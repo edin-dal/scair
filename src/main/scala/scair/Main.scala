@@ -1,13 +1,20 @@
 package scair
 
-class Value // TODO
 class Region // TODO
 class Block // TODO
-class Attribute // TODO
 
+class Attribute(
+	val name: String
+)
+	
+class Value(
+	val typ: Attribute	
+)
+	
 class Operation(
 	val name: String,
-	val ops: Seq[Value] // TODO rest
+	val operands: Seq[Value], // TODO rest
+	val results: Seq[Value]
 )
 
 object Main {
