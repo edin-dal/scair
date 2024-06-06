@@ -1,6 +1,8 @@
 package scair
 
 import fastparse._, MultiLineWhitespace._
+import scala.collection.mutable
+import Main._
 
 object Parser {
 
@@ -8,6 +10,10 @@ object Parser {
     // COMMON FUNCTIONS //
     //////////////////////
 
+    val typeAttributeMap: mutable.Map[String, Attribute] = mutable.Map.empty[String, Attribute]
+    val valueMap: mutable.Map[String, Value] = mutable.Map.empty[String, Value]
+
+    // not used just yet I am not sure as it is whether it will be useful
     def flattenList(commonList: (Any, Seq[Any])): Seq[Any] = {
         return commonList._1 +: commonList._2 
     }
@@ -97,6 +103,10 @@ object Parser {
     def generateOperation(operation: (String, Option[Seq[(String, Option[String])]], (Any, Any))): (String, Option[Seq[(String, Option[String])]], (Any, Any)) = {
         println(operation._1)
         //return ("", Option(""), "")
+        val (operandsTypes, resultTypes) = operation._3
+
+        println(operandsTypes.getClass())
+
         return operation
     }
 
@@ -151,11 +161,19 @@ object Parser {
         return types._1 +: types._2 
     }
 
+    def mapAttribute(typeName: String): String = {
+
+        if (!typeAttributeMap.contains(typeName)) {
+            typeAttributeMap(typeName) = new Attribute(name = typeName)
+        }
+        return typeName
+    }
+
     def I32[$: P] = P("i32".!)
     def I64[$: P] = P("i64".!)
     def BuiltIn[$: P] = P(I32 | I64) // temporary BuiltIn
 
-    def Type[$: P] = P( TypeAlias | BuiltIn ) // shortened definition TODO: finish...
+    def Type[$: P] = P( TypeAlias | BuiltIn ).map(mapAttribute) // shortened definition TODO: finish...
 
     def TypeListNoParens[$: P] = P( Type ~ ( "," ~ Type ).rep ).map(joinTypeList)
     def TypeListParens[$: P] = P( "(" ~ ")" | "(" ~ TypeListNoParens ~ ")" )
@@ -262,8 +280,11 @@ object Parser {
         println(indent + "OpResultList - OK")
 
         println("TOP LEVEL PRODUCTION")
+
+        println("----In-Progress----")
         println(parse("%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)", OperationPat(_))) 
         println(parse("\"test.op\"(%1, %0) : (i64, i32) -> ()", OperationPat(_))) 
+        println(typeAttributeMap)
         
     }
 }
