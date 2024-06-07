@@ -3,20 +3,18 @@ package scair
 class Region // TODO
 class Block // TODO
 
-class Attribute(
-	val name: String
-){
+case class Attribute(name: String) {
 	override def toString(): String = {
 		return s"$name"
 	}
 }
 	
 class Value(
-	val name: String,
+	//val name: String,
 	val typ: Attribute	
 ){
 	override def toString(): String = {
-		return s"%$name"
+		return s"%somevalue"
 	}
 }
 	
@@ -26,11 +24,11 @@ class Operation(
 	val results: Seq[Value]
 ){
 	override def toString(): String = {
-		val resultsStr: String = if (results != None) results.mkString(", ") + " = " else ""
-		val operandsStr: String = if (operands != None) operands.mkString(", ") else ""
+		val resultsStr: String = if (results.length > 0) results.mkString(", ") + " = " else ""
+		val operandsStr: String = if (operands.length > 0) operands.mkString(", ") else ""
 		val functionType: String = "(" + operands.map(x => x.typ).mkString(", ") + ") -> (" + results.map(x => x.typ).mkString(", ") + ")"
 
-		return resultsStr + "\"" + name + "\" (" + operandsStr +") : (" + functionType + ")" 
+		return resultsStr + "\"" + name + "\" (" + operandsStr +") : " + functionType 
 		//return s"$resultsStr\"$name\" ($operandsStr) : $functionType)"
 	}
 }
