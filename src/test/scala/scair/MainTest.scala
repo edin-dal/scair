@@ -208,6 +208,16 @@ class MainTest extends FlatSpec {
       testContext.testParse("%0,%1,%2=", Parser.OpResultList(_)) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
     }
   }
+
+  "TopLevel Tests" should "Test full programs" in {
+    withClue("Test 1: ") {
+      testContext.testParse(text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)", parser = TopLevel(_)) should matchPattern { case Parsed.Success(_, 48) => }
+    }
+    withClue("Test 2: ") {
+      testContext.testParse(text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+    "\"test.op\"(%1, %0) : (i64, i32) -> ()", parser = TopLevel(_)) should matchPattern { case Parsed.Success(_, 85) => }
+    }
+  }
 }
 
 /*
