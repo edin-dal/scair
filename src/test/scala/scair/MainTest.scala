@@ -1,108 +1,221 @@
 package scair
 
 import fastparse._, MultiLineWhitespace._
+import scala.collection.mutable
+import scala.util.{Try,Success,Failure}
 import org.scalatest._
 import Matchers._
 import Parser._
 
 class MainTest extends FlatSpec {
 
-  "Main" should "test for obvious" in {
-    true should be (!false)
+  val testContext: Parser.Context = new Parser.Context(localValueMap = mutable.Map.empty[String, Value]) 
+
+  "Digits - Unit Tests" should "parse correctly" in {
+    withClue("Test 1: ") {
+      testContext.testParse("a", Parser.Digit(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 2: ") {
+      testContext.testParse(" $ ! £ 4 1 ", Parser.Digit(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 3: ") {
+      testContext.testParse("7", Parser.Digit(_)) should matchPattern { case Parsed.Success("7", _) => }
+    }
   }
-    val indent = "  "    
 
-    var parser = Parser
-    val Parsed.Failure(_, _, _) = parser.parse("a", Digit(_))
-    // val Parsed.Failure(_, _, _) = parse(" $ ! £ 4 1 ", Digit(_))
-    // val Parsed.Success("7", _) = parse("7", Digit(_))
-    // println(indent + "Digits - OK")
-    // // HexDigits
-    // val Parsed.Success("5", _) = parse("5", HexDigit(_))
-    // val Parsed.Success("f", _) = parse("f", HexDigit(_))
-    // val Parsed.Success("E", _) = parse("E", HexDigit(_))
-    // val Parsed.Failure(_, _, _) = parse("G", HexDigit(_))
-    // val Parsed.Failure(_, _, _) = parse("g", HexDigit(_))
-    // val Parsed.Success("4", _) = parse("41", HexDigit(_))
-    // println(indent + "HexDigits - OK")
-    // // Letters
-    // val Parsed.Success("a", _) = parse("a", Letter(_))
-    // val Parsed.Success("G", _) = parse("G", Letter(_))
-    // val Parsed.Failure(_, _, _) = parse("4", Letter(_))
-    // println(indent + "Letters - OK")
-    // // IdPuncts
-    // val Parsed.Success("$", _) = parse("$", IdPunct(_))
-    // val Parsed.Success(".", _) = parse(".", IdPunct(_))
-    // val Parsed.Success("_", _) = parse("_", IdPunct(_))
-    // val Parsed.Success("-", _) = parse("-", IdPunct(_))
-    // val Parsed.Failure(_, _, _) = parse("%", IdPunct(_))
-    // val Parsed.Failure(_, _, _) = parse("£", IdPunct(_))
-    // val Parsed.Failure(_, _, _) = parse("dfd", IdPunct(_))
-    // val Parsed.Failure(_, _, _) = parse("0", IdPunct(_))
-    // println(indent + "IdPunct - OK")
-    // // IntegerLiterals
-    // val Parsed.Success(123456789, _) = parse("123456789", IntegerLiteral(_))
-    // val Parsed.Success(1231, _) = parse("1231f", IntegerLiteral(_))
-    // val Parsed.Failure(_, _, _) = parse("f1231", IntegerLiteral(_))
-    // val Parsed.Success(0x0011ffff, _) = parse("0x0011ffff", IntegerLiteral(_))
-    // val Parsed.Success(0x0011, _) = parse("0x0011gggg", IntegerLiteral(_))
-    // val Parsed.Success(1, _) = parse("1xds%", IntegerLiteral(_))
-    // val Parsed.Success(0, _) = parse("0xgg", IntegerLiteral(_))
-    // println(indent + "IntegerLiteral - OK")
-    // // DecimalLiteral
-    // val Parsed.Success(123456789, _) = parse("123456789", DecimalLiteral(_))
-    // val Parsed.Success(1231, _) = parse("1231f", DecimalLiteral(_))
-    // val Parsed.Failure(_, _, _) = parse("f1231", DecimalLiteral(_))
-    // println(indent + "DecimalLiteral - OK")
-    // // HexadecimalLiteral
-    // val Parsed.Success(0x0011ffff, _) = parse("0x0011ffff", HexadecimalLiteral(_))
-    // val Parsed.Success(0x0011, _) = parse("0x0011gggg", HexadecimalLiteral(_))
-    // val Parsed.Failure(_, _, _) = parse("1xds%", HexadecimalLiteral(_))
-    // val Parsed.Failure(_, _, _) = parse("0xgg", HexadecimalLiteral(_))
-    // println(indent + "HexadecimalLiteral - OK")
-    // // FloatLiteral
-    // val Parsed.Success("1.0", _) = parse("1.0", FloatLiteral(_))
-    // val Parsed.Success("1.01242", _) = parse("1.01242", FloatLiteral(_))
-    // val Parsed.Success("993.013131", _) = parse("993.013131", FloatLiteral(_))
-    // val Parsed.Success("1.0e10", _) = parse("1.0e10", FloatLiteral(_))
-    // val Parsed.Success("1.0E10", _) = parse("1.0E10", FloatLiteral(_))
-    // val Parsed.Failure(_, _, _) = parse("1.", FloatLiteral(_))
-    // val Parsed.Success("1.0E10", _) = parse("1.0E10", FloatLiteral(_))
-    // val Parsed.Success("1.0E10", _) = parse("1.0E10", FloatLiteral(_))
-    // println(indent + "FloatLiteral - OK")
-    // // StringLiteral
-    // val Parsed.Success("hello", _) = parse("\"hello\"", StringLiteral(_))
-    // val Parsed.Success("hello", _) = parse("\"hello\"", StringLiteral(_))
-    // println(indent + "StringLiteral - OK")
+  "HexDigits - Unit Tests" should "parse correctly" in {
+    withClue("Test 4: ") {
+      testContext.testParse("5", Parser.HexDigit(_)) should matchPattern { case Parsed.Success("5", _) => }
+    }
+    withClue("Test 5: ") {
+      testContext.testParse("f", Parser.HexDigit(_)) should matchPattern { case Parsed.Success("f", _) => }
+    }
+    withClue("Test 6: ") {
+      testContext.testParse("E", Parser.HexDigit(_)) should matchPattern { case Parsed.Success("E", _) => }
+    }
+    withClue("Test 7: ") {
+      testContext.testParse("G", Parser.HexDigit(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 8: ") {
+      testContext.testParse("g", Parser.HexDigit(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 9: ") {
+      testContext.testParse("41", Parser.HexDigit(_)) should matchPattern { case Parsed.Success("4", _) => }
+    }
+  }
 
+  "Letters - Unit Tests" should "parse correctly" in {
+    withClue("Test 10: ") {
+      testContext.testParse("a", Parser.Letter(_)) should matchPattern { case Parsed.Success("a", _) => }
+    }
+    withClue("Test 11: ") {
+      testContext.testParse("G", Parser.Letter(_)) should matchPattern { case Parsed.Success("G", _) => }
+    }
+    withClue("Test 12: ") {
+      testContext.testParse("4", Parser.Letter(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+  }
 
-    // println("IDENTIFIERS")
-    // // ValueId
-    // val Parsed.Success("hello", _) = parse("%hello", ValueId(_))
-    // val Parsed.Success("Ater", _) = parse("%Ater", ValueId(_))
-    // val Parsed.Success("312321", _) = parse("%312321", ValueId(_))
-    // val Parsed.Success("Ater", _) = parse("%Ater", ValueId(_))
-    // val Parsed.Success("$$$$$", _) = parse("%$$$$$", ValueId(_))
-    // val Parsed.Success("_-_-_", _) = parse("%_-_-_", ValueId(_))
-    // val Parsed.Success("3", _) = parse("%3asada", ValueId(_))
-    // val Parsed.Failure(_, _, _) = parse("% hello", ValueId(_))
-    // println(indent + "ValueId - OK")
-    // //
+  "IdPuncts - Unit Tests" should "parse correctly" in {
+    withClue("Test 13: ") {
+      testContext.testParse("$", Parser.IdPunct(_)) should matchPattern { case Parsed.Success("$", _) => }
+    }
+    withClue("Test 14: ") {
+      testContext.testParse(".", Parser.IdPunct(_)) should matchPattern { case Parsed.Success(".", _) => }
+    }
+    withClue("Test 15: ") {
+      testContext.testParse("_", Parser.IdPunct(_)) should matchPattern { case Parsed.Success("_", _) => }
+    }
+    withClue("Test 16: ") {
+      testContext.testParse("-", Parser.IdPunct(_)) should matchPattern { case Parsed.Success("-", _) => }
+    }
+    withClue("Test 17: ") {
+      testContext.testParse("%", Parser.IdPunct(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 18: ") {
+      testContext.testParse("£", Parser.IdPunct(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 19: ") {
+      testContext.testParse("dfd", Parser.IdPunct(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 20: ") {
+      testContext.testParse("0", Parser.IdPunct(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+  }
 
+  "IntegerLiterals - Unit Tests" should "parse correctly" in {
+    withClue("Test 21: ") {
+      testContext.testParse("123456789", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Success(123456789, _) => }
+    }
+    withClue("Test 22: ") {
+      testContext.testParse("1231f", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Success(1231, _) => }
+    }
+    withClue("Test 23: ") {
+      testContext.testParse("f1231", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 24: ") {
+      testContext.testParse("0x0011ffff", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Success(0x0011ffff, _) => }
+    }
+    withClue("Test 25: ") {
+      testContext.testParse("0x0011gggg", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Success(0x0011, _) => }
+    }
+    withClue("Test 26: ") {
+      testContext.testParse("1xds%", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Success(1, _) => }
+    }
+    withClue("Test 27: ") {
+      testContext.testParse("0xgg", Parser.IntegerLiteral(_)) should matchPattern { case Parsed.Success(0, _) => }
+    }
+  }
 
-    // println("OPERATIONS")
-    // // OpResultList
-    // println(parse("%0, %1, %2 =", OpResultList(_)))
-    // // val Parsed.Success(Seq("%0", "%1", "%2"), _) = parse("%0, %1, %2 =", OpResultList(_))
-    // // val Parsed.Success(Seq("%0", "%1", "%2"), _) = parse("%0   ,    %1   ,   %2  =   ", OpResultList(_))
-    // // val Parsed.Success(Seq("%0", "%1", "%2"), _) = parse("%0,%1,%2=", OpResultList(_))
-    // println(indent + "OpResultList - OK")
+  "DecimalLiterals - Unit Tests" should "parse correctly" in {
+    withClue("Test 28: ") {
+      testContext.testParse("123456789", Parser.DecimalLiteral(_)) should matchPattern { case Parsed.Success(123456789, _) => }
+    }
+    withClue("Test 29: ") {
+      testContext.testParse("1231f", Parser.DecimalLiteral(_)) should matchPattern { case Parsed.Success(1231, _) => }
+    }
+    withClue("Test 30: ") {
+      testContext.testParse("f1231", Parser.DecimalLiteral(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+  }
 
-    // println("TOP LEVEL PRODUCTION")
+  "HexadecimalLiterals - Unit Tests" should "parse correctly" in {
+    withClue("Test 31: ") {
+      testContext.testParse("0x0011ffff", Parser.HexadecimalLiteral(_)) should matchPattern { case Parsed.Success(0x0011ffff, _) => }
+    }
+    withClue("Test 32: ") {
+      testContext.testParse("0x0011gggg", Parser.HexadecimalLiteral(_)) should matchPattern { case Parsed.Success(0x0011, _) => }
+    }
+    withClue("Test 33: ") {
+      testContext.testParse("1xds%", Parser.HexadecimalLiteral(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 34: ") {
+      testContext.testParse("0xgg", Parser.HexadecimalLiteral(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+  }
 
-    // println("----In-Progress----")
-    // println(parse("%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)", TopLevel(_)))
-    // println(parse("%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-    //               "\"test.op\"(%1, %0) : (i32, i32) -> ()", TopLevel(_))) 
-    // println(parse("\"test.op\"(%1, %0) : (i64, i32) -> ()", OperationPat(_))) 
+  "FloatLiterals - Unit Tests" should "parse correctly" in {
+    withClue("Test 35: ") {
+      testContext.testParse("1.0", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("1.0", _) => }
+    }
+    withClue("Test 36: ") {
+      testContext.testParse("1.01242", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("1.01242", _) => }
+    }
+    withClue("Test 37: ") {
+      testContext.testParse("993.013131", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("993.013131", _) => }
+    }
+    withClue("Test 38: ") {
+      testContext.testParse("1.0e10", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("1.0e10", _) => }
+    }
+    withClue("Test 39: ") {
+      testContext.testParse("1.0E10", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("1.0E10", _) => }
+    }
+    withClue("Test 40: ") {
+      testContext.testParse("1.", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+    withClue("Test 41: ") {
+      testContext.testParse("1.0E10", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("1.0E10", _) => }
+    }
+    withClue("Test 42: ") {
+      testContext.testParse("1.0E10", Parser.FloatLiteral(_)) should matchPattern { case Parsed.Success("1.0E10", _) => }
+    }
+  }
+
+  "StringLiterals - Unit Tests" should "parse correctly" in {
+    withClue("Test 43: ") {
+      testContext.testParse("\"hello\"", Parser.StringLiteral(_)) should matchPattern { case Parsed.Success("hello", _) => }
+    }
+    withClue("Test 44: ") {
+      testContext.testParse("\"hello\"", Parser.StringLiteral(_)) should matchPattern { case Parsed.Success("hello", _) => }
+    }
+  }
+
+  "ValueId - Unit Tests" should "parse correctly" in {
+    withClue("Test 45: ") {
+      testContext.testParse("%hello", Parser.ValueId(_)) should matchPattern { case Parsed.Success("hello", _) => }
+    }
+    withClue("Test 46: ") {
+      testContext.testParse("%Ater", Parser.ValueId(_)) should matchPattern { case Parsed.Success("Ater", _) => }
+    }
+    withClue("Test 47: ") {
+      testContext.testParse("%312321", Parser.ValueId(_)) should matchPattern { case Parsed.Success("312321", _) => }
+    }
+    withClue("Test 48: ") {
+      testContext.testParse("%Ater", Parser.ValueId(_)) should matchPattern { case Parsed.Success("Ater", _) => }
+    }
+    withClue("Test 49: ") {
+      testContext.testParse("%$$$$$", Parser.ValueId(_)) should matchPattern { case Parsed.Success("$$$$$", _) => }
+    }
+    withClue("Test 50: ") {
+      testContext.testParse("%_-_-_", Parser.ValueId(_)) should matchPattern { case Parsed.Success("_-_-_", _) => }
+    }
+    withClue("Test 51: ") {
+      testContext.testParse("%3asada", Parser.ValueId(_)) should matchPattern { case Parsed.Success("3", _) => }
+    }
+    withClue("Test 52: ") {
+      testContext.testParse("% hello", Parser.ValueId(_)) should matchPattern { case Parsed.Failure(_, _, _) => }
+    }
+  }
+
+  "OpResultList - Unit Tests" should "parse correctly" in {
+    withClue("Test 53: ") {
+      testContext.testParse("%0, %1, %2 =", Parser.OpResultList(_)) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
+    }
+    withClue("Test 54: ") {
+      testContext.testParse("%0   ,    %1   ,   %2  =   ", Parser.OpResultList(_)) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
+    }
+    withClue("Test 55: ") {
+      testContext.testParse("%0,%1,%2=", Parser.OpResultList(_)) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
+    }
+  }
 }
+
+/*
+
+"Unit Tests" should "test for obvious" in {
+    true should be (!false)
+    testContext.testParse("a", Parser.Digit(_)) should matchPattern {case Parsed.Failure(_, _, _) => }
+
+  }
+
+*/

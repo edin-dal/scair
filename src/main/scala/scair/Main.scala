@@ -29,7 +29,6 @@ class Operation(
 		val functionType: String = "(" + operands.map(x => x.typ).mkString(", ") + ") -> (" + results.map(x => x.typ).mkString(", ") + ")"
 
 		return resultsStr + "\"" + name + "\" (" + operandsStr +") : " + functionType 
-		//return s"$resultsStr\"$name\" ($operandsStr) : $functionType)"
 	}
 }
 	
