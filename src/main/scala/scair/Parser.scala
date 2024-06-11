@@ -185,18 +185,41 @@ object Parser {
     // BLOCKS //
     ////////////
 
-    // [ ] - block           ::= block-label operation+
-    // [ ] - block-label     ::= block-id block-arg-list? `:`
-    // [ ] - block-id        ::= caret-id
-    // [ ] - caret-id        ::= `^` suffix-id
-    // [ ] - value-id-and-type ::= value-id `:` type
+    // [x] - block           ::= block-label operation+
+    // [x] - block-label     ::= block-id block-arg-list? `:`
+    // [x] - block-id        ::= caret-id
+    // [x] - caret-id        ::= `^` suffix-id
+    // [x] - value-id-and-type ::= value-id `:` type
 
     // // Non-empty list of names and types.
-    // [ ] - value-id-and-type-list ::= value-id-and-type (`,` value-id-and-type)*
+    // [x] - value-id-and-type-list ::= value-id-and-type (`,` value-id-and-type)*
 
-    // [ ] - block-arg-list ::= `(` value-id-and-type-list? `)`
+    // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
 
-    
+
+    //                            name             argument               operations
+    def createBlock(uncutBlock: (String, Seq[(String, Seq[Attribute])], Seq[Operation])): Block = {
+        return new Block(
+            operations    = uncutBlock._3, 
+            argumentTypes = (for ((x, y) <- uncutBlock._2) yield y).flatten
+        )
+    } 
+
+    def elimOption(valueIdAndTypeList: Option[Seq[(String, Seq[Attribute])]]): Seq[(String, Seq[Attribute])] = valueIdAndTypeList match {
+        case Some(x: Seq[(String, Seq[Attribute])]) => x
+        case None                                   => Seq()
+    }   
+
+    def Block[$: P] = P( BlockLabel ~ OperationPat.rep(1) ).map( createBlock )
+    def BlockLabel[$: P] = P( BlockId ~ BlockArgList.?.map( elimOption ) ~ ":" )
+    def BlockId[$: P] = P( CaretId )
+    def CaretId[$: P] = P( "^" ~ SuffixId )
+    def ValueIdAndType[$: P] = P( ValueId ~ ":" ~ Type )
+
+    def ValueIdAndTypeList[$: P] = P( ValueIdAndType ~ ("," ~ ValueIdAndType).rep ).map( (idAndTypes: (String, Seq[Attribute], Seq[(String, Seq[Attribute])])) => (idAndTypes._1, idAndTypes._2) +: idAndTypes._3)
+    def BlockArgList[$: P] = P( "(" ~ ValueIdAndTypeList.? ~ ")" ).map( elimOption )
+
+
     /////////////
     // REGIONS //
     /////////////
@@ -307,6 +330,10 @@ object Parser {
         println(context1.testParse(text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
         "\"test.op\"(%1, %0) : (i64, i32) -> ()", parser = TopLevel(_)))
 
+
+        println(context1.testParse(text = "^bb0(%0: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+        "\"test.op\"(%1, %0) : (i64, i32) -> ()", parser = Block(_)))
+
         println("---------------------")
     }
 }
@@ -368,6 +395,15 @@ def generateOperation
         // }
         return Seq(new Attribute(name = typeName))
     }
+
+
+    val numbers = List(1, 2, 3, 4, 5, 6)
+    val processedNumbers = for {
+        n <- numbers if n % 2 == 0 // Filter even numbers
+        squared = n * n // Transform: square the number
+        if squared > 10 // Additional filter on the transformed number
+    } yield squared
+    println(processedNumbers) // Output: List(16, 36)
 
 
  */
