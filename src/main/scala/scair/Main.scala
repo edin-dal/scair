@@ -1,27 +1,43 @@
 package scair
 
 class Region // TODO
-class Block // TODO
 
-case class Attribute(name: String) {
+case class Block(
+	operations: Seq[Operation],
+	argumentTypes: Seq[Attribute]
+) {
+
+	// Initialization Block
+	{
+		
+	}
+
+	override def toString(): String = {
+		return "behold, i am block"
+	}
+}
+
+case class Attribute(
+	name: String
+) {
 	override def toString(): String = {
 		return s"$name"
 	}
 }
 	
-class Value(
+case class Value(
 	//val name: String,
-	val typ: Attribute	
+	typ: Attribute	
 ){
 	override def toString(): String = {
-		return s"%somevalue"
+		return s"%sv"
 	}
 }
 	
-class Operation(
-	val name: String,
-	val operands: Seq[Value], // TODO rest
-	val results: Seq[Value]
+case class Operation(
+	name: String,
+	operands: Seq[Value], // TODO rest
+	results: Seq[Value]
 ){
 	override def toString(): String = {
 		val resultsStr: String = if (results.length > 0) results.mkString(", ") + " = " else ""
