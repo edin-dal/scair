@@ -207,15 +207,17 @@ class MainTest extends FlatSpec {
     withClue("Test 55: ") {
       testContext.testParse("%0,%1,%2=", Parser.OpResultList(_)) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
     }
-  }
+  } 
 
   "TopLevel Tests" should "Test full programs" in {
     withClue("Test 1: ") {
-      testContext.testParse(text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)", parser = TopLevel(_)) should matchPattern { case Parsed.Success(_, 48) => }
+      testContext.testParse(text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)", parser = TopLevel(_)) should matchPattern { 
+        case Parsed.Success(Seq(Operation("test.op", Seq(), Seq(Value(Attribute("i32")), Value(Attribute("i64")), Value(Attribute("i32"))))), 48) => }
     }
     withClue("Test 2: ") {
       testContext.testParse(text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-    "\"test.op\"(%1, %0) : (i64, i32) -> ()", parser = TopLevel(_)) should matchPattern { case Parsed.Success(_, 85) => }
+    "\"test.op\"(%1, %0) : (i64, i32) -> ()", parser = TopLevel(_)) should matchPattern { 
+      case Parsed.Success(Seq(Operation("test.op", Seq(), Seq(Value(Attribute("i32")), Value(Attribute("i64")), Value(Attribute("i32")))), Operation("test.op", Seq(Value(Attribute("i64")), Value(Attribute("i32"))), Seq())), 85) => }
     }
   }
 }
