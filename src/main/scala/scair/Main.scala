@@ -1,14 +1,19 @@
 package scair
 
-class Region // TODO
+case class Region(
+    blocks: Seq[Block],
+    parent: Option[Operation] = None
+) {
+
+  override def toString(): String = {
+    return "behold, i am REGION"
+  }
+}
 
 case class Block(
     operations: Seq[Operation],
-    argumentTypes: Seq[Attribute]
+    arguments: Seq[Value]
 ) {
-
-  // Initialization Block
-  {}
 
   override def toString(): String = {
     return "behold, i am block"
@@ -35,7 +40,8 @@ case class Value(
 case class Operation(
     name: String,
     operands: Seq[Value], // TODO rest
-    results: Seq[Value]
+    results: Seq[Value],
+    regions: Seq[Region]
 ) {
   override def toString(): String = {
     val resultsStr: String =
