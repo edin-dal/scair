@@ -105,7 +105,7 @@ class Parser(
   }
 
   implicit var currentScope: Scope = new Scope(valueMap = valueMap)
-  
+
   ///////////////////
   // COMMON SYNTAX //
   ///////////////////
@@ -257,7 +257,7 @@ class Parser(
     if (operands.length != operandsTypes.length) {
       throw new Exception("E")
     }
-    
+
     val resultss: Seq[Value] = Scope.defineValues(results zip resultsTypes)
 
     val operandss: Seq[Value] = Scope.useValues(operands zip operandsTypes)
@@ -405,7 +405,6 @@ class Parser(
   def BuiltIn[$: P] = P(I32 | I64) // temporary BuiltIn
 
   def Type[$: P] = P(TypeAlias | BuiltIn).map((typeName: String) =>
-
     new Attribute(name = typeName)
   ) // shortened definition TODO: finish...
 
@@ -557,4 +556,3 @@ object Parser {
 /////////////////////
 // VERSION CONTROL //
 /////////////////////
-
