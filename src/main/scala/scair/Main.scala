@@ -8,6 +8,10 @@ case class Region(
   override def toString(): String = {
     return "behold, i am REGION"
   }
+
+  override def equals(o: Any): Boolean = {
+    return this eq o.asInstanceOf[AnyRef]
+  }
 }
 
 case class Block(
@@ -18,11 +22,16 @@ case class Block(
   override def toString(): String = {
     return "behold, i am block"
   }
+
+  override def equals(o: Any): Boolean = {
+    return this eq o.asInstanceOf[AnyRef]
+  }
 }
 
 case class Attribute(
     name: String
 ) {
+
   override def toString(): String = {
     return s"$name"
   }
@@ -32,8 +41,13 @@ case class Value(
     // val name: String,
     typ: Attribute
 ) {
+
   override def toString(): String = {
     return s"%sv"
+  }
+
+  override def equals(o: Any): Boolean = {
+    return this eq o.asInstanceOf[AnyRef]
   }
 }
 
@@ -54,6 +68,10 @@ case class Operation(
         .mkString(", ") + ")"
 
     return resultsStr + "\"" + name + "\" (" + operandsStr + ") : " + functionType
+  }
+
+  override def equals(o: Any): Boolean = {
+    return this eq o.asInstanceOf[AnyRef]
   }
 }
 

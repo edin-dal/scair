@@ -9,10 +9,6 @@ class Parser(
     var valueMap: mutable.Map[String, Value] = mutable.Map.empty[String, Value]
 ) {
 
-  //////////////////////
-  // COMMON FUNCTIONS //
-  //////////////////////
-
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
   def E[_: P](action: => Unit) = {
@@ -105,6 +101,15 @@ class Parser(
   }
 
   implicit var currentScope: Scope = new Scope(valueMap = valueMap)
+
+  //////////////////////
+  // COMMON FUNCTIONS //
+  //////////////////////
+
+  def optionlessThis[A](option: Option[Seq[A]]): Seq[A] = option match {
+    case None    => Seq[A]()
+    case Some(x) => x
+  }
 
   ///////////////////
   // COMMON SYNTAX //
@@ -266,11 +271,6 @@ class Parser(
     case (name, None)          => Seq(name)
   }
 
-  def optionlessThis[A](option: Option[Seq[A]]): Seq[A] = option match {
-    case None    => Seq[A]()
-    case Some(x) => x
-  }
-
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.?.map(optionlessThis) ~ GenericOperation ~ TrailingLocation.?
   ).map(generateOperation) // shortened definition TODO: finish...
@@ -322,17 +322,10 @@ class Parser(
     return newBlock
   }
 
-  def elimOption(
-      valueIdAndTypeList: Option[Seq[(String, Attribute)]]
-  ): Seq[(String, Attribute)] = valueIdAndTypeList match {
-    case Some(x: Seq[(String, Attribute)]) => x
-    case None                              => Seq()
-  }
-
   def Block[$: P] = P(BlockLabel ~ OperationPat.rep(1)).map(createBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~ BlockArgList.?.map(elimOption)
+    BlockId ~ BlockArgList.?.map(optionlessThis)
       .map(Scope.defineValues) ~ ":"
   )
 
@@ -348,7 +341,8 @@ class Parser(
         (idAndTypes._1, idAndTypes._2) +: idAndTypes._3
     )
 
-  def BlockArgList[$: P] = P("(" ~ ValueIdAndTypeList.? ~ ")").map(elimOption)
+  def BlockArgList[$: P] =
+    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessThis)
 
   /////////////
   // REGIONS //
