@@ -13,8 +13,6 @@ class Parser(
   // COMMON FUNCTIONS //
   //////////////////////
 
-  
-
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
   def E[_: P](action: => Unit) = {
