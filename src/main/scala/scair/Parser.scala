@@ -105,7 +105,7 @@ class Parser(
   }
 
   implicit var currentScope: Scope = new Scope(valueMap = valueMap)
-
+  
   ///////////////////
   // COMMON SYNTAX //
   ///////////////////
@@ -257,6 +257,7 @@ class Parser(
     if (operands.length != operandsTypes.length) {
       throw new Exception("E")
     }
+    
     val resultss: Seq[Value] = Scope.defineValues(results zip resultsTypes)
 
     val operandss: Seq[Value] = Scope.useValues(operands zip operandsTypes)
@@ -404,6 +405,7 @@ class Parser(
   def BuiltIn[$: P] = P(I32 | I64) // temporary BuiltIn
 
   def Type[$: P] = P(TypeAlias | BuiltIn).map((typeName: String) =>
+
     new Attribute(name = typeName)
   ) // shortened definition TODO: finish...
 
@@ -487,6 +489,7 @@ class Parser(
 }
 
 object Parser {
+
   def main(args: Array[String]): Unit = {
 
     println("---- IN PROGRESS ----")
@@ -551,121 +554,7 @@ object Parser {
   }
 }
 
-//////////////////////////////////
-// FUNCTIONAL TESTING ON THE GO //
-//////////////////////////////////
-
 /////////////////////
 // VERSION CONTROL //
 /////////////////////
 
-/*
-
-def generateOperation
-
-    var resultss: Seq[Value] = Seq()
-    var operandss: Seq[Value] = Seq()
-
-    for (i <- (0 to results.length - 1)) {
-        val name = results(i)
-        val value = new Value(typ = resultsTypes(i))
-
-        // SSA value cannot be defined twice
-        if (valueMap.contains(name)) {
-            throw new Exception(s"SSA Value cannot be defined twice %$name")
-        }
-
-        valueMap(name) = value
-
-        resultss = resultss :+ value
-    }
-
-    for (i <- (0 to operands.length - 1)) {
-        val name = operands(i)
-        // val value = new Value(typ = operandsTypes(i))
-
-        // used but not defined
-        if (!valueMap.contains(name)) {
-            // valueMap(name) = value
-            throw new Exception(s"SSA value used but not defined %$name")
-        }
-        if (valueMap(name).typ != operandsTypes(i)) {
-            throw new Exception(s"$name use with type ${operandsTypes(i)} but defined with type ${valueMap(name).typ}")
-        }
-        operandss = operandss :+ valueMap(name)
-    }
-
-    ///////////
-    // Types //
-    ///////////
-
-    def joinTypeList(types: (Seq[Attribute], Seq[Seq[Attribute]])): Seq[Attribute] = {
-        return types._1 ++ types._2.flatten
-    }
-
-    def mapAttribute(typeName: String): Seq[Attribute] = {
-
-        // if (!typeAttributeMap.contains(typeName)) {
-        //     typeAttributeMap(typeName) = new Attribute(name = typeName)
-        // }
-        return Seq(new Attribute(name = typeName))
-    }
-
-    val numbers = List(1, 2, 3, 4, 5, 6)
-    val processedNumbers = for {
-        n <- numbers if n % 2 == 0 // Filter even numbers
-        squared = n * n // Transform: square the number
-        if squared > 10 // Additional filter on the transformed number
-    } yield squared
-    println(processedNumbers) // Output: List(16, 36)
-
-    // context is kept in a class, and each one automatically swaps out the valueMap based on its local value map
-  class Context(var localValueMap: mutable.Map[String, Value]) {
-
-    // we first slot in the local context into the Parser object, then slot it back out once parsing is done
-    def parseThis(text: String): fastparse.Parsed[Seq[Operation]] = {
-      valueMap = localValueMap
-      val result = parse(text, TopLevel(_))
-      localValueMap = valueMap
-      return result
-    }
-
-    // child starts off from the parents context
-    def createChild(): Context = {
-      return new Context(localValueMap = localValueMap)
-    }
-
-    def getLocalValueMap(): mutable.Map[String, Value] = localValueMap
-
-    def testParse[A](
-        text: String,
-        parser: fastparse.P[_] => fastparse.P[A]
-    ): fastparse.Parsed[A] = {
-      valueMap = mutable.Map.empty[String, Value]
-      return parse(text, parser)
-    }
-  }
-
-    def useBlock(
-        blockNameBlock: Seq[(String, Block)]
-    )(implicit
-        scope: Scope
-    ): Unit = {
-      for {
-        (name, block) <- blockNameBlock
-      } yield !scope.blockMap.contains(name) match {
-        case true =>
-          throw new Exception(s"Block referenced but not defined %${name}")
-        case false =>
-          scope.valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
-              )
-            case false =>
-              scope.valueMap(name)
-          }
-      }
-    }
-
- */
