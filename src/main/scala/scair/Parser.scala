@@ -224,29 +224,20 @@ class Parser(
   //  results      name     operands     op types      res types
   def generateOperation(
       operation: (
-          Option[Seq[String]],
+          Seq[String],
           (
               String,
-              Option[Seq[String]],
-              Option[Seq[Region]],
+              Seq[String],
+              Seq[Region],
               (Seq[Attribute], Seq[Attribute])
           )
       )
   ): Operation = {
 
-    val results: Seq[String] = operation._1 match {
-      case None    => Seq[String]()
-      case Some(x) => x
-    }
+    val results: Seq[String] = operation._1
     val opName = operation._2._1
-    val operands: Seq[String] = operation._2._2 match {
-      case None    => Seq[String]()
-      case Some(x) => x
-    }
-    val regions: Seq[Region] = operation._2._3 match {
-      case None    => Seq[Region]()
-      case Some(x) => x
-    }
+    val operands: Seq[String] = operation._2._2
+    val regions: Seq[Region] = operation._2._3
     val resultsTypes = operation._2._4._2
     val operandsTypes = operation._2._4._1
 
@@ -275,12 +266,19 @@ class Parser(
     case (name, None)          => Seq(name)
   }
 
+  def optionlessThis[A](option: Option[Seq[A]]): Seq[A] = option match {
+    case None    => Seq[A]()
+    case Some(x) => x
+  }
+
   def OperationPat[$: P]: P[Operation] = P(
-    OpResultList.? ~ GenericOperation ~ TrailingLocation.?
+    OpResultList.?.map(optionlessThis) ~ GenericOperation ~ TrailingLocation.?
   ).map(generateOperation) // shortened definition TODO: finish...
 
   def GenericOperation[$: P] = P(
-    StringLiteral ~ "(" ~ ValueUseList.? ~ ")" ~ RegionList.? ~ ":" ~ FunctionType
+    StringLiteral ~ "(" ~ ValueUseList.?.map(
+      optionlessThis
+    ) ~ ")" ~ RegionList.?.map(optionlessThis) ~ ":" ~ FunctionType
   ) // shortened definition TODO: finish...
 
   def OpResultList[$: P] = P(OpResult ~ ("," ~ OpResult).rep ~ "=").map(
