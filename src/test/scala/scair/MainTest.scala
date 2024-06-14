@@ -513,13 +513,3 @@ class MainTest extends FlatSpec {
     }
   }
 }
-
-/*
-
-"Unit Tests" should "test for obvious" in {
-    true should be (!false)
-    parser.testParse("a", parser.Digit(_)) should matchPattern {case Parsed.Failure(_, _, _) => }
-
-  }
-
- */
