@@ -53,7 +53,8 @@ case class Value(
 
 case class Operation(
     name: String,
-    operands: Seq[Value], // TODO rest
+    operands: Seq[Value],
+    var successors: Seq[Block],
     results: Seq[Value],
     regions: Seq[Region]
 ) {

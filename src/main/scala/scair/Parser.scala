@@ -70,13 +70,31 @@ class Parser(
       case false =>
         scope.blockMap(blockName) = block
     }
+
+    def checkWaitlist()(implicit scope: Scope): Unit = {
+      for ((operation, successors) <- scope.blockWaitlist) {
+        val successorList: Seq[Block] = for {
+          name <- successors
+        } yield scope.blockMap
+          .contains(
+            name
+          ) match {
+          case false =>
+            throw new Exception(s"Successor ${name} not defined within Scope")
+          case true => scope.blockMap(name)
+        }
+        operation.successors = successorList
+      }
+    }
   }
 
   class Scope(
       var valueMap: mutable.Map[String, Value],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var parentScope: Option[Scope] = None
+      var parentScope: Option[Scope] = None,
+      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
+        mutable.Map.empty[Operation, Seq[String]]
   ) {
 
     // child starts off from the parents context
@@ -94,6 +112,7 @@ class Parser(
 
     def switchWithParent(): Unit = parentScope match {
       case Some(x) =>
+        Scope.checkWaitlist
         currentScope = x
       case None =>
         throw new Exception("No parent present - check your")
@@ -219,19 +238,20 @@ class Parser(
   // [ ] custom-operation      ::= bare-id custom-operation-format
   // [x] op-result-list        ::= op-result (`,` op-result)* `=`
   // [x] op-result             ::= value-id (`:` integer-literal)?
-  // [ ] successor-list        ::= `[` successor (`,` successor)* `]`
-  // [ ] successor             ::= caret-id (`:` block-arg-list)?
+  // [x] successor-list        ::= `[` successor (`,` successor)* `]`
+  // [x] successor             ::= caret-id (`:` block-arg-list)?
   // [ ] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] region-list           ::= `(` region (`,` region)* `)`
   // [ ] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
   // [x] trailing-location     ::= `loc` `(` location `)`
 
-  //  results      name     operands     op types      res types
+  //  results      name     operands   successors   regions   (op types      res types)
   def generateOperation(
       operation: (
           Seq[String],
           (
               String,
+              Seq[String],
               Seq[String],
               Seq[Region],
               (Seq[Attribute], Seq[Attribute])
@@ -242,9 +262,10 @@ class Parser(
     val results: Seq[String] = operation._1
     val opName = operation._2._1
     val operands: Seq[String] = operation._2._2
-    val regions: Seq[Region] = operation._2._3
-    val resultsTypes = operation._2._4._2
-    val operandsTypes = operation._2._4._1
+    val successors: Seq[String] = operation._2._3
+    val regions: Seq[Region] = operation._2._4
+    val resultsTypes = operation._2._5._2
+    val operandsTypes = operation._2._5._1
 
     if (results.length != resultsTypes.length) {
       throw new Exception("E")
@@ -258,12 +279,17 @@ class Parser(
 
     val operandss: Seq[Value] = Scope.useValues(operands zip operandsTypes)
 
-    return new Operation(
+    val op = new Operation(
       name = opName,
       operands = operandss,
+      successors = Seq(),
       results = resultss,
       regions = regions
     )
+
+    currentScope.blockWaitlist += op -> successors
+
+    return op
   }
 
   def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
@@ -278,7 +304,9 @@ class Parser(
   def GenericOperation[$: P] = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(
       optionlessThis
-    ) ~ ")" ~ RegionList.?.map(optionlessThis) ~ ":" ~ FunctionType
+    ) ~ ")" ~ SuccessorList.?.map(optionlessThis) ~ RegionList.?.map(
+      optionlessThis
+    ) ~ ":" ~ FunctionType
   ) // shortened definition TODO: finish...
 
   def OpResultList[$: P] = P(OpResult ~ ("," ~ OpResult).rep ~ "=").map(
@@ -286,6 +314,12 @@ class Parser(
       results._1 ++ results._2.flatten
   )
   def OpResult[$: P] = P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
+
+  def SuccessorList[$: P] =
+    P("[" ~ Successor ~ ("," ~ Successor).rep ~ "]").map(
+      (successors: (String, Seq[String])) => successors._1 +: successors._2
+    )
+  def Successor[$: P] = P(CaretId) // possibly shortened version
 
   def RegionList[$: P] = P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
     .map((x: (Region, Seq[Region])) => x._1 +: x._2)
@@ -386,7 +420,7 @@ class Parser(
   // // Non-empty list of names and types.
   // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
 
-  // [ ] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+  // [x ] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
   // // Type aliases
   // [x] type-alias-def ::= `!` alias-name `=` type

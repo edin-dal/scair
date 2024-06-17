@@ -9,8 +9,8 @@ object Printer {
 
   var indent: String = "  "
 
-  var valueName: Int = 0
-  var blockName: Int = 0
+  var valueNextID: Int = 0
+  var blockNextID: Int = 0
 
   var valueNameMap: mutable.Map[Value, String] =
     mutable.Map.empty[Value, String]
@@ -21,8 +21,8 @@ object Printer {
     valueNameMap.contains(value) match {
       case true => valueNameMap(value)
       case false =>
-        val name = valueName.toString
-        valueName = valueName + 1
+        val name = valueNextID.toString
+        valueNextID = valueNextID + 1
         valueNameMap(value) = name
         return name
     }
@@ -31,8 +31,8 @@ object Printer {
     blockNameMap.contains(block) match {
       case true => blockNameMap(block)
       case false =>
-        val name = blockName.toString
-        blockName = blockName + 1
+        val name = blockNextID.toString
+        blockNextID = blockNextID + 1
         blockNameMap(block) = name
         return s"bb${name}"
     }
@@ -43,11 +43,11 @@ object Printer {
   // )
   def printRegion(region: Region, indentLevel: Int = 0): String = {
 
-    val open: String = indent * indentLevel + "{\n"
+    val open: String = "{\n"
     val close: String = "\n" + indent * indentLevel + "}"
 
     val regionBlocks: String =
-      (for { block <- region.blocks } yield printBlock(block, indentLevel + 1))
+      (for { block <- region.blocks } yield printBlock(block, indentLevel))
         .mkString("\n")
 
     return s"${open}${regionBlocks}${close}"
@@ -97,9 +97,9 @@ object Printer {
   def printOperation(op: Operation, indentLevel: Int = 0): String = {
 
     val open: String =
-      if (op.regions.length > 0) "\n" + indent * indentLevel + "(\n" else ""
+      if (op.regions.length > 0) indent * indentLevel + "(" else ""
     val close: String =
-      if (op.regions.length > 0) "\n" + indent * indentLevel + ")" else ""
+      if (op.regions.length > 0) ")" else ""
 
     var results: Seq[String] = Seq()
     var resultsTypes: Seq[String] = Seq()
@@ -129,14 +129,16 @@ object Printer {
         region,
         indentLevel + 1
       ))
-        .mkString("\n") + close
+        .mkString(", ") + close
+
+    // here is where i put successors to be printed
 
     val functionType: String =
       "(" + operandsTypes.mkString(", ") +
         ") -> (" +
         resultsTypes.mkString(", ") + ")"
 
-    return indent * indentLevel + operationResults + "\"" + op.name + "\" (" + operationOperands + ")" + operationRegions + " : " + functionType
+    return indent * indentLevel + operationResults + "\"" + op.name + "\"(" + operationOperands + ")" + " " + operationRegions + " : " + functionType
   }
 
   def printProgram(programSequence: Seq[Operation]): String = {
@@ -154,15 +156,22 @@ object Printer {
     println("Printer")
 
     val parser = new Parser()
-
     val Parsed.Success(result, _) = parser.testParse(
-      text =
-        "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-          "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-          "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-      parser = parser.Region(_)
+      text = """"test.op"() ({
+        ^bb0(%5: i32):
+          %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)          
+          "test.op"(%1, %0) : (i64, i32) -> () 
+        ^bb1(%4: i32): 
+          %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
+          "test.op"(%8, %7) : (i64, i32) -> ()
+        }, {
+        ^bb2():
+          "test.op"() : () -> ()  
+        }) : () -> ()
+        """,
+      parser = parser.OperationPat(_)
     )
 
-    print(printRegion(result))
+    print(printOperation(result))
   }
 }
