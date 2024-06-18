@@ -6,6 +6,8 @@ import scala.util.{Try, Success, Failure}
 import org.scalatest._
 import Matchers._
 import Parser._
+import org.scalatest.prop.Tables.Table
+import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 
 class MainTest extends FlatSpec {
 
@@ -30,35 +32,27 @@ class MainTest extends FlatSpec {
     }
   }
 
+  val hexsucces = Table(
+    ("input", "expected"),
+    ("5", "5"),
+    ("f", "f"),
+    ("E", "E"),
+    ("41", "4")
+  )
+  val hexfailures = Table(
+    ("input", "expected"),
+    ("G", ""),
+    ("g", "")
+  )
   "HexDigits - Unit Tests" should "parse correctly" in {
-    withClue("Test 4: ") {
-      parser.testParse("5", parser.HexDigit(_)) should matchPattern {
-        case Parsed.Success("5", _) =>
+    forAll(hexsucces) { (input, expected) =>
+      parser.testParse(input, parser.HexDigit(_)) should matchPattern {
+        case Parsed.Success(`expected`, _) =>
       }
     }
-    withClue("Test 5: ") {
-      parser.testParse("f", parser.HexDigit(_)) should matchPattern {
-        case Parsed.Success("f", _) =>
-      }
-    }
-    withClue("Test 6: ") {
-      parser.testParse("E", parser.HexDigit(_)) should matchPattern {
-        case Parsed.Success("E", _) =>
-      }
-    }
-    withClue("Test 7: ") {
-      parser.testParse("G", parser.HexDigit(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 8: ") {
-      parser.testParse("g", parser.HexDigit(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 9: ") {
-      parser.testParse("41", parser.HexDigit(_)) should matchPattern {
-        case Parsed.Success("4", _) =>
+    forAll(hexfailures) { (input, expected) =>
+      parser.testParse(input, parser.HexDigit(_)) should matchPattern {
+        case Parsed.Failure(`expected`, _, _) =>
       }
     }
   }
