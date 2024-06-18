@@ -10,356 +10,181 @@ import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 
 class ParserTest extends FlatSpec with BeforeAndAfter {
+
+  def getResult[A](result: String, expected: A) =
+    result match {
+      case "Success" => ((x: Int) => Parsed.Success(expected, x))
+      case "Failure" => Parsed.Failure(_, _, _)
+    }
+
   var parser: Parser = new Parser
 
   before {
     parser = new Parser
   }
 
-  val digitsTests = Table(
-    ("input", "result", "output"),
+  val digitTests = Table(
+    ("input", "result", "expected"),
+    ("7", "Success", "7"),
     ("a", "Failure", ""),
-    (" $ ! £ 4 1 ", "Failure", ""),
-    ("7", "Success", "7")
+    (" $ ! £ 4 1 ", "Failure", "")
   )
 
-  forAll(digitsTests) { (input, result, expected) =>
-    s"Digits - [ \"${input}\" -> \"${expected}\"" should s" = ${result}]" in {
-      parser.parseThis(input, parser.Digit(_)) should equal {
-          result match {
-            case "Success" => Parsed.Success(`expected`, _)  
-            case "Failure" => Parsed.Failure(_, _, _)  
-          }
-      }
-    }
-  }
-
-
-
-
-    // withClue("Test 1: ") {
-    //   parse("a", parser.Digit(_)) should matchPattern {
-    //     case Parsed.Failure(_, _, _) =>
-    //   }
-    // }
-    // withClue("Test 2: ") {
-    //   parser.parseThis(
-    //     " $ ! £ 4 1 ",
-    //     parser.Digit(_)
-    //   ) should matchPattern { case Parsed.Failure(_, _, _) => }
-    // }
-    // withClue("Test 3: ") {
-    //   parser.parseThis("7", parser.Digit(_)) should matchPattern {
-    //     case Parsed.Success("7", _) =>
-    //   }
-    // }
-
-  val hexsucces = Table(
-    ("input", "expected"),
-    ("5", "5"),
-    ("f", "f"),
-    ("E", "E"),
-    ("41", "4")
+  val hexTests = Table(
+    ("input", "result", "expected"),
+    ("5", "Success", "5"),
+    ("f", "Success", "f"),
+    ("E", "Success", "E"),
+    ("41", "Success", "4"),
+    ("G", "Failure", ""),
+    ("g", "Failure", "")
   )
 
-  val hexfailures = Table(
-    ("input", "expected"),
-    ("G", ""),
-    ("g", "")
+  val letterTests = Table(
+    ("input", "result", "expected"),
+    ("a", "Success", "a"),
+    ("G", "Success", "G"),
+    ("4", "Failure", "")
   )
 
-  forAll(hexsucces) { (input, expected) =>
-    s"HexDigits - Unit Tests - ${input}" should "parse correctly" in {
-      parser.parseThis(input, parser.HexDigit(_)) should matchPattern {
-        case Parsed.Success(`expected`, _) =>
-      }
-    }
-    forAll(hexfailures) { (input, expected) =>
-      parser.parseThis(input, parser.HexDigit(_)) should matchPattern {
-        case Parsed.Failure(`expected`, _, _) =>
-      }
-    }
-  }
+  val idPunctTests = Table(
+    ("input", "result", "expected"),
+    ("$", "Success", "$"),
+    (".", "Success", "."),
+    ("_", "Success", "_"),
+    ("-", "Success", "-"),
+    ("%", "Failure", ""),
+    ("£", "Failure", ""),
+    ("dfd", "Failure", ""),
+    ("0", "Failure", "")
+  )
 
-  "Letters - Unit Tests" should "parse correctly" in {
-    withClue("Test 10: ") {
-      parser.parseThis("a", parser.Letter(_)) should matchPattern {
-        case Parsed.Success("a", _) =>
-      }
-    }
-    withClue("Test 11: ") {
-      parser.parseThis("G", parser.Letter(_)) should matchPattern {
-        case Parsed.Success("G", _) =>
-      }
-    }
-    withClue("Test 12: ") {
-      parser.parseThis("4", parser.Letter(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-  }
+  val intLiteralTests = Table(
+    ("input", "result", "expected"),
+    ("123456789", "Success", "123456789"),
+    ("1231f", "Success", "1231"),
+    ("0x0011ffff", "Success", "0x0011ffff"),
+    ("1xds%", "Success", "1"),
+    ("0xgg", "Success", "0"),
+    ("f1231", "Failure", ""),
+    ("0x0011gggg", "Failure", "")
+  )
 
-  "IdPuncts - Unit Tests" should "parse correctly" in {
-    withClue("Test 13: ") {
-      parser.parseThis("$", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Success("$", _) =>
-      }
-    }
-    withClue("Test 14: ") {
-      parser.parseThis(".", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Success(".", _) =>
-      }
-    }
-    withClue("Test 15: ") {
-      parser.parseThis("_", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Success("_", _) =>
-      }
-    }
-    withClue("Test 16: ") {
-      parser.parseThis("-", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Success("-", _) =>
-      }
-    }
-    withClue("Test 17: ") {
-      parser.parseThis("%", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 18: ") {
-      parser.parseThis("£", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 19: ") {
-      parser.parseThis("dfd", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 20: ") {
-      parser.parseThis("0", parser.IdPunct(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-  }
+  val decimalLiteralTests = Table(
+    ("input", "result", "expected"),
+    ("123456789", "Success", "123456789"),
+    ("1231f", "Success", "1231"),
+    ("f1231", "Failure", "")
+  )
 
-  "IntegerLiterals - Unit Tests" should "parse correctly" in {
-    withClue("Test 21: ") {
-      parser.parseThis(
-        "123456789",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Success(123456789, _) => }
-    }
-    withClue("Test 22: ") {
-      parser.parseThis(
-        "1231f",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Success(1231, _) => }
-    }
-    withClue("Test 23: ") {
-      parser.parseThis(
-        "f1231",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Failure(_, _, _) => }
-    }
-    withClue("Test 24: ") {
-      parser.parseThis(
-        "0x0011ffff",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Success(0x0011ffff, _) => }
-    }
-    withClue("Test 25: ") {
-      parser.parseThis(
-        "0x0011gggg",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Success(0x0011, _) => }
-    }
-    withClue("Test 26: ") {
-      parser.parseThis(
-        "1xds%",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Success(1, _) => }
-    }
-    withClue("Test 27: ") {
-      parser.parseThis(
-        "0xgg",
-        parser.IntegerLiteral(_)
-      ) should matchPattern { case Parsed.Success(0, _) => }
-    }
-  }
+  val hexadecimalLiteralTests = Table(
+    ("input", "result", "expected"),
+    ("0x0011ffff", "Success", "0x0011ffff"),
+    ("0x0011gggg", "Failure", ""),
+    ("1xds%", "Failure", ""),
+    ("0xgg", "Failure", "")
+  )
 
-  "DecimalLiterals - Unit Tests" should "parse correctly" in {
-    withClue("Test 28: ") {
-      parser.parseThis(
-        "123456789",
-        parser.DecimalLiteral(_)
-      ) should matchPattern { case Parsed.Success(123456789, _) => }
-    }
-    withClue("Test 29: ") {
-      parser.parseThis(
-        "1231f",
-        parser.DecimalLiteral(_)
-      ) should matchPattern { case Parsed.Success(1231, _) => }
-    }
-    withClue("Test 30: ") {
-      parser.parseThis(
-        "f1231",
-        parser.DecimalLiteral(_)
-      ) should matchPattern { case Parsed.Failure(_, _, _) => }
-    }
-  }
+  val floatLiteralTests = Table(
+    ("input", "result", "expected"),
+    ("1.0", "Success", "1.0"),
+    ("1.01242", "Success", "1.01242"),
+    ("993.013131", "Success", "993.013131"),
+    ("1.0e10", "Success", "1.0e10"),
+    ("1.0E10", "Success", "1.0E10"),
+    ("1.", "Failure", "")
+  )
 
-  "HexadecimalLiterals - Unit Tests" should "parse correctly" in {
-    withClue("Test 31: ") {
-      parser.parseThis(
-        "0x0011ffff",
-        parser.HexadecimalLiteral(_)
-      ) should matchPattern { case Parsed.Success(0x0011ffff, _) => }
-    }
-    withClue("Test 32: ") {
-      parser.parseThis(
-        "0x0011gggg",
-        parser.HexadecimalLiteral(_)
-      ) should matchPattern { case Parsed.Success(0x0011, _) => }
-    }
-    withClue("Test 33: ") {
-      parser.parseThis(
-        "1xds%",
-        parser.HexadecimalLiteral(_)
-      ) should matchPattern { case Parsed.Failure(_, _, _) => }
-    }
-    withClue("Test 34: ") {
-      parser.parseThis(
-        "0xgg",
-        parser.HexadecimalLiteral(_)
-      ) should matchPattern { case Parsed.Failure(_, _, _) => }
-    }
-  }
+  val stringLiteralTests = Table(
+    ("input", "result", "expected"),
+    ("\"hello\"", "Success", "hello")
+  )
 
-  "FloatLiterals - Unit Tests" should "parse correctly" in {
-    withClue("Test 35: ") {
-      parser.parseThis("1.0", parser.FloatLiteral(_)) should matchPattern {
-        case Parsed.Success("1.0", _) =>
-      }
-    }
-    withClue("Test 36: ") {
-      parser.parseThis(
-        "1.01242",
-        parser.FloatLiteral(_)
-      ) should matchPattern { case Parsed.Success("1.01242", _) => }
-    }
-    withClue("Test 37: ") {
-      parser.parseThis(
-        "993.013131",
-        parser.FloatLiteral(_)
-      ) should matchPattern { case Parsed.Success("993.013131", _) => }
-    }
-    withClue("Test 38: ") {
-      parser.parseThis(
-        "1.0e10",
-        parser.FloatLiteral(_)
-      ) should matchPattern { case Parsed.Success("1.0e10", _) => }
-    }
-    withClue("Test 39: ") {
-      parser.parseThis(
-        "1.0E10",
-        parser.FloatLiteral(_)
-      ) should matchPattern { case Parsed.Success("1.0E10", _) => }
-    }
-    withClue("Test 40: ") {
-      parser.parseThis("1.", parser.FloatLiteral(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 41: ") {
-      parser.parseThis(
-        "1.0E10",
-        parser.FloatLiteral(_)
-      ) should matchPattern { case Parsed.Success("1.0E10", _) => }
-    }
-    withClue("Test 42: ") {
-      parser.parseThis(
-        "1.0E10",
-        parser.FloatLiteral(_)
-      ) should matchPattern { case Parsed.Success("1.0E10", _) => }
-    }
-  }
+  val valueIdTests = Table(
+    ("input", "result", "expected"),
+    ("%hello", "Success", "hello"),
+    ("%Ater", "Success", "Ater"),
+    ("%312321", "Success", "312321"),
+    ("%$$$$$", "Success", "$$$$$"),
+    ("%_-_-_", "Success", "_-_-_"),
+    ("%3asada", "Success", "3"),
+    ("% hello", "Failure", "")
+  )
 
-  "StringLiterals - Unit Tests" should "parse correctly" in {
-    withClue("Test 43: ") {
-      parser.parseThis(
-        "\"hello\"",
-        parser.StringLiteral(_)
-      ) should matchPattern { case Parsed.Success("hello", _) => }
-    }
-    withClue("Test 44: ") {
-      parser.parseThis(
-        "\"hello\"",
-        parser.StringLiteral(_)
-      ) should matchPattern { case Parsed.Success("hello", _) => }
-    }
-  }
+  val opResultListTests = Table(
+    ("input", "result", "expected"),
+    ("%0, %1, %2 =", "Success", List("0", "1", "2")),
+    ("%0   ,    %1   ,   %2  =   ", "Success", List("0", "1", "2")),
+    ("%0,%1,%2=", "Success", List("0", "1", "2"))
+  )
 
-  "ValueId - Unit Tests" should "parse correctly" in {
-    withClue("Test 45: ") {
-      parser.parseThis("%hello", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("hello", _) =>
-      }
-    }
-    withClue("Test 46: ") {
-      parser.parseThis("%Ater", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("Ater", _) =>
-      }
-    }
-    withClue("Test 47: ") {
-      parser.parseThis("%312321", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("312321", _) =>
-      }
-    }
-    withClue("Test 48: ") {
-      parser.parseThis("%Ater", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("Ater", _) =>
-      }
-    }
-    withClue("Test 49: ") {
-      parser.parseThis("%$$$$$", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("$$$$$", _) =>
-      }
-    }
-    withClue("Test 50: ") {
-      parser.parseThis("%_-_-_", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("_-_-_", _) =>
-      }
-    }
-    withClue("Test 51: ") {
-      parser.parseThis("%3asada", parser.ValueId(_)) should matchPattern {
-        case Parsed.Success("3", _) =>
-      }
-    }
-    withClue("Test 52: ") {
-      parser.parseThis("% hello", parser.ValueId(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-  }
+  val unitTests = Table(
+    ("name", "pattern", "tests"),
+    (
+      "Digit",
+      ((x: fastparse.P[_]) => parser.Digit(x)),
+      digitTests
+    ),
+    (
+      "HexDigit",
+      ((x: fastparse.P[_]) => parser.HexDigit(x)),
+      hexTests
+    ),
+    (
+      "Letter",
+      ((x: fastparse.P[_]) => parser.Letter(x)),
+      letterTests
+    ),
+    (
+      "IdPunct",
+      ((x: fastparse.P[_]) => parser.IdPunct(x)),
+      idPunctTests
+    ),
+    (
+      "IntegerLiteral",
+      ((x: fastparse.P[_]) => parser.IntegerLiteral(x)),
+      intLiteralTests
+    ),
+    (
+      "DecimalLiteral",
+      ((x: fastparse.P[_]) => parser.DecimalLiteral(x)),
+      decimalLiteralTests
+    ),
+    (
+      "HexadecimalLiteral",
+      ((x: fastparse.P[_]) => parser.HexadecimalLiteral(x)),
+      hexadecimalLiteralTests
+    ),
+    (
+      "FloatLiteral",
+      ((x: fastparse.P[_]) => parser.FloatLiteral(x)),
+      floatLiteralTests
+    ),
+    (
+      "StringLiteral",
+      ((x: fastparse.P[_]) => parser.StringLiteral(x)),
+      stringLiteralTests
+    ),
+    (
+      "ValueId",
+      ((x: fastparse.P[_]) => parser.ValueId(x)),
+      valueIdTests
+    ),
+    (
+      "OpResultList",
+      ((x: fastparse.P[_]) => parser.OpResultList(x)),
+      opResultListTests
+    )
+  )
 
-  "OpResultList - Unit Tests" should "parse correctly" in {
-    withClue("Test 53: ") {
-      parser.parseThis(
-        "%0, %1, %2 =",
-        parser.OpResultList(_)
-      ) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
-    }
-    withClue("Test 54: ") {
-      parser.parseThis(
-        "%0   ,    %1   ,   %2  =   ",
-        parser.OpResultList(_)
-      ) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
-    }
-    withClue("Test 55: ") {
-      parser.parseThis(
-        "%0,%1,%2=",
-        parser.OpResultList(_)
-      ) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
+  forAll(unitTests) { (name, pattern, tests) =>
+    forAll(tests) { (input, result, expected) =>
+      val res = getResult(result, expected)
+      name should s"[ '$input' -> '$expected' = $result ]" in {
+        parser.parseThis(input, pattern) should matchPattern {
+          case res => // nothing
+        }
+      }
     }
   }
 
@@ -550,4 +375,4 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
   // [ ] - test successors
   // [ ] - test re-format tests
   // [ ] - test re-format tests
-  }
+}

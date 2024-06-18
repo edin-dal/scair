@@ -27,6 +27,8 @@ class Parser {
         (name, typ) <- valueIdAndTypeList
       } yield scope.valueMap.contains(name) match {
         case true =>
+          // val x: fastparse.Parsed.Extra = fastparse.Parsed.Extra
+          // Parsed.Failure("", 0, x)
           throw new Exception(s"SSA Value cannot be defined twice %${name}")
         case false =>
           val value = new Value(typ = typ)
