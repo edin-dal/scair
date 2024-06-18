@@ -3,11 +3,11 @@ package scair
 import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import Main._
+import IR._
 
-class Parser(
-    var valueMap: mutable.Map[String, Value] = mutable.Map.empty[String, Value]
-) {
+object Parser {}
+
+class Parser {
 
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
@@ -89,7 +89,8 @@ class Parser(
   }
 
   class Scope(
-      var valueMap: mutable.Map[String, Value],
+      var valueMap: mutable.Map[String, Value] =
+        mutable.Map.empty[String, Value],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
       var parentScope: Option[Scope] = None,
@@ -119,7 +120,7 @@ class Parser(
     }
   }
 
-  implicit var currentScope: Scope = new Scope(valueMap = valueMap)
+  implicit var currentScope: Scope = new Scope()
 
   //////////////////////
   // COMMON FUNCTIONS //
@@ -500,82 +501,13 @@ class Parser(
   //                             | `{` dialect-attribute-contents+ `}`
   //                             | [^\[<({\]>)}\0]+
 
-  def parseThis(text: String): fastparse.Parsed[Seq[Operation]] = {
-    return parse(text, TopLevel(_))
-  }
-
-  def testParse[A](
+  def parseThis[A, B](
       text: String,
-      parser: fastparse.P[_] => fastparse.P[A]
-  ): fastparse.Parsed[A] = {
-    currentScope = new Scope(valueMap = mutable.Map.empty[String, Value])
-    return parse(text, parser)
-  }
-}
-
-object Parser {
-
-  def main(args: Array[String]): Unit = {
-
-    println("---- IN PROGRESS ----")
-
-    val parser = new Parser()
-
-    println(
-      parser.testParse(
-        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        parser = parser.TopLevel(_)
-      )
-    )
-    println(
-      parser.testParse(
-        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-          "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.TopLevel(_)
-      )
-    )
-
-    println(
-      parser.testParse(
-        text =
-          "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.Block(_)
-      )
-    )
-
-    println(
-      parser.testParse(
-        text =
-          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        parser = parser.Region(_)
-      )
-    )
-
-    try {
-      println(
-        parser.testParse(
-          text =
-            "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-          parser = parser.Region(_)
-        )
-      )
-    } catch {
-      case e: Exception => println(e.getMessage)
-    }
-
-    println(
-      parser.testParse(
-        text = "{}",
-        parser = parser.Region(_)
-      )
-    )
-
-    println("---------------------")
+      pattern: fastparse.P[_] => fastparse.P[B] = { (x: fastparse.P[_]) =>
+        TopLevel(x)
+      }
+  ): fastparse.Parsed[B] = {
+    return parse(text, pattern)
   }
 }
 

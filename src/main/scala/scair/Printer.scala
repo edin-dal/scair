@@ -3,7 +3,7 @@ package scair
 import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import Main._
+import IR._
 
 object Printer {
 
@@ -165,22 +165,22 @@ object Printer {
     println("Printer")
 
     val parser = new Parser()
-    val Parsed.Success(result, _) = parser.testParse(
+    val Parsed.Success(result, _) = parser.parseThis(
       text = """"test.op"() ({
         ^bb0(%5: i32):
-          %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)          
-          "test.op"(%1, %0) : (i64, i32) -> () 
-        ^bb1(%4: i32): 
+          %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
+          "test.op"(%1, %0) : (i64, i32) -> ()
+        ^bb1(%4: i32):
           %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
           "test.op"(%8, %7) : (i64, i32) -> ()
         }, {
         ^bb2():
-          "test.op"() : () -> ()  
+          "test.op"() : () -> ()
         }) : () -> ()
         """,
-      parser = parser.OperationPat(_)
+      pattern = parser.OperationPat(_)
     )
 
-    print(printOperation(result))
+    println(printOperation(result.asInstanceOf[Operation]))
   }
 }

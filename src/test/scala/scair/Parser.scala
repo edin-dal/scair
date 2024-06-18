@@ -9,24 +9,27 @@ import Parser._
 import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 
-class MainTest extends FlatSpec {
+class ParserTest extends FlatSpec with BeforeAndAfter {
+  var parser: Parser = new Parser
 
-  val parser = new Parser
+  before {
+    parser = new Parser
+  }
 
   "Digits - Unit Tests" should "parse correctly" in {
     withClue("Test 1: ") {
-      parser.testParse("a", parser.Digit(_)) should matchPattern {
+      parse("a", parser.Digit(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
     withClue("Test 2: ") {
-      parser.testParse(
+      parser.parseThis(
         " $ ! £ 4 1 ",
         parser.Digit(_)
       ) should matchPattern { case Parsed.Failure(_, _, _) => }
     }
     withClue("Test 3: ") {
-      parser.testParse("7", parser.Digit(_)) should matchPattern {
+      parser.parseThis("7", parser.Digit(_)) should matchPattern {
         case Parsed.Success("7", _) =>
       }
     }
@@ -39,19 +42,21 @@ class MainTest extends FlatSpec {
     ("E", "E"),
     ("41", "4")
   )
+
   val hexfailures = Table(
     ("input", "expected"),
     ("G", ""),
     ("g", "")
   )
-  "HexDigits - Unit Tests" should "parse correctly" in {
-    forAll(hexsucces) { (input, expected) =>
-      parser.testParse(input, parser.HexDigit(_)) should matchPattern {
+
+  forAll(hexsucces) { (input, expected) =>
+    s"HexDigits - Unit Tests - ${input}" should "parse correctly" in {
+      parser.parseThis(input, parser.HexDigit(_)) should matchPattern {
         case Parsed.Success(`expected`, _) =>
       }
     }
     forAll(hexfailures) { (input, expected) =>
-      parser.testParse(input, parser.HexDigit(_)) should matchPattern {
+      parser.parseThis(input, parser.HexDigit(_)) should matchPattern {
         case Parsed.Failure(`expected`, _, _) =>
       }
     }
@@ -59,17 +64,17 @@ class MainTest extends FlatSpec {
 
   "Letters - Unit Tests" should "parse correctly" in {
     withClue("Test 10: ") {
-      parser.testParse("a", parser.Letter(_)) should matchPattern {
+      parser.parseThis("a", parser.Letter(_)) should matchPattern {
         case Parsed.Success("a", _) =>
       }
     }
     withClue("Test 11: ") {
-      parser.testParse("G", parser.Letter(_)) should matchPattern {
+      parser.parseThis("G", parser.Letter(_)) should matchPattern {
         case Parsed.Success("G", _) =>
       }
     }
     withClue("Test 12: ") {
-      parser.testParse("4", parser.Letter(_)) should matchPattern {
+      parser.parseThis("4", parser.Letter(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
@@ -77,42 +82,42 @@ class MainTest extends FlatSpec {
 
   "IdPuncts - Unit Tests" should "parse correctly" in {
     withClue("Test 13: ") {
-      parser.testParse("$", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("$", parser.IdPunct(_)) should matchPattern {
         case Parsed.Success("$", _) =>
       }
     }
     withClue("Test 14: ") {
-      parser.testParse(".", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis(".", parser.IdPunct(_)) should matchPattern {
         case Parsed.Success(".", _) =>
       }
     }
     withClue("Test 15: ") {
-      parser.testParse("_", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("_", parser.IdPunct(_)) should matchPattern {
         case Parsed.Success("_", _) =>
       }
     }
     withClue("Test 16: ") {
-      parser.testParse("-", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("-", parser.IdPunct(_)) should matchPattern {
         case Parsed.Success("-", _) =>
       }
     }
     withClue("Test 17: ") {
-      parser.testParse("%", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("%", parser.IdPunct(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
     withClue("Test 18: ") {
-      parser.testParse("£", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("£", parser.IdPunct(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
     withClue("Test 19: ") {
-      parser.testParse("dfd", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("dfd", parser.IdPunct(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
     withClue("Test 20: ") {
-      parser.testParse("0", parser.IdPunct(_)) should matchPattern {
+      parser.parseThis("0", parser.IdPunct(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
@@ -120,43 +125,43 @@ class MainTest extends FlatSpec {
 
   "IntegerLiterals - Unit Tests" should "parse correctly" in {
     withClue("Test 21: ") {
-      parser.testParse(
+      parser.parseThis(
         "123456789",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Success(123456789, _) => }
     }
     withClue("Test 22: ") {
-      parser.testParse(
+      parser.parseThis(
         "1231f",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Success(1231, _) => }
     }
     withClue("Test 23: ") {
-      parser.testParse(
+      parser.parseThis(
         "f1231",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Failure(_, _, _) => }
     }
     withClue("Test 24: ") {
-      parser.testParse(
+      parser.parseThis(
         "0x0011ffff",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Success(0x0011ffff, _) => }
     }
     withClue("Test 25: ") {
-      parser.testParse(
+      parser.parseThis(
         "0x0011gggg",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Success(0x0011, _) => }
     }
     withClue("Test 26: ") {
-      parser.testParse(
+      parser.parseThis(
         "1xds%",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Success(1, _) => }
     }
     withClue("Test 27: ") {
-      parser.testParse(
+      parser.parseThis(
         "0xgg",
         parser.IntegerLiteral(_)
       ) should matchPattern { case Parsed.Success(0, _) => }
@@ -165,19 +170,19 @@ class MainTest extends FlatSpec {
 
   "DecimalLiterals - Unit Tests" should "parse correctly" in {
     withClue("Test 28: ") {
-      parser.testParse(
+      parser.parseThis(
         "123456789",
         parser.DecimalLiteral(_)
       ) should matchPattern { case Parsed.Success(123456789, _) => }
     }
     withClue("Test 29: ") {
-      parser.testParse(
+      parser.parseThis(
         "1231f",
         parser.DecimalLiteral(_)
       ) should matchPattern { case Parsed.Success(1231, _) => }
     }
     withClue("Test 30: ") {
-      parser.testParse(
+      parser.parseThis(
         "f1231",
         parser.DecimalLiteral(_)
       ) should matchPattern { case Parsed.Failure(_, _, _) => }
@@ -186,25 +191,25 @@ class MainTest extends FlatSpec {
 
   "HexadecimalLiterals - Unit Tests" should "parse correctly" in {
     withClue("Test 31: ") {
-      parser.testParse(
+      parser.parseThis(
         "0x0011ffff",
         parser.HexadecimalLiteral(_)
       ) should matchPattern { case Parsed.Success(0x0011ffff, _) => }
     }
     withClue("Test 32: ") {
-      parser.testParse(
+      parser.parseThis(
         "0x0011gggg",
         parser.HexadecimalLiteral(_)
       ) should matchPattern { case Parsed.Success(0x0011, _) => }
     }
     withClue("Test 33: ") {
-      parser.testParse(
+      parser.parseThis(
         "1xds%",
         parser.HexadecimalLiteral(_)
       ) should matchPattern { case Parsed.Failure(_, _, _) => }
     }
     withClue("Test 34: ") {
-      parser.testParse(
+      parser.parseThis(
         "0xgg",
         parser.HexadecimalLiteral(_)
       ) should matchPattern { case Parsed.Failure(_, _, _) => }
@@ -213,47 +218,47 @@ class MainTest extends FlatSpec {
 
   "FloatLiterals - Unit Tests" should "parse correctly" in {
     withClue("Test 35: ") {
-      parser.testParse("1.0", parser.FloatLiteral(_)) should matchPattern {
+      parser.parseThis("1.0", parser.FloatLiteral(_)) should matchPattern {
         case Parsed.Success("1.0", _) =>
       }
     }
     withClue("Test 36: ") {
-      parser.testParse(
+      parser.parseThis(
         "1.01242",
         parser.FloatLiteral(_)
       ) should matchPattern { case Parsed.Success("1.01242", _) => }
     }
     withClue("Test 37: ") {
-      parser.testParse(
+      parser.parseThis(
         "993.013131",
         parser.FloatLiteral(_)
       ) should matchPattern { case Parsed.Success("993.013131", _) => }
     }
     withClue("Test 38: ") {
-      parser.testParse(
+      parser.parseThis(
         "1.0e10",
         parser.FloatLiteral(_)
       ) should matchPattern { case Parsed.Success("1.0e10", _) => }
     }
     withClue("Test 39: ") {
-      parser.testParse(
+      parser.parseThis(
         "1.0E10",
         parser.FloatLiteral(_)
       ) should matchPattern { case Parsed.Success("1.0E10", _) => }
     }
     withClue("Test 40: ") {
-      parser.testParse("1.", parser.FloatLiteral(_)) should matchPattern {
+      parser.parseThis("1.", parser.FloatLiteral(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
     withClue("Test 41: ") {
-      parser.testParse(
+      parser.parseThis(
         "1.0E10",
         parser.FloatLiteral(_)
       ) should matchPattern { case Parsed.Success("1.0E10", _) => }
     }
     withClue("Test 42: ") {
-      parser.testParse(
+      parser.parseThis(
         "1.0E10",
         parser.FloatLiteral(_)
       ) should matchPattern { case Parsed.Success("1.0E10", _) => }
@@ -262,13 +267,13 @@ class MainTest extends FlatSpec {
 
   "StringLiterals - Unit Tests" should "parse correctly" in {
     withClue("Test 43: ") {
-      parser.testParse(
+      parser.parseThis(
         "\"hello\"",
         parser.StringLiteral(_)
       ) should matchPattern { case Parsed.Success("hello", _) => }
     }
     withClue("Test 44: ") {
-      parser.testParse(
+      parser.parseThis(
         "\"hello\"",
         parser.StringLiteral(_)
       ) should matchPattern { case Parsed.Success("hello", _) => }
@@ -277,42 +282,42 @@ class MainTest extends FlatSpec {
 
   "ValueId - Unit Tests" should "parse correctly" in {
     withClue("Test 45: ") {
-      parser.testParse("%hello", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%hello", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("hello", _) =>
       }
     }
     withClue("Test 46: ") {
-      parser.testParse("%Ater", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%Ater", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("Ater", _) =>
       }
     }
     withClue("Test 47: ") {
-      parser.testParse("%312321", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%312321", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("312321", _) =>
       }
     }
     withClue("Test 48: ") {
-      parser.testParse("%Ater", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%Ater", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("Ater", _) =>
       }
     }
     withClue("Test 49: ") {
-      parser.testParse("%$$$$$", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%$$$$$", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("$$$$$", _) =>
       }
     }
     withClue("Test 50: ") {
-      parser.testParse("%_-_-_", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%_-_-_", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("_-_-_", _) =>
       }
     }
     withClue("Test 51: ") {
-      parser.testParse("%3asada", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("%3asada", parser.ValueId(_)) should matchPattern {
         case Parsed.Success("3", _) =>
       }
     }
     withClue("Test 52: ") {
-      parser.testParse("% hello", parser.ValueId(_)) should matchPattern {
+      parser.parseThis("% hello", parser.ValueId(_)) should matchPattern {
         case Parsed.Failure(_, _, _) =>
       }
     }
@@ -320,19 +325,19 @@ class MainTest extends FlatSpec {
 
   "OpResultList - Unit Tests" should "parse correctly" in {
     withClue("Test 53: ") {
-      parser.testParse(
+      parser.parseThis(
         "%0, %1, %2 =",
         parser.OpResultList(_)
       ) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
     }
     withClue("Test 54: ") {
-      parser.testParse(
+      parser.parseThis(
         "%0   ,    %1   ,   %2  =   ",
         parser.OpResultList(_)
       ) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
     }
     withClue("Test 55: ") {
-      parser.testParse(
+      parser.parseThis(
         "%0,%1,%2=",
         parser.OpResultList(_)
       ) should matchPattern { case Parsed.Success(List("0", "1", "2"), _) => }
@@ -341,11 +346,11 @@ class MainTest extends FlatSpec {
 
   "Block - Unit Tests" should "parse correctly" in {
     withClue("Test 1: ") {
-      parser.testParse(
+      parser.parseThis(
         text =
           "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.Block(_)
+        pattern = parser.Block(_)
       ) should matchPattern {
         case Parsed.Success(
               Block(
@@ -378,13 +383,14 @@ class MainTest extends FlatSpec {
   }
 
   "Region - Unit Tests" should "parse correctly" in {
+
     withClue("Test 1: ") {
-      parser.testParse(
+      parser.parseThis(
         text =
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        parser = parser.Region(_)
+        pattern = parser.Region(_)
       ) should matchPattern {
         case Parsed.Success(
               Region(
@@ -445,15 +451,18 @@ class MainTest extends FlatSpec {
             ) =>
       }
     }
+  }
+
+  "Region2 - Unit Tests" should "parse correctly" in {
 
     withClue("Test 2: ") {
       val exception = intercept[Exception](
-        parser.testParse(
+        parser.parseThis(
           text =
             "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
               "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
               "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-          parser = parser.Region(_)
+          pattern = parser.Region(_)
         )
       ).getMessage shouldBe "Block cannot be defined twice within the same scope - ^bb0"
     }
@@ -461,9 +470,9 @@ class MainTest extends FlatSpec {
 
   "TopLevel Tests" should "Test full programs" in {
     withClue("Test 1: ") {
-      parser.testParse(
+      parser.parseThis(
         text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        parser = parser.TopLevel(_)
+        pattern = parser.TopLevel(_)
       ) should matchPattern {
         case Parsed.Success(
               Seq(
@@ -483,11 +492,14 @@ class MainTest extends FlatSpec {
             ) =>
       }
     }
+  }
+
+  "TopLevel Tests2" should "Test full programs" in {
     withClue("Test 2: ") {
-      parser.testParse(
+      parser.parseThis(
         text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
           "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.TopLevel(_)
+        pattern = parser.TopLevel(_)
       ) should matchPattern {
         case Parsed.Success(
               Seq(
@@ -515,4 +527,8 @@ class MainTest extends FlatSpec {
       }
     }
   }
+
+  // [ ] - test successors
+  // [ ] - test re-format tests
+  // [ ] - test re-format tests
 }
