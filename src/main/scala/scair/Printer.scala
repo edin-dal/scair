@@ -60,8 +60,7 @@ object Printer {
   def printBlock(block: Block, indentLevel: Int = 0): String = {
 
     val blockArguments: String =
-      (for { arg <- block.arguments } yield printValue(arg))
-        .map { case (name: String, typ: String) => s"${name}: ${typ}" }
+      (for { arg <- block.arguments } yield printBlockArgument(arg))
         .mkString(", ")
 
     val blockOperations: String =
@@ -84,8 +83,12 @@ object Printer {
   // case class Value(
   //     typ: Attribute
   // )
-  def printValue(value: Value): (String, String) = {
-    return (s"%${assignValueName(value)}", s"${printAttribute(value.typ)}")
+  def printValue(value: Value): String = {
+    return s"%${assignValueName(value)}"
+  }
+
+  def printBlockArgument(value: Value): String = {
+    return s"${printValue(value)}: ${printAttribute(value.typ)}"
   }
 
   // case class Operation(
@@ -106,13 +109,19 @@ object Printer {
     var operands: Seq[String] = Seq()
     var operandsTypes: Seq[String] = Seq()
 
-    for { res <- op.results } yield printValue(res) match {
+    for { res <- op.results } yield (
+      printValue(res),
+      printAttribute(res.typ)
+    ) match {
       case (name: String, typ: String) =>
         results = results :+ name
         resultsTypes = resultsTypes :+ typ
     }
 
-    for { oper <- op.operands } yield printValue(oper) match {
+    for { oper <- op.operands } yield (
+      printValue(oper),
+      printAttribute(oper.typ)
+    ) match {
       case (name: String, typ: String) =>
         operands = operands :+ name
         operandsTypes = operandsTypes :+ typ

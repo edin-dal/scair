@@ -359,6 +359,7 @@ class MainTest extends FlatSpec {
                   Operation(
                     "test.op",
                     Seq(),
+                    Seq(),
                     Seq(
                       Value(Attribute("i32")),
                       Value(Attribute("i64")),
@@ -369,6 +370,7 @@ class MainTest extends FlatSpec {
                   Operation(
                     "test.op",
                     Seq(Value(Attribute("i64")), Value(Attribute("i32"))),
+                    Seq(),
                     Seq(),
                     Seq()
                   )
@@ -398,6 +400,7 @@ class MainTest extends FlatSpec {
                       Operation(
                         "test.op",
                         Seq(),
+                        Seq(),
                         Seq(
                           Value(Attribute("i32")),
                           Value(Attribute("i64")),
@@ -409,6 +412,7 @@ class MainTest extends FlatSpec {
                         "test.op",
                         Seq(Value(Attribute("i64")), Value(Attribute("i32"))),
                         Seq(),
+                        Seq(),
                         Seq()
                       )
                     ),
@@ -418,6 +422,7 @@ class MainTest extends FlatSpec {
                     Seq(
                       Operation(
                         "test.op",
+                        Seq(),
                         Seq(),
                         Seq(
                           Value(Attribute("i32")),
@@ -432,6 +437,7 @@ class MainTest extends FlatSpec {
                           Value(Attribute("i64")),
                           Value(Attribute("i32"))
                         ),
+                        Seq(),
                         Seq(),
                         Seq()
                       )
@@ -470,6 +476,7 @@ class MainTest extends FlatSpec {
                 Operation(
                   "test.op",
                   Seq(),
+                  Seq(),
                   Seq(
                     Value(Attribute("i32")),
                     Value(Attribute("i64")),
@@ -493,6 +500,7 @@ class MainTest extends FlatSpec {
                 Operation(
                   "test.op",
                   Seq(),
+                  Seq(),
                   Seq(
                     r0,
                     r1,
@@ -503,6 +511,7 @@ class MainTest extends FlatSpec {
                 Operation(
                   "test.op",
                   Seq(o0, o1),
+                  Seq(),
                   Seq(),
                   Seq()
                 )
