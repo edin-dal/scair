@@ -16,24 +16,43 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
     parser = new Parser
   }
 
-  "Digits - Unit Tests" should "parse correctly" in {
-    withClue("Test 1: ") {
-      parse("a", parser.Digit(_)) should matchPattern {
-        case Parsed.Failure(_, _, _) =>
-      }
-    }
-    withClue("Test 2: ") {
-      parser.parseThis(
-        " $ ! £ 4 1 ",
-        parser.Digit(_)
-      ) should matchPattern { case Parsed.Failure(_, _, _) => }
-    }
-    withClue("Test 3: ") {
-      parser.parseThis("7", parser.Digit(_)) should matchPattern {
-        case Parsed.Success("7", _) =>
+  val digitsTests = Table(
+    ("input", "result", "output"),
+    ("a", "Failure", ""),
+    (" $ ! £ 4 1 ", "Failure", ""),
+    ("7", "Success", "7")
+  )
+
+  forAll(digitsTests) { (input, result, expected) =>
+    s"Digits - [ \"${input}\" -> \"${expected}\"" should s" = ${result}]" in {
+      parser.parseThis(input, parser.Digit(_)) should equal {
+          result match {
+            case "Success" => Parsed.Success(`expected`, _)  
+            case "Failure" => Parsed.Failure(_, _, _)  
+          }
       }
     }
   }
+
+
+
+
+    // withClue("Test 1: ") {
+    //   parse("a", parser.Digit(_)) should matchPattern {
+    //     case Parsed.Failure(_, _, _) =>
+    //   }
+    // }
+    // withClue("Test 2: ") {
+    //   parser.parseThis(
+    //     " $ ! £ 4 1 ",
+    //     parser.Digit(_)
+    //   ) should matchPattern { case Parsed.Failure(_, _, _) => }
+    // }
+    // withClue("Test 3: ") {
+    //   parser.parseThis("7", parser.Digit(_)) should matchPattern {
+    //     case Parsed.Success("7", _) =>
+    //   }
+    // }
 
   val hexsucces = Table(
     ("input", "expected"),
@@ -531,4 +550,4 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
   // [ ] - test successors
   // [ ] - test re-format tests
   // [ ] - test re-format tests
-}
+  }
