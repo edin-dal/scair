@@ -31,10 +31,10 @@ object Printer {
     blockNameMap.contains(block) match {
       case true => blockNameMap(block)
       case false =>
-        val name = blockNextID.toString
+        val name = s"bb${blockNextID.toString}"
         blockNextID = blockNextID + 1
         blockNameMap(block) = name
-        return s"bb${name}"
+        return name
     }
 
   // case class Region(
@@ -110,22 +110,14 @@ object Printer {
     var operandsTypes: Seq[String] = Seq()
 
     for { res <- op.results } yield (
-      printValue(res),
-      printAttribute(res.typ)
-    ) match {
-      case (name: String, typ: String) =>
-        results = results :+ name
-        resultsTypes = resultsTypes :+ typ
-    }
+      results = results :+ printValue(res),
+      resultsTypes = resultsTypes :+ printAttribute(res.typ)
+    )
 
     for { oper <- op.operands } yield (
-      printValue(oper),
-      printAttribute(oper.typ)
-    ) match {
-      case (name: String, typ: String) =>
-        operands = operands :+ name
-        operandsTypes = operandsTypes :+ typ
-    }
+      operands = operands :+ printValue(oper),
+      operandsTypes = operandsTypes :+ printAttribute(oper.typ)
+    )
 
     val operationResults: String =
       if (op.results.length > 0) results.mkString(", ") + " = " else ""
@@ -137,17 +129,21 @@ object Printer {
       open + (for { region <- op.regions } yield printRegion(
         region,
         indentLevel + 1
-      ))
-        .mkString(", ") + close
+      )).mkString(", ") + close
 
-    // here is where i put successors to be printed
+    val operationSuccessors: String =
+      if (op.successors.length > 0)
+        "[" + (for { successor <- op.successors } yield blockNameMap(successor))
+          .map((x: String) => "^" + x)
+          .mkString(", ") + "]"
+      else ""
 
     val functionType: String =
       "(" + operandsTypes.mkString(", ") +
         ") -> (" +
         resultsTypes.mkString(", ") + ")"
 
-    return indent * indentLevel + operationResults + "\"" + op.name + "\"(" + operationOperands + ")" + " " + operationRegions + " : " + functionType
+    return indent * indentLevel + operationResults + "\"" + op.name + "\"(" + operationOperands + ")" + operationSuccessors + operationRegions + " : " + functionType
   }
 
   def printProgram(programSequence: Seq[Operation]): String = {

@@ -179,10 +179,12 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
 
   forAll(unitTests) { (name, pattern, tests) =>
     forAll(tests) { (input, result, expected) =>
+      // Get the expected output
       val res = getResult(result, expected)
       name should s"[ '$input' -> '$expected' = $result ]" in {
+        // Run the pqrser on the input and check
         parser.parseThis(input, pattern) should matchPattern {
-          case res => // nothing
+          case res => // pass
         }
       }
     }
