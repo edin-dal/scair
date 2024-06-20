@@ -3,15 +3,11 @@ package scair
 import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import Main._
+import IR._
 
-class Parser(
-    var valueMap: mutable.Map[String, Value] = mutable.Map.empty[String, Value]
-) {
+object Parser {}
 
-  //////////////////////
-  // COMMON FUNCTIONS //
-  //////////////////////
+class Parser {
 
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
@@ -31,6 +27,8 @@ class Parser(
         (name, typ) <- valueIdAndTypeList
       } yield scope.valueMap.contains(name) match {
         case true =>
+          // val x: fastparse.Parsed.Extra = fastparse.Parsed.Extra
+          // Parsed.Failure("", 0, x)
           throw new Exception(s"SSA Value cannot be defined twice %${name}")
         case false =>
           val value = new Value(typ = typ)
@@ -74,20 +72,40 @@ class Parser(
       case false =>
         scope.blockMap(blockName) = block
     }
+
+    def checkWaitlist()(implicit scope: Scope): Unit = {
+
+      for ((operation, successors) <- scope.blockWaitlist) {
+        val successorList: Seq[Block] = for {
+          name <- successors
+        } yield scope.blockMap
+          .contains(
+            name
+          ) match {
+          case false =>
+            throw new Exception(s"Successor ^${name} not defined within Scope")
+          case true => scope.blockMap(name)
+        }
+        operation.successors = successorList
+      }
+    }
   }
 
   class Scope(
-      var valueMap: mutable.Map[String, Value],
+      var valueMap: mutable.Map[String, Value] =
+        mutable.Map.empty[String, Value],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var parentScope: Option[Scope] = None
+      var parentScope: Option[Scope] = None,
+      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
+        mutable.Map.empty[Operation, Seq[String]]
   ) {
 
     // child starts off from the parents context
     def createChild(): Scope = {
       return new Scope(
-        valueMap = valueMap,
-        blockMap = blockMap,
+        valueMap = valueMap.clone,
+        blockMap = blockMap.clone,
         parentScope = Some(this)
       )
     }
@@ -98,13 +116,23 @@ class Parser(
 
     def switchWithParent(): Unit = parentScope match {
       case Some(x) =>
+        Scope.checkWaitlist
         currentScope = x
       case None =>
         throw new Exception("No parent present - check your")
     }
   }
 
-  implicit var currentScope: Scope = new Scope(valueMap = valueMap)
+  implicit var currentScope: Scope = new Scope()
+
+  //////////////////////
+  // COMMON FUNCTIONS //
+  //////////////////////
+
+  def optionlessThis[A](option: Option[Seq[A]]): Seq[A] = option match {
+    case None    => Seq[A]()
+    case Some(x) => x
+  }
 
   ///////////////////
   // COMMON SYNTAX //
@@ -159,7 +187,7 @@ class Parser(
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 
   def TopLevel[$: P] = P(
-    OperationPat.rep ~ End
+    OperationPat.rep ~ E(Scope.checkWaitlist) ~ End
   ) // shortened definition TODO: finish...
 
   /////////////////
@@ -214,19 +242,20 @@ class Parser(
   // [ ] custom-operation      ::= bare-id custom-operation-format
   // [x] op-result-list        ::= op-result (`,` op-result)* `=`
   // [x] op-result             ::= value-id (`:` integer-literal)?
-  // [ ] successor-list        ::= `[` successor (`,` successor)* `]`
-  // [ ] successor             ::= caret-id (`:` block-arg-list)?
+  // [x] successor-list        ::= `[` successor (`,` successor)* `]`
+  // [x] successor             ::= caret-id (`:` block-arg-list)?
   // [ ] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] region-list           ::= `(` region (`,` region)* `)`
   // [ ] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
   // [x] trailing-location     ::= `loc` `(` location `)`
 
-  //  results      name     operands     op types      res types
+  //  results      name     operands   successors   regions   (op types      res types)
   def generateOperation(
       operation: (
           Seq[String],
           (
               String,
+              Seq[String],
               Seq[String],
               Seq[Region],
               (Seq[Attribute], Seq[Attribute])
@@ -237,9 +266,10 @@ class Parser(
     val results: Seq[String] = operation._1
     val opName = operation._2._1
     val operands: Seq[String] = operation._2._2
-    val regions: Seq[Region] = operation._2._3
-    val resultsTypes = operation._2._4._2
-    val operandsTypes = operation._2._4._1
+    val successors: Seq[String] = operation._2._3
+    val regions: Seq[Region] = operation._2._4
+    val resultsTypes = operation._2._5._2
+    val operandsTypes = operation._2._5._1
 
     if (results.length != resultsTypes.length) {
       throw new Exception("E")
@@ -253,22 +283,22 @@ class Parser(
 
     val operandss: Seq[Value] = Scope.useValues(operands zip operandsTypes)
 
-    return new Operation(
+    val op = new Operation(
       name = opName,
       operands = operandss,
+      successors = Seq(),
       results = resultss,
       regions = regions
     )
+
+    currentScope.blockWaitlist += op -> successors
+
+    return op
   }
 
   def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
     case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
     case (name, None)          => Seq(name)
-  }
-
-  def optionlessThis[A](option: Option[Seq[A]]): Seq[A] = option match {
-    case None    => Seq[A]()
-    case Some(x) => x
   }
 
   def OperationPat[$: P]: P[Operation] = P(
@@ -278,7 +308,9 @@ class Parser(
   def GenericOperation[$: P] = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(
       optionlessThis
-    ) ~ ")" ~ RegionList.?.map(optionlessThis) ~ ":" ~ FunctionType
+    ) ~ ")" ~ SuccessorList.?.map(optionlessThis) ~ RegionList.?.map(
+      optionlessThis
+    ) ~ ":" ~ FunctionType
   ) // shortened definition TODO: finish...
 
   def OpResultList[$: P] = P(OpResult ~ ("," ~ OpResult).rep ~ "=").map(
@@ -286,6 +318,12 @@ class Parser(
       results._1 ++ results._2.flatten
   )
   def OpResult[$: P] = P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
+
+  def SuccessorList[$: P] =
+    P("[" ~ Successor ~ ("," ~ Successor).rep ~ "]").map(
+      (successors: (String, Seq[String])) => successors._1 +: successors._2
+    )
+  def Successor[$: P] = P(CaretId) // possibly shortened version
 
   def RegionList[$: P] = P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
     .map((x: (Region, Seq[Region])) => x._1 +: x._2)
@@ -322,17 +360,10 @@ class Parser(
     return newBlock
   }
 
-  def elimOption(
-      valueIdAndTypeList: Option[Seq[(String, Attribute)]]
-  ): Seq[(String, Attribute)] = valueIdAndTypeList match {
-    case Some(x: Seq[(String, Attribute)]) => x
-    case None                              => Seq()
-  }
-
   def Block[$: P] = P(BlockLabel ~ OperationPat.rep(1)).map(createBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~ BlockArgList.?.map(elimOption)
+    BlockId ~ BlockArgList.?.map(optionlessThis)
       .map(Scope.defineValues) ~ ":"
   )
 
@@ -348,7 +379,8 @@ class Parser(
         (idAndTypes._1, idAndTypes._2) +: idAndTypes._3
     )
 
-  def BlockArgList[$: P] = P("(" ~ ValueIdAndTypeList.? ~ ")").map(elimOption)
+  def BlockArgList[$: P] =
+    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessThis)
 
   /////////////
   // REGIONS //
@@ -392,7 +424,7 @@ class Parser(
   // // Non-empty list of names and types.
   // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
 
-  // [ ] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+  // [x ] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
   // // Type aliases
   // [x] type-alias-def ::= `!` alias-name `=` type
@@ -472,82 +504,13 @@ class Parser(
   //                             | `{` dialect-attribute-contents+ `}`
   //                             | [^\[<({\]>)}\0]+
 
-  def parseThis(text: String): fastparse.Parsed[Seq[Operation]] = {
-    return parse(text, TopLevel(_))
-  }
-
-  def testParse[A](
+  def parseThis[A, B](
       text: String,
-      parser: fastparse.P[_] => fastparse.P[A]
-  ): fastparse.Parsed[A] = {
-    currentScope = new Scope(valueMap = mutable.Map.empty[String, Value])
-    return parse(text, parser)
-  }
-}
-
-object Parser {
-
-  def main(args: Array[String]): Unit = {
-
-    println("---- IN PROGRESS ----")
-
-    val parser = new Parser()
-
-    println(
-      parser.testParse(
-        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        parser = parser.TopLevel(_)
-      )
-    )
-    println(
-      parser.testParse(
-        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-          "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.TopLevel(_)
-      )
-    )
-
-    println(
-      parser.testParse(
-        text =
-          "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.Block(_)
-      )
-    )
-
-    println(
-      parser.testParse(
-        text =
-          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        parser = parser.Region(_)
-      )
-    )
-
-    try {
-      println(
-        parser.testParse(
-          text =
-            "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-          parser = parser.Region(_)
-        )
-      )
-    } catch {
-      case e: Exception => println(e.getMessage)
-    }
-
-    println(
-      parser.testParse(
-        text = "{}",
-        parser = parser.Region(_)
-      )
-    )
-
-    println("---------------------")
+      pattern: fastparse.P[_] => fastparse.P[B] = { (x: fastparse.P[_]) =>
+        TopLevel(x)
+      }
+  ): fastparse.Parsed[B] = {
+    return parse(text, pattern)
   }
 }
 
