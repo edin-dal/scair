@@ -425,6 +425,34 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
     }
   }
 
+  "Operation  Test" should "Test forward block reference" in {
+    withClue("Test 3:") {
+      val text = """"op1"()({
+                 |  ^bb3():
+                 |    "test.op"()[^bb4] : () -> ()
+                 |  ^bb4():
+                 |    "test.op"() : () -> ()
+                 |  }) : () -> ()""".stripMargin
+
+      val bb4 = Block(
+        Seq(Operation("test.op", Seq(), Seq(), Seq(), Seq())),
+        Seq()
+      )
+      val bb3 = Block(
+        Seq(Operation("test.op", Seq(), Seq(bb4), Seq(), Seq())),
+        Seq()
+      )
+      val operation =
+        Operation("test.op", Seq(), Seq(), Seq(), Seq(Region(Seq(bb3, bb4))))
+
+      parser.parseThis(
+        text = text,
+        pattern = parser.OperationPat(_)
+      ) should matchPattern { case operation =>
+      }
+    }
+  }
+
   "TopLevel Tests" should "Test full programs" in {
     withClue("Test 1: ") {
       parser.parseThis(
