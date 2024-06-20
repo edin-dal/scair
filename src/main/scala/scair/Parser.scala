@@ -5,27 +5,7 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 
-object Parser {
-  def main(args: Array[String]): Unit = {
-    var parser: Parser = new Parser
-
-    val text = """"op1"()[^bb3]({
-                   |  ^bb3(%4: i32):
-                   |    %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
-                   |    "test.op"(%6, %5) : (i64, i32) -> ()
-                   |  ^bb4(%8: i32):
-                   |    %9, %10, %11 = "test.op"() : () -> (i32, i64, i32)
-                   |    "test.op"(%10, %9) : (i64, i32) -> ()
-                   |  }) : () -> ()""".stripMargin
-
-    val test = parser.parseThis(
-      text = text,
-      pattern = parser.TopLevel(_)
-    )
-
-    println(test)
-  }
-}
+object Parser {}
 
 class Parser {
 
