@@ -109,7 +109,7 @@ class PrinterTest extends FlatSpec {
       Operation(
         "op1",
         Seq(),
-        Seq(successorTestBlock),
+        Seq(),
         Seq(),
         Seq(
           Region(
@@ -120,7 +120,7 @@ class PrinterTest extends FlatSpec {
                   Operation(
                     "test.op",
                     Seq(),
-                    Seq(),
+                    Seq(successorTestBlock),
                     Seq(
                       val1,
                       val2,
@@ -146,12 +146,12 @@ class PrinterTest extends FlatSpec {
           )
         )
       )
-    val expected = """"op1"()[^bb3]({
+    val expected = """"op1"()({
                      |  ^bb3(%4: i32):
                      |    %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
                      |    "test.op"(%6, %5) : (i64, i32) -> ()
                      |  ^bb4(%8: i32):
-                     |    %9, %10, %11 = "test.op"() : () -> (i32, i64, i32)
+                     |    %9, %10, %11 = "test.op"()[^bb3] : () -> (i32, i64, i32)
                      |    "test.op"(%10, %9) : (i64, i32) -> ()
                      |  }) : () -> ()""".stripMargin
     val result = Printer.printOperation(program)

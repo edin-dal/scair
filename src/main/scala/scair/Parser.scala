@@ -5,7 +5,27 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 
-object Parser {}
+object Parser {
+  def main(args: Array[String]): Unit = {
+    var parser: Parser = new Parser
+
+    val text = """"op1"()[^bb3]({
+                   |  ^bb3(%4: i32):
+                   |    %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
+                   |    "test.op"(%6, %5) : (i64, i32) -> ()
+                   |  ^bb4(%8: i32):
+                   |    %9, %10, %11 = "test.op"() : () -> (i32, i64, i32)
+                   |    "test.op"(%10, %9) : (i64, i32) -> ()
+                   |  }) : () -> ()""".stripMargin
+
+    val test = parser.parseThis(
+      text = text,
+      pattern = parser.TopLevel(_)
+    )
+
+    println(test)
+  }
+}
 
 class Parser {
 
@@ -74,6 +94,7 @@ class Parser {
     }
 
     def checkWaitlist()(implicit scope: Scope): Unit = {
+
       for ((operation, successors) <- scope.blockWaitlist) {
         val successorList: Seq[Block] = for {
           name <- successors
@@ -82,7 +103,7 @@ class Parser {
             name
           ) match {
           case false =>
-            throw new Exception(s"Successor ${name} not defined within Scope")
+            throw new Exception(s"Successor ^${name} not defined within Scope")
           case true => scope.blockMap(name)
         }
         operation.successors = successorList
@@ -103,8 +124,8 @@ class Parser {
     // child starts off from the parents context
     def createChild(): Scope = {
       return new Scope(
-        valueMap = valueMap,
-        blockMap = blockMap,
+        valueMap = valueMap.clone,
+        blockMap = blockMap.clone,
         parentScope = Some(this)
       )
     }
@@ -186,7 +207,7 @@ class Parser {
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 
   def TopLevel[$: P] = P(
-    OperationPat.rep ~ End
+    OperationPat.rep ~ E(Scope.checkWaitlist) ~ End
   ) // shortened definition TODO: finish...
 
   /////////////////

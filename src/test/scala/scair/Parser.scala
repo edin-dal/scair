@@ -314,6 +314,117 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
     }
   }
 
+  "Operation  Test" should "Test operations" in {
+    withClue("Test 1: ") {
+      val text = """"op1"()({
+                       |  ^bb3(%4: i32):
+                       |    %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
+                       |    "test.op"(%6, %5) : (i64, i32) -> ()
+                       |  ^bb4(%8: i32):
+                       |    %9, %10, %11 = "test.op"()[^bb3] : () -> (i32, i64, i32)
+                       |    "test.op"(%10, %9) : (i64, i32) -> ()
+                       |  }) : () -> ()""".stripMargin
+
+      val val1 = Value(Attribute("i32"))
+      val val2 = Value(Attribute("i64"))
+      val val3 = Value(Attribute("i32"))
+      val val4 = Value(Attribute("i64"))
+
+      val successorTestBlock = Block(
+        Seq(
+          Operation(
+            "test.op",
+            Seq(),
+            Seq(),
+            Seq(
+              val3,
+              val4,
+              Value(Attribute("i32"))
+            ),
+            Seq()
+          ),
+          Operation(
+            "test.op",
+            Seq(val4, val3),
+            Seq(),
+            Seq(),
+            Seq()
+          )
+        ),
+        Seq(Value(Attribute("i32")))
+      )
+
+      val operation =
+        Operation(
+          "op1",
+          Seq(),
+          Seq(),
+          Seq(),
+          Seq(
+            Region(
+              Seq(
+                successorTestBlock,
+                Block(
+                  Seq(
+                    Operation(
+                      "test.op",
+                      Seq(),
+                      Seq(successorTestBlock),
+                      Seq(
+                        val1,
+                        val2,
+                        Value(Attribute("i32"))
+                      ),
+                      Seq()
+                    ),
+                    Operation(
+                      "test.op",
+                      Seq(
+                        val2,
+                        val1
+                      ),
+                      Seq(),
+                      Seq(),
+                      Seq()
+                    )
+                  ),
+                  Seq(Value(Attribute("i32")))
+                )
+              ),
+              None
+            )
+          )
+        )
+
+      parser.parseThis(
+        text = text,
+        pattern = parser.OperationPat(_)
+      ) should matchPattern { case operation =>
+      }
+    }
+  }
+
+  "Operation  Test - Failure" should "Test faulty Operation IR" in {
+    withClue("Test 2: ") {
+
+      val text = """"op1"()[^bb3]({
+                   |  ^bb3(%4: i32):
+                   |    %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
+                   |    "test.op"(%6, %5) : (i64, i32) -> ()
+                   |  ^bb4(%8: i32):
+                   |    %9, %10, %11 = "test.op"() : () -> (i32, i64, i32)
+                   |    "test.op"(%10, %9) : (i64, i32) -> ()
+                   |  }) : () -> ()""".stripMargin
+
+      val exception = intercept[Exception](
+        parser.parseThis(
+          text = text,
+          pattern = parser.TopLevel(_)
+        )
+      ).getMessage shouldBe "Successor ^bb3 not defined within Scope"
+    }
+  }
+
   "TopLevel Tests" should "Test full programs" in {
     withClue("Test 1: ") {
       parser.parseThis(
