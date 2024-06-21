@@ -516,8 +516,4 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
       }
     }
   }
-
-  // [ ] - test successors
-  // [ ] - test re-format tests
-  // [ ] - test re-format tests
 }
