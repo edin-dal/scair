@@ -56,8 +56,8 @@ jobs:
         distribution: 'temurin'
         cache: 'sbt'
 
-    - name: Run tests
+    - name: Package? scair-opt
       run: sbt stage
 
     - name: For now, just run scair-opt on first.mlir!
-      run: ./target/universal/stage/bin/scair-opt src/test/resources/first.mlir
+      run: ./target/universal/stage/bin/scair-opt tests/filecheck/first.mlir
