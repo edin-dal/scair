@@ -6,6 +6,9 @@ import Parser._
 
 class PrinterTest extends FlatSpec {
 
+  val I32 = IntegerType(32, Signless)
+  val I64 = IntegerType(64, Signless)
+
   "printRegion" should "return the correct string representation of a region" in {
     val region =
       Region(
@@ -22,7 +25,7 @@ class PrinterTest extends FlatSpec {
   "printBlock" should "return the correct string representation of a block" in {
     val block = Block(
       Seq(Operation("op1", Seq(), Seq(), Seq(), Seq())),
-      Seq(Value(Attribute("i32")))
+      Seq(Value(I32))
     )
     val expected = """^bb1(%0: i32):
                      |  "op1"() : () -> ()""".stripMargin
@@ -30,15 +33,8 @@ class PrinterTest extends FlatSpec {
     result shouldEqual expected
   }
 
-  "printAttribute" should "return the correct string representation of an attribute" in {
-    val attribute = Attribute("name")
-    val expected = "name"
-    val result = Printer.printAttribute(attribute)
-    result shouldEqual expected
-  }
-
   "printValue" should "return the correct string representation of a value" in {
-    val value = Value(Attribute("i32"))
+    val value = Value(I32)
     "%1" shouldEqual Printer.printValue(value)
     "i32" shouldEqual Printer.printAttribute(value.typ)
     "%1: i32" shouldEqual Printer.printBlockArgument(value)
@@ -47,9 +43,9 @@ class PrinterTest extends FlatSpec {
   "printOperation" should "return the correct string representation of an operation" in {
     val operation = Operation(
       "op1",
-      Seq(Value(Attribute("i32"))),
+      Seq(Value(I32)),
       Seq(),
-      Seq(Value(Attribute("i32"))),
+      Seq(Value(I32)),
       Seq(
         Region(
           Seq(Block(Seq(Operation("op2", Seq(), Seq(), Seq(), Seq())), Seq()))
@@ -76,10 +72,10 @@ class PrinterTest extends FlatSpec {
   }
   "printSuccessors" should "return the correct string representation of a operation with successors" in {
 
-    val val1 = Value(Attribute("i32"))
-    val val2 = Value(Attribute("i64"))
-    val val3 = Value(Attribute("i32"))
-    val val4 = Value(Attribute("i64"))
+    val val1 = Value(I32)
+    val val2 = Value(I64)
+    val val3 = Value(I32)
+    val val4 = Value(I64)
 
     val successorTestBlock = Block(
       Seq(
@@ -90,7 +86,7 @@ class PrinterTest extends FlatSpec {
           Seq(
             val3,
             val4,
-            Value(Attribute("i32"))
+            Value(I32)
           ),
           Seq()
         ),
@@ -102,7 +98,7 @@ class PrinterTest extends FlatSpec {
           Seq()
         )
       ),
-      Seq(Value(Attribute("i32")))
+      Seq(Value(I32))
     )
 
     val program =
@@ -124,7 +120,7 @@ class PrinterTest extends FlatSpec {
                     Seq(
                       val1,
                       val2,
-                      Value(Attribute("i32"))
+                      Value(I32)
                     ),
                     Seq()
                   ),
@@ -139,7 +135,7 @@ class PrinterTest extends FlatSpec {
                     Seq()
                   )
                 ),
-                Seq(Value(Attribute("i32")))
+                Seq(Value(I32))
               )
             ),
             None

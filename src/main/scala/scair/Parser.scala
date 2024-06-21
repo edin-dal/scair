@@ -4,6 +4,7 @@ import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
+import AttrParser._
 
 object Parser {}
 
@@ -430,13 +431,14 @@ class Parser {
   // [x] type-alias-def ::= `!` alias-name `=` type
   // [x] type-alias ::= `!` alias-name
 
-  def I32[$: P] = P("i32".!)
-  def I64[$: P] = P("i64".!)
-  def BuiltIn[$: P] = P(I32 | I64) // temporary BuiltIn
+  def IntegerTypeP[$: P] =
+    P("i" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
+      IntegerType(intString.toInt, Signless)
+    )
 
-  def Type[$: P] = P(TypeAlias | BuiltIn).map((typeName: String) =>
-    new Attribute(name = typeName)
-  ) // shortened definition TODO: finish...
+  def BuiltIn[$: P] = P(IntegerTypeP) // temporary BuiltIn
+
+  def Type[$: P] = P(AttrParser.BuiltIn) // shortened definition TODO: finish...
 
   def TypeListNoParens[$: P] =
     P(Type ~ ("," ~ Type).rep).map((types: (Attribute, Seq[Attribute])) =>
@@ -461,12 +463,18 @@ class Parser {
   // ATTRIBUTES //
   ////////////////
 
-  // [ ] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
-  // [ ] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
+  // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
+  // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
   // // Attribute Value Aliases
-  // [ ] - attribute-alias-def ::= `#` alias-name `=` attribute-value
-  // [ ] - attribute-alias ::= `#` alias-name
+  // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
+  // [x] - attribute-alias ::= `#` alias-name
+
+  def AttributeEntry[$: P] = P((BareId | StringLiteral) ~ "=" ~ AttributeValue)
+  def AttributeValue[$: P] = P(AttributeAlias) // | BuiltInAttribute)
+
+  def AttributeAliasDef[$: P] = P("#" ~ AliasName ~ "=" ~ AttributeValue)
+  def AttributeAlias[$: P] = P("#" ~ AliasName)
 
   ///////////////////
   // DIALECT TYPES //

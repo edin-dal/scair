@@ -4,6 +4,7 @@ import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
+import AttrParser._
 
 object Printer {
 
@@ -77,7 +78,7 @@ object Printer {
   //     name: String
   // )
   def printAttribute(attribute: Attribute): String = {
-    return attribute.name
+    return attribute.toString
   }
 
   // case class Value(
@@ -163,11 +164,11 @@ object Printer {
     val parser = new Parser()
     val Parsed.Success(result, _) = parser.parseThis(
       text = """"test.op"() ({
-        ^bb0(%5: i32):
-          %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
-          "test.op"(%1, %0) : (i64, i32) -> ()
+        ^bb0(%5: f32):
+          %0, %1, %2 = "test.op"() : () -> (i32, f64, i32)
+          "test.op"(%1, %0) : (f64, i32) -> ()
         ^bb1(%4: i32):
-          %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
+          %7, %8, %9 = "test.op"() : () -> (i32, i64, f32)
           "test.op"(%8, %7) : (i64, i32) -> ()
         }, {
         ^bb2():
