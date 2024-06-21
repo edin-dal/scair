@@ -13,9 +13,10 @@ object ScairOpt {
       OParser.sequence(
         programName("scair-opt"),
         head("scair-opt", "0"),
-        arg[String]("<file>")
+        arg[String]("file")
           .optional()
           .text("input file")
+          .action((x, c) => c.copy(input = Some(x)))
       )
     }
 
