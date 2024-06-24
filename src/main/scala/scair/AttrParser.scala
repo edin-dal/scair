@@ -54,16 +54,39 @@ case object IndexType extends Type("builtin.index") {
 
 object AttrParser {
 
+  ////////////////
+  // FLOAT TYPE //
+  ////////////////
+
   def Float16TypeP[$: P]: P[Attribute] = P("f16".!).map(_ => Float16Type)
   def Float32TypeP[$: P]: P[Attribute] = P("f32".!).map(_ => Float32Type)
   def Float64TypeP[$: P]: P[Attribute] = P("f64".!).map(_ => Float64Type)
   def Float80TypeP[$: P]: P[Attribute] = P("f80".!).map(_ => Float80Type)
   def Float128TypeP[$: P]: P[Attribute] = P("f128".!).map(_ => Float128Type)
 
-  def IntegerTypeP[$: P]: P[Attribute] =
+  //////////////////
+  // INTEGER TYPE //
+  //////////////////
+
+  def SignedIntegerTypeP[$: P]: P[Attribute] =
+    P("si" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
+      IntegerType(intString.toInt, Signless)
+    )
+  def UnsignedIntegerTypeP[$: P]: P[Attribute] =
+    P("ui" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
+      IntegerType(intString.toInt, Signless)
+    )
+  def SignlessIntegerTypeP[$: P]: P[Attribute] =
     P("i" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
       IntegerType(intString.toInt, Signless)
     )
+  def IntegerTypeP[$: P]: P[Attribute] = P(
+    SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
+  )
+
+  ////////////////
+  // INDEX TYPE //
+  ////////////////
 
   def IndexTypeP[$: P]: P[Attribute] = P("index".!).map(_ => IndexType)
 
