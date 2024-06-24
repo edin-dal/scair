@@ -45,7 +45,11 @@ case object Float128Type extends Type("builtin.f128") {
 
 case class IntegerType(val width: Int, val sign: Signedness)
     extends Type("builtin.int_type") {
-  override def toString = s"i$width"
+  override def toString = sign match {
+    case Signless => s"i$width"
+    case Signed   => s"si$width"
+    case Unsigned => s"ui$width"
+  }
 }
 
 case object IndexType extends Type("builtin.index") {

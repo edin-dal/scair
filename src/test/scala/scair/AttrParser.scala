@@ -223,7 +223,7 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
           Seq()
         )
       ),
-      Seq(Value(F128))
+      Seq(Value(F16))
     )
 
     val block2 = new Block(
@@ -250,7 +250,7 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
           Seq()
         )
       ),
-      Seq(Value(I32))
+      Seq(Value(F128))
     )
 
     val block3 = new Block(
@@ -309,5 +309,53 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
       text = input,
       pattern = parser.TopLevel(_)
     ) should matchPattern { case Parsed.Success(Seq(program), _) => }
+  }
+
+  "parsingInteger" should "match parsed string against expected string" in {
+
+    var parser: Parser = new Parser
+
+    val input = """"op1"()({
+                     |  ^bb0(%0: f128):
+                     |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
+                     |  }) : () -> ()""".stripMargin
+
+    parser.parseThis(
+      text = input,
+      pattern = parser.OperationPat(_)
+    ) should matchPattern {
+      case Parsed.Success(
+            Operation(
+              "op1",
+              Seq(),
+              Seq(),
+              Seq(),
+              Seq(
+                Region(
+                  Seq(
+                    Block(
+                      Seq(
+                        Operation(
+                          "test.op",
+                          Seq(),
+                          Seq(),
+                          Seq(
+                            Value(IntegerType(32, Signless)),
+                            Value(IntegerType(64, Signed)),
+                            Value(IntegerType(80, Unsigned))
+                          ),
+                          Seq()
+                        )
+                      ),
+                      Seq(Value(F128))
+                    )
+                  ),
+                  None
+                )
+              )
+            ),
+            98
+          ) =>
+    }
   }
 }
