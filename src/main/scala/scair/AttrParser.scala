@@ -70,11 +70,11 @@ object AttrParser {
 
   def SignedIntegerTypeP[$: P]: P[Attribute] =
     P("si" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
-      IntegerType(intString.toInt, Signless)
+      IntegerType(intString.toInt, Signed)
     )
   def UnsignedIntegerTypeP[$: P]: P[Attribute] =
     P("ui" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
-      IntegerType(intString.toInt, Signless)
+      IntegerType(intString.toInt, Unsigned)
     )
   def SignlessIntegerTypeP[$: P]: P[Attribute] =
     P("i" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
