@@ -4,8 +4,9 @@ import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
+import AttrParser._
 
-object Printer {
+class Printer {
 
   var indent: String = "  "
 
@@ -77,7 +78,7 @@ object Printer {
   //     name: String
   // )
   def printAttribute(attribute: Attribute): String = {
-    return attribute.name
+    return attribute.toString
   }
 
   // case class Value(
@@ -161,13 +162,14 @@ object Printer {
     println("Printer")
 
     val parser = new Parser()
+    val printer = new Printer()
     val Parsed.Success(result, _) = parser.parseThis(
       text = """"test.op"() ({
-        ^bb0(%5: i32):
-          %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
-          "test.op"(%1, %0) : (i64, i32) -> ()
+        ^bb0(%5: f32):
+          %0, %1, %2 = "test.op"() : () -> (i32, f64, i32)
+          "test.op"(%1, %0) : (f64, i32) -> ()
         ^bb1(%4: i32):
-          %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
+          %7, %8, %9 = "test.op"() : () -> (i32, i64, f32)
           "test.op"(%8, %7) : (i64, i32) -> ()
         }, {
         ^bb2():
@@ -177,6 +179,47 @@ object Printer {
       pattern = parser.OperationPat(_)
     )
 
-    println(printOperation(result.asInstanceOf[Operation]))
+    val val1 = new Value(IntegerType(32, Signless))
+    val val2 = new Value(IntegerType(64, Signless))
+    val val3 = new Value(IntegerType(32, Signless))
+    val val4 = new Value(IntegerType(64, Signless))
+
+    val successorTestBlock = new Block(
+      Seq(),
+      Seq()
+    )
+
+    val program =
+      Operation(
+        "op1",
+        Seq(),
+        Seq(),
+        Seq(),
+        Seq(
+          Region(
+            Seq(
+              successorTestBlock,
+              Block(
+                Seq(
+                  Operation(
+                    "test.op",
+                    Seq(),
+                    Seq(successorTestBlock),
+                    Seq(),
+                    Seq()
+                  )
+                ),
+                Seq()
+              )
+            ),
+            None
+          )
+        )
+      )
+
+    val result2 = printer.printOperation(program)
+    println(result2)
+
+    // println(printOperation(result.asInstanceOf[Operation]))
   }
 }

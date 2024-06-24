@@ -8,8 +8,12 @@ import Matchers._
 import Parser._
 import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
+import AttrParser._
 
 class ParserTest extends FlatSpec with BeforeAndAfter {
+
+  val I32 = IntegerType(32, Signless)
+  val I64 = IntegerType(64, Signless)
 
   def getResult[A](result: String, expected: A) =
     result match {
@@ -206,21 +210,21 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                     Seq(),
                     Seq(),
                     Seq(
-                      Value(Attribute("i32")),
-                      Value(Attribute("i64")),
-                      Value(Attribute("i32"))
+                      Value(I32),
+                      Value(I64),
+                      Value(I32)
                     ),
                     Seq()
                   ),
                   Operation(
                     "test.op",
-                    Seq(Value(Attribute("i64")), Value(Attribute("i32"))),
+                    Seq(Value(I64), Value(I32)),
                     Seq(),
                     Seq(),
                     Seq()
                   )
                 ),
-                Seq(Value(Attribute("i32")))
+                Seq(Value(I32))
               ),
               100
             ) =>
@@ -248,21 +252,21 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                         Seq(),
                         Seq(),
                         Seq(
-                          Value(Attribute("i32")),
-                          Value(Attribute("i64")),
-                          Value(Attribute("i32"))
+                          Value(I32),
+                          Value(I64),
+                          Value(I32)
                         ),
                         Seq()
                       ),
                       Operation(
                         "test.op",
-                        Seq(Value(Attribute("i64")), Value(Attribute("i32"))),
+                        Seq(Value(I64), Value(I32)),
                         Seq(),
                         Seq(),
                         Seq()
                       )
                     ),
-                    Seq(Value(Attribute("i32")))
+                    Seq(Value(I32))
                   ),
                   Block(
                     Seq(
@@ -271,24 +275,24 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                         Seq(),
                         Seq(),
                         Seq(
-                          Value(Attribute("i32")),
-                          Value(Attribute("i64")),
-                          Value(Attribute("i32"))
+                          Value(I32),
+                          Value(I64),
+                          Value(I32)
                         ),
                         Seq()
                       ),
                       Operation(
                         "test.op",
                         Seq(
-                          Value(Attribute("i64")),
-                          Value(Attribute("i32"))
+                          Value(I64),
+                          Value(I32)
                         ),
                         Seq(),
                         Seq(),
                         Seq()
                       )
                     ),
-                    Seq(Value(Attribute("i32")))
+                    Seq(Value(I32))
                   )
                 ),
                 None
@@ -325,10 +329,10 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                        |    "test.op"(%10, %9) : (i64, i32) -> ()
                        |  }) : () -> ()""".stripMargin
 
-      val val1 = Value(Attribute("i32"))
-      val val2 = Value(Attribute("i64"))
-      val val3 = Value(Attribute("i32"))
-      val val4 = Value(Attribute("i64"))
+      val val1 = Value(I32)
+      val val2 = Value(I64)
+      val val3 = Value(I32)
+      val val4 = Value(I64)
 
       val successorTestBlock = Block(
         Seq(
@@ -339,7 +343,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
             Seq(
               val3,
               val4,
-              Value(Attribute("i32"))
+              Value(I32)
             ),
             Seq()
           ),
@@ -351,7 +355,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
             Seq()
           )
         ),
-        Seq(Value(Attribute("i32")))
+        Seq(Value(I32))
       )
 
       val operation =
@@ -373,7 +377,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                       Seq(
                         val1,
                         val2,
-                        Value(Attribute("i32"))
+                        Value(I32)
                       ),
                       Seq()
                     ),
@@ -388,7 +392,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                       Seq()
                     )
                   ),
-                  Seq(Value(Attribute("i32")))
+                  Seq(Value(I32))
                 )
               ),
               None
@@ -466,9 +470,9 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                   Seq(),
                   Seq(),
                   Seq(
-                    Value(Attribute("i32")),
-                    Value(Attribute("i64")),
-                    Value(Attribute("i32"))
+                    Value(I32),
+                    Value(I64),
+                    Value(I32)
                   ),
                   Seq()
                 )
@@ -512,8 +516,4 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
       }
     }
   }
-
-  // [ ] - test successors
-  // [ ] - test re-format tests
-  // [ ] - test re-format tests
 }
