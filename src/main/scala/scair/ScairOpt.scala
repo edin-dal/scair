@@ -1,6 +1,7 @@
 import java.io.File
 import scopt.OParser
 import scala.io.Source
+import scair.Printer
 case class Args(
     val input: Option[String] = None
 )
@@ -43,7 +44,8 @@ object ScairOpt {
         }
 
         // Print the parsed module if not errored
-        val output = scair.Printer.printOperation(module)
+        val printer = new Printer()
+        val output = printer.printOperation(module)
         println(output)
 
       case _ =>
