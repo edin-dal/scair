@@ -47,7 +47,15 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
     (I32, "Success", "i32"),
     (I64, "Success", "i64"),
     (IntegerType(874234232, Signless), "Success", "i874234232"),
-    ("index", "Success", "index")
+    (IntegerType(7, Signed), "Success", "si7"),
+    (IntegerType(8, Unsigned), "Success", "ui8"),
+    (
+      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringAttribute("hello"))),
+      "Success",
+      "[f64, [], \"hello\"]"
+    ),
+    (StringAttribute("hello world!"), "Success", "\"hello world!\""),
+    (INDEX, "Success", "index")
   )
 
   val strToAttributeTests = Table(
@@ -62,7 +70,16 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
     ("i32", "Success", I32),
     ("i64", "Success", I64),
     ("i874234232", "Success", IntegerType(874234232, Signless)),
+    ("874234232", "Success", IntegerType(874234232, Signless)),
+    ("si7", "Success", IntegerType(7, Signed)),
+    ("ui8", "Success", IntegerType(8, Unsigned)),
     ("index", "Success", INDEX),
+    (
+      "[f64, [], \"hello\"]",
+      "Success",
+      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringAttribute("hello")))
+    ),
+    ("\"hello world!\"", "Success", StringAttribute("hello world!")),
     ("fg12", "Failure", "")
   )
 
@@ -223,7 +240,7 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
           Seq()
         )
       ),
-      Seq(Value(F128))
+      Seq(Value(F16))
     )
 
     val block2 = new Block(
@@ -250,7 +267,7 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
           Seq()
         )
       ),
-      Seq(Value(I32))
+      Seq(Value(F128))
     )
 
     val block3 = new Block(
@@ -309,5 +326,53 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
       text = input,
       pattern = parser.TopLevel(_)
     ) should matchPattern { case Parsed.Success(Seq(program), _) => }
+  }
+
+  "parsingInteger" should "match parsed string against expected string" in {
+
+    var parser: Parser = new Parser
+
+    val input = """"op1"()({
+                     |  ^bb0(%0: f128):
+                     |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
+                     |  }) : () -> ()""".stripMargin
+
+    parser.parseThis(
+      text = input,
+      pattern = parser.OperationPat(_)
+    ) should matchPattern {
+      case Parsed.Success(
+            Operation(
+              "op1",
+              Seq(),
+              Seq(),
+              Seq(),
+              Seq(
+                Region(
+                  Seq(
+                    Block(
+                      Seq(
+                        Operation(
+                          "test.op",
+                          Seq(),
+                          Seq(),
+                          Seq(
+                            Value(IntegerType(32, Signless)),
+                            Value(IntegerType(64, Signed)),
+                            Value(IntegerType(80, Unsigned))
+                          ),
+                          Seq()
+                        )
+                      ),
+                      Seq(Value(F128))
+                    )
+                  ),
+                  None
+                )
+              )
+            ),
+            98
+          ) =>
+    }
   }
 }
