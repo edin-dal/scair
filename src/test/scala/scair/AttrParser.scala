@@ -200,17 +200,17 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
         )
       )
 
-    val expected = """"op1"()({
-                     |  ^bb0(%0: f128):
-                     |    %1, %2, %3 = "test.op"() : () -> (f32, f64, f80)
-                     |    "test.op"(%2, %1) : (f64, f32) -> ()
-                     |  ^bb1(%4: i32):
-                     |    %5, %6, %7 = "test.op"()[^bb0] : () -> (i1, i16, i32)
-                     |    "test.op"(%6, %5) : (i16, i1) -> ()
-                     |  ^bb2(%8: i64):
-                     |    %9 = "test.op"() : () -> (index)
-                     |    "test.op"(%9) : (index) -> ()
-                     |  }) : () -> ()""".stripMargin
+    val expected = """"op1"() ({
+                     |^bb0(%0: f128):
+                     |  %1, %2, %3 = "test.op"() : () -> (f32, f64, f80)
+                     |  "test.op"(%2, %1) : (f64, f32) -> ()
+                     |^bb1(%4: i32):
+                     |  %5, %6, %7 = "test.op"()[^bb0] : () -> (i1, i16, i32)
+                     |  "test.op"(%6, %5) : (i16, i1) -> ()
+                     |^bb2(%8: i64):
+                     |  %9 = "test.op"() : () -> (index)
+                     |  "test.op"(%9) : (index) -> ()
+                     |}) : () -> ()""".stripMargin
     val result = printer.printOperation(program)
     result shouldEqual expected
   }
