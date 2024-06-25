@@ -1,13 +1,45 @@
 package scair
 
-import fastparse._, MultiLineWhitespace._
+import fastparse._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 import AttrParser._
 import Parser._
+import scala.annotation.tailrec
+import fastparse.internal.Util
+import scala.annotation.switch
 
 object Parser {
+  implicit val whitespace: fastparse.Whitespace = { implicit ctx: P[_] =>
+    val input = ctx.input
+    val startIndex = ctx.index
+    @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
+      if (!input.isReachable(current)) {
+        if (state == 0 || state == 1) ctx.freshSuccessUnit(current)
+        else ctx.freshSuccessUnit(current - 1)
+      } else {
+        val currentChar = input(current)
+        (state: @switch) match {
+          case 0 =>
+            (currentChar: @switch) match {
+              case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
+              case '/'                      => rec(current + 1, state = 2)
+              case _                        => ctx.freshSuccessUnit(current)
+            }
+          case 1 =>
+            rec(current + 1, state = if (currentChar == '\n') 0 else state)
+          case 2 =>
+            (currentChar: @switch) match {
+              case '/' => rec(current + 1, state = 1)
+              case '*' => rec(current + 1, state = 3)
+              case _   => ctx.freshSuccessUnit(current - 1)
+            }
+        }
+      }
+    }
+    rec(current = ctx.index, state = 0)
+  }
   //////////////////////
   // COMMON FUNCTIONS //
   //////////////////////

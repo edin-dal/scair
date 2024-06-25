@@ -321,8 +321,11 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
   "Operation  Test" should "Test operations" in {
     withClue("Test 1: ") {
       val text = """"op1"()({
-                       |  ^bb3(%4: i32):
+                       |  ^bb3(%4: i32): // Some comment at end of line
                        |    %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
+                       |    // Some comment-only line, plus some extra whitspace there
+                       |
+                       |
                        |    "test.op"(%6, %5) : (i64, i32) -> ()
                        |  ^bb4(%8: i32):
                        |    %9, %10, %11 = "test.op"()[^bb3] : () -> (i32, i64, i32)
