@@ -11,6 +11,13 @@ import fastparse.internal.Util
 import scala.annotation.switch
 
 object Parser {
+
+  /** Whitespace syntax that supports // line-comments, *without* /* */
+    * comments, as is the case in the MLIR Language Spec.
+    *
+    * It's litteraly fastparse's JavaWhitespace with the /* */ states just
+    * erased :)
+    */
   implicit val whitespace: fastparse.Whitespace = { implicit ctx: P[_] =>
     val input = ctx.input
     val startIndex = ctx.index
