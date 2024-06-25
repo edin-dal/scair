@@ -126,52 +126,52 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
     ("name", "pattern", "tests"),
     (
       "Digit",
-      ((x: fastparse.P[_]) => parser.Digit(x)),
+      ((x: fastparse.P[_]) => Parser.Digit(x)),
       digitTests
     ),
     (
       "HexDigit",
-      ((x: fastparse.P[_]) => parser.HexDigit(x)),
+      ((x: fastparse.P[_]) => Parser.HexDigit(x)),
       hexTests
     ),
     (
       "Letter",
-      ((x: fastparse.P[_]) => parser.Letter(x)),
+      ((x: fastparse.P[_]) => Parser.Letter(x)),
       letterTests
     ),
     (
       "IdPunct",
-      ((x: fastparse.P[_]) => parser.IdPunct(x)),
+      ((x: fastparse.P[_]) => Parser.IdPunct(x)),
       idPunctTests
     ),
     (
       "IntegerLiteral",
-      ((x: fastparse.P[_]) => parser.IntegerLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.IntegerLiteral(x)),
       intLiteralTests
     ),
     (
       "DecimalLiteral",
-      ((x: fastparse.P[_]) => parser.DecimalLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.DecimalLiteral(x)),
       decimalLiteralTests
     ),
     (
       "HexadecimalLiteral",
-      ((x: fastparse.P[_]) => parser.HexadecimalLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.HexadecimalLiteral(x)),
       hexadecimalLiteralTests
     ),
     (
       "FloatLiteral",
-      ((x: fastparse.P[_]) => parser.FloatLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.FloatLiteral(x)),
       floatLiteralTests
     ),
     (
       "StringLiteral",
-      ((x: fastparse.P[_]) => parser.StringLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.StringLiteral(x)),
       stringLiteralTests
     ),
     (
       "ValueId",
-      ((x: fastparse.P[_]) => parser.ValueId(x)),
+      ((x: fastparse.P[_]) => Parser.ValueId(x)),
       valueIdTests
     ),
     (

@@ -4,6 +4,7 @@ import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
+import Parser._
 
 /*
 
@@ -56,6 +57,18 @@ case object IndexType extends Type("builtin.index") {
   override def toString = "index"
 }
 
+case class ArrayAttribute(val attrValues: Seq[Attribute])
+    extends Attribute("builtin.array_attribute") {
+  override def toString =
+    "[" + attrValues.map(x => x.toString).mkString(", ") + "]"
+}
+
+// shortened definition, does not include type information
+case class StringAttribute(val stringLiteral: String)
+    extends Attribute("builtin.string_attribute") {
+  override def toString = "\"" + stringLiteral + "\""
+}
+
 object AttrParser {
 
   ////////////////
@@ -94,8 +107,30 @@ object AttrParser {
 
   def IndexTypeP[$: P]: P[Attribute] = P("index".!).map(_ => IndexType)
 
+  /////////////////////
+  // ARRAY ATTRIBUTE //
+  /////////////////////
+
+  def ArrayAttributeP[$: P]: P[Attribute] = P(
+    "[" ~ (BuiltIn
+      .rep(sep = ","))
+      .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
+  )
+
+  //////////////////////
+  // STRING ATTRIBUTE //
+  //////////////////////
+
+  def StringAttributeP[$: P]: P[Attribute] = P(
+    Parser.StringLiteral.map((x: String) => StringAttribute(stringLiteral = x))
+  ) // shortened definition omits typing information
+
+  //////////////////////////
+  // DICTIONARY ATTRIBUTE //
+  //////////////////////////
+
   def BuiltIn[$: P]: P[Attribute] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP
+    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP
   )
 
   def main(args: Array[String]): Unit = {
