@@ -8,8 +8,12 @@ import Matchers._
 import Parser._
 import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
+import AttrParser._
 
 class ParserTest extends FlatSpec with BeforeAndAfter {
+
+  val I32 = IntegerType(32, Signless)
+  val I64 = IntegerType(64, Signless)
 
   def getResult[A](result: String, expected: A) =
     result match {
@@ -122,52 +126,52 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
     ("name", "pattern", "tests"),
     (
       "Digit",
-      ((x: fastparse.P[_]) => parser.Digit(x)),
+      ((x: fastparse.P[_]) => Parser.Digit(x)),
       digitTests
     ),
     (
       "HexDigit",
-      ((x: fastparse.P[_]) => parser.HexDigit(x)),
+      ((x: fastparse.P[_]) => Parser.HexDigit(x)),
       hexTests
     ),
     (
       "Letter",
-      ((x: fastparse.P[_]) => parser.Letter(x)),
+      ((x: fastparse.P[_]) => Parser.Letter(x)),
       letterTests
     ),
     (
       "IdPunct",
-      ((x: fastparse.P[_]) => parser.IdPunct(x)),
+      ((x: fastparse.P[_]) => Parser.IdPunct(x)),
       idPunctTests
     ),
     (
       "IntegerLiteral",
-      ((x: fastparse.P[_]) => parser.IntegerLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.IntegerLiteral(x)),
       intLiteralTests
     ),
     (
       "DecimalLiteral",
-      ((x: fastparse.P[_]) => parser.DecimalLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.DecimalLiteral(x)),
       decimalLiteralTests
     ),
     (
       "HexadecimalLiteral",
-      ((x: fastparse.P[_]) => parser.HexadecimalLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.HexadecimalLiteral(x)),
       hexadecimalLiteralTests
     ),
     (
       "FloatLiteral",
-      ((x: fastparse.P[_]) => parser.FloatLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.FloatLiteral(x)),
       floatLiteralTests
     ),
     (
       "StringLiteral",
-      ((x: fastparse.P[_]) => parser.StringLiteral(x)),
+      ((x: fastparse.P[_]) => Parser.StringLiteral(x)),
       stringLiteralTests
     ),
     (
       "ValueId",
-      ((x: fastparse.P[_]) => parser.ValueId(x)),
+      ((x: fastparse.P[_]) => Parser.ValueId(x)),
       valueIdTests
     ),
     (
@@ -206,21 +210,21 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                     Seq(),
                     Seq(),
                     Seq(
-                      Value(Attribute("i32")),
-                      Value(Attribute("i64")),
-                      Value(Attribute("i32"))
+                      Value(I32),
+                      Value(I64),
+                      Value(I32)
                     ),
                     Seq()
                   ),
                   Operation(
                     "test.op",
-                    Seq(Value(Attribute("i64")), Value(Attribute("i32"))),
+                    Seq(Value(I64), Value(I32)),
                     Seq(),
                     Seq(),
                     Seq()
                   )
                 ),
-                Seq(Value(Attribute("i32")))
+                Seq(Value(I32))
               ),
               100
             ) =>
@@ -248,21 +252,21 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                         Seq(),
                         Seq(),
                         Seq(
-                          Value(Attribute("i32")),
-                          Value(Attribute("i64")),
-                          Value(Attribute("i32"))
+                          Value(I32),
+                          Value(I64),
+                          Value(I32)
                         ),
                         Seq()
                       ),
                       Operation(
                         "test.op",
-                        Seq(Value(Attribute("i64")), Value(Attribute("i32"))),
+                        Seq(Value(I64), Value(I32)),
                         Seq(),
                         Seq(),
                         Seq()
                       )
                     ),
-                    Seq(Value(Attribute("i32")))
+                    Seq(Value(I32))
                   ),
                   Block(
                     Seq(
@@ -271,24 +275,24 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                         Seq(),
                         Seq(),
                         Seq(
-                          Value(Attribute("i32")),
-                          Value(Attribute("i64")),
-                          Value(Attribute("i32"))
+                          Value(I32),
+                          Value(I64),
+                          Value(I32)
                         ),
                         Seq()
                       ),
                       Operation(
                         "test.op",
                         Seq(
-                          Value(Attribute("i64")),
-                          Value(Attribute("i32"))
+                          Value(I64),
+                          Value(I32)
                         ),
                         Seq(),
                         Seq(),
                         Seq()
                       )
                     ),
-                    Seq(Value(Attribute("i32")))
+                    Seq(Value(I32))
                   )
                 ),
                 None
@@ -325,10 +329,10 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                        |    "test.op"(%10, %9) : (i64, i32) -> ()
                        |  }) : () -> ()""".stripMargin
 
-      val val1 = Value(Attribute("i32"))
-      val val2 = Value(Attribute("i64"))
-      val val3 = Value(Attribute("i32"))
-      val val4 = Value(Attribute("i64"))
+      val val1 = Value(I32)
+      val val2 = Value(I64)
+      val val3 = Value(I32)
+      val val4 = Value(I64)
 
       val successorTestBlock = Block(
         Seq(
@@ -339,7 +343,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
             Seq(
               val3,
               val4,
-              Value(Attribute("i32"))
+              Value(I32)
             ),
             Seq()
           ),
@@ -351,7 +355,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
             Seq()
           )
         ),
-        Seq(Value(Attribute("i32")))
+        Seq(Value(I32))
       )
 
       val operation =
@@ -373,7 +377,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                       Seq(
                         val1,
                         val2,
-                        Value(Attribute("i32"))
+                        Value(I32)
                       ),
                       Seq()
                     ),
@@ -388,7 +392,7 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                       Seq()
                     )
                   ),
-                  Seq(Value(Attribute("i32")))
+                  Seq(Value(I32))
                 )
               ),
               None
@@ -466,9 +470,9 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                   Seq(),
                   Seq(),
                   Seq(
-                    Value(Attribute("i32")),
-                    Value(Attribute("i64")),
-                    Value(Attribute("i32"))
+                    Value(I32),
+                    Value(I64),
+                    Value(I32)
                   ),
                   Seq()
                 )
@@ -512,8 +516,4 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
       }
     }
   }
-
-  // [ ] - test successors
-  // [ ] - test re-format tests
-  // [ ] - test re-format tests
 }

@@ -4,8 +4,9 @@ import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
+import AttrParser._
 
-object Printer {
+class Printer {
 
   var indent: String = "  "
 
@@ -77,7 +78,7 @@ object Printer {
   //     name: String
   // )
   def printAttribute(attribute: Attribute): String = {
-    return attribute.name
+    return attribute.toString
   }
 
   // case class Value(
@@ -156,27 +157,26 @@ object Printer {
 
     return programPrint
   }
-
+}
+object Printer {
   def main(args: Array[String]): Unit = {
-    println("Printer")
+    // println("Printer")
 
     val parser = new Parser()
-    val Parsed.Success(result, _) = parser.parseThis(
-      text = """"test.op"() ({
-        ^bb0(%5: i32):
-          %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
-          "test.op"(%1, %0) : (i64, i32) -> ()
-        ^bb1(%4: i32):
-          %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
-          "test.op"(%8, %7) : (i64, i32) -> ()
-        }, {
-        ^bb2():
-          "test.op"() : () -> ()
-        }) : () -> ()
-        """,
+    val printer = new Printer()
+
+    val input = """"op1"()({
+                  |  ^bb0(%0: f128):
+                  |    %1, %2, %3 = "test.op"() : () -> (f32, si64, ui80)
+                  |  }) : () -> ()""".stripMargin
+
+    val Parsed.Success(res, x) = parser.parseThis(
+      text = input,
       pattern = parser.OperationPat(_)
     )
 
-    println(printOperation(result.asInstanceOf[Operation]))
+    println(printer.printOperation(res))
+
+    // println(printOperation(result.asInstanceOf[Operation]))
   }
 }

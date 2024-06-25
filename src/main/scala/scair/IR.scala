@@ -20,9 +20,8 @@ case class Block(
   }
 }
 
-case class Attribute(
-    name: String
-) {}
+abstract class Attribute(val name: String)
+abstract class Type(override val name: String) extends Attribute(name)
 
 case class Value(
     // val name: String,

@@ -4,10 +4,13 @@ import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
+import AttrParser._
+import Parser._
 
-object Parser {}
-
-class Parser {
+object Parser {
+  //////////////////////
+  // COMMON FUNCTIONS //
+  //////////////////////
 
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
@@ -15,6 +18,101 @@ class Parser {
     action
     Pass()
   }
+
+  def optionlessSeq[A](option: Option[Seq[A]]): Seq[A] = option match {
+    case None    => Seq[A]()
+    case Some(x) => x
+  }
+
+  ///////////////////
+  // COMMON SYNTAX //
+  ///////////////////
+
+  // [x] digit     ::= [0-9]
+  // [x] hex_digit ::= [0-9a-fA-F]
+  // [x] letter    ::= [a-zA-Z]
+  // [x] id-punct  ::= [$._-]
+
+  // [x] integer-literal ::= decimal-literal | hexadecimal-literal
+  // [x] decimal-literal ::= digit+
+  // [x] hexadecimal-literal ::= `0x` hex_digit+
+  // [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
+  // [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
+
+  val excludedCharacters: Set[Char] = Set('\"', '\n', '\f', '\u000B',
+    '\r') // \u000B represents \v escape character
+
+  def Digit[$: P] = P(CharIn("0-9").!)
+
+  def HexDigit[$: P] = P(CharIn("0-9a-fA-F").!)
+
+  def Letter[$: P] = P(CharIn("a-zA-Z").!)
+
+  def IdPunct[$: P] = P(CharIn("$._\\-").!)
+
+  def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
+
+  def DecimalLiteral[$: P] =
+    P(Digit.rep(1).!).map((literal: String) => literal.toInt)
+
+  def HexadecimalLiteral[$: P] =
+    P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => Integer.parseInt(hex, 16))
+
+  def FloatLiteral[$: P] = P(
+    CharIn("\\-\\+").? ~~ DecimalLiteral ~~ "." ~~ DecimalLiteral ~~ (CharIn(
+      "eE"
+    ) ~~ CharIn("\\-\\+").? ~~ DecimalLiteral).?
+  ).! // substituted [0-9]* with [0-9]+
+
+  def notExcluded[$: P] = P(
+    CharPred(char => !excludedCharacters.contains(char))
+  )
+
+  def StringLiteral[$: P] = P("\"" ~~ notExcluded.rep.! ~~ "\"")
+
+  /////////////////
+  // IDENTIFIERS //
+  /////////////////
+
+  // [x] bare-id ::= (letter|[_]) (letter|digit|[_$.])*
+  // [ ] bare-id-list ::= bare-id (`,` bare-id)*
+  // [x] value-id ::= `%` suffix-id
+  // [x] alias-name :: = bare-id
+  // [x] suffix-id ::= (digit+ | ((letter|id-punct) (letter|id-punct|digit)*))
+
+  // [ ] symbol-ref-id ::= `@` (suffix-id | string-literal) (`::` symbol-ref-id)?
+  // [ ] value-id-list ::= value-id (`,` value-id)*
+
+  // // Uses of value, e.g. in an operand list to an operation.
+  // [x] value-use ::= value-id (`#` decimal-literal)?
+  // [x] value-use-list ::= value-use (`,` value-use)*
+
+  def simplifyValueName(valueUse: (String, Option[Int])): String =
+    valueUse match {
+      case (name, Some(number)) => s"$name#$number"
+      case (name, None)         => name
+    }
+
+  def BareId[$: P] = P((Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).rep).!
+
+  def ValueId[$: P] = P("%" ~~ SuffixId)
+
+  def AliasName[$: P] = P(BareId)
+
+  def SuffixId[$: P] = P(
+    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).rep
+  ).!
+
+  def ValueUse[$: P] =
+    P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
+
+  def ValueUseList[$: P] = P(ValueUse ~ ("," ~ ValueUse).rep).map(
+    (valueUseList: (String, Seq[String])) => valueUseList._1 +: valueUseList._2
+  )
+
+}
+
+class Parser {
 
   object Scope {
 
@@ -125,61 +223,6 @@ class Parser {
 
   implicit var currentScope: Scope = new Scope()
 
-  //////////////////////
-  // COMMON FUNCTIONS //
-  //////////////////////
-
-  def optionlessThis[A](option: Option[Seq[A]]): Seq[A] = option match {
-    case None    => Seq[A]()
-    case Some(x) => x
-  }
-
-  ///////////////////
-  // COMMON SYNTAX //
-  ///////////////////
-
-  // [x] digit     ::= [0-9]
-  // [x] hex_digit ::= [0-9a-fA-F]
-  // [x] letter    ::= [a-zA-Z]
-  // [x] id-punct  ::= [$._-]
-
-  // [x] integer-literal ::= decimal-literal | hexadecimal-literal
-  // [x] decimal-literal ::= digit+
-  // [x] hexadecimal-literal ::= `0x` hex_digit+
-  // [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
-  // [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
-
-  val excludedCharacters: Set[Char] = Set('\"', '\n', '\f', '\u000B',
-    '\r') // \u000B represents \v escape character
-
-  def Digit[$: P] = P(CharIn("0-9").!)
-
-  def HexDigit[$: P] = P(CharIn("0-9a-fA-F").!)
-
-  def Letter[$: P] = P(CharIn("a-zA-Z").!)
-
-  def IdPunct[$: P] = P(CharIn("$._\\-").!)
-
-  def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
-
-  def DecimalLiteral[$: P] =
-    P(Digit.rep(1).!).map((literal: String) => literal.toInt)
-
-  def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => Integer.parseInt(hex, 16))
-
-  def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ DecimalLiteral ~~ "." ~~ DecimalLiteral ~~ (CharIn(
-      "eE"
-    ) ~~ CharIn("\\-\\+").? ~~ DecimalLiteral).?
-  ).! // substituted [0-9]* with [0-9]+
-
-  def notExcluded[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
-  )
-
-  def StringLiteral[$: P] = P("\"" ~~ notExcluded.rep.! ~~ "\"")
-
   //////////////////////////
   // TOP LEVEL PRODUCTION //
   //////////////////////////
@@ -189,46 +232,6 @@ class Parser {
   def TopLevel[$: P] = P(
     OperationPat.rep ~ E(Scope.checkWaitlist) ~ End
   ) // shortened definition TODO: finish...
-
-  /////////////////
-  // IDENTIFIERS //
-  /////////////////
-
-  // [x] bare-id ::= (letter|[_]) (letter|digit|[_$.])*
-  // [ ] bare-id-list ::= bare-id (`,` bare-id)*
-  // [x] value-id ::= `%` suffix-id
-  // [x] alias-name :: = bare-id
-  // [x] suffix-id ::= (digit+ | ((letter|id-punct) (letter|id-punct|digit)*))
-
-  // [ ] symbol-ref-id ::= `@` (suffix-id | string-literal) (`::` symbol-ref-id)?
-  // [ ] value-id-list ::= value-id (`,` value-id)*
-
-  // // Uses of value, e.g. in an operand list to an operation.
-  // [x] value-use ::= value-id (`#` decimal-literal)?
-  // [x] value-use-list ::= value-use (`,` value-use)*
-
-  def simplifyValueName(valueUse: (String, Option[Int])): String =
-    valueUse match {
-      case (name, Some(number)) => s"$name#$number"
-      case (name, None)         => name
-    }
-
-  def BareId[$: P] = P((Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).rep).!
-
-  def ValueId[$: P] = P("%" ~~ SuffixId)
-
-  def AliasName[$: P] = P(BareId)
-
-  def SuffixId[$: P] = P(
-    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).rep
-  ).!
-
-  def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
-
-  def ValueUseList[$: P] = P(ValueUse ~ ("," ~ ValueUse).rep).map(
-    (valueUseList: (String, Seq[String])) => valueUseList._1 +: valueUseList._2
-  )
 
   ////////////////
   // OPERATIONS //
@@ -302,14 +305,16 @@ class Parser {
   }
 
   def OperationPat[$: P]: P[Operation] = P(
-    OpResultList.?.map(optionlessThis) ~ GenericOperation ~ TrailingLocation.?
+    OpResultList.?.map(
+      optionlessSeq
+    ) ~ GenericOperation ~ TrailingLocation.?
   ).map(generateOperation) // shortened definition TODO: finish...
 
   def GenericOperation[$: P] = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(
-      optionlessThis
-    ) ~ ")" ~ SuccessorList.?.map(optionlessThis) ~ RegionList.?.map(
-      optionlessThis
+      optionlessSeq
+    ) ~ ")" ~ SuccessorList.?.map(optionlessSeq) ~ RegionList.?.map(
+      optionlessSeq
     ) ~ ":" ~ FunctionType
   ) // shortened definition TODO: finish...
 
@@ -363,7 +368,7 @@ class Parser {
   def Block[$: P] = P(BlockLabel ~ OperationPat.rep(1)).map(createBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~ BlockArgList.?.map(optionlessThis)
+    BlockId ~ BlockArgList.?.map(optionlessSeq)
       .map(Scope.defineValues) ~ ":"
   )
 
@@ -380,7 +385,7 @@ class Parser {
     )
 
   def BlockArgList[$: P] =
-    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessThis)
+    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessSeq)
 
   /////////////
   // REGIONS //
@@ -430,13 +435,7 @@ class Parser {
   // [x] type-alias-def ::= `!` alias-name `=` type
   // [x] type-alias ::= `!` alias-name
 
-  def I32[$: P] = P("i32".!)
-  def I64[$: P] = P("i64".!)
-  def BuiltIn[$: P] = P(I32 | I64) // temporary BuiltIn
-
-  def Type[$: P] = P(TypeAlias | BuiltIn).map((typeName: String) =>
-    new Attribute(name = typeName)
-  ) // shortened definition TODO: finish...
+  def Type[$: P] = P(AttrParser.BuiltIn) // shortened definition TODO: finish...
 
   def TypeListNoParens[$: P] =
     P(Type ~ ("," ~ Type).rep).map((types: (Attribute, Seq[Attribute])) =>
@@ -461,12 +460,18 @@ class Parser {
   // ATTRIBUTES //
   ////////////////
 
-  // [ ] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
-  // [ ] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
+  // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
+  // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
   // // Attribute Value Aliases
-  // [ ] - attribute-alias-def ::= `#` alias-name `=` attribute-value
-  // [ ] - attribute-alias ::= `#` alias-name
+  // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
+  // [x] - attribute-alias ::= `#` alias-name
+
+  def AttributeEntry[$: P] = P((BareId | StringLiteral) ~ "=" ~ AttributeValue)
+  def AttributeValue[$: P] = P(AttributeAlias) // | BuiltInAttribute)
+
+  def AttributeAliasDef[$: P] = P("#" ~ AliasName ~ "=" ~ AttributeValue)
+  def AttributeAlias[$: P] = P("#" ~ AliasName)
 
   ///////////////////
   // DIALECT TYPES //
