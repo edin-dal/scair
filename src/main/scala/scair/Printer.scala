@@ -101,7 +101,7 @@ class Printer {
   def printOperation(op: Operation, indentLevel: Int = 0): String = {
 
     val open: String =
-      if (op.regions.length > 0) indent * indentLevel + "(" else ""
+      if (op.regions.length > 0) indent * indentLevel + " (" else ""
     val close: String =
       if (op.regions.length > 0) ")" else ""
 
@@ -129,14 +129,32 @@ class Printer {
     val operationRegions: String =
       open + (for { region <- op.regions } yield printRegion(
         region,
-        indentLevel + 1
+        indentLevel
       )).mkString(", ") + close
 
     val operationSuccessors: String =
       if (op.successors.length > 0)
-        "[" + (for { successor <- op.successors } yield blockNameMap(successor))
+        "[" + (for { successor <- op.successors } yield blockNameMap(
+          successor
+        ))
           .map((x: String) => "^" + x)
           .mkString(", ") + "]"
+      else ""
+
+    val dictionaryProperties: String =
+      if (op.dictionaryProperties.size > 0)
+        " <{" + (for {
+          (key, value) <- op.dictionaryProperties
+        } yield s"$key = $value")
+          .mkString(", ") + "}>"
+      else ""
+
+    val dictionaryAttributes: String =
+      if (op.dictionaryAttributes.size > 0)
+        " {" + (for {
+          (key, value) <- op.dictionaryAttributes
+        } yield s"$key = $value")
+          .mkString(", ") + "}"
       else ""
 
     val functionType: String =
@@ -144,7 +162,7 @@ class Printer {
         ") -> (" +
         resultsTypes.mkString(", ") + ")"
 
-    return indent * indentLevel + operationResults + "\"" + op.name + "\"(" + operationOperands + ")" + operationSuccessors + operationRegions + " : " + functionType
+    return indent * indentLevel + s"$operationResults${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
   }
 
   def printProgram(programSequence: Seq[Operation]): String = {

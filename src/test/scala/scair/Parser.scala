@@ -214,14 +214,18 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                       Value(I64),
                       Value(I32)
                     ),
-                    Seq()
+                    Seq(),
+                    _,
+                    _
                   ),
                   Operation(
                     "test.op",
                     Seq(Value(I64), Value(I32)),
                     Seq(),
                     Seq(),
-                    Seq()
+                    Seq(),
+                    _,
+                    _
                   )
                 ),
                 Seq(Value(I32))
@@ -256,14 +260,18 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                           Value(I64),
                           Value(I32)
                         ),
-                        Seq()
+                        Seq(),
+                        _,
+                        _
                       ),
                       Operation(
                         "test.op",
                         Seq(Value(I64), Value(I32)),
                         Seq(),
                         Seq(),
-                        Seq()
+                        Seq(),
+                        _,
+                        _
                       )
                     ),
                     Seq(Value(I32))
@@ -279,7 +287,9 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                           Value(I64),
                           Value(I32)
                         ),
-                        Seq()
+                        Seq(),
+                        _,
+                        _
                       ),
                       Operation(
                         "test.op",
@@ -289,7 +299,9 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                         ),
                         Seq(),
                         Seq(),
-                        Seq()
+                        Seq(),
+                        _,
+                        _
                       )
                     ),
                     Seq(Value(I32))
@@ -477,7 +489,9 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                     Value(I64),
                     Value(I32)
                   ),
-                  Seq()
+                  Seq(),
+                  _,
+                  _
                 )
               ),
               48
@@ -504,14 +518,18 @@ class ParserTest extends FlatSpec with BeforeAndAfter {
                     r1,
                     r2
                   ),
-                  Seq()
+                  Seq(),
+                  _,
+                  _
                 ),
                 Operation(
                   "test.op",
                   Seq(o0, o1),
                   Seq(),
                   Seq(),
-                  Seq()
+                  Seq(),
+                  _,
+                  _
                 )
               ),
               85

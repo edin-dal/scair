@@ -62,10 +62,10 @@ class PrinterTest extends FlatSpec with BeforeAndAfter {
         )
       )
     )
-    val expected = """%0 = "op1"(%1)({
-                     |  ^bb0():
-                     |    "op2"() : () -> ()
-                     |  }) : (f32) -> (f32)""".stripMargin
+    val expected = """%0 = "op1"(%1) ({
+                     |^bb0():
+                     |  "op2"() : () -> ()
+                     |}) : (f32) -> (f32)""".stripMargin
     val result = printer.printOperation(operation)
     result shouldEqual expected
   }
@@ -120,12 +120,12 @@ class PrinterTest extends FlatSpec with BeforeAndAfter {
           )
         )
       )
-    val expected = """"op1"()({
-                     |  ^bb0():
+    val expected = """"op1"() ({
+                     |^bb0():
                      |
-                     |  ^bb1():
-                     |    "test.op"()[^bb0] : () -> ()
-                     |  }) : () -> ()""".stripMargin
+                     |^bb1():
+                     |  "test.op"()[^bb0] : () -> ()
+                     |}) : () -> ()""".stripMargin
     val result = printer.printOperation(program)
     result shouldEqual expected
   }
