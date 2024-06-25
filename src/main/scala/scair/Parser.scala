@@ -46,6 +46,7 @@ object Parser {
     }
     rec(current = ctx.index, state = 0)
   }
+
   //////////////////////
   // COMMON FUNCTIONS //
   //////////////////////

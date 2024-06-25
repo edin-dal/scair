@@ -1,6 +1,6 @@
 package scair
 
-import fastparse._
+import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
