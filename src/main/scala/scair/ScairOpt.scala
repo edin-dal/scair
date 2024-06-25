@@ -7,12 +7,14 @@ case class Args(
 object ScairOpt {
   def main(args: Array[String]): Unit = {
 
+    // Define CLI args
     val argbuilder = OParser.builder[Args]
     val argparser = {
       import argbuilder._
       OParser.sequence(
         programName("scair-opt"),
         head("scair-opt", "0"),
+        // The input file - defaulting to stdin
         arg[String]("file")
           .optional()
           .text("input file")
@@ -20,12 +22,16 @@ object ScairOpt {
       )
     }
 
+    // Parse the CLI args
     OParser.parse(argparser, args, Args()) match {
       case Some(args) =>
+        // Open the input file or stdin
         val input = args.input match {
           case Some(file) => Source.fromFile(file)
           case None       => Source.stdin
         }
+
+        // Parse content
         val parser = new scair.Parser
         val module = parser.parseThis(
           input.mkString,
@@ -35,8 +41,11 @@ object ScairOpt {
           case fastparse.Parsed.Failure(_, _, extra) =>
             sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
         }
+
+        // Print the parsed module if not errored
         val output = scair.Printer.printOperation(module)
         println(output)
+
       case _ =>
     }
   }
