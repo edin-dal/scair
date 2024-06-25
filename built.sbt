@@ -4,7 +4,7 @@ scalaVersion := scala_version
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scala_version,
-  "com.lihaoyi" %% "fastparse" % "2.2.2",
+  "com.lihaoyi" %% "fastparse" % "3.1.0",
   "org.scalatest" % "scalatest_2.12" % "3.1.1" % "test",
   "com.github.scopt" %% "scopt" % "4.1.0"
 )
