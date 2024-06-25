@@ -1,16 +1,23 @@
 package scair
 
+import org.scalatest._
+import Inspectors._
+import flatspec._
+import matchers.should.Matchers._
+import prop._
+import Tables._
+import exceptions._
+
 import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import org.scalatest._
-import Matchers._
 import Parser._
-import org.scalatest.prop.Tables.Table
-import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
 
-class ParserTest extends FlatSpec with BeforeAndAfter {
+class ParserTest
+    extends AnyFlatSpec
+    with BeforeAndAfter
+    with TableDrivenPropertyChecks {
 
   val I32 = IntegerType(32, Signless)
   val I64 = IntegerType(64, Signless)

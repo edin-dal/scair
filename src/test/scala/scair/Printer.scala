@@ -1,13 +1,17 @@
 package scair
 
 import org.scalatest._
+import Inspectors._
+import flatspec._
+import matchers.should.Matchers._
+import prop._
+
 import scala.collection.mutable
-import Matchers._
 import Parser._
 
-class PrinterTest extends FlatSpec with BeforeAndAfter {
+class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
-  var printer = new Printer
+  var printer = new Printer();
 
   before {
     printer = new Printer
