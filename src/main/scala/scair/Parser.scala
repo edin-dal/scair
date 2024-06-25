@@ -247,12 +247,12 @@ class Parser {
   // [x] op-result             ::= value-id (`:` integer-literal)?
   // [x] successor-list        ::= `[` successor (`,` successor)* `]`
   // [x] successor             ::= caret-id (`:` block-arg-list)?
-  // [ ] dictionary-properties ::= `<` dictionary-attribute `>`
+  // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] region-list           ::= `(` region (`,` region)* `)`
-  // [ ] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
+  // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
   // [x] trailing-location     ::= `loc` `(` location `)`
 
-  //  results      name     operands   successors   regions   (op types      res types)
+  //  results      name     operands   successors  dictprops  regions  dictattr  (op types      res types)
   def generateOperation(
       operation: (
           Seq[String],
@@ -260,7 +260,9 @@ class Parser {
               String,
               Seq[String],
               Seq[String],
+              Seq[(String, Attribute)],
               Seq[Region],
+              Seq[(String, Attribute)],
               (Seq[Attribute], Seq[Attribute])
           )
       )
@@ -270,9 +272,11 @@ class Parser {
     val opName = operation._2._1
     val operands: Seq[String] = operation._2._2
     val successors: Seq[String] = operation._2._3
-    val regions: Seq[Region] = operation._2._4
-    val resultsTypes = operation._2._5._2
-    val operandsTypes = operation._2._5._1
+    val dictProperties: Seq[(String, Attribute)] = operation._2._4
+    val regions: Seq[Region] = operation._2._5
+    val dictAttributes: Seq[(String, Attribute)] = operation._2._6
+    val resultsTypes = operation._2._7._2
+    val operandsTypes = operation._2._7._1
 
     if (results.length != resultsTypes.length) {
       throw new Exception("E")
@@ -280,6 +284,24 @@ class Parser {
 
     if (operands.length != operandsTypes.length) {
       throw new Exception("E")
+    }
+
+    val dictPropertiesMap: Map[String, Attribute] =
+      dictProperties.map({ case (x, y) => x -> y }).toMap
+
+    if (dictProperties.length != dictPropertiesMap.size) {
+      throw new Exception(
+        "Dictionary Properties names in Operation " + opName + " are cloned."
+      )
+    }
+
+    val dictAttributesMap: Map[String, Attribute] =
+      dictAttributes.map({ case (x, y) => x -> y }).toMap
+
+    if (dictAttributes.length != dictAttributesMap.size) {
+      throw new Exception(
+        "Dictionary Properties names in Operation " + opName + " are cloned."
+      )
     }
 
     val resultss: Seq[Value] = Scope.defineValues(results zip resultsTypes)
@@ -290,7 +312,9 @@ class Parser {
       name = opName,
       operands = operandss,
       successors = Seq(),
+      dictionaryProperties = dictPropertiesMap,
       results = resultss,
+      dictionaryAttributes = dictAttributesMap,
       regions = regions
     )
 
@@ -311,12 +335,12 @@ class Parser {
   ).map(generateOperation) // shortened definition TODO: finish...
 
   def GenericOperation[$: P] = P(
-    StringLiteral ~ "(" ~ ValueUseList.?.map(
-      optionlessSeq
-    ) ~ ")" ~ SuccessorList.?.map(optionlessSeq) ~ RegionList.?.map(
-      optionlessSeq
-    ) ~ ":" ~ FunctionType
-  ) // shortened definition TODO: finish...
+    StringLiteral ~ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
+      ~ SuccessorList.?.map(optionlessSeq)
+      ~ DictionaryProperties.?.map(optionlessSeq)
+      ~ RegionList.?.map(optionlessSeq)
+      ~ DictionaryAttribute.?.map(optionlessSeq) ~ ":" ~ FunctionType
+  )
 
   def OpResultList[$: P] = P(OpResult ~ ("," ~ OpResult).rep ~ "=").map(
     (results: (Seq[String], Seq[Seq[String]])) =>
@@ -329,6 +353,10 @@ class Parser {
       (successors: (String, Seq[String])) => successors._1 +: successors._2
     )
   def Successor[$: P] = P(CaretId) // possibly shortened version
+
+  def DictionaryProperties[$: P] = P("<" ~ DictionaryAttribute ~ ">")
+
+  def DictionaryAttribute[$: P] = P("{" ~ AttributeEntry.rep(sep = ",") ~ "}")
 
   def RegionList[$: P] = P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
     .map((x: (Region, Seq[Region])) => x._1 +: x._2)
@@ -429,7 +457,7 @@ class Parser {
   // // Non-empty list of names and types.
   // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
 
-  // [x ] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+  // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
   // // Type aliases
   // [x] type-alias-def ::= `!` alias-name `=` type
@@ -468,7 +496,9 @@ class Parser {
   // [x] - attribute-alias ::= `#` alias-name
 
   def AttributeEntry[$: P] = P((BareId | StringLiteral) ~ "=" ~ AttributeValue)
-  def AttributeValue[$: P] = P(AttributeAlias) // | BuiltInAttribute)
+  def AttributeValue[$: P]: P[Attribute] = P(
+    AttrParser.BuiltIn // | AttributeAlias // | DialectAttribute
+  )
 
   def AttributeAliasDef[$: P] = P("#" ~ AliasName ~ "=" ~ AttributeValue)
   def AttributeAlias[$: P] = P("#" ~ AliasName)

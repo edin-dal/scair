@@ -1,4 +1,5 @@
 package scair
+import scala.collection.immutable
 
 case class Region(
     blocks: Seq[Block],
@@ -35,15 +36,18 @@ case class Value(
 
 case class Operation(
     name: String,
-    operands: Seq[Value],
-    var successors: Seq[Block],
-    results: Seq[Value],
-    regions: Seq[Region]
+    operands: Seq[Value] = Seq(),
+    var successors: Seq[Block] = Seq(),
+    results: Seq[Value] = Seq[Value](),
+    regions: Seq[Region] = Seq[Region](),
+    dictionaryProperties: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute],
+    dictionaryAttributes: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute]
 ) {
-
-  override def equals(o: Any): Boolean = {
-    return this eq o.asInstanceOf[AnyRef]
-  }
+  // override def equals(o: Any): Boolean = {
+  //   return this eq o.asInstanceOf[AnyRef]
+  // }
 }
 
 object IR {

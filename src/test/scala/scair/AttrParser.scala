@@ -337,10 +337,11 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
                      |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
                      |  }) : () -> ()""".stripMargin
 
-    parser.parseThis(
-      text = input,
-      pattern = parser.OperationPat(_)
-    ) should matchPattern {
+    parser
+      .parseThis(
+        text = input,
+        pattern = parser.OperationPat(_)
+      ) should matchPattern {
       case Parsed.Success(
             Operation(
               "op1",
@@ -361,7 +362,9 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
                             Value(IntegerType(64, Signed)),
                             Value(IntegerType(80, Unsigned))
                           ),
-                          Seq()
+                          Seq(),
+                          _,
+                          _
                         )
                       ),
                       Seq(Value(F128))
@@ -369,7 +372,9 @@ class AttrParserTest extends FlatSpec with BeforeAndAfter {
                   ),
                   None
                 )
-              )
+              ),
+              _,
+              _
             ),
             98
           ) =>
