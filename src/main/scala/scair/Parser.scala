@@ -39,7 +39,6 @@ object Parser {
           case 2 =>
             (currentChar: @switch) match {
               case '/' => rec(current + 1, state = 1)
-              case '*' => rec(current + 1, state = 3)
               case _   => ctx.freshSuccessUnit(current - 1)
             }
         }
