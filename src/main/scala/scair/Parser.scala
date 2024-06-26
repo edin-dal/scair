@@ -466,7 +466,16 @@ class Parser {
   // [x] - region        ::= `{` operation* block* `}`
 
   def defineRegion(parseResult: (Seq[Operation], Seq[Block])): Region = {
-    return new Region(blocks = parseResult._2)
+    return parseResult._1.length match {
+      case 0 => new Region(blocks = parseResult._2)
+      case _ =>
+        new Region(blocks =
+          new Block(
+            operations = parseResult._1,
+            arguments = Seq()
+          ) +: parseResult._2
+        )
+    }
   }
 
   // EntryBlock might break - take out if it does...

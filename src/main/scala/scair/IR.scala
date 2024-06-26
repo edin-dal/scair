@@ -45,9 +45,9 @@ case class Operation(
     dictionaryAttributes: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute]
 ) {
-  // override def equals(o: Any): Boolean = {
-  //   return this eq o.asInstanceOf[AnyRef]
-  // }
+  override def equals(o: Any): Boolean = {
+    return this eq o.asInstanceOf[AnyRef]
+  }
 }
 
 object IR {
