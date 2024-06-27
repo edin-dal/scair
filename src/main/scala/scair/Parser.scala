@@ -18,7 +18,7 @@ object Parser {
     * It's litteraly fastparse's JavaWhitespace with the /* */ states just
     * erased :)
     */
-  implicit val whitespace: fastparse.Whitespace = { implicit ctx: P[_] =>
+  implicit val whitespace: Whitespace = { implicit ctx: P[_] =>
     val input = ctx.input
     val startIndex = ctx.index
     @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
@@ -53,9 +53,9 @@ object Parser {
 
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
-  def E[_: P](action: => Unit) = {
+  def E[$: P](action: => Unit) = {
     action
-    Pass()
+    Pass(())
   }
 
   def optionlessSeq[A](option: Option[Seq[A]]): Seq[A] = option match {
@@ -132,7 +132,9 @@ object Parser {
       case (name, None)         => name
     }
 
-  def BareId[$: P] = P((Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).rep).!
+  def BareId[$: P] = P(
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).rep
+  ).!
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
@@ -145,9 +147,11 @@ object Parser {
   def ValueUse[$: P] =
     P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
 
-  def ValueUseList[$: P] = P(ValueUse ~ ("," ~ ValueUse).rep).map(
-    (valueUseList: (String, Seq[String])) => valueUseList._1 +: valueUseList._2
-  )
+  def ValueUseList[$: P] =
+    P(ValueUse ~ ("," ~ ValueUse).rep).map(
+      (valueUseList: (String, Seq[String])) =>
+        valueUseList._1 +: valueUseList._2
+    )
 
 }
 
@@ -255,7 +259,7 @@ class Parser {
 
     def switchWithParent(): Unit = parentScope match {
       case Some(x) =>
-        Scope.checkWaitlist
+        Scope.checkWaitlist()
         currentScope = x
       case None =>
         throw new Exception("No parent present - check your")
@@ -271,7 +275,7 @@ class Parser {
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 
   def TopLevel[$: P] = P(
-    OperationPat.rep ~ E(Scope.checkWaitlist) ~ End
+    OperationPat.rep ~ E(Scope.checkWaitlist()) ~ End
   ) // shortened definition TODO: finish...
 
   ////////////////
@@ -385,11 +389,13 @@ class Parser {
       ~ DictionaryAttribute.?.map(optionlessSeq) ~ ":" ~ FunctionType
   )
 
-  def OpResultList[$: P] = P(OpResult ~ ("," ~ OpResult).rep ~ "=").map(
-    (results: (Seq[String], Seq[Seq[String]])) =>
-      results._1 ++ results._2.flatten
+  def OpResultList[$: P] = P(
+    OpResult ~ ("," ~ OpResult).rep ~ "="
+  ).map((results: (Seq[String], Seq[Seq[String]])) =>
+    results._1 ++ results._2.flatten
   )
-  def OpResult[$: P] = P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
+  def OpResult[$: P] =
+    P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
 
   def SuccessorList[$: P] =
     P("[" ~ Successor ~ ("," ~ Successor).rep ~ "]").map(
@@ -397,12 +403,17 @@ class Parser {
     )
   def Successor[$: P] = P(CaretId) // possibly shortened version
 
-  def DictionaryProperties[$: P] = P("<" ~ DictionaryAttribute ~ ">")
+  def DictionaryProperties[$: P] = P(
+    "<" ~ DictionaryAttribute ~ ">"
+  )
 
-  def DictionaryAttribute[$: P] = P("{" ~ AttributeEntry.rep(sep = ",") ~ "}")
+  def DictionaryAttribute[$: P] = P(
+    "{" ~ AttributeEntry.rep(sep = ",") ~ "}"
+  )
 
-  def RegionList[$: P] = P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
-    .map((x: (Region, Seq[Region])) => x._1 +: x._2)
+  def RegionList[$: P] =
+    P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
+      .map((x: (Region, Seq[Region])) => x._1 +: x._2)
 
   def TrailingLocation[$: P] = P(
     "loc" ~ "(" ~ "unknown" ~ ")"
@@ -436,7 +447,8 @@ class Parser {
     return newBlock
   }
 
-  def Block[$: P] = P(BlockLabel ~ OperationPat.rep(1)).map(createBlock)
+  def Block[$: P] =
+    P(BlockLabel ~ OperationPat.rep(1)).map(createBlock)
 
   def BlockLabel[$: P] = P(
     BlockId ~ BlockArgList.?.map(optionlessSeq)
@@ -485,9 +497,9 @@ class Parser {
   // EntryBlock might break - take out if it does...
   def Region[$: P] = P(
     "{" ~ E(
-      currentScope.switchWithChild
+      currentScope.switchWithChild()
     ) ~ OperationPat.rep ~ Block.rep ~ "}" ~ E(
-      currentScope.switchWithParent
+      currentScope.switchWithParent()
     )
   ).map(defineRegion)
 
@@ -515,16 +527,21 @@ class Parser {
   // [x] type-alias-def ::= `!` alias-name `=` type
   // [x] type-alias ::= `!` alias-name
 
-  def Type[$: P] = P(AttrParser.BuiltIn) // shortened definition TODO: finish...
+  def Type[$: P] = P(
+    AttrParser.BuiltIn
+  ) // shortened definition TODO: finish...
 
   def TypeListNoParens[$: P] =
     P(Type ~ ("," ~ Type).rep).map((types: (Attribute, Seq[Attribute])) =>
       types._1 +: types._2
     )
 
-  def TypeListParens[$: P] = P(ClosedParens | "(" ~ TypeListNoParens ~ ")")
+  def TypeListParens[$: P] = P(
+    ClosedParens | "(" ~ TypeListNoParens ~ ")"
+  )
 
-  def ClosedParens[$: P] = P("(" ~ ")").map(_ => Seq[Attribute]())
+  def ClosedParens[$: P] =
+    P("(" ~ ")").map(_ => Seq[Attribute]())
 
   def FunctionType[$: P] = P(
     (Type.map(Seq(_)) | TypeListParens) ~ "->" ~ (Type.map(
@@ -532,7 +549,9 @@ class Parser {
     ) | TypeListParens)
   )
 
-  def TypeAliasDef[$: P] = P("!" ~~ AliasName ~ "=" ~ Type)
+  def TypeAliasDef[$: P] = P(
+    "!" ~~ AliasName ~ "=" ~ Type
+  )
 
   def TypeAlias[$: P] = P("!" ~~ AliasName)
 
@@ -547,12 +566,16 @@ class Parser {
   // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
   // [x] - attribute-alias ::= `#` alias-name
 
-  def AttributeEntry[$: P] = P((BareId | StringLiteral) ~ "=" ~ AttributeValue)
-  def AttributeValue[$: P]: P[Attribute] = P(
+  def AttributeEntry[$: P] = P(
+    (BareId | StringLiteral) ~ "=" ~ AttributeValue
+  )
+  def AttributeValue[$: P] = P(
     AttrParser.BuiltIn // | AttributeAlias // | DialectAttribute
   )
 
-  def AttributeAliasDef[$: P] = P("#" ~ AliasName ~ "=" ~ AttributeValue)
+  def AttributeAliasDef[$: P] = P(
+    "#" ~ AliasName ~ "=" ~ AttributeValue
+  )
   def AttributeAlias[$: P] = P("#" ~ AliasName)
 
   ///////////////////

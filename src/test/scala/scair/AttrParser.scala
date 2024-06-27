@@ -1,16 +1,19 @@
 package scair
 
 import org.scalatest._
+import flatspec._
+import matchers.should.Matchers._
+import prop._
+
 import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import Matchers._
 import Parser._
 import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
 
-class AttrParserTest extends FlatSpec with BeforeAndAfter {
+class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer
 
