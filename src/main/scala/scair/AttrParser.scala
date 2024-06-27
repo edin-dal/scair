@@ -5,6 +5,7 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 import Parser._
+import org.w3c.dom.Attr
 
 /*
 
@@ -69,6 +70,15 @@ case class StringAttribute(val stringLiteral: String)
   override def toString = "\"" + stringLiteral + "\""
 }
 
+case class RankedTensorType(
+    val dimensionList: Seq[Int],
+    val typ: Attribute,
+    val encoding: Option[Attribute]
+) extends Type("builtin.ranked_tensor") {}
+
+case class UnrankedTensorType(val typ: Attribute)
+    extends Type("builtin.unranked_tensor") {}
+
 object AttrParser {
 
   ////////////////
@@ -112,7 +122,7 @@ object AttrParser {
   /////////////////////
 
   def ArrayAttributeP[$: P]: P[Attribute] = P(
-    "[" ~ (BuiltIn
+    "[" ~ (AttributeValue
       .rep(sep = ","))
       .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
@@ -125,12 +135,60 @@ object AttrParser {
     Parser.StringLiteral.map((x: String) => StringAttribute(stringLiteral = x))
   ) // shortened definition omits typing information
 
-  //////////////////////////
-  // DICTIONARY ATTRIBUTE //
-  //////////////////////////
+  /////////////////
+  // MEMREF TYPE //
+  /////////////////
+
+  // memref type
+  // memref-type ::= 'memref' ~ '<' ~ ( ranked-memref-type | unranked-memref-type ) ~ '>'
+
+  // ranked-memref-type ::= shape type (`,` layout-specification)? (`,` memory-space)?
+
+  // 'Unranked' memref type
+  // unranked-memref-type ::= '*' ~ 'x'.? ~ type ~ (`,` memory-space)?
+
+  // layout-specification ::= attribute-value
+  // memory-space ::= attribute-value
+  // shape ::= ranked-shape | unranked-shape
+  // ranked-shape ::= (dimension `x`)* type
+  // unranked-shape ::= `*`x type
+  // dimension ::= `?` | decimal-literal
+
+  /////////////////
+  // TENSOR TYPE //
+  /////////////////
+
+  // tensor-type           ::=   `tensor` `<` (ranked-tensor-type | unranked-tensor-type) `>`
+  // ranked-tensor-type    ::=   dimension-list type (`,` encoding)?
+  // unranked-tensor-type  ::=   `*` `x` type
+  // dimension-list        ::=   (dimension `x`)*
+  // dimension             ::=   `?` | decimal-literal
+  // encoding              ::=   attribute-value
+
+  def TensorTypeP[$: P]: P[Attribute] = P(
+    "tensor" ~ "<" ~ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
+  )
+  def RankedTensorTypeP[$: P]: P[Attribute] = P(
+    DimensionList ~ Type ~ ("," ~ Encoding).?
+  ).map((x: (Seq[Int], Attribute, Option[Attribute])) =>
+    RankedTensorType(dimensionList = x._1, typ = x._2, encoding = x._3)
+  )
+
+  def UnrankedTensorTypeP[$: P]: P[Attribute] =
+    P("*" ~ "x" ~ Type).map((x: Attribute) => UnrankedTensorType(typ = x))
+
+  def DimensionList[$: P] = P((Dimension ~ "x").rep)
+
+  def Dimension[$: P] = P("-1".!.map(x => x.toInt) | DecimalLiteral)
+
+  def Encoding[$: P] = P(AttributeValue)
+
+  //////////////
+  // BUILT IN //
+  //////////////
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP
+    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP
   )
 
   def main(args: Array[String]): Unit = {
