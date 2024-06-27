@@ -229,7 +229,8 @@ class Parser {
             throw new Exception(s"Successor ^${name} not defined within Scope")
           case true => scope.blockMap(name)
         }
-        operation.successors = successorList
+        operation.successors.clear()
+        operation.successors.appendAll(successorList)
       }
     }
   }
@@ -353,10 +354,10 @@ class Parser {
 
     val operandss: Seq[Value] = Scope.useValues(operands zip operandsTypes)
 
-    val op = new Operation(
+    val op = new UnregisteredOperation(
       name = opName,
       operands = operandss,
-      successors = Seq(),
+      successors = collection.mutable.ArrayBuffer(),
       dictionaryProperties = dictPropertiesMap,
       results = resultss,
       dictionaryAttributes = dictAttributesMap,

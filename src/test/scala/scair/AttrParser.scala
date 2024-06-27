@@ -13,6 +13,9 @@ import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
 
+import scair.dialects.builtin._
+import scala.collection.mutable.ArrayBuffer
+
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer
@@ -114,23 +117,17 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val block1 = Block(
       Seq(
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(),
-          Seq(),
-          Seq(
+          results = Seq(
             valF32,
             valF64,
             Value(F80)
-          ),
-          Seq()
+          )
         ),
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(valF64, valF32),
-          Seq(),
-          Seq(),
-          Seq()
+          operands = Seq(valF64, valF32)
         )
       ),
       Seq(Value(F128))
@@ -138,26 +135,21 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val block2 = Block(
       Seq(
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(),
-          Seq(block1),
-          Seq(
+          successors = mutable.ArrayBuffer(block1),
+          results = Seq(
             valI1,
             valI16,
             Value(I32)
-          ),
-          Seq()
+          )
         ),
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(
+          operands = Seq(
             valI16,
             valI1
-          ),
-          Seq(),
-          Seq(),
-          Seq()
+          )
         )
       ),
       Seq(Value(I32))
@@ -165,33 +157,24 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val block3 = Block(
       Seq(
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(),
-          Seq(),
-          Seq(
+          results = Seq(
             valINDEX
-          ),
-          Seq()
+          )
         ),
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(valINDEX),
-          Seq(),
-          Seq(),
-          Seq()
+          operands = Seq(valINDEX)
         )
       ),
       Seq(Value(I64))
     )
 
     val program =
-      Operation(
+      UnregisteredOperation(
         "op1",
-        Seq(),
-        Seq(),
-        Seq(),
-        Seq(
+        regions = Seq(
           Region(
             Seq(
               block1,
@@ -224,23 +207,17 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val block1 = new Block(
       Seq(
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(),
-          Seq(),
-          Seq(
+          operands = Seq(
             valF32,
             valF64,
             Value(F80)
-          ),
-          Seq()
+          )
         ),
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(valF64, valF32),
-          Seq(),
-          Seq(),
-          Seq()
+          results = Seq(valF64, valF32)
         )
       ),
       Seq(Value(F16))
@@ -248,26 +225,21 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val block2 = new Block(
       Seq(
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(),
-          Seq(block1),
-          Seq(
+          successors = mutable.ArrayBuffer(block1),
+          results = Seq(
             valI1,
             valI16,
             Value(I32)
-          ),
-          Seq()
+          )
         ),
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(
+          operands = Seq(
             valI16,
             valI1
-          ),
-          Seq(),
-          Seq(),
-          Seq()
+          )
         )
       ),
       Seq(Value(F128))
@@ -275,33 +247,24 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val block3 = new Block(
       Seq(
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(),
-          Seq(),
-          Seq(
+          results = Seq(
             valINDEX
-          ),
-          Seq()
+          )
         ),
-        Operation(
+        UnregisteredOperation(
           "test.op",
-          Seq(valINDEX),
-          Seq(),
-          Seq(),
-          Seq()
+          operands = Seq(valINDEX)
         )
       ),
       Seq(Value(I64))
     )
 
     val program =
-      Operation(
+      UnregisteredOperation(
         "op1",
-        Seq(),
-        Seq(),
-        Seq(),
-        Seq(
+        regions = Seq(
           Region(
             Seq(
               block1,
@@ -346,20 +309,20 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         pattern = parser.OperationPat(_)
       ) should matchPattern {
       case Parsed.Success(
-            Operation(
+            UnregisteredOperation(
               "op1",
               Seq(),
-              Seq(),
+              ArrayBuffer(),
               Seq(),
               Seq(
                 Region(
                   Seq(
                     Block(
                       Seq(
-                        Operation(
+                        UnregisteredOperation(
                           "test.op",
                           Seq(),
-                          Seq(),
+                          ArrayBuffer(),
                           Seq(
                             Value(IntegerType(32, Signless)),
                             Value(IntegerType(64, Signed)),
