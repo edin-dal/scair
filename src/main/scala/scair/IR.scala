@@ -5,7 +5,6 @@ case class Region(
     blocks: Seq[Block],
     parent: Option[Operation] = None
 ) {
-
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
@@ -15,7 +14,6 @@ case class Block(
     operations: Seq[Operation],
     arguments: Seq[Value]
 ) {
-
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
@@ -28,7 +26,6 @@ case class Value(
     // val name: String,
     typ: Attribute
 ) {
-
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
@@ -45,9 +42,19 @@ case class Operation(
     dictionaryAttributes: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute]
 ) {
-  // override def equals(o: Any): Boolean = {
-  //   return this eq o.asInstanceOf[AnyRef]
-  // }
+
+  override def hashCode(): Int = {
+    return this.productArity * 41 +
+      this.name.hashCode() +
+      this.operands.hashCode() +
+      this.results.hashCode() +
+      this.regions.hashCode() +
+      this.dictionaryProperties.hashCode() +
+      this.dictionaryAttributes.hashCode()
+  }
+  override def equals(o: Any): Boolean = {
+    return this eq o.asInstanceOf[AnyRef]
+  }
 }
 
 object IR {
