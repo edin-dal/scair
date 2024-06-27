@@ -433,16 +433,11 @@ class Parser {
     return op
   }
 
-  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
-    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
-    case (name, None)          => Seq(name)
-  }
-
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.?.map(
       optionlessSeq
-    ) ~ GenericOperation ~ TrailingLocation.?
-  ).map(generateOperation) // shortened definition TODO: finish...
+    ) ~ GenericOperation ~/ TrailingLocation.?
+  ).map(generateOperation) // shortened definition TODO: custom-operation
 
   def GenericOperation[$: P] = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
@@ -455,6 +450,11 @@ class Parser {
   def OpResultList[$: P] = P(
     OpResult.rep(1, sep = ",") ~ "="
   ).map((results: Seq[Seq[String]]) => results.flatten)
+
+  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
+    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
+    case (name, None)          => Seq(name)
+  }
 
   def OpResult[$: P] =
     P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)

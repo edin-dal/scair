@@ -5,24 +5,8 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 import Parser._
+import Printer._
 import org.w3c.dom.Attr
-
-/*
-
-int
-float
-index
-
-fucntion type
-ArrayAttr
-
-StringAttr
-
-DictionaryAttr
-
-memref type
-
- */
 
 sealed trait Signedness
 case object Signed extends Signedness
@@ -74,10 +58,36 @@ case class RankedTensorType(
     val dimensionList: Seq[Int],
     val typ: Attribute,
     val encoding: Option[Attribute]
-) extends Type("builtin.ranked_tensor") {}
+) extends Type("builtin.ranked_tensor") {
+
+  override def toString: String = {
+
+    val dimListString = mkStringV2(
+      sequence = dimensionList,
+      sep = "x",
+      end = "x",
+      substitutions = Map(-1 -> "?")
+    )
+
+    // alternative... ugly in my opinion hehe ;)
+    // if (dimensionList.length > 0) dimensionList.map {
+    //   case -1 => "?"
+    //   case x  => x.toString
+    // }
+    // .mkString(start = "", sep = "x", end = "x") else ""
+
+    val encodingString = encoding match {
+      case Some(x) => x.toString
+      case None    => ""
+    }
+    return s"tensor<${dimListString}${typ.toString}${encodingString}>"
+  }
+}
 
 case class UnrankedTensorType(val typ: Attribute)
-    extends Type("builtin.unranked_tensor") {}
+    extends Type("builtin.unranked_tensor") {
+  override def toString = s"tensor<*x${typ.toString}>"
+}
 
 object AttrParser {
 
@@ -166,7 +176,7 @@ object AttrParser {
   // encoding              ::=   attribute-value
 
   def TensorTypeP[$: P]: P[Attribute] = P(
-    "tensor" ~ "<" ~ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
+    "tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
   )
   def RankedTensorTypeP[$: P]: P[Attribute] = P(
     DimensionList ~ Type ~ ("," ~ Encoding).?
@@ -179,7 +189,7 @@ object AttrParser {
 
   def DimensionList[$: P] = P((Dimension ~ "x").rep)
 
-  def Dimension[$: P] = P("-1".!.map(x => x.toInt) | DecimalLiteral)
+  def Dimension[$: P] = P("?".!.map(_ => -1) | DecimalLiteral)
 
   def Encoding[$: P] = P(AttributeValue)
 
