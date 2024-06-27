@@ -6,7 +6,6 @@ import scala.util.{Try, Success, Failure}
 import IR._
 import Parser._
 import Printer._
-import org.w3c.dom.Attr
 
 sealed trait Signedness
 case object Signed extends Signedness
