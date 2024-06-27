@@ -5,14 +5,14 @@
   ^bb0():
     "test.op"()[^bb1] : () -> ()
   ^bb1():
-    "test.op"() : () -> ()
+    "test.op"()[^bb0] : () -> ()
   }) : () -> ()
 
   // CHECK:      "op1"() ({
   // CHECK-NEXT: ^bb1():
   // CHECK-NEXT:   "test.op"()[^bb2] : () -> ()
   // CHECK-NEXT: ^bb2():
-  // CHECK-NEXT:   "test.op"() : () -> ()
+  // CHECK-NEXT:   "test.op"()[^bb1] : () -> ()
   // CHECK-NEXT: }) : () -> ()
 
   "op1"() ({

@@ -30,7 +30,8 @@ class Printer {
 
   def assignBlockName(block: Block): String =
     blockNameMap.contains(block) match {
-      case true => blockNameMap(block)
+      case true =>
+        blockNameMap(block)
       case false =>
         val name = s"bb${blockNextID.toString}"
         blockNextID = blockNextID + 1
@@ -195,7 +196,7 @@ object Printer {
                  |  ^bb3():
                  |    "test.op"()[^bb4] : () -> ()
                  |  ^bb4():
-                 |    "test.op"() : () -> ()
+                 |    "test.op"()[^bb3] : () -> ()
                  |  }) : () -> ()""".stripMargin
 
     val Parsed.Success(res, x) = parser.parseThis(
