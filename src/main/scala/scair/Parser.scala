@@ -214,6 +214,8 @@ class Parser {
         scope.blockMap(blockName) = block
     }
 
+    // check block waitlist once you exit the local scope of a region,
+    // as well as the global scope of the program at the end
     def checkWaitlist()(implicit scope: Scope): Unit = {
 
       for ((operation, successors) <- scope.blockWaitlist) {
@@ -295,7 +297,7 @@ class Parser {
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
   // [x] trailing-location     ::= `loc` `(` location `)`
 
-  //  results      name     operands   successors  dictprops  regions  dictattr  (op types      res types)
+  //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
   def generateOperation(
       operation: (
           Seq[String],
@@ -361,7 +363,9 @@ class Parser {
       regions = regions
     )
 
-    currentScope.blockWaitlist += op -> successors
+    if (successors.length > 0) {
+      currentScope.blockWaitlist += op -> successors
+    }
 
     return op
   }
@@ -478,7 +482,16 @@ class Parser {
   // [x] - region        ::= `{` operation* block* `}`
 
   def defineRegion(parseResult: (Seq[Operation], Seq[Block])): Region = {
-    return new Region(blocks = parseResult._2)
+    return parseResult._1.length match {
+      case 0 => new Region(blocks = parseResult._2)
+      case _ =>
+        new Region(blocks =
+          new Block(
+            operations = parseResult._1,
+            arguments = Seq()
+          ) +: parseResult._2
+        )
+    }
   }
 
   // EntryBlock might break - take out if it does...

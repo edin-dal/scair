@@ -30,7 +30,8 @@ class Printer {
 
   def assignBlockName(block: Block): String =
     blockNameMap.contains(block) match {
-      case true => blockNameMap(block)
+      case true =>
+        blockNameMap(block)
       case false =>
         val name = s"bb${blockNextID.toString}"
         blockNextID = blockNextID + 1
@@ -60,6 +61,8 @@ class Printer {
   // )
   def printBlock(block: Block, indentLevel: Int = 0): String = {
 
+    val blockName = assignBlockName(block)
+
     val blockArguments: String =
       (for { arg <- block.arguments } yield printBlockArgument(arg))
         .mkString(", ")
@@ -69,7 +72,7 @@ class Printer {
         .mkString("\n")
 
     val blockHead: String =
-      indent * indentLevel + s"^${assignBlockName(block)}(${blockArguments}):\n"
+      indent * indentLevel + s"^${blockName}(${blockArguments}):\n"
 
     return blockHead + blockOperations
   }
@@ -134,7 +137,7 @@ class Printer {
 
     val operationSuccessors: String =
       if (op.successors.length > 0)
-        "[" + (for { successor <- op.successors } yield blockNameMap(
+        "[" + (for { successor <- op.successors } yield assignBlockName(
           successor
         ))
           .map((x: String) => "^" + x)
@@ -176,6 +179,7 @@ class Printer {
     return programPrint
   }
 }
+
 object Printer {
   def main(args: Array[String]): Unit = {
     // println("Printer")
@@ -188,8 +192,15 @@ object Printer {
                   |    %1, %2, %3 = "test.op"() : () -> (f32, si64, ui80)
                   |  }) : () -> ()""".stripMargin
 
+    val text = """"op1"()({
+                 |  ^bb3():
+                 |    "test.op"()[^bb4] : () -> ()
+                 |  ^bb4():
+                 |    "test.op"()[^bb3] : () -> ()
+                 |  }) : () -> ()""".stripMargin
+
     val Parsed.Success(res, x) = parser.parseThis(
-      text = input,
+      text = text,
       pattern = parser.OperationPat(_)
     )
 
