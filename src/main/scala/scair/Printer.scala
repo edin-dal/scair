@@ -181,6 +181,7 @@ class Printer {
 }
 
 object Printer {
+
   def main(args: Array[String]): Unit = {
     // println("Printer")
 
@@ -199,8 +200,19 @@ object Printer {
                  |    "test.op"()[^bb3] : () -> ()
                  |  }) : () -> ()""".stripMargin
 
+    val text2 = """"builtin.module"() ({
+                  |^bb0():
+                  |  %0 = "test.op1"() {"quoted" = i3298} : () -> (i32)
+                  |  "test.op2"() {hello = tensor<f32>} : () -> ()
+                  |  "test.op3"() {hello = tensor<1xf32>} : () -> ()
+                  |  "test.op4"() {hello = tensor<?xf32>} : () -> ()
+                  |  "test.op5"() {hello = tensor<3x?x5xf32>} : () -> ()
+                  |  "test.op6"() {hello = tensor<?x5x?xf32>} : () -> ()
+                  |  "test.op7"(%0) : (i32) -> ()
+                  |}) : () -> ()""".stripMargin
+
     val Parsed.Success(res, x) = parser.parseThis(
-      text = text,
+      text = text2,
       pattern = parser.OperationPat(_)
     )
 

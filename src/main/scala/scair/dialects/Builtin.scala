@@ -48,3 +48,29 @@ case class StringAttribute(val stringLiteral: String)
     extends Attribute("builtin.string_attribute") {
   override def toString = "\"" + stringLiteral + "\""
 }
+
+case class RankedTensorType(
+    val dimensionList: Seq[Int],
+    val typ: Attribute,
+    val encoding: Option[Attribute]
+) extends TypeAttribute("builtin.ranked_tensor") {
+
+  override def toString: String = {
+
+    val shapeString =
+      (dimensionList.map(x => if (x == -1) "?" else x.toString) :+ typ.toString)
+        .mkString("x")
+
+    val encodingString = encoding match {
+      case Some(x) => x.toString
+      case None    => ""
+    }
+
+    return s"tensor<${shapeString}${encodingString}>"
+  }
+}
+
+case class UnrankedTensorType(val typ: Attribute)
+    extends TypeAttribute("builtin.unranked_tensor") {
+  override def toString = s"tensor<*x${typ.toString}>"
+}
