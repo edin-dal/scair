@@ -13,7 +13,6 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import Parser._
 import AttrParser._
-import scair.dialects.builtin._
 import scala.collection.mutable.ArrayBuffer
 
 class ParserTest

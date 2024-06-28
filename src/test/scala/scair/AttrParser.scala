@@ -13,7 +13,6 @@ import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
 
-import scair.dialects.builtin._
 import scala.collection.mutable.ArrayBuffer
 
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
