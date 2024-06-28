@@ -15,6 +15,8 @@ import AttrParser._
 
 import scala.collection.mutable.ArrayBuffer
 
+import scair.dialects.builtin._
+
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer

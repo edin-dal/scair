@@ -15,6 +15,8 @@ import Parser._
 import AttrParser._
 import scala.collection.mutable.ArrayBuffer
 
+import scair.dialects.builtin._
+
 class ParserTest
     extends AnyFlatSpec
     with BeforeAndAfter
