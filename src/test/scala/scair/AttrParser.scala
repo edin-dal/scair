@@ -15,6 +15,8 @@ import AttrParser._
 
 import scala.collection.mutable.ArrayBuffer
 
+import scair.dialects.builtin._
+
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer
@@ -302,13 +304,6 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                      |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
                      |  }) : () -> ()""".stripMargin
 
-    println(
-      parser
-        .parseThis(
-          text = input,
-          pattern = parser.OperationPat(_)
-        )
-    )
     parser
       .parseThis(
         text = input,
