@@ -153,6 +153,69 @@ object Parser {
         valueUseList._1 +: valueUseList._2
     )
 
+  ///////////
+  // TYPES //
+  ///////////
+
+  // [x] type ::= type-alias | dialect-type | builtin-type
+
+  // [x] type-list-no-parens ::=  type (`,` type)*
+  // [x] type-list-parens ::= `(` `)` | `(` type-list-no-parens `)`
+
+  // // This is a common way to refer to a value with a specified type.
+  // [ ] ssa-use-and-type ::= ssa-use `:` type
+  // [ ] ssa-use ::= value-use
+
+  // // Non-empty list of names and types.
+  // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
+
+  // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+
+  // // Type aliases
+  // [x] type-alias-def ::= `!` alias-name `=` type
+  // [x] type-alias ::= `!` alias-name
+
+  def Type[$: P] = P(
+    AttrParser.BuiltIn
+  ) // shortened definition TODO: finish...
+
+  def ParenTypeList[$: P] = P(
+    "(" ~ Type.rep(sep = ",") ~ ")"
+  )
+
+  def FunctionType[$: P] = P(
+    ParenTypeList ~ "->" ~ (ParenTypeList | Type.rep(exactly = 1))
+  )
+
+  def TypeAliasDef[$: P] = P(
+    "!" ~~ AliasName ~ "=" ~ Type
+  )
+
+  def TypeAlias[$: P] = P("!" ~~ AliasName)
+
+  ////////////////
+  // ATTRIBUTES //
+  ////////////////
+
+  // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
+  // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
+
+  // // Attribute Value Aliases
+  // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
+  // [x] - attribute-alias ::= `#` alias-name
+
+  def AttributeEntry[$: P] = P(
+    (BareId | StringLiteral) ~ "=" ~ AttributeValue
+  )
+  def AttributeValue[$: P] = P(
+    AttrParser.BuiltIn // | AttributeAlias // | DialectAttribute
+  )
+
+  def AttributeAliasDef[$: P] = P(
+    "#" ~ AliasName ~ "=" ~ AttributeValue
+  )
+  def AttributeAlias[$: P] = P("#" ~ AliasName)
+
 }
 
 class Parser {
@@ -371,16 +434,11 @@ class Parser {
     return op
   }
 
-  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
-    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
-    case (name, None)          => Seq(name)
-  }
-
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.?.map(
       optionlessSeq
-    ) ~ GenericOperation ~ TrailingLocation.?
-  ).map(generateOperation) // shortened definition TODO: finish...
+    ) ~ GenericOperation ~/ TrailingLocation.?
+  ).map(generateOperation) // shortened definition TODO: custom-operation
 
   def GenericOperation[$: P] = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
@@ -391,17 +449,19 @@ class Parser {
   )
 
   def OpResultList[$: P] = P(
-    OpResult ~ ("," ~ OpResult).rep ~ "="
-  ).map((results: (Seq[String], Seq[Seq[String]])) =>
-    results._1 ++ results._2.flatten
-  )
+    OpResult.rep(1, sep = ",") ~ "="
+  ).map((results: Seq[Seq[String]]) => results.flatten)
+
+  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
+    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
+    case (name, None)          => Seq(name)
+  }
+
   def OpResult[$: P] =
     P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
 
-  def SuccessorList[$: P] =
-    P("[" ~ Successor ~ ("," ~ Successor).rep ~ "]").map(
-      (successors: (String, Seq[String])) => successors._1 +: successors._2
-    )
+  def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
+
   def Successor[$: P] = P(CaretId) // possibly shortened version
 
   def DictionaryProperties[$: P] = P(
@@ -505,79 +565,6 @@ class Parser {
   ).map(defineRegion)
 
   // def EntryBlock[$: P] = P(OperationPat.rep(1))
-
-  ///////////
-  // TYPES //
-  ///////////
-
-  // [x] type ::= type-alias | dialect-type | builtin-type
-
-  // [x] type-list-no-parens ::=  type (`,` type)*
-  // [x] type-list-parens ::= `(` `)` | `(` type-list-no-parens `)`
-
-  // // This is a common way to refer to a value with a specified type.
-  // [ ] ssa-use-and-type ::= ssa-use `:` type
-  // [ ] ssa-use ::= value-use
-
-  // // Non-empty list of names and types.
-  // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
-
-  // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
-
-  // // Type aliases
-  // [x] type-alias-def ::= `!` alias-name `=` type
-  // [x] type-alias ::= `!` alias-name
-
-  def Type[$: P] = P(
-    AttrParser.BuiltIn
-  ) // shortened definition TODO: finish...
-
-  def TypeListNoParens[$: P] =
-    P(Type ~ ("," ~ Type).rep).map((types: (Attribute, Seq[Attribute])) =>
-      types._1 +: types._2
-    )
-
-  def TypeListParens[$: P] = P(
-    ClosedParens | "(" ~ TypeListNoParens ~ ")"
-  )
-
-  def ClosedParens[$: P] =
-    P("(" ~ ")").map(_ => Seq[Attribute]())
-
-  def FunctionType[$: P] = P(
-    (Type.map(Seq(_)) | TypeListParens) ~ "->" ~ (Type.map(
-      Seq(_)
-    ) | TypeListParens)
-  )
-
-  def TypeAliasDef[$: P] = P(
-    "!" ~~ AliasName ~ "=" ~ Type
-  )
-
-  def TypeAlias[$: P] = P("!" ~~ AliasName)
-
-  ////////////////
-  // ATTRIBUTES //
-  ////////////////
-
-  // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
-  // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
-
-  // // Attribute Value Aliases
-  // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
-  // [x] - attribute-alias ::= `#` alias-name
-
-  def AttributeEntry[$: P] = P(
-    (BareId | StringLiteral) ~ "=" ~ AttributeValue
-  )
-  def AttributeValue[$: P] = P(
-    AttrParser.BuiltIn // | AttributeAlias // | DialectAttribute
-  )
-
-  def AttributeAliasDef[$: P] = P(
-    "#" ~ AliasName ~ "=" ~ AttributeValue
-  )
-  def AttributeAlias[$: P] = P("#" ~ AliasName)
 
   ///////////////////
   // DIALECT TYPES //
