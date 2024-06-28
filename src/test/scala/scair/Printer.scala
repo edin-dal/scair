@@ -9,7 +9,6 @@ import prop._
 import scala.collection.mutable
 import Parser._
 
-import scair.dialects.builtin._
 import scala.collection.mutable.ArrayBuffer
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 

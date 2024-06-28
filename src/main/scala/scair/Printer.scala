@@ -6,8 +6,6 @@ import scala.util.{Try, Success, Failure}
 import IR._
 import AttrParser._
 
-import scair.dialects.builtin._
-
 class Printer {
 
   var indent: String = "  "
