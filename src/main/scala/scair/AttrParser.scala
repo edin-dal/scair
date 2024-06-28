@@ -99,7 +99,11 @@ object AttrParser {
   def RankedTensorTypeP[$: P]: P[Attribute] = P(
     DimensionList ~ Type ~ ("," ~ Encoding).?
   ).map((x: (Seq[Int], Attribute, Option[Attribute])) =>
-    RankedTensorType(dimensionList = x._1, typ = x._2, encoding = x._3)
+    RankedTensorType(
+      dimensionList = ArrayAttribute(x._1.map(IntAttr(_))),
+      typ = x._2,
+      encoding = x._3
+    )
   )
 
   def UnrankedTensorTypeP[$: P]: P[Attribute] =

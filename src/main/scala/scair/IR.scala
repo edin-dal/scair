@@ -19,8 +19,18 @@ case class Block(
   }
 }
 
-abstract class Attribute(val name: String)
-abstract class TypeAttribute(override val name: String) extends Attribute(name)
+abstract sealed class Attribute(val name: String)
+abstract trait TypeAttribute extends Attribute
+
+abstract class ParametrizedAttribute(
+    override val name: String,
+    val parameters: Option[Attribute] | Attribute*
+) extends Attribute(name)
+
+abstract class DataAttribute[D](override val name: String, val data: D)
+    extends Attribute(name) {
+  override def toString = data.toString
+}
 
 case class Value(
     // val name: String,
