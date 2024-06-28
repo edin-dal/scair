@@ -13,6 +13,7 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import Parser._
 import AttrParser._
+import scala.collection.mutable.ArrayBuffer
 
 class ParserTest
     extends AnyFlatSpec
@@ -212,10 +213,10 @@ class ParserTest
         case Parsed.Success(
               Block(
                 Seq(
-                  Operation(
+                  UnregisteredOperation(
                     "test.op",
                     Seq(),
-                    Seq(),
+                    ArrayBuffer(),
                     Seq(
                       Value(I32),
                       Value(I64),
@@ -225,10 +226,10 @@ class ParserTest
                     _,
                     _
                   ),
-                  Operation(
+                  UnregisteredOperation(
                     "test.op",
                     Seq(Value(I64), Value(I32)),
-                    Seq(),
+                    ArrayBuffer(),
                     Seq(),
                     Seq(),
                     _,
@@ -258,10 +259,10 @@ class ParserTest
                 Seq(
                   Block(
                     Seq(
-                      Operation(
+                      UnregisteredOperation(
                         "test.op",
                         Seq(),
-                        Seq(),
+                        ArrayBuffer(),
                         Seq(
                           Value(I32),
                           Value(I64),
@@ -271,10 +272,10 @@ class ParserTest
                         _,
                         _
                       ),
-                      Operation(
+                      UnregisteredOperation(
                         "test.op",
                         Seq(Value(I64), Value(I32)),
-                        Seq(),
+                        ArrayBuffer(),
                         Seq(),
                         Seq(),
                         _,
@@ -285,10 +286,10 @@ class ParserTest
                   ),
                   Block(
                     Seq(
-                      Operation(
+                      UnregisteredOperation(
                         "test.op",
                         Seq(),
-                        Seq(),
+                        ArrayBuffer(),
                         Seq(
                           Value(I32),
                           Value(I64),
@@ -298,13 +299,13 @@ class ParserTest
                         _,
                         _
                       ),
-                      Operation(
+                      UnregisteredOperation(
                         "test.op",
                         Seq(
                           Value(I64),
                           Value(I32)
                         ),
-                        Seq(),
+                        ArrayBuffer(),
                         Seq(),
                         Seq(),
                         _,
@@ -368,15 +369,13 @@ class ParserTest
                  |  }) : () -> ()""".stripMargin
 
       val bb4 = Block(
-        Seq(Operation("test.op", Seq(), Seq(), Seq(), Seq())),
-        Seq()
+        Seq(UnregisteredOperation("test.op"))
       )
       val bb3 = Block(
-        Seq(Operation("test.op", Seq(), Seq(bb4), Seq(), Seq())),
-        Seq()
+        Seq(UnregisteredOperation("test.op", successors = ArrayBuffer(bb4)))
       )
       val operation =
-        Operation("test.op", Seq(), Seq(), Seq(), Seq(Region(Seq(bb3, bb4))))
+        UnregisteredOperation("test.op", regions = Seq(Region(Seq(bb3, bb4))))
 
       parser.parseThis(
         text = text,
@@ -394,10 +393,10 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               Seq(
-                Operation(
+                UnregisteredOperation(
                   "test.op",
                   Seq(),
-                  Seq(),
+                  ArrayBuffer(),
                   Seq(
                     Value(I32),
                     Value(I64),
@@ -423,10 +422,10 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               Seq(
-                Operation(
+                UnregisteredOperation(
                   "test.op",
                   Seq(),
-                  Seq(),
+                  ArrayBuffer(),
                   Seq(
                     r0,
                     r1,
@@ -436,10 +435,10 @@ class ParserTest
                   _,
                   _
                 ),
-                Operation(
+                UnregisteredOperation(
                   "test.op",
                   Seq(o0, o1),
-                  Seq(),
+                  ArrayBuffer(),
                   Seq(),
                   Seq(),
                   _,

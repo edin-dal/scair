@@ -11,8 +11,8 @@ case class Region(
 }
 
 case class Block(
-    operations: Seq[Operation],
-    arguments: Seq[Value]
+    operations: Seq[Operation] = Seq(),
+    arguments: Seq[Value] = Seq()
 ) {
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
@@ -20,7 +20,7 @@ case class Block(
 }
 
 abstract class Attribute(val name: String)
-abstract class Type(override val name: String) extends Attribute(name)
+abstract class TypeAttribute(override val name: String) extends Attribute(name)
 
 case class Value(
     // val name: String,
@@ -31,10 +31,10 @@ case class Value(
   }
 }
 
-case class Operation(
-    name: String,
+abstract sealed case class Operation(
     operands: Seq[Value] = Seq(),
-    var successors: Seq[Block] = Seq(),
+    successors: collection.mutable.ArrayBuffer[Block] =
+      collection.mutable.ArrayBuffer(),
     results: Seq[Value] = Seq[Value](),
     regions: Seq[Region] = Seq[Region](),
     dictionaryProperties: immutable.Map[String, Attribute] =
@@ -42,6 +42,7 @@ case class Operation(
     dictionaryAttributes: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute]
 ) {
+  def name: String
 
   override def hashCode(): Int = {
     return this.productArity * 41 +
@@ -55,6 +56,47 @@ case class Operation(
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
+}
+
+class UnregisteredOperation(
+    val name: String,
+    override val operands: Seq[Value] = Seq(),
+    override val successors: collection.mutable.ArrayBuffer[Block] =
+      collection.mutable.ArrayBuffer(),
+    override val results: Seq[Value] = Seq[Value](),
+    override val regions: Seq[Region] = Seq[Region](),
+    override val dictionaryProperties: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute]
+) extends Operation {}
+
+object UnregisteredOperation {
+  def unapply(op: UnregisteredOperation): (
+      String,
+      Seq[Value],
+      collection.mutable.Seq[Block],
+      Seq[Value],
+      Seq[Region],
+      Map[String, Attribute],
+      Map[String, Attribute]
+  ) = {
+    return (
+      op.name,
+      op.operands,
+      op.successors,
+      op.results,
+      op.regions,
+      op.dictionaryProperties,
+      op.dictionaryAttributes
+    )
+  }
+}
+final case class Dialect(
+    val operation: Seq[Class[Operation]],
+    val attributes: Seq[Class[Attribute]]
+) {
+  // val operations :
 }
 
 object IR {

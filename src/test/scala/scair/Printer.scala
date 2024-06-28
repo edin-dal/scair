@@ -9,6 +9,7 @@ import prop._
 import scala.collection.mutable
 import Parser._
 
+import scala.collection.mutable.ArrayBuffer
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer();
@@ -26,7 +27,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
   "printRegion" should "return the correct string representation of a region" in {
     val region =
       Region(
-        Seq(Block(Seq(Operation("op1", Seq(), Seq(), Seq(), Seq())), Seq()))
+        Seq(Block(Seq(UnregisteredOperation("op1"))))
       )
     val expected = """{
                      |^bb0():
@@ -38,7 +39,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
   "printBlock" should "return the correct string representation of a block" in {
     val block = Block(
-      Seq(Operation("op1", Seq(), Seq(), Seq(), Seq())),
+      Seq(UnregisteredOperation("op1")),
       Seq(Value(I32))
     )
     val expected = """^bb0(%0: i32):
@@ -55,14 +56,17 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "printOperation" should "return the correct string representation of an operation" in {
-    val operation = Operation(
+    val operation = UnregisteredOperation(
       "op1",
-      Seq(new Value(F32)),
-      Seq(),
-      Seq(new Value(F32)),
-      Seq(
+      results = Seq(new Value(F32)),
+      operands = Seq(new Value(F32)),
+      regions = Seq(
         Region(
-          Seq(Block(Seq(Operation("op2", Seq(), Seq(), Seq(), Seq())), Seq()))
+          Seq(
+            Block(
+              Seq(UnregisteredOperation("op2"))
+            )
+          )
         )
       )
     )
@@ -76,8 +80,8 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
   "printProgram" should "return the correct string representation of a program" in {
     val program = Seq(
-      Operation("op1", Seq(), Seq(), Seq(), Seq()),
-      Operation("op2", Seq(), Seq(), Seq(), Seq())
+      UnregisteredOperation("op1"),
+      UnregisteredOperation("op2")
     )
     val expected = """"op1"() : () -> ()
                      |"op2"() : () -> ()""".stripMargin
@@ -98,21 +102,18 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val program =
-      Operation(
+      UnregisteredOperation(
         "op1",
-        Seq(),
-        Seq(),
-        Seq(),
-        Seq(
+        regions = Seq(
           Region(
             Seq(
               successorTestBlock,
               Block(
                 Seq(
-                  Operation(
+                  UnregisteredOperation(
                     "test.op",
                     Seq(),
-                    Seq(successorTestBlock),
+                    ArrayBuffer(successorTestBlock),
                     Seq(),
                     Seq()
                   )
