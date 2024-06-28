@@ -57,7 +57,7 @@ case class RankedTensorType(
     val dimensionList: Seq[Int],
     val typ: Attribute,
     val encoding: Option[Attribute]
-) extends Type("builtin.ranked_tensor") {
+) extends TypeAttribute("builtin.ranked_tensor") {
 
   override def toString: String = {
 
@@ -75,7 +75,7 @@ case class RankedTensorType(
 }
 
 case class UnrankedTensorType(val typ: Attribute)
-    extends Type("builtin.unranked_tensor") {
+    extends TypeAttribute("builtin.unranked_tensor") {
   override def toString = s"tensor<*x${typ.toString}>"
 }
 
