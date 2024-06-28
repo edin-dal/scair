@@ -61,25 +61,16 @@ case class RankedTensorType(
 
   override def toString: String = {
 
-    val dimListString = mkStringV2(
-      sequence = dimensionList,
-      sep = "x",
-      end = "x",
-      substitutions = Map(-1 -> "?")
-    )
-
-    // alternative... ugly in my opinion hehe ;)
-    // if (dimensionList.length > 0) dimensionList.map {
-    //   case -1 => "?"
-    //   case x  => x.toString
-    // }
-    // .mkString(start = "", sep = "x", end = "x") else ""
+    val shapeString =
+      (dimensionList.map(x => if (x == -1) "?" else x.toString) :+ typ.toString)
+        .mkString("x")
 
     val encodingString = encoding match {
       case Some(x) => x.toString
       case None    => ""
     }
-    return s"tensor<${dimListString}${typ.toString}${encodingString}>"
+
+    return s"tensor<${shapeString}${encodingString}>"
   }
 }
 

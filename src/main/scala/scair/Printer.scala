@@ -182,22 +182,6 @@ class Printer {
 
 object Printer {
 
-  def mkStringV2[A](
-      sequence: Seq[A],
-      sep: String = "",
-      start: String = "",
-      end: String = "",
-      substitutions: Map[A, String] = Map.empty[A, String]
-  ): String = {
-    return if (sequence.length > 0)
-      sequence
-        .map((x: A) =>
-          if (substitutions.contains(x)) substitutions(x) else x.toString
-        )
-        .mkString(start, sep, end)
-    else ""
-  }
-
   def main(args: Array[String]): Unit = {
     // println("Printer")
 
