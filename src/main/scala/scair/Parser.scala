@@ -9,8 +9,11 @@ import Parser._
 import scala.annotation.tailrec
 import fastparse.internal.Util
 import scala.annotation.switch
+import scair.MLContext
 
 object Parser {
+
+  val ctx: MLContext = new MLContext()
 
   /** Whitespace syntax that supports // line-comments, *without* /* */
     * comments, as is the case in the MLIR Language Spec.
@@ -61,6 +64,118 @@ object Parser {
   def optionlessSeq[A](option: Option[Seq[A]]): Seq[A] = option match {
     case None    => Seq[A]()
     case Some(x) => x
+  }
+
+  ///////////
+  // SCOPE //
+  ///////////
+
+  object Scope {
+
+    def defineValues(
+        valueIdAndTypeList: Seq[(String, Attribute)]
+    )(implicit
+        scope: Scope
+    ): Seq[Value[Attribute]] = {
+      for {
+        (name, typ) <- valueIdAndTypeList
+      } yield scope.valueMap.contains(name) match {
+        case true =>
+          throw new Exception(s"SSA Value cannot be defined twice %${name}")
+        case false =>
+          val value = new Value(typ = typ)
+          scope.valueMap(name) = value
+          value
+      }
+    }
+
+    def useValues(
+        valueIdAndTypeList: Seq[(String, Attribute)]
+    )(implicit
+        scope: Scope
+    ): Seq[Value[Attribute]] = {
+      for {
+        (name, typ) <- valueIdAndTypeList
+      } yield !scope.valueMap.contains(name) match {
+        case true =>
+          throw new Exception(s"SSA value used but not defined %${name}")
+        case false =>
+          scope.valueMap(name).typ != typ match {
+            case true =>
+              throw new Exception(
+                s"$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
+              )
+            case false =>
+              scope.valueMap(name)
+          }
+      }
+    }
+
+    def defineBlock(
+        blockName: String,
+        block: Block
+    )(implicit
+        scope: Scope
+    ): Unit = scope.blockMap.contains(blockName) match {
+      case true =>
+        throw new Exception(
+          s"Block cannot be defined twice within the same scope - ^${blockName}"
+        )
+      case false =>
+        scope.blockMap(blockName) = block
+    }
+
+    // check block waitlist once you exit the local scope of a region,
+    // as well as the global scope of the program at the end
+    def checkWaitlist()(implicit scope: Scope): Unit = {
+
+      for ((operation, successors) <- scope.blockWaitlist) {
+        val successorList: Seq[Block] = for {
+          name <- successors
+        } yield scope.blockMap
+          .contains(
+            name
+          ) match {
+          case false =>
+            throw new Exception(s"Successor ^${name} not defined within Scope")
+          case true => scope.blockMap(name)
+        }
+        operation.successors.clear()
+        operation.successors.appendAll(successorList)
+      }
+    }
+  }
+
+  class Scope(
+      var valueMap: mutable.Map[String, Value[Attribute]] =
+        mutable.Map.empty[String, Value[Attribute]],
+      var blockMap: mutable.Map[String, Block] =
+        mutable.Map.empty[String, Block],
+      var parentScope: Option[Scope] = None,
+      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
+        mutable.Map.empty[Operation, Seq[String]]
+  ) {
+
+    // child starts off from the parents context
+    def createChild(): Scope = {
+      return new Scope(
+        valueMap = valueMap.clone,
+        blockMap = blockMap.clone,
+        parentScope = Some(this)
+      )
+    }
+
+    def switchWithChild(): Scope = {
+      createChild()
+    }
+
+    def switchWithParent(scope: Scope): Scope = parentScope match {
+      case Some(x) =>
+        Scope.checkWaitlist()(scope)
+        x
+      case None =>
+        throw new Exception("No parent present - check your")
+    }
   }
 
   ///////////////////
@@ -148,10 +263,7 @@ object Parser {
     P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
 
   def ValueUseList[$: P] =
-    P(ValueUse ~ ("," ~ ValueUse).rep).map(
-      (valueUseList: (String, Seq[String])) =>
-        valueUseList._1 +: valueUseList._2
-    )
+    P(ValueUse.rep(sep = ","))
 
   ///////////
   // TYPES //
@@ -216,119 +328,74 @@ object Parser {
   )
   def AttributeAlias[$: P] = P("#" ~ AliasName)
 
+  ////////////////
+  // OPERATIONS //
+  ////////////////
+
+  // [x] op-result-list        ::= op-result (`,` op-result)* `=`
+  // [x] op-result             ::= value-id (`:` integer-literal)?
+  // [x] successor-list        ::= `[` successor (`,` successor)* `]`
+  // [x] successor             ::= caret-id (`:` block-arg-list)?
+  // [x] dictionary-properties ::= `<` dictionary-attribute `>`
+  // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
+  // [x] trailing-location     ::= `loc` `(` location `)`
+
+  def OpResultList[$: P] = P(
+    OpResult.rep(1, sep = ",") ~ "="
+  ).map((results: Seq[Seq[String]]) => results.flatten)
+
+  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
+    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
+    case (name, None)          => Seq(name)
+  }
+
+  def OpResult[$: P] =
+    P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
+
+  def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
+
+  def Successor[$: P] = P(CaretId) // possibly shortened version
+
+  def DictionaryProperties[$: P] = P(
+    "<" ~ DictionaryAttribute ~ ">"
+  )
+
+  def DictionaryAttribute[$: P] = P(
+    "{" ~ AttributeEntry.rep(sep = ",") ~ "}"
+  )
+
+  def TrailingLocation[$: P] = P(
+    "loc" ~ "(" ~ "unknown" ~ ")"
+  ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
+
+  ////////////
+  // BLOCKS //
+  ////////////
+
+  // [x] - block-id        ::= caret-id
+  // [x] - caret-id        ::= `^` suffix-id
+  // [x] - value-id-and-type ::= value-id `:` type
+
+  // // Non-empty list of names and types.
+  // [x] - value-id-and-type-list ::= value-id-and-type (`,` value-id-and-type)*
+
+  // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
+
+  def BlockId[$: P] = P(CaretId)
+
+  def CaretId[$: P] = P("^" ~ SuffixId)
+
+  def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
+
+  def ValueIdAndTypeList[$: P] =
+    P(ValueIdAndType.rep(sep = ","))
+
+  def BlockArgList[$: P] =
+    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessSeq)
+
 }
 
 class Parser {
-
-  object Scope {
-
-    def defineValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    )(implicit
-        scope: Scope
-    ): Seq[Value] = {
-      for {
-        (name, typ) <- valueIdAndTypeList
-      } yield scope.valueMap.contains(name) match {
-        case true =>
-          // val x: fastparse.Parsed.Extra = fastparse.Parsed.Extra
-          // Parsed.Failure("", 0, x)
-          throw new Exception(s"SSA Value cannot be defined twice %${name}")
-        case false =>
-          val value = new Value(typ = typ)
-          scope.valueMap(name) = value
-          value
-      }
-    }
-
-    def useValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    )(implicit
-        scope: Scope
-    ): Seq[Value] = {
-      for {
-        (name, typ) <- valueIdAndTypeList
-      } yield !scope.valueMap.contains(name) match {
-        case true =>
-          throw new Exception(s"SSA value used but not defined %${name}")
-        case false =>
-          scope.valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
-              )
-            case false =>
-              scope.valueMap(name)
-          }
-      }
-    }
-
-    def defineBlock(
-        blockName: String,
-        block: Block
-    )(implicit
-        scope: Scope
-    ): Unit = scope.blockMap.contains(blockName) match {
-      case true =>
-        throw new Exception(
-          s"Block cannot be defined twice within the same scope - ^${blockName}"
-        )
-      case false =>
-        scope.blockMap(blockName) = block
-    }
-
-    // check block waitlist once you exit the local scope of a region,
-    // as well as the global scope of the program at the end
-    def checkWaitlist()(implicit scope: Scope): Unit = {
-
-      for ((operation, successors) <- scope.blockWaitlist) {
-        val successorList: Seq[Block] = for {
-          name <- successors
-        } yield scope.blockMap
-          .contains(
-            name
-          ) match {
-          case false =>
-            throw new Exception(s"Successor ^${name} not defined within Scope")
-          case true => scope.blockMap(name)
-        }
-        operation.successors.clear()
-        operation.successors.appendAll(successorList)
-      }
-    }
-  }
-
-  class Scope(
-      var valueMap: mutable.Map[String, Value] =
-        mutable.Map.empty[String, Value],
-      var blockMap: mutable.Map[String, Block] =
-        mutable.Map.empty[String, Block],
-      var parentScope: Option[Scope] = None,
-      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
-        mutable.Map.empty[Operation, Seq[String]]
-  ) {
-
-    // child starts off from the parents context
-    def createChild(): Scope = {
-      return new Scope(
-        valueMap = valueMap.clone,
-        blockMap = blockMap.clone,
-        parentScope = Some(this)
-      )
-    }
-
-    def switchWithChild(): Unit = {
-      currentScope = createChild()
-    }
-
-    def switchWithParent(): Unit = parentScope match {
-      case Some(x) =>
-        Scope.checkWaitlist()
-        currentScope = x
-      case None =>
-        throw new Exception("No parent present - check your")
-    }
-  }
 
   implicit var currentScope: Scope = new Scope()
 
@@ -352,14 +419,7 @@ class Parser {
   //                         dictionary-properties? region-list? dictionary-attribute?
   //                         `:` function-type
   // [ ] custom-operation      ::= bare-id custom-operation-format
-  // [x] op-result-list        ::= op-result (`,` op-result)* `=`
-  // [x] op-result             ::= value-id (`:` integer-literal)?
-  // [x] successor-list        ::= `[` successor (`,` successor)* `]`
-  // [x] successor             ::= caret-id (`:` block-arg-list)?
-  // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] region-list           ::= `(` region (`,` region)* `)`
-  // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
-  // [x] trailing-location     ::= `loc` `(` location `)`
 
   //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
   def generateOperation(
@@ -388,11 +448,15 @@ class Parser {
     val operandsTypes = operation._2._7._1
 
     if (results.length != resultsTypes.length) {
-      throw new Exception("E")
+      throw new Exception(
+        s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
+      )
     }
 
     if (operands.length != operandsTypes.length) {
-      throw new Exception("E")
+      throw new Exception(
+        s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
+      )
     }
 
     val dictPropertiesMap: Map[String, Attribute] =
@@ -413,19 +477,35 @@ class Parser {
       )
     }
 
-    val resultss: Seq[Value] = Scope.defineValues(results zip resultsTypes)
+    val resultss: Seq[Value[Attribute]] =
+      Scope.defineValues(results zip resultsTypes)
 
-    val operandss: Seq[Value] = Scope.useValues(operands zip operandsTypes)
+    val operandss: Seq[Value[Attribute]] =
+      Scope.useValues(operands zip operandsTypes)
 
-    val op = new UnregisteredOperation(
-      name = opName,
-      operands = operandss,
-      successors = collection.mutable.ArrayBuffer(),
-      dictionaryProperties = dictPropertiesMap,
-      results = resultss,
-      dictionaryAttributes = dictAttributesMap,
-      regions = regions
-    )
+    val opObject: Option[DialectOperation] = ctx.getOperation(opName)
+
+    val op = opObject match {
+      case Some(x) =>
+        x.constructOp(
+          operands = operandss,
+          successors = collection.mutable.ArrayBuffer(),
+          dictionaryProperties = dictPropertiesMap,
+          results = resultss,
+          dictionaryAttributes = dictAttributesMap,
+          regions = regions
+        )
+      case None =>
+        new UnregisteredOperation(
+          name = opName,
+          operands = operandss,
+          successors = collection.mutable.ArrayBuffer(),
+          dictionaryProperties = dictPropertiesMap,
+          results = resultss,
+          dictionaryAttributes = dictAttributesMap,
+          regions = regions
+        )
+    }
 
     if (successors.length > 0) {
       currentScope.blockWaitlist += op -> successors
@@ -448,37 +528,11 @@ class Parser {
       ~ DictionaryAttribute.?.map(optionlessSeq) ~ ":" ~ FunctionType
   )
 
-  def OpResultList[$: P] = P(
-    OpResult.rep(1, sep = ",") ~ "="
-  ).map((results: Seq[Seq[String]]) => results.flatten)
-
-  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
-    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
-    case (name, None)          => Seq(name)
-  }
-
-  def OpResult[$: P] =
-    P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
-
-  def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
-
-  def Successor[$: P] = P(CaretId) // possibly shortened version
-
-  def DictionaryProperties[$: P] = P(
-    "<" ~ DictionaryAttribute ~ ">"
-  )
-
-  def DictionaryAttribute[$: P] = P(
-    "{" ~ AttributeEntry.rep(sep = ",") ~ "}"
-  )
+  // def CustomOperation[$: P] = P() maybe it will be fine with scope, or maybe it won't, lets see...
+  // i do not think it is currently possible without passing the whole parser instance, but lets see...
 
   def RegionList[$: P] =
-    P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
-      .map((x: (Region, Seq[Region])) => x._1 +: x._2)
-
-  def TrailingLocation[$: P] = P(
-    "loc" ~ "(" ~ "unknown" ~ ")"
-  ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
+    P("(" ~ Region.rep(sep = ",") ~ ")")
 
   ////////////
   // BLOCKS //
@@ -486,18 +540,10 @@ class Parser {
 
   // [x] - block           ::= block-label operation+
   // [x] - block-label     ::= block-id block-arg-list? `:`
-  // [x] - block-id        ::= caret-id
-  // [x] - caret-id        ::= `^` suffix-id
-  // [x] - value-id-and-type ::= value-id `:` type
-
-  // // Non-empty list of names and types.
-  // [x] - value-id-and-type-list ::= value-id-and-type (`,` value-id-and-type)*
-
-  // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
 
   def createBlock(
       //            name    argument     operations
-      uncutBlock: (String, Seq[Value], Seq[Operation])
+      uncutBlock: (String, Seq[Value[Attribute]], Seq[Operation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
@@ -509,27 +555,12 @@ class Parser {
   }
 
   def Block[$: P] =
-    P(BlockLabel ~ OperationPat.rep(1)).map(createBlock)
+    P(BlockLabel ~ OperationPat.rep(0)).map(createBlock)
 
   def BlockLabel[$: P] = P(
     BlockId ~ BlockArgList.?.map(optionlessSeq)
       .map(Scope.defineValues) ~ ":"
   )
-
-  def BlockId[$: P] = P(CaretId)
-
-  def CaretId[$: P] = P("^" ~ SuffixId)
-
-  def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
-
-  def ValueIdAndTypeList[$: P] =
-    P(ValueIdAndType ~ ("," ~ ValueIdAndType).rep).map(
-      (idAndTypes: (String, Attribute, Seq[(String, Attribute)])) =>
-        (idAndTypes._1, idAndTypes._2) +: idAndTypes._3
-    )
-
-  def BlockArgList[$: P] =
-    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessSeq)
 
   /////////////
   // REGIONS //
@@ -558,9 +589,9 @@ class Parser {
   // EntryBlock might break - take out if it does...
   def Region[$: P] = P(
     "{" ~ E(
-      currentScope.switchWithChild()
+      { currentScope = currentScope.switchWithChild() }
     ) ~ OperationPat.rep ~ Block.rep ~ "}" ~ E(
-      currentScope.switchWithParent()
+      { currentScope = currentScope.switchWithParent(currentScope) }
     )
   ).map(defineRegion)
 
@@ -611,7 +642,3 @@ class Parser {
     return parse(text, pattern)
   }
 }
-
-/////////////////////
-// VERSION CONTROL //
-/////////////////////

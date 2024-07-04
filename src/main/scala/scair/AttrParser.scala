@@ -23,6 +23,11 @@ object AttrParser {
   // INTEGER TYPE //
   //////////////////
 
+  // signed-integer-type    ::=  `si` [1-9][0-9]*
+  // unsigned-integer-type  ::=  `ui` [1-9][0-9]*
+  // signless-integer-type  ::=  `i`  [1-9][0-9]*
+  // integer-type           ::=  signed-integer-type | unsigned-integer-type | signless-integer-type
+
   def SignedIntegerTypeP[$: P]: P[Attribute] =
     P("si" ~~ CharIn("0-9").rep(1).!).map((intString: String) =>
       IntegerType(intString.toInt, Signed)
@@ -49,6 +54,8 @@ object AttrParser {
   // ARRAY ATTRIBUTE //
   /////////////////////
 
+  // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
+
   def ArrayAttributeP[$: P]: P[Attribute] = P(
     "[" ~ (AttributeValue
       .rep(sep = ","))
@@ -59,28 +66,11 @@ object AttrParser {
   // STRING ATTRIBUTE //
   //////////////////////
 
+  // string-attribute ::= string-literal (`:` type)?
+
   def StringAttributeP[$: P]: P[Attribute] = P(
     Parser.StringLiteral.map((x: String) => StringAttribute(stringLiteral = x))
   ) // shortened definition omits typing information
-
-  /////////////////
-  // MEMREF TYPE //
-  /////////////////
-
-  // memref type
-  // memref-type ::= 'memref' ~ '<' ~ ( ranked-memref-type | unranked-memref-type ) ~ '>'
-
-  // ranked-memref-type ::= shape type (`,` layout-specification)? (`,` memory-space)?
-
-  // 'Unranked' memref type
-  // unranked-memref-type ::= '*' ~ 'x'.? ~ type ~ (`,` memory-space)?
-
-  // layout-specification ::= attribute-value
-  // memory-space ::= attribute-value
-  // shape ::= ranked-shape | unranked-shape
-  // ranked-shape ::= (dimension `x`)* type
-  // unranked-shape ::= `*`x type
-  // dimension ::= `?` | decimal-literal
 
   /////////////////
   // TENSOR TYPE //
@@ -98,16 +88,22 @@ object AttrParser {
   )
   def RankedTensorTypeP[$: P]: P[Attribute] = P(
     DimensionList ~ Type ~ ("," ~ Encoding).?
-  ).map((x: (Seq[Int], Attribute, Option[Attribute])) =>
-    RankedTensorType(dimensionList = x._1, typ = x._2, encoding = x._3)
+  ).map((x: (ArrayAttribute[IntAttr], Attribute, Option[Attribute])) =>
+    RankedTensorType(
+      dimensionList = x._1,
+      typ = x._2,
+      encoding = x._3
+    )
   )
 
   def UnrankedTensorTypeP[$: P]: P[Attribute] =
     P("*" ~ "x" ~ Type).map((x: Attribute) => UnrankedTensorType(typ = x))
 
-  def DimensionList[$: P] = P((Dimension ~ "x").rep)
+  def DimensionList[$: P] =
+    P((Dimension ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
 
-  def Dimension[$: P] = P("?".!.map(_ => -1) | DecimalLiteral)
+  def Dimension[$: P]: P[IntAttr] =
+    P("?".!.map(_ => -1) | DecimalLiteral).map(x => IntAttr(x))
 
   def Encoding[$: P] = P(AttributeValue)
 
@@ -118,10 +114,23 @@ object AttrParser {
   def BuiltIn[$: P]: P[Attribute] = P(
     Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP
   )
-
-  def main(args: Array[String]): Unit = {
-    val Parsed.Success(x, y) = parse("f16", BuiltIn(_))
-    println(x.getClass)
-    println("Hello World!")
-  }
 }
+
+/////////////////
+// MEMREF TYPE //
+/////////////////
+
+// memref type
+// memref-type ::= 'memref' ~ '<' ~ ( ranked-memref-type | unranked-memref-type ) ~ '>'
+
+// ranked-memref-type ::= shape type (`,` layout-specification)? (`,` memory-space)?
+
+// 'Unranked' memref type
+// unranked-memref-type ::= '*' ~ 'x'.? ~ type ~ (`,` memory-space)?
+
+// layout-specification ::= attribute-value
+// memory-space ::= attribute-value
+// shape ::= ranked-shape | unranked-shape
+// ranked-shape ::= (dimension `x`)* type
+// unranked-shape ::= `*`x type
+// dimension ::= `?` | decimal-literal

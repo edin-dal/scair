@@ -57,6 +57,16 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     (IntegerType(7, Signed), "Success", "si7"),
     (IntegerType(8, Unsigned), "Success", "ui8"),
     (
+      RankedTensorType(
+        ArrayAttribute(Seq(IntAttr(3), IntAttr(-1), IntAttr(5))),
+        Float32Type,
+        None
+      ),
+      "Success",
+      "tensor<3x?x5xf32>"
+    ),
+    (UnrankedTensorType(Float32Type), "Success", "tensor<*xf32>"),
+    (
       ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringAttribute("hello"))),
       "Success",
       "[f64, [], \"hello\"]"
@@ -87,6 +97,16 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringAttribute("hello")))
     ),
     ("\"hello world!\"", "Success", StringAttribute("hello world!")),
+    (
+      "tensor<3x?x5xf32>",
+      "Success",
+      RankedTensorType(
+        ArrayAttribute(Seq(IntAttr(3), IntAttr(-1), IntAttr(5))),
+        Float32Type,
+        None
+      )
+    ),
+    ("tensor<*xf32>", "Success", UnrankedTensorType(Float32Type)),
     ("fg12", "Failure", "")
   )
 
@@ -108,11 +128,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  val valF32 = Value(F32)
-  val valF64 = Value(F64)
-  val valI1 = Value(I1)
-  val valI16 = Value(I16)
-  val valINDEX = Value(INDEX)
+  val valF32 = Value[Float32Type.type](F32)
+  val valF64 = Value[Float64Type.type](F64)
+  val valI1 = Value[IntegerType](I1)
+  val valI16 = Value[IntegerType](I16)
+  val valINDEX = Value[IndexType.type](INDEX)
 
   "printAttributesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
 

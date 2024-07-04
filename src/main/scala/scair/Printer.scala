@@ -5,20 +5,25 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 import AttrParser._
+import scair.dialects.cmath._
 
 class Printer {
+
+  ///////////
+  // TOOLS //
+  ///////////
 
   var indent: String = "  "
 
   var valueNextID: Int = 0
   var blockNextID: Int = 0
 
-  var valueNameMap: mutable.Map[Value, String] =
-    mutable.Map.empty[Value, String]
+  var valueNameMap: mutable.Map[Value[_ <: Attribute], String] =
+    mutable.Map.empty[Value[_ <: Attribute], String]
   var blockNameMap: mutable.Map[Block, String] =
     mutable.Map.empty[Block, String]
 
-  def assignValueName(value: Value): String =
+  def assignValueName(value: Value[_ <: Attribute]): String =
     valueNameMap.contains(value) match {
       case true => valueNameMap(value)
       case false =>
@@ -39,26 +44,30 @@ class Printer {
         return name
     }
 
-  // case class Region(
-  //     blocks: Seq[Block],
-  //     parent: Option[Operation] = None
-  // )
-  def printRegion(region: Region, indentLevel: Int = 0): String = {
+  ///////////////
+  // ATTRIBUTE //
+  ///////////////
 
-    val open: String = "{\n"
-    val close: String = "\n" + indent * indentLevel + "}"
-
-    val regionBlocks: String =
-      (for { block <- region.blocks } yield printBlock(block, indentLevel))
-        .mkString("\n")
-
-    return s"${open}${regionBlocks}${close}"
+  def printAttribute(attribute: Attribute): String = {
+    return attribute.toString
   }
 
-  // case class Block(
-  //     operations: Seq[Operation],
-  //     arguments: Seq[Value]
-  // )
+  ///////////
+  // VALUE //
+  ///////////
+
+  def printValue(value: Value[_ <: Attribute]): String = {
+    return s"%${assignValueName(value)}"
+  }
+
+  ///////////
+  // BLOCK //
+  ///////////
+
+  def printBlockArgument(value: Value[_ <: Attribute]): String = {
+    return s"${printValue(value)}: ${printAttribute(value.typ)}"
+  }
+
   def printBlock(block: Block, indentLevel: Int = 0): String = {
 
     val blockName = assignBlockName(block)
@@ -77,36 +86,27 @@ class Printer {
     return blockHead + blockOperations
   }
 
-  // case class Attribute(
-  //     name: String
-  // )
-  def printAttribute(attribute: Attribute): String = {
-    return attribute.toString
+  ////////////
+  // REGION //
+  ////////////
+
+  def printRegion(region: Region, indentLevel: Int = 0): String = {
+
+    val open: String = "{\n"
+    val close: String = "\n" + indent * indentLevel + "}"
+
+    val regionBlocks: String =
+      (for { block <- region.blocks } yield printBlock(block, indentLevel))
+        .mkString("\n")
+
+    return s"${open}${regionBlocks}${close}"
   }
 
-  // case class Value(
-  //     typ: Attribute
-  // )
-  def printValue(value: Value): String = {
-    return s"%${assignValueName(value)}"
-  }
+  ///////////////
+  // OPERATION //
+  ///////////////
 
-  def printBlockArgument(value: Value): String = {
-    return s"${printValue(value)}: ${printAttribute(value.typ)}"
-  }
-
-  // case class Operation(
-  //     name: String,
-  //     operands: Seq[Value], // TODO rest
-  //     results: Seq[Value],
-  //     regions: Seq[Region]
-  // )
   def printOperation(op: Operation, indentLevel: Int = 0): String = {
-
-    val open: String =
-      if (op.regions.length > 0) indent * indentLevel + " (" else ""
-    val close: String =
-      if (op.regions.length > 0) ")" else ""
 
     var results: Seq[String] = Seq()
     var resultsTypes: Seq[String] = Seq()
@@ -124,16 +124,22 @@ class Printer {
     )
 
     val operationResults: String =
-      if (op.results.length > 0) results.mkString(", ") + " = " else ""
+      if (op.results.length > 0)
+        results.mkString(", ") + " = "
+      else ""
 
     val operationOperands: String =
-      if (op.operands.length > 0) operands.mkString(", ") else ""
+      if (op.operands.length > 0)
+        operands.mkString(", ")
+      else ""
 
     val operationRegions: String =
-      open + (for { region <- op.regions } yield printRegion(
-        region,
-        indentLevel
-      )).mkString(", ") + close
+      if (op.regions.length > 0)
+        " (" + (for { region <- op.regions } yield printRegion(
+          region,
+          indentLevel
+        )).mkString(", ") + ")"
+      else ""
 
     val operationSuccessors: String =
       if (op.successors.length > 0)
@@ -168,13 +174,14 @@ class Printer {
     return indent * indentLevel + s"$operationResults${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
   }
 
+  /////////////
+  // PROGRAM //
+  /////////////
+
   def printProgram(programSequence: Seq[Operation]): String = {
 
-    var programPrint: String = ""
-
-    for { op <- programSequence } op match {
-      case x: Operation => programPrint + printOperation(x)
-    }
+    var programPrint: String =
+      (for { op <- programSequence } yield printOperation(op)).mkString("\n")
 
     return programPrint
   }
