@@ -263,10 +263,7 @@ object Parser {
     P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
 
   def ValueUseList[$: P] =
-    P(ValueUse ~ ("," ~ ValueUse).rep).map(
-      (valueUseList: (String, Seq[String])) =>
-        valueUseList._1 +: valueUseList._2
-    )
+    P(ValueUse.rep(sep = ","))
 
   ///////////
   // TYPES //
@@ -391,10 +388,7 @@ object Parser {
   def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
 
   def ValueIdAndTypeList[$: P] =
-    P(ValueIdAndType ~ ("," ~ ValueIdAndType).rep).map(
-      (idAndTypes: (String, Attribute, Seq[(String, Attribute)])) =>
-        (idAndTypes._1, idAndTypes._2) +: idAndTypes._3
-    )
+    P(ValueIdAndType.rep(sep = ","))
 
   def BlockArgList[$: P] =
     P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessSeq)
@@ -538,8 +532,7 @@ class Parser {
   // i do not think it is currently possible without passing the whole parser instance, but lets see...
 
   def RegionList[$: P] =
-    P("(" ~ Region ~ ("," ~ Region).rep ~ ")")
-      .map((x: (Region, Seq[Region])) => x._1 +: x._2)
+    P("(" ~ Region.rep(sep = ",") ~ ")")
 
   ////////////
   // BLOCKS //
