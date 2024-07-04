@@ -288,7 +288,7 @@ object Parser {
   // [x] type-alias ::= `!` alias-name
 
   def Type[$: P] = P(
-    AttrParser.BuiltIn
+    AttrParser.BuiltIn // | DialectType
   ) // shortened definition TODO: finish...
 
   def ParenTypeList[$: P] = P(
@@ -320,7 +320,7 @@ object Parser {
     (BareId | StringLiteral) ~ "=" ~ AttributeValue
   )
   def AttributeValue[$: P] = P(
-    AttrParser.BuiltIn // | AttributeAlias // | DialectAttribute
+    AttrParser.BuiltIn // | DialectAttribute // | AttributeAlias //
   )
 
   def AttributeAliasDef[$: P] = P(
@@ -392,6 +392,95 @@ object Parser {
 
   def BlockArgList[$: P] =
     P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessSeq)
+
+  ///////////////////
+  // DIALECT TYPES //
+  ///////////////////
+
+  // [x] - dialect-namespace      ::= bare-id
+
+  // [x] - dialect-type           ::= `!` (opaque-dialect-type | pretty-dialect-type)
+  // [x] - opaque-dialect-type    ::= dialect-namespace dialect-type-body
+  // [x] - pretty-dialect-type    ::= dialect-namespace `.` pretty-dialect-type-lead-ident dialect-type-body?
+  // [x] - pretty-dialect-type-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
+
+  // [x] - dialect-type-body      ::= `<` dialect-type-contents+ `>`
+  // [x] - dialect-type-contents  ::= dialect-type-body
+  //                             | `(` dialect-type-contents+ `)`
+  //                             | `[` dialect-type-contents+ `]`
+  //                             | `{` dialect-type-contents+ `}`
+  //                             | [^\[<({\]>)}\0]+
+
+  val excludedCharactersDTC: Set[Char] =
+    Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
+
+  def notExcludedDTC[$: P] = P(
+    CharPred(char => !excludedCharacters.contains(char))
+  )
+
+  def DialectNamespace[$: P] = P(BareId)
+
+  def DialectType[$: P] = P("!" ~ (PrettyDialectType | OpaqueDialectType))
+
+  def PrettyDialectType[$: P] = P(
+    DialectNamespace ~ "." ~ PrettyDialectTypeLeadIdent ~ DialectTypeBody.?
+  )
+  def OpaqueDialectType[$: P] = P(DialectNamespace ~ DialectTypeBody)
+
+  def PrettyDialectTypeLeadIdent[$: P] = P(
+    (CharIn("a-zA-Z").! ~ CharIn("a-zA-Z0-9._").rep).!
+  )
+  def DialectTypeBody[$: P] = P("<" ~ DialectTypeContents.rep(1) ~ ">")
+
+  def DialectTypeContents[$: P]: P[Any] = P(
+    CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
+      ("<" ~ DialectTypeContents.rep(1) ~ ">") |
+      ("(" ~ DialectTypeContents.rep(1) ~ ")") |
+      ("[" ~ DialectTypeContents.rep(1) ~ "]") |
+      ("{" ~ DialectTypeContents.rep(1) ~ "}")
+  )
+
+  //////////////////////////////
+  // DIALECT ATTRIBUTE VALUES //
+  //////////////////////////////
+
+  // [x] - dialect-namespace ::= bare-id
+
+  // [x] - dialect-attribute ::= `#` (opaque-dialect-attribute | pretty-dialect-attribute)
+  // [x] - opaque-dialect-attribute ::= dialect-namespace dialect-attribute-body
+  // [x] - pretty-dialect-attribute ::= dialect-namespace `.` pretty-dialect-attribute-lead-ident dialect-attribute-body?
+  // [x] - pretty-dialect-attribute-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
+
+  // [x] - dialect-attribute-body ::= `<` dialect-attribute-contents+ `>`
+  // [x] - dialect-attribute-contents ::= dialect-attribute-body
+  //                             | `(` dialect-attribute-contents+ `)`
+  //                             | `[` dialect-attribute-contents+ `]`
+  //                             | `{` dialect-attribute-contents+ `}`
+  //                             | [^\[<({\]>)}\0]+
+
+  def DialectAttribute[$: P] = P(
+    "!" ~ (PrettyDialectAttribute | OpaqueDialectAttribute)
+  )
+
+  def PrettyDialectAttribute[$: P] = P(
+    DialectNamespace ~ "." ~ PrettyDialectAttributeLeadIdent ~ DialectAttributeBody.?
+  )
+  def OpaqueDialectAttribute[$: P] = P(DialectNamespace ~ DialectAttributeBody)
+
+  def PrettyDialectAttributeLeadIdent[$: P] = P(
+    (CharIn("a-zA-Z").! ~ CharIn("a-zA-Z0-9._").rep).!
+  )
+  def DialectAttributeBody[$: P] = P(
+    "<" ~ DialectAttributeContents.rep(1) ~ ">"
+  )
+
+  def DialectAttributeContents[$: P]: P[Any] = P(
+    CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
+      ("<" ~ DialectAttributeContents.rep(1) ~ ">") |
+      ("(" ~ DialectAttributeContents.rep(1) ~ ")") |
+      ("[" ~ DialectAttributeContents.rep(1) ~ "]") |
+      ("{" ~ DialectAttributeContents.rep(1) ~ "}")
+  )
 
 }
 
@@ -597,41 +686,9 @@ class Parser {
 
   // def EntryBlock[$: P] = P(OperationPat.rep(1))
 
-  ///////////////////
-  // DIALECT TYPES //
-  ///////////////////
-
-  // [ ] - dialect-namespace      ::= bare-id
-
-  // [ ] - dialect-type           ::= `!` (opaque-dialect-type | pretty-dialect-type)
-  // [ ] - opaque-dialect-type    ::= dialect-namespace dialect-type-body
-  // [ ] - pretty-dialect-type    ::= dialect-namespace `.` pretty-dialect-type-lead-ident dialect-type-body?
-  // [ ] - pretty-dialect-type-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
-
-  // [ ] - dialect-type-body      ::= `<` dialect-type-contents+ `>`
-  // [ ] - dialect-type-contents  ::= dialect-type-body
-  //                             | `(` dialect-type-contents+ `)`
-  //                             | `[` dialect-type-contents+ `]`
-  //                             | `{` dialect-type-contents+ `}`
-  //                             | [^\[<({\]>)}\0]+
-
-  //////////////////////////////
-  // DIALECT ATTRIBUTE VALUES //
-  //////////////////////////////
-
-  // [ ] - dialect-namespace ::= bare-id
-
-  // [ ] - dialect-attribute ::= `#` (opaque-dialect-attribute | pretty-dialect-attribute)
-  // [ ] - opaque-dialect-attribute ::= dialect-namespace dialect-attribute-body
-  // [ ] - pretty-dialect-attribute ::= dialect-namespace `.` pretty-dialect-attribute-lead-ident dialect-attribute-body?
-  // [ ] - pretty-dialect-attribute-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
-
-  // [ ] - dialect-attribute-body ::= `<` dialect-attribute-contents+ `>`
-  // [ ] - dialect-attribute-contents ::= dialect-attribute-body
-  //                             | `(` dialect-attribute-contents+ `)`
-  //                             | `[` dialect-attribute-contents+ `]`
-  //                             | `{` dialect-attribute-contents+ `}`
-  //                             | [^\[<({\]>)}\0]+
+  ////////////////////
+  // PARSE FUNCTION //
+  ////////////////////
 
   def parseThis[A, B](
       text: String,
