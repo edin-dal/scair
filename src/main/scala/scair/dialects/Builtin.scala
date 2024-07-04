@@ -3,17 +3,24 @@ package scair.dialects.builtin
 import scair.{Attribute, TypeAttribute, ParametrizedAttribute, DataAttribute}
 import scala.compiletime.ops.string
 
+////////////////
+// SIGNEDNESS //
+////////////////
+
 sealed trait Signedness
 case object Signed extends Signedness
 case object Unsigned extends Signedness
 case object Signless extends Signedness
+
+////////////////
+// FLOAT TYPE //
+////////////////
 
 case object Float16Type
     extends ParametrizedAttribute("builtin.f16")
     with TypeAttribute {
   override def toString = "f16"
 }
-
 case object Float32Type
     extends ParametrizedAttribute("builtin.f32")
     with TypeAttribute {
@@ -35,6 +42,10 @@ case object Float128Type
   override def toString = "f128"
 }
 
+//////////////////
+// INTEGER TYPE //
+//////////////////
+
 case class IntegerType(val width: Int, val sign: Signedness)
     extends ParametrizedAttribute("builtin.int_type")
     with TypeAttribute {
@@ -48,11 +59,19 @@ case class IntegerType(val width: Int, val sign: Signedness)
 case class IntAttr(val value: Int)
     extends DataAttribute[Int]("builtin.int_attr", value)
 
+////////////////
+// INDEX TYPE //
+////////////////
+
 case object IndexType
     extends ParametrizedAttribute("builtin.index")
     with TypeAttribute {
   override def toString = "index"
 }
+
+/////////////////////
+// ARRAY ATTRIBUTE //
+/////////////////////
 
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
@@ -60,11 +79,19 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     "[" + attrValues.map(x => x.toString).mkString(", ") + "]"
 }
 
+//////////////////////
+// STRING ATTRIBUTE //
+//////////////////////
+
 // shortened definition, does not include type information
 case class StringAttribute(val stringLiteral: String)
     extends DataAttribute("builtin.string_attribute", stringLiteral) {
   override def toString = "\"" + stringLiteral + "\""
 }
+
+/////////////////
+// TENSOR TYPE //
+/////////////////
 
 case class RankedTensorType(
     val dimensionList: ArrayAttribute[IntAttr],

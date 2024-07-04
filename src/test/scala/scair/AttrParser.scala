@@ -108,11 +108,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  val valF32 = Value(F32)
-  val valF64 = Value(F64)
-  val valI1 = Value(I1)
-  val valI16 = Value(I16)
-  val valINDEX = Value(INDEX)
+  val valF32 = Value[Float32Type.type](F32)
+  val valF64 = Value[Float64Type.type](F64)
+  val valI1 = Value[IntegerType](I1)
+  val valI16 = Value[IntegerType](I16)
+  val valINDEX = Value[IndexType.type](INDEX)
 
   "printAttributesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
 

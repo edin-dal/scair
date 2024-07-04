@@ -186,7 +186,7 @@ class ParserTest
     ),
     (
       "OpResultList",
-      ((x: fastparse.P[_]) => parser.OpResultList(x)),
+      ((x: fastparse.P[_]) => Parser.OpResultList(x)),
       opResultListTests
     )
   )
