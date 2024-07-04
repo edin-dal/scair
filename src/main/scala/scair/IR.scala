@@ -25,7 +25,7 @@ abstract class DataAttribute[D](
   override def toString = data.toString
 }
 
-case class Value[T <: Attribute](
+case class Value[+T](
     typ: T
 ) {
   override def equals(o: Any): Boolean = {
@@ -35,7 +35,7 @@ case class Value[T <: Attribute](
 
 case class Block(
     operations: Seq[Operation] = Seq(),
-    arguments: Seq[Value[_ <: Attribute]] = Seq()
+    arguments: Seq[Value[Attribute]] = Seq()
 ) {
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
@@ -53,10 +53,10 @@ case class Region(
 
 sealed abstract class Operation(
     val name: String,
-    val operands: Seq[Value[_ <: Attribute]] = Seq(),
+    val operands: Seq[Value[Attribute]] = Seq(),
     val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
-    val results: Seq[Value[_ <: Attribute]] = Seq[Value[_ <: Attribute]](),
+    val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     val regions: Seq[Region] = Seq[Region](),
     val dictionaryProperties: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute],
@@ -81,11 +81,10 @@ sealed abstract class Operation(
 
 final case class UnregisteredOperation(
     override val name: String,
-    override val operands: Seq[Value[_ <: Attribute]] = Seq(),
+    override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
-    override val results: Seq[Value[_ <: Attribute]] =
-      Seq[Value[_ <: Attribute]](),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute],
@@ -95,11 +94,10 @@ final case class UnregisteredOperation(
 
 class RegisteredOperation(
     override val name: String,
-    override val operands: Seq[Value[_ <: Attribute]] = Seq(),
+    override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
-    override val results: Seq[Value[_ <: Attribute]] =
-      Seq[Value[_ <: Attribute]](),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute],
@@ -111,12 +109,12 @@ trait DialectOperation {
   def name: String
   def parse(parser: Parser)(implicit
       parsingCtx: P[Any]
-  ): Option[P[_ <: Operation]] = None
+  ): Option[P[Operation]] = None
   def constructOp(
-      operands: Seq[Value[_ <: Attribute]] = Seq(),
+      operands: Seq[Value[Attribute]] = Seq(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
-      results: Seq[Value[_ <: Attribute]] = Seq[Value[_ <: Attribute]](),
+      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
       regions: Seq[Region] = Seq[Region](),
       dictionaryProperties: immutable.Map[String, Attribute] =
         immutable.Map.empty[String, Attribute],
@@ -127,7 +125,7 @@ trait DialectOperation {
 
 trait DialectAttribute {
   def name: String
-  def parse[$: P]: Option[P[_ <: Attribute]] = None
+  def parse[$: P]: Option[P[Attribute]] = None
 }
 
 final case class Dialect(

@@ -76,7 +76,7 @@ object Parser {
         valueIdAndTypeList: Seq[(String, Attribute)]
     )(implicit
         scope: Scope
-    ): Seq[Value[_ <: Attribute]] = {
+    ): Seq[Value[Attribute]] = {
       for {
         (name, typ) <- valueIdAndTypeList
       } yield scope.valueMap.contains(name) match {
@@ -93,7 +93,7 @@ object Parser {
         valueIdAndTypeList: Seq[(String, Attribute)]
     )(implicit
         scope: Scope
-    ): Seq[Value[_ <: Attribute]] = {
+    ): Seq[Value[Attribute]] = {
       for {
         (name, typ) <- valueIdAndTypeList
       } yield !scope.valueMap.contains(name) match {
@@ -147,8 +147,8 @@ object Parser {
   }
 
   class Scope(
-      var valueMap: mutable.Map[String, Value[_ <: Attribute]] =
-        mutable.Map.empty[String, Value[_ <: Attribute]],
+      var valueMap: mutable.Map[String, Value[Attribute]] =
+        mutable.Map.empty[String, Value[Attribute]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
       var parentScope: Option[Scope] = None,
@@ -477,10 +477,10 @@ class Parser {
       )
     }
 
-    val resultss: Seq[Value[_ <: Attribute]] =
+    val resultss: Seq[Value[Attribute]] =
       Scope.defineValues(results zip resultsTypes)
 
-    val operandss: Seq[Value[_ <: Attribute]] =
+    val operandss: Seq[Value[Attribute]] =
       Scope.useValues(operands zip operandsTypes)
 
     val opObject: Option[DialectOperation] = ctx.getOperation(opName)
@@ -543,7 +543,7 @@ class Parser {
 
   def createBlock(
       //            name    argument     operations
-      uncutBlock: (String, Seq[Value[_ <: Attribute]], Seq[Operation])
+      uncutBlock: (String, Seq[Value[Attribute]], Seq[Operation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,

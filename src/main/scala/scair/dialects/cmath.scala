@@ -27,6 +27,7 @@ import scair.{
 
 object ComplexType extends DialectAttribute {
   override def name: String = "cmath.complex"
+
 }
 
 case class ComplexType(val cmplxType: Attribute)
@@ -45,10 +46,10 @@ case class ComplexType(val cmplxType: Attribute)
 object Norm extends DialectOperation {
   override def name: String = "cmath.norm"
   override def constructOp(
-      operands: Seq[Value[_ <: Attribute]] = Seq(),
+      operands: Seq[Value[Attribute]] = Seq(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
-      results: Seq[Value[_ <: Attribute]] = Seq[Value[_ <: Attribute]](),
+      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
       regions: Seq[Region] = Seq[Region](),
       dictionaryProperties: immutable.Map[String, Attribute] =
         immutable.Map.empty[String, Attribute],
@@ -65,11 +66,10 @@ object Norm extends DialectOperation {
 }
 
 case class Norm(
-    override val operands: Seq[Value[_ <: Attribute]] = Seq(),
+    override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
-    override val results: Seq[Value[_ <: Attribute]] =
-      Seq[Value[_ <: Attribute]](),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute],
@@ -87,10 +87,10 @@ case class Norm(
 object Mul extends DialectOperation {
   override def name: String = "cmath.mul"
   override def constructOp(
-      operands: Seq[Value[_ <: Attribute]] = Seq(),
+      operands: Seq[Value[Attribute]] = Seq(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
-      results: Seq[Value[_ <: Attribute]] = Seq[Value[_ <: Attribute]](),
+      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
       regions: Seq[Region] = Seq[Region](),
       dictionaryProperties: immutable.Map[String, Attribute] =
         immutable.Map.empty[String, Attribute],
@@ -107,11 +107,10 @@ object Mul extends DialectOperation {
 }
 
 case class Mul(
-    override val operands: Seq[Value[_ <: Attribute]] = Seq(),
+    override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
-    override val results: Seq[Value[_ <: Attribute]] =
-      Seq[Value[_ <: Attribute]](),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute],
