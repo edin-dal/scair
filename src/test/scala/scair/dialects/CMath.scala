@@ -35,7 +35,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
   val strToAttributeTests =
     Table(
       ("input", "result", "expected"),
-      ("!cmath.comlex<f32>", "Success", ComplexType(Float32Type))
+      ("!cmath.complex<f32>", "Success", ComplexType(Float32Type))
     )
 
   forAll(strToAttributeTests) { (input, result, expected) =>
