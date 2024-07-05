@@ -19,6 +19,35 @@ import scair.dialects.builtin._
 import scair.dialects.cmath._
 
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
+
+  var printer = new Printer
+
+  before {
+    printer = new Printer
+  }
+
+  def getResult[A](result: String, expected: A) =
+    result match {
+      case "Success" => ((x: Int) => Parsed.Success(expected, x))
+      case "Failure" => Parsed.Failure(_, _, _)
+    }
+
+  val strToAttributeTests =
+    Table(
+      ("input", "result", "expected"),
+      ("!cmath.comlex<f32>", "Success", ComplexType(Float32Type))
+    )
+
+  forAll(strToAttributeTests) { (input, result, expected) =>
+    // Get the expected output
+    val res = getResult(result, expected)
+    "strToAttributeTests" should s"[ '$input' -> '$expected' = $result ]" in {
+      // Run the pqrser on the input and check
+      parse(input, Type(_)) should matchPattern { case res => // pass
+      }
+    }
+  }
+
   "Cmath simple object creation test :)" should "match parsed string against expected string" in {
 
     var parser: Parser = new Parser

@@ -4,7 +4,7 @@ import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scair.dialects.irdl.{Operand, OpResult}
-import scair.Parser.{whitespace}
+import scair.Parser.{whitespace, Type}
 import scair.{
   RegisteredOperation,
   Region,
@@ -27,7 +27,8 @@ import scair.{
 
 object ComplexType extends DialectAttribute {
   override def name: String = "cmath.complex"
-
+  override def parse[$: P]: Some[P[Attribute]] =
+    Some(P("<" ~ Type ~ ">").map(ComplexType(_)))
 }
 
 case class ComplexType(val cmplxType: Attribute)
@@ -130,3 +131,10 @@ val CMath: Dialect =
     operations = Seq(Norm, Mul),
     attributes = Seq(ComplexType)
   )
+
+object CMathh {
+  def main(args: Array[String]): Unit = {
+    val res = parse("!cmath.complex<f32>", Type(_))
+    println(res)
+  }
+}

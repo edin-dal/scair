@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import fastparse.internal.Util
 import scala.annotation.switch
 import scair.MLContext
+import java.lang.module.ModuleDescriptor.Exports
 
 object Parser {
 
@@ -288,7 +289,7 @@ object Parser {
   // [x] type-alias ::= `!` alias-name
 
   def Type[$: P] = P(
-    AttrParser.BuiltIn // | DialectType
+    AttrParser.BuiltIn | DialectType | DialectAttribute
   ) // shortened definition TODO: finish...
 
   def ParenTypeList[$: P] = P(
@@ -320,7 +321,7 @@ object Parser {
     (BareId | StringLiteral) ~ "=" ~ AttributeValue
   )
   def AttributeValue[$: P] = P(
-    AttrParser.BuiltIn // | DialectAttribute // | AttributeAlias //
+    AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
   )
 
   def AttributeAliasDef[$: P] = P(
@@ -418,27 +419,65 @@ object Parser {
     CharPred(char => !excludedCharacters.contains(char))
   )
 
-  def DialectNamespace[$: P] = P(BareId)
+  def DialectBareId[$: P] = P(
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).rep
+  ).!
 
-  def DialectType[$: P] = P("!" ~ (PrettyDialectType | OpaqueDialectType))
+  def DialectNamespace[$: P] = P(DialectBareId)
 
-  def PrettyDialectType[$: P] = P(
-    DialectNamespace ~ "." ~ PrettyDialectTypeLeadIdent ~ DialectTypeBody.?
+  def DialectAttribute[$: P]: P[Attribute] = P(
+    "#" ~ PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
+      ctx.getAttribute(x) match {
+        case Some(y) =>
+          y.parse match {
+            case Some(parser) => parser
+            case None =>
+              throw new Exception(s"There is no parser defined for type ${x}")
+          }
+        case None =>
+          throw new Exception(
+            s"Type ${x} is not defined in any supported Dialect."
+          )
+      }
+    }
   )
-  def OpaqueDialectType[$: P] = P(DialectNamespace ~ DialectTypeBody)
 
-  def PrettyDialectTypeLeadIdent[$: P] = P(
-    (CharIn("a-zA-Z").! ~ CharIn("a-zA-Z0-9._").rep).!
+  def DialectType[$: P]: P[Attribute] = P(
+    "!" ~ PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
+      ctx.getAttribute(x) match {
+        case Some(y) =>
+          y.parse match {
+            case Some(parser) => parser
+            case None =>
+              throw new Exception(s"There is no parser defined for type ${x}")
+          }
+        case None =>
+          throw new Exception(
+            s"Type ${x} is not defined in any supported Dialect."
+          )
+      }
+    }
   )
-  def DialectTypeBody[$: P] = P("<" ~ DialectTypeContents.rep(1) ~ ">")
 
-  def DialectTypeContents[$: P]: P[Any] = P(
-    CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
-      ("<" ~ DialectTypeContents.rep(1) ~ ">") |
-      ("(" ~ DialectTypeContents.rep(1) ~ ")") |
-      ("[" ~ DialectTypeContents.rep(1) ~ "]") |
-      ("{" ~ DialectTypeContents.rep(1) ~ "}")
+  def PrettyDialectTypeOrAttribute[$: P] = P(
+    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttributeLeadIdent).!
   )
+
+  def PrettyDialectTypeOrAttributeLeadIdent[$: P] = P(
+    (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9").rep).!
+  )
+
+  // def OpaqueDialectType[$: P] = P(DialectNamespace ~ DialectTypeBody)
+
+  // def DialectTypeBody[$: P] = P("<" ~ DialectTypeContents.rep(1) ~ ">")
+
+  // def DialectTypeContents[$: P]: P[Any] = P(
+  //   CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
+  //     ("<" ~ DialectTypeContents.rep(1) ~ ">") |
+  //     ("(" ~ DialectTypeContents.rep(1) ~ ")") |
+  //     ("[" ~ DialectTypeContents.rep(1) ~ "]") |
+  //     ("{" ~ DialectTypeContents.rep(1) ~ "}")
+  // )
 
   //////////////////////////////
   // DIALECT ATTRIBUTE VALUES //
@@ -458,29 +497,31 @@ object Parser {
   //                             | `{` dialect-attribute-contents+ `}`
   //                             | [^\[<({\]>)}\0]+
 
-  def DialectAttribute[$: P] = P(
-    "!" ~ (PrettyDialectAttribute | OpaqueDialectAttribute)
-  )
+  // def DialectAttribute[$: P] = P(
+  //   "!" ~ (PrettyDialectAttribute | OpaqueDialectAttribute)
+  // )
 
-  def PrettyDialectAttribute[$: P] = P(
-    DialectNamespace ~ "." ~ PrettyDialectAttributeLeadIdent ~ DialectAttributeBody.?
-  )
-  def OpaqueDialectAttribute[$: P] = P(DialectNamespace ~ DialectAttributeBody)
+  // def PrettyDialectAttribute[$: P] = P(
+  //   DialectNamespace ~ "." ~ PrettyDialectAttributeLeadIdent
+  // )
 
-  def PrettyDialectAttributeLeadIdent[$: P] = P(
-    (CharIn("a-zA-Z").! ~ CharIn("a-zA-Z0-9._").rep).!
-  )
-  def DialectAttributeBody[$: P] = P(
-    "<" ~ DialectAttributeContents.rep(1) ~ ">"
-  )
+  // def PrettyDialectAttributeLeadIdent[$: P] = P(
+  //   (CharIn("a-zA-Z").! ~ CharIn("a-zA-Z0-9._").rep).!
+  // )
 
-  def DialectAttributeContents[$: P]: P[Any] = P(
-    CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
-      ("<" ~ DialectAttributeContents.rep(1) ~ ">") |
-      ("(" ~ DialectAttributeContents.rep(1) ~ ")") |
-      ("[" ~ DialectAttributeContents.rep(1) ~ "]") |
-      ("{" ~ DialectAttributeContents.rep(1) ~ "}")
-  )
+  // def OpaqueDialectAttribute[$: P] = P(DialectNamespace ~ DialectAttributeBody)
+
+  // def DialectAttributeBody[$: P] = P(
+  //   "<" ~ DialectAttributeContents.rep(1) ~ ">"
+  // )
+
+  // def DialectAttributeContents[$: P]: P[Any] = P(
+  //   CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
+  //     ("<" ~ DialectAttributeContents.rep(1) ~ ">") |
+  //     ("(" ~ DialectAttributeContents.rep(1) ~ ")") |
+  //     ("[" ~ DialectAttributeContents.rep(1) ~ "]") |
+  //     ("{" ~ DialectAttributeContents.rep(1) ~ "}")
+  // )
 
 }
 
