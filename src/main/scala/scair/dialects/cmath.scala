@@ -37,6 +37,15 @@ case class ComplexType(val cmplxType: Attribute)
       parameters = cmplxType
     )
     with TypeAttribute {
+
+  override def verify(): Unit = cmplxType match {
+    case Float32Type =>
+    case Float64Type =>
+    case _ =>
+      throw new Exception(
+        "Complex type must be constructed with either 'f32' or 'f64' attribute."
+      )
+  }
   override def toString = s"${prefix}cmath.complex<$cmplxType>"
 }
 
@@ -80,7 +89,22 @@ case class Norm(
       immutable.Map.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.norm") {
 
-  override def verify(): Unit = ()
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (1, 0, 1, 0, 0, 0) =>
+      operands(0).typ.verify()
+      results(0).typ.verify()
+    case _ =>
+      throw new Exception(
+        "Norm Operation must only contain 1 operand of 'complex' type, and 1 result of 'f32' or 'f64'."
+      )
+  }
 }
 
 ///////////////////
@@ -123,7 +147,23 @@ case class Mul(
       immutable.Map.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.mul") {
 
-  override def verify(): Unit = ()
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (2, 0, 1, 0, 0, 0) =>
+      operands(0).typ.verify()
+      operands(1).typ.verify()
+      results(0).typ.verify()
+    case _ =>
+      throw new Exception(
+        "Mul Operation must only contain 2 operands and 1 result of 'complex' type."
+      )
+  }
 }
 
 ///////////
@@ -135,5 +175,3 @@ val CMath: Dialect =
     operations = Seq(Norm, Mul),
     attributes = Seq(ComplexType)
   )
-
-object CMathh {}
