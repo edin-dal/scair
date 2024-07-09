@@ -217,7 +217,7 @@ class ParserTest
                 Seq(
                   UnregisteredOperation(
                     "test.op",
-                    Seq(),
+                    ArrayBuffer(),
                     ArrayBuffer(),
                     Seq(
                       Value(I32),
@@ -230,7 +230,7 @@ class ParserTest
                   ),
                   UnregisteredOperation(
                     "test.op",
-                    Seq(Value(I64), Value(I32)),
+                    ArrayBuffer(Value(I64), Value(I32)),
                     ArrayBuffer(),
                     Seq(),
                     Seq(),
@@ -263,7 +263,7 @@ class ParserTest
                     Seq(
                       UnregisteredOperation(
                         "test.op",
-                        Seq(),
+                        ArrayBuffer(),
                         ArrayBuffer(),
                         Seq(
                           Value(I32),
@@ -276,7 +276,7 @@ class ParserTest
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        Seq(Value(I64), Value(I32)),
+                        ArrayBuffer(Value(I64), Value(I32)),
                         ArrayBuffer(),
                         Seq(),
                         Seq(),
@@ -290,7 +290,7 @@ class ParserTest
                     Seq(
                       UnregisteredOperation(
                         "test.op",
-                        Seq(),
+                        ArrayBuffer(),
                         ArrayBuffer(),
                         Seq(
                           Value(I32),
@@ -303,7 +303,7 @@ class ParserTest
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        Seq(
+                        ArrayBuffer(
                           Value(I64),
                           Value(I32)
                         ),
@@ -397,7 +397,7 @@ class ParserTest
               Seq(
                 UnregisteredOperation(
                   "test.op",
-                  Seq(),
+                  ArrayBuffer(),
                   ArrayBuffer(),
                   Seq(
                     Value(I32),
@@ -426,7 +426,7 @@ class ParserTest
               Seq(
                 UnregisteredOperation(
                   "test.op",
-                  Seq(),
+                  ArrayBuffer(),
                   ArrayBuffer(),
                   Seq(
                     r0,
@@ -439,7 +439,7 @@ class ParserTest
                 ),
                 UnregisteredOperation(
                   "test.op",
-                  Seq(o0, o1),
+                  ArrayBuffer(o0, o1),
                   ArrayBuffer(),
                   Seq(),
                   Seq(),

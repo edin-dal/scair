@@ -47,7 +47,8 @@ case class ComplexType(val cmplxType: Attribute)
 object Norm extends DialectOperation {
   override def name: String = "cmath.norm"
   override def constructOp(
-      operands: Seq[Value[Attribute]] = Seq(),
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -67,7 +68,8 @@ object Norm extends DialectOperation {
 }
 
 case class Norm(
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -88,7 +90,8 @@ case class Norm(
 object Mul extends DialectOperation {
   override def name: String = "cmath.mul"
   override def constructOp(
-      operands: Seq[Value[Attribute]] = Seq(),
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -108,7 +111,8 @@ object Mul extends DialectOperation {
 }
 
 case class Mul(
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -132,9 +136,4 @@ val CMath: Dialect =
     attributes = Seq(ComplexType)
   )
 
-object CMathh {
-  def main(args: Array[String]): Unit = {
-    val res = parse("!cmath.complex<f32>", Type(_))
-    println(res)
-  }
-}
+object CMathh {}

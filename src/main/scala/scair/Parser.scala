@@ -2,6 +2,7 @@ package scair
 
 import fastparse._
 import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer}
 import scala.util.{Try, Success, Failure}
 import IR._
 import AttrParser._
@@ -94,12 +95,17 @@ object Parser {
         valueIdAndTypeList: Seq[(String, Attribute)]
     )(implicit
         scope: Scope
-    ): Seq[Value[Attribute]] = {
+    ): (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) = {
+      var forwardRefSeq: ArrayBuffer[(String, Attribute)] =
+        ArrayBuffer()
+      var useValSeq: ArrayBuffer[Value[Attribute]] =
+        ArrayBuffer()
       for {
         (name, typ) <- valueIdAndTypeList
       } yield !scope.valueMap.contains(name) match {
         case true =>
-          throw new Exception(s"SSA value used but not defined %${name}")
+          val tuple = (name, typ)
+          forwardRefSeq += tuple
         case false =>
           scope.valueMap(name).typ != typ match {
             case true =>
@@ -107,8 +113,48 @@ object Parser {
                 s"$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
               )
             case false =>
-              scope.valueMap(name)
+              useValSeq += scope.valueMap(name)
           }
+      }
+      return (useValSeq, forwardRefSeq)
+    }
+
+    def checkValueWaitlist()(implicit scope: Scope): Unit = {
+
+      for ((operation, operands) <- scope.valueWaitlist) {
+
+        val foundOperands: ArrayBuffer[(String, Attribute)] = ArrayBuffer()
+        val operandList: ArrayBuffer[Value[Attribute]] = ArrayBuffer()
+
+        for {
+          (name, typ) <- operands
+        } yield scope.valueMap
+          .contains(
+            name
+          ) match {
+          case true =>
+            val tuple = (name, typ)
+            foundOperands += tuple
+            operandList += scope.valueMap(name)
+          case false =>
+        }
+
+        scope.valueWaitlist(operation) --= foundOperands
+
+        if (scope.valueWaitlist(operation).length == 0) {
+          scope.valueWaitlist -= operation
+        }
+        operation.operands.appendAll(operandList)
+      }
+
+      if (scope.valueWaitlist.size > 0) {
+        scope.parentScope match {
+          case Some(x) => x.valueWaitlist ++= scope.valueWaitlist
+          case None =>
+            throw new Exception(
+              s"Value ${scope.valueWaitlist.head._2.head} not defined within Scope"
+            )
+        }
       }
     }
 
@@ -126,35 +172,78 @@ object Parser {
         scope.blockMap(blockName) = block
     }
 
+    def useBlocks(
+        successorList: Seq[String]
+    )(implicit
+        scope: Scope
+    ): (ArrayBuffer[Block], ArrayBuffer[String]) = {
+      var forwardRefSeq: ArrayBuffer[String] =
+        ArrayBuffer()
+      var successorBlockSeq: ArrayBuffer[Block] =
+        ArrayBuffer()
+      for {
+        name <- successorList
+      } yield !scope.blockMap.contains(name) match {
+        case true =>
+          forwardRefSeq += name
+        case false =>
+          successorBlockSeq += scope.blockMap(name)
+      }
+      return (successorBlockSeq, forwardRefSeq)
+    }
+
     // check block waitlist once you exit the local scope of a region,
     // as well as the global scope of the program at the end
-    def checkWaitlist()(implicit scope: Scope): Unit = {
+    def checkBlockWaitlist()(implicit scope: Scope): Unit = {
 
       for ((operation, successors) <- scope.blockWaitlist) {
-        val successorList: Seq[Block] = for {
+
+        val foundOperands: ArrayBuffer[String] = ArrayBuffer()
+        val successorList: ArrayBuffer[Block] = ArrayBuffer()
+
+        for {
           name <- successors
         } yield scope.blockMap
           .contains(
             name
           ) match {
+          case true =>
+            foundOperands += name
+            successorList += scope.blockMap(name)
           case false =>
-            throw new Exception(s"Successor ^${name} not defined within Scope")
-          case true => scope.blockMap(name)
         }
-        operation.successors.clear()
+
+        scope.blockWaitlist(operation) --= foundOperands
+
+        if (scope.blockWaitlist(operation).length == 0) {
+          scope.blockWaitlist -= operation
+        }
         operation.successors.appendAll(successorList)
+      }
+
+      if (scope.blockWaitlist.size > 0) {
+        scope.parentScope match {
+          case Some(x) => x.blockWaitlist ++= scope.blockWaitlist
+          case None =>
+            throw new Exception(
+              s"Successor ^${scope.blockWaitlist.head._2.head} not defined within Scope"
+            )
+        }
       }
     }
   }
 
   class Scope(
+      var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
+      var valueWaitlist: mutable.Map[Operation, ArrayBuffer[
+        (String, Attribute)
+      ]] = mutable.Map.empty[Operation, ArrayBuffer[(String, Attribute)]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var parentScope: Option[Scope] = None,
-      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
-        mutable.Map.empty[Operation, Seq[String]]
+      var blockWaitlist: mutable.Map[Operation, ArrayBuffer[String]] =
+        mutable.Map.empty[Operation, ArrayBuffer[String]]
   ) {
 
     // child starts off from the parents context
@@ -172,7 +261,8 @@ object Parser {
 
     def switchWithParent(scope: Scope): Scope = parentScope match {
       case Some(x) =>
-        Scope.checkWaitlist()(scope)
+        Scope.checkValueWaitlist()(scope)
+        Scope.checkBlockWaitlist()(scope)
         x
       case None =>
         throw new Exception("No parent present - check your")
@@ -529,6 +619,9 @@ class Parser {
 
   implicit var currentScope: Scope = new Scope()
 
+  // currentScope = currentScope.switchWithChild()
+  // currentScope = currentScope.switchWithParent(currentScope)
+
   //////////////////////////
   // TOP LEVEL PRODUCTION //
   //////////////////////////
@@ -536,7 +629,10 @@ class Parser {
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 
   def TopLevel[$: P] = P(
-    OperationPat.rep ~ E(Scope.checkWaitlist()) ~ End
+    OperationPat.rep ~ E({
+      Scope.checkValueWaitlist()
+      Scope.checkBlockWaitlist()
+    }) ~ End
   ) // shortened definition TODO: finish...
 
   ////////////////
@@ -610,16 +706,20 @@ class Parser {
     val resultss: Seq[Value[Attribute]] =
       Scope.defineValues(results zip resultsTypes)
 
-    val operandss: Seq[Value[Attribute]] =
+    val useAndRefValueSeqs
+        : (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) =
       Scope.useValues(operands zip operandsTypes)
+
+    val useAndRefBlockSeqs: (ArrayBuffer[Block], ArrayBuffer[String]) =
+      Scope.useBlocks(successors)
 
     val opObject: Option[DialectOperation] = ctx.getOperation(opName)
 
     val op = opObject match {
       case Some(x) =>
         x.constructOp(
-          operands = operandss,
-          successors = collection.mutable.ArrayBuffer(),
+          operands = useAndRefValueSeqs._1,
+          successors = useAndRefBlockSeqs._1,
           dictionaryProperties = dictPropertiesMap,
           results = resultss,
           dictionaryAttributes = dictAttributesMap,
@@ -628,8 +728,8 @@ class Parser {
       case None =>
         new UnregisteredOperation(
           name = opName,
-          operands = operandss,
-          successors = collection.mutable.ArrayBuffer(),
+          operands = useAndRefValueSeqs._1,
+          successors = useAndRefBlockSeqs._1,
           dictionaryProperties = dictPropertiesMap,
           results = resultss,
           dictionaryAttributes = dictAttributesMap,
@@ -637,8 +737,11 @@ class Parser {
         )
     }
 
-    if (successors.length > 0) {
-      currentScope.blockWaitlist += op -> successors
+    if (useAndRefValueSeqs._2.length > 0) {
+      currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
+    }
+    if (useAndRefBlockSeqs._2.length > 0) {
+      currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
     }
 
     return op
@@ -657,9 +760,6 @@ class Parser {
       ~ RegionList.?.map(optionlessSeq)
       ~ DictionaryAttribute.?.map(optionlessSeq) ~ ":" ~ FunctionType
   )
-
-  // def CustomOperation[$: P] = P() maybe it will be fine with scope, or maybe it won't, lets see...
-  // i do not think it is currently possible without passing the whole parser instance, but lets see...
 
   def RegionList[$: P] =
     P("(" ~ Region.rep(sep = ",") ~ ")")

@@ -66,7 +66,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
             Seq(
               UnregisteredOperation(
                 "op1",
-                Seq(),
+                ArrayBuffer(),
                 ArrayBuffer(),
                 Seq(),
                 Seq(
@@ -75,7 +75,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                       Block(
                         Seq(
                           Norm(
-                            Seq(Value(Float32Type)),
+                            ArrayBuffer(Value(Float32Type)),
                             ArrayBuffer(),
                             Seq(Value(Float64Type)),
                             Seq(),
@@ -83,7 +83,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                             _
                           ),
                           Mul(
-                            Seq(Value(Float32Type), Value(Float32Type)),
+                            ArrayBuffer(Value(Float32Type), Value(Float32Type)),
                             ArrayBuffer(),
                             Seq(Value(Float32Type)),
                             Seq(),

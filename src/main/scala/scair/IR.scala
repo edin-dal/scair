@@ -1,5 +1,5 @@
 package scair
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 import scair.Parser
 import fastparse._
 
@@ -53,7 +53,8 @@ case class Region(
 
 sealed abstract class Operation(
     val name: String,
-    val operands: Seq[Value[Attribute]] = Seq(),
+    val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -81,7 +82,8 @@ sealed abstract class Operation(
 
 final case class UnregisteredOperation(
     override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -94,7 +96,8 @@ final case class UnregisteredOperation(
 
 class RegisteredOperation(
     override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -111,7 +114,8 @@ trait DialectOperation {
       parsingCtx: P[Any]
   ): Option[P[Operation]] = None
   def constructOp(
-      operands: Seq[Value[Attribute]] = Seq(),
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
