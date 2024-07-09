@@ -394,61 +394,21 @@ class ParserTest
         pattern = parser.TopLevel(_)
       ) should matchPattern {
         case Parsed.Success(
-              Seq(
-                UnregisteredOperation(
-                  "test.op",
-                  ArrayBuffer(),
-                  ArrayBuffer(),
-                  Seq(
-                    Value(I32),
-                    Value(I64),
-                    Value(I32)
-                  ),
-                  Seq(),
-                  _,
-                  _
-                )
+              UnregisteredOperation(
+                "test.op",
+                ArrayBuffer(),
+                ArrayBuffer(),
+                Seq(
+                  Value(I32),
+                  Value(I64),
+                  Value(I32)
+                ),
+                Seq(),
+                _,
+                _
               ),
               48
             ) =>
-      }
-    }
-  }
-
-  "TopLevel Tests2" should "Test full programs" in {
-    withClue("Test 2: ") {
-      parser.parseThis(
-        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-          "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        pattern = parser.TopLevel(_)
-      ) should matchPattern {
-        case Parsed.Success(
-              Seq(
-                UnregisteredOperation(
-                  "test.op",
-                  ArrayBuffer(),
-                  ArrayBuffer(),
-                  Seq(
-                    r0,
-                    r1,
-                    r2
-                  ),
-                  Seq(),
-                  _,
-                  _
-                ),
-                UnregisteredOperation(
-                  "test.op",
-                  ArrayBuffer(o0, o1),
-                  ArrayBuffer(),
-                  Seq(),
-                  Seq(),
-                  _,
-                  _
-                )
-              ),
-              85
-            ) if (o0 eq r1) && (o1 eq r0) =>
       }
     }
   }

@@ -312,7 +312,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     parser.parseThis(
       text = input,
       pattern = parser.TopLevel(_)
-    ) should matchPattern { case Parsed.Success(Seq(program), _) => }
+    ) should matchPattern { case Parsed.Success(program, _) => }
   }
 
   "parsingInteger" should "match parsed string against expected string" in {
