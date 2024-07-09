@@ -134,8 +134,11 @@ object Parser {
           ) match {
           case true =>
             val tuple = (name, typ)
-            foundOperands += tuple
-            operandList += scope.valueMap(name)
+            val value = scope.valueMap(name)
+            if (value.typ.name == typ.name) { // to be changed
+              foundOperands += tuple
+              operandList += value
+            }
           case false =>
         }
 
@@ -151,8 +154,11 @@ object Parser {
         scope.parentScope match {
           case Some(x) => x.valueWaitlist ++= scope.valueWaitlist
           case None =>
+            val opName = scope.valueWaitlist.head._1.name
+            val operandName = scope.valueWaitlist.head._2(0)._1
+            val operandTyp = scope.valueWaitlist.head._2(0)._2
             throw new Exception(
-              s"Value ${scope.valueWaitlist.head._2.head} not defined within Scope"
+              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}' "
             )
         }
       }
@@ -619,9 +625,6 @@ class Parser {
 
   implicit var currentScope: Scope = new Scope()
 
-  // currentScope = currentScope.switchWithChild()
-  // currentScope = currentScope.switchWithParent(currentScope)
-
   //////////////////////////
   // TOP LEVEL PRODUCTION //
   //////////////////////////
@@ -629,7 +632,7 @@ class Parser {
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 
   def TopLevel[$: P] = P(
-    OperationPat.rep ~ E({
+    OperationPat ~ E({
       Scope.checkValueWaitlist()
       Scope.checkBlockWaitlist()
     }) ~ End
