@@ -18,7 +18,8 @@ import scair.{
   DialectOperation,
   Dialect,
   Printer,
-  AttrParser
+  AttrParser,
+  Parser
 }
 
 //////////////////
@@ -27,8 +28,8 @@ import scair.{
 
 object ComplexType extends DialectAttribute {
   override def name: String = "cmath.complex"
-  override def parse[$: P]: Some[P[Attribute]] =
-    Some(P("<" ~ Type ~ ">").map(ComplexType(_)))
+  override def parse[$: P]: P[Attribute] =
+    P("<" ~ Type ~ ">").map(ComplexType(_))
 }
 
 case class ComplexType(val cmplxType: Attribute)

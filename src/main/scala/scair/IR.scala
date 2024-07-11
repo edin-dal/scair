@@ -129,7 +129,9 @@ trait DialectOperation {
 
 trait DialectAttribute {
   def name: String
-  def parse[$: P]: Option[P[Attribute]] = None
+  def parse[$: P]: P[Attribute] = throw new Exception(
+    s"No custom Parser implemented for Attribute '${name}'"
+  )
 }
 
 final case class Dialect(
