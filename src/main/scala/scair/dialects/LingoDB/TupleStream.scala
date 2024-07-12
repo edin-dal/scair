@@ -21,34 +21,34 @@ import scair.{
   AttrParser
 }
 
-///////////
-// TYPES //
-///////////
+// ///////////
+// // TYPES //
+// ///////////
 
-case class TupleStream extends ParametrizedAttribute(
-  name = "tuples.tuplestream"
-  parameters = Seq()
-) with TypeAttribute
+// case class TupleStream extends ParametrizedAttribute(
+//   name = "tuples.tuplestream"
+//   parameters = Seq()
+// ) with TypeAttribute
 
-case class TupleStreamTuple extends ParametrizedAttribute(
-  name = "tuples.tuple"
-  parameters = Seq()
-) with TypeAttribute
+// case class TupleStreamTuple extends ParametrizedAttribute(
+//   name = "tuples.tuple"
+//   parameters = Seq()
+// ) with TypeAttribute
 
-////////////////
-// ATTRIBUTES //
-////////////////
+// ////////////////
+// // ATTRIBUTES //
+// ////////////////
 
-case class ColumnDefAttr() extends ParametrizedAttribute(
-  name = "tuples.columndef"
-  parameters = Seq()
-) with TypeAttribute
+// case class ColumnDefAttr() extends ParametrizedAttribute(
+//   name = "tuples.columndef"
+//   parameters = Seq()
+// ) with TypeAttribute
 
-case class TupleStreamTuple extends ParametrizedAttribute(
-  name = "tuples.tuple"
-  parameters = Seq()
-) with TypeAttribute
+// case class TupleStreamTuple extends ParametrizedAttribute(
+//   name = "tuples.tuple"
+//   parameters = Seq()
+// ) with TypeAttribute
 
-////////////////
-// OPERATIONS //
-////////////////
+// ////////////////
+// // OPERATIONS //
+// ////////////////
