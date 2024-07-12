@@ -129,7 +129,9 @@ trait DialectOperation {
 
 trait DialectAttribute {
   def name: String
-  def parse[$: P]: Option[P[Attribute]] = None
+  def parse[$: P]: P[Attribute] = throw new Exception(
+    s"No custom Parser implemented for Attribute '${name}'"
+  )
 }
 
 final case class Dialect(
@@ -138,3 +140,36 @@ final case class Dialect(
 ) {}
 
 object IR {}
+
+/*
+
+import scala.quoted.*
+
+trait MyObject {
+  def name: String
+}
+
+trait MyTrait {
+  type ReturnType <: MyObject
+
+  inline def parseReturn(name: String):
+    ReturnType = ${ MyTrait.impl[ReturnType]('name) }
+}
+
+object MyTrait {
+  def impl[T <: MyObject: Type]
+  (name: Expr[String])(using Quotes): Expr[T] = {
+    import quotes.reflect.*
+
+    // Generate code to instantiate the ReturnType with String argument
+    val returnTypeSymbol = TypeRepr.of[T].typeSymbol
+    val instance = New(TypeIdent(returnTypeSymbol))
+      .select(returnTypeSymbol.primaryConstructor)
+      .appliedToArgs(name)
+      .asExprOf[T]
+
+    instance
+  }
+}
+
+ */

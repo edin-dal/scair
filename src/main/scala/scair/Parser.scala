@@ -521,11 +521,7 @@ object Parser {
     "#" ~ PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
       ctx.getAttribute(x) match {
         case Some(y) =>
-          y.parse match {
-            case Some(parser) => parser
-            case None =>
-              throw new Exception(s"There is no parser defined for type ${x}")
-          }
+          y.parse
         case None =>
           throw new Exception(
             s"Type ${x} is not defined in any supported Dialect."
@@ -538,11 +534,7 @@ object Parser {
     "!" ~ PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
       ctx.getAttribute(x) match {
         case Some(y) =>
-          y.parse match {
-            case Some(parser) => parser
-            case None =>
-              throw new Exception(s"There is no parser defined for type ${x}")
-          }
+          y.parse
         case None =>
           throw new Exception(
             s"Type ${x} is not defined in any supported Dialect."
