@@ -61,7 +61,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val operation = UnregisteredOperation(
       "op1",
       results = Seq(new Value(F32)),
-      operands = Seq(new Value(F32)),
+      operands = ArrayBuffer(new Value(F32)),
       regions = Seq(
         Region(
           Seq(
@@ -114,7 +114,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
                 Seq(
                   UnregisteredOperation(
                     "test.op",
-                    Seq(),
+                    ArrayBuffer(),
                     ArrayBuffer(successorTestBlock),
                     Seq(),
                     Seq()

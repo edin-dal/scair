@@ -18,7 +18,8 @@ import scair.{
   DialectOperation,
   Dialect,
   Printer,
-  AttrParser
+  AttrParser,
+  Parser
 }
 
 //////////////////
@@ -27,8 +28,8 @@ import scair.{
 
 object ComplexType extends DialectAttribute {
   override def name: String = "cmath.complex"
-  override def parse[$: P]: Some[P[Attribute]] =
-    Some(P("<" ~ Type ~ ">").map(ComplexType(_)))
+  override def parse[$: P]: P[Attribute] =
+    P("<" ~ Type ~ ">").map(ComplexType(_))
 }
 
 case class ComplexType(val cmplxType: Attribute)
@@ -37,6 +38,15 @@ case class ComplexType(val cmplxType: Attribute)
       parameters = cmplxType
     )
     with TypeAttribute {
+
+  override def verify(): Unit = cmplxType match {
+    case Float32Type =>
+    case Float64Type =>
+    case _ =>
+      throw new Exception(
+        "Complex type must be constructed with either 'f32' or 'f64' attribute."
+      )
+  }
   override def toString = s"${prefix}cmath.complex<$cmplxType>"
 }
 
@@ -47,7 +57,8 @@ case class ComplexType(val cmplxType: Attribute)
 object Norm extends DialectOperation {
   override def name: String = "cmath.norm"
   override def constructOp(
-      operands: Seq[Value[Attribute]] = Seq(),
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -67,7 +78,8 @@ object Norm extends DialectOperation {
 }
 
 case class Norm(
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -78,7 +90,22 @@ case class Norm(
       immutable.Map.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.norm") {
 
-  override def verify(): Unit = ()
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (1, 0, 1, 0, 0, 0) =>
+      operands(0).typ.verify()
+      results(0).typ.verify()
+    case _ =>
+      throw new Exception(
+        "Norm Operation must only contain 1 operand of 'complex' type, and 1 result of 'f32' or 'f64'."
+      )
+  }
 }
 
 ///////////////////
@@ -88,7 +115,8 @@ case class Norm(
 object Mul extends DialectOperation {
   override def name: String = "cmath.mul"
   override def constructOp(
-      operands: Seq[Value[Attribute]] = Seq(),
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -108,7 +136,8 @@ object Mul extends DialectOperation {
 }
 
 case class Mul(
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -119,7 +148,23 @@ case class Mul(
       immutable.Map.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.mul") {
 
-  override def verify(): Unit = ()
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (2, 0, 1, 0, 0, 0) =>
+      operands(0).typ.verify()
+      operands(1).typ.verify()
+      results(0).typ.verify()
+    case _ =>
+      throw new Exception(
+        "Mul Operation must only contain 2 operands and 1 result of 'complex' type."
+      )
+  }
 }
 
 ///////////
@@ -131,10 +176,3 @@ val CMath: Dialect =
     operations = Seq(Norm, Mul),
     attributes = Seq(ComplexType)
   )
-
-object CMathh {
-  def main(args: Array[String]): Unit = {
-    val res = parse("!cmath.complex<f32>", Type(_))
-    println(res)
-  }
-}

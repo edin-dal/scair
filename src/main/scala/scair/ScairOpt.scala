@@ -36,7 +36,7 @@ object ScairOpt {
         val parser = new scair.Parser
         val module = parser.parseThis(
           input.mkString,
-          pattern = parser.OperationPat(_)
+          pattern = parser.TopLevel(_)
         ) match {
           case fastparse.Parsed.Success(value, _) => value
           case fastparse.Parsed.Failure(_, _, extra) =>

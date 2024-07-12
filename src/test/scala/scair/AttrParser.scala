@@ -148,7 +148,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = Seq(valF64, valF32)
+          operands = ArrayBuffer(valF64, valF32)
         )
       ),
       Seq(Value(F128))
@@ -167,7 +167,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = Seq(
+          operands = ArrayBuffer(
             valI16,
             valI1
           )
@@ -186,7 +186,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = Seq(valINDEX)
+          operands = ArrayBuffer(valINDEX)
         )
       ),
       Seq(Value(I64))
@@ -230,7 +230,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       Seq(
         UnregisteredOperation(
           "test.op",
-          operands = Seq(
+          operands = ArrayBuffer(
             valF32,
             valF64,
             Value(F80)
@@ -257,7 +257,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = Seq(
+          operands = ArrayBuffer(
             valI16,
             valI1
           )
@@ -276,7 +276,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = Seq(valINDEX)
+          operands = ArrayBuffer(valINDEX)
         )
       ),
       Seq(Value(I64))
@@ -312,7 +312,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     parser.parseThis(
       text = input,
       pattern = parser.TopLevel(_)
-    ) should matchPattern { case Parsed.Success(Seq(program), _) => }
+    ) should matchPattern { case Parsed.Success(program, _) => }
   }
 
   "parsingInteger" should "match parsed string against expected string" in {
@@ -332,7 +332,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       case Parsed.Success(
             UnregisteredOperation(
               "op1",
-              Seq(),
+              ArrayBuffer(),
               ArrayBuffer(),
               Seq(),
               Seq(
@@ -342,7 +342,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                       Seq(
                         UnregisteredOperation(
                           "test.op",
-                          Seq(),
+                          ArrayBuffer(),
                           ArrayBuffer(),
                           Seq(
                             Value(IntegerType(32, Signless)),

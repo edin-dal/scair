@@ -1,5 +1,5 @@
 package scair
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 import scair.Parser
 import fastparse._
 
@@ -53,7 +53,8 @@ case class Region(
 
 sealed abstract class Operation(
     val name: String,
-    val operands: Seq[Value[Attribute]] = Seq(),
+    val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -81,7 +82,8 @@ sealed abstract class Operation(
 
 final case class UnregisteredOperation(
     override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -94,7 +96,8 @@ final case class UnregisteredOperation(
 
 class RegisteredOperation(
     override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
     override val successors: collection.mutable.ArrayBuffer[Block] =
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -111,7 +114,8 @@ trait DialectOperation {
       parsingCtx: P[Any]
   ): Option[P[Operation]] = None
   def constructOp(
-      operands: Seq[Value[Attribute]] = Seq(),
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
@@ -125,7 +129,9 @@ trait DialectOperation {
 
 trait DialectAttribute {
   def name: String
-  def parse[$: P]: Option[P[Attribute]] = None
+  def parse[$: P]: P[Attribute] = throw new Exception(
+    s"No custom Parser implemented for Attribute '${name}'"
+  )
 }
 
 final case class Dialect(
@@ -134,3 +140,36 @@ final case class Dialect(
 ) {}
 
 object IR {}
+
+/*
+
+import scala.quoted.*
+
+trait MyObject {
+  def name: String
+}
+
+trait MyTrait {
+  type ReturnType <: MyObject
+
+  inline def parseReturn(name: String):
+    ReturnType = ${ MyTrait.impl[ReturnType]('name) }
+}
+
+object MyTrait {
+  def impl[T <: MyObject: Type]
+  (name: Expr[String])(using Quotes): Expr[T] = {
+    import quotes.reflect.*
+
+    // Generate code to instantiate the ReturnType with String argument
+    val returnTypeSymbol = TypeRepr.of[T].typeSymbol
+    val instance = New(TypeIdent(returnTypeSymbol))
+      .select(returnTypeSymbol.primaryConstructor)
+      .appliedToArgs(name)
+      .asExprOf[T]
+
+    instance
+  }
+}
+
+ */
