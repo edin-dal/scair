@@ -65,15 +65,40 @@ case class TupleStream(val tuples: Attribute*)
 // ATTRIBUTES //
 ////////////////
 
-case class ColumnDefAttr()
+case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
     extends ParametrizedAttribute(
-      name = "tuples.columndef"
-    )
+      name = "tuples.columndef",
+      refName,
+      fromExisting
+    ) {
 
-case class ColumnRefAttr()
+  override def verify(): Unit = {
+    if (!refName.isInstanceOf[SymbolRefAttr]) {
+      throw new Exception(
+        "ColumnDefAttr's name must be of SymbolRefAttr Attribute."
+      )
+    }
+  }
+  override def toString =
+    s"${prefix}${name}<${refName}, ${fromExisting}>"
+}
+
+case class ColumnRefAttr(val refName: Attribute)
     extends ParametrizedAttribute(
-      name = "tuples.columnref"
-    )
+      name = "tuples.columnref",
+      refName
+    ) {
+
+  override def verify(): Unit = {
+    if (!refName.isInstanceOf[SymbolRefAttr]) {
+      throw new Exception(
+        "ColumnRefAttr's name must be of SymbolRefAttr Attribute."
+      )
+    }
+  }
+  override def toString =
+    s"${prefix}${name}<${refName}>"
+}
 
 ////////////////
 // OPERATIONS //
