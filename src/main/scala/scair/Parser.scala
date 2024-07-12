@@ -261,17 +261,13 @@ object Parser {
       )
     }
 
-    def switchWithChild(): Scope = {
-      createChild()
-    }
-
     def switchWithParent(scope: Scope): Scope = parentScope match {
       case Some(x) =>
         Scope.checkValueWaitlist()(scope)
         Scope.checkBlockWaitlist()(scope)
         x
       case None =>
-        throw new Exception("No parent present - check your")
+        scope
     }
   }
 
@@ -525,11 +521,7 @@ object Parser {
     "#" ~ PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
       ctx.getAttribute(x) match {
         case Some(y) =>
-          y.parse match {
-            case Some(parser) => parser
-            case None =>
-              throw new Exception(s"There is no parser defined for type ${x}")
-          }
+          y.parse
         case None =>
           throw new Exception(
             s"Type ${x} is not defined in any supported Dialect."
@@ -542,11 +534,7 @@ object Parser {
     "!" ~ PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
       ctx.getAttribute(x) match {
         case Some(y) =>
-          y.parse match {
-            case Some(parser) => parser
-            case None =>
-              throw new Exception(s"There is no parser defined for type ${x}")
-          }
+          y.parse
         case None =>
           throw new Exception(
             s"Type ${x} is not defined in any supported Dialect."
@@ -624,6 +612,14 @@ object Parser {
 class Parser {
 
   implicit var currentScope: Scope = new Scope()
+
+  def enterLocalRegion = {
+    currentScope = currentScope.createChild()
+  }
+
+  def enterParentRegion = {
+    currentScope = currentScope.switchWithParent(currentScope)
+  }
 
   //////////////////////////
   // TOP LEVEL PRODUCTION //
@@ -822,9 +818,9 @@ class Parser {
   // EntryBlock might break - take out if it does...
   def Region[$: P] = P(
     "{" ~ E(
-      { currentScope = currentScope.switchWithChild() }
+      { enterLocalRegion }
     ) ~ OperationPat.rep ~ Block.rep ~ "}" ~ E(
-      { currentScope = currentScope.switchWithParent(currentScope) }
+      { enterParentRegion }
     )
   ).map(defineRegion)
 
