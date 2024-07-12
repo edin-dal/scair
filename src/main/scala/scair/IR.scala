@@ -129,7 +129,6 @@ trait DialectOperation {
 
 trait DialectAttribute {
   def name: String
-  def parseReturn[T <: Attribute]: => T
   def parse[$: P]: P[Attribute] = throw new Exception(
     s"No custom Parser implemented for Attribute '${name}'"
   )
@@ -153,7 +152,7 @@ trait MyObject {
 trait MyTrait {
   type ReturnType <: MyObject
 
-  inline def parseReturn(name: String): 
+  inline def parseReturn(name: String):
     ReturnType = ${ MyTrait.impl[ReturnType]('name) }
 }
 
@@ -173,4 +172,4 @@ object MyTrait {
   }
 }
 
-*/
+ */
