@@ -107,12 +107,25 @@ object AttrParser {
 
   def Encoding[$: P] = P(AttributeValue)
 
+  //////////////////////////
+  // SYMBOL REF ATTRIBUTE //
+  //////////////////////////
+
+  def SymbolRefAttrP[$: P]: P[Attribute] = P(
+    SymbolRefId ~ SymbolRefId.rep(sep = "::")
+  ).map((x: String, y: Seq[String]) =>
+    SymbolRefAttr(
+      StringAttribute(x),
+      ArrayAttribute({ y.map(z => StringAttribute(z)) })
+    )
+  )
+
   //////////////
   // BUILT IN //
   //////////////
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP
+    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP
   )
 }
 

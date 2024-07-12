@@ -21,34 +21,60 @@ import scair.{
   AttrParser
 }
 
-// ///////////
-// // TYPES //
-// ///////////
+///////////
+// TYPES //
+///////////
 
-// case class TupleStream extends ParametrizedAttribute(
-//   name = "tuples.tuplestream"
-//   parameters = Seq()
-// ) with TypeAttribute
+case class TupleStreamTuple(val tupleVals: Attribute*)
+    extends ParametrizedAttribute(
+      name = "tuples.tuple",
+      parameters = tupleVals: _*
+    )
+    with TypeAttribute {
 
-// case class TupleStreamTuple extends ParametrizedAttribute(
-//   name = "tuples.tuple"
-//   parameters = Seq()
-// ) with TypeAttribute
+  override def verify(): Unit = {
+    if (tupleVals.length != 2) {
+      throw new Exception("TupleStream Tuple must contain 2 elements only.")
+    }
+  }
+  override def toString =
+    s"${prefix}${name}<${tupleVals.map(x => x.toString).mkString(", ")}>"
+}
 
-// ////////////////
-// // ATTRIBUTES //
-// ////////////////
+case class TupleStream(val tuples: Attribute*)
+    extends ParametrizedAttribute(
+      name = "tuples.tuplestream",
+      parameters = tuples: _*
+    )
+    with TypeAttribute {
 
-// case class ColumnDefAttr() extends ParametrizedAttribute(
-//   name = "tuples.columndef"
-//   parameters = Seq()
-// ) with TypeAttribute
+  override def verify(): Unit = {
+    for (param <- tuples) {
+      if (!param.isInstanceOf[TupleStreamTuple]) {
+        throw new Exception(
+          "TupleStream must only contain TupleStream Tuple attributes."
+        )
+      }
+    }
+  }
+  override def toString =
+    s"${prefix}${name}<${tuples.map(x => x.toString).mkString(", ")}>"
+}
 
-// case class TupleStreamTuple extends ParametrizedAttribute(
-//   name = "tuples.tuple"
-//   parameters = Seq()
-// ) with TypeAttribute
+////////////////
+// ATTRIBUTES //
+////////////////
 
-// ////////////////
-// // OPERATIONS //
-// ////////////////
+case class ColumnDefAttr()
+    extends ParametrizedAttribute(
+      name = "tuples.columndef"
+    )
+
+case class ColumnRefAttr()
+    extends ParametrizedAttribute(
+      name = "tuples.columnref"
+    )
+
+////////////////
+// OPERATIONS //
+////////////////
