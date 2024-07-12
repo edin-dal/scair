@@ -153,11 +153,13 @@ trait MyObject {
 trait MyTrait {
   type ReturnType <: MyObject
 
-  inline def parseReturn(name: String): ReturnType = ${ MyTrait.impl[ReturnType]('name) }
+  inline def parseReturn(name: String): 
+    ReturnType = ${ MyTrait.impl[ReturnType]('name) }
 }
 
 object MyTrait {
-  def impl[T <: MyObject: Type](name: Expr[String])(using Quotes): Expr[T] = {
+  def impl[T <: MyObject: Type]
+  (name: Expr[String])(using Quotes): Expr[T] = {
     import quotes.reflect.*
 
     // Generate code to instantiate the ReturnType with String argument
