@@ -25,6 +25,16 @@ import scair.{
 // TYPES //
 ///////////
 
+// ==-----== //
+//   Tuple   //
+// ==-----== //
+
+object TupleStreamTuple extends DialectAttribute {
+  override def name: String = "tuples.tuple"
+  override def parse[$: P]: P[Attribute] =
+    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStreamTuple(_*))
+}
+
 case class TupleStreamTuple(val tupleVals: Attribute*)
     extends ParametrizedAttribute(
       name = "tuples.tuple",
@@ -39,6 +49,16 @@ case class TupleStreamTuple(val tupleVals: Attribute*)
   }
   override def toString =
     s"${prefix}${name}<${tupleVals.map(x => x.toString).mkString(", ")}>"
+}
+
+// ==-----------== //
+//   TupleStream   //
+// ==-----------== //
+
+object TupleStream extends DialectAttribute {
+  override def name: String = "tuples.tuplestream"
+  override def parse[$: P]: P[Attribute] =
+    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStream(_*))
 }
 
 case class TupleStream(val tuples: Attribute*)
@@ -65,6 +85,16 @@ case class TupleStream(val tuples: Attribute*)
 // ATTRIBUTES //
 ////////////////
 
+// ==-------------== //
+//   ColumnDefAttr   //
+// ==-------------== //
+
+object ColumnDefAttr extends DialectAttribute {
+  override def name: String = "tuples.column_def"
+  override def parse[$: P]: P[Attribute] =
+    P("<" ~ Type ~ "," ~ Type ~ ">").map(ColumnDefAttr(_, _))
+}
+
 case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
     extends ParametrizedAttribute(
       name = "tuples.columndef",
@@ -81,6 +111,16 @@ case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
   }
   override def toString =
     s"${prefix}${name}<${refName}, ${fromExisting}>"
+}
+
+// ==-------------== //
+//   ColumnRefAttr   //
+// ==-------------== //
+
+object ColumnRefAttr extends DialectAttribute {
+  override def name: String = "tuples.column_ref"
+  override def parse[$: P]: P[Attribute] =
+    P("<" ~ Type ~ ">").map(ColumnRefAttr(_))
 }
 
 case class ColumnRefAttr(val refName: Attribute)
