@@ -38,22 +38,22 @@ class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
       (
         "!tuples.tuple<f32, f32>",
         "Success",
-        TupleStreamTuple(Float32Type, Float32Type)
+        TupleStreamTuple(Seq(Float32Type, Float32Type))
       ),
       (
         "!tuples.tuplestream<f32, f32>",
         "Success",
-        TupleStreamTuple(Float32Type, Float32Type)
+        TupleStreamTuple(Seq(Float32Type, Float32Type))
       ),
       (
         "!tuples.column_def<f32, f32>",
         "Success",
-        TupleStreamTuple(Float32Type, Float32Type)
+        ColumnDefAttr(Float32Type, Float32Type)
       ),
       (
         "!tuples.column_ref<f32>",
         "Success",
-        TupleStreamTuple(Float32Type)
+        ColumnRefAttr(Float32Type)
       )
     )
 

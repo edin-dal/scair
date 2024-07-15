@@ -15,7 +15,7 @@ trait TypeAttribute extends Attribute {
 
 abstract class ParametrizedAttribute(
     override val name: String,
-    val parameters: Attribute*
+    val parameters: Seq[Attribute] = Seq()
 ) extends Attribute
 
 abstract class DataAttribute[D](

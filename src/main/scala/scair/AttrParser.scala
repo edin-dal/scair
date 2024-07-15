@@ -116,7 +116,7 @@ object AttrParser {
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringAttribute(x),
-      ArrayAttribute({ y.map(z => StringAttribute(z)) })
+      ArrayAttribute(y.map(z => StringAttribute(z)))
     )
   )
 

@@ -32,13 +32,13 @@ import scair.{
 object TupleStreamTuple extends DialectAttribute {
   override def name: String = "tuples.tuple"
   override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStreamTuple(_*))
+    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStreamTuple(_))
 }
 
-case class TupleStreamTuple(val tupleVals: Attribute*)
+case class TupleStreamTuple(val tupleVals: Seq[Attribute])
     extends ParametrizedAttribute(
       name = "tuples.tuple",
-      parameters = tupleVals: _*
+      parameters = tupleVals
     )
     with TypeAttribute {
 
@@ -58,13 +58,13 @@ case class TupleStreamTuple(val tupleVals: Attribute*)
 object TupleStream extends DialectAttribute {
   override def name: String = "tuples.tuplestream"
   override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStream(_*))
+    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStream(_))
 }
 
-case class TupleStream(val tuples: Attribute*)
+case class TupleStream(val tuples: Seq[Attribute])
     extends ParametrizedAttribute(
       name = "tuples.tuplestream",
-      parameters = tuples: _*
+      parameters = tuples
     )
     with TypeAttribute {
 
@@ -98,8 +98,7 @@ object ColumnDefAttr extends DialectAttribute {
 case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
     extends ParametrizedAttribute(
       name = "tuples.column_def",
-      refName,
-      fromExisting
+      Seq(refName, fromExisting)
     ) {
 
   override def verify(): Unit = {
@@ -126,15 +125,15 @@ object ColumnRefAttr extends DialectAttribute {
 case class ColumnRefAttr(val refName: Attribute)
     extends ParametrizedAttribute(
       name = "tuples.column_ref",
-      refName
+      Seq(refName)
     ) {
 
-  override def verify(): Unit = {
-    if (!refName.isInstanceOf[SymbolRefAttr]) {
+  override def verify(): Unit = refName match {
+    case _: SymbolRefAttr =>
+    case _ =>
       throw new Exception(
         "ColumnRefAttr's name must be of SymbolRefAttr Attribute."
       )
-    }
   }
   override def toString =
     s"${prefix}${name}<${refName}>"
@@ -151,16 +150,12 @@ case class ColumnRefAttr(val refName: Attribute)
 object ReturnOp extends DialectOperation {
   override def name: String = "tuples.return"
   override def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-        collection.mutable.ArrayBuffer(),
-      successors: collection.mutable.ArrayBuffer[Block] =
-        collection.mutable.ArrayBuffer(),
-      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-      regions: Seq[Region] = Seq[Region](),
-      dictionaryProperties: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute]
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+      successors: collection.mutable.ArrayBuffer[Block],
+      results: Seq[Value[Attribute]],
+      regions: Seq[Region],
+      dictionaryProperties: immutable.Map[String, Attribute],
+      dictionaryAttributes: immutable.Map[String, Attribute]
   ): ReturnOp = ReturnOp(
     operands,
     successors,
@@ -172,16 +167,12 @@ object ReturnOp extends DialectOperation {
 }
 
 case class ReturnOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
-    override val dictionaryProperties: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute]
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "tuples.return") {
 
   override def verify(): Unit = (
@@ -200,23 +191,19 @@ case class ReturnOp(
   }
 }
 
-// ==--------== //
-//   ReturnOp   //
-// ==--------== //
+// ==-----------== //
+//   GetColumnOp   //
+// ==-----------== //
 
 object GetColumnOp extends DialectOperation {
   override def name: String = "tuples.getcol"
   override def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-        collection.mutable.ArrayBuffer(),
-      successors: collection.mutable.ArrayBuffer[Block] =
-        collection.mutable.ArrayBuffer(),
-      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-      regions: Seq[Region] = Seq[Region](),
-      dictionaryProperties: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute]
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+      successors: collection.mutable.ArrayBuffer[Block],
+      results: Seq[Value[Attribute]],
+      regions: Seq[Region],
+      dictionaryProperties: immutable.Map[String, Attribute],
+      dictionaryAttributes: immutable.Map[String, Attribute]
   ): GetColumnOp = GetColumnOp(
     operands,
     successors,
@@ -228,16 +215,12 @@ object GetColumnOp extends DialectOperation {
 }
 
 case class GetColumnOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
-    override val dictionaryProperties: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute]
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "tuples.getcol") {
 
   override def verify(): Unit = (
@@ -254,7 +237,7 @@ case class GetColumnOp(
       for ((x, y) <- dictionaryAttributes) yield y.verify()
     case _ =>
       throw new Exception(
-        "ReturnOp Operation must contain only results and an attribute dictionary."
+        "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
       )
   }
 }

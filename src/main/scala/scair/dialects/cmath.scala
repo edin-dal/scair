@@ -35,7 +35,7 @@ object ComplexType extends DialectAttribute {
 case class ComplexType(val cmplxType: Attribute)
     extends ParametrizedAttribute(
       name = "cmath.complex",
-      parameters = cmplxType
+      parameters = Seq(cmplxType)
     )
     with TypeAttribute {
 

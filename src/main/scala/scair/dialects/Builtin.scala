@@ -101,7 +101,7 @@ case class RankedTensorType(
       name = "builtin.ranked_tensor",
       dimensionList +:
         typ +:
-        encoding.toSeq: _*
+        encoding.toSeq
     )
     with TypeAttribute {
 
@@ -123,7 +123,7 @@ case class RankedTensorType(
 }
 
 case class UnrankedTensorType(val typ: Attribute)
-    extends ParametrizedAttribute("builtin.unranked_tensor", typ)
+    extends ParametrizedAttribute("builtin.unranked_tensor", Seq(typ))
     with TypeAttribute {
   override def toString = s"tensor<*x${typ.toString}>"
 }
@@ -137,8 +137,7 @@ case class SymbolRefAttr(
     val nestedRefs: ArrayAttribute[StringAttribute]
 ) extends ParametrizedAttribute(
       name = "builtin.symbol_ref",
-      rootRef,
-      nestedRefs
+      Seq(rootRef, nestedRefs)
     ) {
   override def toString =
     s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
