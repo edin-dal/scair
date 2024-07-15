@@ -144,13 +144,128 @@ case class ColumnRefAttr(val refName: Attribute)
 // OPERATIONS //
 ////////////////
 
+// ==--------== //
+//   ReturnOp   //
+// ==--------== //
+
+object ReturnOp extends DialectOperation {
+  override def name: String = "tuples.return"
+  override def constructOp(
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
+      successors: collection.mutable.ArrayBuffer[Block] =
+        collection.mutable.ArrayBuffer(),
+      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
+      regions: Seq[Region] = Seq[Region](),
+      dictionaryProperties: immutable.Map[String, Attribute] =
+        immutable.Map.empty[String, Attribute],
+      dictionaryAttributes: immutable.Map[String, Attribute] =
+        immutable.Map.empty[String, Attribute]
+  ): ReturnOp = ReturnOp(
+    operands,
+    successors,
+    results,
+    regions,
+    dictionaryProperties,
+    dictionaryAttributes
+  )
+}
+
+case class ReturnOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
+    override val successors: collection.mutable.ArrayBuffer[Block] =
+      collection.mutable.ArrayBuffer(),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
+    override val regions: Seq[Region] = Seq[Region](),
+    override val dictionaryProperties: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute]
+) extends RegisteredOperation(name = "tuples.return") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    regions.length,
+    dictionaryProperties.size
+  ) match {
+    case (0, 0, 0, 0) =>
+      for (x <- results) yield x.typ.verify()
+      for ((x, y) <- dictionaryAttributes) yield y.verify()
+    case _ =>
+      throw new Exception(
+        "ReturnOp Operation must contain only results and an attribute dictionary."
+      )
+  }
+}
+
+// ==--------== //
+//   ReturnOp   //
+// ==--------== //
+
+object GetColumnOp extends DialectOperation {
+  override def name: String = "tuples.getcol"
+  override def constructOp(
+      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+        collection.mutable.ArrayBuffer(),
+      successors: collection.mutable.ArrayBuffer[Block] =
+        collection.mutable.ArrayBuffer(),
+      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
+      regions: Seq[Region] = Seq[Region](),
+      dictionaryProperties: immutable.Map[String, Attribute] =
+        immutable.Map.empty[String, Attribute],
+      dictionaryAttributes: immutable.Map[String, Attribute] =
+        immutable.Map.empty[String, Attribute]
+  ): GetColumnOp = GetColumnOp(
+    operands,
+    successors,
+    results,
+    regions,
+    dictionaryProperties,
+    dictionaryAttributes
+  )
+}
+
+case class GetColumnOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
+    override val successors: collection.mutable.ArrayBuffer[Block] =
+      collection.mutable.ArrayBuffer(),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
+    override val regions: Seq[Region] = Seq[Region](),
+    override val dictionaryProperties: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute]
+) extends RegisteredOperation(name = "tuples.getcol") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size
+  ) match {
+    case (2, 0, 1, 0, 0) =>
+      operands(0).typ.verify()
+      operands(1).typ.verify()
+      results(0).typ.verify()
+      for ((x, y) <- dictionaryAttributes) yield y.verify()
+    case _ =>
+      throw new Exception(
+        "ReturnOp Operation must contain only results and an attribute dictionary."
+      )
+  }
+}
+
 /////////////
 // DIALECT //
 /////////////
 
 val TupleStreamDialect: Dialect =
   new Dialect(
-    operations = Seq(),
+    operations = Seq(ReturnOp, GetColumnOp),
     attributes =
       Seq(TupleStreamTuple, TupleStream, ColumnDefAttr, ColumnRefAttr)
   )
