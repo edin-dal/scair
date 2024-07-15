@@ -550,7 +550,7 @@ object Parser {
   )
 
   def PrettyDialectTypeOrAttributeLeadIdent[$: P] = P(
-    (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9").rep).!
+    (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9_").rep).!
   )
 
   // def OpaqueDialectType[$: P] = P(DialectNamespace ~ DialectTypeBody)

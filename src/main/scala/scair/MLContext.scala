@@ -1,29 +1,30 @@
 package scair
 
 import scair.dialects.cmath.CMath
+import scair.dialects.LingoDB.TupleStream.TupleStreamDialect
 import scala.collection.mutable
 import scair._
 
-val allDialects: Seq[Dialect] = Seq(CMath)
+val allDialects: Seq[Dialect] = Seq(CMath, TupleStreamDialect)
 
 class MLContext() {
 
-  var dialectOpContext: Map[String, DialectOperation] = Map()
-  var dialectAttrContext: Map[String, DialectAttribute] = Map()
+  val dialectOpContext: mutable.Map[String, DialectOperation] = mutable.Map()
+  val dialectAttrContext: mutable.Map[String, DialectAttribute] = mutable.Map()
 
   for (dialect <- allDialects) {
 
-    dialectOpContext = {
+    dialectOpContext ++= {
       for { dialectOp <- dialect.operations } yield {
         dialectOp.name -> dialectOp
       }
-    }.toMap
+    }
 
-    dialectAttrContext = {
+    dialectAttrContext ++= {
       for { dialectAttr <- dialect.attributes } yield {
         dialectAttr.name -> dialectAttr
       }
-    }.toMap
+    }
   }
 
   def getOperation(name: String) = dialectOpContext.get(name)

@@ -97,7 +97,7 @@ object ColumnDefAttr extends DialectAttribute {
 
 case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
     extends ParametrizedAttribute(
-      name = "tuples.columndef",
+      name = "tuples.column_def",
       refName,
       fromExisting
     ) {
@@ -125,7 +125,7 @@ object ColumnRefAttr extends DialectAttribute {
 
 case class ColumnRefAttr(val refName: Attribute)
     extends ParametrizedAttribute(
-      name = "tuples.columnref",
+      name = "tuples.column_ref",
       refName
     ) {
 
@@ -143,3 +143,14 @@ case class ColumnRefAttr(val refName: Attribute)
 ////////////////
 // OPERATIONS //
 ////////////////
+
+/////////////
+// DIALECT //
+/////////////
+
+val TupleStreamDialect: Dialect =
+  new Dialect(
+    operations = Seq(),
+    attributes =
+      Seq(TupleStreamTuple, TupleStream, ColumnDefAttr, ColumnRefAttr)
+  )
