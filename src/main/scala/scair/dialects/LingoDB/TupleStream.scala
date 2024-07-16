@@ -17,7 +17,8 @@ import scair.{
   DialectOperation,
   Dialect,
   Parser,
-  Operation
+  Operation,
+  AttrParser
 }
 
 ///////////
@@ -222,6 +223,33 @@ case class ReturnOp(
 
 object GetColumnOp extends DialectOperation {
   override def name: String = "tuples.getcol"
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId.rep(exactly = 1) ~ AttrParser.SymbolRefAttrP ~ ":" ~
+      Type.rep(exactly = 1) ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
+  ).map(
+    (
+        x: Seq[String],
+        y: Attribute,
+        z: Seq[Attribute],
+        w: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = constructOp,
+        opName = name,
+        operandNames = x,
+        resultNames = resNames,
+        resultTypes = z,
+        dictAttrs = w,
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+
   override def constructOp(
       operands: collection.mutable.ArrayBuffer[Value[Attribute]],
       successors: collection.mutable.ArrayBuffer[Block],

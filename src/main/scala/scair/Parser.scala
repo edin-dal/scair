@@ -666,20 +666,13 @@ class Parser {
       resultTypes: Seq[Attribute] = Seq(),
       regions: Seq[Region] = Seq(),
       dictProps: Seq[(String, Attribute)] = Seq(),
-      dictAttrs: Seq[(String, Attribute)] = Seq()
+      dictAttrs: Seq[(String, Attribute)] = Seq(),
+      noForwardOperandRef: Int = 0
   ): Operation = {
-
-    println(opName)
 
     if (resultNames.length != resultTypes.length) {
       throw new Exception(
         s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
-      )
-    }
-
-    if (operandNames.length != operandTypes.length) {
-      throw new Exception(
-        s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
       )
     }
 
@@ -704,30 +697,68 @@ class Parser {
     val resultss: Seq[Value[Attribute]] =
       Scope.defineValues(resultNames zip resultTypes)
 
-    val useAndRefValueSeqs
-        : (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) =
-      Scope.useValues(operandNames zip operandTypes)
-
     val useAndRefBlockSeqs: (ArrayBuffer[Block], ArrayBuffer[String]) =
       Scope.useBlocks(successors)
 
-    val op: Operation = opGen(
-      useAndRefValueSeqs._1,
-      useAndRefBlockSeqs._1,
-      resultss,
-      regions,
-      dictPropertiesMap,
-      dictAttributesMap
-    )
+    // plaster solution for custom parsing
+    if (noForwardOperandRef == 1) {
 
-    if (useAndRefValueSeqs._2.length > 0) {
-      currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
-    }
-    if (useAndRefBlockSeqs._2.length > 0) {
-      currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
-    }
+      val operandValues: ArrayBuffer[Value[Attribute]] = (
+        try {
+          for { name <- operandNames } yield currentScope.valueMap(name)
+        } catch {
+          case e: Exception =>
+            throw new Exception(
+              s"Operands for Operation: \"${opName}\" must be pre-defined."
+            )
+        }
+      ).to(ArrayBuffer)
 
-    return op
+      val op: Operation = opGen(
+        operandValues,
+        useAndRefBlockSeqs._1,
+        resultss,
+        regions,
+        dictPropertiesMap,
+        dictAttributesMap
+      )
+
+      if (useAndRefBlockSeqs._2.length > 0) {
+        currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
+      }
+
+      return op
+
+    } else {
+
+      if (operandNames.length != operandTypes.length) {
+        throw new Exception(
+          s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
+        )
+      }
+
+      val useAndRefValueSeqs
+          : (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) =
+        Scope.useValues(operandNames zip operandTypes)
+
+      val op: Operation = opGen(
+        useAndRefValueSeqs._1,
+        useAndRefBlockSeqs._1,
+        resultss,
+        regions,
+        dictPropertiesMap,
+        dictAttributesMap
+      )
+
+      if (useAndRefValueSeqs._2.length > 0) {
+        currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
+      }
+      if (useAndRefBlockSeqs._2.length > 0) {
+        currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
+      }
+
+      return op
+    }
   }
 
   //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
