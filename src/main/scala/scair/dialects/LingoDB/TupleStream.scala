@@ -4,7 +4,7 @@ import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scair.dialects.irdl.{Operand, OpResult}
-import scair.Parser.{whitespace, Type}
+import scair.Parser.{whitespace, ValueId, Type, DictionaryAttribute}
 import scair.{
   RegisteredOperation,
   Region,
@@ -13,12 +13,11 @@ import scair.{
   Attribute,
   TypeAttribute,
   ParametrizedAttribute,
-  DataAttribute,
   DialectAttribute,
   DialectOperation,
   Dialect,
-  Printer,
-  AttrParser
+  Parser,
+  Operation
 }
 
 ///////////
@@ -149,6 +148,32 @@ case class ColumnRefAttr(val refName: Attribute)
 
 object ReturnOp extends DialectOperation {
   override def name: String = "tuples.return"
+
+  // ==--- Custom Parsing ---== //
+  private def makeResults(
+      x: Option[(Seq[String], Seq[Attribute])]
+  ): (Seq[String], Seq[Attribute]) = x match {
+    case Some((y, z)) => (y, z)
+    case None         => (Seq(), Seq())
+  }
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    DictionaryAttribute.?.map(Parser.optionlessSeq) ~ (ValueId.rep(sep = ",")
+      ~ ":" ~
+      Type.rep(sep = ",")).?.map(makeResults)
+  ).map((x: Seq[(String, Attribute)], y: (Seq[String], Seq[Attribute])) =>
+    parser.verifyCustomOp(
+      opGen = constructOp,
+      opName = name,
+      operandNames = y._1,
+      operandTypes = y._2,
+      dictAttrs = x
+    )
+  )
+  // ==----------------------== //
+
   override def constructOp(
       operands: collection.mutable.ArrayBuffer[Value[Attribute]],
       successors: collection.mutable.ArrayBuffer[Block],

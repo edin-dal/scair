@@ -6,6 +6,8 @@
   %1 = "test.op"() : () -> (!tuples.tuplestream<f32, f32>)
   %2 = "test.op"() : () -> (#tuples.column_def<f32, f32>)
   %3 = "test.op"() : () -> (#tuples.column_ref<f32>)
+  %4 = "test.op"() : () -> (i32)
+  tuples.return %4 : i32
 
 // CHECK: "op1"() ({
 // CHECK: ^bb0():

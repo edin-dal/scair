@@ -12,6 +12,7 @@ import fastparse.internal.Util
 import scala.annotation.switch
 import scair.MLContext
 import java.lang.module.ModuleDescriptor.Exports
+import java.beans.Customizer
 
 object Parser {
 
@@ -648,6 +649,87 @@ class Parser {
   // [ ] custom-operation      ::= bare-id custom-operation-format
   // [x] region-list           ::= `(` region (`,` region)* `)`
 
+  def verifyCustomOp(
+      opGen: (
+          collection.mutable.ArrayBuffer[Value[Attribute]] /* = operands */,
+          collection.mutable.ArrayBuffer[Block] /* = successors */,
+          Seq[Value[Attribute]] /* = results */,
+          Seq[Region] /* = regions */,
+          collection.immutable.Map[String, Attribute] /* = dictProps */,
+          collection.immutable.Map[String, Attribute] /* = dictAttrs */
+      ) => Operation,
+      opName: String,
+      operandNames: Seq[String] = Seq(),
+      operandTypes: Seq[Attribute] = Seq(),
+      successors: Seq[String] = Seq(),
+      resultNames: Seq[String] = Seq(),
+      resultTypes: Seq[Attribute] = Seq(),
+      regions: Seq[Region] = Seq(),
+      dictProps: Seq[(String, Attribute)] = Seq(),
+      dictAttrs: Seq[(String, Attribute)] = Seq()
+  ): Operation = {
+
+    println(opName)
+
+    if (resultNames.length != resultTypes.length) {
+      throw new Exception(
+        s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
+      )
+    }
+
+    if (operandNames.length != operandTypes.length) {
+      throw new Exception(
+        s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
+      )
+    }
+
+    val dictPropertiesMap: Map[String, Attribute] =
+      dictProps.map({ case (x, y) => x -> y }).toMap
+
+    if (dictProps.length != dictPropertiesMap.size) {
+      throw new Exception(
+        "Dictionary Properties names in Operation " + opName + " are cloned."
+      )
+    }
+
+    val dictAttributesMap: Map[String, Attribute] =
+      dictAttrs.map({ case (x, y) => x -> y }).toMap
+
+    if (dictAttrs.length != dictAttributesMap.size) {
+      throw new Exception(
+        "Dictionary Properties names in Operation " + opName + " are cloned."
+      )
+    }
+
+    val resultss: Seq[Value[Attribute]] =
+      Scope.defineValues(resultNames zip resultTypes)
+
+    val useAndRefValueSeqs
+        : (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) =
+      Scope.useValues(operandNames zip operandTypes)
+
+    val useAndRefBlockSeqs: (ArrayBuffer[Block], ArrayBuffer[String]) =
+      Scope.useBlocks(successors)
+
+    val op: Operation = opGen(
+      useAndRefValueSeqs._1,
+      useAndRefBlockSeqs._1,
+      resultss,
+      regions,
+      dictPropertiesMap,
+      dictAttributesMap
+    )
+
+    if (useAndRefValueSeqs._2.length > 0) {
+      currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
+    }
+    if (useAndRefBlockSeqs._2.length > 0) {
+      currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
+    }
+
+    return op
+  }
+
   //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
   def generateOperation(
       operation: (
@@ -751,15 +833,32 @@ class Parser {
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.?.map(
       optionlessSeq
-    ) ~ GenericOperation ~/ TrailingLocation.?
-  ).map(generateOperation) // shortened definition TODO: custom-operation
+    ).flatMap(Op(_)) ~/ TrailingLocation.?
+  )
 
-  def GenericOperation[$: P] = P(
+  def Op[$: P](resName: Seq[String]) = P(
+    GenericOperation(resName) | CustomOperation(resName)
+  )
+
+  def GenericOperation[$: P](resNames: Seq[String]) = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
       ~ SuccessorList.?.map(optionlessSeq)
       ~ DictionaryProperties.?.map(optionlessSeq)
       ~ RegionList.?.map(optionlessSeq)
       ~ DictionaryAttribute.?.map(optionlessSeq) ~ ":" ~ FunctionType
+  ).map(generateOperation(resNames, _))
+
+  def CustomOperation[$: P](resNames: Seq[String]) = P(
+    PrettyDialectTypeOrAttribute.flatMap { (x: String) =>
+      ctx.getOperation(x) match {
+        case Some(y) =>
+          y.parse(resNames, this)
+        case None =>
+          throw new Exception(
+            s"Operation ${x} is not defined in any supported Dialect."
+          )
+      }
+    }
   )
 
   def RegionList[$: P] =

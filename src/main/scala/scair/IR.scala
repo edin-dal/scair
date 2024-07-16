@@ -110,9 +110,10 @@ class RegisteredOperation(
 
 trait DialectOperation {
   def name: String
-  def parse(parser: Parser)(implicit
-      parsingCtx: P[Any]
-  ): Option[P[Operation]] = None
+  def parse[$: P](resNames: Seq[String], parser: Parser): P[Operation] =
+    throw new Exception(
+      s"No custom Parser implemented for Operation '${name}'"
+    )
   def constructOp(
       operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
         collection.mutable.ArrayBuffer(),
