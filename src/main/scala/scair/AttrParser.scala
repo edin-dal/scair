@@ -112,7 +112,7 @@ object AttrParser {
   //////////////////////////
 
   def SymbolRefAttrP[$: P]: P[Attribute] = P(
-    SymbolRefId ~ SymbolRefId.rep(sep = "::")
+    SymbolRefId ~~ ("::" ~~ SymbolRefId).rep
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringAttribute(x),

@@ -114,7 +114,16 @@ trait DialectOperation {
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )
-  def constructOp(
+  type FactoryType = (
+      collection.mutable.ArrayBuffer[Value[Attribute]] /* = operands */,
+      collection.mutable.ArrayBuffer[Block] /* = successors */,
+      Seq[Value[Attribute]] /* = results */,
+      Seq[Region] /* = regions */,
+      collection.immutable.Map[String, Attribute] /* = dictProps */,
+      collection.immutable.Map[String, Attribute] /* = dictAttrs */
+  ) => Operation
+  def factory: FactoryType
+  final def constructOp(
       operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
         collection.mutable.ArrayBuffer(),
       successors: collection.mutable.ArrayBuffer[Block] =
@@ -125,7 +134,14 @@ trait DialectOperation {
         immutable.Map.empty[String, Attribute],
       dictionaryAttributes: immutable.Map[String, Attribute] =
         immutable.Map.empty[String, Attribute]
-  ): Operation
+  ): Operation = factory(
+    operands,
+    successors,
+    results,
+    regions,
+    dictionaryProperties,
+    dictionaryProperties
+  )
 }
 
 trait DialectAttribute {

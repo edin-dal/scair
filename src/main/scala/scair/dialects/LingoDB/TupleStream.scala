@@ -149,6 +149,7 @@ case class ColumnRefAttr(val refName: Attribute)
 
 object ReturnOp extends DialectOperation {
   override def name: String = "tuples.return"
+  override def factory = ReturnOp.apply
 
   // ==--- Custom Parsing ---== //
   private def makeResults(
@@ -174,22 +175,6 @@ object ReturnOp extends DialectOperation {
     )
   )
   // ==----------------------== //
-
-  override def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-      successors: collection.mutable.ArrayBuffer[Block],
-      results: Seq[Value[Attribute]],
-      regions: Seq[Region],
-      dictionaryProperties: immutable.Map[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute]
-  ): ReturnOp = ReturnOp(
-    operands,
-    successors,
-    results,
-    regions,
-    dictionaryProperties,
-    dictionaryAttributes
-  )
 }
 
 case class ReturnOp(
@@ -223,6 +208,7 @@ case class ReturnOp(
 
 object GetColumnOp extends DialectOperation {
   override def name: String = "tuples.getcol"
+  override def factory = GetColumnOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -230,41 +216,25 @@ object GetColumnOp extends DialectOperation {
       parser: Parser
   ): P[Operation] = P(
     ValueId.rep(exactly = 1) ~ AttrParser.SymbolRefAttrP ~ ":" ~
-      Type.rep(exactly = 1) ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
+      Type ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
   ).map(
     (
         x: Seq[String],
         y: Attribute,
-        z: Seq[Attribute],
+        z: Attribute,
         w: Seq[(String, Attribute)]
     ) =>
       parser.verifyCustomOp(
-        opGen = constructOp,
+        opGen = factory,
         opName = name,
         operandNames = x,
         resultNames = resNames,
-        resultTypes = z,
-        dictAttrs = w,
+        resultTypes = Seq(z),
+        dictAttrs = w :+ ("attr", y),
         noForwardOperandRef = 1
       )
   )
   // ==----------------------== //
-
-  override def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-      successors: collection.mutable.ArrayBuffer[Block],
-      results: Seq[Value[Attribute]],
-      regions: Seq[Region],
-      dictionaryProperties: immutable.Map[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute]
-  ): GetColumnOp = GetColumnOp(
-    operands,
-    successors,
-    results,
-    regions,
-    dictionaryProperties,
-    dictionaryAttributes
-  )
 }
 
 case class GetColumnOp(
