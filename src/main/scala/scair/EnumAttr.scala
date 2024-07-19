@@ -54,57 +54,6 @@ abstract class I64EnumAttr(
 
 /*
 
-import fastparse._, NoWhitespace._
-
-// Define the trait and objects
-trait Obj {
-  def p1[$: P]: P[Unit]
-}
-
-object Obj1 extends Obj {
-  def p1[$: P] = P("hello")
-}
-
-object Obj2 extends Obj {
-  def p1[$: P] = P("world")
-}
-
-object Obj3 extends Obj {
-  def p1[$: P] = P("foo")
-}
-
-object Obj4 extends Obj {
-  def p1[$: P] = P("bar")
-}
-
-// Create a sequence of objects
-val seq = Seq(Obj1, Obj2, Obj3, Obj4)
-
-// Construct the composite parser
-def ultimatePat[$: P]: P[Unit] = {
-  P(seq.map(_.p1).reduce(_ | _))
-}
-
-// Test the parser
-def parseInput(input: String) = {
-  parse(input, ultimatePat(_)) match {
-    case Parsed.Success(value, index) => println(s"Success: $value")
-    case f: Parsed.Failure => println(f.trace().longMsg)
-  }
-}
-
-// Testing various inputs
-parseInput("hello") // should succeed
-parseInput("world") // should succeed
-parseInput("foo")   // should succeed
-parseInput("bar")   // should succeed
-parseInput("baz")   // should fail
-
-
- */
-
-/*
-
 class EnumAttrCaseInfo<string sym, int intVal, string strVal> {
   string symbol = sym;
   int value = intVal;
