@@ -1,7 +1,7 @@
-package scair
+package scair.dialects.LingoDB.RelAlgOps
 
 import fastparse._
-import scair.EnumAttr
+import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 
 // ==---== //
 //  Enums

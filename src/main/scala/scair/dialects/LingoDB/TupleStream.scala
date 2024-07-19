@@ -31,8 +31,7 @@ import scair.{
 
 object TupleStreamTuple extends DialectAttribute {
   override def name: String = "tuples.tuple"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStreamTuple(_))
+  override def factory = TupleStreamTuple.apply
 }
 
 case class TupleStreamTuple(val tupleVals: Seq[Attribute])
@@ -47,8 +46,6 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
       throw new Exception("TupleStream Tuple must contain 2 elements only.")
     }
   }
-  override def toString =
-    s"${prefix}${name}<${tupleVals.map(x => x.toString).mkString(", ")}>"
 }
 
 // ==-----------== //
@@ -57,8 +54,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 
 object TupleStream extends DialectAttribute {
   override def name: String = "tuples.tuplestream"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStream(_))
+  override def factory = TupleStream.apply
 }
 
 case class TupleStream(val tuples: Seq[Attribute])
@@ -77,8 +73,6 @@ case class TupleStream(val tuples: Seq[Attribute])
       }
     }
   }
-  override def toString =
-    s"${prefix}${name}<${tuples.map(x => x.toString).mkString(", ")}>"
 }
 
 ////////////////
@@ -91,25 +85,24 @@ case class TupleStream(val tuples: Seq[Attribute])
 
 object ColumnDefAttr extends DialectAttribute {
   override def name: String = "tuples.column_def"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type ~ "," ~ Type ~ ">").map(ColumnDefAttr(_, _))
+  override def factory = ColumnDefAttr.apply
 }
 
-case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
+// body should be: val refName: Attribute, val fromExisting: Attribute
+case class ColumnDefAttr(val body: Seq[Attribute])
     extends ParametrizedAttribute(
       name = "tuples.column_def",
-      Seq(refName, fromExisting)
+      body
     ) {
-
   override def verify(): Unit = {
-    if (!refName.isInstanceOf[SymbolRefAttr]) {
-      throw new Exception(
-        "ColumnDefAttr's name must be of SymbolRefAttr Attribute."
-      )
+    body(0) match {
+      case _: SymbolRefAttr =>
+      case _ =>
+        throw new Exception(
+          "ColumnDefAttr's name must be of SymbolRefAttr Attribute."
+        )
     }
   }
-  override def toString =
-    s"${prefix}${name}<${refName}, ${fromExisting}>"
 }
 
 // ==-------------== //
@@ -118,25 +111,23 @@ case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
 
 object ColumnRefAttr extends DialectAttribute {
   override def name: String = "tuples.column_ref"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type ~ ">").map(ColumnRefAttr(_))
+  override def factory = ColumnRefAttr.apply
 }
 
-case class ColumnRefAttr(val refName: Attribute)
+case class ColumnRefAttr(val body: Seq[Attribute])
     extends ParametrizedAttribute(
       name = "tuples.column_ref",
-      Seq(refName)
+      body
     ) {
-
-  override def verify(): Unit = refName match {
-    case _: SymbolRefAttr =>
-    case _ =>
-      throw new Exception(
-        "ColumnRefAttr's name must be of SymbolRefAttr Attribute."
-      )
-  }
-  override def toString =
-    s"${prefix}${name}<${refName}>"
+  // body should be: val refName: Attribute
+  override def verify(): Unit =
+    body(0) match {
+      case _: SymbolRefAttr =>
+      case _ =>
+        throw new Exception(
+          "ColumnRefAttr's name must be of SymbolRefAttr Attribute."
+        )
+    }
 }
 
 ////////////////

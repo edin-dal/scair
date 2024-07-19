@@ -1,9 +1,9 @@
-package scair
+package scair.EnumAttr
 
 import scair.dialects.builtin.{IntegerType, Signless}
 import java.lang.StringBuilder
 import fastparse._
-import IR._
+import scair.{Attribute, ParametrizedAttribute}
 
 // ==-----------== //
 //   GetColumnOp   //
@@ -21,7 +21,7 @@ abstract class EnumAttrCase[T <: Attribute](
     val typ: T
 ) extends ParametrizedAttribute(symbol, Seq(typ)) {
   def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
-  def print: String = symbol
+  override def toString: String = symbol
 }
 
 abstract class EnumAttr[T <: Attribute](

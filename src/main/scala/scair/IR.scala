@@ -1,6 +1,6 @@
 package scair
 import scala.collection.{immutable, mutable}
-import scair.Parser
+import scair.Parser._
 import fastparse._
 
 sealed trait Attribute {
@@ -16,7 +16,10 @@ trait TypeAttribute extends Attribute {
 abstract class ParametrizedAttribute(
     override val name: String,
     val parameters: Seq[Attribute] = Seq()
-) extends Attribute
+) extends Attribute {
+  override def toString =
+    s"${prefix}${name}<${parameters.map(x => x.toString).mkString(", ")}>"
+}
 
 abstract class DataAttribute[D](
     override val name: String,
@@ -146,9 +149,12 @@ trait DialectOperation {
 
 trait DialectAttribute {
   def name: String
-  def parse[$: P]: P[Attribute] = throw new Exception(
-    s"No custom Parser implemented for Attribute '${name}'"
-  )
+  type FactoryType = (Seq[Attribute]) => Attribute
+  def factory: FactoryType
+  def parser[$: P]: P[Seq[Attribute]] =
+    P("<" ~ Type.rep(sep = ",") ~ ">")
+  def parse[$: P]: P[Attribute] =
+    parser.map(factory(_))
 }
 
 final case class Dialect(
