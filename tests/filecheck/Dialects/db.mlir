@@ -3,8 +3,8 @@
 "op1"() ({
 ^bb0():
   %0 = "test.op"() : () -> (i32)
-  %1 = db.constant(1) : !db.decimal<12, 2>
-  %2 = db.constant(1) : !db.decimal<12, 2>
+  %1 = db.constant(1 : i32) : !db.decimal<12, 2>
+  %2 = db.constant(1 : i32) : !db.decimal<12, 2>
   %3 = db.sub %1 : !db.decimal<12, 2>, %2 : !db.decimal<12, 2>
   %4 = db.mul %1 : !db.decimal<12, 2>, %2 : !db.decimal<12, 2>
   %5 = db.add %1 : !db.decimal<12, 2>, %2 : !db.decimal<12, 2>
@@ -16,8 +16,8 @@
 // CHECK: "op1"() ({
 // CHECK: ^bb0():
 // CHECK:   %0 = "test.op"() : () -> (i32)
-// CHECK:   %1 = "db.constant"() {value = 1} : () -> (!db.decimal<12, 2>)
-// CHECK:   %2 = "db.constant"() {value = 1} : () -> (!db.decimal<12, 2>)
+// CHECK:   %1 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
+// CHECK:   %2 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
 // CHECK:   %3 = "db.sub"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i64)
 // CHECK:   %4 = "db.mul"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i64)
 // CHECK:   %5 = "db.add"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i64)

@@ -7,6 +7,7 @@ import IR._
 import Parser._
 
 import scair.dialects.builtin._
+
 object AttrParser {
 
   ////////////////
@@ -49,6 +50,25 @@ object AttrParser {
   //////////////
 
   def IntAttrP[$: P]: P[Attribute] = P(DecimalLiteral).map(IntAttr(_))
+
+  //////////////////
+  // INTEGER ATTR //
+  //////////////////
+
+  def IntegerAttrP[$: P]: P[Attribute] =
+    P(
+      (IntegerLiteral ~ (":" ~ IntegerTypeP).?).map((x, y) =>
+        IntegerAttr(
+          x,
+          y match {
+            case Some(a) => a.asInstanceOf[IntegerType]
+            case None    => I64
+          }
+        )
+      )
+        | "true".map(_ => IntegerAttr(1, I1))
+        | "false".map(_ => IntegerAttr(0, I1))
+    )
 
   ////////////////
   // INDEX TYPE //
@@ -131,7 +151,7 @@ object AttrParser {
   //////////////
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP | IntAttrP
+    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP | IntegerAttrP
   )
 }
 
