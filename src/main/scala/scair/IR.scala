@@ -150,7 +150,7 @@ trait DialectOperation {
 trait DialectAttribute {
   def name: String
   type FactoryType = (Seq[Attribute]) => Attribute
-  def factory: FactoryType
+  def factory: FactoryType = ???
   def parser[$: P]: P[Seq[Attribute]] =
     P("<" ~ Type.rep(sep = ",") ~ ">")
   def parse[$: P]: P[Attribute] =

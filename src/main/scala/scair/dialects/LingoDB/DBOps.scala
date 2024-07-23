@@ -119,7 +119,6 @@ case class DB_CharType(val typ: Seq[Attribute])
 
 object DB_DateType extends DialectAttribute {
   override def name: String = "db.date"
-  override def factory = DB_CharType.apply
   override def parse[$: P]: P[Attribute] =
     P("<" ~ DB_DateUnitAttr.caseParser ~ ">").map(DB_DateType(_))
 }
@@ -149,7 +148,6 @@ case class DB_DateType(val unit: Attribute)
 
 object DB_IntervalType extends DialectAttribute {
   override def name: String = "db.interval"
-  override def factory = DB_CharType.apply
   override def parse[$: P]: P[Attribute] =
     P("<" ~ DB_IntervalUnitAttr.caseParser ~ ">").map(DB_IntervalType(_))
 }
