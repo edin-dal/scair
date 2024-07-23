@@ -44,6 +44,12 @@ object AttrParser {
     SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
   )
 
+  //////////////
+  // INT ATTR //
+  //////////////
+
+  def IntAttrP[$: P]: P[Attribute] = P(DecimalLiteral).map(IntAttr(_))
+
   ////////////////
   // INDEX TYPE //
   ////////////////
@@ -125,7 +131,7 @@ object AttrParser {
   //////////////
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP
+    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP | IntAttrP
   )
 }
 
