@@ -1,16 +1,9 @@
 package scair.EnumAttr
 
-import scair.dialects.builtin.{IntegerType, Signless}
-import java.lang.StringBuilder
 import fastparse._
+import scair.dialects.builtin.{IntegerType, Signless, I32, I64}
+import java.lang.StringBuilder
 import scair.{Attribute, ParametrizedAttribute}
-
-// ==-----------== //
-//   GetColumnOp   //
-// ==-----------== //
-
-def I32 = IntegerType(32, Signless)
-def I64 = IntegerType(64, Signless)
 
 // ==--------------------------== //
 //   Enum Attribute Inhertiance   //

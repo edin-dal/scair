@@ -3,6 +3,10 @@ package scair.dialects.builtin
 import scair.{Attribute, TypeAttribute, ParametrizedAttribute, DataAttribute}
 import scala.compiletime.ops.string
 
+def I1 = IntegerType(1, Signless)
+def I32 = IntegerType(32, Signless)
+def I64 = IntegerType(64, Signless)
+
 ////////////////
 // SIGNEDNESS //
 ////////////////
@@ -58,6 +62,20 @@ case class IntegerType(val width: Int, val sign: Signedness)
 
 case class IntAttr(val value: Int)
     extends DataAttribute[Int]("builtin.int_attr", value)
+
+//////////////////
+// INTEGER TYPE //
+//////////////////
+
+case class IntegerAttr(val value: Int, val typ: IntegerType)
+    extends ParametrizedAttribute("builtin.integer_attr") {
+  override def toString = (value, typ) match {
+    case (1, IntegerType(1, Signless))  => "true"
+    case (0, IntegerType(1, Signless))  => "false"
+    case (_, IntegerType(64, Signless)) => s"${value}"
+    case (_, _)                         => s"${value} : ${typ}"
+  }
+}
 
 ////////////////
 // INDEX TYPE //

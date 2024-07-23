@@ -1,7 +1,7 @@
 package scair.dialects.LingoDB.DBOps
 
 import fastparse._
-import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr, I64}
+import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scair.dialects.irdl.{Operand, OpResult}
