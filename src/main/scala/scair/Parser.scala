@@ -624,6 +624,10 @@ class Parser {
     currentScope = currentScope.switchWithParent(currentScope)
   }
 
+  def defineBlockValues(valueIdAndTypeList: Seq[(String, Attribute)]) = {
+    Scope.defineValues(valueIdAndTypeList)
+  }
+
   //////////////////////////
   // TOP LEVEL PRODUCTION //
   //////////////////////////
@@ -920,7 +924,7 @@ class Parser {
 
   def BlockLabel[$: P] = P(
     BlockId ~ BlockArgList.?.map(optionlessSeq)
-      .map(Scope.defineValues) ~ ":"
+      .map(defineBlockValues) ~ ":"
   )
 
   /////////////

@@ -1,7 +1,41 @@
 package scair.dialects.LingoDB.RelAlgOps
 
+import scair.dialects.LingoDB.TupleStream._
+import scair.dialects.LingoDB.SubOperatorOps._
+import scair.dialects.LingoDB.DBOps._
+
 import fastparse._
 import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
+import scair.dialects.builtin._
+import scala.collection.immutable
+import scair.dialects.irdl.{Operand, OpResult}
+import scair.Parser.{
+  whitespace,
+  E,
+  BlockArgList,
+  optionlessSeq,
+  Scope,
+  ValueId,
+  BareId,
+  Type,
+  DictionaryAttribute,
+  AttributeEntry
+}
+import scair.{
+  RegisteredOperation,
+  Region,
+  Block,
+  Value,
+  Attribute,
+  TypeAttribute,
+  ParametrizedAttribute,
+  DialectAttribute,
+  DialectOperation,
+  Dialect,
+  Parser,
+  Operation,
+  AttrParser
+}
 
 // ==---== //
 //  Enums
@@ -68,6 +102,98 @@ object RelAlg_SetSemantic
       "SortSpec",
       Seq(RelAlg_SetSemantic_Distinct, RelAlg_SetSemantic_All)
     )
+
+////////////////
+// ATTRIBUTES //
+////////////////
+
+// ==-------------== //
+//   ColumnDefAttr   //
+// ==-------------== //
+
+///////////
+// TYPES //
+///////////
+
+////////////////
+// OPERATIONS //
+////////////////
+
+// ==------------------== //
+//   Private Region def   //
+// ==------------------== //
+
+private def DialectRegion[$: P](parser: Parser) = P(
+  "(" ~ E({ parser.enterLocalRegion })
+    ~ BlockArgList.?.map(optionlessSeq)
+      .map(parser.defineBlockValues) ~ ")" ~ "{"
+    ~ parser.OperationPat.rep(1) ~ "}"
+    ~ E({ parser.enterParentRegion })
+).map((x: Seq[Value[Attribute]], y: Seq[Operation]) =>
+  new Region(Seq(new Block(y, x)))
+)
+
+// ==-----------== //
+//   BaseTableOp   //
+// ==-----------== //
+
+object BaseTableOp extends DialectOperation {
+  override def name: String = "subop.basetable"
+  override def factory = BaseTableOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    DictionaryAttribute.?.map(Parser.optionlessSeq) ~
+      "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse).rep(0) ~ "}"
+  ).map(
+    (
+        x: Seq[(String, Attribute)],
+        y: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        resultNames = resNames,
+        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        dictAttrs = x,
+        dictProps = y
+      )
+  )
+  // ==----------------------== //
+}
+
+case class BaseTableOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "subop.basetable") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (0, 0, 1, 0) =>
+      results(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "BaseTableOp Operation must contain only 1 result."
+          )
+      }
+  }
+}
+
+// ==-----------== //
+//   SelectionOp   //
+// ==-----------== //
 
 object RelAlgOps {
   def main(args: Array[String]): Unit = {}

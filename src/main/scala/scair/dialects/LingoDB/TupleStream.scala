@@ -4,7 +4,13 @@ import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scair.dialects.irdl.{Operand, OpResult}
-import scair.Parser.{whitespace, ValueId, Type, DictionaryAttribute}
+import scair.Parser.{
+  whitespace,
+  ValueId,
+  Type,
+  DictionaryAttribute,
+  AttributeEntry
+}
 import scair.{
   RegisteredOperation,
   Region,
@@ -85,24 +91,16 @@ case class TupleStream(val tuples: Seq[Attribute])
 
 object ColumnDefAttr extends DialectAttribute {
   override def name: String = "tuples.column_def"
-  override def factory = ColumnDefAttr.apply
+  override def parse[$: P]: P[Attribute] = P(
+    AttrParser.SymbolRefAttrP ~ "(" ~ "{" ~ AttributeEntry ~ "}" ~ ")"
+  ).map((x, y) => ColumnDefAttr(x.asInstanceOf[SymbolRefAttr], y._2))
 }
 
-// body should be: val refName: Attribute, val fromExisting: Attribute
-case class ColumnDefAttr(val body: Seq[Attribute])
+case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
     extends ParametrizedAttribute(
-      name = "tuples.column_def",
-      body
+      name = "tuples.column_def"
     ) {
-  override def verify(): Unit = {
-    body(0) match {
-      case _: SymbolRefAttr =>
-      case _ =>
-        throw new Exception(
-          "ColumnDefAttr's name must be of SymbolRefAttr Attribute."
-        )
-    }
-  }
+  override def toString = s"${refName}({type = ${typ}})"
 }
 
 // ==-------------== //
@@ -111,23 +109,17 @@ case class ColumnDefAttr(val body: Seq[Attribute])
 
 object ColumnRefAttr extends DialectAttribute {
   override def name: String = "tuples.column_ref"
-  override def factory = ColumnRefAttr.apply
+  override def parse[$: P]: P[Attribute] =
+    P(AttrParser.SymbolRefAttrP).map(x =>
+      ColumnRefAttr(x.asInstanceOf[SymbolRefAttr])
+    )
 }
 
-case class ColumnRefAttr(val body: Seq[Attribute])
+case class ColumnRefAttr(val refName: SymbolRefAttr)
     extends ParametrizedAttribute(
-      name = "tuples.column_ref",
-      body
+      name = "tuples.column_ref"
     ) {
-  // body should be: val refName: Attribute
-  override def verify(): Unit =
-    body(0) match {
-      case _: SymbolRefAttr =>
-      case _ =>
-        throw new Exception(
-          "ColumnRefAttr's name must be of SymbolRefAttr Attribute."
-        )
-    }
+  override def toString = s"${refName}"
 }
 
 ////////////////
@@ -206,7 +198,7 @@ object GetColumnOp extends DialectOperation {
       resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
-    ValueId.rep(exactly = 1) ~ AttrParser.SymbolRefAttrP ~ ":" ~
+    ValueId.rep(exactly = 1) ~ ColumnRefAttr.parse ~ ":" ~
       Type ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
   ).map(
     (
