@@ -21,7 +21,7 @@
 // CHECK:   %3 = "db.sub"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
 // CHECK:   %4 = "db.mul"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<0, 0>)
 // CHECK:   %5 = "db.add"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
-// CHECK:   %6 = "db.compare"(%3, %5) {predicate = lte} : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i8)
+// CHECK:   %6 = "db.compare"(%3, %5) {predicate = lte} : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i1)
 // CHECK:   %7 = "test.op"() : () -> (!db.char<1>)
 // CHECK:   %8 = "test.op"() : () -> (!db.date<day>)
 // CHECK:   %9 = "test.op"() : () -> (!db.string<>)

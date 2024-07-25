@@ -323,7 +323,7 @@ object DB_CmpOp extends DialectOperation {
         opGen = factory,
         opName = name,
         resultNames = resNames,
-        resultTypes = Seq(IntegerType(8, Signless)),
+        resultTypes = Seq(I1),
         operandNames = Seq(left, right),
         operandTypes = Seq(leftType, rightType),
         dictAttrs = z :+ ("predicate", x)

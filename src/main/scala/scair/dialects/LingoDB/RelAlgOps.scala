@@ -500,7 +500,7 @@ case class CountRowsOp(
 // ==----------== //
 
 object AggrFuncOp extends DialectOperation {
-  override def name: String = "relalg.count"
+  override def name: String = "relalg.aggrfn"
   override def factory = AggrFuncOp.apply
 
   // ==--- Custom Parsing ---== //
@@ -539,7 +539,7 @@ case class AggrFuncOp(
     override val regions: Seq[Region],
     override val dictionaryProperties: immutable.Map[String, Attribute],
     override val dictionaryAttributes: immutable.Map[String, Attribute]
-) extends RegisteredOperation(name = "relalg.count") {
+) extends RegisteredOperation(name = "relalg.aggrfn") {
 
   override def verify(): Unit = (
     operands.length,
@@ -712,6 +712,21 @@ case class MaterializeOp(
   }
 }
 
-object RelAlgOps {
-  def main(args: Array[String]): Unit = {}
-}
+val RelAlgOps: Dialect =
+  new Dialect(
+    operations = Seq(
+      BaseTableOp,
+      SelectionOp,
+      MapOp,
+      AggregationOp,
+      CountRowsOp,
+      AggrFuncOp,
+      SortOp,
+      MaterializeOp
+    ),
+    attributes = Seq()
+  )
+
+// object RelAlgOps {
+//   def main(args: Array[String]): Unit = {}
+// }
