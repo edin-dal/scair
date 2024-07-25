@@ -21,6 +21,7 @@ import scair.Parser.{
   DictionaryAttribute,
   AttributeEntry
 }
+import scair.AttrParser.{ArrayAttributeP}
 import scair.{
   RegisteredOperation,
   Region,
@@ -107,9 +108,30 @@ object RelAlg_SetSemantic
 // ATTRIBUTES //
 ////////////////
 
-// ==-------------== //
-//   ColumnDefAttr   //
-// ==-------------== //
+// ==---------------------== //
+//   SortSpecificationAttr   //
+// ==---------------------== //
+
+object SortSpecificationAttr extends DialectAttribute {
+  override def name: String = "db.sortspec"
+  override def parse[$: P]: P[Attribute] =
+    P("(" ~ ColumnRefAttr.parse ~ "," ~ RelAlg_SortSpec.caseParser ~ ")")
+      .map((x, y) =>
+        SortSpecificationAttr(
+          x.asInstanceOf[ColumnRefAttr],
+          y.asInstanceOf[RelAlg_SortSpec_Case]
+        )
+      )
+}
+
+case class SortSpecificationAttr(
+    val attr: ColumnRefAttr,
+    val sortSpec: RelAlg_SortSpec_Case
+) extends ParametrizedAttribute(
+      name = "db.interval"
+    ) {
+  override def toString = s"(${attr},${sortSpec})"
+}
 
 ///////////
 // TYPES //
@@ -138,7 +160,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
 // ==-----------== //
 
 object BaseTableOp extends DialectOperation {
-  override def name: String = "subop.basetable"
+  override def name: String = "relalg.basetable"
   override def factory = BaseTableOp.apply
 
   // ==--- Custom Parsing ---== //
@@ -172,7 +194,7 @@ case class BaseTableOp(
     override val regions: Seq[Region],
     override val dictionaryProperties: immutable.Map[String, Attribute],
     override val dictionaryAttributes: immutable.Map[String, Attribute]
-) extends RegisteredOperation(name = "subop.basetable") {
+) extends RegisteredOperation(name = "relalg.basetable") {
 
   override def verify(): Unit = (
     operands.length,
@@ -194,6 +216,501 @@ case class BaseTableOp(
 // ==-----------== //
 //   SelectionOp   //
 // ==-----------== //
+
+object SelectionOp extends DialectOperation {
+  override def name: String = "relalg.selection"
+  override def factory = SelectionOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId ~ DialectRegion(parser)
+      ~ ("attributes" ~ DictionaryAttribute).?.map(optionlessSeq)
+  ).map(
+    (
+        x: String,
+        y: Region,
+        z: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(x),
+        resultNames = resNames,
+        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        regions = Seq(y),
+        dictAttrs = z,
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class SelectionOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.selection") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 1) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "SelectionOp Operation must contain only 1 operand of type TupleStream."
+          )
+      }
+      results(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "SelectionOp Operation must contain only 1 result of type TupleStream."
+          )
+      }
+  }
+}
+
+// ==-----== //
+//   MapOp   //
+// ==-----== //
+
+object MapOp extends DialectOperation {
+  override def name: String = "relalg.map"
+  override def factory = MapOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId ~ DialectRegion(parser)
+      ~ "computes" ~ ":"
+      ~ "[" ~ ColumnDefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ ("attributes" ~ DictionaryAttribute).?.map(optionlessSeq)
+  ).map(
+    (
+        x: String,
+        y: Region,
+        z: Attribute,
+        w: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(x),
+        resultNames = resNames,
+        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        regions = Seq(y),
+        dictAttrs = w :+ ("computes", z),
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class MapOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.map") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 1) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "MapOp Operation must contain only 1 operand of type TupleStream."
+          )
+      }
+      results(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "MapOp Operation must contain only 1 result of type TupleStream."
+          )
+      }
+  }
+}
+
+// ==-------------== //
+//   AggregationOp   //
+// ==-------------== //
+
+object AggregationOp extends DialectOperation {
+  override def name: String = "relalg.aggregation"
+  override def factory = AggregationOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId
+      ~ "[" ~ ColumnRefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "computes" ~ ":"
+      ~ "[" ~ ColumnDefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ DialectRegion(parser)
+      ~ ("attributes" ~ DictionaryAttribute).?.map(optionlessSeq)
+  ).map(
+    (
+        x: String,
+        reff: Attribute,
+        deff: Attribute,
+        y: Region,
+        w: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(x),
+        resultNames = resNames,
+        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        regions = Seq(y),
+        dictAttrs = w :+ ("group_by_cols", reff) :+ ("computes", deff),
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class AggregationOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.aggregation") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 1) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "AggregationOp Operation must contain only 1 operand of type TupleStream."
+          )
+      }
+      results(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "AggregationOp Operation must contain only 1 result of type TupleStream."
+          )
+      }
+  }
+}
+
+// ==-----------== //
+//   CountRowsOp   //
+// ==-----------== //
+
+object CountRowsOp extends DialectOperation {
+  override def name: String = "relalg.count"
+  override def factory = CountRowsOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
+  ).map(
+    (
+        x: String,
+        y: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(x),
+        resultNames = resNames,
+        resultTypes = Seq(I64),
+        dictAttrs = y,
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class CountRowsOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.count") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 0) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "CountRowsOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      results(0).typ match {
+        case _: IntegerType =>
+        case _ =>
+          throw new Exception(
+            "CountRowsOp Operation must contain only 1 result of IntegerType."
+          )
+      }
+    case _ =>
+      throw new Exception(
+        "CountRowsOp Operation must contain only 1 operand and 1 result."
+      )
+  }
+}
+
+// ==----------== //
+//   AggrFuncOp   //
+// ==----------== //
+
+object AggrFuncOp extends DialectOperation {
+  override def name: String = "relalg.count"
+  override def factory = AggrFuncOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse
+      ~ ValueId ~ ":" ~ Type.rep(1)
+      ~ DictionaryAttribute.?.map(optionlessSeq)
+  ).map(
+    (
+        aggrfunc: Attribute,
+        attr: Attribute,
+        x: String,
+        resTypes: Seq[Attribute],
+        y: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(x),
+        resultNames = resNames,
+        resultTypes = resTypes,
+        dictAttrs = y :+ ("fn", aggrfunc) :+ ("attr", attr),
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class AggrFuncOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.count") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 0) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "AggrFuncOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+    case _ =>
+      throw new Exception(
+        "AggrFuncOp Operation must contain only 1 operand and 1 result."
+      )
+  }
+}
+
+// ==------== //
+//   SortOp   //
+// ==------== //
+
+object SortOp extends DialectOperation {
+  override def name: String = "relalg.sort"
+  override def factory = SortOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId
+      ~ "[" ~ (SortSpecificationAttr.parse).rep.map(ArrayAttribute(_)) ~ "]"
+      ~ DictionaryAttribute.?.map(optionlessSeq)
+  ).map(
+    (
+        x: String,
+        attr: Attribute,
+        y: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(x),
+        resultNames = resNames,
+        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        dictAttrs = y :+ ("sortspecs", attr),
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class SortOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.sort") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 0) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "SortOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      results(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "SortOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+    case _ =>
+      throw new Exception(
+        "SortOp Operation must contain only 1 operand and 1 result."
+      )
+  }
+}
+
+// ==-------------== //
+//   MaterializeOp   //
+// ==-------------== //
+
+object MaterializeOp extends DialectOperation {
+  override def name: String = "relalg.materialize"
+  override def factory = MaterializeOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId
+      ~ "[" ~ ColumnRefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "=" ~ ">"
+      ~ ArrayAttributeP
+      ~ ":"
+      ~ Type.rep
+      ~ DictionaryAttribute.?.map(optionlessSeq)
+  ).map(
+    (
+        operand: String,
+        cols: Attribute,
+        columns: Attribute,
+        resTypes: Seq[Attribute],
+        y: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(operand),
+        resultNames = resNames,
+        resultTypes = resTypes,
+        dictAttrs = y :+ ("cols", cols) :+ ("columns", columns),
+        noForwardOperandRef = 1
+      )
+  )
+  // ==----------------------== //
+}
+
+case class MaterializeOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "relalg.materialize") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length
+  ) match {
+    case (1, 0, 1, 0) =>
+      operands(0).typ match {
+        case _: TupleStream =>
+        case _ =>
+          throw new Exception(
+            "MaterializeOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      results(0).typ match {
+        case _: ResultTable =>
+        case _ =>
+          throw new Exception(
+            "MaterializeOp Operation must contain 1 operand of type ResultOp."
+          )
+      }
+    case _ =>
+      throw new Exception(
+        "MaterializeOp Operation must contain only 1 operand and 1 result."
+      )
+  }
+}
 
 object RelAlgOps {
   def main(args: Array[String]): Unit = {}
