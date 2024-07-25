@@ -111,7 +111,7 @@ object Parser {
           scope.valueMap(name).typ != typ match {
             case true =>
               throw new Exception(
-                s"$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
+                s"%$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
               )
             case false =>
               useValSeq += scope.valueMap(name)

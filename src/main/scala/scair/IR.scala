@@ -28,8 +28,8 @@ abstract class DataAttribute[D](
   override def toString = data.toString
 }
 
-case class Value[+T](
-    typ: T
+case class Value[T <: Attribute](
+    var typ: T
 ) {
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
