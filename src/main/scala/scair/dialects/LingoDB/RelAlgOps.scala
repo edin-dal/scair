@@ -14,6 +14,7 @@ import scair.Parser.{
   E,
   BlockArgList,
   optionlessSeq,
+  giveBack,
   Scope,
   ValueId,
   BareId,
@@ -146,9 +147,9 @@ case class SortSpecificationAttr(
 // ==------------------== //
 
 private def DialectRegion[$: P](parser: Parser) = P(
-  "(" ~ E({ parser.enterLocalRegion })
+  E({ parser.enterLocalRegion })
     ~ BlockArgList.?.map(optionlessSeq)
-      .map(parser.defineBlockValues) ~ ")" ~ "{"
+      .map(parser.defineBlockValues) ~ "{"
     ~ parser.OperationPat.rep(1) ~ "}"
     ~ E({ parser.enterParentRegion })
 ).map((x: Seq[Value[Attribute]], y: Seq[Operation]) =>
@@ -167,9 +168,10 @@ object BaseTableOp extends DialectOperation {
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] = P(
+  ) = P(
     DictionaryAttribute.?.map(Parser.optionlessSeq) ~
-      "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse).rep(0) ~ "}"
+      "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse)
+        .rep(0, sep = ",") ~ "}"
   ).map(
     (
         x: Seq[(String, Attribute)],
@@ -227,7 +229,9 @@ object SelectionOp extends DialectOperation {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ DialectRegion(parser)
-      ~ ("attributes" ~ DictionaryAttribute).?.map(optionlessSeq)
+      ~ ("attributes" ~ DictionaryAttribute).?.map(
+        optionlessSeq
+      )
   ).map(
     (
         x: String,
@@ -294,15 +298,16 @@ object MapOp extends DialectOperation {
       resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
-    ValueId ~ DialectRegion(parser)
+    ValueId
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ DialectRegion(parser)
       ~ ("attributes" ~ DictionaryAttribute).?.map(optionlessSeq)
   ).map(
     (
         x: String,
-        y: Region,
         z: Attribute,
+        y: Region,
         w: Seq[(String, Attribute)]
     ) =>
       parser.verifyCustomOp(
@@ -366,9 +371,9 @@ object AggregationOp extends DialectOperation {
       parser: Parser
   ): P[Operation] = P(
     ValueId
-      ~ "[" ~ ColumnRefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "[" ~ ColumnRefAttr.parse.rep(sep = ",").map(ArrayAttribute(_)) ~ "]"
       ~ "computes" ~ ":"
-      ~ "[" ~ ColumnDefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "[" ~ ColumnDefAttr.parse.rep(sep = ",").map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
       ~ ("attributes" ~ DictionaryAttribute).?.map(optionlessSeq)
   ).map(
@@ -576,7 +581,9 @@ object SortOp extends DialectOperation {
       parser: Parser
   ): P[Operation] = P(
     ValueId
-      ~ "[" ~ (SortSpecificationAttr.parse).rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "[" ~ (SortSpecificationAttr.parse)
+        .rep(sep = ",")
+        .map(ArrayAttribute(_)) ~ "]"
       ~ DictionaryAttribute.?.map(optionlessSeq)
   ).map(
     (
@@ -648,7 +655,7 @@ object MaterializeOp extends DialectOperation {
       parser: Parser
   ): P[Operation] = P(
     ValueId
-      ~ "[" ~ ColumnRefAttr.parse.rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "[" ~ ColumnRefAttr.parse.rep(sep = ",").map(ArrayAttribute(_)) ~ "]"
       ~ "=" ~ ">"
       ~ ArrayAttributeP
       ~ ":"

@@ -1,5 +1,6 @@
 package scair.dialects.LingoDB.DBOps
 
+import scala.math.max
 import fastparse._
 import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 import scair.dialects.builtin._
@@ -374,6 +375,55 @@ object DB_MulOp extends DialectOperation {
   override def factory = DB_MulOp.apply
 
   // ==--- Custom Parsing ---== //
+  private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
+    (opLeft.getClass == opRight.getClass) match {
+      case true =>
+        opLeft match {
+          case x: IntegerAttr => Seq(opLeft)
+          case y: FloatAttr   => Seq(opLeft)
+          case z: DB_DecimalType =>
+            Seq(
+              DB_DecimalType(
+                Seq(
+                  new IntegerAttr(
+                    opLeft
+                      .asInstanceOf[DB_DecimalType]
+                      .typ(0)
+                      .asInstanceOf[IntegerAttr]
+                      .value
+                      +
+                        opRight
+                          .asInstanceOf[DB_DecimalType]
+                          .typ(0)
+                          .asInstanceOf[IntegerAttr]
+                          .value
+                  ),
+                  new IntegerAttr(
+                    opLeft
+                      .asInstanceOf[DB_DecimalType]
+                      .typ(1)
+                      .asInstanceOf[IntegerAttr]
+                      .value
+                      +
+                        opRight
+                          .asInstanceOf[DB_DecimalType]
+                          .typ(1)
+                          .asInstanceOf[IntegerAttr]
+                          .value
+                  )
+                )
+              )
+            )
+          case _ =>
+            throw new Exception(
+              "Operand types for the MulOp must be of type IntegerAttr, FloatAttr or DB_DecimalType."
+            )
+        }
+      case false =>
+        throw new Exception("Operand types for the MulOp must be the same.")
+    }
+  }
+
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
@@ -392,7 +442,7 @@ object DB_MulOp extends DialectOperation {
         opGen = factory,
         opName = name,
         resultNames = resNames,
-        resultTypes = Seq(DB_DecimalType(Seq(IntAttr(0), IntAttr(0)))),
+        resultTypes = inferRetType(leftType, rightType),
         operandNames = Seq(left, right),
         operandTypes = Seq(leftType, rightType),
         dictAttrs = z
@@ -450,8 +500,8 @@ case class DB_MulOp(
                   .value
               results(0).typ = DB_DecimalType(
                 Seq(
-                  IntAttr(opLeft0 + opRight0),
-                  IntAttr(opLeft1 + opRight1)
+                  new IntegerAttr(opLeft0 + opRight0),
+                  new IntegerAttr(opLeft1 + opRight1)
                 )
               )
             case _ =>
@@ -480,6 +530,60 @@ object DB_DivOp extends DialectOperation {
   override def factory = DB_DivOp.apply
 
   // ==--- Custom Parsing ---== //
+  private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
+    (opLeft.getClass == opRight.getClass) match {
+      case true =>
+        opLeft match {
+          case x: IntegerAttr => Seq(opLeft)
+          case y: FloatAttr   => Seq(opLeft)
+          case z: DB_DecimalType =>
+            val opLeft0 =
+              opLeft
+                .asInstanceOf[DB_DecimalType]
+                .typ(0)
+                .asInstanceOf[IntegerAttr]
+                .value
+            val opLeft1 =
+              opLeft
+                .asInstanceOf[DB_DecimalType]
+                .typ(1)
+                .asInstanceOf[IntegerAttr]
+                .value
+            val opRight0 =
+              opRight
+                .asInstanceOf[DB_DecimalType]
+                .typ(0)
+                .asInstanceOf[IntegerAttr]
+                .value
+            val opRight1 =
+              opRight
+                .asInstanceOf[DB_DecimalType]
+                .typ(1)
+                .asInstanceOf[IntegerAttr]
+                .value
+            Seq(
+              DB_DecimalType(
+                Seq(
+                  new IntegerAttr(
+                    opLeft0 - opLeft1 + opRight1
+                      + max(opLeft1 + opRight0, 6)
+                  ),
+                  new IntegerAttr(
+                    max(opLeft1 + opRight0, 6)
+                  )
+                )
+              )
+            )
+          case _ =>
+            throw new Exception(
+              "Operand types for the DivOp must be of type IntegerAttr, FloatAttr or DB_DecimalType."
+            )
+        }
+      case false =>
+        throw new Exception("Operand types for the MulOp must be the same.")
+    }
+  }
+
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
@@ -500,7 +604,7 @@ object DB_DivOp extends DialectOperation {
         operandNames = Seq(left, right),
         operandTypes = Seq(leftType, rightType),
         resultNames = resNames,
-        resultTypes = Seq(DB_DecimalType(Seq(IntAttr(0), IntAttr(0)))),
+        resultTypes = inferRetType(leftType, rightType),
         dictAttrs = z
       )
   )
@@ -556,12 +660,12 @@ case class DB_DivOp(
                   .value
               results(0).typ = DB_DecimalType(
                 Seq(
-                  IntAttr(
+                  new IntegerAttr(
                     opLeft0 - opLeft1 + opRight1
-                      + (6).max(opLeft1 + opRight0)
+                      + max(opLeft1 + opRight0, 6)
                   ),
-                  IntAttr(
-                    (6).max(opLeft1 + opRight0)
+                  new IntegerAttr(
+                    max(opLeft1 + opRight0, 6)
                   )
                 )
               )

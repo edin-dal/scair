@@ -19,7 +19,7 @@
 // CHECK:   %1 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
 // CHECK:   %2 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
 // CHECK:   %3 = "db.sub"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
-// CHECK:   %4 = "db.mul"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<0, 0>)
+// CHECK:   %4 = "db.mul"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<24, 4>)
 // CHECK:   %5 = "db.add"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
 // CHECK:   %6 = "db.compare"(%3, %5) {predicate = lte} : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i1)
 // CHECK:   %7 = "test.op"() : () -> (!db.char<1>)
