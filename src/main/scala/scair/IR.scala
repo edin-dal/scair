@@ -28,8 +28,8 @@ abstract class DataAttribute[D](
   override def toString = data.toString
 }
 
-case class Value[+T](
-    typ: T
+case class Value[T <: Attribute](
+    var typ: T
 ) {
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
@@ -152,7 +152,7 @@ trait DialectAttribute {
   type FactoryType = (Seq[Attribute]) => Attribute
   def factory: FactoryType = ???
   def parser[$: P]: P[Seq[Attribute]] =
-    P("<" ~ Type.rep(sep = ",") ~ ">")
+    P(("<" ~ Type.rep(sep = ",") ~ ">").?).map(_.getOrElse(Seq()))
   def parse[$: P]: P[Attribute] =
     parser.map(factory(_))
 }
