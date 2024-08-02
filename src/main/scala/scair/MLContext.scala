@@ -2,10 +2,14 @@ package scair
 
 import scair.dialects.cmath.CMath
 import scair.dialects.LingoDB.TupleStream.TupleStreamDialect
+import scair.dialects.LingoDB.DBOps.DBOps
+import scair.dialects.LingoDB.SubOperatorOps.SubOperatorOps
+import scair.dialects.LingoDB.RelAlgOps.RelAlgOps
 import scala.collection.mutable
 import scair._
 
-val allDialects: Seq[Dialect] = Seq(CMath, TupleStreamDialect)
+val allDialects: Seq[Dialect] =
+  Seq(CMath, TupleStreamDialect, DBOps, SubOperatorOps, RelAlgOps)
 
 class MLContext() {
 

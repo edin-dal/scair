@@ -1,16 +1,9 @@
-package scair
+package scair.EnumAttr
 
-import scair.dialects.builtin.{IntegerType, Signless}
-import java.lang.StringBuilder
 import fastparse._
-import IR._
-
-// ==-----------== //
-//   GetColumnOp   //
-// ==-----------== //
-
-def I32 = IntegerType(32, Signless)
-def I64 = IntegerType(64, Signless)
+import scair.dialects.builtin.{IntegerType, Signless, I32, I64}
+import java.lang.StringBuilder
+import scair.{Attribute, ParametrizedAttribute}
 
 // ==--------------------------== //
 //   Enum Attribute Inhertiance   //
@@ -20,8 +13,8 @@ abstract class EnumAttrCase[T <: Attribute](
     val symbol: String,
     val typ: T
 ) extends ParametrizedAttribute(symbol, Seq(typ)) {
-  def parse[$: P] = P(symbol)
-  def print: String = symbol
+  def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
+  override def toString: String = symbol
 }
 
 abstract class EnumAttr[T <: Attribute](
@@ -29,7 +22,21 @@ abstract class EnumAttr[T <: Attribute](
     val cases: Seq[EnumAttrCase[T]],
     val typ: T
 ) {
-  def caseParser[$: P] = P(cases.map(_.parse).reduce(_ | _))
+
+  def parser[$: P](seq: Seq[EnumAttrCase[T]]): P[Attribute] = seq match {
+    case x +: xs => P(x.parse | parser(xs))
+    case Nil     => P(Fail)
+  }
+
+  def caseParser[$: P]: P[Attribute] = {
+    // we want to order here by length in descending order to ensure
+    // we hit all cases:
+    //  if "v = P("asc" | "ascc")"
+    //  then "parse("ascc", v(_))"
+    //  returns "Success("asc")"
+    //  but we need "Success("ascc")"
+    parser(cases.sortBy(_.symbol.length)(Ordering[Int].reverse))
+  }
 }
 
 // ==----------------------------== //

@@ -28,26 +28,28 @@ import scair.{
 
 object ComplexType extends DialectAttribute {
   override def name: String = "cmath.complex"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type ~ ">").map(ComplexType(_))
+  override def factory = ComplexType.apply
 }
 
-case class ComplexType(val cmplxType: Attribute)
+case class ComplexType(val body: Seq[Attribute])
     extends ParametrizedAttribute(
       name = "cmath.complex",
-      parameters = Seq(cmplxType)
+      parameters = body
     )
     with TypeAttribute {
 
-  override def verify(): Unit = cmplxType match {
-    case Float32Type =>
-    case Float64Type =>
-    case _ =>
-      throw new Exception(
-        "Complex type must be constructed with either 'f32' or 'f64' attribute."
-      )
-  }
-  override def toString = s"${prefix}cmath.complex<$cmplxType>"
+  override def verify(): Unit =
+    if (body.length != 1) {
+      throw new Exception("TupleStream Tuple must contain 1 elements only.")
+    } else
+      body(0) match {
+        case Float32Type =>
+        case Float64Type =>
+        case _ =>
+          throw new Exception(
+            "Complex type must be constructed with either 'f32' or 'f64' attribute."
+          )
+      }
 }
 
 ////////////////////

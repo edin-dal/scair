@@ -4,7 +4,14 @@ import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scair.dialects.irdl.{Operand, OpResult}
-import scair.Parser.{whitespace, ValueId, Type, DictionaryAttribute}
+import scair.Parser.{
+  whitespace,
+  ValueId,
+  Type,
+  DictionaryAttribute,
+  AttributeEntry,
+  AttributeValue
+}
 import scair.{
   RegisteredOperation,
   Region,
@@ -31,8 +38,7 @@ import scair.{
 
 object TupleStreamTuple extends DialectAttribute {
   override def name: String = "tuples.tuple"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStreamTuple(_))
+  override def factory = TupleStreamTuple.apply
 }
 
 case class TupleStreamTuple(val tupleVals: Seq[Attribute])
@@ -47,8 +53,6 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
       throw new Exception("TupleStream Tuple must contain 2 elements only.")
     }
   }
-  override def toString =
-    s"${prefix}${name}<${tupleVals.map(x => x.toString).mkString(", ")}>"
 }
 
 // ==-----------== //
@@ -57,8 +61,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 
 object TupleStream extends DialectAttribute {
   override def name: String = "tuples.tuplestream"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type.rep(sep = ",") ~ ">").map(TupleStream(_))
+  override def factory = TupleStream.apply
 }
 
 case class TupleStream(val tuples: Seq[Attribute])
@@ -77,8 +80,6 @@ case class TupleStream(val tuples: Seq[Attribute])
       }
     }
   }
-  override def toString =
-    s"${prefix}${name}<${tuples.map(x => x.toString).mkString(", ")}>"
 }
 
 ////////////////
@@ -91,25 +92,16 @@ case class TupleStream(val tuples: Seq[Attribute])
 
 object ColumnDefAttr extends DialectAttribute {
   override def name: String = "tuples.column_def"
-  override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type ~ "," ~ Type ~ ">").map(ColumnDefAttr(_, _))
+  override def parse[$: P]: P[Attribute] = P(
+    AttrParser.SymbolRefAttrP ~ "(" ~ "{" ~ AttributeEntry ~ "}" ~ ")"
+  ).map((x, y) => ColumnDefAttr(x.asInstanceOf[SymbolRefAttr], y._2))
 }
 
-case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
+case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
     extends ParametrizedAttribute(
-      name = "tuples.column_def",
-      Seq(refName, fromExisting)
+      name = "tuples.column_def"
     ) {
-
-  override def verify(): Unit = {
-    if (!refName.isInstanceOf[SymbolRefAttr]) {
-      throw new Exception(
-        "ColumnDefAttr's name must be of SymbolRefAttr Attribute."
-      )
-    }
-  }
-  override def toString =
-    s"${prefix}${name}<${refName}, ${fromExisting}>"
+  override def toString = s"${refName}({type = ${typ}})"
 }
 
 // ==-------------== //
@@ -119,24 +111,16 @@ case class ColumnDefAttr(val refName: Attribute, val fromExisting: Attribute)
 object ColumnRefAttr extends DialectAttribute {
   override def name: String = "tuples.column_ref"
   override def parse[$: P]: P[Attribute] =
-    P("<" ~ Type ~ ">").map(ColumnRefAttr(_))
+    P(AttrParser.SymbolRefAttrP).map(x =>
+      ColumnRefAttr(x.asInstanceOf[SymbolRefAttr])
+    )
 }
 
-case class ColumnRefAttr(val refName: Attribute)
+case class ColumnRefAttr(val refName: SymbolRefAttr)
     extends ParametrizedAttribute(
-      name = "tuples.column_ref",
-      Seq(refName)
+      name = "tuples.column_ref"
     ) {
-
-  override def verify(): Unit = refName match {
-    case _: SymbolRefAttr =>
-    case _ =>
-      throw new Exception(
-        "ColumnRefAttr's name must be of SymbolRefAttr Attribute."
-      )
-  }
-  override def toString =
-    s"${prefix}${name}<${refName}>"
+  override def toString = s"${refName}"
 }
 
 ////////////////
@@ -215,7 +199,7 @@ object GetColumnOp extends DialectOperation {
       resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
-    ValueId.rep(exactly = 1) ~ AttrParser.SymbolRefAttrP ~ ":" ~
+    ValueId.rep(exactly = 1) ~ ColumnRefAttr.parse ~ ":" ~
       Type ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
   ).map(
     (
