@@ -56,25 +56,7 @@ case class ComplexType(val cmplxType: Attribute)
 
 object Norm extends DialectOperation {
   override def name: String = "cmath.norm"
-  override def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-        collection.mutable.ArrayBuffer(),
-      successors: collection.mutable.ArrayBuffer[Block] =
-        collection.mutable.ArrayBuffer(),
-      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-      regions: Seq[Region] = Seq[Region](),
-      dictionaryProperties: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute]
-  ): Norm = Norm(
-    operands,
-    successors,
-    results,
-    regions,
-    dictionaryProperties,
-    dictionaryAttributes
-  )
+  override def factory: FactoryType = Norm.apply
 }
 
 case class Norm(
@@ -114,25 +96,7 @@ case class Norm(
 
 object Mul extends DialectOperation {
   override def name: String = "cmath.mul"
-  override def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-        collection.mutable.ArrayBuffer(),
-      successors: collection.mutable.ArrayBuffer[Block] =
-        collection.mutable.ArrayBuffer(),
-      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-      regions: Seq[Region] = Seq[Region](),
-      dictionaryProperties: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute]
-  ): Mul = Mul(
-    operands,
-    successors,
-    results,
-    regions,
-    dictionaryProperties,
-    dictionaryAttributes
-  )
+  override def factory: FactoryType = Mul.apply
 }
 
 case class Mul(
