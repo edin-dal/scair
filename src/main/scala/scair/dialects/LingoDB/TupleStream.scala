@@ -39,8 +39,6 @@ import scair.{
 object TupleStreamTuple extends DialectAttribute {
   override def name: String = "tuples.tuple"
   override def factory = TupleStreamTuple.apply
-  override def parser[$: P]: P[Seq[Attribute]] =
-    P(("<" ~ Type.rep(sep = ",") ~ ">").?).map(_.getOrElse(Seq()))
 }
 
 case class TupleStreamTuple(val tupleVals: Seq[Attribute])
@@ -64,8 +62,6 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 object TupleStream extends DialectAttribute {
   override def name: String = "tuples.tuplestream"
   override def factory = TupleStream.apply
-  override def parser[$: P]: P[Seq[Attribute]] =
-    P(("<" ~ Type.rep(sep = ",") ~ ">").?).map(_.getOrElse(Seq()))
 }
 
 case class TupleStream(val tuples: Seq[Attribute])

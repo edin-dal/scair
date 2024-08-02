@@ -563,8 +563,8 @@ object Parser {
   def DialectNamespace[$: P] = P(DialectBareId)
 
   def DialectAttribute[$: P]: P[Attribute] = P(
-    "#" ~ PrettyDialectReferenceName.flatMap { (x: String) =>
-      ctx.getAttribute(x) match {
+    "#" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+      ctx.getAttribute(s"${x}.${y}") match {
         case Some(y) =>
           y.parse
         case None =>
@@ -576,8 +576,8 @@ object Parser {
   )
 
   def DialectType[$: P]: P[Attribute] = P(
-    "!" ~ PrettyDialectReferenceName.flatMap { (x: String) =>
-      ctx.getAttribute(x) match {
+    "!" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+      ctx.getAttribute(s"${x}.${y}") match {
         case Some(y) =>
           y.parse
         case None =>
@@ -589,7 +589,15 @@ object Parser {
   )
 
   def PrettyDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName).!
+    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
+  )
+
+  def OpaqueDialectReferenceName[$: P] = P(
+    (DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName)
+  )
+
+  def DialectReferenceName[$: P] = P(
+    PrettyDialectReferenceName | OpaqueDialectReferenceName
   )
 
   def PrettyDialectTypeOrAttReferenceName[$: P] = P(
@@ -926,8 +934,8 @@ class Parser {
   ).map(generateOperation(resNames, _))
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
-    PrettyDialectReferenceName.flatMap { (x: String) =>
-      ctx.getOperation(x) match {
+    PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+      ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
           y.parse(resNames, this)
         case None =>

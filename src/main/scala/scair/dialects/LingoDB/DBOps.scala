@@ -121,27 +121,16 @@ case class DB_CharType(val typ: Seq[Attribute])
 object DB_DateType extends DialectAttribute {
   override def name: String = "db.date"
   override def parse[$: P]: P[Attribute] =
-    P("<" ~ DB_DateUnitAttr.caseParser ~ ">").map(DB_DateType(_))
+    P("<" ~ DB_DateUnitAttr.caseParser ~ ">")
+      .map((x: Attribute) => DB_DateType(x.asInstanceOf[DB_DateUnit_Case]))
 }
 
-case class DB_DateType(val unit: Attribute)
+case class DB_DateType(val unit: DB_DateUnit_Case)
     extends ParametrizedAttribute(
       name = "db.date",
       parameters = Seq(unit)
     )
-    with TypeAttribute {
-
-  // override def verify(): Unit = {
-  //   if (typ.length != 1) {
-  //     throw new Exception("TupleStream Tuple must contain 1 elements only.")
-  //   } else
-  //     typ(0) match {
-  //       case _: IntAttr =>
-  //       case _ =>
-  //         throw new Exception("CharType type must be IntAttr")
-  //     }
-  // }
-}
+    with TypeAttribute
 
 // ==------------== //
 //   IntervalType   //

@@ -152,7 +152,7 @@ trait DialectAttribute {
   type FactoryType = (Seq[Attribute]) => Attribute
   def factory: FactoryType = ???
   def parser[$: P]: P[Seq[Attribute]] =
-    P("<" ~ Type.rep(sep = ",") ~ ">")
+    P(("<" ~ Type.rep(sep = ",") ~ ">").?).map(_.getOrElse(Seq()))
   def parse[$: P]: P[Attribute] =
     parser.map(factory(_))
 }
