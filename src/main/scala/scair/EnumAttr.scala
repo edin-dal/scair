@@ -5,6 +5,7 @@ import scair.dialects.builtin.{IntegerType, Signless, I32, I64}
 import java.lang.StringBuilder
 import scair.{Attribute, ParametrizedAttribute}
 
+
 // ==--------------------------== //
 //   Enum Attribute Inhertiance   //
 // ==--------------------------== //
@@ -63,7 +64,7 @@ abstract class I64EnumAttr(
 
 class EnumAttrCaseInfo<string sym, int intVal, string strVal> {
   string symbol = sym;
-  int value = intVal;`
+  int value = intVal;
   string str = strVal;
 }
 
