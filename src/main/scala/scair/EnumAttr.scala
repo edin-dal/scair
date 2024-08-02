@@ -5,7 +5,6 @@ import scair.dialects.builtin.{IntegerType, Signless, I32, I64}
 import java.lang.StringBuilder
 import scair.{Attribute, ParametrizedAttribute}
 
-
 // ==--------------------------== //
 //   Enum Attribute Inhertiance   //
 // ==--------------------------== //
