@@ -13,6 +13,9 @@ import scala.annotation.switch
 import scair.MLContext
 import java.lang.module.ModuleDescriptor.Exports
 import java.beans.Customizer
+import java.lang.Long.parseLong
+import java.lang.Float.parseFloat
+import Math.pow
 
 object Parser {
 
@@ -64,6 +67,11 @@ object Parser {
     Pass(())
   }
 
+  def giveBack[A](a: A) = {
+    println(a)
+    a
+  }
+
   def optionlessSeq[A](option: Option[Seq[A]]): Seq[A] = option match {
     case None    => Seq[A]()
     case Some(x) => x
@@ -111,7 +119,34 @@ object Parser {
           scope.valueMap(name).typ != typ match {
             case true =>
               throw new Exception(
-                s"$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
+                s"%$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
+              )
+            case false =>
+              useValSeq += scope.valueMap(name)
+          }
+      }
+      return (useValSeq, forwardRefSeq)
+    }
+
+    def useValue(
+        name: String,
+        typ: Attribute
+    )(implicit
+        scope: Scope
+    ): (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) = {
+      var forwardRefSeq: ArrayBuffer[(String, Attribute)] =
+        ArrayBuffer()
+      var useValSeq: ArrayBuffer[Value[Attribute]] =
+        ArrayBuffer()
+      !scope.valueMap.contains(name) match {
+        case true =>
+          val tuple = (name, typ)
+          forwardRefSeq += tuple
+        case false =>
+          scope.valueMap(name).typ != typ match {
+            case true =>
+              throw new Exception(
+                s"%$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
               )
             case false =>
               useValSeq += scope.valueMap(name)
@@ -301,16 +336,22 @@ object Parser {
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(Digit.rep(1).!).map((literal: String) => literal.toInt)
+    P(Digit.rep(1).!).map((literal: String) => parseLong(literal))
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => Integer.parseInt(hex, 16))
+    P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => parseLong(hex, 16))
+
+  private def parseFloatNum(float: (String, String)): Double = {
+    val number = parseFloat(float._1)
+    val power = parseLong(float._2)
+    return number * pow(10, power)
+  }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ DecimalLiteral ~~ "." ~~ DecimalLiteral ~~ (CharIn(
-      "eE"
-    ) ~~ CharIn("\\-\\+").? ~~ DecimalLiteral).?
-  ).! // substituted [0-9]* with [0-9]+
+    CharIn("\\-\\+").? ~~ (Digit.rep(1) ~~ "." ~~ Digit.rep(1)).!
+      ~~ (CharIn("eE")
+        ~~ (CharIn("\\-\\+").? ~~ Digit.rep(1)).!).?.map(_.getOrElse("0"))
+  ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
   def notExcluded[$: P] = P(
     CharPred(char => !excludedCharacters.contains(char))
@@ -335,7 +376,7 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[Int])): String =
+  def simplifyValueName(valueUse: (String, Option[Long])): String =
     valueUse match {
       case (name, Some(number)) => s"$name#$number"
       case (name, None)         => name
@@ -416,7 +457,7 @@ object Parser {
     (BareId | StringLiteral) ~ "=" ~ AttributeValue
   )
   def AttributeValue[$: P] = P(
-    AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
+    Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
   )
 
   def AttributeAliasDef[$: P] = P(
@@ -440,13 +481,14 @@ object Parser {
     OpResult.rep(1, sep = ",") ~ "="
   ).map((results: Seq[Seq[String]]) => results.flatten)
 
-  def sequenceValues(value: (String, Option[Int])): Seq[String] = value match {
-    case (name, Some(totalNo)) => (0 to totalNo).map(no => s"$name#$no")
-    case (name, None)          => Seq(name)
-  }
+  def sequenceValues(value: (String, Option[Long])): Seq[String] =
+    value match {
+      case (name, Some(totalNo)) => (0 to totalNo.toInt).map(no => s"$name#$no")
+      case (name, None)          => Seq(name)
+    }
 
   def OpResult[$: P] =
-    P(ValueId ~ (":" ~ IntegerLiteral).?).map(sequenceValues)
+    P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
 
@@ -521,8 +563,8 @@ object Parser {
   def DialectNamespace[$: P] = P(DialectBareId)
 
   def DialectAttribute[$: P]: P[Attribute] = P(
-    "#" ~ PrettyDialectReferenceName.flatMap { (x: String) =>
-      ctx.getAttribute(x) match {
+    "#" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+      ctx.getAttribute(s"${x}.${y}") match {
         case Some(y) =>
           y.parse
         case None =>
@@ -534,8 +576,8 @@ object Parser {
   )
 
   def DialectType[$: P]: P[Attribute] = P(
-    "!" ~ PrettyDialectReferenceName.flatMap { (x: String) =>
-      ctx.getAttribute(x) match {
+    "!" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+      ctx.getAttribute(s"${x}.${y}") match {
         case Some(y) =>
           y.parse
         case None =>
@@ -547,7 +589,15 @@ object Parser {
   )
 
   def PrettyDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName).!
+    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
+  )
+
+  def OpaqueDialectReferenceName[$: P] = P(
+    (DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName)
+  )
+
+  def DialectReferenceName[$: P] = P(
+    PrettyDialectReferenceName | OpaqueDialectReferenceName
   )
 
   def PrettyDialectTypeOrAttReferenceName[$: P] = P(
@@ -622,6 +672,10 @@ class Parser {
 
   def enterParentRegion = {
     currentScope = currentScope.switchWithParent(currentScope)
+  }
+
+  def defineBlockValues(valueIdAndTypeList: Seq[(String, Attribute)]) = {
+    Scope.defineValues(valueIdAndTypeList)
   }
 
   //////////////////////////
@@ -880,8 +934,8 @@ class Parser {
   ).map(generateOperation(resNames, _))
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
-    PrettyDialectReferenceName.flatMap { (x: String) =>
-      ctx.getOperation(x) match {
+    PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+      ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
           y.parse(resNames, this)
         case None =>
@@ -920,7 +974,7 @@ class Parser {
 
   def BlockLabel[$: P] = P(
     BlockId ~ BlockArgList.?.map(optionlessSeq)
-      .map(Scope.defineValues) ~ ":"
+      .map(defineBlockValues) ~ ":"
   )
 
   /////////////

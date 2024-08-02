@@ -1,5 +1,6 @@
 package scair.dialects.LingoDB.DBOps
 
+import scala.math.max
 import fastparse._
 import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 import scair.dialects.builtin._
@@ -119,29 +120,17 @@ case class DB_CharType(val typ: Seq[Attribute])
 
 object DB_DateType extends DialectAttribute {
   override def name: String = "db.date"
-  override def factory = DB_CharType.apply
   override def parse[$: P]: P[Attribute] =
-    P("<" ~ DB_DateUnitAttr.caseParser ~ ">").map(DB_DateType(_))
+    P("<" ~ DB_DateUnitAttr.caseParser ~ ">")
+      .map((x: Attribute) => DB_DateType(x.asInstanceOf[DB_DateUnit_Case]))
 }
 
-case class DB_DateType(val unit: Attribute)
+case class DB_DateType(val unit: DB_DateUnit_Case)
     extends ParametrizedAttribute(
       name = "db.date",
       parameters = Seq(unit)
     )
-    with TypeAttribute {
-
-  // override def verify(): Unit = {
-  //   if (typ.length != 1) {
-  //     throw new Exception("TupleStream Tuple must contain 1 elements only.")
-  //   } else
-  //     typ(0) match {
-  //       case _: IntAttr =>
-  //       case _ =>
-  //         throw new Exception("CharType type must be IntAttr")
-  //     }
-  // }
-}
+    with TypeAttribute
 
 // ==------------== //
 //   IntervalType   //
@@ -149,7 +138,6 @@ case class DB_DateType(val unit: Attribute)
 
 object DB_IntervalType extends DialectAttribute {
   override def name: String = "db.interval"
-  override def factory = DB_CharType.apply
   override def parse[$: P]: P[Attribute] =
     P("<" ~ DB_IntervalUnitAttr.caseParser ~ ">").map(DB_IntervalType(_))
 }
@@ -192,12 +180,18 @@ case class DB_DecimalType(val typ: Seq[Attribute])
   override def verify(): Unit = {
     if (typ.length != 2) {
       throw new Exception("TupleStream Tuple must contain exactly 2 elements.")
-    } else
-      (typ(0), typ(1)) match {
-        case _: (IntAttr, IntAttr) =>
+    } else {
+      typ(0) match {
+        case _: IntAttr =>
         case _ =>
           throw new Exception("DB_DecimalType type must be (IntAttr, IntAttr)")
       }
+      typ(1) match {
+        case _: IntAttr =>
+        case _ =>
+          throw new Exception("DB_DecimalType type must be (IntAttr, IntAttr)")
+      }
+    }
   }
 }
 
@@ -319,7 +313,7 @@ object DB_CmpOp extends DialectOperation {
         opGen = factory,
         opName = name,
         resultNames = resNames,
-        resultTypes = Seq(IntegerType(8, Signless)),
+        resultTypes = Seq(I1),
         operandNames = Seq(left, right),
         operandTypes = Seq(leftType, rightType),
         dictAttrs = z :+ ("predicate", x)
@@ -362,6 +356,326 @@ case class DB_CmpOp(
 }
 
 // ==-----== //
+//   MulOp   //
+// ==-----== //
+
+object DB_MulOp extends DialectOperation {
+  override def name: String = "db.mul"
+  override def factory = DB_MulOp.apply
+
+  // ==--- Custom Parsing ---== //
+  private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
+    (opLeft.getClass == opRight.getClass) match {
+      case true =>
+        opLeft match {
+          case x: IntegerAttr => Seq(opLeft)
+          case y: FloatAttr   => Seq(opLeft)
+          case z: DB_DecimalType =>
+            Seq(
+              DB_DecimalType(
+                Seq(
+                  new IntegerAttr(
+                    opLeft
+                      .asInstanceOf[DB_DecimalType]
+                      .typ(0)
+                      .asInstanceOf[IntegerAttr]
+                      .value
+                      +
+                        opRight
+                          .asInstanceOf[DB_DecimalType]
+                          .typ(0)
+                          .asInstanceOf[IntegerAttr]
+                          .value
+                  ),
+                  new IntegerAttr(
+                    opLeft
+                      .asInstanceOf[DB_DecimalType]
+                      .typ(1)
+                      .asInstanceOf[IntegerAttr]
+                      .value
+                      +
+                        opRight
+                          .asInstanceOf[DB_DecimalType]
+                          .typ(1)
+                          .asInstanceOf[IntegerAttr]
+                          .value
+                  )
+                )
+              )
+            )
+          case _ =>
+            throw new Exception(
+              "Operand types for the MulOp must be of type IntegerAttr, FloatAttr or DB_DecimalType."
+            )
+        }
+      case false =>
+        throw new Exception("Operand types for the MulOp must be the same.")
+    }
+  }
+
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId ~ ":" ~ Type ~ "," ~ ValueId ~ ":" ~ Type
+      ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
+  ).map(
+    (
+        left: String,
+        leftType: Attribute,
+        right: String,
+        rightType: Attribute,
+        z: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        resultNames = resNames,
+        resultTypes = inferRetType(leftType, rightType),
+        operandNames = Seq(left, right),
+        operandTypes = Seq(leftType, rightType),
+        dictAttrs = z
+      )
+  )
+  // ==----------------------== //
+}
+
+case class DB_MulOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "db.mul") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size
+  ) match {
+    case (2, 0, 1, 0, 0) =>
+      operands(0).typ.verify()
+      operands(1).typ.verify()
+      (operands(0).typ == operands(1).typ) match {
+        case true =>
+          operands(0).typ match {
+            case _: DB_DecimalType =>
+              val opLeft0 =
+                operands(0).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(0)
+                  .asInstanceOf[IntAttr]
+                  .value
+              val opLeft1 =
+                operands(0).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(1)
+                  .asInstanceOf[IntAttr]
+                  .value
+              val opRight0 =
+                operands(1).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(0)
+                  .asInstanceOf[IntAttr]
+                  .value
+              val opRight1 =
+                operands(1).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(1)
+                  .asInstanceOf[IntAttr]
+                  .value
+              results(0).typ = DB_DecimalType(
+                Seq(
+                  new IntegerAttr(opLeft0 + opRight0),
+                  new IntegerAttr(opLeft1 + opRight1)
+                )
+              )
+            case _ =>
+              throw new Exception(
+                "In order to be divided, operands' types must match!"
+              )
+          }
+        case false =>
+          throw new Exception(
+            "In order to be divided, operands' types must match!"
+          )
+      }
+    case _ =>
+      throw new Exception(
+        "DB_DivOp Operation must contain only 2 operands."
+      )
+  }
+}
+
+// ==-----== //
+//   DivOp   //
+// ==-----== //
+
+object DB_DivOp extends DialectOperation {
+  override def name: String = "db.div"
+  override def factory = DB_DivOp.apply
+
+  // ==--- Custom Parsing ---== //
+  private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
+    (opLeft.getClass == opRight.getClass) match {
+      case true =>
+        opLeft match {
+          case x: IntegerAttr => Seq(opLeft)
+          case y: FloatAttr   => Seq(opLeft)
+          case z: DB_DecimalType =>
+            val opLeft0 =
+              opLeft
+                .asInstanceOf[DB_DecimalType]
+                .typ(0)
+                .asInstanceOf[IntegerAttr]
+                .value
+            val opLeft1 =
+              opLeft
+                .asInstanceOf[DB_DecimalType]
+                .typ(1)
+                .asInstanceOf[IntegerAttr]
+                .value
+            val opRight0 =
+              opRight
+                .asInstanceOf[DB_DecimalType]
+                .typ(0)
+                .asInstanceOf[IntegerAttr]
+                .value
+            val opRight1 =
+              opRight
+                .asInstanceOf[DB_DecimalType]
+                .typ(1)
+                .asInstanceOf[IntegerAttr]
+                .value
+            Seq(
+              DB_DecimalType(
+                Seq(
+                  new IntegerAttr(
+                    opLeft0 - opLeft1 + opRight1
+                      + max(opLeft1 + opRight0, 6)
+                  ),
+                  new IntegerAttr(
+                    max(opLeft1 + opRight0, 6)
+                  )
+                )
+              )
+            )
+          case _ =>
+            throw new Exception(
+              "Operand types for the DivOp must be of type IntegerAttr, FloatAttr or DB_DecimalType."
+            )
+        }
+      case false =>
+        throw new Exception("Operand types for the MulOp must be the same.")
+    }
+  }
+
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId ~ ":" ~ Type ~ "," ~ ValueId ~ ":" ~ Type
+      ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
+  ).map(
+    (
+        left: String,
+        leftType: Attribute,
+        right: String,
+        rightType: Attribute,
+        z: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        operandNames = Seq(left, right),
+        operandTypes = Seq(leftType, rightType),
+        resultNames = resNames,
+        resultTypes = inferRetType(leftType, rightType),
+        dictAttrs = z
+      )
+  )
+  // ==----------------------== //
+}
+
+case class DB_DivOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "db.div") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size
+  ) match {
+    case (2, 0, 1, 0, 0) =>
+      operands(0).typ.verify()
+      operands(1).typ.verify()
+      (operands(0).typ == operands(1).typ) match {
+        case true =>
+          operands(0).typ match {
+            case _: DB_DecimalType =>
+              val opLeft0 =
+                operands(0).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(0)
+                  .asInstanceOf[IntAttr]
+                  .value
+              val opLeft1 =
+                operands(0).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(1)
+                  .asInstanceOf[IntAttr]
+                  .value
+              val opRight0 =
+                operands(1).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(0)
+                  .asInstanceOf[IntAttr]
+                  .value
+              val opRight1 =
+                operands(1).typ
+                  .asInstanceOf[ParametrizedAttribute]
+                  .parameters(1)
+                  .asInstanceOf[IntAttr]
+                  .value
+              results(0).typ = DB_DecimalType(
+                Seq(
+                  new IntegerAttr(
+                    opLeft0 - opLeft1 + opRight1
+                      + max(opLeft1 + opRight0, 6)
+                  ),
+                  new IntegerAttr(
+                    max(opLeft1 + opRight0, 6)
+                  )
+                )
+              )
+            case _ =>
+              throw new Exception(
+                "In order to be divided, operands' types must match!"
+              )
+          }
+        case false =>
+          throw new Exception(
+            "In order to be divided, operands' types must match!"
+          )
+      }
+    case _ =>
+      throw new Exception(
+        "DB_DivOp Operation must contain only 2 operands."
+      )
+  }
+}
+
+// ==-----== //
 //   AddOp   //
 // ==-----== //
 
@@ -388,7 +702,7 @@ object DB_AddOp extends DialectOperation {
         opGen = factory,
         opName = name,
         resultNames = resNames,
-        resultTypes = Seq(I64),
+        resultTypes = Seq(leftType),
         operandNames = Seq(left, right),
         operandTypes = Seq(leftType, rightType),
         dictAttrs = z
@@ -431,75 +745,6 @@ case class DB_AddOp(
 }
 
 // ==-----== //
-//   MulOp   //
-// ==-----== //
-
-object DB_MulOp extends DialectOperation {
-  override def name: String = "db.mul"
-  override def factory = DB_MulOp.apply
-
-  // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      resNames: Seq[String],
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ":" ~ Type ~ "," ~ ValueId ~ ":" ~ Type
-      ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
-  ).map(
-    (
-        left: String,
-        leftType: Attribute,
-        right: String,
-        rightType: Attribute,
-        z: Seq[(String, Attribute)]
-    ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
-        opName = name,
-        resultNames = resNames,
-        resultTypes = Seq(I64),
-        operandNames = Seq(left, right),
-        operandTypes = Seq(leftType, rightType),
-        dictAttrs = z
-      )
-  )
-  // ==----------------------== //
-}
-
-case class DB_MulOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
-) extends RegisteredOperation(name = "db.mul") {
-
-  override def verify(): Unit = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length,
-    dictionaryProperties.size
-  ) match {
-    case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
-      (operands(0).typ == operands(1).typ) match {
-        case true =>
-        case false =>
-          throw new Exception(
-            "In order to be compared, operands' types must match!"
-          )
-      }
-    case _ =>
-      throw new Exception(
-        "DB_MulOp Operation must contain only 2 operands."
-      )
-  }
-}
-
-// ==-----== //
 //   SubOp   //
 // ==-----== //
 
@@ -526,7 +771,7 @@ object DB_SubOp extends DialectOperation {
         opGen = factory,
         opName = name,
         resultNames = resNames,
-        resultTypes = Seq(I64),
+        resultTypes = Seq(leftType),
         operandNames = Seq(left, right),
         operandTypes = Seq(leftType, rightType),
         dictAttrs = z
@@ -568,8 +813,76 @@ case class DB_SubOp(
   }
 }
 
+// ==-----== //
+//   CastOp   //
+// ==-----== //
+
+object CastOp extends DialectOperation {
+  override def name: String = "db.cast"
+  override def factory = CastOp.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    ValueId ~ ":" ~ Type ~ "->" ~ Type.rep
+      ~ DictionaryAttribute.?.map(Parser.optionlessSeq)
+  ).map(
+    (
+        operand: String,
+        opType: Attribute,
+        resTypes: Seq[Attribute],
+        z: Seq[(String, Attribute)]
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        resultNames = resNames,
+        resultTypes = resTypes,
+        operandNames = Seq(operand),
+        operandTypes = Seq(opType),
+        dictAttrs = z
+      )
+  )
+  // ==----------------------== //
+}
+
+case class CastOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
+    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val results: Seq[Value[Attribute]],
+    override val regions: Seq[Region],
+    override val dictionaryProperties: immutable.Map[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute]
+) extends RegisteredOperation(name = "db.cast") {
+
+  override def verify(): Unit = (
+    operands.length,
+    successors.length,
+    results.length,
+    regions.length,
+    dictionaryProperties.size
+  ) match {
+    case (1, 0, 1, 0, 0) =>
+      operands(0).typ.verify()
+    case _ =>
+      throw new Exception(
+        "CastOp Operation must contain only 1 operand and result."
+      )
+  }
+}
+
 val DBOps: Dialect =
   new Dialect(
-    operations = Seq(DB_ConstantOp, DB_CmpOp, DB_AddOp, DB_MulOp, DB_SubOp),
+    operations = Seq(
+      DB_ConstantOp,
+      DB_CmpOp,
+      DB_MulOp,
+      DB_DivOp,
+      DB_SubOp,
+      DB_AddOp,
+      CastOp
+    ),
     attributes = Seq(DB_CharType, DB_DateType, DB_DecimalType, DB_StringType)
   )

@@ -20,29 +20,21 @@ case object Signless extends Signedness
 // FLOAT TYPE //
 ////////////////
 
-case object Float16Type
-    extends ParametrizedAttribute("builtin.f16")
-    with TypeAttribute {
+abstract class FloatType(val namee: String) extends ParametrizedAttribute(namee)
+
+case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
   override def toString = "f16"
 }
-case object Float32Type
-    extends ParametrizedAttribute("builtin.f32")
-    with TypeAttribute {
+case object Float32Type extends FloatType("builtin.f32") with TypeAttribute {
   override def toString = "f32"
 }
-case object Float64Type
-    extends ParametrizedAttribute("builtin.f64")
-    with TypeAttribute {
+case object Float64Type extends FloatType("builtin.f64") with TypeAttribute {
   override def toString = "f64"
 }
-case object Float80Type
-    extends ParametrizedAttribute("builtin.f80")
-    with TypeAttribute {
+case object Float80Type extends FloatType("builtin.f80") with TypeAttribute {
   override def toString = "f80"
 }
-case object Float128Type
-    extends ParametrizedAttribute("builtin.f128")
-    with TypeAttribute {
+case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
   override def toString = "f128"
 }
 
@@ -60,20 +52,34 @@ case class IntegerType(val width: Int, val sign: Signedness)
   }
 }
 
-case class IntAttr(val value: Int)
-    extends DataAttribute[Int]("builtin.int_attr", value)
+case class IntAttr(val value: Long)
+    extends DataAttribute[Long]("builtin.int_attr", value)
 
-//////////////////
-// INTEGER TYPE //
-//////////////////
+///////////////////////
+// INTEGER ATTRIBUTE //
+///////////////////////
 
-case class IntegerAttr(val value: Int, val typ: IntegerType)
+case class IntegerAttr(val value: Long, val typ: IntegerType)
     extends ParametrizedAttribute("builtin.integer_attr") {
+
+  def this(value: Long) = this(value, I64)
   override def toString = (value, typ) match {
     case (1, IntegerType(1, Signless))  => "true"
     case (0, IntegerType(1, Signless))  => "false"
     case (_, IntegerType(64, Signless)) => s"${value}"
     case (_, _)                         => s"${value} : ${typ}"
+  }
+}
+
+/////////////////////
+// FLOAT ATTRIBUTE //
+/////////////////////
+
+case class FloatAttr(val value: Double, val typ: FloatType)
+    extends ParametrizedAttribute("builtin.float_attr") {
+  override def toString = (value, typ) match {
+    case (_, Float64Type) => s"${value}"
+    case (_, _)           => s"${value} : ${typ}"
   }
 }
 

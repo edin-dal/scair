@@ -5,6 +5,7 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 import Parser._
+import java.lang.Float.intBitsToFloat
 
 import scair.dialects.builtin._
 
@@ -19,6 +20,9 @@ object AttrParser {
   def Float64TypeP[$: P]: P[Attribute] = P("f64".!).map(_ => Float64Type)
   def Float80TypeP[$: P]: P[Attribute] = P("f80".!).map(_ => Float80Type)
   def Float128TypeP[$: P]: P[Attribute] = P("f128".!).map(_ => Float128Type)
+  def FloatTypeP[$: P]: P[Attribute] = P(
+    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP
+  )
 
   //////////////////
   // INTEGER TYPE //
@@ -45,11 +49,24 @@ object AttrParser {
     SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
   )
 
-  //////////////
-  // INT ATTR //
-  //////////////
+  //////////////////
+  // FLOAT ATTR //
+  //////////////////
 
-  def IntAttrP[$: P]: P[Attribute] = P(DecimalLiteral).map(IntAttr(_))
+  def FloatAttrP[$: P]: P[Attribute] =
+    P(
+      (FloatLiteral ~ (":" ~ FloatTypeP).?).map((x, y) =>
+        FloatAttr(
+          x,
+          y match {
+            case Some(a) => a.asInstanceOf[FloatType]
+            case None    => Float64Type
+          }
+        )
+      ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP).map((x, y) =>
+        FloatAttr(intBitsToFloat(x.intValue()), y.asInstanceOf[FloatType])
+      )
+    )
 
   //////////////////
   // INTEGER ATTR //
@@ -129,7 +146,7 @@ object AttrParser {
     P((Dimension ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
 
   def Dimension[$: P]: P[IntAttr] =
-    P("?".!.map(_ => -1) | DecimalLiteral).map(x => IntAttr(x))
+    P("?".!.map(_ => -1: Long) | DecimalLiteral).map(x => IntAttr(x))
 
   def Encoding[$: P] = P(AttributeValue)
 
@@ -151,8 +168,13 @@ object AttrParser {
   //////////////
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP | IntegerAttrP
+    FloatTypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP | FloatAttrP | IntegerAttrP
   )
+
+  def main(args: Array[String]): Unit = {
+    val parsed = parse("5930888.26171875 : f64", BuiltIn(_))
+    println(parsed)
+  }
 }
 
 /////////////////
