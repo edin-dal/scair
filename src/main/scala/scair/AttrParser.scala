@@ -50,25 +50,6 @@ object AttrParser {
   )
 
   //////////////////
-  // INTEGER ATTR //
-  //////////////////
-
-  def IntegerAttrP[$: P]: P[Attribute] =
-    P(
-      (IntegerLiteral ~ (":" ~ IntegerTypeP).?).map((x, y) =>
-        IntegerAttr(
-          x,
-          y match {
-            case Some(a) => a.asInstanceOf[IntegerType]
-            case None    => I64
-          }
-        )
-      )
-        | "true".map(_ => IntegerAttr(1, I1))
-        | "false".map(_ => IntegerAttr(0, I1))
-    )
-
-  //////////////////
   // FLOAT ATTR //
   //////////////////
 
@@ -85,6 +66,25 @@ object AttrParser {
       ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP).map((x, y) =>
         FloatAttr(intBitsToFloat(x.intValue()), y.asInstanceOf[FloatType])
       )
+    )
+
+  //////////////////
+  // INTEGER ATTR //
+  //////////////////
+
+  def IntegerAttrP[$: P]: P[Attribute] =
+    P(
+      (IntegerLiteral ~ (":" ~ IntegerTypeP).?).map((x, y) =>
+        IntegerAttr(
+          x,
+          y match {
+            case Some(a) => a.asInstanceOf[IntegerType]
+            case None    => I64
+          }
+        )
+      )
+        | "true".map(_ => IntegerAttr(1, I1))
+        | "false".map(_ => IntegerAttr(0, I1))
     )
 
   ////////////////

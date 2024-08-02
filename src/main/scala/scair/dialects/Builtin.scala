@@ -83,6 +83,20 @@ case class FloatAttr(val value: Double, val typ: FloatType)
   }
 }
 
+//////////////////
+// INTEGER TYPE //
+//////////////////
+
+case class IntegerAttr(val value: Int, val typ: IntegerType)
+    extends ParametrizedAttribute("builtin.integer_attr") {
+  override def toString = (value, typ) match {
+    case (1, IntegerType(1, Signless))  => "true"
+    case (0, IntegerType(1, Signless))  => "false"
+    case (_, IntegerType(64, Signless)) => s"${value}"
+    case (_, _)                         => s"${value} : ${typ}"
+  }
+}
+
 ////////////////
 // INDEX TYPE //
 ////////////////
