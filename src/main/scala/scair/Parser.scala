@@ -327,7 +327,7 @@ object Parser {
   // [x] alias-name :: = bare-id
   // [x] suffix-id ::= (digit+ | ((letter|id-punct) (letter|id-punct|digit)*))
 
-  // [ ] symbol-ref-id ::= `@` (suffix-id | string-literal) (`::` symbol-ref-id)?
+  // [ ] symbol-ref-id ::= `@` (suffix-id | string-literal) // - redundant - (`::` symbol-ref-id)?
   // [ ] value-id-list ::= value-id (`,` value-id)*
 
   // // Uses of value, e.g. in an operand list to an operation.
@@ -351,6 +351,8 @@ object Parser {
   def SuffixId[$: P] = P(
     DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).rep
   ).!
+
+  def SymbolRefId[$: P] = P("@" ~ (SuffixId | StringLiteral))
 
   def ValueUse[$: P] =
     P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
@@ -548,7 +550,7 @@ object Parser {
   )
 
   def PrettyDialectTypeOrAttributeLeadIdent[$: P] = P(
-    (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9").rep).!
+    (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9_").rep).!
   )
 
   // def OpaqueDialectType[$: P] = P(DialectNamespace ~ DialectTypeBody)
