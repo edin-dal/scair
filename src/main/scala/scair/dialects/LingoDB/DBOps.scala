@@ -276,7 +276,8 @@ case class DB_ConstantOp(
     dictionaryProperties.size,
     dictionaryAttributes.size
   ) match {
-    case (0, 0, 0, 0, 0, _) =>
+    case (0, 0, 1, 0, 0, _) =>
+      results(0).verify()
       for ((x, y) <- dictionaryAttributes) yield y.verify()
     case _ =>
       throw new Exception(
@@ -339,8 +340,8 @@ case class DB_CmpOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+      operands(0).verify()
+      operands(1).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -348,6 +349,7 @@ case class DB_CmpOp(
             "In order to be compared, operands' types must match!"
           )
       }
+      for ((x, y) <- dictionaryAttributes) yield y.verify()
     case _ =>
       throw new Exception(
         "DB_CmpOp Operation must contain only 2 operands."
@@ -457,55 +459,19 @@ case class DB_MulOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+      operands(0).verify()
+      operands(1).verify()
+      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
-          operands(0).typ match {
-            case _: DB_DecimalType =>
-              val opLeft0 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opLeft1 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight0 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight1 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              results(0).typ = DB_DecimalType(
-                Seq(
-                  new IntegerAttr(opLeft0 + opRight0),
-                  new IntegerAttr(opLeft1 + opRight1)
-                )
-              )
-            case _ =>
-              throw new Exception(
-                "In order to be divided, operands' types must match!"
-              )
-          }
         case false =>
           throw new Exception(
-            "In order to be divided, operands' types must match!"
+            "In order to be multiplied, operands' types must match!"
           )
       }
     case _ =>
       throw new Exception(
-        "DB_DivOp Operation must contain only 2 operands."
+        "DB_MulOp Operation must contain only 2 operands."
       )
   }
 }
@@ -617,52 +583,11 @@ case class DB_DivOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+      operands(0).verify()
+      operands(1).verify()
+      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
-          operands(0).typ match {
-            case _: DB_DecimalType =>
-              val opLeft0 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opLeft1 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight0 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight1 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              results(0).typ = DB_DecimalType(
-                Seq(
-                  new IntegerAttr(
-                    opLeft0 - opLeft1 + opRight1
-                      + max(opLeft1 + opRight0, 6)
-                  ),
-                  new IntegerAttr(
-                    max(opLeft1 + opRight0, 6)
-                  )
-                )
-              )
-            case _ =>
-              throw new Exception(
-                "In order to be divided, operands' types must match!"
-              )
-          }
         case false =>
           throw new Exception(
             "In order to be divided, operands' types must match!"
@@ -727,14 +652,15 @@ case class DB_AddOp(
     regions.length,
     dictionaryProperties.size
   ) match {
-    case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+    case (2, 0, 1, 0, 0) =>
+      operands(0).verify()
+      operands(1).verify()
+      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
           throw new Exception(
-            "In order to be compared, operands' types must match!"
+            "In order to be added, operands' types must match!"
           )
       }
     case _ =>
@@ -796,14 +722,15 @@ case class DB_SubOp(
     regions.length,
     dictionaryProperties.size
   ) match {
-    case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+    case (2, 0, 1, 0, 0) =>
+      operands(0).verify()
+      operands(1).verify()
+      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
           throw new Exception(
-            "In order to be compared, operands' types must match!"
+            "In order to carry out substitution, operands' types must match!"
           )
       }
     case _ =>
@@ -865,7 +792,8 @@ case class CastOp(
     dictionaryProperties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
+      operands(0).verify()
+      results(0).verify()
     case _ =>
       throw new Exception(
         "CastOp Operation must contain only 1 operand and result."

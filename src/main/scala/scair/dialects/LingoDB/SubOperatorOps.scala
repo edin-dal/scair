@@ -127,6 +127,7 @@ case class SetResultOp(
     dictionaryProperties.size
   ) match {
     case (1, 0, 0, 0, 0) =>
+      operands(0).verify()
       for ((x, y) <- dictionaryAttributes) yield y.verify()
       dictionaryAttributes.get("result_id") match {
         case Some(x) =>
@@ -139,7 +140,7 @@ case class SetResultOp(
           }
         case _ =>
           throw new Exception(
-            "SetResultOp Operation must contain only 2 dictionary attributes."
+            "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
           )
       }
   }

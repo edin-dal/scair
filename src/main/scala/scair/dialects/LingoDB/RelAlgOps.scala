@@ -206,12 +206,28 @@ case class BaseTableOp(
   ) match {
     case (0, 0, 1, 0) =>
       results(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "BaseTableOp Operation must contain only 1 result."
           )
       }
+      dictionaryAttributes.get("table_identifier") match {
+        case Some(x) =>
+          x match {
+            case _: StringAttribute =>
+            case _ =>
+              throw new Exception(
+                "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
+              )
+          }
+        case None =>
+          throw new Exception(
+            "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
+          )
+      }
+      for ((x, y) <- dictionaryProperties) y.verify()
+      for ((x, y) <- dictionaryAttributes) y.verify()
   }
 }
 
@@ -269,19 +285,20 @@ case class SelectionOp(
   ) match {
     case (1, 0, 1, 1) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "SelectionOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "SelectionOp Operation must contain only 1 result of type TupleStream."
           )
       }
+      regions(0).verify()
   }
 }
 
@@ -317,7 +334,7 @@ object MapOp extends DialectOperation {
         resultNames = resNames,
         resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = w :+ ("computes", z),
+        dictAttrs = w :+ ("computed_cols", z),
         noForwardOperandRef = 1
       )
   )
@@ -341,19 +358,36 @@ case class MapOp(
   ) match {
     case (1, 0, 1, 1) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "MapOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "MapOp Operation must contain only 1 result of type TupleStream."
           )
       }
+
+      dictionaryAttributes.get("computed_cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
+              )
+          }
+        case None =>
+          throw new Exception(
+            "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
+          )
+      }
+      for ((x, y) <- dictionaryAttributes) y.verify()
+      regions(0).verify()
   }
 }
 
@@ -391,7 +425,7 @@ object AggregationOp extends DialectOperation {
         resultNames = resNames,
         resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = w :+ ("group_by_cols", reff) :+ ("computes", deff),
+        dictAttrs = w :+ ("group_by_cols", reff) :+ ("computed_cols", deff),
         noForwardOperandRef = 1
       )
   )
@@ -415,19 +449,51 @@ case class AggregationOp(
   ) match {
     case (1, 0, 1, 1) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "AggregationOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "AggregationOp Operation must contain only 1 result of type TupleStream."
           )
       }
+
+      dictionaryAttributes.get("computed_cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
+          )
+      }
+
+      dictionaryAttributes.get("group_by_cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
+          )
+      }
+      for ((x, y) <- dictionaryAttributes) y.verify()
+      regions(0).verify()
   }
 }
 
@@ -480,14 +546,14 @@ case class CountRowsOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "CountRowsOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case _: IntegerType =>
+        case x: IntegerType => x.verify()
         case _ =>
           throw new Exception(
             "CountRowsOp Operation must contain only 1 result of IntegerType."
@@ -554,10 +620,40 @@ case class AggrFuncOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "AggrFuncOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      results(0).verify()
+      dictionaryAttributes.get("fn") match {
+        case Some(x) =>
+          x match {
+            case _: RelAlg_AggrFunc_Case =>
+            case _ =>
+              throw new Exception(
+                "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
+          )
+      }
+
+      dictionaryAttributes.get("attr") match {
+        case Some(x) =>
+          x match {
+            case _: ColumnRefAttr =>
+            case _ =>
+              throw new Exception(
+                "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
           )
       }
     case _ =>
@@ -621,17 +717,31 @@ case class SortOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "SortOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "SortOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      dictionaryAttributes.get("sortspecs") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
           )
       }
     case _ =>
@@ -699,17 +809,47 @@ case class MaterializeOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case _: TupleStream =>
+        case x: TupleStream => x.verify()
         case _ =>
           throw new Exception(
             "MaterializeOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case _: ResultTable =>
+        case x: ResultTable => x.verify()
         case _ =>
           throw new Exception(
             "MaterializeOp Operation must contain 1 operand of type ResultOp."
+          )
+      }
+
+      dictionaryAttributes.get("cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
+          )
+      }
+
+      dictionaryAttributes.get("columns") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
           )
       }
     case _ =>

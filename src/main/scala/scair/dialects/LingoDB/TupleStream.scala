@@ -49,7 +49,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
     with TypeAttribute {
 
   override def verify(): Unit = {
-    if (tupleVals.length != 2) {
+    if (tupleVals.length != 0 && tupleVals.length != 2) {
       throw new Exception("TupleStream Tuple must contain 2 elements only.")
     }
   }
@@ -73,10 +73,12 @@ case class TupleStream(val tuples: Seq[Attribute])
 
   override def verify(): Unit = {
     for (param <- tuples) {
-      if (!param.isInstanceOf[TupleStreamTuple]) {
-        throw new Exception(
-          "TupleStream must only contain TupleStream Tuple attributes."
-        )
+      param match {
+        case _: TupleStreamTuple =>
+        case _ =>
+          throw new Exception(
+            "TupleStream must only contain TupleStream Tuple attributes."
+          )
       }
     }
   }
@@ -177,8 +179,8 @@ case class ReturnOp(
     dictionaryProperties.size
   ) match {
     case (0, 0, 0, 0) =>
-      for (x <- results) yield x.typ.verify()
-      for ((x, y) <- dictionaryAttributes) yield y.verify()
+      for (x <- results) x.verify()
+      for ((x, y) <- dictionaryAttributes) y.verify()
     case _ =>
       throw new Exception(
         "ReturnOp Operation must contain only results and an attribute dictionary."
@@ -237,11 +239,30 @@ case class GetColumnOp(
     regions.length,
     dictionaryProperties.size
   ) match {
-    case (2, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
-      results(0).typ.verify()
-      for ((x, y) <- dictionaryAttributes) yield y.verify()
+    case (1, 0, 1, 0, 0) =>
+      operands(0).typ match {
+        case x: TupleStreamTuple => x.verify()
+        case _ =>
+          throw new Exception(
+            "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
+          )
+      }
+      results(0).verify()
+      dictionaryAttributes.get("attr") match {
+        case Some(x) =>
+          x match {
+            case _: ColumnRefAttr =>
+            case _ =>
+              throw new Exception(
+                "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
+              )
+          }
+        case None =>
+          throw new Exception(
+            "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
+          )
+      }
+      for ((x, y) <- dictionaryAttributes) y.verify()
     case _ =>
       throw new Exception(
         "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."

@@ -31,6 +31,7 @@ abstract class DataAttribute[D](
 case class Value[T <: Attribute](
     var typ: T
 ) {
+  def verify(): Unit = typ.verify()
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
@@ -40,6 +41,12 @@ case class Block(
     operations: Seq[Operation] = Seq(),
     arguments: Seq[Value[Attribute]] = Seq()
 ) {
+
+  def verify(): Unit = {
+    for (op <- operations) op.verify()
+    for (arg <- arguments) arg.verify()
+  }
+
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
@@ -49,6 +56,10 @@ case class Region(
     blocks: Seq[Block],
     parent: Option[Operation] = None
 ) {
+
+  def verify(): Unit = {
+    for (block <- blocks) block.verify()
+  }
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
@@ -68,7 +79,14 @@ sealed abstract class Operation(
       immutable.Map.empty[String, Attribute]
 ) {
 
-  def verify(): Unit = ()
+  def verify(): Unit = {
+    for (op <- operands) op.verify()
+    for (block <- successors) block.verify()
+    for (result <- results) result.verify()
+    for (region <- regions) region.verify()
+    for ((key, attr) <- dictionaryProperties) attr.verify()
+    for ((key, attr) <- dictionaryAttributes) attr.verify()
+  }
 
   override def hashCode(): Int = {
     return 7 * 41 +
@@ -95,7 +113,7 @@ final case class UnregisteredOperation(
       immutable.Map.empty[String, Attribute],
     override val dictionaryAttributes: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute]
-) extends Operation(name = name) {}
+) extends Operation(name = name)
 
 class RegisteredOperation(
     override val name: String,
@@ -109,7 +127,7 @@ class RegisteredOperation(
       immutable.Map.empty[String, Attribute],
     override val dictionaryAttributes: immutable.Map[String, Attribute] =
       immutable.Map.empty[String, Attribute]
-) extends Operation(name = name) {}
+) extends Operation(name = name)
 
 trait DialectOperation {
   def name: String

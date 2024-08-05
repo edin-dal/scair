@@ -83,8 +83,8 @@ case class Norm(
     dictionaryAttributes.size
   ) match {
     case (1, 0, 1, 0, 0, 0) =>
-      operands(0).typ.verify()
-      results(0).typ.verify()
+      operands(0).verify()
+      results(0).verify()
     case _ =>
       throw new Exception(
         "Norm Operation must only contain 1 operand of 'complex' type, and 1 result of 'f32' or 'f64'."
@@ -123,9 +123,9 @@ case class Mul(
     dictionaryAttributes.size
   ) match {
     case (2, 0, 1, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
-      results(0).typ.verify()
+      operands(0).verify()
+      operands(1).verify()
+      results(0).verify()
     case _ =>
       throw new Exception(
         "Mul Operation must only contain 2 operands and 1 result of 'complex' type."
