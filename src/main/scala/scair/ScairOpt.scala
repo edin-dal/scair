@@ -3,7 +3,8 @@ import scopt.OParser
 import scala.io.Source
 import scair.Printer
 case class Args(
-    val input: Option[String] = None
+    val input: Option[String] = None,
+    val skip_verify: Boolean = true
 )
 object ScairOpt {
   def main(args: Array[String]): Unit = {
@@ -19,7 +20,11 @@ object ScairOpt {
         arg[String]("file")
           .optional()
           .text("input file")
-          .action((x, c) => c.copy(input = Some(x)))
+          .action((x, c) => c.copy(input = Some(x))),
+        opt[Unit]('s', "skip_verify")
+          .optional()
+          .text("Skip verification")
+          .action((_, c) => c.copy(skip_verify = true))
       )
     }
 
@@ -32,6 +37,8 @@ object ScairOpt {
           case None       => Source.stdin
         }
 
+        val skip_verify = args.skip_verify
+
         // Parse content
         val parser = new scair.Parser
         val module = parser.parseThis(
@@ -41,6 +48,12 @@ object ScairOpt {
           case fastparse.Parsed.Success(value, _) => value
           case fastparse.Parsed.Failure(_, _, extra) =>
             sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
+        }
+
+        // verify parsed content
+        skip_verify match {
+          case true  =>
+          case false => module.verify()
         }
 
         // Print the parsed module if not errored

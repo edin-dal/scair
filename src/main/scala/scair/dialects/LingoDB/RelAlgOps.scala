@@ -198,7 +198,7 @@ case class BaseTableOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.basetable") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -206,7 +206,7 @@ case class BaseTableOp(
   ) match {
     case (0, 0, 1, 0) =>
       results(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "BaseTableOp Operation must contain only 1 result."
@@ -226,8 +226,6 @@ case class BaseTableOp(
             "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
           )
       }
-      for ((x, y) <- dictionaryProperties) y.verify()
-      for ((x, y) <- dictionaryAttributes) y.verify()
   }
 }
 
@@ -277,7 +275,7 @@ case class SelectionOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.selection") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -285,20 +283,19 @@ case class SelectionOp(
   ) match {
     case (1, 0, 1, 1) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "SelectionOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "SelectionOp Operation must contain only 1 result of type TupleStream."
           )
       }
-      regions(0).verify()
   }
 }
 
@@ -350,7 +347,7 @@ case class MapOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.map") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -358,14 +355,14 @@ case class MapOp(
   ) match {
     case (1, 0, 1, 1) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "MapOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "MapOp Operation must contain only 1 result of type TupleStream."
@@ -386,8 +383,6 @@ case class MapOp(
             "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
           )
       }
-      for ((x, y) <- dictionaryAttributes) y.verify()
-      regions(0).verify()
   }
 }
 
@@ -441,7 +436,7 @@ case class AggregationOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggregation") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -449,14 +444,14 @@ case class AggregationOp(
   ) match {
     case (1, 0, 1, 1) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "AggregationOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "AggregationOp Operation must contain only 1 result of type TupleStream."
@@ -492,8 +487,6 @@ case class AggregationOp(
             "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
           )
       }
-      for ((x, y) <- dictionaryAttributes) y.verify()
-      regions(0).verify()
   }
 }
 
@@ -538,7 +531,7 @@ case class CountRowsOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.count") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -546,14 +539,14 @@ case class CountRowsOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "CountRowsOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case x: IntegerType => x.verify()
+        case _: IntegerType =>
         case _ =>
           throw new Exception(
             "CountRowsOp Operation must contain only 1 result of IntegerType."
@@ -612,7 +605,7 @@ case class AggrFuncOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggrfn") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -620,13 +613,12 @@ case class AggrFuncOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "AggrFuncOp Operation must contain 1 operand of type TupleStream."
           )
       }
-      results(0).verify()
       dictionaryAttributes.get("fn") match {
         case Some(x) =>
           x match {
@@ -709,7 +701,7 @@ case class SortOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.sort") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -717,14 +709,14 @@ case class SortOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "SortOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "SortOp Operation must contain 1 operand of type TupleStream."
@@ -801,7 +793,7 @@ case class MaterializeOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.materialize") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -809,14 +801,14 @@ case class MaterializeOp(
   ) match {
     case (1, 0, 1, 0) =>
       operands(0).typ match {
-        case x: TupleStream => x.verify()
+        case _: TupleStream =>
         case _ =>
           throw new Exception(
             "MaterializeOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
-        case x: ResultTable => x.verify()
+        case _: ResultTable =>
         case _ =>
           throw new Exception(
             "MaterializeOp Operation must contain 1 operand of type ResultOp."
@@ -873,7 +865,3 @@ val RelAlgOps: Dialect =
     ),
     attributes = Seq()
   )
-
-// object RelAlgOps {
-//   def main(args: Array[String]): Unit = {}
-// }
