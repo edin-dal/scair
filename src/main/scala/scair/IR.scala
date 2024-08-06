@@ -79,9 +79,10 @@ sealed abstract class Operation(
       immutable.Map.empty[String, Attribute]
 ) {
 
-  def verify(): Unit = {
-    for (op <- operands) op.verify()
-    for (block <- successors) block.verify()
+  def custom_verify(): Unit = ()
+
+  final def verify(): Unit = {
+    custom_verify()
     for (result <- results) result.verify()
     for (region <- regions) region.verify()
     for ((key, attr) <- dictionaryProperties) attr.verify()

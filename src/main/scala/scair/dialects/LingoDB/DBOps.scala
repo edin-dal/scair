@@ -268,17 +268,14 @@ case class DB_ConstantOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.constant") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size,
-    dictionaryAttributes.size
+    dictionaryProperties.size
   ) match {
-    case (0, 0, 1, 0, 0, _) =>
-      results(0).verify()
-      for ((x, y) <- dictionaryAttributes) yield y.verify()
+    case (0, 0, 1, 0, 0) =>
     case _ =>
       throw new Exception(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
@@ -332,7 +329,7 @@ case class DB_CmpOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.compare") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -340,8 +337,6 @@ case class DB_CmpOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 0, 0, 0) =>
-      operands(0).verify()
-      operands(1).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -349,7 +344,6 @@ case class DB_CmpOp(
             "In order to be compared, operands' types must match!"
           )
       }
-      for ((x, y) <- dictionaryAttributes) yield y.verify()
     case _ =>
       throw new Exception(
         "DB_CmpOp Operation must contain only 2 operands."
@@ -451,7 +445,7 @@ case class DB_MulOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.mul") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -459,9 +453,6 @@ case class DB_MulOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).verify()
-      operands(1).verify()
-      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -575,7 +566,7 @@ case class DB_DivOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.div") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -583,9 +574,6 @@ case class DB_DivOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).verify()
-      operands(1).verify()
-      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -645,7 +633,7 @@ case class DB_AddOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.add") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -653,9 +641,6 @@ case class DB_AddOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).verify()
-      operands(1).verify()
-      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -715,7 +700,7 @@ case class DB_SubOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.sub") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -723,9 +708,6 @@ case class DB_SubOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).verify()
-      operands(1).verify()
-      results(0).verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -784,7 +766,7 @@ case class CastOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.cast") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -792,8 +774,6 @@ case class CastOp(
     dictionaryProperties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
-      operands(0).verify()
-      results(0).verify()
     case _ =>
       throw new Exception(
         "CastOp Operation must contain only 1 operand and result."

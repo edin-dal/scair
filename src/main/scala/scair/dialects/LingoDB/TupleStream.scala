@@ -172,15 +172,13 @@ case class ReturnOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "tuples.return") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     regions.length,
     dictionaryProperties.size
   ) match {
     case (0, 0, 0, 0) =>
-      for (x <- results) x.verify()
-      for ((x, y) <- dictionaryAttributes) y.verify()
     case _ =>
       throw new Exception(
         "ReturnOp Operation must contain only results and an attribute dictionary."
@@ -232,7 +230,7 @@ case class GetColumnOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "tuples.getcol") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -247,7 +245,6 @@ case class GetColumnOp(
             "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
           )
       }
-      results(0).verify()
       dictionaryAttributes.get("attr") match {
         case Some(x) =>
           x match {
@@ -262,7 +259,6 @@ case class GetColumnOp(
             "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
           )
       }
-      for ((x, y) <- dictionaryAttributes) y.verify()
     case _ =>
       throw new Exception(
         "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
