@@ -45,15 +45,15 @@ object ScairOpt {
           input.mkString,
           pattern = parser.TopLevel(_)
         ) match {
-          case fastparse.Parsed.Success(value, _) =>
-            skip_verify match {
-              case true => value
-              case false =>
-                value.verify()
-                value
-            }
+          case fastparse.Parsed.Success(value, _) => value
           case fastparse.Parsed.Failure(_, _, extra) =>
             sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
+        }
+
+        // verify parsed content
+        skip_verify match {
+          case true  =>
+          case false => value.verify()
         }
 
         // Print the parsed module if not errored
