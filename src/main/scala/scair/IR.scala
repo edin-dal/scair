@@ -82,11 +82,11 @@ sealed abstract class Operation(
   def custom_verify(): Unit = ()
 
   final def verify(): Unit = {
-    custom_verify()
     for (result <- results) result.verify()
     for (region <- regions) region.verify()
     for ((key, attr) <- dictionaryProperties) attr.verify()
     for ((key, attr) <- dictionaryAttributes) attr.verify()
+    custom_verify()
   }
 
   override def hashCode(): Int = {
