@@ -268,16 +268,14 @@ case class DB_ConstantOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.constant") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size,
-    dictionaryAttributes.size
+    dictionaryProperties.size
   ) match {
-    case (0, 0, 0, 0, 0, _) =>
-      for ((x, y) <- dictionaryAttributes) yield y.verify()
+    case (0, 0, 1, 0, 0) =>
     case _ =>
       throw new Exception(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
@@ -331,7 +329,7 @@ case class DB_CmpOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.compare") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -339,8 +337,6 @@ case class DB_CmpOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
@@ -449,7 +445,7 @@ case class DB_MulOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.mul") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -457,55 +453,16 @@ case class DB_MulOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
-          operands(0).typ match {
-            case _: DB_DecimalType =>
-              val opLeft0 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opLeft1 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight0 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight1 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              results(0).typ = DB_DecimalType(
-                Seq(
-                  new IntegerAttr(opLeft0 + opRight0),
-                  new IntegerAttr(opLeft1 + opRight1)
-                )
-              )
-            case _ =>
-              throw new Exception(
-                "In order to be divided, operands' types must match!"
-              )
-          }
         case false =>
           throw new Exception(
-            "In order to be divided, operands' types must match!"
+            "In order to be multiplied, operands' types must match!"
           )
       }
     case _ =>
       throw new Exception(
-        "DB_DivOp Operation must contain only 2 operands."
+        "DB_MulOp Operation must contain only 2 operands."
       )
   }
 }
@@ -609,7 +566,7 @@ case class DB_DivOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.div") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -617,52 +574,8 @@ case class DB_DivOp(
     dictionaryProperties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
       (operands(0).typ == operands(1).typ) match {
         case true =>
-          operands(0).typ match {
-            case _: DB_DecimalType =>
-              val opLeft0 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opLeft1 =
-                operands(0).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight0 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(0)
-                  .asInstanceOf[IntAttr]
-                  .value
-              val opRight1 =
-                operands(1).typ
-                  .asInstanceOf[ParametrizedAttribute]
-                  .parameters(1)
-                  .asInstanceOf[IntAttr]
-                  .value
-              results(0).typ = DB_DecimalType(
-                Seq(
-                  new IntegerAttr(
-                    opLeft0 - opLeft1 + opRight1
-                      + max(opLeft1 + opRight0, 6)
-                  ),
-                  new IntegerAttr(
-                    max(opLeft1 + opRight0, 6)
-                  )
-                )
-              )
-            case _ =>
-              throw new Exception(
-                "In order to be divided, operands' types must match!"
-              )
-          }
         case false =>
           throw new Exception(
             "In order to be divided, operands' types must match!"
@@ -720,21 +633,19 @@ case class DB_AddOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.add") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
     dictionaryProperties.size
   ) match {
-    case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+    case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
           throw new Exception(
-            "In order to be compared, operands' types must match!"
+            "In order to be added, operands' types must match!"
           )
       }
     case _ =>
@@ -789,21 +700,19 @@ case class DB_SubOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.sub") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
     dictionaryProperties.size
   ) match {
-    case (2, 0, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
+    case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
           throw new Exception(
-            "In order to be compared, operands' types must match!"
+            "In order to carry out substitution, operands' types must match!"
           )
       }
     case _ =>
@@ -857,7 +766,7 @@ case class CastOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "db.cast") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -865,7 +774,6 @@ case class CastOp(
     dictionaryProperties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
-      operands(0).typ.verify()
     case _ =>
       throw new Exception(
         "CastOp Operation must contain only 1 operand and result."

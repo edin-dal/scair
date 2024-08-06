@@ -119,7 +119,7 @@ case class SetResultOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "subop.set_result") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -127,7 +127,6 @@ case class SetResultOp(
     dictionaryProperties.size
   ) match {
     case (1, 0, 0, 0, 0) =>
-      for ((x, y) <- dictionaryAttributes) yield y.verify()
       dictionaryAttributes.get("result_id") match {
         case Some(x) =>
           x match {
@@ -139,7 +138,7 @@ case class SetResultOp(
           }
         case _ =>
           throw new Exception(
-            "SetResultOp Operation must contain only 2 dictionary attributes."
+            "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
           )
       }
   }

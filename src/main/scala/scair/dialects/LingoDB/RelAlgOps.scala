@@ -198,7 +198,7 @@ case class BaseTableOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.basetable") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -210,6 +210,20 @@ case class BaseTableOp(
         case _ =>
           throw new Exception(
             "BaseTableOp Operation must contain only 1 result."
+          )
+      }
+      dictionaryAttributes.get("table_identifier") match {
+        case Some(x) =>
+          x match {
+            case _: StringAttribute =>
+            case _ =>
+              throw new Exception(
+                "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
+              )
+          }
+        case None =>
+          throw new Exception(
+            "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
           )
       }
   }
@@ -261,7 +275,7 @@ case class SelectionOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.selection") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -317,7 +331,7 @@ object MapOp extends DialectOperation {
         resultNames = resNames,
         resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = w :+ ("computes", z),
+        dictAttrs = w :+ ("computed_cols", z),
         noForwardOperandRef = 1
       )
   )
@@ -333,7 +347,7 @@ case class MapOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.map") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -352,6 +366,21 @@ case class MapOp(
         case _ =>
           throw new Exception(
             "MapOp Operation must contain only 1 result of type TupleStream."
+          )
+      }
+
+      dictionaryAttributes.get("computed_cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
+              )
+          }
+        case None =>
+          throw new Exception(
+            "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
           )
       }
   }
@@ -391,7 +420,7 @@ object AggregationOp extends DialectOperation {
         resultNames = resNames,
         resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = w :+ ("group_by_cols", reff) :+ ("computes", deff),
+        dictAttrs = w :+ ("group_by_cols", reff) :+ ("computed_cols", deff),
         noForwardOperandRef = 1
       )
   )
@@ -407,7 +436,7 @@ case class AggregationOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggregation") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -426,6 +455,36 @@ case class AggregationOp(
         case _ =>
           throw new Exception(
             "AggregationOp Operation must contain only 1 result of type TupleStream."
+          )
+      }
+
+      dictionaryAttributes.get("computed_cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
+          )
+      }
+
+      dictionaryAttributes.get("group_by_cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
           )
       }
   }
@@ -472,7 +531,7 @@ case class CountRowsOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.count") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -546,7 +605,7 @@ case class AggrFuncOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggrfn") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -558,6 +617,35 @@ case class AggrFuncOp(
         case _ =>
           throw new Exception(
             "AggrFuncOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      dictionaryAttributes.get("fn") match {
+        case Some(x) =>
+          x match {
+            case _: RelAlg_AggrFunc_Case =>
+            case _ =>
+              throw new Exception(
+                "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
+          )
+      }
+
+      dictionaryAttributes.get("attr") match {
+        case Some(x) =>
+          x match {
+            case _: ColumnRefAttr =>
+            case _ =>
+              throw new Exception(
+                "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
           )
       }
     case _ =>
@@ -613,7 +701,7 @@ case class SortOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.sort") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -632,6 +720,20 @@ case class SortOp(
         case _ =>
           throw new Exception(
             "SortOp Operation must contain 1 operand of type TupleStream."
+          )
+      }
+      dictionaryAttributes.get("sortspecs") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
           )
       }
     case _ =>
@@ -691,7 +793,7 @@ case class MaterializeOp(
     override val dictionaryAttributes: immutable.Map[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.materialize") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -710,6 +812,36 @@ case class MaterializeOp(
         case _ =>
           throw new Exception(
             "MaterializeOp Operation must contain 1 operand of type ResultOp."
+          )
+      }
+
+      dictionaryAttributes.get("cols") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
+          )
+      }
+
+      dictionaryAttributes.get("columns") match {
+        case Some(x) =>
+          x match {
+            case _: ArrayAttribute[_] =>
+            case _ =>
+              throw new Exception(
+                "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
+              )
+          }
+        case _ =>
+          throw new Exception(
+            "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
           )
       }
     case _ =>
@@ -733,7 +865,3 @@ val RelAlgOps: Dialect =
     ),
     attributes = Seq()
   )
-
-// object RelAlgOps {
-//   def main(args: Array[String]): Unit = {}
-// }

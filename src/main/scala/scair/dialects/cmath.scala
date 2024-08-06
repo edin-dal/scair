@@ -74,7 +74,7 @@ case class Norm(
       immutable.Map.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.norm") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -83,8 +83,6 @@ case class Norm(
     dictionaryAttributes.size
   ) match {
     case (1, 0, 1, 0, 0, 0) =>
-      operands(0).typ.verify()
-      results(0).typ.verify()
     case _ =>
       throw new Exception(
         "Norm Operation must only contain 1 operand of 'complex' type, and 1 result of 'f32' or 'f64'."
@@ -114,7 +112,7 @@ case class Mul(
       immutable.Map.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.mul") {
 
-  override def verify(): Unit = (
+  override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     results.length,
@@ -123,9 +121,6 @@ case class Mul(
     dictionaryAttributes.size
   ) match {
     case (2, 0, 1, 0, 0, 0) =>
-      operands(0).typ.verify()
-      operands(1).typ.verify()
-      results(0).typ.verify()
     case _ =>
       throw new Exception(
         "Mul Operation must only contain 2 operands and 1 result of 'complex' type."
