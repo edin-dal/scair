@@ -53,7 +53,7 @@ object ScairOpt {
         // verify parsed content
         skip_verify match {
           case true  =>
-          case false => value.verify()
+          case false => module.verify()
         }
 
         // Print the parsed module if not errored
