@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import IR._
 import AttrParser._
-import scair.dialects.cmath._
+import scair.dialects.CMath.cmath._
 
 class Printer {
 
