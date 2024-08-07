@@ -1,18 +1,20 @@
 package scair
 
 import fastparse._
+import fastparse.internal.Util
+
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer}
+import scala.annotation.tailrec
+import scala.annotation.switch
 import scala.util.{Try, Success, Failure}
+
 import IR._
 import AttrParser._
 import Parser._
-import scala.annotation.tailrec
-import fastparse.internal.Util
-import scala.annotation.switch
 import scair.MLContext
-import java.lang.module.ModuleDescriptor.Exports
-import java.beans.Customizer
+import scair.dialects.builtin.ModuleOp
+
 import java.lang.Long.parseLong
 import java.lang.Float.parseFloat
 import Math.pow
@@ -683,13 +685,24 @@ class Parser {
   //////////////////////////
 
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
+  // shortened definition TODO: finish...
 
-  def TopLevel[$: P] = P(
-    OperationPat ~ E({
+  // E(()) - weird bug happens without it
+  // it fails parsing at OpResultsList for some reason eg:
+  // "%0 = "test.op"() : () -> (i32)"
+
+  def TopLevel[$: P]: P[Operation] = P(
+    E(()) ~ (OperationPat.rep(0) | ModuleOp.parse(this)) ~ E({
       Scope.checkValueWaitlist()
       Scope.checkBlockWaitlist()
     }) ~ End
-  ) // shortened definition TODO: finish...
+  ).map((toplevel: Operation | Seq[Operation]) =>
+    toplevel match {
+      case x: ModuleOp => x
+      case y: Seq[Operation] =>
+        ModuleOp(regions = Seq(new Region(Seq(new Block(operations = y)))))
+    }
+  )
 
   ////////////////
   // OPERATIONS //

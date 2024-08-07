@@ -1,7 +1,22 @@
 package scair.dialects.builtin
 
-import scair.{Attribute, TypeAttribute, ParametrizedAttribute, DataAttribute}
 import scala.compiletime.ops.string
+import scala.collection.{immutable, mutable}
+import scair.{
+  Attribute,
+  TypeAttribute,
+  ParametrizedAttribute,
+  DataAttribute,
+  Value,
+  Block,
+  Region,
+  Operation,
+  RegisteredOperation,
+  Parser,
+  Printer
+}
+import scair.Parser.whitespace
+import fastparse._
 
 def I1 = IntegerType(1, Signless)
 def I32 = IntegerType(32, Signless)
@@ -166,3 +181,38 @@ case class SymbolRefAttr(
   override def toString =
     s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
 }
+
+////////////////
+// OPERATIONS //
+////////////////
+
+// ==------== //
+//  ModuleOp  //
+// ==------== //
+
+object ModuleOp {
+
+  // ==--- Custom Parsing ---== //
+  def parse[$: P](parser: Parser): P[Operation] = P(
+    "builtin.module" ~ parser.Region.rep(exactly = 1)
+  ).map((x: Seq[Region]) => ModuleOp(regions = x))
+  // ==----------------------== //
+
+  // ==--- Custom Printing ---== //
+  def print(module: ModuleOp, printer: Printer): String =
+    s"builtin.module ${printer.printRegion(module.regions(0))}"
+  // ==-----------------------== //
+}
+
+case class ModuleOp(
+    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
+      collection.mutable.ArrayBuffer(),
+    override val successors: collection.mutable.ArrayBuffer[Block] =
+      collection.mutable.ArrayBuffer(),
+    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
+    override val regions: Seq[Region] = Seq[Region](),
+    override val dictionaryProperties: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute],
+    override val dictionaryAttributes: immutable.Map[String, Attribute] =
+      immutable.Map.empty[String, Attribute]
+) extends RegisteredOperation(name = "builtin.module")

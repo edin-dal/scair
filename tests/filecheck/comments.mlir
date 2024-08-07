@@ -10,11 +10,13 @@
   "test.op"(%6, %5) : (i64, i32) -> ()
 }) : () -> ()
 
-// CHECK: "op1"() ({
-// CHECK-NEXT: ^bb0(%0: i32):
-// CHECK-NEXT:   %1, %2, %3 = "test.op"() : () -> (i32, i64, i32)
-// CHECK-NEXT:   "test.op"(%2, %1) : (i64, i32) -> ()
-// CHECK-NEXT: ^bb1(%4: i32):
-// CHECK-NEXT:   %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
-// CHECK-NEXT:   "test.op"(%6, %5) : (i64, i32) -> ()
-// CHECK-NEXT: }) : () -> ()
+// CHECK:      builtin.module {
+// CHECK:      ^bb0():
+// CHECK:        "op1"() ({
+// CHECK-NEXT:   ^bb1(%0: i32):
+// CHECK-NEXT:     %1, %2, %3 = "test.op"() : () -> (i32, i64, i32)
+// CHECK-NEXT:     "test.op"(%2, %1) : (i64, i32) -> ()
+// CHECK-NEXT:   ^bb2(%4: i32):
+// CHECK-NEXT:     %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
+// CHECK-NEXT:     "test.op"(%6, %5) : (i64, i32) -> ()
+// CHECK-NEXT:   }) : () -> ()
