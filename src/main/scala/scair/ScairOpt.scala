@@ -1,10 +1,13 @@
 import java.io.File
 import scopt.OParser
 import scala.io.Source
-import scair.Printer
+import scair.{Printer, Operation}
+import scair.transformations.TransformContext
+
 case class Args(
     val input: Option[String] = None,
-    val skip_verify: Boolean = true
+    val skip_verify: Boolean = true,
+    val passes: Seq[String] = Seq()
 )
 object ScairOpt {
   def main(args: Array[String]): Unit = {
@@ -24,7 +27,11 @@ object ScairOpt {
         opt[Unit]('s', "skip_verify")
           .optional()
           .text("Skip verification")
-          .action((_, c) => c.copy(skip_verify = true))
+          .action((_, c) => c.copy(skip_verify = true)),
+        opt[Seq[String]]('p', "passes")
+          .optional()
+          .text("Specify passes to apply to the IR")
+          .action((x, c) => c.copy(passes = x))
       )
     }
 
@@ -39,9 +46,11 @@ object ScairOpt {
 
         val skip_verify = args.skip_verify
 
+        val passes = args.passes
+
         // Parse content
         val parser = new scair.Parser
-        val module = parser.parseThis(
+        var module: Operation = parser.parseThis(
           input.mkString,
           pattern = parser.TopLevel(_)
         ) match {
@@ -51,9 +60,19 @@ object ScairOpt {
         }
 
         // verify parsed content
-        skip_verify match {
-          case true  =>
-          case false => module.verify()
+        if (!skip_verify) module.verify()
+
+        // apply the specified passes
+        if (passes.length != 0) {
+          val transformCtx = new TransformContext()
+          for (name <- passes) {
+            transformCtx.getPass(name) match {
+              case Some(pass) =>
+                module = pass.transform(module)
+                if (!skip_verify) module.verify()
+              case None =>
+            }
+          }
         }
 
         // Print the parsed module if not errored
