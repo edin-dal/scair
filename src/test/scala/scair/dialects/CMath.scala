@@ -16,7 +16,7 @@ import AttrParser._
 import scala.collection.mutable.ArrayBuffer
 
 import scair.dialects.builtin._
-import scair.dialects.cmath._
+import scair.dialects.CMath.cmath._
 
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 

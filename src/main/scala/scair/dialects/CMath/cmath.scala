@@ -1,4 +1,4 @@
-package scair.dialects.cmath
+package scair.dialects.CMath.cmath
 
 import fastparse._
 import scair.dialects.builtin._
