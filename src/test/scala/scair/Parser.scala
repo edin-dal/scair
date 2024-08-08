@@ -394,16 +394,35 @@ class ParserTest
         pattern = parser.TopLevel(_)
       ) should matchPattern {
         case Parsed.Success(
-              UnregisteredOperation(
-                "test.op",
+              ModuleOp(
                 ArrayBuffer(),
                 ArrayBuffer(),
-                Seq(
-                  Value(I32),
-                  Value(I64),
-                  Value(I32)
-                ),
                 Seq(),
+                Seq(
+                  Region(
+                    Seq(
+                      Block(
+                        Seq(
+                          UnregisteredOperation(
+                            "test.op",
+                            ArrayBuffer(),
+                            ArrayBuffer(),
+                            Seq(
+                              Value(I32),
+                              Value(I64),
+                              Value(I32)
+                            ),
+                            Seq(),
+                            _,
+                            _
+                          )
+                        ),
+                        Seq()
+                      )
+                    ),
+                    None
+                  )
+                ),
                 _,
                 _
               ),

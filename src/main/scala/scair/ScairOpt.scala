@@ -3,6 +3,7 @@ import scopt.OParser
 import scala.io.Source
 import scair.{Printer, Operation}
 import scair.transformations.TransformContext
+import scair.dialects.builtin.ModuleOp
 
 case class Args(
     val input: Option[String] = None,
@@ -77,7 +78,16 @@ object ScairOpt {
 
         // Print the parsed module if not errored
         val printer = new Printer()
-        val output = printer.printOperation(module)
+        val output = module match {
+          case x: ModuleOp => ModuleOp.print(x, printer)
+          case _ =>
+            throw new Exception(
+              "Top level module must be the Builtin module of type ModuleOp.\n" +
+                "==------------------==" +
+                s"Check your tranformations: ${passes.mkString(", ")}" +
+                "==------------------=="
+            )
+        }
         println(output)
 
       case _ =>

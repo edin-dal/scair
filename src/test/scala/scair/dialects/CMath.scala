@@ -63,8 +63,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
       pattern = parser.TopLevel(_)
     ) should matchPattern {
       case Parsed.Success(
-            UnregisteredOperation(
-              "op1",
+            ModuleOp(
               ArrayBuffer(),
               ArrayBuffer(),
               Seq(),
@@ -73,31 +72,54 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                   Seq(
                     Block(
                       Seq(
-                        Norm(
-                          ArrayBuffer(Value(Float32Type)),
+                        UnregisteredOperation(
+                          "op1",
                           ArrayBuffer(),
-                          Seq(Value(Float64Type)),
-                          Seq(),
-                          _,
-                          _
-                        ),
-                        Mul(
-                          ArrayBuffer(Value(Float32Type), Value(Float32Type)),
                           ArrayBuffer(),
-                          Seq(Value(Float32Type)),
                           Seq(),
+                          Seq(
+                            Region(
+                              Seq(
+                                Block(
+                                  Seq(
+                                    Norm(
+                                      ArrayBuffer(Value(Float32Type)),
+                                      ArrayBuffer(),
+                                      Seq(Value(Float64Type)),
+                                      Seq(),
+                                      _,
+                                      _
+                                    ),
+                                    Mul(
+                                      ArrayBuffer(
+                                        Value(Float32Type),
+                                        Value(Float32Type)
+                                      ),
+                                      ArrayBuffer(),
+                                      Seq(Value(Float32Type)),
+                                      Seq(),
+                                      _,
+                                      _
+                                    )
+                                  ),
+                                  Seq(
+                                    Value(Float32Type),
+                                    Value(Float32Type),
+                                    Value(Float32Type)
+                                  )
+                                )
+                              ),
+                              _
+                            )
+                          ),
                           _,
                           _
                         )
                       ),
-                      Seq(
-                        Value(Float32Type),
-                        Value(Float32Type),
-                        Value(Float32Type)
-                      )
+                      Seq()
                     )
                   ),
-                  _
+                  None
                 )
               ),
               _,
