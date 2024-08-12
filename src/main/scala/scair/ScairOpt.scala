@@ -79,7 +79,8 @@ object ScairOpt {
         // Print the parsed module if not errored
         val printer = new Printer()
         val output = module match {
-          case x: ModuleOp => ModuleOp.print(x, printer)
+          case x: ModuleOp =>
+            ModuleOp.print(x, printer) // printer.printOperation(x)
           case _ =>
             throw new Exception(
               "Top level module must be the Builtin module of type ModuleOp.\n" +
