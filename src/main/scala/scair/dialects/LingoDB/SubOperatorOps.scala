@@ -3,9 +3,11 @@ package scair.dialects.LingoDB.SubOperatorOps
 import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
+import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{whitespace, BareId, ValueId, Type, DictionaryAttribute}
 import scair.{
+  DictType,
   RegisteredOperation,
   Region,
   Block,
@@ -115,8 +117,8 @@ case class SetResultOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "subop.set_result") {
 
   override def custom_verify(): Unit = (

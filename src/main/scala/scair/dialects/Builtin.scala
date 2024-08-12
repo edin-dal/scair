@@ -3,6 +3,7 @@ package scair.dialects.builtin
 import scala.compiletime.ops.string
 import scala.collection.{immutable, mutable}
 import scair.{
+  DictType,
   Attribute,
   TypeAttribute,
   ParametrizedAttribute,
@@ -211,8 +212,8 @@ case class ModuleOp(
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
-    override val dictionaryProperties: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "builtin.module")

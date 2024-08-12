@@ -8,6 +8,7 @@ import fastparse._
 import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 import scair.dialects.builtin._
 import scala.collection.immutable
+import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{
   whitespace,
@@ -24,6 +25,7 @@ import scair.Parser.{
 }
 import scair.AttrParser.{ArrayAttributeP}
 import scair.{
+  DictType,
   RegisteredOperation,
   Region,
   Block,
@@ -194,8 +196,8 @@ case class BaseTableOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.basetable") {
 
   override def custom_verify(): Unit = (
@@ -271,8 +273,8 @@ case class SelectionOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.selection") {
 
   override def custom_verify(): Unit = (
@@ -343,8 +345,8 @@ case class MapOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.map") {
 
   override def custom_verify(): Unit = (
@@ -432,8 +434,8 @@ case class AggregationOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggregation") {
 
   override def custom_verify(): Unit = (
@@ -527,8 +529,8 @@ case class CountRowsOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.count") {
 
   override def custom_verify(): Unit = (
@@ -601,8 +603,8 @@ case class AggrFuncOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggrfn") {
 
   override def custom_verify(): Unit = (
@@ -697,8 +699,8 @@ case class SortOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.sort") {
 
   override def custom_verify(): Unit = (
@@ -789,8 +791,8 @@ case class MaterializeOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.materialize") {
 
   override def custom_verify(): Unit = (

@@ -5,9 +5,11 @@ import fastparse._
 import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 import scair.dialects.builtin._
 import scala.collection.immutable
+import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{whitespace, ValueId, Type, DictionaryAttribute}
 import scair.{
+  DictType,
   RegisteredOperation,
   Region,
   Block,
@@ -264,8 +266,8 @@ case class DB_ConstantOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.constant") {
 
   override def custom_verify(): Unit = (
@@ -325,8 +327,8 @@ case class DB_CmpOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.compare") {
 
   override def custom_verify(): Unit = (
@@ -441,8 +443,8 @@ case class DB_MulOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.mul") {
 
   override def custom_verify(): Unit = (
@@ -562,8 +564,8 @@ case class DB_DivOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.div") {
 
   override def custom_verify(): Unit = (
@@ -629,8 +631,8 @@ case class DB_AddOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.add") {
 
   override def custom_verify(): Unit = (
@@ -696,8 +698,8 @@ case class DB_SubOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.sub") {
 
   override def custom_verify(): Unit = (
@@ -762,8 +764,8 @@ case class CastOp(
     override val successors: collection.mutable.ArrayBuffer[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
-    override val dictionaryProperties: immutable.Map[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.cast") {
 
   override def custom_verify(): Unit = (

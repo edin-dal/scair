@@ -687,7 +687,7 @@ class Parser {
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
   // shortened definition TODO: finish...
 
-  // E(()) - weird bug happens without it
+  // TODO - E(()) - weird bug happens without it
   // it fails parsing at OpResultsList for some reason eg:
   // "%0 = "test.op"() : () -> (i32)"
 
@@ -722,8 +722,8 @@ class Parser {
           collection.mutable.ArrayBuffer[Block] /* = successors */,
           Seq[Value[Attribute]] /* = results */,
           Seq[Region] /* = regions */,
-          collection.immutable.Map[String, Attribute] /* = dictProps */,
-          collection.immutable.Map[String, Attribute] /* = dictAttrs */
+          DictType[String, Attribute] /* = dictProps */,
+          DictType[String, Attribute] /* = dictAttrs */
       ) => Operation,
       opName: String,
       operandNames: Seq[String] = Seq(),
@@ -743,8 +743,8 @@ class Parser {
       )
     }
 
-    val dictPropertiesMap: Map[String, Attribute] =
-      dictProps.map({ case (x, y) => x -> y }).toMap
+    val dictPropertiesMap: DictType[String, Attribute] =
+      DictType[String, Attribute](dictProps.map({ case (x, y) => x -> y }): _*)
 
     if (dictProps.length != dictPropertiesMap.size) {
       throw new Exception(
@@ -752,8 +752,8 @@ class Parser {
       )
     }
 
-    val dictAttributesMap: Map[String, Attribute] =
-      dictAttrs.map({ case (x, y) => x -> y }).toMap
+    val dictAttributesMap: DictType[String, Attribute] =
+      DictType[String, Attribute](dictAttrs.map({ case (x, y) => x -> y }): _*)
 
     if (dictAttrs.length != dictAttributesMap.size) {
       throw new Exception(
@@ -866,8 +866,10 @@ class Parser {
       )
     }
 
-    val dictPropertiesMap: Map[String, Attribute] =
-      dictProperties.map({ case (x, y) => x -> y }).toMap
+    val dictPropertiesMap: DictType[String, Attribute] =
+      DictType[String, Attribute](
+        dictProperties.map({ case (x, y) => x -> y }): _*
+      )
 
     if (dictProperties.length != dictPropertiesMap.size) {
       throw new Exception(
@@ -875,8 +877,10 @@ class Parser {
       )
     }
 
-    val dictAttributesMap: Map[String, Attribute] =
-      dictAttributes.map({ case (x, y) => x -> y }).toMap
+    val dictAttributesMap: DictType[String, Attribute] =
+      DictType[String, Attribute](
+        dictAttributes.map({ case (x, y) => x -> y }): _*
+      )
 
     if (dictAttributes.length != dictAttributesMap.size) {
       throw new Exception(
