@@ -1,7 +1,10 @@
 package scair
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable.{Map, LinkedHashMap}
 import scair.Parser._
 import fastparse._
+
+val DictType = LinkedHashMap
+type DictType[A, B] = LinkedHashMap[A, B]
 
 sealed trait Attribute {
   def name: String
@@ -73,10 +76,10 @@ sealed abstract class Operation(
       collection.mutable.ArrayBuffer(),
     val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     val regions: Seq[Region] = Seq[Region](),
-    val dictionaryProperties: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute],
-    val dictionaryAttributes: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute]
+    val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
 ) {
 
   def custom_verify(): Unit = ()
@@ -110,10 +113,10 @@ final case class UnregisteredOperation(
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
-    override val dictionaryProperties: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
 ) extends Operation(name = name)
 
 class RegisteredOperation(
@@ -124,10 +127,10 @@ class RegisteredOperation(
       collection.mutable.ArrayBuffer(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
-    override val dictionaryProperties: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute],
-    override val dictionaryAttributes: immutable.Map[String, Attribute] =
-      immutable.Map.empty[String, Attribute]
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
 ) extends Operation(name = name)
 
 trait DialectOperation {
@@ -141,8 +144,8 @@ trait DialectOperation {
       collection.mutable.ArrayBuffer[Block] /* = successors */,
       Seq[Value[Attribute]] /* = results */,
       Seq[Region] /* = regions */,
-      collection.immutable.Map[String, Attribute] /* = dictProps */,
-      collection.immutable.Map[String, Attribute] /* = dictAttrs */
+      DictType[String, Attribute], /* = dictProps */
+      DictType[String, Attribute] /* = dictAttrs */
   ) => Operation
   def factory: FactoryType
   final def constructOp(
@@ -152,17 +155,17 @@ trait DialectOperation {
         collection.mutable.ArrayBuffer(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
       regions: Seq[Region] = Seq[Region](),
-      dictionaryProperties: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute],
-      dictionaryAttributes: immutable.Map[String, Attribute] =
-        immutable.Map.empty[String, Attribute]
+      dictionaryProperties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      dictionaryAttributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
   ): Operation = factory(
     operands,
     successors,
     results,
     regions,
     dictionaryProperties,
-    dictionaryProperties
+    dictionaryAttributes
   )
 }
 
