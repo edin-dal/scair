@@ -5,6 +5,21 @@ import scala.collection.mutable.Stack
 import scair.dialects.builtin.ModuleOp
 import scair._
 
+// ==----------== //
+//  Static realm  //
+// ==----------== //
+
+object RewriteMethods {
+  def erase_op(op: Operation, safe_erase: Boolean = true) = {
+    op match {
+      case x: ModuleOp =>
+      case _ =>
+        throw new Exception("Cannot erase an operation that has no parents.")
+    }
+
+  }
+}
+
 // ==------------== //
 //  Abstract realm  //
 // ==------------== //

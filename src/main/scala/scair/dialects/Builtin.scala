@@ -3,6 +3,7 @@ package scair.dialects.builtin
 import scala.compiletime.ops.string
 import scala.collection.{immutable, mutable}
 import scair.{
+  ListType,
   DictType,
   Attribute,
   TypeAttribute,
@@ -206,10 +207,8 @@ object ModuleOp {
 }
 
 case class ModuleOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =

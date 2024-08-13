@@ -7,6 +7,7 @@ import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{whitespace, Type}
 import scair.{
+  ListType,
   DictType,
   RegisteredOperation,
   Region,
@@ -64,10 +65,8 @@ object Norm extends DialectOperation {
 }
 
 case class Norm(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
@@ -102,10 +101,8 @@ object Mul extends DialectOperation {
 }
 
 case class Mul(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =

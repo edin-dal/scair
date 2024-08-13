@@ -4,7 +4,6 @@ import fastparse._
 import fastparse.internal.Util
 
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer}
 import scala.annotation.tailrec
 import scala.annotation.switch
 import scala.util.{Try, Success, Failure}
@@ -106,11 +105,11 @@ object Parser {
         valueIdAndTypeList: Seq[(String, Attribute)]
     )(implicit
         scope: Scope
-    ): (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) = {
-      var forwardRefSeq: ArrayBuffer[(String, Attribute)] =
-        ArrayBuffer()
-      var useValSeq: ArrayBuffer[Value[Attribute]] =
-        ArrayBuffer()
+    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
+      var forwardRefSeq: ListType[(String, Attribute)] =
+        ListType()
+      var useValSeq: ListType[Value[Attribute]] =
+        ListType()
       for {
         (name, typ) <- valueIdAndTypeList
       } yield !scope.valueMap.contains(name) match {
@@ -135,11 +134,11 @@ object Parser {
         typ: Attribute
     )(implicit
         scope: Scope
-    ): (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) = {
-      var forwardRefSeq: ArrayBuffer[(String, Attribute)] =
-        ArrayBuffer()
-      var useValSeq: ArrayBuffer[Value[Attribute]] =
-        ArrayBuffer()
+    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
+      var forwardRefSeq: ListType[(String, Attribute)] =
+        ListType()
+      var useValSeq: ListType[Value[Attribute]] =
+        ListType()
       !scope.valueMap.contains(name) match {
         case true =>
           val tuple = (name, typ)
@@ -161,8 +160,8 @@ object Parser {
 
       for ((operation, operands) <- scope.valueWaitlist) {
 
-        val foundOperands: ArrayBuffer[(String, Attribute)] = ArrayBuffer()
-        val operandList: ArrayBuffer[Value[Attribute]] = ArrayBuffer()
+        val foundOperands: ListType[(String, Attribute)] = ListType()
+        val operandList: ListType[Value[Attribute]] = ListType()
 
         for {
           (name, typ) <- operands
@@ -220,11 +219,11 @@ object Parser {
         successorList: Seq[String]
     )(implicit
         scope: Scope
-    ): (ArrayBuffer[Block], ArrayBuffer[String]) = {
-      var forwardRefSeq: ArrayBuffer[String] =
-        ArrayBuffer()
-      var successorBlockSeq: ArrayBuffer[Block] =
-        ArrayBuffer()
+    ): (ListType[Block], ListType[String]) = {
+      var forwardRefSeq: ListType[String] =
+        ListType()
+      var successorBlockSeq: ListType[Block] =
+        ListType()
       for {
         name <- successorList
       } yield !scope.blockMap.contains(name) match {
@@ -242,8 +241,8 @@ object Parser {
 
       for ((operation, successors) <- scope.blockWaitlist) {
 
-        val foundOperands: ArrayBuffer[String] = ArrayBuffer()
-        val successorList: ArrayBuffer[Block] = ArrayBuffer()
+        val foundOperands: ListType[String] = ListType()
+        val successorList: ListType[Block] = ListType()
 
         for {
           name <- successors
@@ -281,13 +280,13 @@ object Parser {
       var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[Operation, ArrayBuffer[
+      var valueWaitlist: mutable.Map[Operation, ListType[
         (String, Attribute)
-      ]] = mutable.Map.empty[Operation, ArrayBuffer[(String, Attribute)]],
+      ]] = mutable.Map.empty[Operation, ListType[(String, Attribute)]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var blockWaitlist: mutable.Map[Operation, ArrayBuffer[String]] =
-        mutable.Map.empty[Operation, ArrayBuffer[String]]
+      var blockWaitlist: mutable.Map[Operation, ListType[String]] =
+        mutable.Map.empty[Operation, ListType[String]]
   ) {
 
     // child starts off from the parents context
@@ -725,8 +724,8 @@ class Parser {
 
   def verifyCustomOp(
       opGen: (
-          collection.mutable.ArrayBuffer[Value[Attribute]] /* = operands */,
-          collection.mutable.ArrayBuffer[Block] /* = successors */,
+          ListType[Value[Attribute]] /* = operands */,
+          ListType[Block] /* = successors */,
           Seq[Value[Attribute]] /* = results */,
           Seq[Region] /* = regions */,
           DictType[String, Attribute] /* = dictProps */,
@@ -771,13 +770,13 @@ class Parser {
     val resultss: Seq[Value[Attribute]] =
       Scope.defineValues(resultNames zip resultTypes)
 
-    val useAndRefBlockSeqs: (ArrayBuffer[Block], ArrayBuffer[String]) =
+    val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
       Scope.useBlocks(successors)
 
     // plaster solution for custom parsing
     if (noForwardOperandRef == 1) {
 
-      val operandValues: ArrayBuffer[Value[Attribute]] = (
+      val operandValues: ListType[Value[Attribute]] = (
         try {
           for { name <- operandNames } yield currentScope.valueMap(name)
         } catch {
@@ -786,7 +785,7 @@ class Parser {
               s"Operands for Operation: \"${opName}\" must be pre-defined."
             )
         }
-      ).to(ArrayBuffer)
+      ).to(ListType)
 
       val op: Operation = opGen(
         operandValues,
@@ -812,7 +811,7 @@ class Parser {
       }
 
       val useAndRefValueSeqs
-          : (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) =
+          : (ListType[Value[Attribute]], ListType[(String, Attribute)]) =
         Scope.useValues(operandNames zip operandTypes)
 
       val op: Operation = opGen(
@@ -899,10 +898,10 @@ class Parser {
       Scope.defineValues(results zip resultsTypes)
 
     val useAndRefValueSeqs
-        : (ArrayBuffer[Value[Attribute]], ArrayBuffer[(String, Attribute)]) =
+        : (ListType[Value[Attribute]], ListType[(String, Attribute)]) =
       Scope.useValues(operands zip operandsTypes)
 
-    val useAndRefBlockSeqs: (ArrayBuffer[Block], ArrayBuffer[String]) =
+    val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
       Scope.useBlocks(successors)
 
     val opObject: Option[DialectOperation] = ctx.getOperation(opName)

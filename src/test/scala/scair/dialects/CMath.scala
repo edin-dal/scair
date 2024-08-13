@@ -13,8 +13,6 @@ import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
 
-import scala.collection.mutable.ArrayBuffer
-
 import scair.dialects.builtin._
 import scair.dialects.CMath.cmath._
 
@@ -64,8 +62,8 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
     ) should matchPattern {
       case Parsed.Success(
             ModuleOp(
-              ArrayBuffer(),
-              ArrayBuffer(),
+              ListType(),
+              ListType(),
               Seq(),
               Seq(
                 Region(
@@ -74,8 +72,8 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                       Seq(
                         UnregisteredOperation(
                           "op1",
-                          ArrayBuffer(),
-                          ArrayBuffer(),
+                          ListType(),
+                          ListType(),
                           Seq(),
                           Seq(
                             Region(
@@ -83,19 +81,19 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                                 Block(
                                   Seq(
                                     Norm(
-                                      ArrayBuffer(Value(Float32Type)),
-                                      ArrayBuffer(),
+                                      ListType(Value(Float32Type)),
+                                      ListType(),
                                       Seq(Value(Float64Type)),
                                       Seq(),
                                       _,
                                       _
                                     ),
                                     Mul(
-                                      ArrayBuffer(
+                                      ListType(
                                         Value(Float32Type),
                                         Value(Float32Type)
                                       ),
-                                      ArrayBuffer(),
+                                      ListType(),
                                       Seq(Value(Float32Type)),
                                       Seq(),
                                       _,

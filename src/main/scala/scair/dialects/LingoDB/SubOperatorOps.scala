@@ -7,6 +7,7 @@ import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{whitespace, BareId, ValueId, Type, DictionaryAttribute}
 import scair.{
+  ListType,
   DictType,
   RegisteredOperation,
   Region,
@@ -113,8 +114,8 @@ object SetResultOp extends DialectOperation {
 }
 
 case class SetResultOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],

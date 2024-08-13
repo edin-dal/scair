@@ -1,10 +1,13 @@
 package scair
-import scala.collection.mutable.{Map, LinkedHashMap}
+import scala.collection.mutable.{Map, LinkedHashMap, ListBuffer}
 import scair.Parser._
 import fastparse._
 
 val DictType = LinkedHashMap
 type DictType[A, B] = LinkedHashMap[A, B]
+
+val ListType = ListBuffer
+type ListType[A] = ListBuffer[A]
 
 sealed trait Attribute {
   def name: String
@@ -73,10 +76,8 @@ case class Region(
 
 sealed abstract class Operation(
     val name: String,
-    val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
+    val operands: ListType[Value[Attribute]] = ListType(),
+    val successors: ListType[Block] = ListType(),
     val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     val regions: Seq[Region] = Seq[Region](),
     val dictionaryProperties: DictType[String, Attribute] =
@@ -112,10 +113,8 @@ sealed abstract class Operation(
 
 final case class UnregisteredOperation(
     override val name: String,
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
@@ -126,10 +125,8 @@ final case class UnregisteredOperation(
 
 class RegisteredOperation(
     override val name: String,
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-      collection.mutable.ArrayBuffer(),
-    override val successors: collection.mutable.ArrayBuffer[Block] =
-      collection.mutable.ArrayBuffer(),
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
     override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
     override val regions: Seq[Region] = Seq[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
@@ -145,8 +142,8 @@ trait DialectOperation {
       s"No custom Parser implemented for Operation '${name}'"
     )
   type FactoryType = (
-      collection.mutable.ArrayBuffer[Value[Attribute]] /* = operands */,
-      collection.mutable.ArrayBuffer[Block] /* = successors */,
+      ListType[Value[Attribute]] /* = operands */,
+      ListType[Block] /* = successors */,
       Seq[Value[Attribute]] /* = results */,
       Seq[Region] /* = regions */,
       DictType[String, Attribute], /* = dictProps */
@@ -154,10 +151,8 @@ trait DialectOperation {
   ) => Operation
   def factory: FactoryType
   final def constructOp(
-      operands: collection.mutable.ArrayBuffer[Value[Attribute]] =
-        collection.mutable.ArrayBuffer(),
-      successors: collection.mutable.ArrayBuffer[Block] =
-        collection.mutable.ArrayBuffer(),
+      operands: ListType[Value[Attribute]] = ListType(),
+      successors: ListType[Block] = ListType(),
       results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
       regions: Seq[Region] = Seq[Region](),
       dictionaryProperties: DictType[String, Attribute] =

@@ -14,6 +14,7 @@ import scair.Parser.{
   AttributeValue
 }
 import scair.{
+  ListType,
   DictType,
   RegisteredOperation,
   Region,
@@ -166,8 +167,8 @@ object ReturnOp extends DialectOperation {
 }
 
 case class ReturnOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -224,8 +225,8 @@ object GetColumnOp extends DialectOperation {
 }
 
 case class GetColumnOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
