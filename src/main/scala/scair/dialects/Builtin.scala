@@ -209,9 +209,8 @@ object ModuleOp {
 case class ModuleOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] =
-      ListType[Value[Attribute]](),
-    override val regions: ListType[Region] = ListType[Region](),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
