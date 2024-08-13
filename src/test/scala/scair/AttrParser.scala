@@ -201,8 +201,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
               block1,
               block2,
               block3
-            ),
-            None
+            )
           )
         )
       )
@@ -291,8 +290,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
               block1,
               block2,
               block3
-            ),
-            None
+            )
           )
         )
       )
@@ -356,8 +354,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                       ),
                       Seq(Value(F128))
                     )
-                  ),
-                  None
+                  )
                 )
               ),
               _,

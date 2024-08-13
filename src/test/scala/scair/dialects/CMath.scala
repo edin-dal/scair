@@ -108,8 +108,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                                     Value(Float32Type)
                                   )
                                 )
-                              ),
-                              _
+                              )
                             )
                           ),
                           _,
@@ -118,8 +117,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                       ),
                       Seq()
                     )
-                  ),
-                  None
+                  )
                 )
               ),
               _,

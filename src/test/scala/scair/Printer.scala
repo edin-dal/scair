@@ -122,8 +122,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
                 ),
                 Seq()
               )
-            ),
-            None
+            )
           )
         )
       )
