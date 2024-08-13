@@ -139,7 +139,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       Seq(
         UnregisteredOperation(
           "test.op",
-          results = Seq(
+          results = ListType(
             valF32,
             valF64,
             Value(F80)
@@ -150,7 +150,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           operands = ListType(valF64, valF32)
         )
       ),
-      Seq(Value(F128))
+      ListType(Value(F128))
     )
 
     val block2 = Block(
@@ -158,7 +158,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         UnregisteredOperation(
           "test.op",
           successors = ListType(block1),
-          results = Seq(
+          results = ListType(
             valI1,
             valI16,
             Value(I32)
@@ -172,14 +172,14 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           )
         )
       ),
-      Seq(Value(I32))
+      ListType(Value(I32))
     )
 
     val block3 = Block(
       Seq(
         UnregisteredOperation(
           "test.op",
-          results = Seq(
+          results = ListType(
             valINDEX
           )
         ),
@@ -188,13 +188,13 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           operands = ListType(valINDEX)
         )
       ),
-      Seq(Value(I64))
+      ListType(Value(I64))
     )
 
     val program =
       UnregisteredOperation(
         "op1",
-        regions = Seq(
+        regions = ListType(
           Region(
             Seq(
               block1,
@@ -236,10 +236,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          results = Seq(valF64, valF32)
+          results = ListType(valF64, valF32)
         )
       ),
-      Seq(Value(F16))
+      ListType(Value(F16))
     )
 
     val block2 = new Block(
@@ -247,7 +247,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         UnregisteredOperation(
           "test.op",
           successors = ListType(block1),
-          results = Seq(
+          results = ListType(
             valI1,
             valI16,
             Value(I32)
@@ -261,14 +261,14 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           )
         )
       ),
-      Seq(Value(F128))
+      ListType(Value(F128))
     )
 
     val block3 = new Block(
       Seq(
         UnregisteredOperation(
           "test.op",
-          results = Seq(
+          results = ListType(
             valINDEX
           )
         ),
@@ -277,13 +277,13 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           operands = ListType(valINDEX)
         )
       ),
-      Seq(Value(I64))
+      ListType(Value(I64))
     )
 
     val program =
       UnregisteredOperation(
         "op1",
-        regions = Seq(
+        regions = ListType(
           Region(
             Seq(
               block1,
@@ -331,8 +331,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
               "op1",
               ListType(),
               ListType(),
-              Seq(),
-              Seq(
+              ListType(),
+              ListType(
                 Region(
                   Seq(
                     Block(
@@ -341,17 +341,17 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                           "test.op",
                           ListType(),
                           ListType(),
-                          Seq(
+                          ListType(
                             Value(IntegerType(32, Signless)),
                             Value(IntegerType(64, Signed)),
                             Value(IntegerType(80, Unsigned))
                           ),
-                          Seq(),
+                          ListType(),
                           _,
                           _
                         )
                       ),
-                      Seq(Value(F128))
+                      ListType(Value(F128))
                     )
                   )
                 )

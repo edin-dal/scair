@@ -104,36 +104,36 @@ object PR {
 
   def main(args: Array[String]): Unit = {
 
-    val op1_1 = RegisteredOperation("op1")
-    val op1_2 = RegisteredOperation("op2")
-    val op2_1 = RegisteredOperation("op3")
-    val op2_2 = RegisteredOperation("op4")
-    val op3_1 = RegisteredOperation("op5")
-    val op3_2 = RegisteredOperation("op6")
-    val op4_1 = RegisteredOperation("op7")
-    val op4_2 = RegisteredOperation("op8")
+    // val op1_1 = RegisteredOperation("op1")
+    // val op1_2 = RegisteredOperation("op2")
+    // val op2_1 = RegisteredOperation("op3")
+    // val op2_2 = RegisteredOperation("op4")
+    // val op3_1 = RegisteredOperation("op5")
+    // val op3_2 = RegisteredOperation("op6")
+    // val op4_1 = RegisteredOperation("op7")
+    // val op4_2 = RegisteredOperation("op8")
 
-    val block1 = new Block(Seq(op1_1, op1_2))
-    val block2 = new Block(Seq(op2_1, op2_2))
-    val block3 = new Block(Seq(op3_1, op3_2))
-    val block4 = new Block(Seq(op4_1, op4_2))
+    // val block1 = new Block(Seq(op1_1, op1_2))
+    // val block2 = new Block(Seq(op2_1, op2_2))
+    // val block3 = new Block(Seq(op3_1, op3_2))
+    // val block4 = new Block(Seq(op4_1, op4_2))
 
-    val region1 = new Region(Seq(block1, block2))
-    val region2 = new Region(Seq(block3, block4))
+    // val region1 = new Region(Seq(block1, block2))
+    // val region2 = new Region(Seq(block3, block4))
 
-    val masterop =
-      RegisteredOperation("master", regions = Seq(region1, region2))
+    // val masterop =
+    //   RegisteredOperation("master", regions = ListType(region1, region2))
 
-    populate_worklist(masterop)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.pop().name)
-    println(worklist.length)
+    // populate_worklist(masterop)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.pop().name)
+    // println(worklist.length)
   }
 }
 

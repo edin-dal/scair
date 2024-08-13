@@ -88,8 +88,8 @@ object Parser {
         valueIdAndTypeList: Seq[(String, Attribute)]
     )(implicit
         scope: Scope
-    ): Seq[Value[Attribute]] = {
-      for {
+    ): ListType[Value[Attribute]] = {
+      (for {
         (name, typ) <- valueIdAndTypeList
       } yield scope.valueMap.contains(name) match {
         case true =>
@@ -98,7 +98,7 @@ object Parser {
           val value = new Value(typ = typ)
           scope.valueMap(name) = value
           value
-      }
+      }).to(ListType)
     }
 
     def useValues(
@@ -701,7 +701,7 @@ class Parser {
       case y: Seq[Operation] =>
         val block = new Block(operations = y)
         val region = new Region(blocks = Seq(block))
-        val moduleOp = new ModuleOp(regions = Seq(region))
+        val moduleOp = new ModuleOp(regions = ListType(region))
 
         block.container_region = Some(region)
         region.container_operation = Some(moduleOp)
@@ -726,8 +726,8 @@ class Parser {
       opGen: (
           ListType[Value[Attribute]] /* = operands */,
           ListType[Block] /* = successors */,
-          Seq[Value[Attribute]] /* = results */,
-          Seq[Region] /* = regions */,
+          ListType[Value[Attribute]] /* = results */,
+          ListType[Region] /* = regions */,
           DictType[String, Attribute] /* = dictProps */,
           DictType[String, Attribute] /* = dictAttrs */
       ) => Operation,
@@ -742,6 +742,8 @@ class Parser {
       dictAttrs: Seq[(String, Attribute)] = Seq(),
       noForwardOperandRef: Int = 0
   ): Operation = {
+
+    val regionss = regions.to(ListType)
 
     if (resultNames.length != resultTypes.length) {
       throw new Exception(
@@ -767,7 +769,7 @@ class Parser {
       )
     }
 
-    val resultss: Seq[Value[Attribute]] =
+    val resultss: ListType[Value[Attribute]] =
       Scope.defineValues(resultNames zip resultTypes)
 
     val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
@@ -791,7 +793,7 @@ class Parser {
         operandValues,
         useAndRefBlockSeqs._1,
         resultss,
-        regions,
+        regionss,
         dictPropertiesMap,
         dictAttributesMap
       )
@@ -818,7 +820,7 @@ class Parser {
         useAndRefValueSeqs._1,
         useAndRefBlockSeqs._1,
         resultss,
-        regions,
+        regionss,
         dictPropertiesMap,
         dictAttributesMap
       )
@@ -855,7 +857,7 @@ class Parser {
     val operands: Seq[String] = operation._2._2
     val successors: Seq[String] = operation._2._3
     val dictProperties: Seq[(String, Attribute)] = operation._2._4
-    val regions: Seq[Region] = operation._2._5
+    val regions: ListType[Region] = operation._2._5.to(ListType)
     val dictAttributes: Seq[(String, Attribute)] = operation._2._6
     val resultsTypes = operation._2._7._2
     val operandsTypes = operation._2._7._1
@@ -894,7 +896,7 @@ class Parser {
       )
     }
 
-    val resultss: Seq[Value[Attribute]] =
+    val resultss: ListType[Value[Attribute]] =
       Scope.defineValues(results zip resultsTypes)
 
     val useAndRefValueSeqs
@@ -984,7 +986,7 @@ class Parser {
 
   def createBlock(
       //            name    argument     operations
-      uncutBlock: (String, Seq[Value[Attribute]], Seq[Operation])
+      uncutBlock: (String, ListType[Value[Attribute]], Seq[Operation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
@@ -1022,7 +1024,7 @@ class Parser {
         region
       case _ =>
         val startblock =
-          new Block(operations = parseResult._1, arguments = Seq())
+          new Block(operations = parseResult._1, arguments = ListType())
         val region = new Region(blocks = startblock +: parseResult._2)
         for (block <- region.blocks) block.container_region = Some(region)
         region

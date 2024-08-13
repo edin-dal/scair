@@ -64,8 +64,8 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
             ModuleOp(
               ListType(),
               ListType(),
-              Seq(),
-              Seq(
+              ListType(),
+              ListType(
                 Region(
                   Seq(
                     Block(
@@ -74,8 +74,8 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                           "op1",
                           ListType(),
                           ListType(),
-                          Seq(),
-                          Seq(
+                          ListType(),
+                          ListType(
                             Region(
                               Seq(
                                 Block(
@@ -83,8 +83,8 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                                     Norm(
                                       ListType(Value(Float32Type)),
                                       ListType(),
-                                      Seq(Value(Float64Type)),
-                                      Seq(),
+                                      ListType(Value(Float64Type)),
+                                      ListType(),
                                       _,
                                       _
                                     ),
@@ -94,13 +94,13 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                                         Value(Float32Type)
                                       ),
                                       ListType(),
-                                      Seq(Value(Float32Type)),
-                                      Seq(),
+                                      ListType(Value(Float32Type)),
+                                      ListType(),
                                       _,
                                       _
                                     )
                                   ),
-                                  Seq(
+                                  ListType(
                                     Value(Float32Type),
                                     Value(Float32Type),
                                     Value(Float32Type)
@@ -113,7 +113,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                           _
                         )
                       ),
-                      Seq()
+                      ListType()
                     )
                   )
                 )

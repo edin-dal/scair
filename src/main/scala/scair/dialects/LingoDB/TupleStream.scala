@@ -169,8 +169,8 @@ object ReturnOp extends DialectOperation {
 case class ReturnOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "tuples.return") {
@@ -227,8 +227,8 @@ object GetColumnOp extends DialectOperation {
 case class GetColumnOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "tuples.getcol") {

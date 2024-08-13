@@ -155,7 +155,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
       .map(parser.defineBlockValues) ~ "{"
     ~ parser.OperationPat.rep(1) ~ "}"
     ~ E({ parser.enterParentRegion })
-).map((x: Seq[Value[Attribute]], y: Seq[Operation]) =>
+).map((x: ListType[Value[Attribute]], y: Seq[Operation]) =>
   new Region(Seq(new Block(y, x)))
 )
 
@@ -195,8 +195,8 @@ object BaseTableOp extends DialectOperation {
 case class BaseTableOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.basetable") {
@@ -272,8 +272,8 @@ object SelectionOp extends DialectOperation {
 case class SelectionOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.selection") {
@@ -344,8 +344,8 @@ object MapOp extends DialectOperation {
 case class MapOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.map") {
@@ -433,8 +433,8 @@ object AggregationOp extends DialectOperation {
 case class AggregationOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggregation") {
@@ -528,8 +528,8 @@ object CountRowsOp extends DialectOperation {
 case class CountRowsOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.count") {
@@ -602,8 +602,8 @@ object AggrFuncOp extends DialectOperation {
 case class AggrFuncOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.aggrfn") {
@@ -698,8 +698,8 @@ object SortOp extends DialectOperation {
 case class SortOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.sort") {
@@ -790,8 +790,8 @@ object MaterializeOp extends DialectOperation {
 case class MaterializeOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "relalg.materialize") {

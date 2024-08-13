@@ -67,8 +67,9 @@ object Norm extends DialectOperation {
 case class Norm(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
+    override val results: ListType[Value[Attribute]] =
+      ListType[Value[Attribute]](),
+    override val regions: ListType[Region] = ListType[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
@@ -103,8 +104,9 @@ object Mul extends DialectOperation {
 case class Mul(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
+    override val results: ListType[Value[Attribute]] =
+      ListType[Value[Attribute]](),
+    override val regions: ListType[Region] = ListType[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =

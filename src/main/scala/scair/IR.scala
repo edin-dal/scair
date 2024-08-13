@@ -45,7 +45,7 @@ case class Value[T <: Attribute](
 
 case class Block(
     operations: Seq[Operation] = Seq(),
-    arguments: Seq[Value[Attribute]] = Seq()
+    arguments: ListType[Value[Attribute]] = ListType()
 ) {
 
   var container_region: Option[Region] = None
@@ -78,8 +78,8 @@ sealed abstract class Operation(
     val name: String,
     val operands: ListType[Value[Attribute]] = ListType(),
     val successors: ListType[Block] = ListType(),
-    val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    val regions: Seq[Region] = Seq[Region](),
+    val results: ListType[Value[Attribute]] = ListType[Value[Attribute]](),
+    val regions: ListType[Region] = ListType[Region](),
     val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     val dictionaryAttributes: DictType[String, Attribute] =
@@ -115,8 +115,9 @@ final case class UnregisteredOperation(
     override val name: String,
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
+    override val results: ListType[Value[Attribute]] =
+      ListType[Value[Attribute]](),
+    override val regions: ListType[Region] = ListType[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
@@ -127,8 +128,9 @@ class RegisteredOperation(
     override val name: String,
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
+    override val results: ListType[Value[Attribute]] =
+      ListType[Value[Attribute]](),
+    override val regions: ListType[Region] = ListType[Region](),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
@@ -144,8 +146,8 @@ trait DialectOperation {
   type FactoryType = (
       ListType[Value[Attribute]] /* = operands */,
       ListType[Block] /* = successors */,
-      Seq[Value[Attribute]] /* = results */,
-      Seq[Region] /* = regions */,
+      ListType[Value[Attribute]] /* = results */,
+      ListType[Region] /* = regions */,
       DictType[String, Attribute], /* = dictProps */
       DictType[String, Attribute] /* = dictAttrs */
   ) => Operation
@@ -153,8 +155,8 @@ trait DialectOperation {
   final def constructOp(
       operands: ListType[Value[Attribute]] = ListType(),
       successors: ListType[Block] = ListType(),
-      results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-      regions: Seq[Region] = Seq[Region](),
+      results: ListType[Value[Attribute]] = ListType[Value[Attribute]](),
+      regions: ListType[Region] = ListType[Region](),
       dictionaryProperties: DictType[String, Attribute] =
         DictType.empty[String, Attribute],
       dictionaryAttributes: DictType[String, Attribute] =

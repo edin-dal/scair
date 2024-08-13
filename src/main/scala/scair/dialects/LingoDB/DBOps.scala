@@ -265,8 +265,8 @@ object DB_ConstantOp extends DialectOperation {
 case class DB_ConstantOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.constant") {
@@ -326,8 +326,8 @@ object DB_CmpOp extends DialectOperation {
 case class DB_CmpOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.compare") {
@@ -442,8 +442,8 @@ object DB_MulOp extends DialectOperation {
 case class DB_MulOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.mul") {
@@ -563,8 +563,8 @@ object DB_DivOp extends DialectOperation {
 case class DB_DivOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.div") {
@@ -630,8 +630,8 @@ object DB_AddOp extends DialectOperation {
 case class DB_AddOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.add") {
@@ -697,8 +697,8 @@ object DB_SubOp extends DialectOperation {
 case class DB_SubOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.sub") {
@@ -763,8 +763,8 @@ object CastOp extends DialectOperation {
 case class CastOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "db.cast") {

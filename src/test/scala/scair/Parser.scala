@@ -218,12 +218,12 @@ class ParserTest
                     "test.op",
                     ListType(),
                     ListType(),
-                    Seq(
+                    ListType(
                       Value(I32),
                       Value(I64),
                       Value(I32)
                     ),
-                    Seq(),
+                    ListType(),
                     _,
                     _
                   ),
@@ -231,13 +231,13 @@ class ParserTest
                     "test.op",
                     ListType(Value(I64), Value(I32)),
                     ListType(),
-                    Seq(),
-                    Seq(),
+                    ListType(),
+                    ListType(),
                     _,
                     _
                   )
                 ),
-                Seq(Value(I32))
+                ListType(Value(I32))
               ),
               100
             ) =>
@@ -264,12 +264,12 @@ class ParserTest
                         "test.op",
                         ListType(),
                         ListType(),
-                        Seq(
+                        ListType(
                           Value(I32),
                           Value(I64),
                           Value(I32)
                         ),
-                        Seq(),
+                        ListType(),
                         _,
                         _
                       ),
@@ -277,13 +277,13 @@ class ParserTest
                         "test.op",
                         ListType(Value(I64), Value(I32)),
                         ListType(),
-                        Seq(),
-                        Seq(),
+                        ListType(),
+                        ListType(),
                         _,
                         _
                       )
                     ),
-                    Seq(Value(I32))
+                    ListType(Value(I32))
                   ),
                   Block(
                     Seq(
@@ -291,12 +291,12 @@ class ParserTest
                         "test.op",
                         ListType(),
                         ListType(),
-                        Seq(
+                        ListType(
                           Value(I32),
                           Value(I64),
                           Value(I32)
                         ),
-                        Seq(),
+                        ListType(),
                         _,
                         _
                       ),
@@ -307,13 +307,13 @@ class ParserTest
                           Value(I32)
                         ),
                         ListType(),
-                        Seq(),
-                        Seq(),
+                        ListType(),
+                        ListType(),
                         _,
                         _
                       )
                     ),
-                    Seq(Value(I32))
+                    ListType(Value(I32))
                   )
                 )
               ),
@@ -375,7 +375,10 @@ class ParserTest
         Seq(UnregisteredOperation("test.op", successors = ListType(bb4)))
       )
       val operation =
-        UnregisteredOperation("test.op", regions = Seq(Region(Seq(bb3, bb4))))
+        UnregisteredOperation(
+          "test.op",
+          regions = ListType(Region(Seq(bb3, bb4)))
+        )
 
       parser.parseThis(
         text = text,
@@ -395,8 +398,8 @@ class ParserTest
               ModuleOp(
                 ListType(),
                 ListType(),
-                Seq(),
-                Seq(
+                ListType(),
+                ListType(
                   Region(
                     Seq(
                       Block(
@@ -405,17 +408,17 @@ class ParserTest
                             "test.op",
                             ListType(),
                             ListType(),
-                            Seq(
+                            ListType(
                               Value(I32),
                               Value(I64),
                               Value(I32)
                             ),
-                            Seq(),
+                            ListType(),
                             _,
                             _
                           )
                         ),
-                        Seq()
+                        ListType()
                       )
                     )
                   )
