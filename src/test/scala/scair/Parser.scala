@@ -431,4 +431,106 @@ class ParserTest
       }
     }
   }
+
+  "Value Uses assignment test forward ref" should "Test Operation's Operand uses" in {
+    withClue("Operand Uses: ") {
+
+      val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)""".stripMargin
+
+      val Parsed.Success(value, _) = parser.parseThis(
+        text = text,
+        pattern = parser.TopLevel(_)
+      )
+
+      val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
+      val uses1 = value.regions(0).blocks(0).operations(4).results(1).uses
+      val uses2 = value.regions(0).blocks(0).operations(4).results(2).uses
+
+      uses0.length shouldEqual 4
+      uses0(0).operation.name shouldEqual "op1"
+      uses0(0).index shouldEqual 0
+      uses0(1).operation.name shouldEqual "op2"
+      uses0(1).index shouldEqual 0
+      uses0(2).operation.name shouldEqual "op3"
+      uses0(2).index shouldEqual 0
+      uses0(3).operation.name shouldEqual "op4"
+      uses0(3).index shouldEqual 0
+
+      uses1.length shouldEqual 4
+      uses1(0).operation.name shouldEqual "op1"
+      uses1(0).index shouldEqual 1
+      uses1(1).operation.name shouldEqual "op2"
+      uses1(1).index shouldEqual 1
+      uses1(2).operation.name shouldEqual "op3"
+      uses1(2).index shouldEqual 1
+      uses1(3).operation.name shouldEqual "op4"
+      uses1(3).index shouldEqual 1
+
+      uses2.length shouldEqual 4
+      uses2(0).operation.name shouldEqual "op1"
+      uses2(0).index shouldEqual 2
+      uses2(1).operation.name shouldEqual "op2"
+      uses2(1).index shouldEqual 2
+      uses2(2).operation.name shouldEqual "op3"
+      uses2(2).index shouldEqual 2
+      uses2(3).operation.name shouldEqual "op4"
+      uses2(3).index shouldEqual 2
+
+    }
+  }
+
+  "Value Uses assignment test" should "Test Operation's Operand uses" in {
+    withClue("Operand Uses: ") {
+
+      val text = """  %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
+                    | "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()""".stripMargin
+
+      val Parsed.Success(value, _) = parser.parseThis(
+        text = text,
+        pattern = parser.TopLevel(_)
+      )
+
+      val uses0 = value.regions(0).blocks(0).operations(0).results(0).uses
+      val uses1 = value.regions(0).blocks(0).operations(0).results(1).uses
+      val uses2 = value.regions(0).blocks(0).operations(0).results(2).uses
+
+      uses0.length shouldEqual 4
+      uses0(0).operation.name shouldEqual "op1"
+      uses0(0).index shouldEqual 0
+      uses0(1).operation.name shouldEqual "op2"
+      uses0(1).index shouldEqual 0
+      uses0(2).operation.name shouldEqual "op3"
+      uses0(2).index shouldEqual 0
+      uses0(3).operation.name shouldEqual "op4"
+      uses0(3).index shouldEqual 0
+
+      uses1.length shouldEqual 4
+      uses1(0).operation.name shouldEqual "op1"
+      uses1(0).index shouldEqual 1
+      uses1(1).operation.name shouldEqual "op2"
+      uses1(1).index shouldEqual 1
+      uses1(2).operation.name shouldEqual "op3"
+      uses1(2).index shouldEqual 1
+      uses1(3).operation.name shouldEqual "op4"
+      uses1(3).index shouldEqual 1
+
+      uses2.length shouldEqual 4
+      uses2(0).operation.name shouldEqual "op1"
+      uses2(0).index shouldEqual 2
+      uses2(1).operation.name shouldEqual "op2"
+      uses2(1).index shouldEqual 2
+      uses2(2).operation.name shouldEqual "op3"
+      uses2(2).index shouldEqual 2
+      uses2(3).operation.name shouldEqual "op4"
+      uses2(3).index shouldEqual 2
+
+    }
+  }
 }

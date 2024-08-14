@@ -34,9 +34,14 @@ abstract class DataAttribute[D](
   override def toString = data.toString
 }
 
+class Use(val operation: Operation, val index: Int)
+
 case class Value[T <: Attribute](
     var typ: T
 ) {
+
+  var uses: ListType[Use] = ListType()
+
   def verify(): Unit = typ.verify()
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
