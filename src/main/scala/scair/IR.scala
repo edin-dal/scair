@@ -3,6 +3,10 @@ import scala.collection.mutable.{Map, LinkedHashMap, ListBuffer}
 import scair.Parser._
 import fastparse._
 
+// ==----------== //
+// =-ATTRIBUTES-= //
+// ==----------== //
+
 val DictType = LinkedHashMap
 type DictType[A, B] = LinkedHashMap[A, B]
 
@@ -34,26 +38,77 @@ abstract class DataAttribute[D](
   override def toString = data.toString
 }
 
+// ==----------== //
+// =---VALUES---= //
+// ==----------== //
+
 class Use(val operation: Operation, val index: Int)
 
-case class Value[T <: Attribute](
+object Value {
+  def apply[T <: Attribute](typ: T): Value[T] = new Value(typ)
+  def unapply[T <: Attribute](value: Value[T]): Option[T] = Some(value.typ)
+}
+
+class Value[T <: Attribute](
     var typ: T
 ) {
 
   var uses: ListType[Use] = ListType()
 
+  def replace_by(newValue: Value[Attribute]): Unit = {
+    for (use <- uses) {
+      use.operation.operands.update(use.index, newValue)
+    }
+    uses = ListType()
+  }
+
+  def erase(): Unit = {
+    if (uses.length != 0) then
+    throw new Exception(
+      "Attempting to erase a Value that has uses in other operations."
+    )
+  }
+
   def verify(): Unit = typ.verify()
+
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
 }
 
+// ==----------== //
+// =---BLOCKS---= //
+// ==----------== //
+
 case class Block(
-    operations: Seq[Operation] = Seq(),
+    operations: ListType[Operation] = ListType(),
     arguments: ListType[Value[Attribute]] = ListType()
 ) {
 
   var container_region: Option[Region] = None
+
+  def drop_all_references: Unit = {
+    container_region = None
+    for (op <- operations) op.drop_all_references
+  }
+
+  def detach_op(op: Operation): Operation = {
+    !(op.container_block equals Some(this)) match {
+      case true =>
+        throw new Exception(
+          "Operation can only be detached from a block in which it is contained."
+        )
+      case false =>
+        op.container_block = None
+        operations -= op
+        return op
+    }
+  }
+
+  def erase_op(op: Operation) = {
+    detach_op(op)
+    op.erase()
+  }
 
   def verify(): Unit = {
     for (op <- operations) op.verify()
@@ -65,11 +120,20 @@ case class Block(
   }
 }
 
+// ==-----------== //
+// =---REGIONS---= //
+// ==-----------== //
+
 case class Region(
     blocks: Seq[Block]
 ) {
 
   var container_operation: Option[Operation] = None
+
+  def drop_all_references: Unit = {
+    container_operation = None
+    for (block <- blocks) block.drop_all_references
+  }
 
   def verify(): Unit = {
     for (block <- blocks) block.verify()
@@ -78,6 +142,10 @@ case class Region(
     return this eq o.asInstanceOf[AnyRef]
   }
 }
+
+// ==----------== //
+// =-OPERATIONS-= //
+// ==----------== //
 
 sealed abstract class Operation(
     val name: String,
@@ -93,10 +161,28 @@ sealed abstract class Operation(
 
   var container_block: Option[Block] = None
 
+  def drop_all_references: Unit = {
+    container_block = None
+    for (region <- regions) region.drop_all_references
+  }
+
+  def erase(drop_refs: Boolean = true): Unit = {
+    if (container_block != None) then {
+      throw new Exception(
+        "Operation should be first detached from its container block before erasure."
+      )
+    }
+    if (drop_refs) then drop_all_references
+
+    for (result <- results) {
+      result.erase()
+    }
+  }
+
   def custom_verify(): Unit = ()
 
   final def verify(): Unit = {
-    for (result <- results) result.verify()
+    for (operand <- operands) operand.verify()
     for (region <- regions) region.verify()
     for ((key, attr) <- dictionaryProperties) attr.verify()
     for ((key, attr) <- dictionaryAttributes) attr.verify()
@@ -139,6 +225,10 @@ class RegisteredOperation(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends Operation(name = name)
+
+// ==----------== //
+// =--DIALECTS--= //
+// ==----------== //
 
 trait DialectOperation {
   def name: String

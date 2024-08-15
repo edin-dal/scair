@@ -11,8 +11,9 @@ import scair._
 
 object RewriteMethods {
   def erase_op(op: Operation, safe_erase: Boolean = true) = {
-    op match {
-      case x: ModuleOp =>
+    op.container_block match {
+      case Some(block) =>
+        block.erase_op(op)
       case _ =>
         throw new Exception("Cannot erase an operation that has no parents.")
     }

@@ -136,7 +136,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   "printAttributesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
 
     val block1 = Block(
-      Seq(
+      ListType(
         UnregisteredOperation(
           "test.op",
           results = ListType(
@@ -154,7 +154,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val block2 = Block(
-      Seq(
+      ListType(
         UnregisteredOperation(
           "test.op",
           successors = ListType(block1),
@@ -176,7 +176,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val block3 = Block(
-      Seq(
+      ListType(
         UnregisteredOperation(
           "test.op",
           results = ListType(
@@ -225,7 +225,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     var parser: Parser = new Parser
 
     val block1 = new Block(
-      Seq(
+      ListType(
         UnregisteredOperation(
           "test.op",
           operands = ListType(
@@ -243,7 +243,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val block2 = new Block(
-      Seq(
+      ListType(
         UnregisteredOperation(
           "test.op",
           successors = ListType(block1),
@@ -265,7 +265,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val block3 = new Block(
-      Seq(
+      ListType(
         UnregisteredOperation(
           "test.op",
           results = ListType(
@@ -336,7 +336,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                 Region(
                   Seq(
                     Block(
-                      Seq(
+                      ListType(
                         UnregisteredOperation(
                           "test.op",
                           ListType(),
