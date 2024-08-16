@@ -2,16 +2,30 @@ package scair
 import scala.collection.mutable.{Map, LinkedHashMap, ListBuffer}
 import scair.Parser._
 import fastparse._
+import ListTypeExtensions.updateOperandsAndUses
 
-// ==----------== //
-// =-ATTRIBUTES-= //
-// ==----------== //
+// ==---------== //
+// =---UTILS---= //
+// ==---------== //
 
 val DictType = LinkedHashMap
 type DictType[A, B] = LinkedHashMap[A, B]
 
 val ListType = ListBuffer
 type ListType[A] = ListBuffer[A]
+
+object ListTypeExtensions {
+  extension(lt: ListType[Value[Attribute]]) {
+    def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
+      newValue.uses += use
+      lt.update(use.index, newValue)
+    }
+  }
+}
+
+// ==----------== //
+// =-ATTRIBUTES-= //
+// ==----------== //
 
 sealed trait Attribute {
   def name: String
@@ -42,7 +56,15 @@ abstract class DataAttribute[D](
 // =---VALUES---= //
 // ==----------== //
 
-class Use(val operation: Operation, val index: Int)
+// TO-DO: perhaps a linked list of a use to other uses within an operation
+//        for faster use retrieval and index update
+class Use(val operation: Operation, val index: Int) {
+  override def equals(o: Any): Boolean = o match {
+    case use: Use =>
+      (operation eq use.operation) && (index eq use.index)
+    case _ => super.equals(o)
+  }
+}
 
 object Value {
   def apply[T <: Attribute](typ: T): Value[T] = new Value(typ)
@@ -55,9 +77,17 @@ class Value[T <: Attribute](
 
   var uses: ListType[Use] = ListType()
 
+  def remove_use(use: Use): Unit = {
+    val usesLengthBefore = uses.length
+    uses -= use
+    if (usesLengthBefore == uses.length) then {
+      throw new Exception("Use to be removed was not in the Use list.")
+    }
+  }
+
   def replace_by(newValue: Value[Attribute]): Unit = {
     for (use <- uses) {
-      use.operation.operands.update(use.index, newValue)
+      use.operation.operands.updateOperandsAndUses(use, newValue)
     }
     uses = ListType()
   }
@@ -93,15 +123,15 @@ case class Block(
   }
 
   def detach_op(op: Operation): Operation = {
-    !(op.container_block equals Some(this)) match {
+    (op.container_block equals Some(this)) match {
       case true =>
-        throw new Exception(
-          "Operation can only be detached from a block in which it is contained."
-        )
-      case false =>
         op.container_block = None
         operations -= op
         return op
+      case false =>
+        throw new Exception(
+          "Operation can only be detached from a block in which it is contained."
+        )
     }
   }
 
@@ -163,9 +193,13 @@ sealed abstract class Operation(
 
   def drop_all_references: Unit = {
     container_block = None
+    for ((idx, operand) <- (0 to operands.length) zip operands) {
+      operand.remove_use(new Use(this, idx))
+    }
     for (region <- regions) region.drop_all_references
   }
 
+  // TO-DO: think harder about the drop_refs - sounds fishy as per PR #45
   def erase(drop_refs: Boolean = true): Unit = {
     if (container_block != None) then {
       throw new Exception(
@@ -182,7 +216,7 @@ sealed abstract class Operation(
   def custom_verify(): Unit = ()
 
   final def verify(): Unit = {
-    for (operand <- operands) operand.verify()
+    for (result <- results) result.verify()
     for (region <- regions) region.verify()
     for ((key, attr) <- dictionaryProperties) attr.verify()
     for ((key, attr) <- dictionaryAttributes) attr.verify()
