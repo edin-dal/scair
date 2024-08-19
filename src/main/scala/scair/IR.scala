@@ -119,6 +119,100 @@ case class Block(
 
   var container_region: Option[Region] = None
 
+  private def attach_op(op: Operation): Unit = {
+    op.container_block match {
+      case Some(x) =>
+        throw new Exception(
+          "Can't attach an operation already attached to a block."
+        )
+      case None =>
+        op.is_ancestor(this) match {
+          case true =>
+            throw new Exception(
+              "Can't add an operation to a block that is contained within that operation"
+            )
+          case false =>
+            op.container_block = Some(this)
+        }
+    }
+  }
+
+  def add_op(new_op: Operation): Unit = {
+    val oplen = operations.length
+    attach_op(new_op)
+    operations.insertAll(oplen, ListType(new_op))
+  }
+
+  def add_ops(new_ops: Seq[Operation]): Unit = {
+    val oplen = operations.length
+    for (op <- new_ops) {
+      attach_op(op)
+    }
+    operations.insertAll(oplen, ListType(new_ops: _*))
+  }
+
+  def insert_op_before(existing_op: Operation, new_op: Operation): Unit = {
+    (existing_op.container_block == Some(this)) match {
+      case true =>
+        attach_op(new_op)
+        operations.insertAll(getIndexOf(existing_op), ListType(new_op))
+      case false =>
+        throw new Exception(
+          "Can't insert the new operation into the block, as the operation that was " +
+            "given as a point of reference does not exist in the current block."
+        )
+    }
+  }
+
+  def insert_ops_before(
+      existing_op: Operation,
+      new_ops: Seq[Operation]
+  ): Unit = {
+    (existing_op.container_block == Some(this)) match {
+      case true =>
+        for (op <- new_ops) {
+          attach_op(op)
+        }
+        operations.insertAll(getIndexOf(existing_op), ListType(new_ops: _*))
+      case false =>
+        throw new Exception(
+          "Can't insert the new operation into the block, as the operation that was " +
+            "given as a point of reference does not exist in the current block."
+        )
+    }
+  }
+
+  def insert_op_after(existing_op: Operation, new_op: Operation): Unit = {
+    (existing_op.container_block == Some(this)) match {
+      case true =>
+        attach_op(new_op)
+        operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_op))
+      case false =>
+        throw new Exception(
+          "Can't insert the new operation into the block, as the operation that was " +
+            "given as a point of reference does not exist in the current block."
+        )
+    }
+  }
+
+  def insert_ops_after(
+      existing_op: Operation,
+      new_ops: Seq[Operation]
+  ): Unit = {
+    (existing_op.container_block == Some(this)) match {
+      case true =>
+        for (op <- new_ops) {
+          attach_op(op)
+        }
+        operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_ops: _*))
+      case false =>
+        throw new Exception(
+          "Can't insert the new operation into the block, as the operation that was " +
+            "given as a point of reference does not exist in the current block."
+        )
+    }
+  }
+
   def drop_all_references: Unit = {
     container_region = None
     for (op <- operations) op.drop_all_references
@@ -200,6 +294,27 @@ sealed abstract class Operation(
 ) {
 
   var container_block: Option[Block] = None
+
+  def is_ancestor(node: Block): Boolean = {
+    val reg = node.container_region
+    reg match {
+      case Some(x) =>
+        x.container_operation match {
+          case Some(op) =>
+            (op equals this) match {
+              case true => true
+              case false =>
+                op.container_block match {
+                  case None => false
+                  case Some(block) =>
+                    is_ancestor(block)
+                }
+            }
+          case None => false
+        }
+      case None => false
+    }
+  }
 
   def drop_all_references: Unit = {
     container_block = None
