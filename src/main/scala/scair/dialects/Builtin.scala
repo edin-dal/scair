@@ -197,7 +197,7 @@ object ModuleOp {
   // ==--- Custom Parsing ---== //
   def parse[$: P](parser: Parser): P[Operation] = P(
     "builtin.module" ~ parser.Region.rep(exactly = 1)
-  ).map((x: Seq[Region]) => ModuleOp(regions = x))
+  ).map((x: Seq[Region]) => ModuleOp(regions = x.to(ListType)))
   // ==----------------------== //
 
   // ==--- Custom Printing ---== //
@@ -209,8 +209,8 @@ object ModuleOp {
 case class ModuleOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: Seq[Value[Attribute]] = Seq[Value[Attribute]](),
-    override val regions: Seq[Region] = Seq[Region](),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =

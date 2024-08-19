@@ -116,8 +116,8 @@ object SetResultOp extends DialectOperation {
 case class SetResultOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: Seq[Value[Attribute]],
-    override val regions: Seq[Region],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
 ) extends RegisteredOperation(name = "subop.set_result") {
