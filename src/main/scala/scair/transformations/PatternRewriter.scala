@@ -5,6 +5,71 @@ import scala.collection.mutable.Stack
 import scair.dialects.builtin.ModuleOp
 import scair._
 
+// ==---------== //
+//  Utils realm  //
+// ==---------== //
+
+object InsertPoint {
+
+  def before(op: Operation): InsertPoint = {
+    (op.container_block == None) match {
+      case true =>
+        throw new Exception(
+          "Operation insertion point must have a parent block."
+        )
+      case false =>
+        val block = op.container_block.get
+        new InsertPoint(block, Some(op))
+    }
+  }
+
+  def after(op: Operation): InsertPoint = {
+    (op.container_block == None) match {
+      case true =>
+        throw new Exception(
+          "Operation insertion point must have a parent block."
+        )
+      case false =>
+        val block = op.container_block.get
+        val opIdx = block.getIndexOf(op)
+        (opIdx == block.operations.length - 1) match {
+          case true => new InsertPoint(block)
+          case false =>
+            new InsertPoint(block, Some(block.operations(opIdx + 1)))
+        }
+    }
+  }
+
+  def at_start(block: Block): InsertPoint = {
+    val ops = block.operations
+    ops.length match {
+      case 0 => new InsertPoint(block)
+      case _ => new InsertPoint(block, Some(ops(0)))
+    }
+  }
+
+  def at_end(block: Block): InsertPoint = {
+    new InsertPoint(block)
+  }
+}
+
+class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
+
+  // custom constructor
+  def this(block: Block) = {
+    this(block, None)
+  }
+
+  if (insert_before != None) then {
+    if !(insert_before.get eq block) then {
+      throw new Error(
+        "Given operation's container and given block do not match: " +
+          "InsertPoint must be an operation inside a given block."
+      )
+    }
+  }
+}
+
 // ==----------== //
 //  Static realm  //
 // ==----------== //
