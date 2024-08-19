@@ -8,6 +8,8 @@ import ListTypeExtensions.updateOperandsAndUses
 // =---UTILS---= //
 // ==---------== //
 
+// TO-DO: export utils to a separate file
+
 val DictType = LinkedHashMap
 type DictType[A, B] = LinkedHashMap[A, B]
 
