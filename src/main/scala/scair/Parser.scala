@@ -188,6 +188,8 @@ object Parser {
         // adding Uses to each found operand
         val operandsLength = operation.operands.length
 
+        // TO-DO: create a new OpOperands class specifically to close the API
+        //        for operations operands
         for ((operand, i) <- operandList zip (0 to operandList.length)) {
           operand.uses += Use(operation, operandsLength + i)
         }
