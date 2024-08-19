@@ -11,7 +11,6 @@ import Parser._
 
 import scair.dialects.builtin._
 
-import scala.collection.mutable.ArrayBuffer
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer();
@@ -61,7 +60,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val operation = UnregisteredOperation(
       "op1",
       results = Seq(new Value(F32)),
-      operands = ArrayBuffer(new Value(F32)),
+      operands = ListType(new Value(F32)),
       regions = Seq(
         Region(
           Seq(
@@ -114,8 +113,8 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
                 Seq(
                   UnregisteredOperation(
                     "test.op",
-                    ArrayBuffer(),
-                    ArrayBuffer(successorTestBlock),
+                    ListType(),
+                    ListType(successorTestBlock),
                     Seq(),
                     Seq()
                   )

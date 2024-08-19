@@ -12,8 +12,7 @@ import Parser._
 import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
-
-import scala.collection.mutable.ArrayBuffer
+import IR._
 
 import scair.dialects.builtin._
 
@@ -148,7 +147,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = ArrayBuffer(valF64, valF32)
+          operands = ListType(valF64, valF32)
         )
       ),
       Seq(Value(F128))
@@ -158,7 +157,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       Seq(
         UnregisteredOperation(
           "test.op",
-          successors = mutable.ArrayBuffer(block1),
+          successors = ListType(block1),
           results = Seq(
             valI1,
             valI16,
@@ -167,7 +166,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = ArrayBuffer(
+          operands = ListType(
             valI16,
             valI1
           )
@@ -186,7 +185,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = ArrayBuffer(valINDEX)
+          operands = ListType(valINDEX)
         )
       ),
       Seq(Value(I64))
@@ -229,7 +228,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       Seq(
         UnregisteredOperation(
           "test.op",
-          operands = ArrayBuffer(
+          operands = ListType(
             valF32,
             valF64,
             Value(F80)
@@ -247,7 +246,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       Seq(
         UnregisteredOperation(
           "test.op",
-          successors = mutable.ArrayBuffer(block1),
+          successors = ListType(block1),
           results = Seq(
             valI1,
             valI16,
@@ -256,7 +255,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = ArrayBuffer(
+          operands = ListType(
             valI16,
             valI1
           )
@@ -275,7 +274,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          operands = ArrayBuffer(valINDEX)
+          operands = ListType(valINDEX)
         )
       ),
       Seq(Value(I64))
@@ -330,8 +329,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       case Parsed.Success(
             UnregisteredOperation(
               "op1",
-              ArrayBuffer(),
-              ArrayBuffer(),
+              ListType(),
+              ListType(),
               Seq(),
               Seq(
                 Region(
@@ -340,8 +339,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                       Seq(
                         UnregisteredOperation(
                           "test.op",
-                          ArrayBuffer(),
-                          ArrayBuffer(),
+                          ListType(),
+                          ListType(),
                           Seq(
                             Value(IntegerType(32, Signless)),
                             Value(IntegerType(64, Signed)),

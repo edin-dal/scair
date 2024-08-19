@@ -9,6 +9,7 @@ import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{whitespace, ValueId, Type, DictionaryAttribute}
 import scair.{
+  ListType,
   DictType,
   RegisteredOperation,
   Region,
@@ -262,8 +263,8 @@ object DB_ConstantOp extends DialectOperation {
 }
 
 case class DB_ConstantOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -323,8 +324,8 @@ object DB_CmpOp extends DialectOperation {
 }
 
 case class DB_CmpOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -439,8 +440,8 @@ object DB_MulOp extends DialectOperation {
 }
 
 case class DB_MulOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -560,8 +561,8 @@ object DB_DivOp extends DialectOperation {
 }
 
 case class DB_DivOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -627,8 +628,8 @@ object DB_AddOp extends DialectOperation {
 }
 
 case class DB_AddOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -694,8 +695,8 @@ object DB_SubOp extends DialectOperation {
 }
 
 case class DB_SubOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -760,8 +761,8 @@ object CastOp extends DialectOperation {
 }
 
 case class CastOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],

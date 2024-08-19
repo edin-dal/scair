@@ -1,9 +1,8 @@
 package scair.EnumAttr
-
 import fastparse._
 import scair.dialects.builtin.{IntegerType, Signless, I32, I64}
 import java.lang.StringBuilder
-import scair.{Attribute, ParametrizedAttribute}
+import scair.{Attribute, ParametrizedAttribute, ListType}
 
 // ==--------------------------== //
 //   Enum Attribute Inhertiance   //

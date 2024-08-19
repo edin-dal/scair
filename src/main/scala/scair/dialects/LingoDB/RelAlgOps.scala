@@ -25,6 +25,7 @@ import scair.Parser.{
 }
 import scair.AttrParser.{ArrayAttributeP}
 import scair.{
+  ListType,
   DictType,
   RegisteredOperation,
   Region,
@@ -192,8 +193,8 @@ object BaseTableOp extends DialectOperation {
 }
 
 case class BaseTableOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -269,8 +270,8 @@ object SelectionOp extends DialectOperation {
 }
 
 case class SelectionOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -341,8 +342,8 @@ object MapOp extends DialectOperation {
 }
 
 case class MapOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -430,8 +431,8 @@ object AggregationOp extends DialectOperation {
 }
 
 case class AggregationOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -525,8 +526,8 @@ object CountRowsOp extends DialectOperation {
 }
 
 case class CountRowsOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -599,8 +600,8 @@ object AggrFuncOp extends DialectOperation {
 }
 
 case class AggrFuncOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -695,8 +696,8 @@ object SortOp extends DialectOperation {
 }
 
 case class SortOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],
@@ -787,8 +788,8 @@ object MaterializeOp extends DialectOperation {
 }
 
 case class MaterializeOp(
-    override val operands: collection.mutable.ArrayBuffer[Value[Attribute]],
-    override val successors: collection.mutable.ArrayBuffer[Block],
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
     override val results: Seq[Value[Attribute]],
     override val regions: Seq[Region],
     override val dictionaryProperties: DictType[String, Attribute],

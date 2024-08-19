@@ -13,7 +13,6 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 import Parser._
 import AttrParser._
-import scala.collection.mutable.ArrayBuffer
 
 import scair.dialects.builtin._
 
@@ -217,8 +216,8 @@ class ParserTest
                 Seq(
                   UnregisteredOperation(
                     "test.op",
-                    ArrayBuffer(),
-                    ArrayBuffer(),
+                    ListType(),
+                    ListType(),
                     Seq(
                       Value(I32),
                       Value(I64),
@@ -230,8 +229,8 @@ class ParserTest
                   ),
                   UnregisteredOperation(
                     "test.op",
-                    ArrayBuffer(Value(I64), Value(I32)),
-                    ArrayBuffer(),
+                    ListType(Value(I64), Value(I32)),
+                    ListType(),
                     Seq(),
                     Seq(),
                     _,
@@ -263,8 +262,8 @@ class ParserTest
                     Seq(
                       UnregisteredOperation(
                         "test.op",
-                        ArrayBuffer(),
-                        ArrayBuffer(),
+                        ListType(),
+                        ListType(),
                         Seq(
                           Value(I32),
                           Value(I64),
@@ -276,8 +275,8 @@ class ParserTest
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        ArrayBuffer(Value(I64), Value(I32)),
-                        ArrayBuffer(),
+                        ListType(Value(I64), Value(I32)),
+                        ListType(),
                         Seq(),
                         Seq(),
                         _,
@@ -290,8 +289,8 @@ class ParserTest
                     Seq(
                       UnregisteredOperation(
                         "test.op",
-                        ArrayBuffer(),
-                        ArrayBuffer(),
+                        ListType(),
+                        ListType(),
                         Seq(
                           Value(I32),
                           Value(I64),
@@ -303,11 +302,11 @@ class ParserTest
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        ArrayBuffer(
+                        ListType(
                           Value(I64),
                           Value(I32)
                         ),
-                        ArrayBuffer(),
+                        ListType(),
                         Seq(),
                         Seq(),
                         _,
@@ -373,7 +372,7 @@ class ParserTest
         Seq(UnregisteredOperation("test.op"))
       )
       val bb3 = Block(
-        Seq(UnregisteredOperation("test.op", successors = ArrayBuffer(bb4)))
+        Seq(UnregisteredOperation("test.op", successors = ListType(bb4)))
       )
       val operation =
         UnregisteredOperation("test.op", regions = Seq(Region(Seq(bb3, bb4))))
@@ -394,8 +393,8 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
-                ArrayBuffer(),
-                ArrayBuffer(),
+                ListType(),
+                ListType(),
                 Seq(),
                 Seq(
                   Region(
@@ -404,8 +403,8 @@ class ParserTest
                         Seq(
                           UnregisteredOperation(
                             "test.op",
-                            ArrayBuffer(),
-                            ArrayBuffer(),
+                            ListType(),
+                            ListType(),
                             Seq(
                               Value(I32),
                               Value(I64),
