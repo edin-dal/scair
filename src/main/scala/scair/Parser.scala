@@ -700,7 +700,14 @@ class Parser {
     toplevel match {
       case x: ModuleOp => x
       case y: Seq[Operation] =>
-        ModuleOp(regions = Seq(new Region(Seq(new Block(operations = y)))))
+        val block = new Block(operations = y)
+        val region = new Region(blocks = Seq(block))
+        val moduleOp = new ModuleOp(regions = Seq(region))
+
+        block.container_region = Some(region)
+        region.container_operation = Some(moduleOp)
+
+        moduleOp
     }
   )
 
@@ -940,7 +947,10 @@ class Parser {
 
   def Op[$: P](resName: Seq[String]) = P(
     GenericOperation(resName) | CustomOperation(resName)
-  )
+  ).map(op => {
+    for (region <- op.regions) region.container_operation = Some(op)
+    op
+  })
 
   def GenericOperation[$: P](resNames: Seq[String]) = P(
     StringLiteral ~ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
@@ -981,7 +991,7 @@ class Parser {
       operations = uncutBlock._3,
       arguments = uncutBlock._2
     )
-
+    for (op <- newBlock.operations) op.container_block = Some(newBlock)
     Scope.defineBlock(uncutBlock._1, newBlock)
     return newBlock
   }
@@ -1007,14 +1017,16 @@ class Parser {
 
   def defineRegion(parseResult: (Seq[Operation], Seq[Block])): Region = {
     return parseResult._1.length match {
-      case 0 => new Region(blocks = parseResult._2)
+      case 0 =>
+        val region = new Region(blocks = parseResult._2)
+        for (block <- region.blocks) block.container_region = Some(region)
+        region
       case _ =>
-        new Region(blocks =
-          new Block(
-            operations = parseResult._1,
-            arguments = Seq()
-          ) +: parseResult._2
-        )
+        val startblock =
+          new Block(operations = parseResult._1, arguments = Seq())
+        val region = new Region(blocks = startblock +: parseResult._2)
+        for (block <- region.blocks) block.container_region = Some(region)
+        region
     }
   }
 

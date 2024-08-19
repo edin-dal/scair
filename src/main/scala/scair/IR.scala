@@ -45,6 +45,8 @@ case class Block(
     arguments: Seq[Value[Attribute]] = Seq()
 ) {
 
+  var container_region: Option[Region] = None
+
   def verify(): Unit = {
     for (op <- operations) op.verify()
     for (arg <- arguments) arg.verify()
@@ -56,9 +58,10 @@ case class Block(
 }
 
 case class Region(
-    blocks: Seq[Block],
-    parent: Option[Operation] = None
+    blocks: Seq[Block]
 ) {
+
+  var container_operation: Option[Operation] = None
 
   def verify(): Unit = {
     for (block <- blocks) block.verify()
@@ -81,6 +84,8 @@ sealed abstract class Operation(
     val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) {
+
+  var container_block: Option[Block] = None
 
   def custom_verify(): Unit = ()
 

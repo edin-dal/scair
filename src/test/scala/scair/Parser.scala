@@ -316,8 +316,7 @@ class ParserTest
                     ),
                     Seq(Value(I32))
                   )
-                ),
-                None
+                )
               ),
               202
             ) =>
@@ -419,8 +418,7 @@ class ParserTest
                         ),
                         Seq()
                       )
-                    ),
-                    None
+                    )
                   )
                 ),
                 _,
