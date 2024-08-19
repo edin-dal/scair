@@ -184,6 +184,14 @@ object Parser {
         if (scope.valueWaitlist(operation).length == 0) {
           scope.valueWaitlist -= operation
         }
+
+        // adding Uses to each found operand
+        val operandsLength = operation.operands.length
+
+        for ((operand, i) <- operandList zip (0 to operandList.length)) {
+          operand.uses += Use(operation, operandsLength + i)
+        }
+
         operation.operands.appendAll(operandList)
       }
 
@@ -798,6 +806,10 @@ class Parser {
         dictAttributesMap
       )
 
+      for ((operand, i) <- operandValues zip (0 to operandValues.length)) {
+        operand.uses += Use(op, i)
+      }
+
       if (useAndRefBlockSeqs._2.length > 0) {
         currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
       }
@@ -824,6 +836,13 @@ class Parser {
         dictPropertiesMap,
         dictAttributesMap
       )
+
+      for (
+        (operand, i) <-
+          useAndRefValueSeqs._1 zip (0 to useAndRefValueSeqs._1.length)
+      ) {
+        operand.uses += Use(op, i)
+      }
 
       if (useAndRefValueSeqs._2.length > 0) {
         currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
@@ -930,6 +949,13 @@ class Parser {
         )
     }
 
+    // adding uses for known operands
+    for (
+      (operand, i) <-
+        useAndRefValueSeqs._1 zip (0 to useAndRefValueSeqs._1.length)
+    ) {
+      operand.uses += Use(op, i)
+    }
     if (useAndRefValueSeqs._2.length > 0) {
       currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
     }
