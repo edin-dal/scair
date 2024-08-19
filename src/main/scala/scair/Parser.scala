@@ -188,6 +188,8 @@ object Parser {
         // adding Uses to each found operand
         val operandsLength = operation.operands.length
 
+        // TO-DO: create a new OpOperands class specifically to close the API
+        //        for operations operands
         for ((operand, i) <- operandList zip (0 to operandList.length)) {
           operand.uses += Use(operation, operandsLength + i)
         }
@@ -699,18 +701,19 @@ class Parser {
   // "%0 = "test.op"() : () -> (i32)"
 
   def TopLevel[$: P]: P[Operation] = P(
-    E(()) ~ (OperationPat.rep(0) | ModuleOp.parse(this)) ~ E({
+    E(()) ~ (Operations(0) | ModuleOp.parse(this)) ~ E({
       Scope.checkValueWaitlist()
       Scope.checkBlockWaitlist()
     }) ~ End
-  ).map((toplevel: Operation | Seq[Operation]) =>
+  ).map((toplevel: Operation | ListType[Operation]) =>
     toplevel match {
       case x: ModuleOp => x
-      case y: Seq[Operation] =>
+      case y: ListType[Operation] =>
         val block = new Block(operations = y)
         val region = new Region(blocks = Seq(block))
         val moduleOp = new ModuleOp(regions = ListType(region))
 
+        for (op <- y) op.container_block = Some(block)
         block.container_region = Some(region)
         region.container_operation = Some(moduleOp)
 
@@ -966,6 +969,9 @@ class Parser {
     return op
   }
 
+  def Operations[$: P](at_least_this_many: Int = 0): P[ListType[Operation]] =
+    P(OperationPat.rep(at_least_this_many).map(_.to(ListType)))
+
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.?.map(
       optionlessSeq
@@ -1012,7 +1018,7 @@ class Parser {
 
   def createBlock(
       //            name    argument     operations
-      uncutBlock: (String, ListType[Value[Attribute]], Seq[Operation])
+      uncutBlock: (String, ListType[Value[Attribute]], ListType[Operation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
@@ -1024,7 +1030,7 @@ class Parser {
   }
 
   def Block[$: P] =
-    P(BlockLabel ~ OperationPat.rep(0)).map(createBlock)
+    P(BlockLabel ~ Operations(0)).map(createBlock)
 
   def BlockLabel[$: P] = P(
     BlockId ~ BlockArgList.?.map(optionlessSeq)
@@ -1042,7 +1048,7 @@ class Parser {
   //                   \/
   // [x] - region        ::= `{` operation* block* `}`
 
-  def defineRegion(parseResult: (Seq[Operation], Seq[Block])): Region = {
+  def defineRegion(parseResult: (ListType[Operation], Seq[Block])): Region = {
     return parseResult._1.length match {
       case 0 =>
         val region = new Region(blocks = parseResult._2)
@@ -1061,7 +1067,7 @@ class Parser {
   def Region[$: P] = P(
     "{" ~ E(
       { enterLocalRegion }
-    ) ~ OperationPat.rep ~ Block.rep ~ "}" ~ E(
+    ) ~ Operations(0) ~ Block.rep ~ "}" ~ E(
       { enterParentRegion }
     )
   ).map(defineRegion)

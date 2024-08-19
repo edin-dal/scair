@@ -213,7 +213,7 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               Block(
-                Seq(
+                ListType(
                   UnregisteredOperation(
                     "test.op",
                     ListType(),
@@ -259,7 +259,7 @@ class ParserTest
               Region(
                 Seq(
                   Block(
-                    Seq(
+                    ListType(
                       UnregisteredOperation(
                         "test.op",
                         ListType(),
@@ -286,7 +286,7 @@ class ParserTest
                     ListType(Value(I32))
                   ),
                   Block(
-                    Seq(
+                    ListType(
                       UnregisteredOperation(
                         "test.op",
                         ListType(),
@@ -369,10 +369,10 @@ class ParserTest
                  |  }) : () -> ()""".stripMargin
 
       val bb4 = Block(
-        Seq(UnregisteredOperation("test.op"))
+        ListType(UnregisteredOperation("test.op"))
       )
       val bb3 = Block(
-        Seq(UnregisteredOperation("test.op", successors = ListType(bb4)))
+        ListType(UnregisteredOperation("test.op", successors = ListType(bb4)))
       )
       val operation =
         UnregisteredOperation(
@@ -403,7 +403,7 @@ class ParserTest
                   Region(
                     Seq(
                       Block(
-                        Seq(
+                        ListType(
                           UnregisteredOperation(
                             "test.op",
                             ListType(),
@@ -531,6 +531,36 @@ class ParserTest
       uses2(3).operation.name shouldEqual "op4"
       uses2(3).index shouldEqual 2
 
+    }
+  }
+
+  "Operation Erasure" should "Test that operation gets erased :)" in {
+    withClue("Operand Erasure: ") {
+
+      val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
+                    | %2 = "test.op"(%0) : (i32) -> (i32)
+                    | "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
+                    | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()""".stripMargin
+
+      val Parsed.Success(value, _) = parser.parseThis(
+        text = text,
+        pattern = parser.TopLevel(_)
+      )
+
+      val printer = new Printer()
+
+      val opToErase = value.regions(0).blocks(0).operations(1)
+
+      val block =
+        opToErase.container_block.getOrElse(throw new Exception("bruh"))
+
+      val exception = intercept[Exception](
+        block.erase_op(opToErase)
+      ).getMessage shouldBe "Attempting to erase a Value that has uses in other operations."
+
+      opToErase.container_block shouldEqual None
     }
   }
 }

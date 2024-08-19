@@ -28,7 +28,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
   "printRegion" should "return the correct string representation of a region" in {
     val region =
       Region(
-        Seq(Block(Seq(UnregisteredOperation("op1"))))
+        Seq(Block(ListType(UnregisteredOperation("op1"))))
       )
     val expected = """{
                      |^bb0():
@@ -40,7 +40,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
   "printBlock" should "return the correct string representation of a block" in {
     val block = Block(
-      Seq(UnregisteredOperation("op1")),
+      ListType(UnregisteredOperation("op1")),
       ListType(Value(I32))
     )
     val expected = """^bb0(%0: i32):
@@ -65,7 +65,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
         Region(
           Seq(
             Block(
-              Seq(UnregisteredOperation("op2"))
+              ListType(UnregisteredOperation("op2"))
             )
           )
         )
@@ -98,7 +98,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val val4 = new Value(I64)
 
     val successorTestBlock = new Block(
-      Seq(),
+      ListType(),
       ListType()
     )
 
@@ -110,7 +110,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
             Seq(
               successorTestBlock,
               Block(
-                Seq(
+                ListType(
                   UnregisteredOperation(
                     "test.op",
                     ListType(),

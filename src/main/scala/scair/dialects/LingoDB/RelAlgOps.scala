@@ -153,9 +153,9 @@ private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
     ~ BlockArgList.?.map(optionlessSeq)
       .map(parser.defineBlockValues) ~ "{"
-    ~ parser.OperationPat.rep(1) ~ "}"
+    ~ parser.Operations(1) ~ "}"
     ~ E({ parser.enterParentRegion })
-).map((x: ListType[Value[Attribute]], y: Seq[Operation]) =>
+).map((x: ListType[Value[Attribute]], y: ListType[Operation]) =>
   new Region(Seq(new Block(y, x)))
 )
 
