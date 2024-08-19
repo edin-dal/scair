@@ -58,10 +58,10 @@ abstract class DataAttribute[D](
 
 // TO-DO: perhaps a linked list of a use to other uses within an operation
 //        for faster use retrieval and index update
-class Use(val operation: Operation, val index: Int) {
+case class Use(val operation: Operation, val index: Int) {
   override def equals(o: Any): Boolean = o match {
-    case use: Use =>
-      (operation eq use.operation) && (index eq use.index)
+    case Use(op, idx) =>
+      (operation eq op) && (index eq idx)
     case _ => super.equals(o)
   }
 }
