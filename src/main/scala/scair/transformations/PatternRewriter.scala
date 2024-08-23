@@ -19,7 +19,7 @@ object InsertPoint {
         )
       case false =>
         val block = op.container_block.get
-        new InsertPoint(block, Some(op))
+        InsertPoint(block, Some(op))
     }
   }
 
@@ -35,25 +35,25 @@ object InsertPoint {
         (opIdx == block.operations.length - 1) match {
           case true => new InsertPoint(block)
           case false =>
-            new InsertPoint(block, Some(block.operations(opIdx + 1)))
+            InsertPoint(block, Some(block.operations(opIdx + 1)))
         }
     }
   }
 
-  def at_start(block: Block): InsertPoint = {
+  def at_start_of(block: Block): InsertPoint = {
     val ops = block.operations
     ops.length match {
       case 0 => new InsertPoint(block)
-      case _ => new InsertPoint(block, Some(ops(0)))
+      case _ => InsertPoint(block, Some(ops(0)))
     }
   }
 
-  def at_end(block: Block): InsertPoint = {
+  def at_end_of(block: Block): InsertPoint = {
     new InsertPoint(block)
   }
 }
 
-class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
+case class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
 
   // custom constructor
   def this(block: Block) = {
@@ -61,7 +61,7 @@ class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
   }
 
   if (insert_before != None) then {
-    if !(insert_before.get eq block) then {
+    if !(insert_before.get.container_block equals Some(block)) then {
       throw new Error(
         "Given operation's container and given block do not match: " +
           "InsertPoint must be an operation inside a given block."
@@ -75,6 +75,7 @@ class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
 // ==----------== //
 
 object RewriteMethods {
+
   def erase_op(op: Operation) = {
     op.container_block match {
       case Some(block) =>
@@ -82,7 +83,40 @@ object RewriteMethods {
       case _ =>
         throw new Exception("Cannot erase an operation that has no parents.")
     }
+  }
 
+  def insert_ops_at(
+      insertion_point: InsertPoint,
+      ops: Operation | Seq[Operation]
+  ): Unit = {
+
+    val operations = ops match {
+      case x: Operation      => Seq(x)
+      case y: Seq[Operation] => y
+    }
+    insertion_point.insert_before match {
+      case Some(op) =>
+        insertion_point.block.insert_ops_before(
+          op,
+          operations
+        )
+      case None =>
+        insertion_point.block.add_ops(operations)
+    }
+  }
+
+  def insert_ops_before(
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
+  ): Unit = {
+    insert_ops_at(InsertPoint.before(op), new_ops)
+  }
+
+  def insert_ops_after(
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
+  ): Unit = {
+    insert_ops_at(InsertPoint.after(op), new_ops)
   }
 }
 
@@ -95,6 +129,64 @@ class PatternRewriter(
     var current_op: Operation
 ) {
   var has_done_action: Boolean = false
+
+  def erase_op(op: Operation): Unit = {
+    RewriteMethods.erase_op(op)
+    has_done_action = true
+  }
+
+  def erase_matched_op(): Unit = {
+    RewriteMethods.erase_op(current_op)
+    has_done_action = true
+  }
+
+  def insert_op_at_location(
+      insertion_point: InsertPoint,
+      ops: Operation | Seq[Operation]
+  ): Unit = {
+    RewriteMethods.insert_ops_at(insertion_point, ops)
+    has_done_action = true
+  }
+
+  def insert_op_before_matched_op(ops: Operation | Seq[Operation]): Unit = {
+    RewriteMethods.insert_ops_before(current_op, ops)
+    has_done_action = true
+  }
+
+  def insert_op_after_matched_op(ops: Operation | Seq[Operation]): Unit = {
+    RewriteMethods.insert_ops_before(current_op, ops)
+    has_done_action = true
+  }
+
+  def insert_op_at_end_of(
+      block: Block,
+      ops: Operation | Seq[Operation]
+  ): Unit = {
+    insert_op_at_location(InsertPoint.at_end_of(block), ops)
+  }
+
+  def insert_op_at_start_of(
+      block: Block,
+      ops: Operation | Seq[Operation]
+  ): Unit = {
+    insert_op_at_location(InsertPoint.at_start_of(block), ops)
+  }
+
+  def insert_ops_before(
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
+  ): Unit = {
+    RewriteMethods.insert_ops_before(op, new_ops)
+    has_done_action = true
+  }
+
+  def insert_ops_after(
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
+  ): Unit = {
+    RewriteMethods.insert_ops_after(op, new_ops)
+    has_done_action = true
+  }
 }
 
 abstract class RewritePattern {

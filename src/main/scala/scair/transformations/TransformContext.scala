@@ -1,11 +1,11 @@
 package scair.transformations
 
-import scair.dialects.CMath.transformations.cdt.{DummyPass}
+import scair.dialects.CMath.transformations.cdt.{DummyPass, TestInsertionPass}
 import scala.collection.mutable
 import scair._
 
 private val allPasses: Seq[ModulePass] =
-  Seq(DummyPass)
+  Seq(DummyPass, TestInsertionPass)
 
 class TransformContext() {
 

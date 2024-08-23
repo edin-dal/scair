@@ -152,7 +152,7 @@ case class Block(
   }
 
   def insert_op_before(existing_op: Operation, new_op: Operation): Unit = {
-    (existing_op.container_block == Some(this)) match {
+    (existing_op.container_block equals Some(this)) match {
       case true =>
         attach_op(new_op)
         operations.insertAll(getIndexOf(existing_op), ListType(new_op))
@@ -168,7 +168,7 @@ case class Block(
       existing_op: Operation,
       new_ops: Seq[Operation]
   ): Unit = {
-    (existing_op.container_block == Some(this)) match {
+    (existing_op.container_block equals Some(this)) match {
       case true =>
         for (op <- new_ops) {
           attach_op(op)
@@ -183,7 +183,7 @@ case class Block(
   }
 
   def insert_op_after(existing_op: Operation, new_op: Operation): Unit = {
-    (existing_op.container_block == Some(this)) match {
+    (existing_op.container_block equals Some(this)) match {
       case true =>
         attach_op(new_op)
         operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_op))
@@ -199,7 +199,7 @@ case class Block(
       existing_op: Operation,
       new_ops: Seq[Operation]
   ): Unit = {
-    (existing_op.container_block == Some(this)) match {
+    (existing_op.container_block equals Some(this)) match {
       case true =>
         for (op <- new_ops) {
           attach_op(op)
