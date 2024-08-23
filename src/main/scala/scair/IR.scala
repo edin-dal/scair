@@ -17,7 +17,7 @@ val ListType = ListBuffer
 type ListType[A] = ListBuffer[A]
 
 object ListTypeExtensions {
-  extension(lt: ListType[Value[Attribute]]) {
+  extension (lt: ListType[Value[Attribute]]) {
     def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
       newValue.uses += use
       lt.update(use.index, newValue)
@@ -96,9 +96,9 @@ class Value[T <: Attribute](
 
   def erase(): Unit = {
     if (uses.length != 0) then
-    throw new Exception(
-      "Attempting to erase a Value that has uses in other operations."
-    )
+      throw new Exception(
+        "Attempting to erase a Value that has uses in other operations."
+      )
   }
 
   def verify(): Unit = typ.verify()
@@ -140,6 +140,14 @@ case class Block(
   def erase_op(op: Operation) = {
     detach_op(op)
     op.erase()
+  }
+
+  def getIndexOf(op: Operation): Int = {
+    operations.lastIndexOf(op) match {
+      case -1 => throw new Exception("Operation not present in the block.")
+      case x  => x
+    }
+
   }
 
   def verify(): Unit = {
