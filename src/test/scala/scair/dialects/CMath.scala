@@ -18,10 +18,10 @@ import scair.dialects.CMath.cmath._
 
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 
-  var printer = new Printer
+  var printer = new Printer(true)
 
   before {
-    printer = new Printer
+    printer = new Printer(true)
   }
 
   def getResult[A](result: String, expected: A) =

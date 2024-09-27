@@ -20,10 +20,10 @@ import scair.dialects.LingoDB.TupleStream._
 
 class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
 
-  var printer = new Printer
+  var printer = new Printer(true)
 
   before {
-    printer = new Printer
+    printer = new Printer(true)
   }
 
   def getResult[A](result: String, expected: A) =

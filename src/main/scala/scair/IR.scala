@@ -33,6 +33,7 @@ sealed trait Attribute {
   def name: String
   def prefix: String = "#"
   def verify(): Unit = ()
+  def pString: String
 }
 
 trait TypeAttribute extends Attribute {
@@ -43,15 +44,17 @@ abstract class ParametrizedAttribute(
     override val name: String,
     val parameters: Seq[Attribute] = Seq()
 ) extends Attribute {
+  override def pString = s"<${parameters.map(x => x.toString).mkString(", ")}>"
   override def toString =
-    s"${prefix}${name}<${parameters.map(x => x.toString).mkString(", ")}>"
+    s"${prefix}${name}${pString}"
 }
 
 abstract class DataAttribute[D](
     override val name: String,
     val data: D
 ) extends Attribute {
-  override def toString = data.toString
+  override def pString = data.toString
+  override def toString = pString
 }
 
 // ==----------== //
@@ -346,6 +349,28 @@ sealed abstract class Operation(
     for ((key, attr) <- dictionaryProperties) attr.verify()
     for ((key, attr) <- dictionaryAttributes) attr.verify()
     custom_verify()
+  }
+
+  def custom_print(p: Printer): String =
+    throw new Exception(
+      s"No custom Printer implemented for Operation '${name}'"
+    )
+
+  final def print(printer: Printer): String = {
+    var results: Seq[String] = Seq()
+    var resultsTypes: Seq[String] = Seq()
+
+    for { res <- this.results } yield (
+      results = results :+ printer.printValue(res),
+      resultsTypes = resultsTypes :+ printer.printAttribute(res.typ)
+    )
+
+    val operationResults: String =
+      if (this.results.length > 0)
+        results.mkString(", ") + " = "
+      else ""
+
+    return operationResults + custom_print(printer)
   }
 
   override def hashCode(): Int = {

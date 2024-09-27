@@ -549,7 +549,7 @@ class ParserTest
         pattern = parser.TopLevel(_)
       )
 
-      val printer = new Printer()
+      val printer = new Printer(true)
 
       val opToErase = value.regions(0).blocks(0).operations(1)
 

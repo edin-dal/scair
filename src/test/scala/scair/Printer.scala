@@ -13,10 +13,10 @@ import scair.dialects.builtin._
 
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
-  var printer = new Printer();
+  var printer = new Printer(true);
 
   before {
-    printer = new Printer
+    printer = new Printer(true)
   }
 
   val F32 = Float32Type
@@ -77,17 +77,6 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
                      |}) : (f32) -> (f32)""".stripMargin
     val result = printer.printOperation(operation)
     result shouldEqual expected
-  }
-
-  "printProgram" should "return the correct string representation of a program" in {
-    val program = Seq(
-      UnregisteredOperation("op1"),
-      UnregisteredOperation("op2")
-    )
-    val expected = """"op1"() : () -> ()
-                     |"op2"() : () -> ()""".stripMargin
-    val result = printer.printProgram(program)
-    // result shouldEqual expected
   }
 
   "printSuccessors" should "return the correct string representation of a operation with successors" in {

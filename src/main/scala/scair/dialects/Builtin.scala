@@ -193,17 +193,11 @@ case class SymbolRefAttr(
 // ==------== //
 
 object ModuleOp {
-
   // ==--- Custom Parsing ---== //
   def parse[$: P](parser: Parser): P[Operation] = P(
     "builtin.module" ~ parser.Region.rep(exactly = 1)
   ).map((x: Seq[Region]) => ModuleOp(regions = x.to(ListType)))
   // ==----------------------== //
-
-  // ==--- Custom Printing ---== //
-  def print(module: ModuleOp, printer: Printer): String =
-    s"builtin.module ${printer.printRegion(module.regions(0))}"
-  // ==-----------------------== //
 }
 
 case class ModuleOp(
@@ -215,4 +209,9 @@ case class ModuleOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "builtin.module")
+) extends RegisteredOperation(name = "builtin.module") {
+  override def custom_print(
+      p: Printer
+  ): String =
+    s"builtin.module ${p.printRegion(regions(0))}"
+}
