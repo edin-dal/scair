@@ -5,6 +5,12 @@ import scair.{Attribute, Operation, Value}
 type Operand[T <: Attribute] = Value[T]
 type OpResult[T <: Attribute] = Value[T]
 
+// CONSTRAINTS
+// CONSTRAINTS
+
+// CONSTRAINTS
+// CONSTRAINTS
+
 // class Operand(name)
 // class Type(name, Attribute)
 // class Result
