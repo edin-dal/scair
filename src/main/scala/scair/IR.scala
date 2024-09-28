@@ -34,6 +34,7 @@ sealed trait Attribute {
   def prefix: String = "#"
   def verify(): Unit = ()
   def pString: String
+  def same_as(attr: Attribute): Boolean
 }
 
 trait TypeAttribute extends Attribute {
@@ -45,8 +46,17 @@ abstract class ParametrizedAttribute(
     val parameters: Seq[Attribute] = Seq()
 ) extends Attribute {
   override def pString = s"<${parameters.map(x => x.toString).mkString(", ")}>"
-  override def toString =
-    s"${prefix}${name}${pString}"
+  override def toString = s"${prefix}${name}${pString}"
+  override def same_as(attr: Attribute): Boolean = {
+    attr match {
+      case x: ParametrizedAttribute =>
+        x.name == this.name &&
+        x.parameters.length == this.parameters.length &&
+        (for ((i, j) <- x.parameters zip this.parameters)
+          yield i same_as j).reduce((i, j) => i && j)
+      case _ => false
+    }
+  }
 }
 
 abstract class DataAttribute[D](
@@ -55,6 +65,12 @@ abstract class DataAttribute[D](
 ) extends Attribute {
   override def pString = data.toString
   override def toString = pString
+  override def same_as(attr: Attribute): Boolean = {
+    attr match {
+      case x: DataAttribute[D] => x.name == this.name && x.data == this.data
+      case _                   => false
+    }
+  }
 }
 
 // ==----------== //

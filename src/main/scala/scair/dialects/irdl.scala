@@ -6,9 +6,33 @@ type Operand[T <: Attribute] = Value[T]
 type OpResult[T <: Attribute] = Value[T]
 
 // CONSTRAINTS
-// CONSTRAINTS
 
-// CONSTRAINTS
+abstract class IRDLConstraint {
+  def verify(attr: Attrbiute): Unit
+}
+
+object AnyAttr extends IRDLConstraint {
+  override def verify(attr: Attribute): Unit = {}
+}
+
+class EqualAttr(val equal_to: Attribute) extends IRDLConstraint {
+  override def verify(attr: Attribute): Unit = {
+    equal_to same_as attr
+  }
+}
+
+class BaseAttr(val base: Attribute) extends IRDLConstraint {
+  override def verify(attr: Attribute): Unit = {
+    equal_to.getClass == attr.getClass
+  }
+}
+
+class AnyOf(val attrs: Seq[Attribute]) extends IRDLConstraint {
+  override def verify(attr: Attribute): Unit = {
+    equal_to.getClass == attr.getClass
+  }
+}
+
 // CONSTRAINTS
 
 // class Operand(name)
