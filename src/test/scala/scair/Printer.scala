@@ -22,8 +22,8 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
   val F32 = Float32Type
   val F64 = Float64Type
 
-  val I32 = new IntegerType(32, Signless)
-  val I64 = new IntegerType(64, Signless)
+  val I32 = new IntegerType(IntData(32), Signless)
+  val I64 = new IntegerType(IntData(64), Signless)
 
   "printRegion" should "return the correct string representation of a region" in {
     val region =

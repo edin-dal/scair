@@ -35,10 +35,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   val F64 = Float64Type
   val F80 = Float80Type
   val F128 = Float128Type
-  val I1 = IntegerType(1, Signless)
-  val I16 = IntegerType(16, Signless)
-  val I32 = IntegerType(32, Signless)
-  val I64 = IntegerType(64, Signless)
+  val I1 = IntegerType(IntData(1), Signless)
+  val I16 = IntegerType(IntData(16), Signless)
+  val I32 = IntegerType(IntData(32), Signless)
+  val I64 = IntegerType(IntData(64), Signless)
   val INDEX = IndexType
 
   val attrToStringTests = Table(
@@ -52,12 +52,12 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     (I16, "Success", "i16"),
     (I32, "Success", "i32"),
     (I64, "Success", "i64"),
-    (IntegerType(874234232, Signless), "Success", "i874234232"),
-    (IntegerType(7, Signed), "Success", "si7"),
-    (IntegerType(8, Unsigned), "Success", "ui8"),
+    (IntegerType(IntData(874234232), Signless), "Success", "i874234232"),
+    (IntegerType(IntData(7), Signed), "Success", "si7"),
+    (IntegerType(IntData(8), Unsigned), "Success", "ui8"),
     (
       RankedTensorType(
-        ArrayAttribute(Seq(IntAttr(3), IntAttr(-1), IntAttr(5))),
+        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
         Float32Type,
         None
       ),
@@ -66,11 +66,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     ),
     (UnrankedTensorType(Float32Type), "Success", "tensor<*xf32>"),
     (
-      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringAttribute("hello"))),
+      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
       "Success",
       "[f64, [], \"hello\"]"
     ),
-    (StringAttribute("hello world!"), "Success", "\"hello world!\""),
+    (StringData("hello world!"), "Success", "\"hello world!\""),
     (INDEX, "Success", "index")
   )
 
@@ -85,22 +85,22 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     ("i16", "Success", I16),
     ("i32", "Success", I32),
     ("i64", "Success", I64),
-    ("i874234232", "Success", IntegerType(874234232, Signless)),
-    ("874234232", "Success", IntegerType(874234232, Signless)),
-    ("si7", "Success", IntegerType(7, Signed)),
-    ("ui8", "Success", IntegerType(8, Unsigned)),
+    ("i874234232", "Success", IntegerType(IntData(874234232), Signless)),
+    ("874234232", "Success", IntegerType(IntData(874234232), Signless)),
+    ("si7", "Success", IntegerType(IntData(7), Signed)),
+    ("ui8", "Success", IntegerType(IntData(8), Unsigned)),
     ("index", "Success", INDEX),
     (
       "[f64, [], \"hello\"]",
       "Success",
-      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringAttribute("hello")))
+      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello")))
     ),
-    ("\"hello world!\"", "Success", StringAttribute("hello world!")),
+    ("\"hello world!\"", "Success", StringData("hello world!")),
     (
       "tensor<3x?x5xf32>",
       "Success",
       RankedTensorType(
-        ArrayAttribute(Seq(IntAttr(3), IntAttr(-1), IntAttr(5))),
+        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
         Float32Type,
         None
       )
@@ -133,7 +133,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   val valI16 = Value[Attribute](I16)
   val valINDEX = Value[Attribute](INDEX)
 
-  "printAttributesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
+  "printDataibutesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
 
     val block1 = Block(
       ListType(
@@ -342,9 +342,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                           ListType(),
                           ListType(),
                           ListType(
-                            Value(IntegerType(32, Signless)),
-                            Value(IntegerType(64, Signed)),
-                            Value(IntegerType(80, Unsigned))
+                            Value(IntegerType(IntData(32), Signless)),
+                            Value(IntegerType(IntData(64), Signed)),
+                            Value(IntegerType(IntData(80), Unsigned))
                           ),
                           ListType(),
                           _,

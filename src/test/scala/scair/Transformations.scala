@@ -21,8 +21,8 @@ class TransformationsTest
     with BeforeAndAfter
     with TableDrivenPropertyChecks {
 
-  val I32 = IntegerType(32, Signless)
-  val I64 = IntegerType(64, Signless)
+  val I32 = IntegerType(IntData(32), Signless)
+  val I64 = IntegerType(IntData(64), Signless)
 
 //   def getResult[A](result: String, expected: A) =
 //     result match {
