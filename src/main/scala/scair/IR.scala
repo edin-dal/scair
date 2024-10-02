@@ -51,6 +51,7 @@ abstract class ParametrizedAttribute(
     attr match {
       case x: ParametrizedAttribute =>
         x.name == this.name &&
+        x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
         (for ((i, j) <- x.parameters zip this.parameters)
           yield i same_as j).reduce((i, j) => i && j)
@@ -67,8 +68,11 @@ abstract class DataAttribute[D](
   override def toString = pString
   override def same_as(attr: Attribute): Boolean = {
     attr match {
-      case x: DataAttribute[D] => x.name == this.name && x.data == this.data
-      case _                   => false
+      case x: DataAttribute[D] =>
+        x.name == this.name &&
+        x.getClass == this.getClass &&
+        x.data == this.data
+      case _ => false
     }
   }
 }
