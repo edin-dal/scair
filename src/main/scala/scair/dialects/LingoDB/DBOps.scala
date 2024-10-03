@@ -105,7 +105,7 @@ case class DB_CharType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (typ.length != 1) {
       throw new Exception("TupleStream Tuple must contain 1 elements only.")
     } else
@@ -152,7 +152,7 @@ case class DB_IntervalType(val unit: Attribute)
     )
     with TypeAttribute {
 
-  // override def verify(): Unit = {
+  // override def custom_verify(): Unit = {
   //   if (typ.length != 1) {
   //     throw new Exception("TupleStream Tuple must contain 1 elements only.")
   //   } else
@@ -180,7 +180,7 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (typ.length != 2) {
       throw new Exception("TupleStream Tuple must contain exactly 2 elements.")
     } else {
@@ -214,7 +214,7 @@ case class DB_StringType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (typ.length > 1) {
       throw new Exception("TupleStream Tuple must contain at most 1 element.")
     } else if (typ.length == 1)

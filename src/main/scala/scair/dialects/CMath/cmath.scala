@@ -37,13 +37,10 @@ object ComplexType extends DialectAttribute {
 }
 
 case class ComplexType(val body: Seq[Attribute])
-    extends ParametrizedAttribute(
-      name = "cmath.complex",
-      parameters = body
-    )
+    extends ParametrizedAttribute("cmath.complex", body)
     with TypeAttribute {
 
-  override def verify(): Unit =
+  override def custom_verify(): Unit =
     if (body.length != 1) {
       throw new Exception("TupleStream Tuple must contain 1 elements only.")
     } else
@@ -104,7 +101,7 @@ case class Norm(
       p: Printer
   ): String = {
     val oper = p.printValue(operands(0))
-    val operType = operands(0).typ.pString
+    val operType = operands(0).typ.custom_print
 
     s"${name} (${oper} : ${operType}) => ${p.printAttribute(results(0).typ)}"
   }
@@ -174,11 +171,11 @@ case class Mul(
       p: Printer
   ): String = {
     val oper = p.printValue(operands(0))
-    val operType = operands(0).typ.pString
+    val operType = operands(0).typ.custom_print
     val oper1 = p.printValue(operands(1))
-    val operType1 = operands(1).typ.pString
+    val operType1 = operands(1).typ.custom_print
 
-    s"${name} (${oper} : ${operType}, ${oper1} : ${operType1}) => ${results(0).typ.pString}"
+    s"${name} (${oper} : ${operType}, ${oper1} : ${operType1}) => ${results(0).typ.custom_print}"
   }
 
   override def custom_verify(): Unit = (

@@ -51,7 +51,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (tupleVals.length != 0 && tupleVals.length != 2) {
       throw new Exception("TupleStream Tuple must contain 2 elements only.")
     }
@@ -74,7 +74,7 @@ case class TupleStream(val tuples: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     for (param <- tuples) {
       param match {
         case _: TupleStreamTuple =>
@@ -242,7 +242,7 @@ case class GetColumnOp(
   ) match {
     case (1, 0, 1, 0, 0) =>
       operands(0).typ match {
-        case x: TupleStreamTuple => x.verify()
+        case x: TupleStreamTuple => x.custom_verify()
         case _ =>
           throw new Exception(
             "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
