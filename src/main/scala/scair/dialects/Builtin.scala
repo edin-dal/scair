@@ -72,7 +72,7 @@ case class IntData(val value: Long)
 //////////////////
 
 case class IntegerType(val width: IntData, val sign: Signedness)
-    extends ParametrizedAttribute("builtin.int_type")
+    extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
     with TypeAttribute {
   override def toString = sign match {
     case Signless => s"$sign$width"
@@ -86,7 +86,7 @@ case class IntegerType(val width: IntData, val sign: Signedness)
 ///////////////////////
 
 case class IntegerAttr(val value: IntData, val typ: IntegerType)
-    extends ParametrizedAttribute("builtin.integer_attr") {
+    extends ParametrizedAttribute("builtin.integer_attr", Seq(value, typ)) {
 
   def this(value: IntData) = this(value, I64)
 
@@ -112,7 +112,7 @@ case class FloatData(val value: Double)
 /////////////////////
 
 case class FloatAttr(val value: FloatData, val typ: FloatType)
-    extends ParametrizedAttribute("builtin.float_attr") {
+    extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
   override def toString = (value, typ) match {
     case (_, Float64Type) => s"${value}"
     case (_, _)           => s"${value} : ${typ}"
@@ -157,6 +157,7 @@ abstract class TensorType(
     override val name: String,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)
+    with TypeAttribute
 
 case class RankedTensorType(
     val dimensionList: ArrayAttribute[IntData],
@@ -167,8 +168,7 @@ case class RankedTensorType(
       features = dimensionList +:
         typ +:
         encoding.toSeq
-    )
-    with TypeAttribute {
+    ) {
 
   override def toString: String = {
 
@@ -188,8 +188,7 @@ case class RankedTensorType(
 }
 
 case class UnrankedTensorType(val typ: Attribute)
-    extends TensorType("builtin.unranked_tensor", Seq(typ))
-    with TypeAttribute {
+    extends TensorType("builtin.unranked_tensor", Seq(typ)) {
   override def toString = s"tensor<*x${typ.toString}>"
 }
 
