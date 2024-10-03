@@ -28,10 +28,13 @@ def I64 = IntegerType(IntData(64), Signless)
 // SIGNEDNESS //
 ////////////////
 
-sealed trait Signedness
-case object Signed extends Signedness
-case object Unsigned extends Signedness
-case object Signless extends Signedness
+sealed abstract class Signedness(override val name: String, val dat: String)
+    extends DataAttribute[String](name, dat) {
+  override def toString = dat
+}
+case object Signed extends Signedness("signed", "si")
+case object Unsigned extends Signedness("unsigned", "ui")
+case object Signless extends Signedness("signless", "i")
 
 ////////////////
 // FLOAT TYPE //
@@ -72,9 +75,9 @@ case class IntegerType(val width: IntData, val sign: Signedness)
     extends ParametrizedAttribute("builtin.int_type")
     with TypeAttribute {
   override def toString = sign match {
-    case Signless => s"i$width"
-    case Signed   => s"si$width"
-    case Unsigned => s"ui$width"
+    case Signless => s"$sign$width"
+    case Signed   => s"$sign$width"
+    case Unsigned => s"$sign$width"
   }
 }
 
