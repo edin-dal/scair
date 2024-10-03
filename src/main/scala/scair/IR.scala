@@ -55,7 +55,7 @@ abstract class ParametrizedAttribute(
         x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
         (for ((i, j) <- x.parameters zip this.parameters)
-          yield i same_as j).reduce((i, j) => i && j)
+          yield i same_as j).foldLeft(true)((i, j) => i && j)
       case _ => false
     }
   }
