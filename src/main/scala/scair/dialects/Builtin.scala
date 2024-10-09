@@ -2,6 +2,8 @@ package scair.dialects.builtin
 
 import scala.compiletime.ops.string
 import scala.collection.{immutable, mutable}
+
+import scair.dialects.irdl.{BaseAttr, EqualAttr, ConstraintContext}
 import scair.{
   ListType,
   DictType,
@@ -17,6 +19,7 @@ import scair.{
   Parser,
   Printer
 }
+
 import scair.Parser.whitespace
 import fastparse._
 
@@ -150,21 +153,29 @@ case class StringData(val stringLiteral: String)
 }
 
 /////////////////
+// SHAPED TYPE //
+/////////////////
+
+trait ShapedType extends TypeAttribute
+
+/////////////////
 // TENSOR TYPE //
 /////////////////
 
 abstract class TensorType(
     override val name: String,
+    val typ: Attribute,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)
-    with TypeAttribute
+    with ShapedType
 
 case class RankedTensorType(
     val dimensionList: ArrayAttribute[IntData],
-    val typ: Attribute,
+    override val typ: Attribute,
     val encoding: Option[Attribute]
 ) extends TensorType(
       name = "builtin.ranked_tensor",
+      typ,
       features = dimensionList +:
         typ +:
         encoding.toSeq
@@ -187,8 +198,8 @@ case class RankedTensorType(
   }
 }
 
-case class UnrankedTensorType(val typ: Attribute)
-    extends TensorType("builtin.unranked_tensor", Seq(typ)) {
+case class UnrankedTensorType(override val typ: Attribute)
+    extends TensorType("builtin.unranked_tensor", typ, Seq(typ)) {
   override def toString = s"tensor<*x${typ.toString}>"
 }
 
@@ -205,6 +216,41 @@ case class SymbolRefAttr(
     ) {
   override def toString =
     s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
+}
+
+//////////////////////////////
+// DenseIntOrFPElementsAttr //
+//////////////////////////////
+
+type TensorLiteralArray =
+  ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
+
+case class DenseIntOrFPElementsAttr(
+    val typ: TensorType,
+    val data: TensorLiteralArray
+) extends ParametrizedAttribute("builtin.dense") {
+
+  val type_cnstr = BaseAttr[IntegerType | FloatType]()
+  val TLA_cnstr = EqualAttr(typ.typ)
+
+  override def custom_verify(): Unit =
+    type_cnstr.verify(typ.typ, new ConstraintContext())
+    for (x <- data.attrValues) TLA_cnstr.verify(x, new ConstraintContext())
+
+  override def toString() = {
+
+    val values = data.attrValues(0) match {
+      case x: IntegerAttr =>
+        for (a <- data.attrValues) yield a.asInstanceOf[IntegerAttr].value
+      case y: FloatAttr =>
+        for (a <- data.attrValues) yield a.asInstanceOf[FloatAttr].value
+    }
+
+    return s"dense<${
+        if (values.size == 1) { values(0) }
+        else { values.mkString("[", ", ", "]") }
+      }> : ${typ}"
+  }
 }
 
 ////////////////
