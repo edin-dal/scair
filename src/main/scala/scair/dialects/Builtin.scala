@@ -3,6 +3,7 @@ package scair.dialects.builtin
 import scala.compiletime.ops.string
 import scala.collection.{immutable, mutable}
 
+import scair.dialects.affine.{AffineMap, AffineSet}
 import scair.dialects.irdl.{BaseAttr, EqualAttr, ConstraintContext}
 import scair.{
   ListType,
@@ -22,6 +23,20 @@ import scair.{
 
 import scair.Parser.whitespace
 import fastparse._
+
+// ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
+// ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
+// ██████╦╝ ██║░░░██║ ██║ ██║░░░░░ ░░░██║░░░ ██║ ██╔██╗██║
+// ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ░░░██║░░░ ██║ ██║╚████║
+// ██████╦╝ ╚██████╔╝ ██║ ███████╗ ░░░██║░░░ ██║ ██║░╚███║
+// ╚═════╝░ ░╚═════╝░ ╚═╝ ╚══════╝ ░░░╚═╝░░░ ╚═╝ ╚═╝░░╚══╝
+
+// ██████╗░ ██╗ ░█████╗░ ██╗░░░░░ ███████╗ ░█████╗░ ████████╗
+// ██╔══██╗ ██║ ██╔══██╗ ██║░░░░░ ██╔════╝ ██╔══██╗ ╚══██╔══╝
+// ██║░░██║ ██║ ███████║ ██║░░░░░ █████╗░░ ██║░░╚═╝ ░░░██║░░░
+// ██║░░██║ ██║ ██╔══██║ ██║░░░░░ ██╔══╝░░ ██║░░██╗ ░░░██║░░░
+// ██████╔╝ ██║ ██║░░██║ ███████╗ ███████╗ ╚█████╔╝ ░░░██║░░░
+// ╚═════╝░ ╚═╝ ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ░╚════╝░ ░░░╚═╝░░░
 
 def I1 = IntegerType(IntData(1), Signless)
 def I32 = IntegerType(IntData(32), Signless)
@@ -221,6 +236,8 @@ case class SymbolRefAttr(
 //////////////////////////////
 // DenseIntOrFPElementsAttr //
 //////////////////////////////
+//
+// TO-DO : it can also parse a vector type or a memref type
 
 type TensorLiteralArray =
   ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
@@ -251,6 +268,27 @@ case class DenseIntOrFPElementsAttr(
         else { values.mkString("[", ", ", "]") }
       }> : ${typ}"
   }
+}
+
+/////////////////////
+// AFFINE MAP ATTR //
+/////////////////////
+
+case class AffineMapAttr(val affine_map: AffineMap)
+    extends DataAttribute[AffineMap]("builtin.affine_map", affine_map) {
+
+  override def toString = s"affine_map<${affine_map}>"
+}
+
+/////////////////////
+// AFFINE SET ATTR //
+/////////////////////
+// note: in mlir terms this is called an IntegerSetAttr
+
+case class AffineSetAttr(val affine_set: AffineSet)
+    extends DataAttribute[AffineSet]("builtin.affine_set", affine_set) {
+
+  override def toString = s"affine_set<${affine_set}>"
 }
 
 ////////////////
