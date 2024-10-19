@@ -247,12 +247,11 @@ case class DenseIntOrFPElementsAttr(
     val data: TensorLiteralArray
 ) extends ParametrizedAttribute("builtin.dense") {
 
-  val type_cnstr = BaseAttr[IntegerType | FloatType]()
-  val TLA_cnstr = EqualAttr(typ.typ)
+  val int_or_float = BaseAttr[IntegerType | FloatType]()
 
   override def custom_verify(): Unit =
-    type_cnstr.verify(typ.typ, new ConstraintContext())
-    for (x <- data.attrValues) TLA_cnstr.verify(x, new ConstraintContext())
+    int_or_float.verify(typ.typ, new ConstraintContext())
+    for (x <- data.attrValues) int_or_float.verify(x, new ConstraintContext())
 
   override def toString() = {
 
