@@ -175,16 +175,69 @@ object AttrParser {
     )
   )
 
+  //////////////////////////////
+  // DenseIntOrFPElementsAttr //
+  //////////////////////////////
+
+  // TO-DO : it can also parse a vector type or a memref type
+  // TO-DO : Figure out why it is throwing an error when you get rid of asInstanceOf...
+
+  def DenseIntOrFPElementsAttrP[$: P]: P[DenseIntOrFPElementsAttr] =
+    P("dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~ TensorTypeP).map((x, y) =>
+      DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])
+    )
+
+  def TensorLiteral[$: P]: P[TensorLiteralArray] =
+    P(SingleTensorLiteral | EmptyTensorLiteral | MultipleTensorLiteral)
+
+  def SingleTensorLiteral[$: P]: P[TensorLiteralArray] =
+    P(FloatDataP | IntDataP).map(_ match {
+      case (x: IntData) =>
+        ArrayAttribute[IntegerAttr](Seq(IntegerAttr(x, I32)))
+      case (y: FloatData) =>
+        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type)))
+    })
+
+  def MultipleTensorLiteral[$: P]: P[TensorLiteralArray] =
+    P(MultipleFloatTensorLiteral | MultipleIntTensorLiteral)
+
+  def MultipleIntTensorLiteral[$: P]: P[ArrayAttribute[IntegerAttr]] =
+    P("[" ~ IntDataP.rep(1, sep = ",") ~ "]").map((x: Seq[IntData]) =>
+      ArrayAttribute[IntegerAttr](
+        for (x1 <- x) yield IntegerAttr(x1, I32)
+      )
+    )
+
+  def MultipleFloatTensorLiteral[$: P]: P[ArrayAttribute[FloatAttr]] =
+    P("[" ~ FloatDataP.rep(1, sep = ",") ~ "]").map((y: Seq[FloatData]) =>
+      ArrayAttribute[FloatAttr](
+        for (y1 <- y) yield FloatAttr(y1, Float32Type)
+      )
+    )
+
+  def EmptyTensorLiteral[$: P]: P[TensorLiteralArray] =
+    P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr](Seq()))
+
   //////////////
   // BUILT IN //
   //////////////
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    FloatTypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP | StringAttributeP | TensorTypeP | SymbolRefAttrP | FloatAttrP | IntegerAttrP
+    FloatTypeP |
+      IntegerTypeP |
+      IndexTypeP |
+      ArrayAttributeP |
+      StringAttributeP |
+      TensorTypeP |
+      SymbolRefAttrP |
+      FloatAttrP |
+      IntegerAttrP |
+      DenseIntOrFPElementsAttrP
   )
 
   def main(args: Array[String]): Unit = {
-    val parsed = parse("5930888.26171875 : f64", BuiltIn(_))
+    val parsed =
+      parse("dense<[10.0, 11.0]> : tensor<2xf32>", DenseIntOrFPElementsAttrP(_))
     println(parsed)
   }
 }
