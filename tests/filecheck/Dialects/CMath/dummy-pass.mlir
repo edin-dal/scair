@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p dummy-pass -g | filecheck %s
+// RUN: scair-opt %s -p dummy-pass -g -s | filecheck %s
 
 %0, %1, %2 = "test.op"() ({
 ^bb0(%1 : f32, %3 : f32, %4 : f32):

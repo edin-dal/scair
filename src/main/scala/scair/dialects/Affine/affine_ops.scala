@@ -244,8 +244,173 @@ case class IfOp(
   }
 }
 
+/*≡==--=≡≡≡≡=--=≡≡*\
+||    STORE OP    ||
+\*≡==--==≡≡==--==≡*/
+
+// TODO: operands: any, memref & indices
+
+object StoreOp extends DialectOperation {
+  override def name: String = "affine.store"
+  override def factory: FactoryType = StoreOp.apply
+}
+
+case class StoreOp(
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends RegisteredOperation(name = "affine.store") {
+
+  val map_check = BaseAttr[AffineMapAttr]()
+
+  override def custom_verify(): Unit = (
+    successors.length,
+    regions.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (0, 0, 0, 0) =>
+      map_check.verify(
+        dictionaryAttributes.checkandget("map", name, "affine_map"),
+        new ConstraintContext()
+      )
+    case _ =>
+      throw new Exception(
+        "If Operation must only contain only operands and results."
+      )
+  }
+}
+
+/*≡==---=≡≡≡=---=≡≡*\
+||     LOAD OP     ||
+\*≡==----=≡=----==≡*/
+
+// TODO: operands: memref & indices
+
+object LoadOp extends DialectOperation {
+  override def name: String = "affine.load"
+  override def factory: FactoryType = LoadOp.apply
+}
+
+case class LoadOp(
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends RegisteredOperation(name = "affine.load") {
+
+  val map_check = BaseAttr[AffineMapAttr]()
+
+  override def custom_verify(): Unit = (
+    successors.length,
+    regions.length,
+    results.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (0, 0, 1, 0, 0) =>
+      map_check.verify(
+        dictionaryAttributes.checkandget("map", name, "affine_map"),
+        new ConstraintContext()
+      )
+    case _ =>
+      throw new Exception(
+        "If Operation must only contain only operands and results."
+      )
+  }
+}
+
+/*≡==--=≡≡≡≡=--=≡≡*\
+||     MIN OP     ||
+\*≡==---=≡≡=---==≡*/
+
+object MinOp extends DialectOperation {
+  override def name: String = "affine.min"
+  override def factory: FactoryType = MinOp.apply
+}
+
+case class MinOp(
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends RegisteredOperation(name = "affine.min") {
+
+  val map_check = BaseAttr[AffineMapAttr]()
+  val index_check = BaseAttr[IndexType.type]()
+
+  override def custom_verify(): Unit = (
+    successors.length,
+    regions.length,
+    results.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (0, 0, 1, 0, 0) =>
+      for (x <- operands) index_check.verify(x.typ, new ConstraintContext())
+      map_check.verify(
+        dictionaryAttributes.checkandget("map", name, "affine_map"),
+        new ConstraintContext()
+      )
+      index_check.verify(results(0).typ, new ConstraintContext())
+
+    case _ =>
+      throw new Exception(
+        "If Operation must only contain only operands and results."
+      )
+  }
+}
+
+/*≡==--=≡≡≡≡=--=≡≡*\
+||    YIELD OP    ||
+\*≡==---=≡≡=---==≡*/
+
+object YieldOp extends DialectOperation {
+  override def name: String = "affine.yield"
+  override def factory: FactoryType = YieldOp.apply
+}
+
+case class YieldOp(
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends RegisteredOperation(name = "affine.yield") {
+
+  override def custom_verify(): Unit = (
+    successors.length,
+    regions.length,
+    dictionaryProperties.size,
+    dictionaryAttributes.size
+  ) match {
+    case (0, 0, 0, 0) =>
+    case _ =>
+      throw new Exception(
+        "If Operation must only contain only operands and results."
+      )
+  }
+}
+
 val Affine: Dialect =
   new Dialect(
-    operations = Seq(ApplyOp, ForOp, ParallelOp, IfOp),
+    operations =
+      Seq(ApplyOp, ForOp, ParallelOp, IfOp, StoreOp, LoadOp, MinOp, YieldOp),
     attributes = Seq()
   )

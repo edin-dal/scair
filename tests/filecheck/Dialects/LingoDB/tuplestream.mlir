@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s -s | filecheck %s
 
 "op1"() ({
 ^bb0():

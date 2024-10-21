@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -g | filecheck %s
+// RUN: scair-opt %s -g -s | filecheck %s
 
 %0, %1, %2 = "test.op"() : () -> (!cmath.complex<f32>, !cmath.complex<index>, !cmath.complex<f32>)
 %3 = "cmath.norm"(%0) : (!cmath.complex<f32>) -> (f64)
