@@ -118,6 +118,43 @@ object RewriteMethods {
   ): Unit = {
     insert_ops_at(InsertPoint.after(op), new_ops)
   }
+
+  def replace_op(
+      op: Operation,
+      new_ops: Operation | Seq[Operation],
+      new_results: Option[Seq[Value[Attribute]]] = None
+  ): Unit = {
+
+    val block = op.container_block match {
+      case Some(x) => x
+      case None =>
+        throw new Exception("Cannot replace an operation without a parent")
+    }
+
+    val ops = new_ops match {
+      case x: Operation      => Seq(x)
+      case y: Seq[Operation] => y
+    }
+
+    val results = new_results match {
+      case Some(x) => x
+      case None =>
+        if (ops.length == 0) then ListType() else ops(ops.length - 1).results
+    }
+
+    if (op.results.length != results.length) then {
+      throw new Exception(
+        s"Expected ${op.results.length} new results but got ${results.length}"
+      )
+    }
+
+    for ((old_res, new_res) <- op.results zip results) {
+      old_res.replace_by(new_res)
+    }
+
+    block.insert_ops_after(op, ops)
+    block.erase_op(op)
+  }
 }
 
 // ==------------== //
@@ -187,6 +224,14 @@ class PatternRewriter(
     RewriteMethods.insert_ops_after(op, new_ops)
     has_done_action = true
   }
+
+  def replace_op(
+      op: Operation,
+      new_ops: Operation | Seq[Operation],
+      new_results: Option[Seq[Value[Attribute]]] = None
+  ): Unit = {
+    RewriteMethods.replace_op(op, new_ops, new_results)
+  }
 }
 
 abstract class RewritePattern {
@@ -236,7 +281,7 @@ class PatternRewriteWalker(
       try {
         pattern.match_and_rewrite(op, rewriter)
       } catch {
-        case e: Exception => throw new Exception("Caught exception!")
+        case e: Exception => throw e // throw new Exception("Caught exception!")
       }
 
       rewriter_done_action |= rewriter.has_done_action
