@@ -179,6 +179,12 @@ trait ShapedType extends TypeAttribute
 
 abstract class TensorType(
     override val name: String,
+    val features: Seq[Attribute]
+) extends ParametrizedAttribute(name, features)
+    with TypeAttribute
+
+case class RankedTensorType(
+    val dimensionList: ArrayAttribute[IntData],
     val typ: Attribute,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)
@@ -290,7 +296,6 @@ case class AffineSetAttr(val affine_set: AffineSet)
 
   override def toString = s"affine_set<${affine_set}>"
 }
-
 ////////////////
 // OPERATIONS //
 ////////////////
