@@ -8,6 +8,7 @@ import scair.dialects.builtin.ModuleOp
 case class Args(
     val input: Option[String] = None,
     val skip_verify: Boolean = true,
+    val print_generic: Boolean = false,
     val passes: Seq[String] = Seq()
 )
 object ScairOpt {
@@ -29,6 +30,10 @@ object ScairOpt {
           .optional()
           .text("Skip verification")
           .action((_, c) => c.copy(skip_verify = true)),
+        opt[Unit]('g', "print_generic")
+          .optional()
+          .text("Print Strictly in Generic format")
+          .action((_, c) => c.copy(print_generic = true)),
         opt[Seq[String]]('p', "passes")
           .optional()
           .text("Specify passes to apply to the IR")
@@ -46,6 +51,8 @@ object ScairOpt {
         }
 
         val skip_verify = args.skip_verify
+
+        val print_generic = args.print_generic
 
         val passes = args.passes
 
@@ -77,10 +84,10 @@ object ScairOpt {
         }
 
         // Print the parsed module if not errored
-        val printer = new Printer()
+        val printer = new Printer(print_generic)
         val output = module match {
           case x: ModuleOp =>
-            ModuleOp.print(x, printer) // printer.printOperation(x)
+            printer.printOperation(x) // printer.printOperation(x)
           case _ =>
             throw new Exception(
               "Top level module must be the Builtin module of type ModuleOp.\n" +

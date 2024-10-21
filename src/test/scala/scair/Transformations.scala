@@ -31,11 +31,11 @@ class TransformationsTest
 //     }
 
   var parser: Parser = new Parser
-  var printer = new Printer()
+  var printer = new Printer(true)
 
   before {
     parser = new Parser
-    printer = new Printer()
+    printer = new Printer(true)
   }
 
   "Operation Erasure" should "Test that operation does not get erased and throws error :)" in {

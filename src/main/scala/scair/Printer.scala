@@ -7,7 +7,7 @@ import IR._
 import AttrParser._
 import scair.dialects.CMath.cmath._
 
-class Printer {
+class Printer(val strictly_generic: Boolean) {
 
   ///////////
   // TOOLS //
@@ -77,8 +77,7 @@ class Printer {
         .mkString(", ")
 
     val blockOperations: String =
-      (for { op <- block.operations } yield printOperation(op, indentLevel + 1))
-        .mkString("\n")
+      printOperations(block.operations.toSeq, indentLevel + 1)
 
     val blockHead: String =
       indent * indentLevel + s"^${blockName}(${blockArguments}):\n"
@@ -106,8 +105,11 @@ class Printer {
   // OPERATION //
   ///////////////
 
-  def printOperation(op: Operation, indentLevel: Int = 0): String = {
+  def printCustomOperation(op: Operation, indentLevel: Int = 0): String = {
+    indent * indentLevel + op.print(this)
+  }
 
+  def printGenericOperation(op: Operation, indentLevel: Int = 0): String = {
     var results: Seq[String] = Seq()
     var resultsTypes: Seq[String] = Seq()
     var operands: Seq[String] = Seq()
@@ -174,16 +176,32 @@ class Printer {
     return indent * indentLevel + s"$operationResults${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
   }
 
-  /////////////
-  // PROGRAM //
-  /////////////
+  def printOperation(op: Operation, indentLevel: Int = 0): String = {
+    strictly_generic match {
+      case true => printGenericOperation(op, indentLevel)
+      case false =>
+        try {
+          printCustomOperation(op, indentLevel)
+        } catch {
+          case e: Exception =>
+            printGenericOperation(op, indentLevel)
+        }
+    }
+  }
 
-  def printProgram(programSequence: Seq[Operation]): String = {
-
-    var programPrint: String =
-      (for { op <- programSequence } yield printOperation(op)).mkString("\n")
-
-    return programPrint
+  def printOperations(ops: Seq[Operation], indentLevel: Int = 0): String = {
+    strictly_generic match {
+      case true =>
+        (for { op <- ops } yield printGenericOperation(op, indentLevel))
+          .mkString("\n")
+      case false =>
+        (for { op <- ops } yield try {
+          printCustomOperation(op, indentLevel)
+        } catch {
+          case e: Exception =>
+            printGenericOperation(op, indentLevel)
+        }).mkString("\n")
+    }
   }
 }
 
@@ -193,7 +211,7 @@ object Printer {
     // println("Printer")
 
     val parser = new Parser()
-    val printer = new Printer()
+    val printer = new Printer(true)
 
     val input = """"op1"()({
                   |  ^bb0(%0: f128):

@@ -5,10 +5,13 @@ import scair.dialects.builtin._
 import scala.collection.immutable
 import scala.collection.mutable
 import scair.dialects.irdl.{Operand, OpResult}
-import scair.Parser.{whitespace, Type}
+import scair.Parser.{whitespace, ValueId, Type}
+import scair.Parser.{whitespace, ValueId, Type, E}
+import scair.AttrParser.{Float32TypeP, Float64TypeP}
 import scair.{
   ListType,
   DictType,
+  Operation,
   RegisteredOperation,
   Region,
   Block,
@@ -21,7 +24,6 @@ import scair.{
   DialectOperation,
   Dialect,
   Printer,
-  AttrParser,
   Parser
 }
 
@@ -62,6 +64,29 @@ case class ComplexType(val body: Seq[Attribute])
 object Norm extends DialectOperation {
   override def name: String = "cmath.norm"
   override def factory: FactoryType = Norm.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    "(" ~ ValueId ~ ":" ~ ComplexType.parse ~ ")" ~ "=>" ~ (Float32TypeP | Float64TypeP)
+  ).map(
+    (
+        operand: String,
+        itstype: Attribute,
+        returntype: Attribute
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        resultNames = resNames,
+        resultTypes = Seq(returntype),
+        operandNames = Seq(operand),
+        operandTypes = Seq(itstype)
+      )
+  )
+  // ==----------------------== //
 }
 
 case class Norm(
@@ -74,6 +99,15 @@ case class Norm(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.norm") {
+
+  override def custom_print(
+      p: Printer
+  ): String = {
+    val oper = p.printValue(operands(0))
+    val operType = operands(0).typ.pString
+
+    s"${name} (${oper} : ${operType}) => ${p.printAttribute(results(0).typ)}"
+  }
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -98,6 +132,31 @@ case class Norm(
 object Mul extends DialectOperation {
   override def name: String = "cmath.mul"
   override def factory: FactoryType = Mul.apply
+
+  // ==--- Custom Parsing ---== //
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = P(
+    "(" ~ ValueId ~ ":" ~ ComplexType.parse ~ "," ~ ValueId ~ ":" ~ ComplexType.parse ~ ")" ~ "=>" ~ ComplexType.parse
+  ).map(
+    (
+        operand1: String,
+        itstype1: Attribute,
+        operand2: String,
+        itstype2: Attribute,
+        returntype: Attribute
+    ) =>
+      parser.verifyCustomOp(
+        opGen = factory,
+        opName = name,
+        resultNames = resNames,
+        resultTypes = Seq(returntype),
+        operandNames = Seq(operand1, operand2),
+        operandTypes = Seq(itstype1, itstype2)
+      )
+  )
+  // ==----------------------== //
 }
 
 case class Mul(
@@ -110,6 +169,17 @@ case class Mul(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "cmath.mul") {
+
+  override def custom_print(
+      p: Printer
+  ): String = {
+    val oper = p.printValue(operands(0))
+    val operType = operands(0).typ.pString
+    val oper1 = p.printValue(operands(1))
+    val operType1 = operands(1).typ.pString
+
+    s"${name} (${oper} : ${operType}, ${oper1} : ${operType1}) => ${results(0).typ.pString}"
+  }
 
   override def custom_verify(): Unit = (
     operands.length,
