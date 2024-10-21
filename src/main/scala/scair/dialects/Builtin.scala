@@ -164,6 +164,12 @@ trait ShapedType extends TypeAttribute
 
 abstract class TensorType(
     override val name: String,
+    val features: Seq[Attribute]
+) extends ParametrizedAttribute(name, features)
+    with TypeAttribute
+
+case class RankedTensorType(
+    val dimensionList: ArrayAttribute[IntData],
     val typ: Attribute,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)

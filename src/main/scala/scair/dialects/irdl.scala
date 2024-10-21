@@ -170,7 +170,6 @@ class VarConstraint(val name: String, val constraint: IRDLConstraint)
         var_consts += ((name, that_attr))
     }
   }
-
   override def toString = s"VarConstraint(${name}, ${constraint})"
 }
 
