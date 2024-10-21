@@ -7,6 +7,7 @@ import IR._
 import Parser._
 import java.lang.Float.intBitsToFloat
 
+import scair.dialects.affine.{AffineMapP, AffineSetP}
 import scair.dialects.builtin._
 
 object AttrParser {
@@ -218,6 +219,20 @@ object AttrParser {
   def EmptyTensorLiteral[$: P]: P[TensorLiteralArray] =
     P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr](Seq()))
 
+  /////////////////////
+  // AFFINE MAP ATTR //
+  /////////////////////
+
+  def AffineMapAttrP[$: P]: P[AffineMapAttr] =
+    P("affine_map" ~ "<" ~ AffineMapP ~ ">").map(AffineMapAttr(_))
+
+  /////////////////////
+  // AFFINE SET ATTR //
+  /////////////////////
+
+  def AffineSetAttrP[$: P]: P[AffineSetAttr] =
+    P("affine_set" ~ "<" ~ AffineSetP ~ ">").map(AffineSetAttr(_))
+
   //////////////
   // BUILT IN //
   //////////////
@@ -232,7 +247,9 @@ object AttrParser {
       SymbolRefAttrP |
       FloatAttrP |
       IntegerAttrP |
-      DenseIntOrFPElementsAttrP
+      DenseIntOrFPElementsAttrP |
+      AffineMapAttrP |
+      AffineSetAttrP
   )
 
   def main(args: Array[String]): Unit = {
