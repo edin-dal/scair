@@ -97,6 +97,45 @@ object TestReplacingDummyOperation extends RewritePattern {
   }
 }
 
+object TestReplacingDummyOperation extends RewritePattern {
+
+  val val1 = Value[Attribute](StringAttribute("replaced(i32)"))
+  val val2 = Value[Attribute](StringAttribute("replaced(i64)"))
+
+  val op1 =
+    new UnregisteredOperation("dummy-op1")
+  val op2 =
+    new UnregisteredOperation("dummy-op2")
+  val op3 =
+    new UnregisteredOperation("dummy-return", results = ListType(val1, val2))
+
+  val opReplace = new UnregisteredOperation(
+    "replacedOp",
+    regions = ListType(
+      Region(Seq(Block(operations = ListType(op1, op2, op3))))
+    )
+  )
+
+  override def match_and_rewrite(
+      op: Operation,
+      rewriter: PatternRewriter
+  ): Unit = {
+
+    (op.name == "tobereplaced") match {
+      case true =>
+        rewriter.replace_op(
+          op,
+          opReplace,
+          Some(op3.results.toSeq)
+        )
+      case false =>
+        op.dictionaryAttributes += ("replaced" -> StringAttribute("false"))
+    }
+
+    rewriter.has_done_action = true
+  }
+}
+
 object DummyPass extends ModulePass {
   override val name = "dummy-pass"
 
