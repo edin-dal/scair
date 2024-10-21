@@ -32,8 +32,8 @@ object ListTypeExtensions {
 sealed trait Attribute {
   def name: String
   def prefix: String = "#"
-  def verify(): Unit = ()
-  def pString: String
+  def custom_verify(): Unit = ()
+  def custom_print: String
   def same_as(attr: Attribute): Boolean
 }
 
@@ -45,8 +45,9 @@ abstract class ParametrizedAttribute(
     override val name: String,
     val parameters: Seq[Attribute] = Seq()
 ) extends Attribute {
-  override def pString = s"<${parameters.map(x => x.toString).mkString(", ")}>"
-  override def toString = s"${prefix}${name}${pString}"
+  override def custom_print =
+    s"<${parameters.map(x => x.toString).mkString(", ")}>"
+  override def toString = s"${prefix}${name}${custom_print}"
   override def same_as(attr: Attribute): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
@@ -64,8 +65,8 @@ abstract class DataAttribute[D](
     override val name: String,
     val data: D
 ) extends Attribute {
-  override def pString = data.toString
-  override def toString = pString
+  override def custom_print = data.toString
+  override def toString = custom_print
   override def same_as(attr: Attribute): Boolean = {
     attr match {
       case x: DataAttribute[D] =>
@@ -124,7 +125,7 @@ class Value[T <: Attribute](
       )
   }
 
-  def verify(): Unit = typ.verify()
+  def verify(): Unit = typ.custom_verify()
 
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
@@ -366,8 +367,8 @@ sealed abstract class Operation(
   final def verify(): Unit = {
     for (result <- results) result.verify()
     for (region <- regions) region.verify()
-    for ((key, attr) <- dictionaryProperties) attr.verify()
-    for ((key, attr) <- dictionaryAttributes) attr.verify()
+    for ((key, attr) <- dictionaryProperties) attr.custom_verify()
+    for ((key, attr) <- dictionaryAttributes) attr.custom_verify()
     custom_verify()
   }
 

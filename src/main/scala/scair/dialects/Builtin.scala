@@ -20,18 +20,21 @@ import scair.{
 import scair.Parser.whitespace
 import fastparse._
 
-def I1 = IntegerType(1, Signless)
-def I32 = IntegerType(32, Signless)
-def I64 = IntegerType(64, Signless)
+def I1 = IntegerType(IntData(1), Signless)
+def I32 = IntegerType(IntData(32), Signless)
+def I64 = IntegerType(IntData(64), Signless)
 
 ////////////////
 // SIGNEDNESS //
 ////////////////
 
-sealed trait Signedness
-case object Signed extends Signedness
-case object Unsigned extends Signedness
-case object Signless extends Signedness
+sealed abstract class Signedness(override val name: String, val dat: String)
+    extends DataAttribute[String](name, dat) {
+  override def toString = dat
+}
+case object Signed extends Signedness("signed", "si")
+case object Unsigned extends Signedness("unsigned", "ui")
+case object Signless extends Signedness("signless", "i")
 
 ////////////////
 // FLOAT TYPE //
@@ -55,45 +58,61 @@ case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
   override def toString = "f128"
 }
 
+//////////////
+// INT DATA //
+//////////////
+
+case class IntData(val value: Long)
+    extends DataAttribute[Long]("builtin.int_attr", value) {
+  override def toString = value.toString
+}
+
 //////////////////
 // INTEGER TYPE //
 //////////////////
 
-case class IntegerType(val width: Int, val sign: Signedness)
-    extends ParametrizedAttribute("builtin.int_type")
+case class IntegerType(val width: IntData, val sign: Signedness)
+    extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
     with TypeAttribute {
   override def toString = sign match {
-    case Signless => s"i$width"
-    case Signed   => s"si$width"
-    case Unsigned => s"ui$width"
+    case Signless => s"$sign$width"
+    case Signed   => s"$sign$width"
+    case Unsigned => s"$sign$width"
   }
 }
-
-case class IntAttr(val value: Long)
-    extends DataAttribute[Long]("builtin.int_attr", value)
 
 ///////////////////////
 // INTEGER ATTRIBUTE //
 ///////////////////////
 
-case class IntegerAttr(val value: Long, val typ: IntegerType)
-    extends ParametrizedAttribute("builtin.integer_attr") {
+case class IntegerAttr(val value: IntData, val typ: IntegerType)
+    extends ParametrizedAttribute("builtin.integer_attr", Seq(value, typ)) {
 
-  def this(value: Long) = this(value, I64)
+  def this(value: IntData) = this(value, I64)
+
   override def toString = (value, typ) match {
-    case (1, IntegerType(1, Signless))  => "true"
-    case (0, IntegerType(1, Signless))  => "false"
-    case (_, IntegerType(64, Signless)) => s"${value}"
-    case (_, _)                         => s"${value} : ${typ}"
+    case (IntData(1), IntegerType(IntData(1), Signless)) => "true"
+    case (IntData(0), IntegerType(IntData(1), Signless)) => "false"
+    case (_, IntegerType(IntData(64), Signless))         => s"${value}"
+    case (_, _)                                          => s"${value} : ${typ}"
   }
+}
+
+////////////////
+// FLOAT DATA //
+////////////////
+
+case class FloatData(val value: Double)
+    extends DataAttribute[Double]("builtin.float_data", value) {
+  override def toString = value.toString
 }
 
 /////////////////////
 // FLOAT ATTRIBUTE //
 /////////////////////
 
-case class FloatAttr(val value: Double, val typ: FloatType)
-    extends ParametrizedAttribute("builtin.float_attr") {
+case class FloatAttr(val value: FloatData, val typ: FloatType)
+    extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
   override def toString = (value, typ) match {
     case (_, Float64Type) => s"${value}"
     case (_, _)           => s"${value} : ${typ}"
@@ -125,8 +144,8 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 //////////////////////
 
 // shortened definition, does not include type information
-case class StringAttribute(val stringLiteral: String)
-    extends DataAttribute("builtin.string_attribute", stringLiteral) {
+case class StringData(val stringLiteral: String)
+    extends DataAttribute("builtin.string", stringLiteral) {
   override def toString = "\"" + stringLiteral + "\""
 }
 
@@ -134,17 +153,22 @@ case class StringAttribute(val stringLiteral: String)
 // TENSOR TYPE //
 /////////////////
 
+abstract class TensorType(
+    override val name: String,
+    val features: Seq[Attribute]
+) extends ParametrizedAttribute(name, features)
+    with TypeAttribute
+
 case class RankedTensorType(
-    val dimensionList: ArrayAttribute[IntAttr],
+    val dimensionList: ArrayAttribute[IntData],
     val typ: Attribute,
     val encoding: Option[Attribute]
-) extends ParametrizedAttribute(
+) extends TensorType(
       name = "builtin.ranked_tensor",
-      dimensionList +:
+      features = dimensionList +:
         typ +:
         encoding.toSeq
-    )
-    with TypeAttribute {
+    ) {
 
   override def toString: String = {
 
@@ -164,8 +188,7 @@ case class RankedTensorType(
 }
 
 case class UnrankedTensorType(val typ: Attribute)
-    extends ParametrizedAttribute("builtin.unranked_tensor", Seq(typ))
-    with TypeAttribute {
+    extends TensorType("builtin.unranked_tensor", Seq(typ)) {
   override def toString = s"tensor<*x${typ.toString}>"
 }
 
@@ -174,8 +197,8 @@ case class UnrankedTensorType(val typ: Attribute)
 //////////////////////////
 
 case class SymbolRefAttr(
-    val rootRef: StringAttribute,
-    val nestedRefs: ArrayAttribute[StringAttribute]
+    val rootRef: StringData,
+    val nestedRefs: ArrayAttribute[StringData]
 ) extends ParametrizedAttribute(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)

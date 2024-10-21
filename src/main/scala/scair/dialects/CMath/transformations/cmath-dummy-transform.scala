@@ -1,7 +1,7 @@
 package scair.dialects.CMath.transformations.cdt
 
 import scair.{Operation, Attribute, Value, Block, Region, ListType, MLContext}
-import scair.dialects.builtin.StringAttribute
+import scair.dialects.builtin.StringData
 import scair.dialects.CMath.cmath.{Mul, Norm}
 import scair.transformations.{
   ModulePass,
@@ -18,13 +18,13 @@ object AddDummyAttributeToDict extends RewritePattern {
   ): Unit = {
     op match {
       case x: UnregisteredOperation =>
-        x.dictionaryAttributes += ("dummy" -> StringAttribute("UnregDumDum"))
+        x.dictionaryAttributes += ("dummy" -> StringData("UnregDumDum"))
       case y: Mul =>
-        y.dictionaryAttributes += ("dummy" -> StringAttribute("MulDumDum"))
+        y.dictionaryAttributes += ("dummy" -> StringData("MulDumDum"))
       case z: Norm =>
-        z.dictionaryAttributes += ("dummy" -> StringAttribute("NormDumDum"))
+        z.dictionaryAttributes += ("dummy" -> StringData("NormDumDum"))
       case d =>
-        d.dictionaryAttributes += ("dummy" -> StringAttribute("dumdum"))
+        d.dictionaryAttributes += ("dummy" -> StringData("dumdum"))
     }
     rewriter.has_done_action = true
   }
@@ -51,7 +51,46 @@ object TestInsertingDummyOperation extends RewritePattern {
         )
         rewriter.erase_matched_op()
       case false =>
-        op.dictionaryAttributes += ("replaced" -> StringAttribute("false"))
+        op.dictionaryAttributes += ("replaced" -> StringData("false"))
+    }
+
+    rewriter.has_done_action = true
+  }
+}
+
+object TestReplacingDummyOperation extends RewritePattern {
+
+  val val1 = Value[Attribute](StringData("replaced(i32)"))
+  val val2 = Value[Attribute](StringData("replaced(i64)"))
+
+  val op1 =
+    new UnregisteredOperation("dummy-op1")
+  val op2 =
+    new UnregisteredOperation("dummy-op2")
+  val op3 =
+    new UnregisteredOperation("dummy-return", results = ListType(val1, val2))
+
+  val opReplace = new UnregisteredOperation(
+    "replacedOp",
+    regions = ListType(
+      Region(Seq(Block(operations = ListType(op1, op2, op3))))
+    )
+  )
+
+  override def match_and_rewrite(
+      op: Operation,
+      rewriter: PatternRewriter
+  ): Unit = {
+
+    (op.name == "tobereplaced") match {
+      case true =>
+        rewriter.replace_op(
+          op,
+          opReplace,
+          Some(op3.results.toSeq)
+        )
+      case false =>
+        op.dictionaryAttributes += ("replaced" -> StringData("false"))
     }
 
     rewriter.has_done_action = true

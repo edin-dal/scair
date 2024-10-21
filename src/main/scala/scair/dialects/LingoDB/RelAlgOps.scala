@@ -218,7 +218,7 @@ case class BaseTableOp(
       dictionaryAttributes.get("table_identifier") match {
         case Some(x) =>
           x match {
-            case _: StringAttribute =>
+            case _: StringData =>
             case _ =>
               throw new Exception(
                 "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."

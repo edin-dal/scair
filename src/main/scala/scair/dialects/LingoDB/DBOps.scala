@@ -105,14 +105,14 @@ case class DB_CharType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (typ.length != 1) {
       throw new Exception("TupleStream Tuple must contain 1 elements only.")
     } else
       typ(0) match {
-        case _: IntAttr =>
+        case _: IntData =>
         case _ =>
-          throw new Exception("CharType type must be IntAttr")
+          throw new Exception("CharType type must be IntData")
       }
   }
 }
@@ -152,14 +152,14 @@ case class DB_IntervalType(val unit: Attribute)
     )
     with TypeAttribute {
 
-  // override def verify(): Unit = {
+  // override def custom_verify(): Unit = {
   //   if (typ.length != 1) {
   //     throw new Exception("TupleStream Tuple must contain 1 elements only.")
   //   } else
   //     typ(0) match {
-  //       case _: IntAttr =>
+  //       case _: IntData =>
   //       case _ =>
-  //         throw new Exception("CharType type must be IntAttr")
+  //         throw new Exception("CharType type must be IntData")
   //     }
   // }
 }
@@ -180,19 +180,19 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (typ.length != 2) {
       throw new Exception("TupleStream Tuple must contain exactly 2 elements.")
     } else {
       typ(0) match {
-        case _: IntAttr =>
+        case _: IntData =>
         case _ =>
-          throw new Exception("DB_DecimalType type must be (IntAttr, IntAttr)")
+          throw new Exception("DB_DecimalType type must be (IntData, IntData)")
       }
       typ(1) match {
-        case _: IntAttr =>
+        case _: IntData =>
         case _ =>
-          throw new Exception("DB_DecimalType type must be (IntAttr, IntAttr)")
+          throw new Exception("DB_DecimalType type must be (IntData, IntData)")
       }
     }
   }
@@ -214,14 +214,14 @@ case class DB_StringType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def verify(): Unit = {
+  override def custom_verify(): Unit = {
     if (typ.length > 1) {
       throw new Exception("TupleStream Tuple must contain at most 1 element.")
     } else if (typ.length == 1)
       typ(0) match {
-        case _: StringAttribute =>
+        case _: StringData =>
         case _ =>
-          throw new Exception("DB_DecimalType type must be StringAttribute")
+          throw new Exception("DB_DecimalType type must be StringData")
       }
   }
 }
@@ -374,30 +374,38 @@ object DB_MulOp extends DialectOperation {
               DB_DecimalType(
                 Seq(
                   new IntegerAttr(
-                    opLeft
-                      .asInstanceOf[DB_DecimalType]
-                      .typ(0)
-                      .asInstanceOf[IntegerAttr]
-                      .value
-                      +
-                        opRight
-                          .asInstanceOf[DB_DecimalType]
-                          .typ(0)
-                          .asInstanceOf[IntegerAttr]
-                          .value
+                    IntData(
+                      opLeft
+                        .asInstanceOf[DB_DecimalType]
+                        .typ(0)
+                        .asInstanceOf[IntegerAttr]
+                        .value
+                        .value
+                        +
+                          opRight
+                            .asInstanceOf[DB_DecimalType]
+                            .typ(0)
+                            .asInstanceOf[IntegerAttr]
+                            .value
+                            .value
+                    )
                   ),
                   new IntegerAttr(
-                    opLeft
-                      .asInstanceOf[DB_DecimalType]
-                      .typ(1)
-                      .asInstanceOf[IntegerAttr]
-                      .value
-                      +
-                        opRight
-                          .asInstanceOf[DB_DecimalType]
-                          .typ(1)
-                          .asInstanceOf[IntegerAttr]
-                          .value
+                    IntData(
+                      opLeft
+                        .asInstanceOf[DB_DecimalType]
+                        .typ(1)
+                        .asInstanceOf[IntegerAttr]
+                        .value
+                        .value
+                        +
+                          opRight
+                            .asInstanceOf[DB_DecimalType]
+                            .typ(1)
+                            .asInstanceOf[IntegerAttr]
+                            .value
+                            .value
+                    )
                   )
                 )
               )
@@ -492,11 +500,13 @@ object DB_DivOp extends DialectOperation {
                 .typ(0)
                 .asInstanceOf[IntegerAttr]
                 .value
+                .value
             val opLeft1 =
               opLeft
                 .asInstanceOf[DB_DecimalType]
                 .typ(1)
                 .asInstanceOf[IntegerAttr]
+                .value
                 .value
             val opRight0 =
               opRight
@@ -504,21 +514,25 @@ object DB_DivOp extends DialectOperation {
                 .typ(0)
                 .asInstanceOf[IntegerAttr]
                 .value
+                .value
             val opRight1 =
               opRight
                 .asInstanceOf[DB_DecimalType]
                 .typ(1)
                 .asInstanceOf[IntegerAttr]
                 .value
+                .value
             Seq(
               DB_DecimalType(
                 Seq(
                   new IntegerAttr(
-                    opLeft0 - opLeft1 + opRight1
-                      + max(opLeft1 + opRight0, 6)
+                    IntData(
+                      opLeft0 - opLeft1 + opRight1
+                        + max(opLeft1 + opRight0, 6)
+                    )
                   ),
                   new IntegerAttr(
-                    max(opLeft1 + opRight0, 6)
+                    IntData(max(opLeft1 + opRight0, 6))
                   )
                 )
               )

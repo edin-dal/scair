@@ -35,15 +35,15 @@ import scair.{
 object StateMembers extends DialectAttribute {
   override def name: String = "subop.state_members"
   override def parse[$: P] = P(
-    "[" ~ (BareId.map(StringAttribute(_)) ~ ":" ~ Type).rep(0, sep = ",") ~ "]"
-  ).map((x: Seq[(StringAttribute, Attribute)]) => {
+    "[" ~ (BareId.map(StringData(_)) ~ ":" ~ Type).rep(0, sep = ",") ~ "]"
+  ).map((x: Seq[(StringData, Attribute)]) => {
     val (names, types) = x.unzip
     StateMembers(names, types)
   })
 }
 
 case class StateMembers(
-    val names: Seq[StringAttribute],
+    val names: Seq[StringData],
     val types: Seq[Attribute]
 ) extends ParametrizedAttribute(
       name = "subop.state_members",
