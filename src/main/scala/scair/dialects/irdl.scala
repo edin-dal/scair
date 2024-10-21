@@ -11,6 +11,7 @@ type OpResult[T <: Attribute] = Value[T]
 // CONSTRAINTS
 // CONSTRAINTS
 
+
 // class Operand(name)
 // class Type(name, Attribute)
 // class Result
