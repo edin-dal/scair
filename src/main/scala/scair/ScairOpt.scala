@@ -7,7 +7,7 @@ import scair.dialects.builtin.ModuleOp
 
 case class Args(
     val input: Option[String] = None,
-    val skip_verify: Boolean = true,
+    val skip_verify: Boolean = false,
     val print_generic: Boolean = false,
     val passes: Seq[String] = Seq()
 )

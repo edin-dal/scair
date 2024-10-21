@@ -179,16 +179,10 @@ trait ShapedType extends TypeAttribute
 
 abstract class TensorType(
     override val name: String,
-    val features: Seq[Attribute]
-) extends ParametrizedAttribute(name, features)
-    with TypeAttribute
-
-case class RankedTensorType(
-    val dimensionList: ArrayAttribute[IntData],
     val typ: Attribute,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)
-    with ShapedType
+    with TypeAttribute
 
 case class RankedTensorType(
     val dimensionList: ArrayAttribute[IntData],
@@ -253,12 +247,11 @@ case class DenseIntOrFPElementsAttr(
     val data: TensorLiteralArray
 ) extends ParametrizedAttribute("builtin.dense") {
 
-  val type_cnstr = BaseAttr[IntegerType | FloatType]()
-  val TLA_cnstr = EqualAttr(typ.typ)
+  val int_or_float = BaseAttr[IntegerType | FloatType]()
 
   override def custom_verify(): Unit =
-    type_cnstr.verify(typ.typ, new ConstraintContext())
-    for (x <- data.attrValues) TLA_cnstr.verify(x, new ConstraintContext())
+    int_or_float.verify(typ.typ, new ConstraintContext())
+    for (x <- data.attrValues) int_or_float.verify(x, new ConstraintContext())
 
   override def toString() = {
 
@@ -296,6 +289,7 @@ case class AffineSetAttr(val affine_set: AffineSet)
 
   override def toString = s"affine_set<${affine_set}>"
 }
+
 ////////////////
 // OPERATIONS //
 ////////////////
