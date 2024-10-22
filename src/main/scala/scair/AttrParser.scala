@@ -117,6 +117,18 @@ object AttrParser {
       .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
 
+  /////////////////////
+  // DENSE ARRAY ATTRIBUTE //
+  /////////////////////
+
+  // dense-array-attribute  ::=  `array` `<` (integer-type | float-type) (`:` tensor-literal)? `>`
+
+  def DenseArrayAttributeP[$: P]: P[DenseArrayAttr] = P(
+    "array<" ~ ((AttributeValue) ~ (":" ~ AttributeValue.rep(sep = ",")).?.map(
+      _.getOrElse(Seq())
+    )).map((typ: Attribute, x: Seq[Attribute]) => DenseArrayAttr(typ, x)) ~ ">"
+  )
+
   //////////////////////
   // STRING ATTRIBUTE //
   //////////////////////
@@ -242,6 +254,7 @@ object AttrParser {
       IntegerTypeP |
       IndexTypeP |
       ArrayAttributeP |
+      DenseArrayAttributeP |
       StringAttributeP |
       TensorTypeP |
       SymbolRefAttrP |
