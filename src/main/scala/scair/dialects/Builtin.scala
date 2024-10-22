@@ -234,6 +234,39 @@ case class SymbolRefAttr(
 }
 
 //////////////////////////////
+// DenseArrayAttr //
+//////////////////////////////
+
+case class DenseArrayAttr(
+    val typ: Attribute,
+    val data: Seq[Attribute]
+) extends ParametrizedAttribute("builtin.dense") {
+
+  override def custom_verify(): Unit =
+    typ match {
+      case _: IntegerType | _: FloatType => ()
+      case _ =>
+        throw new Exception("Element type is not an integer or float type")
+    }
+    if !data.forall(_ match {
+        case IntegerAttr(_, eltyp) => eltyp == typ
+        case FloatAttr(_, eltyp)   => eltyp == typ
+        case _ => throw new Exception("Element type is not an integer or float")
+      })
+    then throw new Exception("Element types do not match the dense array type")
+
+  override def toString() = {
+
+    return s"array<$typ${if data.isEmpty then "" else ": "}${data
+        .map(_ match {
+          case IntegerAttr(value, _) => value
+          case FloatAttr(value, _)   => value
+        })
+        .mkString(", ")}>"
+  }
+}
+
+//////////////////////////////
 // DenseIntOrFPElementsAttr //
 //////////////////////////////
 //
