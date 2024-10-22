@@ -243,11 +243,11 @@ case class DenseArrayAttr(
 ) extends ParametrizedAttribute("builtin.dense") {
 
   override def custom_verify(): Unit =
-    if !(typ.isInstanceOf[IntegerType] || typ.isInstanceOf[FloatType])
-    then
-      throw new Exception(
-        "Element type is not an integer or float type"
-      )
+    typ match {
+      case _: IntegerType | _: FloatType => ()
+      case _ =>
+        throw new Exception("Element type is not an integer or float type")
+    }
     if !data.forall(_ match {
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ
