@@ -63,8 +63,9 @@ object ScairOpt {
           pattern = parser.TopLevel(_)
         ) match {
           case fastparse.Parsed.Success(value, _) => value
-          case fastparse.Parsed.Failure(_, _, extra) =>
-            sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
+          case fastparse.Parsed.Failure(label, index, extra) =>
+            val traced = extra.traced
+            sys.error(s"\nParse error at ${args.input.getOrElse("-")}:${traced.input.prettyIndex(traced.index)}\n${extra.trace().aggregateMsg}")
         }
 
         // verify parsed content

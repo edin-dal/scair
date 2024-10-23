@@ -436,7 +436,7 @@ object Parser {
   // [x] type-alias ::= `!` alias-name
 
   def Type[$: P] = P(
-    AttrParser.BuiltIn | DialectType | DialectAttribute
+    (AttrParser.BuiltIn | DialectType | DialectAttribute)./
   ) // shortened definition TODO: finish...
 
   def ParenTypeList[$: P] = P(
@@ -465,7 +465,7 @@ object Parser {
   // [x] - attribute-alias ::= `#` alias-name
 
   def AttributeEntry[$: P] = P(
-    (BareId | StringLiteral) ~ "=" ~ AttributeValue
+    (BareId | StringLiteral) ~ "=" ~/ AttributeValue
   )
   def AttributeValue[$: P] = P(
     Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
