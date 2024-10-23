@@ -65,7 +65,10 @@ object ScairOpt {
           case fastparse.Parsed.Success(value, _) => value
           case fastparse.Parsed.Failure(label, index, extra) =>
             val traced = extra.traced
-            sys.error(s"\nParse error at ${args.input.getOrElse("-")}:${traced.input.prettyIndex(traced.index)}\n${extra.trace().aggregateMsg}")
+            sys.error(
+              s"\nParse error at ${args.input.getOrElse("-")}:${traced.input
+                  .prettyIndex(traced.index)}\n${extra.trace().aggregateMsg}"
+            )
         }
 
         // verify parsed content
