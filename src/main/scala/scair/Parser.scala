@@ -2,6 +2,7 @@ package scair
 
 import fastparse._
 import fastparse.internal.Util
+import fastparse.Parsed.TracedFailure
 
 import scala.collection.mutable
 import scala.annotation.tailrec
@@ -19,6 +20,16 @@ import java.lang.Float.parseFloat
 import Math.pow
 
 object Parser {
+
+  import scala.util.control.NoStackTrace
+
+  class ParseException(msg: String) extends Exception(msg) with NoStackTrace
+
+  def error(input: String, tracedFailure: TracedFailure): Nothing =
+    throw new scair.Parser.ParseException(
+      s"\nParse error at $input:${tracedFailure.input
+          .prettyIndex(tracedFailure.index)}\n${tracedFailure.failure.extra.trace().aggregateMsg}"
+    )
 
   val ctx: MLContext = new MLContext()
 
@@ -436,7 +447,7 @@ object Parser {
   // [x] type-alias ::= `!` alias-name
 
   def Type[$: P] = P(
-    AttrParser.BuiltIn | DialectType | DialectAttribute
+    (AttrParser.BuiltIn | DialectType | DialectAttribute)./
   ) // shortened definition TODO: finish...
 
   def ParenTypeList[$: P] = P(
@@ -465,7 +476,7 @@ object Parser {
   // [x] - attribute-alias ::= `#` alias-name
 
   def AttributeEntry[$: P] = P(
-    (BareId | StringLiteral) ~ "=" ~ AttributeValue
+    (BareId | StringLiteral) ~ "=" ~/ AttributeValue
   )
   def AttributeValue[$: P] = P(
     Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //

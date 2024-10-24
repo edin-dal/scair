@@ -76,7 +76,8 @@ object ScairOpt {
             ) match {
               case fastparse.Parsed.Success(value, _) => value
               case fastparse.Parsed.Failure(_, _, extra) =>
-                sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
+                val traced = extra.traced
+                scair.Parser.error(args.input.getOrElse("-"), traced)
             }
           }
 
