@@ -1,3 +1,4 @@
+package scair
 import java.io.File
 import scopt.OParser
 import scala.io.Source
@@ -69,15 +70,14 @@ object ScairOpt {
         val modules: Seq[Operation] =
           for (chunk <- input_chunks)
             yield {
-              val parser = new scair.Parser
+              val parser = new scair.Parser(args)
               parser.parseThis(
                 chunk,
                 pattern = parser.TopLevel(_)
               ) match {
                 case fastparse.Parsed.Success(value, _) => value
-                case fastparse.Parsed.Failure(_, _, extra) =>
-                  val traced = extra.traced
-                  scair.Parser.error(args.input.getOrElse("-"), traced)
+                case failure: fastparse.Parsed.Failure =>
+                  parser.error(failure)
               }
             }
 
