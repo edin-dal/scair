@@ -67,26 +67,26 @@ object ScairOpt {
 
         // Parse content
         val modules: Seq[Operation] =
-          for chunk <- input_chunks
-          yield {
-            val parser = new scair.Parser
-            parser.parseThis(
-              chunk,
-              pattern = parser.TopLevel(_)
-            ) match {
-              case fastparse.Parsed.Success(value, _) => value
-              case fastparse.Parsed.Failure(_, _, extra) =>
-                val traced = extra.traced
-                scair.Parser.error(args.input.getOrElse("-"), traced)
+          for (chunk <- input_chunks)
+            yield {
+              val parser = new scair.Parser
+              parser.parseThis(
+                chunk,
+                pattern = parser.TopLevel(_)
+              ) match {
+                case fastparse.Parsed.Success(value, _) => value
+                case fastparse.Parsed.Failure(_, _, extra) =>
+                  val traced = extra.traced
+                  scair.Parser.error(args.input.getOrElse("-"), traced)
+              }
             }
-          }
 
         // verify parsed content
-        if (!skip_verify) for module <- modules yield module.verify()
+        if (!skip_verify) for (module <- modules) yield module.verify()
 
         // apply the specified passes
         val transformCtx = new TransformContext()
-        val processed_modules = for module <- modules yield
+        val processed_modules = for (module <- modules) yield
           var mod = module
           for (name <- passes) {
             transformCtx.getPass(name) match {
@@ -99,7 +99,7 @@ object ScairOpt {
           mod
 
         // Print the parsed module if not errored
-        val outputs = for module <- processed_modules yield
+        val outputs = for (module <- processed_modules) yield
           val printer = new Printer(print_generic)
           module match {
             case x: ModuleOp =>
