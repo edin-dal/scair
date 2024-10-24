@@ -210,7 +210,7 @@ object Printer {
   def main(args: Array[String]): Unit = {
     // println("Printer")
 
-    val parser = new Parser(Args())
+    val parser = new Parser()
     val printer = new Printer(true)
 
     val input = """"op1"()({
