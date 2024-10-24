@@ -677,14 +677,17 @@ object Parser {
 
 class Parser(val args: Args = Args()) {
 
-  def error(failure: Failure): Nothing =
+  def error(failure: Failure) =
     val traced = failure.extra.traced
     val msg =
       s"Parse error at ${args.input.getOrElse("-")}:${failure.extra.input
           .prettyIndex(failure.index)}:\n\n${failure.extra.trace().aggregateMsg}"
 
-    Console.err.println(msg)
-    sys.exit(1)
+    if args.parsing_diagnostics then msg
+    else {
+      Console.err.println(msg)
+      sys.exit(1)
+    }
 
   implicit var currentScope: Scope = new Scope()
 
