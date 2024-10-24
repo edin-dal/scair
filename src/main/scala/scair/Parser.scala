@@ -2,12 +2,11 @@ package scair
 
 import fastparse._
 import fastparse.internal.Util
-import fastparse.Parsed.TracedFailure
+import fastparse.Parsed.Failure
 
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.annotation.switch
-import scala.util.{Try, Success, Failure}
 
 import IR._
 import AttrParser._
@@ -22,14 +21,6 @@ import Math.pow
 object Parser {
 
   import scala.util.control.NoStackTrace
-
-  class ParseException(msg: String) extends Exception(msg) with NoStackTrace
-
-  def error(input: String, tracedFailure: TracedFailure): Nothing =
-    throw new scair.Parser.ParseException(
-      s"\nParse error at $input:${tracedFailure.input
-          .prettyIndex(tracedFailure.index)}\n${tracedFailure.failure.extra.trace().aggregateMsg}"
-    )
 
   val ctx: MLContext = new MLContext()
 
@@ -684,7 +675,16 @@ object Parser {
 
 }
 
-class Parser {
+class Parser(val args: Args = Args()) {
+
+  def error(failure: Failure): Nothing =
+    val traced = failure.extra.traced
+    val msg =
+      s"Parse error at ${args.input.getOrElse("-")}:${failure.extra.input
+          .prettyIndex(failure.index)}:\n\n${failure.extra.trace().aggregateMsg}"
+
+    Console.err.println(msg)
+    sys.exit(1)
 
   implicit var currentScope: Scope = new Scope()
 
