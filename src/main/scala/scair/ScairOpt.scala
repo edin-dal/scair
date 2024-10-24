@@ -62,45 +62,39 @@ package scair {
           val print_generic = args.print_generic
 
           val passes = args.passes
-
-          val input_chunks = // TODO: more robust separator splitting
+          // TODO: more robust separator splitting
+          val input_chunks =
             if (args.split_input_file) input.mkString.split("\n// -----\n")
             else Array(input.mkString)
 
-          // Parse content
-          val modules: Seq[Operation] =
-            for (chunk <- input_chunks)
-              yield {
-                val parser = new scair.Parser(args)
-                parser.parseThis(
-                  chunk,
-                  pattern = parser.TopLevel(_)
-                ) match {
-                  case fastparse.Parsed.Success(value, _) => value
-                  case failure: fastparse.Parsed.Failure =>
-                    parser.error(failure)
-                }
-              }
+          val output_chunks = for (chunk <- input_chunks) yield {
 
-          // verify parsed content
-          if (!skip_verify) for (module <- modules) yield module.verify()
+            // Parse content
+            val parser = new scair.Parser(args)
+            val input_module = parser.parseThis(
+              chunk,
+              pattern = parser.TopLevel(_)
+            ) match {
+              case fastparse.Parsed.Success(value, _) => value
+              case failure: fastparse.Parsed.Failure =>
+                parser.error(failure)
+            }
 
-          // apply the specified passes
-          val transformCtx = new TransformContext()
-          val processed_modules = for (module <- modules) yield
-            var mod = module
+            // verify parsed content
+            if (!skip_verify) input_module.verify()
+
+            // apply the specified passes
+            val transformCtx = new TransformContext()
+            var module = input_module
             for (name <- passes) {
               transformCtx.getPass(name) match {
                 case Some(pass) =>
-                  mod = pass.transform(module)
+                  module = pass.transform(module)
                   if (!skip_verify) module.verify()
                 case None =>
               }
             }
-            mod
 
-          // Print the parsed module if not errored
-          val outputs = for (module <- processed_modules) yield
             val printer = new Printer(print_generic)
             module match {
               case x: ModuleOp =>
@@ -113,7 +107,10 @@ package scair {
                     "==------------------=="
                 )
             }
-          println(outputs.mkString("\n// -----\n"))
+          }
+
+          // Print the processed modules if not errored
+          println(output_chunks.mkString("\n// -----\n"))
 
         case _ =>
       }
