@@ -8,6 +8,7 @@ import scair.dialects.builtin.ModuleOp
 case class Args(
     val input: Option[String] = None,
     val skip_verify: Boolean = false,
+    val split_input_file: Boolean = false,
     val print_generic: Boolean = false,
     val passes: Seq[String] = Seq()
 )
@@ -30,6 +31,10 @@ object ScairOpt {
           .optional()
           .text("Skip verification")
           .action((_, c) => c.copy(skip_verify = true)),
+        opt[Unit]("split_input_file")
+          .optional()
+          .text("Split input file on `// -----`")
+          .action((_, c) => c.copy(split_input_file = true)),
         opt[Unit]('g', "print_generic")
           .optional()
           .text("Print Strictly in Generic format")
@@ -56,48 +61,58 @@ object ScairOpt {
 
         val passes = args.passes
 
+        val input_chunks = // TODO: more robust separator splitting
+          if (args.split_input_file) input.mkString.split("\n// -----\n")
+          else Array(input.mkString)
+
         // Parse content
-        val parser = new scair.Parser
-        var module: Operation = parser.parseThis(
-          input.mkString,
-          pattern = parser.TopLevel(_)
-        ) match {
-          case fastparse.Parsed.Success(value, _) => value
-          case fastparse.Parsed.Failure(label, index, extra) =>
-            val traced = extra.traced
-            scair.Parser.error(args.input.getOrElse("-"), traced)
-        }
+        val modules: Seq[Operation] =
+          for (chunk <- input_chunks)
+            yield {
+              val parser = new scair.Parser
+              parser.parseThis(
+                chunk,
+                pattern = parser.TopLevel(_)
+              ) match {
+                case fastparse.Parsed.Success(value, _) => value
+                case fastparse.Parsed.Failure(_, _, extra) =>
+                  val traced = extra.traced
+                  scair.Parser.error(args.input.getOrElse("-"), traced)
+              }
+            }
 
         // verify parsed content
-        if (!skip_verify) module.verify()
+        if (!skip_verify) for (module <- modules) yield module.verify()
 
         // apply the specified passes
-        if (passes.length != 0) {
-          val transformCtx = new TransformContext()
+        val transformCtx = new TransformContext()
+        val processed_modules = for (module <- modules) yield
+          var mod = module
           for (name <- passes) {
             transformCtx.getPass(name) match {
               case Some(pass) =>
-                module = pass.transform(module)
+                mod = pass.transform(module)
                 if (!skip_verify) module.verify()
               case None =>
             }
           }
-        }
+          mod
 
         // Print the parsed module if not errored
-        val printer = new Printer(print_generic)
-        val output = module match {
-          case x: ModuleOp =>
-            printer.printOperation(x) // printer.printOperation(x)
-          case _ =>
-            throw new Exception(
-              "Top level module must be the Builtin module of type ModuleOp.\n" +
-                "==------------------==" +
-                s"Check your tranformations: ${passes.mkString(", ")}" +
-                "==------------------=="
-            )
-        }
-        println(output)
+        val outputs = for (module <- processed_modules) yield
+          val printer = new Printer(print_generic)
+          module match {
+            case x: ModuleOp =>
+              printer.printOperation(x) // printer.printOperation(x)
+            case _ =>
+              throw new Exception(
+                "Top level module must be the Builtin module of type ModuleOp.\n" +
+                  "==------------------==" +
+                  s"Check your tranformations: ${passes.mkString(", ")}" +
+                  "==------------------=="
+              )
+          }
+        println(outputs.mkString("\n// -----\n"))
 
       case _ =>
     }
