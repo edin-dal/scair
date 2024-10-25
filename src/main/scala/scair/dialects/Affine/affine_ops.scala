@@ -12,6 +12,7 @@ import scair.dialects.builtin.{
   DenseIntOrFPElementsAttr,
   ArrayAttribute
 }
+import scair.exceptions.VerifyException
 import scair.dialects.irdl._
 import scair.Parser.{whitespace, ValueId, Type, E}
 import scair.AttrParser.{Float32TypeP, Float64TypeP}
@@ -87,7 +88,7 @@ case class ApplyOp(
         new ConstraintContext()
       )
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "Apply Operation must only contain at least 1 operand and exaclty 1 result of 'index' type, " +
           "as well as attribute in a dictionary called 'map' of 'affine_map' type."
       )
@@ -138,7 +139,7 @@ case class ForOp(
         new ConstraintContext()
       )
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "For Operation must only contain operands of type index, and 3 dictionary attributes."
       )
   }
@@ -204,7 +205,7 @@ case class ParallelOp(
         new ConstraintContext()
       )
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "Parallel Operation must only contain operands of type index, and 6 dictionary attributes."
       )
   }
@@ -238,7 +239,7 @@ case class IfOp(
   ) match {
     case (0, 0, 0, 0) =>
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "If Operation must only contain only operands and results."
       )
   }
@@ -280,7 +281,7 @@ case class StoreOp(
         new ConstraintContext()
       )
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "If Operation must only contain only operands and results."
       )
   }
@@ -323,7 +324,7 @@ case class LoadOp(
         new ConstraintContext()
       )
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "If Operation must only contain only operands and results."
       )
   }
@@ -368,7 +369,7 @@ case class MinOp(
       index_check.verify(results(0).typ, new ConstraintContext())
 
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "If Operation must only contain only operands and results."
       )
   }
@@ -402,7 +403,7 @@ case class YieldOp(
   ) match {
     case (0, 0, 0, 0) =>
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "If Operation must only contain only operands and results."
       )
   }

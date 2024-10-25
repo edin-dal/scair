@@ -23,6 +23,7 @@ import scair.Parser.{
   DictionaryAttribute,
   AttributeEntry
 }
+import scair.exceptions.VerifyException
 import scair.AttrParser.{ArrayAttributeP}
 import scair.{
   ListType,
@@ -211,7 +212,7 @@ case class BaseTableOp(
       results(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "BaseTableOp Operation must contain only 1 result."
           )
       }
@@ -220,12 +221,12 @@ case class BaseTableOp(
           x match {
             case _: StringData =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
               )
           }
         case None =>
-          throw new Exception(
+          throw new VerifyException(
             "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
           )
       }
@@ -288,14 +289,14 @@ case class SelectionOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "SelectionOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "SelectionOp Operation must contain only 1 result of type TupleStream."
           )
       }
@@ -360,14 +361,14 @@ case class MapOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "MapOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "MapOp Operation must contain only 1 result of type TupleStream."
           )
       }
@@ -377,12 +378,12 @@ case class MapOp(
           x match {
             case _: ArrayAttribute[_] =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
               )
           }
         case None =>
-          throw new Exception(
+          throw new VerifyException(
             "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
           )
       }
@@ -449,14 +450,14 @@ case class AggregationOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggregationOp Operation must contain only 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggregationOp Operation must contain only 1 result of type TupleStream."
           )
       }
@@ -466,12 +467,12 @@ case class AggregationOp(
           x match {
             case _: ArrayAttribute[_] =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
           )
       }
@@ -481,12 +482,12 @@ case class AggregationOp(
           x match {
             case _: ArrayAttribute[_] =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
           )
       }
@@ -544,19 +545,19 @@ case class CountRowsOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "CountRowsOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
         case _: IntegerType =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "CountRowsOp Operation must contain only 1 result of IntegerType."
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "CountRowsOp Operation must contain only 1 operand and 1 result."
       )
   }
@@ -618,7 +619,7 @@ case class AggrFuncOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggrFuncOp Operation must contain 1 operand of type TupleStream."
           )
       }
@@ -627,12 +628,12 @@ case class AggrFuncOp(
           x match {
             case _: RelAlg_AggrFunc_Case =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
           )
       }
@@ -642,17 +643,17 @@ case class AggrFuncOp(
           x match {
             case _: ColumnRefAttr =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "AggrFuncOp Operation must contain only 1 operand and 1 result."
       )
   }
@@ -714,14 +715,14 @@ case class SortOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "SortOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "SortOp Operation must contain 1 operand of type TupleStream."
           )
       }
@@ -730,17 +731,17 @@ case class SortOp(
           x match {
             case _: ArrayAttribute[_] =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "SortOp Operation must contain only 1 operand and 1 result."
       )
   }
@@ -806,14 +807,14 @@ case class MaterializeOp(
       operands(0).typ match {
         case _: TupleStream =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "MaterializeOp Operation must contain 1 operand of type TupleStream."
           )
       }
       results(0).typ match {
         case _: ResultTable =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "MaterializeOp Operation must contain 1 operand of type ResultOp."
           )
       }
@@ -823,12 +824,12 @@ case class MaterializeOp(
           x match {
             case _: ArrayAttribute[_] =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
           )
       }
@@ -838,17 +839,17 @@ case class MaterializeOp(
           x match {
             case _: ArrayAttribute[_] =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "MaterializeOp Operation must contain only 1 operand and 1 result."
       )
   }

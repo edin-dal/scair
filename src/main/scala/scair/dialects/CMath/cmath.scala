@@ -26,6 +26,7 @@ import scair.{
   Printer,
   Parser
 }
+import scair.exceptions.VerifyException
 
 //////////////////
 // COMPLEX TYPE //
@@ -42,13 +43,15 @@ case class ComplexType(val body: Seq[Attribute])
 
   override def custom_verify(): Unit =
     if (body.length != 1) {
-      throw new Exception("TupleStream Tuple must contain 1 elements only.")
+      throw new VerifyException(
+        "TupleStream Tuple must contain 1 elements only."
+      )
     } else
       body(0) match {
         case Float32Type =>
         case Float64Type =>
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "Complex type must be constructed with either 'f32' or 'f64' attribute."
           )
       }
@@ -116,7 +119,7 @@ case class Norm(
   ) match {
     case (1, 0, 1, 0, 0, 0) =>
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "Norm Operation must only contain 1 operand of 'complex' type, and 1 result of 'f32' or 'f64'."
       )
   }
@@ -188,7 +191,7 @@ case class Mul(
   ) match {
     case (2, 0, 1, 0, 0, 0) =>
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "Mul Operation must only contain 2 operands and 1 result of 'complex' type."
       )
   }

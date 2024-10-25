@@ -1,6 +1,7 @@
 package scair
 import scala.collection.mutable.{Map, LinkedHashMap, ListBuffer}
 import scair.Parser._
+import scair.exceptions.VerifyException
 import fastparse._
 import ListTypeExtensions.updateOperandsAndUses
 

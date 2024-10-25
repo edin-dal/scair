@@ -23,6 +23,7 @@ import scair.{
   Operation,
   AttrParser
 }
+import scair.exceptions.VerifyException
 
 ////////////////
 // ATTRIBUTES //
@@ -135,12 +136,12 @@ case class SetResultOp(
           x match {
             case _: IntegerAttr =>
             case _ =>
-              throw new Exception(
+              throw new VerifyException(
                 "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
               )
           }
         case _ =>
-          throw new Exception(
+          throw new VerifyException(
             "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
           )
       }

@@ -23,6 +23,7 @@ import scair.{
 
 import scair.Parser.whitespace
 import fastparse._
+import scair.exceptions.VerifyException
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -246,14 +247,20 @@ case class DenseArrayAttr(
     typ match {
       case _: IntegerType | _: FloatType => ()
       case _ =>
-        throw new Exception("Element type is not an integer or float type")
+        throw new VerifyException(
+          "Element type is not an integer or float type"
+        )
     }
     if !data.forall(_ match {
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ
-        case _ => throw new Exception("Element type is not an integer or float")
+        case _ =>
+          throw new VerifyException("Element type is not an integer or float")
       })
-    then throw new Exception("Element types do not match the dense array type")
+    then
+      throw new VerifyException(
+        "Element types do not match the dense array type"
+      )
 
   override def toString() = {
 
