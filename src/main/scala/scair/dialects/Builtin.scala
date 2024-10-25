@@ -104,8 +104,10 @@ case class IntegerType(val width: IntData, val sign: Signedness)
 // INTEGER ATTRIBUTE //
 ///////////////////////
 
-case class IntegerAttr(val value: IntData, val typ: IntegerType)
-    extends ParametrizedAttribute("builtin.integer_attr", Seq(value, typ)) {
+case class IntegerAttr(
+    val value: IntData,
+    val typ: IntegerType | IndexType.type
+) extends ParametrizedAttribute("builtin.integer_attr", Seq(value, typ)) {
 
   def this(value: IntData) = this(value, I64)
 
@@ -234,14 +236,14 @@ case class SymbolRefAttr(
     s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
 }
 
-//////////////////////////////
+////////////////////
 // DenseArrayAttr //
-//////////////////////////////
+////////////////////
 
 case class DenseArrayAttr(
     val typ: Attribute,
     val data: Seq[Attribute]
-) extends ParametrizedAttribute("builtin.dense") {
+) extends ParametrizedAttribute("builtin.dense", typ +: data) {
 
   override def custom_verify(): Unit =
     typ match {

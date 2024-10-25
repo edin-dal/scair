@@ -61,12 +61,13 @@ object AttrParser {
 
   def IntegerAttrP[$: P]: P[IntegerAttr] =
     P(
-      (IntDataP ~ (":" ~ IntegerTypeP).?).map((x, y) =>
+      (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)).?).map((x, y) =>
         IntegerAttr(
           x,
           y match {
-            case Some(a) => a
-            case None    => I64
+            case x: Some[IntegerType]    => x.get
+            case y: Some[IndexType.type] => y.get
+            case None                    => I64
           }
         )
       )
