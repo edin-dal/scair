@@ -3,9 +3,11 @@ package scair
 import java.io.File
 import scopt.OParser
 import scala.io.Source
+import scala.util.{Try, Success, Failure}
 import scair.{Printer, Operation}
 import scair.transformations.TransformContext
 import scair.dialects.builtin.ModuleOp
+import scair.dialects.irdl.AnyAttr.verify
 
 case class Args(
     val input: Option[String] = None,
@@ -13,7 +15,8 @@ case class Args(
     val split_input_file: Boolean = false,
     val parsing_diagnostics: Boolean = false,
     val print_generic: Boolean = false,
-    val passes: Seq[String] = Seq()
+    val passes: Seq[String] = Seq(),
+    val verify_diagnostics: Boolean = false
 )
 object ScairOpt {
   def main(args: Array[String]): Unit = {
@@ -51,7 +54,13 @@ object ScairOpt {
         opt[Seq[String]]('p', "passes")
           .optional()
           .text("Specify passes to apply to the IR")
-          .action((x, c) => c.copy(passes = x))
+          .action((x, c) => c.copy(passes = x)),
+        opt[Unit]("verify_diagnostics")
+          .optional()
+          .text(
+            "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
+          )
+          .action((_, c) => c.copy(verify_diagnostics = true))
       )
     }
 
@@ -83,23 +92,36 @@ object ScairOpt {
             pattern = parser.TopLevel(_)
           ) match {
             case fastparse.Parsed.Success(input_module, _) =>
-              // verify parsed content
-              if (!skip_verify) input_module.verify()
-
-              // apply the specified passes
-              val transformCtx = new TransformContext()
-              var module = input_module
-              for (name <- passes) {
-                transformCtx.getPass(name) match {
-                  case Some(pass) =>
-                    module = pass.transform(module)
-                    if (!skip_verify) module.verify()
-                  case None =>
+              val processed_module = {
+                var module = input_module
+                // verify parsed content
+                Try(if (!skip_verify) module.verify()) match {
+                  case Success(_) =>
+                    // apply the specified passes
+                    val transformCtx = new TransformContext()
+                    for (name <- passes) {
+                      transformCtx.getPass(name) match {
+                        case Some(pass) =>
+                          module = pass.transform(module)
+                          if (!skip_verify) module.verify()
+                        case None =>
+                      }
+                    }
+                    module
+                  case Failure(exception) =>
+                    if (args.verify_diagnostics) {
+                      exception.getMessage
+                    } else {
+                      throw exception
+                    }
                 }
+
               }
 
               val printer = new Printer(print_generic)
-              module match {
+              processed_module match {
+                case output: String =>
+                  output
                 case x: ModuleOp =>
                   printer.printOperation(x)
                 case _ =>
