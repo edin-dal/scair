@@ -201,7 +201,6 @@ class ParametrizedBaseAttr[
       s", ${implicitly[ClassTag[CT]].runtimeClass.getName}]"
 }
 
-
 // CONSTRAINTS
 
 // class Operand(name)
