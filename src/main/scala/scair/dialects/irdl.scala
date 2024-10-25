@@ -173,6 +173,51 @@ class VarConstraint(val name: String, val constraint: IRDLConstraint)
   override def toString = s"VarConstraint(${name}, ${constraint})"
 }
 
+// PT => parent type, CT => child type
+class ParametrizedBaseAttr[
+    PT <: ParametrizedAttribute: ClassTag,
+    CT <: Attribute: ClassTag
+]() extends IRDLConstraint {
+
+  val base_attr = BaseAttr[CT]()
+
+  override def verify(
+      that_attr: Attribute,
+      constraint_ctx: ConstraintContext
+  ): Unit = {
+
+    that_attr match {
+      case x: PT => for (a <- x.parameters) base_attr.verify(a, constraint_ctx)
+      case _ =>
+        val className = implicitly[ClassTag[PT]].runtimeClass.getName
+        val errstr =
+          s"${that_attr.name}'s class does not equal ${className}\n"
+        throw new Exception(errstr)
+    }
+  }
+
+  override def toString =
+    s"ParametrizedBaseAttr[${implicitly[ClassTag[PT]].runtimeClass.getName}" +
+      s", ${implicitly[ClassTag[CT]].runtimeClass.getName}]"
+}
+
+// class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
+
+//   override def verify(
+//       that_attr: Attribute,
+//       constraint_ctx: ConstraintContext
+//   ): Unit = {
+
+//     that_attr match {
+//       case _: T =>
+//       case _ =>
+//         val className = implicitly[ClassTag[T]].runtimeClass.getName
+//         val errstr =
+//           s"${that_attr.name}'s class does not equal ${className}\n"
+//         throw new Exception(errstr)
+//     }
+//   }
+
 // CONSTRAINTS
 
 // class Operand(name)
