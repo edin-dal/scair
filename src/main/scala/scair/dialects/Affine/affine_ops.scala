@@ -56,6 +56,9 @@ import scair.{
 \*≡==----=≡=----==≡*/
 
 val array_check = ParametrizedBaseAttr[DenseArrayAttr, IntegerAttr]()
+val index_check = BaseAttr[IndexType.type]()
+val map_check = BaseAttr[AffineMapAttr]()
+val dense_check = BaseAttr[DenseIntOrFPElementsAttr]()
 
 case class SegmentedOpConstraint(
     op_name: String,
@@ -115,9 +118,6 @@ case class ApplyOp(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "affine.apply") {
 
-  val index_check = BaseAttr[IndexType.type]()
-  val map_check = BaseAttr[AffineMapAttr]()
-
   override def custom_verify(): Unit = (
     successors.length,
     results.length,
@@ -160,8 +160,6 @@ case class ForOp(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "affine.for") {
 
-  val index_check = BaseAttr[IndexType.type]()
-  val map_check = BaseAttr[AffineMapAttr]()
   val seg_check = SegmentedOpConstraint(
     name,
     operands,
@@ -218,10 +216,7 @@ case class ParallelOp(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "affine.parallel") {
 
-  val index_check = BaseAttr[IndexType.type]()
-  val map_check = BaseAttr[AffineMapAttr]()
-  val array_check = BaseAttr[ArrayAttribute[Attribute]]()
-  val dense_check = BaseAttr[DenseIntOrFPElementsAttr]()
+  val array1_check = BaseAttr[ArrayAttribute[Attribute]]()
 
   override def custom_verify(): Unit = (
     successors.length,
@@ -231,7 +226,7 @@ case class ParallelOp(
   ) match {
     case (0, 1, 0, 6) =>
       for (x <- operands) index_check.verify(x.typ, new ConstraintContext())
-      array_check.verify(
+      array1_check.verify(
         dictionaryAttributes.checkandget("reductions", name, "array_attribute"),
         new ConstraintContext()
       )
@@ -253,7 +248,7 @@ case class ParallelOp(
           .checkandget("upperBoundGroups", name, "dense"),
         new ConstraintContext()
       )
-      array_check.verify(
+      array1_check.verify(
         dictionaryAttributes.checkandget("steps", name, "index"),
         new ConstraintContext()
       )
@@ -320,8 +315,6 @@ case class StoreOp(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "affine.store") {
 
-  val map_check = BaseAttr[AffineMapAttr]()
-
   override def custom_verify(): Unit = (
     successors.length,
     regions.length,
@@ -362,8 +355,6 @@ case class LoadOp(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "affine.load") {
 
-  val map_check = BaseAttr[AffineMapAttr]()
-
   override def custom_verify(): Unit = (
     successors.length,
     regions.length,
@@ -402,9 +393,6 @@ case class MinOp(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "affine.min") {
-
-  val map_check = BaseAttr[AffineMapAttr]()
-  val index_check = BaseAttr[IndexType.type]()
 
   override def custom_verify(): Unit = (
     successors.length,
