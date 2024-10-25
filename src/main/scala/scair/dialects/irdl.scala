@@ -201,22 +201,6 @@ class ParametrizedBaseAttr[
       s", ${implicitly[ClassTag[CT]].runtimeClass.getName}]"
 }
 
-// class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
-
-//   override def verify(
-//       that_attr: Attribute,
-//       constraint_ctx: ConstraintContext
-//   ): Unit = {
-
-//     that_attr match {
-//       case _: T =>
-//       case _ =>
-//         val className = implicitly[ClassTag[T]].runtimeClass.getName
-//         val errstr =
-//           s"${that_attr.name}'s class does not equal ${className}\n"
-//         throw new Exception(errstr)
-//     }
-//   }
 
 // CONSTRAINTS
 
