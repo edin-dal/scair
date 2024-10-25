@@ -25,6 +25,7 @@ import scair.{
   Operation,
   AttrParser
 }
+import scair.exceptions.VerifyException
 
 // ==---== //
 //  Enums
@@ -107,12 +108,14 @@ case class DB_CharType(val typ: Seq[Attribute])
 
   override def custom_verify(): Unit = {
     if (typ.length != 1) {
-      throw new Exception("TupleStream Tuple must contain 1 elements only.")
+      throw new VerifyException(
+        "TupleStream Tuple must contain 1 elements only."
+      )
     } else
       typ(0) match {
         case _: IntData =>
         case _ =>
-          throw new Exception("CharType type must be IntData")
+          throw new VerifyException("CharType type must be IntData")
       }
   }
 }
@@ -154,12 +157,12 @@ case class DB_IntervalType(val unit: Attribute)
 
   // override def custom_verify(): Unit = {
   //   if (typ.length != 1) {
-  //     throw new Exception("TupleStream Tuple must contain 1 elements only.")
+  //     throw new VerifyException("TupleStream Tuple must contain 1 elements only.")
   //   } else
   //     typ(0) match {
   //       case _: IntData =>
   //       case _ =>
-  //         throw new Exception("CharType type must be IntData")
+  //         throw new VerifyException("CharType type must be IntData")
   //     }
   // }
 }
@@ -182,17 +185,23 @@ case class DB_DecimalType(val typ: Seq[Attribute])
 
   override def custom_verify(): Unit = {
     if (typ.length != 2) {
-      throw new Exception("TupleStream Tuple must contain exactly 2 elements.")
+      throw new VerifyException(
+        "TupleStream Tuple must contain exactly 2 elements."
+      )
     } else {
       typ(0) match {
         case _: IntData =>
         case _ =>
-          throw new Exception("DB_DecimalType type must be (IntData, IntData)")
+          throw new VerifyException(
+            "DB_DecimalType type must be (IntData, IntData)"
+          )
       }
       typ(1) match {
         case _: IntData =>
         case _ =>
-          throw new Exception("DB_DecimalType type must be (IntData, IntData)")
+          throw new VerifyException(
+            "DB_DecimalType type must be (IntData, IntData)"
+          )
       }
     }
   }
@@ -216,12 +225,14 @@ case class DB_StringType(val typ: Seq[Attribute])
 
   override def custom_verify(): Unit = {
     if (typ.length > 1) {
-      throw new Exception("TupleStream Tuple must contain at most 1 element.")
+      throw new VerifyException(
+        "TupleStream Tuple must contain at most 1 element."
+      )
     } else if (typ.length == 1)
       typ(0) match {
         case _: StringData =>
         case _ =>
-          throw new Exception("DB_DecimalType type must be StringData")
+          throw new VerifyException("DB_DecimalType type must be StringData")
       }
   }
 }
@@ -280,7 +291,7 @@ case class DB_ConstantOp(
   ) match {
     case (0, 0, 1, 0, 0) =>
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
   }
@@ -343,12 +354,12 @@ case class DB_CmpOp(
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
-          throw new Exception(
+          throw new VerifyException(
             "In order to be compared, operands' types must match!"
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "DB_CmpOp Operation must contain only 2 operands."
       )
   }
@@ -467,12 +478,12 @@ case class DB_MulOp(
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
-          throw new Exception(
+          throw new VerifyException(
             "In order to be multiplied, operands' types must match!"
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "DB_MulOp Operation must contain only 2 operands."
       )
   }
@@ -594,12 +605,12 @@ case class DB_DivOp(
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
-          throw new Exception(
+          throw new VerifyException(
             "In order to be divided, operands' types must match!"
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "DB_DivOp Operation must contain only 2 operands."
       )
   }
@@ -661,12 +672,12 @@ case class DB_AddOp(
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
-          throw new Exception(
+          throw new VerifyException(
             "In order to be added, operands' types must match!"
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "DB_AddOp Operation must contain only 2 operands."
       )
   }
@@ -728,12 +739,12 @@ case class DB_SubOp(
       (operands(0).typ == operands(1).typ) match {
         case true =>
         case false =>
-          throw new Exception(
+          throw new VerifyException(
             "In order to carry out substitution, operands' types must match!"
           )
       }
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "DB_SubOp Operation must contain only 2 operands."
       )
   }
@@ -792,7 +803,7 @@ case class CastOp(
   ) match {
     case (1, 0, 1, 0, 0) =>
     case _ =>
-      throw new Exception(
+      throw new VerifyException(
         "CastOp Operation must contain only 1 operand and result."
       )
   }

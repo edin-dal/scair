@@ -3,6 +3,7 @@ package scair.dialects.irdl
 import scala.reflect.ClassTag
 
 import scair.{Attribute, Operation, Value, ParametrizedAttribute, DictType}
+import scair.exceptions.VerifyException
 
 type Operand[T <: Attribute] = Value[T]
 type OpResult[T <: Attribute] = Value[T]
@@ -54,7 +55,7 @@ class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
           this_attr.toString + " and " + that_attr.toString
-      throw new Exception(errstr)
+      throw new VerifyException(errstr)
     }
   }
 
@@ -74,7 +75,7 @@ class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
         val className = implicitly[ClassTag[T]].runtimeClass.getName
         val errstr =
           s"${that_attr.name}'s class does not equal ${className}\n"
-        throw new Exception(errstr)
+        throw new VerifyException(errstr)
     }
   }
 
@@ -105,7 +106,7 @@ class AnyOf(val these_attrs: Seq[Attribute | IRDLConstraint])
     ) {
       val errstr =
         s"${that_attr.name} does not match any of ${these_attrs}\n"
-      throw new Exception(errstr)
+      throw new VerifyException(errstr)
     }
   }
 
@@ -129,13 +130,13 @@ class ParametricAttr[T <: Attribute: ClassTag](
                 (for ((i, j) <- x.parameters zip params)
                   yield i same_as j).foldLeft(true)((i, j) => i && j))
             ) {
-              throw new Exception(
+              throw new VerifyException(
                 s"Parameters of ${that_attr.name} do not match the constrained" +
                   s" parameters ${params}.\n"
               )
             }
           case _ =>
-            throw new Exception(
+            throw new VerifyException(
               "Attribute being verified must be of type ParametrizedAttribute.\n"
             )
         }
@@ -143,7 +144,7 @@ class ParametricAttr[T <: Attribute: ClassTag](
         val className = implicitly[ClassTag[T]].runtimeClass.getName
         val errstr =
           s"${that_attr.name}'s class does not equal ${className}.\n"
-        throw new Exception(errstr)
+        throw new VerifyException(errstr)
     }
 
   override def toString =
@@ -163,7 +164,7 @@ class VarConstraint(val name: String, val constraint: IRDLConstraint)
     var_consts.contains(name) match {
       case true =>
         if (!(var_consts.apply(name) same_as that_attr)) {
-          throw new Exception("oh mah gawd")
+          throw new VerifyException("oh mah gawd")
         }
       case false =>
         constraint.verify(that_attr, constraint_ctx)
