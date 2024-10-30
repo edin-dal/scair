@@ -70,5 +70,5 @@ jobs:
       run: sbt stage
 
     - name: Filechecks
-      run: eval $(coursier install --env)
+      run: eval $(cs install --env)
            lit tests/filecheck -v
