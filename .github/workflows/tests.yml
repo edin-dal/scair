@@ -49,7 +49,7 @@ jobs:
 
     - name: Update Incremental Build Cache
       if: always()
-      uses: actions/cache/restore@v4
+      uses: actions/cache/save@v4
       with:
         path: "**/target"
         key: sbt-incremental
@@ -89,7 +89,7 @@ jobs:
 
     - name: Update Incremental Build Cache
       if: always()
-      uses: actions/cache/restore@v4
+      uses: actions/cache/save@v4
       with:
         path: "**/target"
         key: sbt-incremental
