@@ -1,4 +1,4 @@
-package clair
+package scair.clair
 
 import scala.collection.mutable
 
@@ -46,24 +46,24 @@ case class RegularType(val dialect: String, override val id: String)
 ||    CONSTRAINTS    ||
 \*≡==----==≡==----==≡*/
 
-abstract class Constraint {
+abstract class ConstraintDef {
   def print(indent: Int): String
   def get_imports(): String
 }
 
-case class Equal(val typ: Type) extends Constraint {
+case class Equal(val typ: Type) extends ConstraintDef {
   override def print(indent: Int): String =
     s"val ${typ.id.toLowerCase()}_check = EqualAttr(${typ.id})\n"
 
   override def get_imports(): String = typ.get_import()
 }
-case class Base(val typ: Type) extends Constraint {
+case class Base(val typ: Type) extends ConstraintDef {
   override def print(indent: Int): String =
     s"val ${typ.id.toLowerCase()}_check = BaseAttr[${typ.id}]()\n"
 
   override def get_imports(): String = typ.get_import()
 }
-case class Any(val typ: Seq[Type]) extends Constraint {
+case class Any(val typ: Seq[Type]) extends ConstraintDef {
   override def print(indent: Int): String =
     s"val ${(for (x <- typ) yield x.id).mkString("_").toLowerCase()}_check = AnyOf(Seq(${(for (x <- typ)
         yield x.id).mkString(", ")}))\n"
@@ -104,17 +104,22 @@ case class Any(val typ: Seq[Type]) extends Constraint {
 
 abstract class OpInput {}
 
-case class Operand(val id: String, val const: Constraint) extends OpInput {}
-case class Result(val id: String, val const: Constraint) extends OpInput {}
-case class Region(val no: Int) extends OpInput {}
-case class Successor(val no: Int) extends OpInput {}
-case class OpProperty(val id: String, val const: Constraint) extends OpInput {}
-case class OpAttribute(val id: String, val const: Constraint) extends OpInput {}
 
-case class Dialect(
+case class OperandDef(val id: String, val const: ConstraintDef)
+    extends OpInput {}
+case class ResultDef(val id: String, val const: ConstraintDef)
+    extends OpInput {}
+case class RegionDef(val no: Int) extends OpInput {}
+case class SuccessorDef(val no: Int) extends OpInput {}
+case class OpPropertyDef(val id: String, val const: ConstraintDef)
+    extends OpInput {}
+case class OpAttributeDef(val id: String, val const: ConstraintDef)
+    extends OpInput {}
+
+case class DialectDef(
     val name: String,
-    val operations: ListType[Operation] = ListType(),
-    val attributes: ListType[Attribute] = ListType()
+    val operations: ListType[OperationDef] = ListType(),
+    val attributes: ListType[AttributeDef] = ListType()
 ) {
   def print(indent: Int): String = ""
 }
@@ -123,15 +128,16 @@ case class Dialect(
 ||   IR ELEMENTS   ||
 \*≡==----=≡=----==≡*/
 
-case class Operation(
+
+case class OperationDef(
     val name: String,
     val className: String,
-    val operands: Seq[Operand],
-    val results: Seq[Result],
-    val region_no: Region,
-    val successor_no: Successor,
-    val OpProperty: Seq[OpProperty],
-    val OpAttribute: Seq[OpAttribute]
+    val operands: Seq[OperandDef],
+    val results: Seq[ResultDef],
+    val region_no: RegionDef,
+    val successor_no: SuccessorDef,
+    val OpProperty: Seq[OpPropertyDef],
+    val OpAttribute: Seq[OpAttributeDef]
 ) {
 
   def get_imports(): Set[String] = {
@@ -192,10 +198,10 @@ case class Operation(
   }
 }
 
-case class Attribute(
+case class AttributeDef(
     val name: String,
     val className: String,
-    val operands: Seq[Operand],
+    val operands: Seq[OperandDef],
     val typee: Int
 ) {
   def print(indent: Int): String = ""

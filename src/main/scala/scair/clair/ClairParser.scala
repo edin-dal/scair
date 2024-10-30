@@ -1,4 +1,4 @@
-package clair
+package scair.clair
 
 import fastparse._
 import fastparse.internal.Util
@@ -69,7 +69,7 @@ object ClairParser {
 
   val typeCTX: DictType[String, RegularType] = DictType()
   // val anonCTX: DictType[String, AnonType] = DictType()
-  val dialectCTX: DictType[String, Dialect] = DictType()
+  val dialectCTX: DictType[String, DialectDef] = DictType()
 
   def typeInCTX(name: String): RegularType = {
     if (!typeCTX.contains(name)) {
@@ -150,7 +150,7 @@ object ClairParser {
   def DecimalLiteral[$: P] =
     P(Digit.rep(1).!).map((literal: String) => parseInt(literal))
 
-  def ConstraintP[$: P](sign: String): P[(String, Constraint)] =
+  def ConstraintP[$: P](sign: String): P[(String, ConstraintDef)] =
     P(
       (BareId ~ ":" ~ TypeParser ~ ("|" ~ TypeParser).rep(0)).map((x, y, z) =>
         (x, Any(z :+ y))
@@ -162,10 +162,10 @@ object ClairParser {
         // )
     )
 
-  def ValueDef[$: P]: P[(String, Constraint)] =
+  def ValueDef[$: P]: P[(String, ConstraintDef)] =
     P(ConstraintP(":"))
 
-  def DictDef[$: P]: P[(String, Constraint)] =
+  def DictDef[$: P]: P[(String, ConstraintDef)] =
     P(ConstraintP("="))
 
   def TypeParser[$: P]: P[Type] =
@@ -183,19 +183,28 @@ object ClairParser {
   // Operation ::=
   //   OperationInput* "-"* identifier "->" identifier "." identifier
 
-  def OperationParser[$: P]: P[Operation] =
+  def OperationParser[$: P]: P[OperationDef] =
     P(
       OperationInputParser ~
         "-".rep(1) ~ BareId ~
         "->" ~ BareId ~~ "." ~~ DialectRefName
     ).map((x) =>
       val op =
-        Operation(s"${x._8}.${x._9}", x._7, x._1, x._2, x._3, x._4, x._5, x._6)
+        OperationDef(
+          s"${x._8}.${x._9}",
+          x._7,
+          x._1,
+          x._2,
+          x._3,
+          x._4,
+          x._5,
+          x._6
+        )
 
       if (dialectCTX.contains(x._8)) {
         dialectCTX(x._8).operations += op
       } else {
-        dialectCTX(x._8) = Dialect(
+        dialectCTX(x._8) = DialectDef(
           name = x._8,
           operations = ListType(op)
         )
@@ -220,18 +229,18 @@ object ClairParser {
   // TypeInput       ::= "type"
   // DataInput       ::= "data"
 
-  def AttributeParser[$: P]: P[Attribute] =
+  def AttributeParser[$: P]: P[AttributeDef] =
     P(
       AttributeInputParser ~
         "-".rep(1) ~ BareId ~
         "->" ~ BareId ~~ "." ~~ DialectRefName
     ).map((x) =>
-      val attr = Attribute(s"${x._5}.${x._6}", x._4, x._3, x._1 + x._2)
+      val attr = AttributeDef(s"${x._5}.${x._6}", x._4, x._3, x._1 + x._2)
 
       if (dialectCTX.contains(x._5)) {
         dialectCTX(x._5).attributes += attr
       } else {
-        dialectCTX(x._5) = Dialect(
+        dialectCTX(x._5) = DialectDef(
           name = x._5,
           attributes = ListType(attr)
         )
@@ -240,7 +249,7 @@ object ClairParser {
       attr
     )
 
-  def AttributeInputParser[$: P]: P[(Int, Int, Seq[Operand])] =
+  def AttributeInputParser[$: P]: P[(Int, Int, Seq[OperandDef])] =
     P(
       TypeInput.?.map(_.getOrElse(0)) ~
         DataInput.?.map(_.getOrElse(0)) ~
@@ -266,54 +275,54 @@ object ClairParser {
 
   def OperationInputParser[$: P]: P[
     (
-        Seq[Operand],
-        Seq[Result],
-        Region,
-        Successor,
-        Seq[OpProperty],
-        Seq[OpAttribute]
+        Seq[OperandDef],
+        Seq[ResultDef],
+        RegionDef,
+        SuccessorDef,
+        Seq[OpPropertyDef],
+        Seq[OpAttributeDef]
     )
   ] =
     P(
       OperandsInput.rep(min = 0, max = 1).map(_.flatten) ~
         ResultsInput.rep(min = 0, max = 1).map(_.flatten) ~
-        RegionsInput.?.map(_.getOrElse(Region(0))) ~
-        SuccessorsInput.?.map(_.getOrElse(Successor(0))) ~
+        RegionsInput.?.map(_.getOrElse(RegionDef(0))) ~
+        SuccessorsInput.?.map(_.getOrElse(SuccessorDef(0))) ~
         OpPropertiesInput.rep(min = 0, max = 1).map(_.flatten) ~
         OpAttributesInput.rep(min = 0, max = 1).map(_.flatten)
     )
 
-  def OperandsInput[$: P]: P[Seq[Operand]] =
+  def OperandsInput[$: P]: P[Seq[OperandDef]] =
     P(
       "->" ~ "operands" ~ "[" ~ ValueDef
-        .map(Operand(_, _))
+        .map(OperandDef(_, _))
         .rep(1, sep = ",") ~ "]"
     )
 
-  def ResultsInput[$: P]: P[Seq[Result]] =
+  def ResultsInput[$: P]: P[Seq[ResultDef]] =
     P(
       "->" ~ "results" ~ "[" ~ ValueDef
-        .map(Result(_, _))
+        .map(ResultDef(_, _))
         .rep(1, sep = ",") ~ "]"
     )
 
-  def RegionsInput[$: P]: P[Region] =
-    P("->" ~ "regions" ~ "[" ~ DecimalLiteral.map(Region(_)) ~ "]")
+  def RegionsInput[$: P]: P[RegionDef] =
+    P("->" ~ "regions" ~ "[" ~ DecimalLiteral.map(RegionDef(_)) ~ "]")
 
-  def SuccessorsInput[$: P]: P[Successor] =
-    P("->" ~ "successors" ~ "[" ~ DecimalLiteral.map(Successor(_)) ~ "]")
+  def SuccessorsInput[$: P]: P[SuccessorDef] =
+    P("->" ~ "successors" ~ "[" ~ DecimalLiteral.map(SuccessorDef(_)) ~ "]")
 
-  def OpPropertiesInput[$: P]: P[Seq[OpProperty]] =
+  def OpPropertiesInput[$: P]: P[Seq[OpPropertyDef]] =
     P(
       "->" ~ "properties" ~ "[" ~ DictDef
-        .map(OpProperty(_, _))
+        .map(OpPropertyDef(_, _))
         .rep(1, sep = ",") ~ "]"
     )
 
-  def OpAttributesInput[$: P]: P[Seq[OpAttribute]] =
+  def OpAttributesInput[$: P]: P[Seq[OpAttributeDef]] =
     P(
       "->" ~ "attributes" ~ "[" ~ DictDef
-        .map(OpAttribute(_, _))
+        .map(OpAttributeDef(_, _))
         .rep(1, sep = ",") ~ "]"
     )
 

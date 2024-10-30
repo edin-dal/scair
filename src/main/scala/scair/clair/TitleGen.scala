@@ -1,4 +1,6 @@
-package clair
+package scair.clair
+
+import scair.clair.ListType
 
 // ████████╗ ██╗ ████████╗ ██╗░░░░░ ███████╗
 // ╚══██╔══╝ ██║ ╚══██╔══╝ ██║░░░░░ ██╔════╝

@@ -1,4 +1,4 @@
-package clair
+package scair.clair
 
 import java.io.File
 import scopt.OParser
@@ -35,8 +35,8 @@ object ClairRun {
         }
 
         // Parse content
-        val parser = clair.ClairParser
-        var module: DictType[String, Dialect] = parser.parseThis(
+        val parser = scair.clair.ClairParser
+        var module: DictType[String, DialectDef] = parser.parseThis(
           input.mkString,
           pattern = parser.EntryPoint(_)
         ) match {
