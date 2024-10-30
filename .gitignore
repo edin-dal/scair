@@ -31,5 +31,4 @@ project/plugins/project/
 .bloop/
 project/.bloop
 
-# maks
-src/main/scala/scair/TryingStuffOut.scala
+tests/filecheck/.scala-build/
