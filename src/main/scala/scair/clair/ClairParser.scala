@@ -105,7 +105,7 @@ object ClairParser {
   ||   ENTRY POINT   ||
   \*≡==----=≡=----==≡*/
 
-  def EntryPoint[$: P]: P[DictType[String, Dialect]] =
+  def EntryPoint[$: P]: P[DictType[String, DialectDef]] =
     P(Start ~ TypeDef.? ~ AttributeParser.? ~ OperationParser.? ~ End).map(_ =>
       dialectCTX
     )
