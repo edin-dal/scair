@@ -39,7 +39,7 @@ jobs:
         path: "**/target"
         key: sbt-incremental-tests-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          sbt-incremental-tests
+          sbt-incremental-tests-
 
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
@@ -74,7 +74,7 @@ jobs:
         path: "**/target"
         key: sbt-incremental-stage-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          sbt-incremental-tests
+          sbt-incremental-stage-
 
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
