@@ -710,10 +710,6 @@ class Parser(val args: Args = Args()) {
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
   // shortened definition TODO: finish...
 
-  // TODO - E(()) - weird bug happens without it
-  // it fails parsing at OpResultsList for some reason eg:
-  // "%0 = "test.op"() : () -> (i32)"
-
   def TopLevel[$: P]: P[Operation] = P(
     Start ~ (ModuleOp.parse(this) | Operations(0)) ~ E({
       Scope.checkValueWaitlist()
