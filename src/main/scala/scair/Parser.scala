@@ -715,7 +715,7 @@ class Parser(val args: Args = Args()) {
   // "%0 = "test.op"() : () -> (i32)"
 
   def TopLevel[$: P]: P[Operation] = P(
-    E(()) ~ (ModuleOp.parse(this) | Operations(0)) ~ E({
+    Start ~ (ModuleOp.parse(this) | Operations(0)) ~ E({
       Scope.checkValueWaitlist()
       Scope.checkBlockWaitlist()
     }) ~ End
