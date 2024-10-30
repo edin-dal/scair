@@ -104,7 +104,6 @@ case class Any(val typ: Seq[Type]) extends ConstraintDef {
 
 abstract class OpInput {}
 
-
 case class OperandDef(val id: String, val const: ConstraintDef)
     extends OpInput {}
 case class ResultDef(val id: String, val const: ConstraintDef)
@@ -127,7 +126,6 @@ case class DialectDef(
 /*≡≡=---=≡≡≡=---=≡≡*\
 ||   IR ELEMENTS   ||
 \*≡==----=≡=----==≡*/
-
 
 case class OperationDef(
     val name: String,
