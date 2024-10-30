@@ -15,6 +15,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Cache Incremental compilation
+      uses: actions/cache@v4
+      with:
+        path: "**/target/"
+        key: sbt-incremental
 
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
@@ -31,6 +37,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+
+    - name: Cache Incremental compilation
+      uses: actions/cache@v4
+      with:
+        path: "**/target/"
+        key: sbt-incremental
 
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
@@ -60,6 +73,12 @@ jobs:
         pip install lit filecheck
 
     - uses: actions/checkout@v4
+
+    - name: Cache Incremental compilation
+      uses: actions/cache@v4
+      with:
+        path: "**/target/"
+        key: sbt-incremental
 
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
