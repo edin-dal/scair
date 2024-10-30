@@ -36,7 +36,7 @@ object ClairRun {
 
         // Parse content
         val parser = scair.clair.ClairParser
-        var module: DictType[String, Dialect] = parser.parseThis(
+        var module: DictType[String, DialectDef] = parser.parseThis(
           input.mkString,
           pattern = parser.EntryPoint(_)
         ) match {
