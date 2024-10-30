@@ -11,4 +11,4 @@
 ----------------- NameOp
 -> dialect.name2
 
-// CHECK: HashMap(dialect -> Dialect(dialect,ListBuffer(Operation(dialect.name2,NameOp,List(Operand(map,Any(List(RegularType(dialect,name2)))), Operand(map2,Equal(RegularType(dialect,name2))), Operand(map3,Any(List(RegularType(dialect,name2), RegularType(dialect,name1))))),List(),Region(0),Successor(0),List(),List())),ListBuffer(Attribute(dialect.name1,NameAttr,List(),1))))
+// CHECK: HashMap(dialect -> DialectDef(dialect,ListBuffer(OperationDef(dialect.name2,NameOp,List(OperandDef(map,Any(List(RegularType(dialect,name2)))), OperandDef(map2,Equal(RegularType(dialect,name2))), OperandDef(map3,Any(List(RegularType(dialect,name2), RegularType(dialect,name1))))),List(),RegionDef(0),SuccessorDef(0),List(),List())),ListBuffer(AttributeDef(dialect.name1,NameAttr,List(),1))))
