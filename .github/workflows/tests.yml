@@ -43,8 +43,6 @@ jobs:
     - uses: coursier/setup-action@v1
       with:
         apps: scala:3.3.1 sbt
-    - name: Setup coursier environment
-      run: eval $(coursier install --env)
 
     - name: Run tests
       run: sbt test
