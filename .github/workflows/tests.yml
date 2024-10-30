@@ -81,5 +81,4 @@ jobs:
       run: sbt stage
 
     - name: Filechecks
-      run: eval $(cs install --env);
-           lit tests/filecheck -v
+      run: lit tests/filecheck -v
