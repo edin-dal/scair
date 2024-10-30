@@ -19,8 +19,8 @@ jobs:
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
       with:
-        apps: scala3:3.3.1 sbt
-        
+        apps: scala3:3.3.1 scala3-repl:3.3.1 sbt
+
     - name: Run scalafmt
       run: sbt scalafmtCheckAll
 
@@ -35,7 +35,7 @@ jobs:
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
       with:
-        apps: scala3:3.3.1 sbt
+        apps: scala3:3.3.1 scala3-repl:3.3.1 sbt
 
     - name: Run tests
       run: sbt test
@@ -62,8 +62,8 @@ jobs:
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
       with:
-        apps: scala3:3.3.1 sbt
-
+        apps: scala3:3.3.1 scala3-repl:3.3.1 
+        
     - name: Package? scair-opt
       run: sbt stage
 
