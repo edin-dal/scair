@@ -33,10 +33,10 @@ jobs:
     - uses: actions/checkout@v4
 
 
-    - name: Cache Incremental compilation
-      uses: actions/cache@v4
+    - name: Restore Incremental Build Cache
+      uses: actions/cache/restore@v4
       with:
-        path: "**/target/"
+        path: "**/target"
         key: sbt-incremental
 
     - uses: coursier/cache-action@v6
@@ -46,6 +46,13 @@ jobs:
 
     - name: Run tests
       run: sbt test
+
+    - name: Update Incremental Build Cache
+      if: always()
+      uses: actions/cache/restore@v4
+      with:
+        path: "**/target"
+        key: sbt-incremental
 
   filechecks:
     name: "Filechecks"
@@ -66,10 +73,10 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: Cache Incremental compilation
-      uses: actions/cache@v4
+    - name: Restore Incremental Build Cache
+      uses: actions/cache/restore@v4
       with:
-        path: "**/target/"
+        path: "**/target"
         key: sbt-incremental
 
     - uses: coursier/cache-action@v6
@@ -79,6 +86,13 @@ jobs:
         
     - name: Package? scair-opt
       run: sbt stage
+
+    - name: Update Incremental Build Cache
+      if: always()
+      uses: actions/cache/restore@v4
+      with:
+        path: "**/target"
+        key: sbt-incremental
 
     - name: Filechecks
       run: lit tests/filecheck -v
