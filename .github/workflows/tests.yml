@@ -19,7 +19,7 @@ jobs:
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
       with:
-        apps: scala3:3.3.1 scala3-repl:3.3.1 sbt
+        apps: scala:3.3.1 sbt
 
     - name: Run scalafmt
       run: sbt scalafmtCheckAll
@@ -35,7 +35,7 @@ jobs:
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
       with:
-        apps: scala3:3.3.1 scala3-repl:3.3.1 sbt
+        apps: scala:3.3.1 sbt
     - name: Setup coursier environment
       run: eval $(coursier install --env)
 
@@ -64,7 +64,7 @@ jobs:
     - uses: coursier/cache-action@v6
     - uses: coursier/setup-action@v1
       with:
-        apps: scala3:3.3.1 scala3-repl:3.3.1 
+        apps: scala:3.3.1 sbt
         
     - name: Package? scair-opt
       run: sbt stage
