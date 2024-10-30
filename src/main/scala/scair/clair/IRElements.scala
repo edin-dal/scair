@@ -111,7 +111,7 @@ case class Successor(val no: Int) extends OpInput {}
 case class OpProperty(val id: String, val const: Constraint) extends OpInput {}
 case class OpAttribute(val id: String, val const: Constraint) extends OpInput {}
 
-class Dialect(
+case class Dialect(
     val name: String,
     val operations: ListType[Operation] = ListType(),
     val attributes: ListType[Attribute] = ListType()
@@ -123,7 +123,7 @@ class Dialect(
 ||   IR ELEMENTS   ||
 \*≡==----=≡=----==≡*/
 
-class Operation(
+case class Operation(
     val name: String,
     val className: String,
     val operands: Seq[Operand],
@@ -192,7 +192,7 @@ class Operation(
   }
 }
 
-class Attribute(
+case class Attribute(
     val name: String,
     val className: String,
     val operands: Seq[Operand],

@@ -40,13 +40,12 @@ object ClairRun {
           input.mkString,
           pattern = parser.EntryPoint(_)
         ) match {
-          case fastparse.Parsed.Success(x, _) => x
+          case fastparse.Parsed.Success(x, _) =>
+            println(x)
+            x
           case fastparse.Parsed.Failure(_, _, extra) =>
             sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
         }
-
-        println("successful")
-
       case _ =>
     }
   }

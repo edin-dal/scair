@@ -377,7 +377,8 @@ object ClairParser {
     // println("----Operations----")
     // println(parse(input5, OperationParser(_)))
     println("----WholeThing----")
-    println(parse(input6, EntryPoint(_)))
+    val Parsed.Success(value, g) = parse(input6, EntryPoint(_))
+    println(value("dialect").toString)
     println(typeCTX)
   }
 
