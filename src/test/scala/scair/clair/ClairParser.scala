@@ -20,20 +20,26 @@ class ClairParserTests
     with BeforeAndAfter
     with TableDrivenPropertyChecks {
 
-  def xor[A](parsed: Parsed[Any], result: String): String =
+  def xor[A](parsed: Try[Parsed[Any]], result: String): String =
     parsed match {
-      case Parsed.Success(expected, x) =>
-        if (result == "Succeed") then "pass" else expected.toString
-      case Parsed.Failure(msg, _, _) =>
-        if (result == "Fail") then "pass" else msg
+      case Success(v) =>
+        v match {
+          case Parsed.Success(expected, x) =>
+            if (result == "Succeed") then "pass" else expected.toString
+          case Parsed.Failure(msg, _, _) =>
+            if (result == "Fail") then "pass" else msg
+        }
+      case Failure(e) => if (result == "Except") then "pass" else throw e
     }
 
   var parser: ClairParser = new ClairParser
   var ctx: ParseCTX = new ParseCTX
+  var lctx: LocalCTX = new LocalCTX
 
   before {
     parser = new ClairParser
     ctx = new ParseCTX
+    lctx = new LocalCTX
     ctx.addCTXtype("a", RegularType("dialect1", "i1"))
     ctx.addCTXtype("b", RegularType("dialect1", "i2"))
     ctx.addCTXtype("c", RegularType("dialect1", "i3"))
@@ -83,6 +89,7 @@ class ClairParserTests
     ("input", "result"),
     ("-> operands [map:a, map1:b, map2:c]", "Succeed"),
     ("-> operands [map=a, map1=b, map2=c]", "Fail"),
+    ("-> operands [map:a, map:b, map2:c, map2:c]", "Except"),
     ("-> operands []", "Fail"),
     ("-> operand [map:a, map1:b, map2:c]", "Fail")
   )
@@ -91,6 +98,7 @@ class ClairParserTests
     ("input", "result"),
     ("-> results [map:a, map1:b, map2:c]", "Succeed"),
     ("-> results [map=a, map1=b, map2=c]", "Fail"),
+    ("-> results [map:a, map:b, map2:c, map2:c]", "Except"),
     ("-> results []", "Fail"),
     ("-> result [map:a, map1:b, map2:c]", "Fail")
   )
@@ -112,6 +120,7 @@ class ClairParserTests
   val opPropertiesTest = Table(
     ("input", "result"),
     ("-> properties [map=a, map1=b, map2=c]", "Succeed"),
+    ("-> properties [map=a, map=b, map2=c, map2=c]", "Except"),
     ("-> properties [map:a, map1:b, map2:c]", "Fail"),
     ("-> properties []", "Fail"),
     ("-> propertie [map=a, map1=b, map2=c]", "Fail")
@@ -120,6 +129,7 @@ class ClairParserTests
   val opAttributesTest = Table(
     ("input", "result"),
     ("-> attributes [map=a, map1=b, map2=c]", "Succeed"),
+    ("-> attributes [map=a, map=b, map2=c, map2=c]", "Except"),
     ("-> attributes [map:a, map1:b, map2:c]", "Fail"),
     ("-> attributes []", "Fail"),
     ("-> attribute [map=a, map1=b, map2=c]", "Fail")
@@ -154,12 +164,12 @@ class ClairParserTests
     ),
     (
       "Operation Operand Test",
-      ((x: fastparse.P[_]) => ClairParser.OperandsInput(x, ctx)),
+      ((x: fastparse.P[_]) => ClairParser.OperandsInput(lctx)(x, ctx)),
       opOperandsTest
     ),
     (
       "Operation Result Test",
-      ((x: fastparse.P[_]) => ClairParser.ResultsInput(x, ctx)),
+      ((x: fastparse.P[_]) => ClairParser.ResultsInput(lctx)(x, ctx)),
       opResultsTest
     ),
     (
@@ -174,12 +184,12 @@ class ClairParserTests
     ),
     (
       "Operation Properties Test",
-      ((x: fastparse.P[_]) => ClairParser.OpPropertiesInput(x, ctx)),
+      ((x: fastparse.P[_]) => ClairParser.OpPropertiesInput(lctx)(x, ctx)),
       opPropertiesTest
     ),
     (
       "Operation Attributes Test",
-      ((x: fastparse.P[_]) => ClairParser.OpAttributesInput(x, ctx)),
+      ((x: fastparse.P[_]) => ClairParser.OpAttributesInput(lctx)(x, ctx)),
       opAttributesTest
     )
   )
@@ -187,7 +197,7 @@ class ClairParserTests
   forAll(unitTests) { (name, pattern, tests) =>
     forAll(tests) { (input, result) =>
       s"$name [$input]" should s"[$result]" in {
-        xor(parser.parseThis(input, pattern), result) shouldBe "pass"
+        xor(Try(parser.parseThis(input, pattern)), result) shouldBe "pass"
       }
     }
   }

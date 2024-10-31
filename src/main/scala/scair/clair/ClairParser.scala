@@ -30,6 +30,7 @@ import java.lang.Integer.parseInt
 class ParseCTX() {
   val typeCTX: DictType[String, RegularType] = DictType()
   val dialectCTX: DictType[String, DialectDef] = DictType()
+  val namingCTX: ListType[String] = ListType()
 
   def typeInCTX(name: String): RegularType = {
     if (!typeCTX.contains(name)) {
@@ -44,10 +45,6 @@ class ParseCTX() {
     } else {
       typeCTX(name) = typ
     }
-  }
-
-  def dialectInCTX(name: String): Boolean = {
-    dialectCTX.contains(name)
   }
 
   def addToCTXdialect(
@@ -67,6 +64,27 @@ class ParseCTX() {
     }
   }
 
+  def checkNameInCTXandAdd(name: String): Unit = {
+    if (namingCTX.contains(name)) {
+      throw new Exception(s"Member '$name' already defined in the file.")
+    } else {
+      namingCTX += name
+    }
+  }
+}
+
+class LocalCTX() {
+  val namingCTX: ListType[String] = ListType()
+
+  def checkNameInCTXandAdd(name: String): Unit = {
+    if (namingCTX.contains(name)) {
+      throw new Exception(
+        s"Field '$name' alreadyn defined within one member's local context."
+      )
+    } else {
+      namingCTX += name
+    }
+  }
 }
 
 class ClairParser() {
@@ -198,9 +216,11 @@ object ClairParser {
         "-".rep(1) ~ BareId ~
         "->" ~ BareId ~~ "." ~~ DialectRefName
     ).map((x) =>
+      val opName = s"${x._8}.${x._9}"
+      ctx.checkNameInCTXandAdd(opName)
       val op =
         OperationDef(
-          s"${x._8}.${x._9}",
+          opName,
           x._7,
           x._1,
           x._2,
@@ -235,19 +255,23 @@ object ClairParser {
         "-".rep(1) ~ BareId ~
         "->" ~ BareId ~~ "." ~~ DialectRefName
     ).map((x) =>
-      val attr = AttributeDef(s"${x._5}.${x._6}", x._4, x._3, x._1 + x._2)
+      val attrName = s"${x._5}.${x._6}"
+      ctx.checkNameInCTXandAdd(attrName)
+      val attr = AttributeDef(attrName, x._4, x._3, x._1 + x._2)
       ctx.addToCTXdialect(x._5, ListType(), ListType(attr))
       attr
     )
 
   def AttributeInputParser[$: P](implicit
       ctx: ParseCTX
-  ): P[(Int, Int, Seq[OperandDef])] =
+  ): P[(Int, Int, Seq[OperandDef])] = {
+    val lctx: LocalCTX = new LocalCTX
     P(
       TypeInput.?.map(_.getOrElse(0)) ~
         DataInput.?.map(_.getOrElse(0)) ~
-        OperandsInput.rep(min = 0, max = 1).map(_.flatten)
+        OperandsInput(lctx).rep(min = 0, max = 1).map(_.flatten)
     )
+  }
 
   def TypeInput[$: P]: P[Int] =
     P("->" ~ "type").map(_ => 1)
@@ -275,27 +299,39 @@ object ClairParser {
         Seq[OpPropertyDef],
         Seq[OpAttributeDef]
     )
-  ] =
+  ] = {
+    val lctx: LocalCTX = new LocalCTX
     P(
-      OperandsInput.rep(min = 0, max = 1).map(_.flatten) ~
-        ResultsInput.rep(min = 0, max = 1).map(_.flatten) ~
+      OperandsInput(lctx).rep(min = 0, max = 1).map(_.flatten) ~
+        ResultsInput(lctx).rep(min = 0, max = 1).map(_.flatten) ~
         RegionsInput.?.map(_.getOrElse(RegionDef(0))) ~
         SuccessorsInput.?.map(_.getOrElse(SuccessorDef(0))) ~
-        OpPropertiesInput.rep(min = 0, max = 1).map(_.flatten) ~
-        OpAttributesInput.rep(min = 0, max = 1).map(_.flatten)
+        OpPropertiesInput(lctx).rep(min = 0, max = 1).map(_.flatten) ~
+        OpAttributesInput(lctx).rep(min = 0, max = 1).map(_.flatten)
     )
+  }
 
-  def OperandsInput[$: P](implicit ctx: ParseCTX): P[Seq[OperandDef]] =
+  def OperandsInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[OperandDef]] =
     P(
       "->" ~ "operands" ~ "[" ~ ValueDef
-        .map(OperandDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          OperandDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 
-  def ResultsInput[$: P](implicit ctx: ParseCTX): P[Seq[ResultDef]] =
+  def ResultsInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[ResultDef]] =
     P(
       "->" ~ "results" ~ "[" ~ ValueDef
-        .map(ResultDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          ResultDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 
@@ -305,17 +341,27 @@ object ClairParser {
   def SuccessorsInput[$: P]: P[SuccessorDef] =
     P("->" ~ "successors" ~ "[" ~ DecimalLiteral.map(SuccessorDef(_)) ~ "]")
 
-  def OpPropertiesInput[$: P](implicit ctx: ParseCTX): P[Seq[OpPropertyDef]] =
+  def OpPropertiesInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[OpPropertyDef]] =
     P(
       "->" ~ "properties" ~ "[" ~ DictDef
-        .map(OpPropertyDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          OpPropertyDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 
-  def OpAttributesInput[$: P](implicit ctx: ParseCTX): P[Seq[OpAttributeDef]] =
+  def OpAttributesInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[OpAttributeDef]] =
     P(
       "->" ~ "attributes" ~ "[" ~ DictDef
-        .map(OpAttributeDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          OpAttributeDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 }
