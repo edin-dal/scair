@@ -2,12 +2,14 @@ package scair.clair
 
 import fastparse._
 import fastparse.internal.Util
+import scala.util.control.NoStackTrace
 
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.annotation.switch
 import scala.util.{Try, Success, Failure}
 import java.lang.Integer.parseInt
+import scair.clair.ClairCustomException
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗
@@ -34,14 +36,20 @@ class ParseCTX() {
 
   def typeInCTX(name: String): RegularType = {
     if (!typeCTX.contains(name)) {
-      throw new Exception(s"Type ${name} used but not defined.")
+      throw new ClairCustomException(
+        "ParseCTXException",
+        s"Type ${name} used but not defined."
+      )
     }
     typeCTX(name)
   }
 
   def addCTXtype(name: String, typ: RegularType): Unit = {
     if (typeCTX.contains(name)) {
-      throw new Exception(s"Type ${name} already defined.")
+      throw new ClairCustomException(
+        "ParseCTXException",
+        s"Type ${name} already defined."
+      )
     } else {
       typeCTX(name) = typ
     }
@@ -66,7 +74,10 @@ class ParseCTX() {
 
   def checkNameInCTXandAdd(name: String): Unit = {
     if (namingCTX.contains(name)) {
-      throw new Exception(s"Member '$name' already defined in the file.")
+      throw new ClairCustomException(
+        "ParseCTXException",
+        s"Member '$name' already defined in the file."
+      )
     } else {
       namingCTX += name
     }
@@ -78,7 +89,8 @@ class LocalCTX() {
 
   def checkNameInCTXandAdd(name: String): Unit = {
     if (namingCTX.contains(name)) {
-      throw new Exception(
+      throw new ClairCustomException(
+        "LocalCTXException",
         s"Field '$name' alreadyn defined within one member's local context."
       )
     } else {
