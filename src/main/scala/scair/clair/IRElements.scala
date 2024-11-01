@@ -79,8 +79,8 @@ case class OperandDef(val id: String, val const: ConstraintDef)
     extends OpInput {}
 case class ResultDef(val id: String, val const: ConstraintDef)
     extends OpInput {}
-case class RegionDef(val no: Int) extends OpInput {}
-case class SuccessorDef(val no: Int) extends OpInput {}
+case class RegionDef(val id: String) extends OpInput {}
+case class SuccessorDef(val id: String) extends OpInput {}
 case class OpPropertyDef(val id: String, val const: ConstraintDef)
     extends OpInput {}
 case class OpAttributeDef(val id: String, val const: ConstraintDef)
@@ -112,8 +112,8 @@ case class OperationDef(
     val className: String,
     val operands: Seq[OperandDef],
     val results: Seq[ResultDef],
-    val regions_no: RegionDef,
-    val successors_no: SuccessorDef,
+    val regions: Seq[RegionDef],
+    val successors: Seq[SuccessorDef],
     val OpProperty: Seq[OpPropertyDef],
     val OpAttribute: Seq[OpAttributeDef]
 ) {
@@ -152,8 +152,8 @@ case class $className(
   override def custom_verify(): Unit = 
     if (operands.length != ${operands.length}) then throw new Exception("Expected ${operands.length} operands, got operands.length") 
     if (results.length != ${results.length}) then throw new Exception("Expected ${results.length} results, got results.length")
-    if (regions.length != ${regions_no.no}) then throw new Exception("Expected ${regions_no.no} regions, got regions.length")
-    if (successors.length != ${successors_no.no}) then throw new Exception("Expected ${successors_no.no} successors, got successors.length")
+    if (regions.length != ${regions.length}) then throw new Exception("Expected ${regions.length} regions, got regions.length")
+    if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
     if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
 }
