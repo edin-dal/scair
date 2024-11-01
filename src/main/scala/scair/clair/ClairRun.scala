@@ -3,6 +3,7 @@ package scair.clair
 import java.io.File
 import scopt.OParser
 import scala.io.Source
+import scair.clair.ClairParser.dialectCTX
 
 case class Args(
     val input: Option[String] = None
@@ -41,7 +42,9 @@ object ClairRun {
           pattern = parser.EntryPoint(_)
         ) match {
           case fastparse.Parsed.Success(x, _) =>
-            println(x)
+            for dialect_def <- x.values do {
+              println(dialect_def.print(0))
+            }
             x
           case fastparse.Parsed.Failure(_, _, extra) =>
             sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
