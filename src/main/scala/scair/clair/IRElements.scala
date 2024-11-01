@@ -92,20 +92,7 @@ case class DialectDef(
     val attributes: ListType[AttributeDef] = ListType()
 ) {
   def print(indent: Int): String = s"""
-import scair.{
-  ListType,
-  DictType,
-  RegisteredOperation,
-  Region,
-  Block,
-  Value,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DialectAttribute,
-  DialectOperation,
-  Dialect
-}
+import scair.ir._
   """ +
     (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
       .mkString("\n") + s"""

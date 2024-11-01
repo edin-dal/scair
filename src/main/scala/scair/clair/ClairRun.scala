@@ -3,8 +3,9 @@ package scair.clair
 import java.io.File
 import scopt.OParser
 import scala.io.Source
-import scair.clair.ClairParser.dialectCTX
 import scala.util.{Try, Success, Failure}
+import fastparse.Parsed
+import scair.clair.ClairParser
 
 case class Args(
     val input: Option[String] = None
