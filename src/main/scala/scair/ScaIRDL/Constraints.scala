@@ -1,4 +1,4 @@
-package scair.irdl.constraints
+package scair.scairdl.constraints
 
 import scala.reflect.ClassTag
 

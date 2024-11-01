@@ -15,7 +15,7 @@ import AttrParser._
 import Parser._
 import scair.dialects.builtin._
 import scair.ir._
-import scair.irdl.constraints._
+import scair.scairdl.constraints._
 
 class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 

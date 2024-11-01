@@ -18,7 +18,7 @@ import scair.exceptions.VerifyException
 import scair.Parser.{whitespace, ValueId, Type, E}
 import scair.AttrParser.{Float32TypeP, Float64TypeP}
 import scair.ir._
-import scair.irdl.constraints.{
+import scair.scairdl.constraints.{
   IRDLConstraint,
   ConstraintContext,
   BaseAttr,
