@@ -3,6 +3,8 @@ package scair.clair
 import java.io.File
 import scopt.OParser
 import scala.io.Source
+import scala.util.{Try, Success, Failure}
+import fastparse.Parsed
 
 case class Args(
     val input: Option[String] = None
@@ -36,14 +38,22 @@ object ClairRun {
 
         // Parse content
         val parser = new ClairParser
-        var module: DictType[String, DialectDef] = parser.parseThis(
-          input.mkString
-        ) match {
-          case fastparse.Parsed.Success(x, _) =>
-            println(x)
-            x
-          case fastparse.Parsed.Failure(_, _, extra) =>
-            sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
+        var module: Try[Parsed[DictType[String, DialectDef]]] = Try(
+          parser.parseThis(
+            input.mkString
+          )
+        )
+
+        module match {
+          case Success(v) =>
+            v match {
+              case fastparse.Parsed.Success(x, _) =>
+                println(x)
+              case e: fastparse.Parsed.Failure =>
+                ClairExceptionMethods.throwParseError(input.toString, e)
+            }
+          case Failure(e) =>
+            ClairExceptionMethods.throwCustomClairError(e)
         }
       case _ =>
     }

@@ -1,0 +1,14 @@
+// RUN: clair-run %s | filecheck %s
+
+{ type tt = dialect.name1 }
+{ type gg = dialect.name2 }
+
+-> type
+----------------- NameAttr
+-> dialect.name1
+
+-> operands   [map:gg, map2==gg, map3 : tt | gg]
+----------------- NameOp
+-> dialect.name2
+
+// CHECK: HashMap(dialect -> DialectDef(dialect,ListBuffer(OperationDef(dialect.name2,NameOp,List(OperandDef(map,Base(RegularType(dialect,name2))), OperandDef(map2,Equal(RegularType(dialect,name2))), OperandDef(map3,AnyOf(List(RegularType(dialect,name1), RegularType(dialect,name2))))),List(),RegionDef(0),SuccessorDef(0),List(),List())),ListBuffer(AttributeDef(dialect.name1,NameAttr,List(),1))))
