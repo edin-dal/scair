@@ -59,10 +59,6 @@ object ClairParser {
     Pass(())
   }
 
-  // TODO: type parsing and type context as well
-  // TODO: operation & attribute name context (can just be one)
-  // TODO:
-
   /*≡≡=---=≡≡=---=≡≡*\
   ||    CONTEXTS    ||
   \*≡==---=≡≡=---==≡*/
@@ -78,13 +74,6 @@ object ClairParser {
     typeCTX(name)
   }
 
-  // def anonInCTX(name: String): AnonType = {
-  //   if (!anonCTX.contains(name)) {
-  //     throw new Exception(s"Anonymous type ${name} used but not defined.")
-  //   }
-  //   anonCTX(name)
-  // }
-
   def addCTXtype(name: String, typ: RegularType): Unit = {
     if (typeCTX.contains(name)) {
       throw new Exception(s"Type ${name} already defined.")
@@ -92,14 +81,6 @@ object ClairParser {
       typeCTX(name) = typ
     }
   }
-
-  // def addCTXanon(name: String, typ: AnonType): Unit = {
-  //   if (anonCTX.contains(name)) {
-  //     throw new Exception(s"Anonymous type ${name} already defined.")
-  //   } else {
-  //     anonCTX(name) = typ
-  //   }
-  // }
 
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||   ENTRY POINT   ||
@@ -120,11 +101,6 @@ object ClairParser {
   def RegularTypeP[$: P]: P[Unit] =
     P("{" ~ "type" ~/ BareId ~/ "=" ~/ DialectRefName ~/ "." ~/ BareId ~ "}")
       .map((x, y, z) => addCTXtype(x, RegularType(y, z)))
-
-  // def AnonTypeP[$: P]: P[Unit] =
-  //   P("anon " ~ BareId ~ ":" ~ DialectRefName ~ "." ~ BareId).map((x, y, z) =>
-  //     addCTXanon(x, AnonType(x, RegularType(y, z)))
-  //   )
 
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||      BASIC      ||
@@ -157,9 +133,6 @@ object ClairParser {
       ) |
         (BareId ~ sign ~ TypeParser).map((x, y) => (x, Base(y))) |
         (BareId ~ "==" ~ TypeParser).map((x, y) => (x, Equal(y)))
-        // (BareId ~ "::" ~ BareId ~ ":" ~ "[" ~ ConstraintP ~ "]").map(
-        //   (x, y, z) => (x, Anon(y))
-        // )
     )
 
   def ValueDef[$: P]: P[(String, ConstraintDef)] =
@@ -169,12 +142,7 @@ object ClairParser {
     P(ConstraintP("="))
 
   def TypeParser[$: P]: P[Type] =
-    P(BareId).map((x) => typeInCTX(x)
-    // Try(typeInCTX(x)) match {
-    //   case Success(a) => a
-    //   case Failure(_) => anonInCTX(x)
-    // }
-    )
+    P(BareId).map((x) => typeInCTX(x))
 
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||    OPERATION    ||
@@ -245,7 +213,6 @@ object ClairParser {
           attributes = ListType(attr)
         )
       }
-
       attr
     )
 
