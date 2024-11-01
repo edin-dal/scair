@@ -4,28 +4,12 @@ import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.dialects.irdl.{Operand, OpResult}
 import scair.Parser.{whitespace, ValueId, Type}
 import scair.Parser.{whitespace, ValueId, Type, E}
 import scair.AttrParser.{Float32TypeP, Float64TypeP}
-import scair.{
-  ListType,
-  DictType,
-  Operation,
-  RegisteredOperation,
-  Region,
-  Block,
-  Value,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DataAttribute,
-  DialectAttribute,
-  DialectOperation,
-  Dialect,
-  Printer,
-  Parser
-}
+import scair.{Printer, Parser}
+import scair.ir._
+
 import scair.exceptions.VerifyException
 
 //////////////////

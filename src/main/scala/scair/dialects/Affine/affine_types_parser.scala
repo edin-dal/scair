@@ -9,14 +9,7 @@ import scair.Parser.{
   SuffixId
 }
 
-import scair.{
-  ListType,
-  DictType,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DataAttribute
-}
+import scair.ir._
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.annotation.switch
 
-import IR._
+import scair.ir._
 import AttrParser._
 import Parser._
 import scair.MLContext

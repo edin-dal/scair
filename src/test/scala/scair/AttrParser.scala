@@ -12,7 +12,7 @@ import Parser._
 import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
-import IR._
+import scair.ir._
 
 import scair.dialects.builtin._
 
