@@ -38,9 +38,6 @@ case class RegularType(val dialect: String, override val id: String)
     extends Type(id) {
   override def get_import(): String = s"import scair.dialects.${dialect}._\n"
 }
-// case class AnonType(override val id: String, val typ: RegularType) extends Type(id) {
-//   override def get_import(): String = typ.get_import()
-// }
 
 /*≡≡=---==≡≡≡==---=≡≡*\
 ||    CONSTRAINTS    ||
@@ -71,36 +68,10 @@ case class Any(val typ: Seq[Type]) extends ConstraintDef {
   override def get_imports(): String =
     (for (x <- typ) yield x.get_import()).mkString("\n")
 }
-// case class Anon(val typ: Type) extends Constraint {
-//   override def print(indent: Int): String =
-//     s"val ${typ.id.toLowerCase()}_check = VarConstraint(${typ.id}, )\n"
-
-//   override def get_imports(): String =
-
-// }
 
 /*≡≡=---===≡≡≡≡===---=≡≡*\
 ||  TYPES & CONTAINERS  ||
 \*≡==----===≡≡===----==≡*/
-
-// def get_imports_from(constraint: Constraint): String =
-//   constraint match {
-//     case Equal(typ) =>
-//     case Base(typ) =>
-//     case Any(typ) =>
-//     case Anon(typ) =>
-//   }
-
-// def get_imports(op: OpInput): String = {
-//   op match {
-//     case x: Operand =>
-//     case x: Result =>
-//     case x: Region => ""
-//     case x: Successor => ""
-//     case x: OpProperty =>
-//     case x: OpAttribute =>
-//   }
-// }
 
 abstract class OpInput {}
 
