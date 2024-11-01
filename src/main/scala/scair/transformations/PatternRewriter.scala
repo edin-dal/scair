@@ -3,7 +3,7 @@ package scair.transformations
 import scala.collection.mutable.Stack
 
 import scair.dialects.builtin.ModuleOp
-import scair._
+import scair.ir._
 
 // ==---------== //
 //  Utils realm  //

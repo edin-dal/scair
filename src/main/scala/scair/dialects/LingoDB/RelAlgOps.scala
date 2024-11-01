@@ -9,7 +9,7 @@ import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.dialects.irdl.{Operand, OpResult}
+import scair.{Parser, AttrParser}
 import scair.Parser.{
   whitespace,
   E,
@@ -25,23 +25,7 @@ import scair.Parser.{
 }
 import scair.exceptions.VerifyException
 import scair.AttrParser.{ArrayAttributeP}
-import scair.{
-  ListType,
-  DictType,
-  RegisteredOperation,
-  Region,
-  Block,
-  Value,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DialectAttribute,
-  DialectOperation,
-  Dialect,
-  Parser,
-  Operation,
-  AttrParser
-}
+import scair.ir._
 
 // ==---== //
 //  Enums

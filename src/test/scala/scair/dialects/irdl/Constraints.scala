@@ -14,7 +14,8 @@ import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import AttrParser._
 import Parser._
 import scair.dialects.builtin._
-import scair.dialects.irdl._
+import scair.ir._
+import scair.irdl.constraints._
 
 class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 

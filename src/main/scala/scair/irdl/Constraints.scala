@@ -1,12 +1,9 @@
-package scair.dialects.irdl
+package scair.irdl.constraints
 
 import scala.reflect.ClassTag
 
-import scair.{Attribute, Operation, Value, ParametrizedAttribute, DictType}
+import scair.ir._
 import scair.exceptions.VerifyException
-
-type Operand[T <: Attribute] = Value[T]
-type OpResult[T <: Attribute] = Value[T]
 
 // USEFUL COMMANDS
 
@@ -201,14 +198,3 @@ class ParametrizedBaseAttr[
     s"ParametrizedBaseAttr[${implicitly[ClassTag[PT]].runtimeClass.getName}" +
       s", ${implicitly[ClassTag[CT]].runtimeClass.getName}]"
 }
-
-// CONSTRAINTS
-
-// class Operand(name)
-// class Type(name, Attribute)
-// class Result
-// class DictAttr
-
-// M("(" + Operand("hello") + ")" + "this is an custom syntax" + ":" + Type("hello", StringAttribute.parse))
-
-// %5 = "custom.op"(%3)this is an custom syntax:"this"
