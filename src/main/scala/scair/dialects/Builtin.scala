@@ -4,7 +4,7 @@ import scala.compiletime.ops.string
 import scala.collection.{immutable, mutable}
 
 import scair.dialects.affine.{AffineMap, AffineSet}
-import scair.irdl.constraints.{BaseAttr, EqualAttr, ConstraintContext}
+import scair.scairdl.constraints.{BaseAttr, EqualAttr, ConstraintContext}
 import scair.{Parser, Printer}
 import scair.ir._
 

@@ -156,7 +156,6 @@ case class $className(
     if (successors.length != ${successors_no.no}) then throw new Exception("Expected ${successors_no.no} successors, got successors.length")
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
     if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
-
 }
   """
 }

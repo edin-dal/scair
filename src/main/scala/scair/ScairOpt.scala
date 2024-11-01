@@ -8,7 +8,7 @@ import scair.Printer
 import scair.ir._
 import scair.transformations.TransformContext
 import scair.dialects.builtin.ModuleOp
-import scair.irdl.constraints.AnyAttr.verify
+import scair.scairdl.constraints.AnyAttr.verify
 
 case class Args(
     val input: Option[String] = None,
