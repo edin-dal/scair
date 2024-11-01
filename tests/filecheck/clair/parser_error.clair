@@ -1,0 +1,15 @@
+// RUN: clair-run %s 2>&1 | filecheck %s
+
+{ type tt = dialect.name1 }
+{ type gg = dialect.name2 }
+
+-> type
+----------------- NameAttr
+-> dialect.name1
+
+-> operands   [map:gg, map==gg, map3 : tt | gg]
+----------------- NameOp
+-> dialect.name2
+
+// CHECK: LocalCTXException
+// CHECK:  => Field 'map' alreadyn defined within one member's local context.

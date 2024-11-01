@@ -4,6 +4,7 @@ import java.io.File
 import scopt.OParser
 import scala.io.Source
 import scair.clair.ClairParser.dialectCTX
+import scala.util.{Try, Success, Failure}
 
 case class Args(
     val input: Option[String] = None
@@ -36,18 +37,25 @@ object ClairRun {
         }
 
         // Parse content
-        val parser = scair.clair.ClairParser
-        var module: DictType[String, DialectDef] = parser.parseThis(
-          input.mkString,
-          pattern = parser.EntryPoint(_)
-        ) match {
-          case fastparse.Parsed.Success(x, _) =>
-            for dialect_def <- x.values do {
-              println(dialect_def.print(0))
+        val parser = new ClairParser
+        var module: Try[Parsed[DictType[String, DialectDef]]] = Try(
+          parser.parseThis(
+            input.mkString
+          )
+        )
+
+        module match {
+          case Success(v) =>
+            v match {
+              case fastparse.Parsed.Success(x, _) =>
+                for dialect_def <- x.values do {
+                  println(dialect_def.print(0))
+                }
+              case e: fastparse.Parsed.Failure =>
+                ClairExceptionMethods.throwParseError(input.toString, e)
             }
-            x
-          case fastparse.Parsed.Failure(_, _, extra) =>
-            sys.error(s"parse error:\n${extra.trace().longAggregateMsg}")
+          case Failure(e) =>
+            ClairExceptionMethods.throwCustomClairError(e)
         }
       case _ =>
     }

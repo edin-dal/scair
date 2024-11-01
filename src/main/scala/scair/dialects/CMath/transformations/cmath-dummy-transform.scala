@@ -1,6 +1,6 @@
 package scair.dialects.CMath.transformations.cdt
 
-import scair.{Operation, Attribute, Value, Block, Region, ListType, MLContext}
+import scair.ir._
 import scair.dialects.builtin.StringData
 import scair.dialects.CMath.cmath.{Mul, Norm}
 import scair.transformations.{
@@ -9,7 +9,7 @@ import scair.transformations.{
   RewritePattern,
   PatternRewriteWalker
 }
-import scair.UnregisteredOperation
+import scair.MLContext
 
 object AddDummyAttributeToDict extends RewritePattern {
   override def match_and_rewrite(

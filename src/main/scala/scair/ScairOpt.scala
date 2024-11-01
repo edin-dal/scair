@@ -4,10 +4,11 @@ import java.io.File
 import scopt.OParser
 import scala.io.Source
 import scala.util.{Try, Success, Failure}
-import scair.{Printer, Operation}
+import scair.Printer
+import scair.ir._
 import scair.transformations.TransformContext
 import scair.dialects.builtin.ModuleOp
-import scair.dialects.irdl.AnyAttr.verify
+import scair.irdl.constraints.AnyAttr.verify
 
 case class Args(
     val input: Option[String] = None,

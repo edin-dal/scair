@@ -60,7 +60,7 @@ case class Base(val typ: Type) extends ConstraintDef {
 
   override def get_imports(): String = typ.get_import()
 }
-case class Any(val typ: Seq[Type]) extends ConstraintDef {
+case class AnyOf(val typ: Seq[Type]) extends ConstraintDef {
   override def print(indent: Int): String =
     s"val ${(for (x <- typ) yield x.id).mkString("_").toLowerCase()}_check = AnyOf(Seq(${(for (x <- typ)
         yield x.id).mkString(", ")}))\n"

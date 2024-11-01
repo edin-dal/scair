@@ -14,6 +14,7 @@ import scala.util.{Try, Success, Failure}
 import Parser._
 import AttrParser._
 
+import scair.ir._
 import scair.dialects.builtin._
 
 class ParserTest

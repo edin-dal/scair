@@ -2,12 +2,14 @@ package scair.clair
 
 import fastparse._
 import fastparse.internal.Util
+import scala.util.control.NoStackTrace
 
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.annotation.switch
 import scala.util.{Try, Success, Failure}
 import java.lang.Integer.parseInt
+import scair.clair.ClairCustomException
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗
@@ -22,6 +24,94 @@ import java.lang.Integer.parseInt
 // ██╔═══╝░ ██╔══██║ ██╔══██╗ ░╚═══██╗ ██╔══╝░░ ██╔══██╗
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
+
+/*≡≡=---=≡≡≡=---=≡≡*\
+||     CONTEXT     ||
+\*≡==---==≡==---==≡*/
+
+class ParseCTX() {
+  val typeCTX: DictType[String, RegularType] = DictType()
+  val dialectCTX: DictType[String, DialectDef] = DictType()
+  val namingCTX: ListType[String] = ListType()
+
+  def typeInCTX(name: String): RegularType = {
+    if (!typeCTX.contains(name)) {
+      throw new ClairCustomException(
+        "ParseCTXException",
+        s"Type ${name} used but not defined."
+      )
+    }
+    typeCTX(name)
+  }
+
+  def addCTXtype(name: String, typ: RegularType): Unit = {
+    if (typeCTX.contains(name)) {
+      throw new ClairCustomException(
+        "ParseCTXException",
+        s"Type ${name} already defined."
+      )
+    } else {
+      typeCTX(name) = typ
+    }
+  }
+
+  def addToCTXdialect(
+      name: String,
+      ops: ListType[OperationDef],
+      attrs: ListType[AttributeDef]
+  ): Unit = {
+    if (dialectCTX.contains(name)) {
+      dialectCTX(name).operations ++= ops
+      dialectCTX(name).attributes ++= attrs
+    } else {
+      dialectCTX(name) = DialectDef(
+        name = name,
+        attributes = attrs,
+        operations = ops
+      )
+    }
+  }
+
+  def checkNameInCTXandAdd(name: String): Unit = {
+    if (namingCTX.contains(name)) {
+      throw new ClairCustomException(
+        "ParseCTXException",
+        s"Member '$name' already defined in the file."
+      )
+    } else {
+      namingCTX += name
+    }
+  }
+}
+
+class LocalCTX() {
+  val namingCTX: ListType[String] = ListType()
+
+  def checkNameInCTXandAdd(name: String): Unit = {
+    if (namingCTX.contains(name)) {
+      throw new ClairCustomException(
+        "LocalCTXException",
+        s"Field '$name' alreadyn defined within one member's local context."
+      )
+    } else {
+      namingCTX += name
+    }
+  }
+}
+
+class ClairParser() {
+
+  implicit val ctx: ParseCTX = new ParseCTX
+
+  def parseThis[A](
+      text: String,
+      pattern: P[_] => P[A] = { (x: P[_]) =>
+        ClairParser.EntryPoint(x, ctx)
+      }
+  ): Parsed[A] = {
+    return parse(text, pattern)
+  }
+}
 
 object ClairParser {
 
@@ -59,48 +149,27 @@ object ClairParser {
     Pass(())
   }
 
-  /*≡≡=---=≡≡=---=≡≡*\
-  ||    CONTEXTS    ||
-  \*≡==---=≡≡=---==≡*/
-
-  val typeCTX: DictType[String, RegularType] = DictType()
-  // val anonCTX: DictType[String, AnonType] = DictType()
-  val dialectCTX: DictType[String, DialectDef] = DictType()
-
-  def typeInCTX(name: String): RegularType = {
-    if (!typeCTX.contains(name)) {
-      throw new Exception(s"Type ${name} used but not defined.")
-    }
-    typeCTX(name)
-  }
-
-  def addCTXtype(name: String, typ: RegularType): Unit = {
-    if (typeCTX.contains(name)) {
-      throw new Exception(s"Type ${name} already defined.")
-    } else {
-      typeCTX(name) = typ
-    }
-  }
-
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||   ENTRY POINT   ||
   \*≡==----=≡=----==≡*/
 
-  def EntryPoint[$: P]: P[DictType[String, DialectDef]] =
+  def EntryPoint[$: P](implicit
+      ctx: ParseCTX
+  ): P[DictType[String, DialectDef]] =
     P(Start ~ TypeDef.? ~ AttributeParser.? ~ OperationParser.? ~ End).map(_ =>
-      dialectCTX
+      ctx.dialectCTX
     )
 
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||      TYPES      ||
   \*≡==----=≡=----==≡*/
 
-  def TypeDef[$: P]: P[Unit] =
+  def TypeDef[$: P](implicit ctx: ParseCTX): P[Unit] =
     P((RegularTypeP).rep(0))
 
-  def RegularTypeP[$: P]: P[Unit] =
+  def RegularTypeP[$: P](implicit ctx: ParseCTX): P[Unit] =
     P("{" ~ "type" ~/ BareId ~/ "=" ~/ DialectRefName ~/ "." ~/ BareId ~ "}")
-      .map((x, y, z) => addCTXtype(x, RegularType(y, z)))
+      .map((x, y, z) => ctx.addCTXtype(x, RegularType(y, z)))
 
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||      BASIC      ||
@@ -126,23 +195,25 @@ object ClairParser {
   def DecimalLiteral[$: P] =
     P(Digit.rep(1).!).map((literal: String) => parseInt(literal))
 
-  def ConstraintP[$: P](sign: String): P[(String, ConstraintDef)] =
+  def ConstraintP[$: P](
+      sign: String
+  )(implicit ctx: ParseCTX): P[(String, ConstraintDef)] =
     P(
-      (BareId ~ ":" ~ TypeParser ~ ("|" ~ TypeParser).rep(0)).map((x, y, z) =>
-        (x, Any(z :+ y))
-      ) |
+      (BareId ~ sign ~ TypeParser ~ "|" ~ TypeParser ~
+        ("|" ~ TypeParser).rep(0))
+        .map((x, y1, y2, z) => (x, AnyOf(z :+ y1 :+ y2))) |
         (BareId ~ sign ~ TypeParser).map((x, y) => (x, Base(y))) |
         (BareId ~ "==" ~ TypeParser).map((x, y) => (x, Equal(y)))
     )
 
-  def ValueDef[$: P]: P[(String, ConstraintDef)] =
+  def ValueDef[$: P](implicit ctx: ParseCTX): P[(String, ConstraintDef)] =
     P(ConstraintP(":"))
 
-  def DictDef[$: P]: P[(String, ConstraintDef)] =
+  def DictDef[$: P](implicit ctx: ParseCTX): P[(String, ConstraintDef)] =
     P(ConstraintP("="))
 
-  def TypeParser[$: P]: P[Type] =
-    P(BareId).map((x) => typeInCTX(x))
+  def TypeParser[$: P](implicit ctx: ParseCTX): P[Type] =
+    P(BareId).map((x) => ctx.typeInCTX(x))
 
   /*≡≡=---=≡≡≡=---=≡≡*\
   ||    OPERATION    ||
@@ -151,15 +222,17 @@ object ClairParser {
   // Operation ::=
   //   OperationInput* "-"* identifier "->" identifier "." identifier
 
-  def OperationParser[$: P]: P[OperationDef] =
+  def OperationParser[$: P](implicit ctx: ParseCTX): P[OperationDef] =
     P(
       OperationInputParser ~
         "-".rep(1) ~ BareId ~
         "->" ~ BareId ~~ "." ~~ DialectRefName
     ).map((x) =>
+      val opName = s"${x._8}.${x._9}"
+      ctx.checkNameInCTXandAdd(opName)
       val op =
         OperationDef(
-          s"${x._8}.${x._9}",
+          opName,
           x._7,
           x._1,
           x._2,
@@ -168,16 +241,7 @@ object ClairParser {
           x._5,
           x._6
         )
-
-      if (dialectCTX.contains(x._8)) {
-        dialectCTX(x._8).operations += op
-      } else {
-        dialectCTX(x._8) = DialectDef(
-          name = x._8,
-          operations = ListType(op)
-        )
-      }
-
+      ctx.addToCTXdialect(x._8, ListType(op), ListType())
       op
     )
 
@@ -197,31 +261,29 @@ object ClairParser {
   // TypeInput       ::= "type"
   // DataInput       ::= "data"
 
-  def AttributeParser[$: P]: P[AttributeDef] =
+  def AttributeParser[$: P](implicit ctx: ParseCTX): P[AttributeDef] =
     P(
       AttributeInputParser ~
         "-".rep(1) ~ BareId ~
         "->" ~ BareId ~~ "." ~~ DialectRefName
     ).map((x) =>
-      val attr = AttributeDef(s"${x._5}.${x._6}", x._4, x._3, x._1 + x._2)
-
-      if (dialectCTX.contains(x._5)) {
-        dialectCTX(x._5).attributes += attr
-      } else {
-        dialectCTX(x._5) = DialectDef(
-          name = x._5,
-          attributes = ListType(attr)
-        )
-      }
+      val attrName = s"${x._5}.${x._6}"
+      ctx.checkNameInCTXandAdd(attrName)
+      val attr = AttributeDef(attrName, x._4, x._3, x._1 + x._2)
+      ctx.addToCTXdialect(x._5, ListType(), ListType(attr))
       attr
     )
 
-  def AttributeInputParser[$: P]: P[(Int, Int, Seq[OperandDef])] =
+  def AttributeInputParser[$: P](implicit
+      ctx: ParseCTX
+  ): P[(Int, Int, Seq[OperandDef])] = {
+    val lctx: LocalCTX = new LocalCTX
     P(
       TypeInput.?.map(_.getOrElse(0)) ~
         DataInput.?.map(_.getOrElse(0)) ~
-        OperandsInput.rep(min = 0, max = 1).map(_.flatten)
+        OperandsInput(lctx).rep(min = 0, max = 1).map(_.flatten)
     )
+  }
 
   def TypeInput[$: P]: P[Int] =
     P("->" ~ "type").map(_ => 1)
@@ -240,7 +302,7 @@ object ClairParser {
   // PropertiesInput ::= "->" "properties" "[" DictDef* "]"
   // AttributesInput ::= "->" "attributes" "[" DictDef* "]"
 
-  def OperationInputParser[$: P]: P[
+  def OperationInputParser[$: P](implicit ctx: ParseCTX): P[
     (
         Seq[OperandDef],
         Seq[ResultDef],
@@ -249,27 +311,39 @@ object ClairParser {
         Seq[OpPropertyDef],
         Seq[OpAttributeDef]
     )
-  ] =
+  ] = {
+    val lctx: LocalCTX = new LocalCTX
     P(
-      OperandsInput.rep(min = 0, max = 1).map(_.flatten) ~
-        ResultsInput.rep(min = 0, max = 1).map(_.flatten) ~
+      OperandsInput(lctx).rep(min = 0, max = 1).map(_.flatten) ~
+        ResultsInput(lctx).rep(min = 0, max = 1).map(_.flatten) ~
         RegionsInput.?.map(_.getOrElse(RegionDef(0))) ~
         SuccessorsInput.?.map(_.getOrElse(SuccessorDef(0))) ~
-        OpPropertiesInput.rep(min = 0, max = 1).map(_.flatten) ~
-        OpAttributesInput.rep(min = 0, max = 1).map(_.flatten)
+        OpPropertiesInput(lctx).rep(min = 0, max = 1).map(_.flatten) ~
+        OpAttributesInput(lctx).rep(min = 0, max = 1).map(_.flatten)
     )
+  }
 
-  def OperandsInput[$: P]: P[Seq[OperandDef]] =
+  def OperandsInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[OperandDef]] =
     P(
       "->" ~ "operands" ~ "[" ~ ValueDef
-        .map(OperandDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          OperandDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 
-  def ResultsInput[$: P]: P[Seq[ResultDef]] =
+  def ResultsInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[ResultDef]] =
     P(
       "->" ~ "results" ~ "[" ~ ValueDef
-        .map(ResultDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          ResultDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 
@@ -279,83 +353,27 @@ object ClairParser {
   def SuccessorsInput[$: P]: P[SuccessorDef] =
     P("->" ~ "successors" ~ "[" ~ DecimalLiteral.map(SuccessorDef(_)) ~ "]")
 
-  def OpPropertiesInput[$: P]: P[Seq[OpPropertyDef]] =
+  def OpPropertiesInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[OpPropertyDef]] =
     P(
       "->" ~ "properties" ~ "[" ~ DictDef
-        .map(OpPropertyDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          OpPropertyDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
 
-  def OpAttributesInput[$: P]: P[Seq[OpAttributeDef]] =
+  def OpAttributesInput[$: P](
+      lctx: LocalCTX
+  )(implicit ctx: ParseCTX): P[Seq[OpAttributeDef]] =
     P(
       "->" ~ "attributes" ~ "[" ~ DictDef
-        .map(OpAttributeDef(_, _))
+        .map((x, y) =>
+          lctx.checkNameInCTXandAdd(x)
+          OpAttributeDef(x, y)
+        )
         .rep(1, sep = ",") ~ "]"
     )
-
-  def parseThis[A](
-      text: String,
-      pattern: P[_] => P[A] = { (x: P[_]) =>
-        EntryPoint(x)
-      }
-  ): Parsed[A] = {
-    return parse(text, pattern)
-  }
-
-  def main(args: Array[String]): Unit = {
-    val iinput =
-      "-> operands   [name:type]\n" +
-        "-> results    [name:type]\n" +
-        "-> regions    [0]\n" +
-        "-> successors [0]\n" +
-        "-> properties [name=type]\n" +
-        "-> attributes [name=type]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name"
-
-    val iinput2 =
-      "-> type\n" +
-        "-> data\n" +
-        "-> operands   [name:type]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name"
-
-    val input3 =
-      "{ type tt = dialect.name1 }\n" +
-        "{ type gg = dialect.name2 }\n"
-
-    val input4 =
-      "-> type\n" +
-        "----------------- NameAttr\n" +
-        "-> dialect.name1"
-
-    val input5 =
-      "-> operands   [map:gg, map2==gg, map3 : tt | gg]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name2"
-
-    val input6 =
-      "{ type tt = dialect.name1 }\n" +
-        "{ type gg = dialect.name2 }\n" +
-        "-> type\n" +
-        "----------------- NameAttr\n" +
-        "-> dialect.name1\n" +
-        "-> operands   [map:gg, map2==gg, map3 : tt | gg]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name2"
-
-    // println(parse(iinput, OperationParser(_)))
-    // println(parse(iinput2, AttributeParser(_)))
-    // println("----Types----")
-    // println(parse(input3, TypeDef(_)))
-    // println("----Attributes----")
-    // println(parse(input4, AttributeParser(_)))
-    // println("----Operations----")
-    // println(parse(input5, OperationParser(_)))
-    println("----WholeThing----")
-    val Parsed.Success(value, g) = parse(input6, EntryPoint(_))
-    println(value("dialect").toString)
-    println(typeCTX)
-  }
-
 }
