@@ -3,7 +3,7 @@ package scair
 import fastparse._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import IR._
+import scair.ir._
 import Parser._
 import java.lang.Float.intBitsToFloat
 
