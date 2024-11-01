@@ -4,22 +4,9 @@ import scala.compiletime.ops.string
 import scala.collection.{immutable, mutable}
 
 import scair.dialects.affine.{AffineMap, AffineSet}
-import scair.dialects.irdl.{BaseAttr, EqualAttr, ConstraintContext}
-import scair.{
-  ListType,
-  DictType,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DataAttribute,
-  Value,
-  Block,
-  Region,
-  Operation,
-  RegisteredOperation,
-  Parser,
-  Printer
-}
+import scair.irdl.constraints.{BaseAttr, EqualAttr, ConstraintContext}
+import scair.{Parser, Printer}
+import scair.ir._
 
 import scair.Parser.whitespace
 import fastparse._

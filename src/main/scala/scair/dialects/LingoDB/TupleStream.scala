@@ -4,7 +4,7 @@ import fastparse._
 import scair.dialects.builtin._
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.dialects.irdl.{Operand, OpResult}
+import scair.{Parser, AttrParser}
 import scair.Parser.{
   whitespace,
   ValueId,
@@ -13,23 +13,7 @@ import scair.Parser.{
   AttributeEntry,
   AttributeValue
 }
-import scair.{
-  ListType,
-  DictType,
-  RegisteredOperation,
-  Region,
-  Block,
-  Value,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DialectAttribute,
-  DialectOperation,
-  Dialect,
-  Parser,
-  Operation,
-  AttrParser
-}
+import scair.ir._
 
 ///////////
 // TYPES //

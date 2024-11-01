@@ -1,13 +1,6 @@
 package scair.dialects.affine
 
-import scair.{
-  ListType,
-  DictType,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DataAttribute
-}
+import scair.ir._
 
 // ██████╗░ ░█████╗░ ░██████╗ ██╗ ░█████╗░
 // ██╔══██╗ ██╔══██╗ ██╔════╝ ██║ ██╔══██╗

@@ -3,7 +3,7 @@ package scair
 import fastparse._, MultiLineWhitespace._
 import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
-import IR._
+import scair.ir._
 import AttrParser._
 import scair.dialects.CMath.cmath._
 
