@@ -15,6 +15,7 @@ import AttrParser._
 
 import scair.dialects.builtin._
 import scair.dialects.CMath.cmath._
+import scair.ir._
 
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 

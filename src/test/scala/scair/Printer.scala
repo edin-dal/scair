@@ -10,6 +10,7 @@ import scala.collection.mutable
 import Parser._
 
 import scair.dialects.builtin._
+import scair.ir._
 
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 

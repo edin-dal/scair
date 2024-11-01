@@ -1,9 +1,10 @@
-package scair
+package scair.ir
+
 import scala.collection.mutable.{Map, LinkedHashMap, ListBuffer}
 import scair.Parser._
 import scair.exceptions.VerifyException
 import fastparse._
-import ListTypeExtensions.updateOperandsAndUses
+import scair.{Parser, Printer}
 
 // ==---------== //
 // =---UTILS---= //
@@ -17,30 +18,26 @@ type DictType[A, B] = LinkedHashMap[A, B]
 val ListType = ListBuffer
 type ListType[A] = ListBuffer[A]
 
-object DictTypeExtenions {
-  extension (dt: DictType[String, Attribute]) {
-    def checkandget(
-        key: String,
-        op_name: String,
-        expected_type: String
-    ): Attribute = {
-      dt.get(key) match {
-        case Some(b) => b
-        case None =>
-          throw new Exception(
-            s"Operation '${op_name}' must include an attribute named '${key}' of type '${}'"
-          )
-      }
+extension (dt: DictType[String, Attribute]) {
+  def checkandget(
+      key: String,
+      op_name: String,
+      expected_type: String
+  ): Attribute = {
+    dt.get(key) match {
+      case Some(b) => b
+      case None =>
+        throw new Exception(
+          s"Operation '${op_name}' must include an attribute named '${key}' of type '${}'"
+        )
     }
   }
 }
 
-object ListTypeExtensions {
-  extension (lt: ListType[Value[Attribute]]) {
-    def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
-      newValue.uses += use
-      lt.update(use.index, newValue)
-    }
+extension (lt: ListType[Value[Attribute]]) {
+  def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
+    newValue.uses += use
+    lt.update(use.index, newValue)
   }
 }
 
@@ -150,6 +147,9 @@ class Value[T <: Attribute](
     return this eq o.asInstanceOf[AnyRef]
   }
 }
+
+type Operand[T <: Attribute] = Value[T]
+type OpResult[T <: Attribute] = Value[T]
 
 // ==----------== //
 // =---BLOCKS---= //

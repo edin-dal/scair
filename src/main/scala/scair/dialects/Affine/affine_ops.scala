@@ -15,27 +15,15 @@ import scair.dialects.builtin.{
   ArrayAttribute
 }
 import scair.exceptions.VerifyException
-import scair.dialects.irdl._
 import scair.Parser.{whitespace, ValueId, Type, E}
 import scair.AttrParser.{Float32TypeP, Float64TypeP}
-import scair.DictTypeExtenions.checkandget
-import scair.{
-  ListType,
-  DictType,
-  Operation,
-  RegisteredOperation,
-  Region,
-  Block,
-  Value,
-  Attribute,
-  TypeAttribute,
-  ParametrizedAttribute,
-  DataAttribute,
-  DialectAttribute,
-  DialectOperation,
-  Dialect,
-  Printer,
-  Parser
+import scair.ir._
+import scair.irdl.constraints.{
+  IRDLConstraint,
+  ConstraintContext,
+  BaseAttr,
+  ParametrizedBaseAttr,
+  AnyAttr
 }
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
