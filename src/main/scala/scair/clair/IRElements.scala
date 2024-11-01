@@ -91,7 +91,16 @@ case class DialectDef(
     val operations: ListType[OperationDef] = ListType(),
     val attributes: ListType[AttributeDef] = ListType()
 ) {
-  def print(indent: Int): String = ""
+  def print(indent: Int): String = s"""
+import scair.ir._
+  """ +
+    (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
+      .mkString("\n") + s"""
+val $name: Dialect = new Dialect(
+  operations = Seq(${operations.map(_.className).mkString(", ")}),
+  attributes = Seq(${attributes.map(_.className).mkString(", ")})
+)
+  """
 }
 
 /*≡≡=---=≡≡≡=---=≡≡*\
@@ -103,8 +112,8 @@ case class OperationDef(
     val className: String,
     val operands: Seq[OperandDef],
     val results: Seq[ResultDef],
-    val region_no: RegionDef,
-    val successor_no: SuccessorDef,
+    val regions_no: RegionDef,
+    val successors_no: SuccessorDef,
     val OpProperty: Seq[OpPropertyDef],
     val OpAttribute: Seq[OpAttributeDef]
 ) {
@@ -123,55 +132,52 @@ case class OperationDef(
       (for (x <- OpAttribute) yield x.const.print(indent))).toSet.mkString("\n")
   }
 
-  def print(indent: Int): String = {
-    val op =
-      s"object ${className} extends DialectOperation {" +
-        s"  override def name: String = \"${name}\"" +
-        s"  override def factory: FactoryType = ${className}.apply" +
-        s"}" +
-        s"case class ${className}(" +
-        s"  override val operands: ListType[Value[Attribute]] = ListType()," +
-        s"  override val successors: ListType[Block] = ListType()," +
-        s"  override val results: ListType[Value[Attribute]] = ListType()," +
-        s"  override val regions: ListType[Region] = ListType()," +
-        s"  override val dictionaryProperties: DictType[String, Attribute] =" +
-        s"    DictType.empty[String, Attribute]," +
-        s"  override val dictionaryAttributes: DictType[String, Attribute] =" +
-        s"    DictType.empty[String, Attribute]" +
-        s") extends RegisteredOperation(name = \"${name}\") {" +
-        s"\n" +
-        "  " + constraint_printer(indent) +
-        s"\n" +
-        s"  override def custom_verify(): Unit = (" +
-        s"    successors.length," +
-        s"    results.length," +
-        s"    regions.length," +
-        s"    dictionaryProperties.size," +
-        s"    dictionaryAttributes.size" +
-        s"  ) match {" +
-        s"    case (0, 1, 0, 0, 1) =>" +
-        s"      for (x <- operands) index_check.verify(x.typ, new ConstraintContext())" +
-        s"      index_check.verify(results(0).typ, new ConstraintContext())" +
-        s"      map_check.verify(" +
-        s"        dictionaryAttributes.checkandget(\"map\", name, \"affine_map\")," +
-        s"        new ConstraintContext()" +
-        s"      )" +
-        s"    case _ =>" +
-        s"      throw new Exception(" +
-        s"        \"Apply Operation must only contain at least 1 operand and exaclty 1 result of 'index' type, \" +" +
-        s"        \"as well as attribute in a dictionary called 'map' of 'affine_map' type.\"" +
-        s"      )" +
-        s"  }" +
-        s"}"
-    op
-  }
+  def print(indent: Int): String = s"""
+object $className extends DialectOperation {
+  override def name = "$name"
+  override def factory = $className.apply
+}
+
+case class $className(
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
+    override val results: ListType[Value[Attribute]] = ListType(),
+    override val regions: ListType[Region] = ListType(),
+    override val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends RegisteredOperation(name = "$name") {
+
+  override def custom_verify(): Unit = 
+    if (operands.length != ${operands.length}) then throw new Exception("Expected ${operands.length} operands, got operands.length") 
+    if (results.length != ${results.length}) then throw new Exception("Expected ${results.length} results, got results.length")
+    if (regions.length != ${regions_no.no}) then throw new Exception("Expected ${regions_no.no} regions, got regions.length")
+    if (successors.length != ${successors_no.no}) then throw new Exception("Expected ${successors_no.no} successors, got successors.length")
+    if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
+    if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
+
+}
+  """
 }
 
 case class AttributeDef(
     val name: String,
     val className: String,
-    val operands: Seq[OperandDef],
+    val parameters: Seq[OperandDef],
     val typee: Int
 ) {
-  def print(indent: Int): String = ""
+  def print(indent: Int): String = s"""
+object $className extends DialectAttribute {
+  override def name = "$name"
+  override def factory = $className.apply
+}
+
+case class $className(override val parameters: Seq[Attribute]) extends ParametrizedAttribute(name = "$name", parameters = parameters) ${
+      if typee != 0 then "with TypeAttribute" else ""
+    } {
+  override def custom_verify(): Unit = 
+    if (parameters.length != ${parameters.length}) then throw new Exception("Expected ${parameters.length} parameters, got parameters.length")
+}
+  """
 }

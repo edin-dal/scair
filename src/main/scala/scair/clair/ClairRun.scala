@@ -5,6 +5,7 @@ import scopt.OParser
 import scala.io.Source
 import scala.util.{Try, Success, Failure}
 import fastparse.Parsed
+import scair.clair.ClairParser
 
 case class Args(
     val input: Option[String] = None
@@ -48,7 +49,9 @@ object ClairRun {
           case Success(v) =>
             v match {
               case fastparse.Parsed.Success(x, _) =>
-                println(x)
+                for dialect_def <- x.values do {
+                  println(dialect_def.print(0))
+                }
               case e: fastparse.Parsed.Failure =>
                 ClairExceptionMethods.throwParseError(input.toString, e)
             }
