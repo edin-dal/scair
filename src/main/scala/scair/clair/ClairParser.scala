@@ -169,9 +169,9 @@ object ClairParser {
       sign: String
   )(implicit ctx: ParseCTX): P[(String, ConstraintDef)] =
     P(
-      (BareId ~ ":" ~ TypeParser ~ ("|" ~ TypeParser).rep(0)).map((x, y, z) =>
-        (x, Any(z :+ y))
-      ) |
+      (BareId ~ sign ~ TypeParser ~ "|" ~ TypeParser ~
+        ("|" ~ TypeParser).rep(0))
+        .map((x, y1, y2, z) => (x, AnyOf(z :+ y1 :+ y2))) |
         (BareId ~ sign ~ TypeParser).map((x, y) => (x, Base(y))) |
         (BareId ~ "==" ~ TypeParser).map((x, y) => (x, Equal(y)))
     )
@@ -318,63 +318,4 @@ object ClairParser {
         .map(OpAttributeDef(_, _))
         .rep(1, sep = ",") ~ "]"
     )
-}
-
-object Main123 {
-  def main(args: Array[String]): Unit = {
-    val iinput =
-      "-> operands   [name:type]\n" +
-        "-> results    [name:type]\n" +
-        "-> regions    [0]\n" +
-        "-> successors [0]\n" +
-        "-> properties [name=type]\n" +
-        "-> attributes [name=type]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name"
-
-    val iinput2 =
-      "-> type\n" +
-        "-> data\n" +
-        "-> operands   [name:type]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name"
-
-    val input3 =
-      "{ type tt = dialect.name1 }\n" +
-        "{ type gg = dialect.name2 }\n"
-
-    val input4 =
-      "-> type\n" +
-        "----------------- NameAttr\n" +
-        "-> dialect.name1"
-
-    val input5 =
-      "-> operands   [map:gg, map2==gg, map3 : tt | gg]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name2"
-
-    val input6 =
-      "{ type tt = dialect.name1 }\n" +
-        "{ type gg = dialect.name2 }\n" +
-        "-> type\n" +
-        "----------------- NameAttr\n" +
-        "-> dialect.name1\n" +
-        "-> operands   [map:gg, map2==gg, map3 : tt | gg]\n" +
-        "----------------- NameOp\n" +
-        "-> dialect.name2"
-
-    val parser = new ClairParser
-
-    // println(parse(iinput, OperationParser(_)))
-    // println(parse(iinput2, AttributeParser(_)))
-    // println("----Types----")
-    // println(parse(input3, TypeDef(_)))
-    // println("----Attributes----")
-    // println(parse(input4, AttributeParser(_)))
-    // println("----Operations----")
-    // println(parse(input5, OperationParser(_)))
-    println("----WholeThing----")
-    val parsed = parser.parseThis(input6)
-    println(parsed)
-  }
 }
