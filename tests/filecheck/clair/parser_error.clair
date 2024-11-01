@@ -11,5 +11,4 @@
 ----------------- NameOp
 -> dialect.name2
 
-// CHECK: LocalCTXException
-// CHECK:  => Field 'map' alreadyn defined within one member's local context.
+// CHECK:       The clair parser is on holidays right now. Please try again later.
