@@ -115,7 +115,7 @@ case class OpPropertyDef(val id: String, val const: ConstraintDef)
 case class OpAttributeDef(val id: String, val const: ConstraintDef)
     extends OpInput {}
 
-class DialectDef(
+case class DialectDef(
     val name: String,
     val operations: ListType[OperationDef] = ListType(),
     val attributes: ListType[AttributeDef] = ListType()
@@ -127,7 +127,7 @@ class DialectDef(
 ||   IR ELEMENTS   ||
 \*≡==----=≡=----==≡*/
 
-class OperationDef(
+case class OperationDef(
     val name: String,
     val className: String,
     val operands: Seq[OperandDef],
@@ -196,7 +196,7 @@ class OperationDef(
   }
 }
 
-class AttributeDef(
+case class AttributeDef(
     val name: String,
     val className: String,
     val operands: Seq[OperandDef],
