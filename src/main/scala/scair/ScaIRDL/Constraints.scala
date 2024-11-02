@@ -185,7 +185,12 @@ class ParametrizedBaseAttr[
   ): Unit = {
 
     that_attr match {
-      case x: PT => for (a <- x.parameters) base_attr.verify(a, constraint_ctx)
+      case x: PT =>
+        for (p <- x.parameters) p match {
+          case p: Seq[Attribute] =>
+            for (pe <- p) base_attr.verify(pe, constraint_ctx)
+          case p: Attribute => base_attr.verify(p, constraint_ctx)
+        }
       case _ =>
         val className = implicitly[ClassTag[PT]].runtimeClass.getName
         val errstr =

@@ -58,7 +58,7 @@ trait TypeAttribute extends Attribute {
 
 abstract class ParametrizedAttribute(
     override val name: String,
-    val parameters: Seq[Attribute] = Seq()
+    val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 ) extends Attribute {
   override def custom_print =
     s"<${parameters.map(x => x.toString).mkString(", ")}>"
