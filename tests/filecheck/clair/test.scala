@@ -64,7 +64,7 @@ def main(args: Array[String]) = {
 // CHECK-NEXT:    def testregion_=(value: Region): Unit = {regions(0) = value}
 // CHECK:         def testsuccessor: Block = successors(0)
 // CHECK-NEXT:    def testsuccessor_=(value: Block): Unit = {successors(0) = value}
-// CHECK:  }
+// CHECK:       }
 // CHECK:       object NameAttr extends DialectAttribute {
 // CHECK-NEXT:    override def name = "dialect.name1"
 // CHECK-NEXT:    override def factory = NameAttr.apply
