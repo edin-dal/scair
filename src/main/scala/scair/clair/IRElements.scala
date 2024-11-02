@@ -1,4 +1,4 @@
-package scair.clair
+package scair.clair.ir
 
 import scala.collection.mutable
 
@@ -110,12 +110,12 @@ val $name: Dialect = new Dialect(
 case class OperationDef(
     val name: String,
     val className: String,
-    val operands: Seq[OperandDef],
-    val results: Seq[ResultDef],
-    val regions: Seq[RegionDef],
-    val successors: Seq[SuccessorDef],
-    val OpProperty: Seq[OpPropertyDef],
-    val OpAttribute: Seq[OpAttributeDef]
+    val operands: Seq[OperandDef] = Seq(),
+    val results: Seq[ResultDef] = Seq(),
+    val regions: Seq[RegionDef] = Seq(),
+    val successors: Seq[SuccessorDef] = Seq(),
+    val OpProperty: Seq[OpPropertyDef] = Seq(),
+    val OpAttribute: Seq[OpAttributeDef] = Seq()
 ) {
 
   def get_imports(): Set[String] = {
@@ -163,8 +163,8 @@ case class $className(
 case class AttributeDef(
     val name: String,
     val className: String,
-    val parameters: Seq[OperandDef],
-    val typee: Int
+    val parameters: Seq[OperandDef] = Seq(),
+    val typee: Int = 0
 ) {
   def print(indent: Int): String = s"""
 object $className extends DialectAttribute {
