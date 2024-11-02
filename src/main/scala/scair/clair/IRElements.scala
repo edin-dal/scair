@@ -1,6 +1,7 @@
 package scair.clair.ir
 
 import scala.collection.mutable
+import scala.compiletime.ops.int
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -125,14 +126,37 @@ case class OperationDef(
       (for (x <- OpAttribute) yield x.const.get_imports())).toSet
   }
 
-  def constraint_printer(indent: Int): String = {
+  def constraint_printer(implicit indent: Int): String = {
     ((for (x <- operands) yield x.const.print(indent)) ++
       (for (x <- results) yield x.const.print(indent)) ++
       (for (x <- OpProperty) yield x.const.print(indent)) ++
       (for (x <- OpAttribute) yield x.const.print(indent))).toSet.mkString("\n")
   }
 
-  def print(indent: Int): String = s"""
+  def print_getters(implicit indent: Int): String = {
+    ((for (odef, i) <- operands.zipWithIndex
+    yield s"  def ${odef.id}: Value[Attribute] = operands($i)\n" +
+      s"  def ${odef.id}_=(value: Value[Attribute]): Unit = {operands($i) = value}\n") ++
+      (for (rdef, i) <- results.zipWithIndex
+      yield s"  def ${rdef.id}: Value[Attribute] = results($i)\n" +
+        s"  def ${rdef.id}_=(value: Value[Attribute]): Unit = {results($i) = value}\n") ++
+      (for (rdef, i) <- regions.zipWithIndex
+      yield s"  def ${rdef.id}: Region = regions($i)\n" +
+        s"  def ${rdef.id}_=(value: Region): Unit = {regions($i) = value}\n") ++
+      (for (sdef, i) <- successors.zipWithIndex
+      yield s"  def ${sdef.id}: Block = successors($i)\n" +
+        s"  def ${sdef.id}_=(value: Block): Unit = {successors($i) = value}\n") ++
+      (for pdef <- OpProperty
+      yield s"  def ${pdef.id}: Attributes = dictionaryProperties(${pdef.id})\n" +
+        s"  def ${pdef.id}_=(value: Attributes): Unit = {dictionaryProperties(${pdef.id}) = value}\n") ++
+      (for adef <- OpAttribute
+      yield s"  def ${adef.id}: Attributes = dictionaryAttributes(${adef.id})\n" +
+        s"  def ${adef.id}_=(value: Attributes): Unit = {dictionaryAttributes(${adef.id}) = value}\n"))
+      .mkString("\n")
+
+  }
+
+  def print(implicit indent: Int): String = s"""
 object $className extends DialectOperation {
   override def name = "$name"
   override def factory = $className.apply
@@ -156,6 +180,8 @@ case class $className(
     if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
     if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
+
+${print_getters(indent + 1)}
 }
   """
 }

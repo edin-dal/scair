@@ -54,7 +54,17 @@ def main(args: Array[String]) = {
 // CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
-// CHECK-NEXT:  }
+// CHECK:         def map: Value[Attribute] = operands(0)
+// CHECK-NEXT:    def map_=(value: Value[Attribute]): Unit = {operands(0) = value}
+// CHECK:         def map2: Value[Attribute] = operands(1)
+// CHECK-NEXT:    def map2_=(value: Value[Attribute]): Unit = {operands(1) = value}
+// CHECK:         def map3: Value[Attribute] = operands(2)
+// CHECK-NEXT:    def map3_=(value: Value[Attribute]): Unit = {operands(2) = value}
+// CHECK:         def testregion: Region = regions(0)
+// CHECK-NEXT:    def testregion_=(value: Region): Unit = {regions(0) = value}
+// CHECK:         def testsuccessor: Block = successors(0)
+// CHECK-NEXT:    def testsuccessor_=(value: Block): Unit = {successors(0) = value}
+// CHECK:       }
 // CHECK:       object NameAttr extends DialectAttribute {
 // CHECK-NEXT:    override def name = "dialect.name1"
 // CHECK-NEXT:    override def factory = NameAttr.apply
