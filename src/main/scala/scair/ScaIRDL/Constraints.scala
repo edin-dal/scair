@@ -48,7 +48,7 @@ class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit = {
 
-    if (!(this_attr == that_attr)) {
+    if (this_attr != that_attr) {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
           this_attr.toString + " and " + that_attr.toString
@@ -160,7 +160,7 @@ class VarConstraint(val name: String, val constraint: IRDLConstraint)
 
     var_consts.contains(name) match {
       case true =>
-        if (!(var_consts.apply(name) == that_attr)) {
+        if (var_consts.apply(name) != that_attr) {
           throw new VerifyException("oh mah gawd")
         }
       case false =>
