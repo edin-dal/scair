@@ -1,35 +1,36 @@
 // RUN: scala -classpath ../../target/scala-3.3.1/classes/ %s | filecheck %s
 
 import scair.clair.ir._
-
-def main(args: Array[String]) = {
-  val dialect = DialectDef(
-    "dialect",
-    ListType(
-      OperationDef(
-        "dialect.name2",
-        "NameOp",
-        operands = List(
-          OperandDef("map", AnyOf(List(RegularType("dialect", "name2")))),
-          OperandDef("map2", Equal(RegularType("dialect", "name2"))),
-          OperandDef(
-            "map3",
-            AnyOf(
-              List(
-                RegularType("dialect", "name2"),
-                RegularType("dialect", "name1")
+object Test {
+  def main(args: Array[String]) = {
+    val dialect = DialectDef(
+      "dialect",
+      ListType(
+        OperationDef(
+          "dialect.name2",
+          "NameOp",
+          operands = List(
+            OperandDef("map", AnyOf(List(RegularType("dialect", "name2")))),
+            OperandDef("map2", Equal(RegularType("dialect", "name2"))),
+            OperandDef(
+              "map3",
+              AnyOf(
+                List(
+                  RegularType("dialect", "name2"),
+                  RegularType("dialect", "name1")
+                )
               )
             )
-          )
-        ),
-        regions = List(RegionDef("testregion")),
-        successors = List(SuccessorDef("testsuccessor"))
-      )
-    ),
-    ListType(AttributeDef("dialect.name1", "NameAttr", typee = 1))
-  )
+          ),
+          regions = List(RegionDef("testregion")),
+          successors = List(SuccessorDef("testsuccessor"))
+        )
+      ),
+      ListType(AttributeDef("dialect.name1", "NameAttr", typee = 1))
+    )
 
-  println(dialect.print(0))
+    println(dialect.print(0))
+  }
 }
 
 // CHECK:       import scair.ir._

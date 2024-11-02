@@ -48,7 +48,7 @@ class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit = {
 
-    if (!(this_attr same_as that_attr)) {
+    if (!(this_attr == that_attr)) {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
           this_attr.toString + " and " + that_attr.toString
@@ -125,7 +125,7 @@ class ParametricAttr[T <: Attribute: ClassTag](
             if (
               !(x.parameters.length == params.length &&
                 (for ((i, j) <- x.parameters zip params)
-                  yield i same_as j).foldLeft(true)((i, j) => i && j))
+                  yield i == j).foldLeft(true)((i, j) => i && j))
             ) {
               throw new VerifyException(
                 s"Parameters of ${that_attr.name} do not match the constrained" +
@@ -160,7 +160,7 @@ class VarConstraint(val name: String, val constraint: IRDLConstraint)
 
     var_consts.contains(name) match {
       case true =>
-        if (!(var_consts.apply(name) same_as that_attr)) {
+        if (!(var_consts.apply(name) == that_attr)) {
           throw new VerifyException("oh mah gawd")
         }
       case false =>

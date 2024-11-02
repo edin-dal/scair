@@ -50,7 +50,6 @@ sealed trait Attribute {
   def prefix: String = "#"
   def custom_verify(): Unit = ()
   def custom_print: String
-  def same_as(attr: Attribute): Boolean
 }
 
 trait TypeAttribute extends Attribute {
@@ -64,14 +63,14 @@ abstract class ParametrizedAttribute(
   override def custom_print =
     s"<${parameters.map(x => x.toString).mkString(", ")}>"
   override def toString = s"${prefix}${name}${custom_print}"
-  override def same_as(attr: Attribute): Boolean = {
+  override def equals(attr: Any): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
         x.name == this.name &&
         x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
         (for ((i, j) <- x.parameters zip this.parameters)
-          yield i same_as j).foldLeft(true)((i, j) => i && j)
+          yield i == j).foldLeft(true)((i, j) => i && j)
       case _ => false
     }
   }
@@ -83,7 +82,7 @@ abstract class DataAttribute[D](
 ) extends Attribute {
   override def custom_print = data.toString
   override def toString = custom_print
-  override def same_as(attr: Attribute): Boolean = {
+  override def equals(attr: Any): Boolean = {
     attr match {
       case x: DataAttribute[D] =>
         x.name == this.name &&
