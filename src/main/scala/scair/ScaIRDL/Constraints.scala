@@ -56,7 +56,7 @@ class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
     }
   }
 
-  override def toString = s"EqualAttr(${this_attr.custom_print})"
+  override def toString = s"EqualAttr(${this_attr.toString})"
 }
 
 class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {

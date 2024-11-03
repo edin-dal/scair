@@ -99,7 +99,7 @@ case class OperationDef(
 
   def print_constr_defs(implicit indent: Int): String = {
     val deff = { (x: String, y: IRDLConstraint) =>
-      s"  val ${x}_constr = ${y.show}"
+      s"  val ${x}_constr = ${y}"
     }
     ((for (odef <- operands) yield deff(odef.id, odef.const)) ++
       (for (rdef <- results) yield deff(rdef.id, rdef.const)) ++

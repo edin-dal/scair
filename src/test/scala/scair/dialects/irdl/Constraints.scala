@@ -186,10 +186,14 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val or_constraint =
       AnyOf(Seq(attr1, attr2, attr3, attr4, attrcnst1, attrcnst2))
 
-    val exception = intercept[Exception](
+    val exceptMSG = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
-    ).getMessage shouldBe
-      "builtin.array_attr does not match any of List(5 : i32, 6 : i32, f32, index, BaseAttr[scair.dialects.builtin.IndexType$], EqualAttr([index, i32, i64]))\n"
+    ).getMessage
+
+    println(exceptMSG)
+
+    exceptMSG shouldBe
+      "builtin.array_attr does not match any of List(5 : i32, 6 : i32, f32, index, BaseAttr[scair.dialects.builtin.IndexType$], EqualAttr(ArrayAttribute(List(IndexType, IntegerType(IntData(32),Signless), IntegerType(IntData(64),Signless)))))\n"
   }
 
   //////////////////////
