@@ -46,31 +46,7 @@ case class RegularType(val dialect: String, override val id: String)
 ||    CONSTRAINTS    ||
 \*≡==----==≡==----==≡*/
 
-// abstract class ConstraintDef {
-//   def print(indent: Int): String
-//   def get_imports(): String
-// }
-
-// case class Equal(val typ: Type) extends ConstraintDef {
-//   override def print(indent: Int): String =
-//     s"val ${typ.id.toLowerCase()}_check = EqualAttr(${typ.id})\n"
-
-//   override def get_imports(): String = typ.get_import()
-// }
-// case class Base(val typ: Type) extends ConstraintDef {
-//   override def print(indent: Int): String =
-//     s"val ${typ.id.toLowerCase()}_check = BaseAttr[${typ.id}]()\n"
-
-//   override def get_imports(): String = typ.get_import()
-// }
-// case class AnyOf(val typ: Seq[Type]) extends ConstraintDef {
-//   override def print(indent: Int): String =
-//     s"val ${(for (x <- typ) yield x.id).mkString("_").toLowerCase()}_check = AnyOf(Seq(${(for (x <- typ)
-//         yield x.id).mkString(", ")}))\n"
-
-//   override def get_imports(): String =
-//     (for (x <- typ) yield x.get_import()).mkString("\n")
-// }
+// RETIRED TO A HOLIDAY RESORT IN NORTHERN SCOTLAND, POSSIBLY PERMANENTLY :')
 
 /*≡≡=---===≡≡≡≡===---=≡≡*\
 ||  TYPES & CONTAINERS  ||
@@ -96,6 +72,8 @@ case class DialectDef(
 ) {
   def print(indent: Int): String = s"""
 import scair.ir._
+import scair.dialects.builtin._
+import scair.scairdl.constraints._
   """ +
     (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
       .mkString("\n") + s"""
@@ -121,19 +99,26 @@ case class OperationDef(
     val OpAttribute: Seq[OpAttributeDef] = Seq()
 ) {
 
-  // def get_imports(): Set[String] = {
-  //   ((for (x <- operands) yield x.const.get_imports()) ++
-  //     (for (x <- results) yield x.const.get_imports()) ++
-  //     (for (x <- OpProperty) yield x.const.get_imports()) ++
-  //     (for (x <- OpAttribute) yield x.const.get_imports())).toSet
-  // }
+  def print_constr_defs(implicit indent: Int): String = {
+    val deff = { (x: String, y: IRDLConstraint) =>
+      s"  val ${x}_constr = ${y}"
+    }
+    ((for (odef <- operands) yield deff(odef.id, odef.const)) ++
+      (for (rdef <- results) yield deff(rdef.id, rdef.const)) ++
+      (for (pdef <- OpProperty) yield deff(pdef.id, pdef.const)) ++
+      (for (adef <- OpAttribute)
+        yield deff(adef.id, adef.const))).mkString("\n")
+  }
 
-  // def constraint_printer(implicit indent: Int): String = {
-  //   ((for (x <- operands) yield x.const.print(indent)) ++
-  //     (for (x <- results) yield x.const.print(indent)) ++
-  //     (for (x <- OpProperty) yield x.const.print(indent)) ++
-  //     (for (x <- OpAttribute) yield x.const.print(indent))).toSet.mkString("\n")
-  // }
+  def print_constr_vers(implicit indent: Int): String = {
+    val ver = { (x: String) =>
+      s"    ${x}_constr.verify($x.typ, ${className}_CTX)"
+    }
+    ((for (odef <- operands) yield ver(odef.id)) ++
+      (for (rdef <- results) yield ver(rdef.id)) ++
+      (for (pdef <- OpProperty) yield ver(pdef.id)) ++
+      (for (adef <- OpAttribute) yield ver(adef.id))).mkString("\n")
+  }
 
   def print_getters(implicit indent: Int): String = {
     ((for (odef, i) <- operands.zipWithIndex
@@ -175,6 +160,11 @@ case class $className(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name") {
 
+${print_getters(indent + 1)}
+
+  val ${className}_CTX = new ConstraintContext() 
+${print_constr_defs(indent + 1)}
+
   override def custom_verify(): Unit = 
     if (operands.length != ${operands.length}) then throw new Exception("Expected ${operands.length} operands, got operands.length") 
     if (results.length != ${results.length}) then throw new Exception("Expected ${results.length} results, got results.length")
@@ -182,8 +172,7 @@ case class $className(
     if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
     if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
-
-${print_getters(indent + 1)}
+${print_constr_vers(indent + 1)}
 }
   """
 }

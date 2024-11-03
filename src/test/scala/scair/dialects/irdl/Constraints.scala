@@ -186,10 +186,11 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val or_constraint =
       AnyOf(Seq(attr1, attr2, attr3, attr4, attrcnst1, attrcnst2))
 
-    val exception = intercept[Exception](
+    val exceptMSG = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
     ).getMessage should include
     "builtin.array_attr does not match any of List(EqualAttr(5 : i32), EqualAttr(6 : i32), EqualAttr(f32), EqualAttr(index), BaseAttr(), EqualAttr([index, i32, i64]))"
+
   }
 
   //////////////////////
