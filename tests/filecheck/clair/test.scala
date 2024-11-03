@@ -59,9 +59,9 @@ object Main {
 // CHECK:   def testsuccessor: Block = successors(0)
 // CHECK:   def testsuccessor_=(value: Block): Unit = {successors(0) = value}
 // CHECK:   val NameOp_CTX = new ConstraintContext()
-// CHECK:   val map_constr = BaseAttr[scair.dialects.builtin.IntData]
+// CHECK:   val map_constr = BaseAttr()
 // CHECK:   val map2_constr = EqualAttr(IntData(5))
-// CHECK:   val map3_constr = AnyOf(List(IntData(5), IntData(6)))
+// CHECK:   val map3_constr = AnyOf(List(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
 // CHECK:   override def custom_verify(): Unit =
 // CHECK:     if (operands.length != 3) then throw new Exception("Expected 3 operands, got operands.length")
 // CHECK:     if (results.length != 0) then throw new Exception("Expected 0 results, got results.length")
