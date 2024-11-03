@@ -96,7 +96,7 @@ case class OperationDef(
     val OpProperty: Seq[OpPropertyDef] = Seq(),
     val OpAttribute: Seq[OpAttributeDef] = Seq()
 ) {
-
+  
   def print_constr_defs(implicit indent: Int): String = {
     val deff = { (x: String, y: IRDLConstraint) =>
       s"  val ${x}_constr = ${y}"
