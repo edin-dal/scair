@@ -50,27 +50,32 @@ sealed trait Attribute {
   def prefix: String = "#"
   def custom_verify(): Unit = ()
   def custom_print: String
-  def same_as(attr: Attribute): Boolean
 }
 
 trait TypeAttribute extends Attribute {
   override def prefix: String = "!"
 }
 
+// TODO: Think about this; probably not the best design
+extension (x: Seq[Attribute] | Attribute)
+  def custom_print: String = x match {
+    case seq: Seq[Attribute] => seq.map(_.custom_print).mkString("[", ", ", "]")
+    case attr: Attribute     => attr.custom_print
+  }
 abstract class ParametrizedAttribute(
     override val name: String,
-    val parameters: Seq[Attribute] = Seq()
+    val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 ) extends Attribute {
   override def custom_print =
     s"${prefix}${name}<${parameters.map(x => x.custom_print).mkString(", ")}>"
-  override def same_as(attr: Attribute): Boolean = {
+  override def equals(attr: Any): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
         x.name == this.name &&
         x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
         (for ((i, j) <- x.parameters zip this.parameters)
-          yield i same_as j).foldLeft(true)((i, j) => i && j)
+          yield i == j).foldLeft(true)((i, j) => i && j)
       case _ => false
     }
   }
@@ -81,7 +86,7 @@ abstract class DataAttribute[D](
     val data: D
 ) extends Attribute {
   override def custom_print = data.toString
-  override def same_as(attr: Attribute): Boolean = {
+  override def equals(attr: Any): Boolean = {
     attr match {
       case x: DataAttribute[D] =>
         x.name == this.name &&
