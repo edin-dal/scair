@@ -230,7 +230,8 @@ case class SymbolRefAttr(
 case class DenseArrayAttr(
     val typ: Attribute,
     val data: Seq[Attribute]
-) extends ParametrizedAttribute("builtin.dense", Seq(typ, data)) {
+) extends ParametrizedAttribute("builtin.dense", Seq(typ, data))
+    with Seq[Attribute] {
 
   override def custom_verify(): Unit =
     typ match {
@@ -260,6 +261,13 @@ case class DenseArrayAttr(
         })
         .mkString(", ")}>"
   }
+
+  // Seq methods
+  def apply(idx: Int): Attribute = data.apply(idx)
+
+  def length: Int = data.length
+
+  def iterator: Iterator[Attribute] = data.iterator
 }
 
 //////////////////////////////

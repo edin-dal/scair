@@ -117,6 +117,15 @@ case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
   }
 }
 
+case class AllOf(val constraints: Seq[IRDLConstraint]) extends IRDLConstraint {
+
+  override def verify(
+      that_attr: Attribute,
+      constraint_ctx: ConstraintContext
+  ): Unit =
+    for (c <- constraints) c.verify(that_attr, constraint_ctx)
+}
+
 case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
     val constraints: Seq[IRDLConstraint]
 ) extends IRDLConstraint {
