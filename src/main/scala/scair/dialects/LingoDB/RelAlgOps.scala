@@ -119,7 +119,7 @@ case class SortSpecificationAttr(
 ) extends ParametrizedAttribute(
       name = "db.interval"
     ) {
-  override def toString = s"(${attr},${sortSpec})"
+  override def custom_print = s"(${attr.custom_print},${sortSpec.custom_print})"
 }
 
 ///////////

@@ -49,7 +49,7 @@ class Printer(val strictly_generic: Boolean) {
   ///////////////
 
   def printAttribute(attribute: Attribute): String = {
-    return attribute.toString
+    return attribute.custom_print
   }
 
   ///////////
@@ -156,7 +156,7 @@ class Printer(val strictly_generic: Boolean) {
       if (op.dictionaryProperties.size > 0)
         " <{" + (for {
           (key, value) <- op.dictionaryProperties
-        } yield s"$key = $value")
+        } yield s"$key = ${value.custom_print}")
           .mkString(", ") + "}>"
       else ""
 
@@ -164,7 +164,7 @@ class Printer(val strictly_generic: Boolean) {
       if (op.dictionaryAttributes.size > 0)
         " {" + (for {
           (key, value) <- op.dictionaryAttributes
-        } yield s"$key = $value")
+        } yield s"$key = ${value.custom_print}")
           .mkString(", ") + "}"
       else ""
 

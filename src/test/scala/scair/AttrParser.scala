@@ -112,7 +112,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   forAll(attrToStringTests) { (input, result, expected) =>
     "attrToStringTests" should s"[ '$input' -> '$expected' = $result ]" in {
       // Run the pqrser on the input and check
-      input.toString shouldEqual expected
+      input.custom_print shouldEqual expected
     }
   }
 

@@ -51,12 +51,12 @@ class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
     if (!(this_attr same_as that_attr)) {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
-          this_attr.toString + " and " + that_attr.toString
+          this_attr.custom_print + " and " + that_attr.custom_print
       throw new VerifyException(errstr)
     }
   }
 
-  override def toString = s"EqualAttr(${this_attr})"
+  override def toString = s"EqualAttr(${this_attr.custom_print})"
 }
 
 class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
@@ -102,7 +102,10 @@ class AnyOf(val these_attrs: Seq[Attribute | IRDLConstraint])
       )
     ) {
       val errstr =
-        s"${that_attr.name} does not match any of ${these_attrs}\n"
+        s"${that_attr.name} does not match any of ${these_attrs.map(_ match {
+            case x: Attribute      => x.custom_print
+            case y: IRDLConstraint => y.toString
+          })}\n"
       throw new VerifyException(errstr)
     }
   }
@@ -129,7 +132,7 @@ class ParametricAttr[T <: Attribute: ClassTag](
             ) {
               throw new VerifyException(
                 s"Parameters of ${that_attr.name} do not match the constrained" +
-                  s" parameters ${params}.\n"
+                  s" parameters ${params.map(_.custom_print)}.\n"
               )
             }
           case _ =>

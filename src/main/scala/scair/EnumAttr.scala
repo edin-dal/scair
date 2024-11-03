@@ -13,7 +13,7 @@ abstract class EnumAttrCase[T <: Attribute](
     val typ: T
 ) extends ParametrizedAttribute(symbol, Seq(typ)) {
   def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
-  override def toString: String = symbol
+  override def custom_print = symbol
 }
 
 abstract class EnumAttr[T <: Attribute](
