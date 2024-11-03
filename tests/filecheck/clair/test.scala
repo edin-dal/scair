@@ -14,7 +14,7 @@ object Main {
           "NameOp",
           operands = List(
             OperandDef("map", BaseAttr[IntData]()),
-            OperandDef("map2", EqualAttr(IntData(5))),
+            OperandDef("map2", EqualAttr(IntData(5)), Variadicity.Variadic),
             OperandDef(
               "map3",
               AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
