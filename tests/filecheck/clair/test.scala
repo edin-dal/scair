@@ -17,7 +17,7 @@ object Main {
             OperandDef("map2", EqualAttr(IntData(5))),
             OperandDef(
               "map3",
-              AnyOf(Seq(IntData(5), IntData(6)))
+              AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
             )
           ),
           regions = List(RegionDef("testregion")),
