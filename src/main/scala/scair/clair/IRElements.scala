@@ -3,6 +3,8 @@ package scair.clair.ir
 import scala.collection.mutable
 import scala.compiletime.ops.int
 
+import scair.scairdl.constraints._
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -44,31 +46,31 @@ case class RegularType(val dialect: String, override val id: String)
 ||    CONSTRAINTS    ||
 \*≡==----==≡==----==≡*/
 
-abstract class ConstraintDef {
-  def print(indent: Int): String
-  def get_imports(): String
-}
+// abstract class ConstraintDef {
+//   def print(indent: Int): String
+//   def get_imports(): String
+// }
 
-case class Equal(val typ: Type) extends ConstraintDef {
-  override def print(indent: Int): String =
-    s"val ${typ.id.toLowerCase()}_check = EqualAttr(${typ.id})\n"
+// case class Equal(val typ: Type) extends ConstraintDef {
+//   override def print(indent: Int): String =
+//     s"val ${typ.id.toLowerCase()}_check = EqualAttr(${typ.id})\n"
 
-  override def get_imports(): String = typ.get_import()
-}
-case class Base(val typ: Type) extends ConstraintDef {
-  override def print(indent: Int): String =
-    s"val ${typ.id.toLowerCase()}_check = BaseAttr[${typ.id}]()\n"
+//   override def get_imports(): String = typ.get_import()
+// }
+// case class Base(val typ: Type) extends ConstraintDef {
+//   override def print(indent: Int): String =
+//     s"val ${typ.id.toLowerCase()}_check = BaseAttr[${typ.id}]()\n"
 
-  override def get_imports(): String = typ.get_import()
-}
-case class AnyOf(val typ: Seq[Type]) extends ConstraintDef {
-  override def print(indent: Int): String =
-    s"val ${(for (x <- typ) yield x.id).mkString("_").toLowerCase()}_check = AnyOf(Seq(${(for (x <- typ)
-        yield x.id).mkString(", ")}))\n"
+//   override def get_imports(): String = typ.get_import()
+// }
+// case class AnyOf(val typ: Seq[Type]) extends ConstraintDef {
+//   override def print(indent: Int): String =
+//     s"val ${(for (x <- typ) yield x.id).mkString("_").toLowerCase()}_check = AnyOf(Seq(${(for (x <- typ)
+//         yield x.id).mkString(", ")}))\n"
 
-  override def get_imports(): String =
-    (for (x <- typ) yield x.get_import()).mkString("\n")
-}
+//   override def get_imports(): String =
+//     (for (x <- typ) yield x.get_import()).mkString("\n")
+// }
 
 /*≡≡=---===≡≡≡≡===---=≡≡*\
 ||  TYPES & CONTAINERS  ||
@@ -76,15 +78,15 @@ case class AnyOf(val typ: Seq[Type]) extends ConstraintDef {
 
 abstract class OpInput {}
 
-case class OperandDef(val id: String, val const: ConstraintDef)
+case class OperandDef(val id: String, val const: IRDLConstraint)
     extends OpInput {}
-case class ResultDef(val id: String, val const: ConstraintDef)
+case class ResultDef(val id: String, val const: IRDLConstraint)
     extends OpInput {}
 case class RegionDef(val id: String) extends OpInput {}
 case class SuccessorDef(val id: String) extends OpInput {}
-case class OpPropertyDef(val id: String, val const: ConstraintDef)
+case class OpPropertyDef(val id: String, val const: IRDLConstraint)
     extends OpInput {}
-case class OpAttributeDef(val id: String, val const: ConstraintDef)
+case class OpAttributeDef(val id: String, val const: IRDLConstraint)
     extends OpInput {}
 
 case class DialectDef(
@@ -119,19 +121,19 @@ case class OperationDef(
     val OpAttribute: Seq[OpAttributeDef] = Seq()
 ) {
 
-  def get_imports(): Set[String] = {
-    ((for (x <- operands) yield x.const.get_imports()) ++
-      (for (x <- results) yield x.const.get_imports()) ++
-      (for (x <- OpProperty) yield x.const.get_imports()) ++
-      (for (x <- OpAttribute) yield x.const.get_imports())).toSet
-  }
+  // def get_imports(): Set[String] = {
+  //   ((for (x <- operands) yield x.const.get_imports()) ++
+  //     (for (x <- results) yield x.const.get_imports()) ++
+  //     (for (x <- OpProperty) yield x.const.get_imports()) ++
+  //     (for (x <- OpAttribute) yield x.const.get_imports())).toSet
+  // }
 
-  def constraint_printer(implicit indent: Int): String = {
-    ((for (x <- operands) yield x.const.print(indent)) ++
-      (for (x <- results) yield x.const.print(indent)) ++
-      (for (x <- OpProperty) yield x.const.print(indent)) ++
-      (for (x <- OpAttribute) yield x.const.print(indent))).toSet.mkString("\n")
-  }
+  // def constraint_printer(implicit indent: Int): String = {
+  //   ((for (x <- operands) yield x.const.print(indent)) ++
+  //     (for (x <- results) yield x.const.print(indent)) ++
+  //     (for (x <- OpProperty) yield x.const.print(indent)) ++
+  //     (for (x <- OpAttribute) yield x.const.print(indent))).toSet.mkString("\n")
+  // }
 
   def print_getters(implicit indent: Int): String = {
     ((for (odef, i) <- operands.zipWithIndex
