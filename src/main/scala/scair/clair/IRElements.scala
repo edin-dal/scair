@@ -72,6 +72,8 @@ case class DialectDef(
 ) {
   def print(indent: Int): String = s"""
 import scair.ir._
+import scair.dialects.builtin._
+import scair.scairdl.constraints._
   """ +
     (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
       .mkString("\n") + s"""
@@ -110,7 +112,7 @@ case class OperationDef(
 
   def print_constr_vers(implicit indent: Int): String = {
     val ver = { (x: String) =>
-      s"    ${x}_constr.verify($x, new ConstraintContext())"
+      s"    ${x}_constr.verify($x.typ, ${className}_CTX)"
     }
     ((for (odef <- operands) yield ver(odef.id)) ++
       (for (rdef <- results) yield ver(rdef.id)) ++
@@ -160,6 +162,7 @@ case class $className(
 
 ${print_getters(indent + 1)}
 
+  val ${className}_CTX = new ConstraintContext() 
 ${print_constr_defs(indent + 1)}
 
   override def custom_verify(): Unit = 

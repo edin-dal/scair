@@ -32,10 +32,14 @@ object Main {
 }
 
 // CHECK: import scair.ir._
+// CHECK: import scair.dialects.builtin._
+// CHECK: import scair.scairdl.constraints._
+// CHECK:
 // CHECK: object NameOp extends DialectOperation {
 // CHECK:   override def name = "dialect.name2"
 // CHECK:   override def factory = NameOp.apply
 // CHECK: }
+// CHECK:
 // CHECK: case class NameOp(
 // CHECK:     override val operands: ListType[Value[Attribute]] = ListType(),
 // CHECK:     override val successors: ListType[Block] = ListType(),
@@ -46,19 +50,28 @@ object Main {
 // CHECK:     override val dictionaryAttributes: DictType[String, Attribute] =
 // CHECK:       DictType.empty[String, Attribute]
 // CHECK: ) extends RegisteredOperation(name = "dialect.name2") {
+// CHECK:
 // CHECK:   def map: Value[Attribute] = operands(0)
 // CHECK:   def map_=(value: Value[Attribute]): Unit = {operands(0) = value}
+// CHECK:
 // CHECK:   def map2: Value[Attribute] = operands(1)
 // CHECK:   def map2_=(value: Value[Attribute]): Unit = {operands(1) = value}
+// CHECK:
 // CHECK:   def map3: Value[Attribute] = operands(2)
 // CHECK:   def map3_=(value: Value[Attribute]): Unit = {operands(2) = value}
+// CHECK:
 // CHECK:   def testregion: Region = regions(0)
 // CHECK:   def testregion_=(value: Region): Unit = {regions(0) = value}
+// CHECK:
 // CHECK:   def testsuccessor: Block = successors(0)
 // CHECK:   def testsuccessor_=(value: Block): Unit = {successors(0) = value}
+// CHECK:
+// CHECK:
+// CHECK:   val NameOp_CTX = new ConstraintContext()
 // CHECK:   val map_constr = BaseAttr[scair.dialects.builtin.IntData]
 // CHECK:   val map2_constr = EqualAttr(IntData(5))
 // CHECK:   val map3_constr = AnyOf(List(IntData(5), IntData(6)))
+// CHECK:
 // CHECK:   override def custom_verify(): Unit =
 // CHECK:     if (operands.length != 3) then throw new Exception("Expected 3 operands, got operands.length")
 // CHECK:     if (results.length != 0) then throw new Exception("Expected 0 results, got results.length")
@@ -66,18 +79,22 @@ object Main {
 // CHECK:     if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
 // CHECK:     if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK:     if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
-// CHECK:     map_constr.verify(map, new ConstraintContext())
-// CHECK:     map2_constr.verify(map2, new ConstraintContext())
-// CHECK:     map3_constr.verify(map3, new ConstraintContext())
+// CHECK:     map_constr.verify(map.typ, NameOp_CTX)
+// CHECK:     map2_constr.verify(map2.typ, NameOp_CTX)
+// CHECK:     map3_constr.verify(map3.typ, NameOp_CTX)
 // CHECK: }
+// CHECK:
+// CHECK:
 // CHECK: object NameAttr extends DialectAttribute {
 // CHECK:   override def name = "dialect.name1"
 // CHECK:   override def factory = NameAttr.apply
 // CHECK: }
+// CHECK:
 // CHECK: case class NameAttr(override val parameters: Seq[Attribute]) extends ParametrizedAttribute(name = "dialect.name1", parameters = parameters) with TypeAttribute {
 // CHECK:   override def custom_verify(): Unit =
 // CHECK:     if (parameters.length != 0) then throw new Exception("Expected 0 parameters, got parameters.length")
 // CHECK: }
+// CHECK:
 // CHECK: val dialect: Dialect = new Dialect(
 // CHECK:   operations = Seq(NameOp),
 // CHECK:   attributes = Seq(NameAttr)
