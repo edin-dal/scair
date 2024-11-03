@@ -90,7 +90,8 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
     extends ParametrizedAttribute(
       name = "tuples.column_def"
     ) {
-  override def toString = s"${refName}({type = ${typ}})"
+  override def custom_print =
+    s"${refName.custom_print}({type = ${typ.custom_print}})"
 }
 
 // ==-------------== //
@@ -109,7 +110,7 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
     extends ParametrizedAttribute(
       name = "tuples.column_ref"
     ) {
-  override def toString = s"${refName}"
+  override def custom_print = s"${refName.custom_print}"
 }
 
 ////////////////

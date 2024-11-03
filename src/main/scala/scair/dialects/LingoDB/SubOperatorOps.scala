@@ -34,8 +34,8 @@ case class StateMembers(
       name = "subop.state_members",
       parameters = names :++ types
     ) {
-  override def toString =
-    s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y}").mkString(", ")}]"
+  override def custom_print =
+    s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
 }
 
 ///////////

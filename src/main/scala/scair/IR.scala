@@ -62,8 +62,7 @@ abstract class ParametrizedAttribute(
     val parameters: Seq[Attribute] = Seq()
 ) extends Attribute {
   override def custom_print =
-    s"<${parameters.map(x => x.toString).mkString(", ")}>"
-  override def toString = s"${prefix}${name}${custom_print}"
+    s"${prefix}${name}<${parameters.map(x => x.custom_print).mkString(", ")}>"
   override def same_as(attr: Attribute): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
@@ -82,7 +81,6 @@ abstract class DataAttribute[D](
     val data: D
 ) extends Attribute {
   override def custom_print = data.toString
-  override def toString = custom_print
   override def same_as(attr: Attribute): Boolean = {
     attr match {
       case x: DataAttribute[D] =>

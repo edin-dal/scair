@@ -88,7 +88,8 @@ case class Norm(
       p: Printer
   ): String = {
     val oper = p.printValue(operands(0))
-    val operType = operands(0).typ.custom_print
+    val operType =
+      s"<${operands(0).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
 
     s"${name} (${oper} : ${operType}) => ${p.printAttribute(results(0).typ)}"
   }
@@ -158,11 +159,16 @@ case class Mul(
       p: Printer
   ): String = {
     val oper = p.printValue(operands(0))
-    val operType = operands(0).typ.custom_print
+    val operType =
+      s"<${operands(0).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
     val oper1 = p.printValue(operands(1))
-    val operType1 = operands(1).typ.custom_print
+    val operType1 =
+      s"<${operands(1).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
 
-    s"${name} (${oper} : ${operType}, ${oper1} : ${operType1}) => ${results(0).typ.custom_print}"
+    val resType =
+      s"<${results(0).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
+
+    s"${name} (${oper} : ${operType}, ${oper1} : ${operType1}) => ${resType}"
   }
 
   override def custom_verify(): Unit = (
