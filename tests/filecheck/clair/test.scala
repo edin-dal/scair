@@ -1,4 +1,4 @@
-// RUN: scala -classpath ../../target/scala-3.3.1/classes/ --main-class Main %s | filecheck %s
+// RUN: scala -classpath ../../target/scala-3.3.1/classes/ %s | filecheck %s
 
 import scair.clair.ir._
 import scair.dialects.builtin.IntData
