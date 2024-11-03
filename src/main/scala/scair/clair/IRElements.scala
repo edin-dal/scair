@@ -55,8 +55,11 @@ case class RegularType(val dialect: String, override val id: String)
 
 abstract class OpInput {}
 
+// TODO: Add support for optionals AFTER variadic support is laid out
+// It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
+// (An Optional structurally is just a Variadic capped at one.)
 enum Variadicity {
-  case Single, Optional, Variadic
+  case Single, Variadic
 }
 
 case class OperandDef(
@@ -213,6 +216,11 @@ case class OperationDef(
         s"""if (operands.length != ${operands.length}) then throw new Exception(s"Expected ${operands.length} operands, got $${operands.length}")"""
       case 1 => {
         s"""if (operands.length < ${operands.length - 1}) then throw new Exception(s"Expected at least ${operands.length - 1} operands, got $${operands.length}")"""
+      }
+      case _: Int => {
+        throw NotImplementedError(
+          "Multiple variadic operands are not yet implemented in Scair"
+        )
       }
     }
 
