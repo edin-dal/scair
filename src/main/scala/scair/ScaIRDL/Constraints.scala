@@ -84,6 +84,8 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
         throw new VerifyException(errstr)
     }
   }
+  override def toString =
+    s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]()"
 }
 
 case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
@@ -149,6 +151,9 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
           s"${that_attr.name}'s class does not equal ${className}.\n"
         throw new VerifyException(errstr)
     }
+
+  override def toString =
+    s"ParametrizedAttrConstraint[${implicitly[ClassTag[T]].runtimeClass.getName}](${constraints})"
 }
 
 case class VarConstraint(val name: String, val constraint: IRDLConstraint)
