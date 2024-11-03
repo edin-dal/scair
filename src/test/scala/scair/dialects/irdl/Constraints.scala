@@ -152,7 +152,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val exception = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
-      "builtin.array_attr does not match any of List(EqualAttr(5 : i32), EqualAttr(6 : i32), EqualAttr(f32), EqualAttr(index))\n"
+      "builtin.array_attr does not match any of List(EqualAttr(IntegerAttr(IntData(5),IntegerType(IntData(32),Signless))), EqualAttr(IntegerAttr(IntData(6),IntegerType(IntData(32),Signless))), EqualAttr(Float32Type), EqualAttr(IndexType))\n"
   }
 
   "OR Constraint Test 3" should "verify AnyOf constraint (should PASS)" in {

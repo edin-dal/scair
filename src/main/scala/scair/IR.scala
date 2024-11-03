@@ -56,13 +56,18 @@ trait TypeAttribute extends Attribute {
   override def prefix: String = "!"
 }
 
+// TODO: Think about this; probably not the best design
+extension (x: Seq[Attribute] | Attribute)
+  def custom_print: String = x match {
+    case seq: Seq[Attribute] => seq.map(_.custom_print).mkString("[", ", ", "]")
+    case attr: Attribute     => attr.custom_print
+  }
 abstract class ParametrizedAttribute(
     override val name: String,
     val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 ) extends Attribute {
   override def custom_print =
-    s"<${parameters.map(x => x.toString).mkString(", ")}>"
-  override def toString = s"${prefix}${name}${custom_print}"
+    s"${prefix}${name}<${parameters.map(x => x.custom_print).mkString(", ")}>"
   override def equals(attr: Any): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
@@ -81,7 +86,6 @@ abstract class DataAttribute[D](
     val data: D
 ) extends Attribute {
   override def custom_print = data.toString
-  override def toString = custom_print
   override def equals(attr: Any): Boolean = {
     attr match {
       case x: DataAttribute[D] =>

@@ -58,7 +58,7 @@ case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
     if (this_attr != that_attr) {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
-          s"Got ${that_attr.toString}, expected ${this_attr.toString}"
+          s"Got ${that_attr.custom_print}, expected ${this_attr.custom_print}"
       throw new VerifyException(errstr)
     }
   }
@@ -106,7 +106,10 @@ case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
       })
     ) {
       val errstr =
-        s"${that_attr.name} does not match any of ${these_attrs}\n"
+        s"${that_attr.name} does not match any of ${these_attrs.map(_ match {
+            case x: Attribute      => x.custom_print
+            case y: IRDLConstraint => y.toString
+          })}\n"
       throw new VerifyException(errstr)
     }
   }

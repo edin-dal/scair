@@ -36,7 +36,7 @@ def I64 = IntegerType(IntData(64), Signless)
 
 sealed abstract class Signedness(override val name: String, val dat: String)
     extends DataAttribute[String](name, dat) {
-  override def toString = dat
+  override def custom_print = dat
 }
 case object Signed extends Signedness("signed", "si")
 case object Unsigned extends Signedness("unsigned", "ui")
@@ -49,19 +49,19 @@ case object Signless extends Signedness("signless", "i")
 abstract class FloatType(val namee: String) extends ParametrizedAttribute(namee)
 
 case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
-  override def toString = "f16"
+  override def custom_print = "f16"
 }
 case object Float32Type extends FloatType("builtin.f32") with TypeAttribute {
-  override def toString = "f32"
+  override def custom_print = "f32"
 }
 case object Float64Type extends FloatType("builtin.f64") with TypeAttribute {
-  override def toString = "f64"
+  override def custom_print = "f64"
 }
 case object Float80Type extends FloatType("builtin.f80") with TypeAttribute {
-  override def toString = "f80"
+  override def custom_print = "f80"
 }
 case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
-  override def toString = "f128"
+  override def custom_print = "f128"
 }
 
 //////////////
@@ -70,7 +70,7 @@ case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
 
 case class IntData(val value: Long)
     extends DataAttribute[Long]("builtin.int_attr", value) {
-  override def toString = value.toString
+  override def custom_print = value.toString
 }
 
 //////////////////
@@ -80,10 +80,10 @@ case class IntData(val value: Long)
 case class IntegerType(val width: IntData, val sign: Signedness)
     extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
     with TypeAttribute {
-  override def toString = sign match {
-    case Signless => s"$sign$width"
-    case Signed   => s"$sign$width"
-    case Unsigned => s"$sign$width"
+  override def custom_print = sign match {
+    case Signless => s"${sign.custom_print}${width.custom_print}"
+    case Signed   => s"${sign.custom_print}${width.custom_print}"
+    case Unsigned => s"${sign.custom_print}${width.custom_print}"
   }
 }
 
@@ -98,11 +98,11 @@ case class IntegerAttr(
 
   def this(value: IntData) = this(value, I64)
 
-  override def toString = (value, typ) match {
+  override def custom_print = (value, typ) match {
     case (IntData(1), IntegerType(IntData(1), Signless)) => "true"
     case (IntData(0), IntegerType(IntData(1), Signless)) => "false"
-    case (_, IntegerType(IntData(64), Signless))         => s"${value}"
-    case (_, _)                                          => s"${value} : ${typ}"
+    case (_, IntegerType(IntData(64), Signless)) => s"${value.custom_print}"
+    case (_, _) => s"${value.custom_print} : ${typ.custom_print}"
   }
 }
 
@@ -112,7 +112,7 @@ case class IntegerAttr(
 
 case class FloatData(val value: Double)
     extends DataAttribute[Double]("builtin.float_data", value) {
-  override def toString = value.toString
+  override def custom_print = value.toString
 }
 
 /////////////////////
@@ -121,9 +121,9 @@ case class FloatData(val value: Double)
 
 case class FloatAttr(val value: FloatData, val typ: FloatType)
     extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
-  override def toString = (value, typ) match {
-    case (_, Float64Type) => s"${value}"
-    case (_, _)           => s"${value} : ${typ}"
+  override def custom_print = (value, typ) match {
+    case (_, Float64Type) => s"${value.custom_print}"
+    case (_, _)           => s"${value.custom_print} : ${typ.custom_print}"
   }
 }
 
@@ -134,7 +134,7 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 case object IndexType
     extends ParametrizedAttribute("builtin.index")
     with TypeAttribute {
-  override def toString = "index"
+  override def custom_print = "index"
 }
 
 /////////////////////
@@ -143,8 +143,8 @@ case object IndexType
 
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
-  override def toString =
-    "[" + attrValues.map(x => x.toString).mkString(", ") + "]"
+  override def custom_print =
+    "[" + attrValues.map(x => x.custom_print).mkString(", ") + "]"
 }
 
 //////////////////////
@@ -154,7 +154,7 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 // shortened definition, does not include type information
 case class StringData(val stringLiteral: String)
     extends DataAttribute("builtin.string", stringLiteral) {
-  override def toString = "\"" + stringLiteral + "\""
+  override def custom_print = "\"" + stringLiteral + "\""
 }
 
 /////////////////
@@ -186,16 +186,16 @@ case class RankedTensorType(
         encoding.toSeq
     ) {
 
-  override def toString: String = {
+  override def custom_print: String = {
 
     val shapeString =
       (dimensionList.data.map(x =>
-        if (x.data == -1) "?" else x.toString
-      ) :+ typ.toString)
+        if (x.data == -1) "?" else x.custom_print
+      ) :+ typ.custom_print)
         .mkString("x")
 
     val encodingString = encoding match {
-      case Some(x) => x.toString
+      case Some(x) => x.custom_print
       case None    => ""
     }
 
@@ -205,7 +205,7 @@ case class RankedTensorType(
 
 case class UnrankedTensorType(override val typ: Attribute)
     extends TensorType("builtin.unranked_tensor", typ, Seq(typ)) {
-  override def toString = s"tensor<*x${typ.toString}>"
+  override def custom_print = s"tensor<*x${typ.custom_print}>"
 }
 
 //////////////////////////
@@ -219,7 +219,7 @@ case class SymbolRefAttr(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)
     ) {
-  override def toString =
+  override def custom_print =
     s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
 }
 
@@ -251,12 +251,12 @@ case class DenseArrayAttr(
         "Element types do not match the dense array type"
       )
 
-  override def toString() = {
+  override def custom_print = {
 
-    return s"array<$typ${if data.isEmpty then "" else ": "}${data
+    return s"array<${typ.custom_print}${if data.isEmpty then "" else ": "}${data
         .map(_ match {
-          case IntegerAttr(value, _) => value
-          case FloatAttr(value, _)   => value
+          case IntegerAttr(value, _) => value.custom_print
+          case FloatAttr(value, _)   => value.custom_print
         })
         .mkString(", ")}>"
   }
@@ -282,7 +282,7 @@ case class DenseIntOrFPElementsAttr(
     int_or_float.verify(typ.typ, new ConstraintContext())
     for (x <- data.attrValues) int_or_float.verify(x, new ConstraintContext())
 
-  override def toString() = {
+  override def custom_print = {
 
     val values = data.attrValues(0) match {
       case x: IntegerAttr =>
@@ -292,9 +292,9 @@ case class DenseIntOrFPElementsAttr(
     }
 
     return s"dense<${
-        if (values.size == 1) { values(0) }
-        else { values.mkString("[", ", ", "]") }
-      }> : ${typ}"
+        if (values.size == 1) { values(0).custom_print }
+        else { values.map(_.custom_print).mkString("[", ", ", "]") }
+      }> : ${typ.custom_print}"
   }
 }
 
@@ -305,7 +305,7 @@ case class DenseIntOrFPElementsAttr(
 case class AffineMapAttr(val affine_map: AffineMap)
     extends DataAttribute[AffineMap]("builtin.affine_map", affine_map) {
 
-  override def toString = s"affine_map<${affine_map}>"
+  override def custom_print = s"affine_map<${affine_map}>"
 }
 
 /////////////////////
@@ -316,7 +316,7 @@ case class AffineMapAttr(val affine_map: AffineMap)
 case class AffineSetAttr(val affine_set: AffineSet)
     extends DataAttribute[AffineSet]("builtin.affine_set", affine_set) {
 
-  override def toString = s"affine_set<${affine_set}>"
+  override def custom_print = s"affine_set<${affine_set}>"
 }
 
 ////////////////
