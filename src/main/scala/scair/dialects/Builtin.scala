@@ -230,7 +230,7 @@ case class SymbolRefAttr(
 case class DenseArrayAttr(
     val typ: Attribute,
     val data: Seq[Attribute]
-) extends ParametrizedAttribute("builtin.dense", typ +: data) {
+) extends ParametrizedAttribute("builtin.dense", Seq(typ, data)) {
 
   override def custom_verify(): Unit =
     typ match {

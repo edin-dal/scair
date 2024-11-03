@@ -16,7 +16,7 @@ import Parser._
 import scair.dialects.builtin._
 import scair.ir._
 import scair.scairdl.constraints._
-
+import scair.scairdl.constraints.attr2constraint
 class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   var constraint_ctx = new ConstraintContext()
@@ -60,7 +60,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
       equal_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
       "builtin.array_attr does not equal builtin.array_attr:\n" +
-      "[index, f16, i64] and [index, f32, i64]"
+      "Got [index, f32, i64], expected [index, f16, i64]"
   }
 
   "Equal Constraint Test 3" should "verify EqualAttr constraint (should PASS)" in {
@@ -90,7 +90,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
       equal_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
       "builtin.array_attr does not equal builtin.array_attr:\n" +
-      "[index, 5 : i32, i64] and [index, 6 : i32, i64]"
+      "Got [index, 6 : i32, i64], expected [index, 5 : i32, i64]"
   }
 
   ////////////
@@ -152,7 +152,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val exception = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
-      "builtin.array_attr does not match any of List(5 : i32, 6 : i32, f32, index)\n"
+      "builtin.array_attr does not match any of List(EqualAttr(5 : i32), EqualAttr(6 : i32), EqualAttr(f32), EqualAttr(index))\n"
   }
 
   "OR Constraint Test 3" should "verify AnyOf constraint (should PASS)" in {
@@ -188,31 +188,32 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
     val exception = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
-    ).getMessage shouldBe
-      "builtin.array_attr does not match any of List(5 : i32, 6 : i32, f32, index, BaseAttr[scair.dialects.builtin.IndexType$], EqualAttr([index, i32, i64]))\n"
+    ).getMessage should include
+    "builtin.array_attr does not match any of List(EqualAttr(5 : i32), EqualAttr(6 : i32), EqualAttr(f32), EqualAttr(index), BaseAttr(), EqualAttr([index, i32, i64]))"
   }
 
   //////////////////////
-  //  PARAMETRICATTR  //
+  //  ParametrizedAttrConstraint  //
   //////////////////////
 
-  "Parametric Constraint Test 1" should "verify ParametricAttr constraint (should PASS)" in {
+  "Parametric Constraint Test 1" should "verify ParametrizedAttrConstraint constraint (should PASS)" in {
 
     val that_attr = FloatAttr(FloatData(1.5), Float32Type)
 
     val parametric_constraint =
-      ParametricAttr[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
 
     parametric_constraint.verify(that_attr, constraint_ctx)
   }
 
-  "Parametric Constraint Test 2" should "not verify ParametricAttr constraint (should FAIL)" in {
+  "Parametric Constraint Test 2" should "not verify ParametrizedAttrConstraint constraint (should FAIL)" in {
 
     val that_attr = ArrayAttribute(Seq(IndexType, Float32Type, I64))
 
-    val parametric_constraint = ParametricAttr[ArrayAttribute[Attribute]](
-      Seq(IndexType, I32, I64)
-    )
+    val parametric_constraint =
+      ParametrizedAttrConstraint[ArrayAttribute[Attribute]](
+        Seq(IndexType, I32, I64)
+      )
 
     val exception = intercept[Exception](
       parametric_constraint.verify(that_attr, constraint_ctx)
@@ -220,25 +221,25 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
       "Attribute being verified must be of type ParametrizedAttribute.\n"
   }
 
-  "Parametric Constraint Test 3" should "not verify ParametricAttr constraint (should FAIL)" in {
+  "Parametric Constraint Test 3" should "not verify ParametrizedAttrConstraint constraint (should FAIL)" in {
 
     val that_attr = FloatAttr(FloatData(1.5), Float32Type)
 
     val parametric_constraint =
-      ParametricAttr[FloatAttr](Seq(FloatData(1.6), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.6), Float32Type))
 
     val exception = intercept[Exception](
       parametric_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
-      "Parameters of builtin.float_attr do not match the constrained parameters List(1.6, f32).\n"
+      "builtin.float_data does not equal builtin.float_data:\nGot 1.5, expected 1.6"
   }
 
-  "Parametric Constraint Test 4" should "not verify ParametricAttr constraint (should FAIL)" in {
+  "Parametric Constraint Test 4" should "not verify ParametrizedAttrConstraint constraint (should FAIL)" in {
 
     val that_attr = FloatAttr(FloatData(1.5), Float32Type)
 
     val parametric_constraint =
-      ParametricAttr[IntegerAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[IntegerAttr](Seq(FloatData(1.5), Float32Type))
 
     val exception = intercept[Exception](
       parametric_constraint.verify(that_attr, constraint_ctx)
@@ -255,7 +256,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val that_attr = FloatAttr(FloatData(1.5), Float32Type)
 
     val parametric_constraint =
-      ParametricAttr[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
 
     val var_constraint = VarConstraint("T", parametric_constraint)
 
@@ -270,7 +271,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val that_attr2 = FloatAttr(FloatData(1.6), Float32Type)
 
     val parametric_constraint =
-      ParametricAttr[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
 
     val var_constraint = VarConstraint("T", parametric_constraint)
 
@@ -287,13 +288,13 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val that_attr = FloatAttr(FloatData(1.6), Float32Type)
 
     val parametric_constraint =
-      ParametricAttr[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
 
     val var_constraint = VarConstraint("T", parametric_constraint)
 
     val exception = intercept[Exception](
       var_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
-      "Parameters of builtin.float_attr do not match the constrained parameters List(1.5, f32).\n"
+      "builtin.float_data does not equal builtin.float_data:\nGot 1.6, expected 1.5"
   }
 }

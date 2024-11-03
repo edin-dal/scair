@@ -4,6 +4,9 @@ import scala.reflect.ClassTag
 
 import scair.ir._
 import scair.exceptions.VerifyException
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 // USEFUL COMMANDS
 
@@ -29,6 +32,12 @@ class ConstraintContext() {
 abstract class IRDLConstraint {
 
   def verify(that_attr: Attribute, constraint_ctx: ConstraintContext): Unit
+
+  def verify(
+      those_attrs: Seq[Attribute],
+      constraint_ctx: ConstraintContext
+  ): Unit =
+    for (attr <- those_attrs) verify(attr, constraint_ctx)
 }
 
 object AnyAttr extends IRDLConstraint {
@@ -37,11 +46,9 @@ object AnyAttr extends IRDLConstraint {
       that_attr: Attribute,
       constraint_ctx: ConstraintContext
   ): Unit = {}
-
-  override def toString = s"AnyAttr"
 }
 
-class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
+case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
 
   override def verify(
       that_attr: Attribute,
@@ -51,15 +58,17 @@ class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
     if (this_attr != that_attr) {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
-          this_attr.toString + " and " + that_attr.toString
+          s"Got ${that_attr.toString}, expected ${this_attr.toString}"
       throw new VerifyException(errstr)
     }
   }
-
-  override def toString = s"EqualAttr(${this_attr})"
 }
 
-class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
+given attr2constraint: Conversion[Attribute, IRDLConstraint] with {
+  def apply(attr: Attribute): IRDLConstraint = EqualAttr(attr)
+}
+
+case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
 
   override def verify(
       that_attr: Attribute,
@@ -75,13 +84,9 @@ class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
         throw new VerifyException(errstr)
     }
   }
-
-  override def toString =
-    s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]"
 }
 
-class AnyOf(val these_attrs: Seq[Attribute | IRDLConstraint])
-    extends IRDLConstraint {
+case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
 
   override def verify(
       that_attr: Attribute,
@@ -90,28 +95,25 @@ class AnyOf(val these_attrs: Seq[Attribute | IRDLConstraint])
 
     val that_attr_class = that_attr.getClass
     if (
-      !these_attrs.exists(entry =>
-        entry match {
-          case attr: Attribute => that_attr_class == attr.getClass
-          case constr: IRDLConstraint =>
-            try {
-              constr.verify(that_attr, constraint_ctx)
-              true
-            } catch { _ => false }
+      !these_attrs.exists(entry => {
+        Try {
+          entry.verify(that_attr, constraint_ctx)
+          true
+        } match {
+          case Success(i) => true
+          case Failure(s) => false
         }
-      )
+      })
     ) {
       val errstr =
         s"${that_attr.name} does not match any of ${these_attrs}\n"
       throw new VerifyException(errstr)
     }
   }
-
-  override def toString = s"AnyOf(${these_attrs})"
 }
 
-class ParametricAttr[T <: Attribute: ClassTag](
-    val params: Seq[Attribute]
+case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
+    val constraints: Seq[IRDLConstraint]
 ) extends IRDLConstraint {
 
   override def verify(
@@ -122,16 +124,17 @@ class ParametricAttr[T <: Attribute: ClassTag](
       case true =>
         that_attr match {
           case x: ParametrizedAttribute =>
-            if (
-              !(x.parameters.length == params.length &&
-                (for ((i, j) <- x.parameters zip params)
-                  yield i == j).foldLeft(true)((i, j) => i && j))
-            ) {
+            if (!(x.parameters.length == constraints.length)) {
               throw new VerifyException(
-                s"Parameters of ${that_attr.name} do not match the constrained" +
-                  s" parameters ${params}.\n"
+                s"Expected ${constraints.length} parameters, got ${x.parameters.length}\n"
               )
             }
+            for ((p, c) <- x.parameters zip constraints)
+              p match {
+                case p: Attribute      => c.verify(p, constraint_ctx)
+                case p: Seq[Attribute] => c.verify(p, constraint_ctx)
+              }
+
           case _ =>
             throw new VerifyException(
               "Attribute being verified must be of type ParametrizedAttribute.\n"
@@ -143,12 +146,9 @@ class ParametricAttr[T <: Attribute: ClassTag](
           s"${that_attr.name}'s class does not equal ${className}.\n"
         throw new VerifyException(errstr)
     }
-
-  override def toString =
-    s"ParametricAttr[${implicitly[ClassTag[T]].runtimeClass.getName}](${params})"
 }
 
-class VarConstraint(val name: String, val constraint: IRDLConstraint)
+case class VarConstraint(val name: String, val constraint: IRDLConstraint)
     extends IRDLConstraint {
 
   override def verify(
@@ -168,38 +168,4 @@ class VarConstraint(val name: String, val constraint: IRDLConstraint)
         var_consts += ((name, that_attr))
     }
   }
-  override def toString = s"VarConstraint(${name}, ${constraint})"
-}
-
-// PT => parent type, CT => child type
-class ParametrizedBaseAttr[
-    PT <: ParametrizedAttribute: ClassTag,
-    CT <: Attribute: ClassTag
-]() extends IRDLConstraint {
-
-  val base_attr = BaseAttr[CT]()
-
-  override def verify(
-      that_attr: Attribute,
-      constraint_ctx: ConstraintContext
-  ): Unit = {
-
-    that_attr match {
-      case x: PT =>
-        for (p <- x.parameters) p match {
-          case p: Seq[Attribute] =>
-            for (pe <- p) base_attr.verify(pe, constraint_ctx)
-          case p: Attribute => base_attr.verify(p, constraint_ctx)
-        }
-      case _ =>
-        val className = implicitly[ClassTag[PT]].runtimeClass.getName
-        val errstr =
-          s"${that_attr.name}'s class does not equal ${className}\n"
-        throw new Exception(errstr)
-    }
-  }
-
-  override def toString =
-    s"ParametrizedBaseAttr[${implicitly[ClassTag[PT]].runtimeClass.getName}" +
-      s", ${implicitly[ClassTag[CT]].runtimeClass.getName}]"
 }
