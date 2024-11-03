@@ -1,7 +1,10 @@
 // RUN: scala -classpath ../../target/scala-3.3.1/classes/ %s | filecheck %s
 
 import scair.clair.ir._
-object Test {
+import scair.dialects.builtin.IntData
+import scair.scairdl.constraints._
+
+object Main {
   def main(args: Array[String]) = {
     val dialect = DialectDef(
       "dialect",
@@ -10,16 +13,11 @@ object Test {
           "dialect.name2",
           "NameOp",
           operands = List(
-            OperandDef("map", AnyOf(List(RegularType("dialect", "name2")))),
-            OperandDef("map2", Equal(RegularType("dialect", "name2"))),
+            OperandDef("map", BaseAttr[IntData]()),
+            OperandDef("map2", EqualAttr(IntData(5))),
             OperandDef(
               "map3",
-              AnyOf(
-                List(
-                  RegularType("dialect", "name2"),
-                  RegularType("dialect", "name1")
-                )
-              )
+              AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
             )
           ),
           regions = List(RegionDef("testregion")),
