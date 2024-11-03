@@ -192,6 +192,8 @@ object Main {
 // CHECK-NEXT:      val verification_context = new ConstraintContext()
 // CHECK:           val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
 // CHECK-NEXT:      if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected ${operandSegmentSizesSum} operands, got ${operands.length}")
+// CHECK-NEXT:      if operandSegmentSizes(0) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand sing_op1 at index 0, got ${operandSegmentSizes(0)}")
+// CHECK-NEXT:      if operandSegmentSizes(3) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand sing_op2 at index 3, got ${operandSegmentSizes(3)}")
 // CHECK-NEXT:      if (results.length != 0) then throw new Exception("Expected 0 results, got results.length")
 // CHECK-NEXT:      if (regions.length != 1) then throw new Exception("Expected 1 regions, got regions.length")
 // CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
