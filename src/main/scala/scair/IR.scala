@@ -151,6 +151,8 @@ class Value[T <: Attribute](
   }
 }
 
+extension (seq: Seq[Value[Attribute]]) def typ: Seq[Attribute] = seq.map(_.typ)
+
 type Operand[T <: Attribute] = Value[T]
 type OpResult[T <: Attribute] = Value[T]
 

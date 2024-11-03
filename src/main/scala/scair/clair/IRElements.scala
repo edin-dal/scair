@@ -146,12 +146,13 @@ case class OperationDef(
           :+
             (s"""  def ${operands(
                 variadic_index
-              ).id}: Seq[Value[Attribute]] = operands.slice($variadic_index, operands.length - ${operands.length - variadic_index - 1})
-  def ${operands(variadic_index).id}_=(value: Seq[Value[Attribute]]): Unit = {
-    val diff = value.length - (operands.length - ${operands.length - 1})
-    for (val, i) <- (value ++ operands.slice($variadic_index, operands.length).zipWithIndex do
-      operands(i + $variadic_index) = val
-    if diff < 0 then operands.trimEnd(-diff)
+              ).id}: Seq[Value[Attribute]] = operands.slice($variadic_index, operands.length - ${operands.length - variadic_index - 1}).toSeq
+  def ${operands(variadic_index).id}_=(values: Seq[Value[Attribute]]): Unit = {
+    val diff = values.length - (operands.length - ${operands.length - 1})
+    for (value, i) <- (values ++ operands.slice($variadic_index, operands.length)).zipWithIndex do
+      operands(i + $variadic_index) = value
+    if (diff < 0)
+      operands.trimEnd(-diff)
   }\n\n""")) ++
           (for (
             (odef, i) <- operands.zipWithIndex
@@ -268,8 +269,7 @@ object $className extends DialectAttribute {
   override def factory = $className.apply
 }
 
-case class $className(override val parameters
-}: Seq[Attribute]) extends ParametrizedAttribute(name = "$name", parameters = parameters) ${
+case class $className(override val parameters: Seq[Attribute]) extends ParametrizedAttribute(name = "$name", parameters = parameters) ${
       if typee != 0 then "with TypeAttribute" else ""
     } {
   override def custom_verify(): Unit = 
