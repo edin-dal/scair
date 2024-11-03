@@ -7,24 +7,37 @@ import scair.scairdl.constraints._
 object Main {
   def main(args: Array[String]) = {
     val dialect = DialectDef(
-      "dialect",
+      "test",
       ListType(
         OperationDef(
-          "dialect.name2",
-          "NameOp",
+          "test.no_variadics",
+          "NoVariadicsOp",
           operands = List(
-            OperandDef("map", BaseAttr[IntData]()),
-            OperandDef("map2", EqualAttr(IntData(5)), Variadicity.Variadic),
+            OperandDef("sing_op1", BaseAttr[IntData]()),
             OperandDef(
-              "map3",
+              "sing_op2",
               AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
             )
           ),
-          regions = List(RegionDef("testregion")),
-          successors = List(SuccessorDef("testsuccessor"))
+          regions = List(RegionDef("region1")),
+          successors = List(SuccessorDef("successor1"))
+        ),
+        OperationDef(
+          "test.variadic_operand",
+          "VariadicOperandOp",
+          operands = List(
+            OperandDef("sing_op1", BaseAttr[IntData]()),
+            OperandDef("var_op1", EqualAttr(IntData(5)), Variadicity.Variadic),
+            OperandDef(
+              "sing_op2",
+              AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+            )
+          ),
+          regions = List(RegionDef("region1")),
+          successors = List(SuccessorDef("successor1"))
         )
       ),
-      ListType(AttributeDef("dialect.name1", "NameAttr", typee = 1))
+      ListType(AttributeDef("test.type", "TypeAttr", typee = 1))
     )
 
     println(dialect.print(0))
