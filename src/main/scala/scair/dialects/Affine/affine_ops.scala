@@ -12,7 +12,8 @@ import scair.dialects.builtin.{
   IndexType,
   DenseArrayAttr,
   DenseIntOrFPElementsAttr,
-  ArrayAttribute
+  ArrayAttribute,
+  IntegerType
 }
 import scair.exceptions.VerifyException
 import scair.Parser.{whitespace, ValueId, Type, E}
@@ -22,7 +23,7 @@ import scair.scairdl.constraints.{
   IRDLConstraint,
   ConstraintContext,
   BaseAttr,
-  ParametrizedBaseAttr,
+  ParametrizedAttrConstraint,
   AnyAttr
 }
 
@@ -44,7 +45,10 @@ import scair.scairdl.constraints.{
 ||   CONSTRAINTS   ||
 \*≡==----=≡=----==≡*/
 
-val array_check = ParametrizedBaseAttr[DenseArrayAttr, IntegerAttr]()
+val array_check =
+  ParametrizedAttrConstraint[DenseArrayAttr](
+    Seq(BaseAttr[IntegerType](), BaseAttr[IntegerAttr]())
+  )
 val index_check = BaseAttr[IndexType.type]()
 val map_check = BaseAttr[AffineMapAttr]()
 val dense_check = BaseAttr[DenseIntOrFPElementsAttr]()
