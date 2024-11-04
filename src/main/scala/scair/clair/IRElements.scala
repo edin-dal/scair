@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.compiletime.ops.int
 
 import scair.scairdl.constraints._
+import scair.transformations.InsertPoint.after
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -54,15 +55,31 @@ case class RegularType(val dialect: String, override val id: String)
 
 abstract class OpInput {}
 
-case class OperandDef(val id: String, val const: IRDLConstraint)
+// TODO: Add support for optionals AFTER variadic support is laid out
+// It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
+// (An Optional structurally is just a Variadic capped at one.)
+enum Variadicity {
+  case Single, Variadic
+}
+
+case class OperandDef(
+    val id: String,
+    val const: IRDLConstraint = AnyAttr,
+    val variadicity: Variadicity = Variadicity.Single
+) extends OpInput {}
+case class ResultDef(
+    val id: String,
+    val const: IRDLConstraint = AnyAttr
+) extends OpInput {}
+case class RegionDef(
+    val id: String
+) extends OpInput {}
+case class SuccessorDef(
+    val id: String
+) extends OpInput {}
+case class OpPropertyDef(val id: String, val const: IRDLConstraint = AnyAttr)
     extends OpInput {}
-case class ResultDef(val id: String, val const: IRDLConstraint)
-    extends OpInput {}
-case class RegionDef(val id: String) extends OpInput {}
-case class SuccessorDef(val id: String) extends OpInput {}
-case class OpPropertyDef(val id: String, val const: IRDLConstraint)
-    extends OpInput {}
-case class OpAttributeDef(val id: String, val const: IRDLConstraint)
+case class OpAttributeDef(val id: String, val const: IRDLConstraint = AnyAttr)
     extends OpInput {}
 
 case class DialectDef(
@@ -110,20 +127,60 @@ case class OperationDef(
         yield deff(adef.id, adef.const))).mkString("\n")
   }
 
-  def print_constr_vers(implicit indent: Int): String = {
-    val ver = { (x: String) =>
-      s"    ${x}_constr.verify($x.typ, ${className}_CTX)"
+  def n_variadic_operands: Int =
+    operands.filter(_.variadicity != Variadicity.Single).length
+
+  def single_operand_accessor(name: String, index: String) =
+    s"  def ${name}: Value[Attribute] = operands($index)\n" +
+      s"  def ${name}_=(value: Value[Attribute]): Unit = {operands($index) = value}\n"
+
+  def operands_accessors(implicit indent: Int): Seq[String] = {
+    n_variadic_operands match {
+      case 0 =>
+        for ((odef, i) <- operands.zipWithIndex)
+          yield single_operand_accessor(odef.id, i.toString)
+      case 1 => {
+        val variadic_index =
+          operands.indexWhere(_.variadicity != Variadicity.Single);
+        ((
+          for (odef, i) <- operands.slice(0, variadic_index).zipWithIndex
+          yield single_operand_accessor(odef.id, i.toString)
+        )
+          :+
+            (s"""  def ${operands(
+                variadic_index
+              ).id}: Seq[Value[Attribute]] = operands.slice($variadic_index, operands.length - ${operands.length - variadic_index - 1}).toSeq
+  def ${operands(variadic_index).id}_=(values: Seq[Value[Attribute]]): Unit = {
+    val diff = values.length - (operands.length - ${operands.length - 1})
+    for (value, i) <- (values ++ operands.slice($variadic_index, operands.length)).zipWithIndex do
+      operands(i + $variadic_index) = value
+    if (diff < 0)
+      operands.trimEnd(-diff)
+  }\n\n""")) ++
+          (for (
+            (odef, i) <- operands.zipWithIndex
+              .slice(
+                variadic_index + 1,
+                operands.length
+              )
+          )
+            yield single_operand_accessor(
+              odef.id,
+              s"operands.length - ${operands.length - i}"
+            ))
+
+      }
+      case _: Int => {
+        throw NotImplementedError(
+          "Multiple variadic operands are not yet implemented in Scair"
+        )
+      }
     }
-    ((for (odef <- operands) yield ver(odef.id)) ++
-      (for (rdef <- results) yield ver(rdef.id)) ++
-      (for (pdef <- OpProperty) yield ver(pdef.id)) ++
-      (for (adef <- OpAttribute) yield ver(adef.id))).mkString("\n")
+
   }
 
-  def print_getters(implicit indent: Int): String = {
-    ((for (odef, i) <- operands.zipWithIndex
-    yield s"  def ${odef.id}: Value[Attribute] = operands($i)\n" +
-      s"  def ${odef.id}_=(value: Value[Attribute]): Unit = {operands($i) = value}\n") ++
+  def accessors(implicit indent: Int): String = {
+    (operands_accessors ++
       (for (rdef, i) <- results.zipWithIndex
       yield s"  def ${rdef.id}: Value[Attribute] = results($i)\n" +
         s"  def ${rdef.id}_=(value: Value[Attribute]): Unit = {results($i) = value}\n") ++
@@ -143,6 +200,46 @@ case class OperationDef(
 
   }
 
+  def constraints_verification(implicit indent: Int): String = {
+    val ver = { (x: String) =>
+      s"${x}_constr.verify($x.typ, verification_context)"
+    }
+    ((for (odef <- operands) yield ver(odef.id)) ++
+      (for (rdef <- results) yield ver(rdef.id)) ++
+      (for (pdef <- OpProperty) yield ver(pdef.id)) ++
+      (for (adef <- OpAttribute) yield ver(adef.id))).mkString("\n    ")
+  }
+
+  def operands_verification(implicit indent: Int): String =
+    n_variadic_operands match {
+      case 0 =>
+        s"""if (operands.length != ${operands.length}) then throw new Exception(s"Expected ${operands.length} operands, got $${operands.length}")"""
+      case 1 => {
+        s"""if (operands.length < ${operands.length - 1}) then throw new Exception(s"Expected at least ${operands.length - 1} operands, got $${operands.length}")"""
+      }
+      case _: Int => {
+        throw NotImplementedError(
+          "Multiple variadic operands are not yet implemented in Scair"
+        )
+      }
+    }
+
+  def constructs_verification(implicit indent: Int): String = s"""
+    ${operands_verification(indent + 1)} 
+    if (results.length != ${results.length}) then throw new Exception("Expected ${results.length} results, got results.length")
+    if (regions.length != ${regions.length}) then throw new Exception("Expected ${regions.length} regions, got regions.length")
+    if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
+    if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
+    if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
+"""
+
+  def irdl_verification(implicit indent: Int): String = s"""
+  override def custom_verify(): Unit = 
+    val verification_context = new ConstraintContext()
+    ${constructs_verification(indent + 1)}
+    ${constraints_verification(indent + 1)}
+"""
+
   def print(implicit indent: Int): String = s"""
 object $className extends DialectOperation {
   override def name = "$name"
@@ -160,21 +257,12 @@ case class $className(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name") {
 
-${print_getters(indent + 1)}
-
-  val ${className}_CTX = new ConstraintContext() 
+${accessors(indent + 1)}
 ${print_constr_defs(indent + 1)}
+${irdl_verification(indent + 1)}
 
-  override def custom_verify(): Unit = 
-    if (operands.length != ${operands.length}) then throw new Exception("Expected ${operands.length} operands, got operands.length") 
-    if (results.length != ${results.length}) then throw new Exception("Expected ${results.length} results, got results.length")
-    if (regions.length != ${regions.length}) then throw new Exception("Expected ${regions.length} regions, got regions.length")
-    if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
-    if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
-    if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
-${print_constr_vers(indent + 1)}
 }
-  """
+"""
 }
 
 case class AttributeDef(
