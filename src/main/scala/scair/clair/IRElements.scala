@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.compiletime.ops.int
 
 import scair.scairdl.constraints._
+import scair.dialects.builtin._
 import scair.transformations.InsertPoint.after
 
 // ██╗ ██████╗░
@@ -116,6 +117,41 @@ case class OperationDef(
     val OpAttribute: Seq[OpAttributeDef] = Seq()
 ) {
 
+  def operand_segment_sizes_helper: String =
+    s"""def operandSegmentSizes: Seq[Int] =
+    if (!dictionaryProperties.contains("operandSegmentSizes")) then throw new Exception("Expected operandSegmentSizes property")
+    val operandSegmentSizes_attr = dictionaryProperties("operandSegmentSizes") match {
+      case right: DenseArrayAttr => right
+      case _ => throw new Exception("Expected operandSegmentSizes to be a DenseArrayAttr")
+    }
+    ${ParametrizedAttrConstraint[DenseArrayAttr](
+        Seq(
+          EqualAttr(IntegerType(IntData(32), Signless)),
+          AllOf(
+            Seq(
+              BaseAttr[IntegerAttr](),
+              ParametrizedAttrConstraint[IntegerAttr](
+                Seq(
+                  BaseAttr[IntData](),
+                  EqualAttr(IntegerType(IntData(32), Signless))
+                )
+              )
+            )
+          )
+        )
+      )}.verify(operandSegmentSizes_attr, ConstraintContext())
+    if (operandSegmentSizes_attr.length != ${operands.length}) then throw new Exception(s"Expected operandSegmentSizes to have ${operands.length} elements, got $${operandSegmentSizes_attr.length}")
+    
+    for (s <- operandSegmentSizes_attr) yield s match {
+      case right: IntegerAttr => right.value.data.toInt
+      case _ => throw new Exception("Unreachable exception as per above constraint check.")
+    }
+    """
+
+  def helpers(implicit indent: Int): String = s"""
+  ${if (n_variadic_operands > 1) then operand_segment_sizes_helper else ""}
+  """
+
   def print_constr_defs(implicit indent: Int): String = {
     val deff = { (x: String, y: IRDLConstraint) =>
       s"  val ${x}_constr = ${y}"
@@ -133,6 +169,18 @@ case class OperationDef(
   def single_operand_accessor(name: String, index: String) =
     s"  def ${name}: Value[Attribute] = operands($index)\n" +
       s"  def ${name}_=(value: Value[Attribute]): Unit = {operands($index) = value}\n"
+
+  def segmented_single_operand_accessor(name: String, index: String) =
+    s"  def ${name}: Value[Attribute] = operands(operandSegmentSizes.slice(0, $index).reduce(_ + _))\n" +
+      s"  def ${name}_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, $index).reduce(_ + _)) = value}\n"
+
+  def segmented_variadic_operand_accessor(name: String, index: String) =
+    s"""  def ${name}: Seq[Value[Attribute]] = 
+    val first = operandSegmentSizes.slice(0, $index).reduce(_ + _)
+    val last = first + operandSegmentSizes($index)
+    operands.slice(first, last).toSeq
+""" // +
+  //   s"  def ${name}_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, $index).reduce(_ + _)) = value}\n"
 
   def operands_accessors(implicit indent: Int): Seq[String] = {
     n_variadic_operands match {
@@ -171,9 +219,13 @@ case class OperationDef(
 
       }
       case _: Int => {
-        throw NotImplementedError(
-          "Multiple variadic operands are not yet implemented in Scair"
-        )
+        for ((odef, i) <- operands.zipWithIndex)
+          yield odef.variadicity match {
+            case Variadicity.Single =>
+              segmented_single_operand_accessor(odef.id, i.toString)
+            case Variadicity.Variadic =>
+              segmented_variadic_operand_accessor(odef.id, i.toString)
+          }
       }
     }
 
@@ -218,9 +270,16 @@ case class OperationDef(
         s"""if (operands.length < ${operands.length - 1}) then throw new Exception(s"Expected at least ${operands.length - 1} operands, got $${operands.length}")"""
       }
       case _: Int => {
-        throw NotImplementedError(
-          "Multiple variadic operands are not yet implemented in Scair"
-        )
+        s"""val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
+    if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
+          (for (
+            (odef, i) <- operands.zipWithIndex.filter(
+              _._1.variadicity == Variadicity.Single
+            )
+          )
+            yield s"""    if operandSegmentSizes($i) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand ${odef.id} at index $i, got $${operandSegmentSizes($i)}")""")
+            .mkString("\n")
+
       }
     }
 
@@ -257,6 +316,7 @@ case class $className(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name") {
 
+${helpers(indent + 1)}
 ${accessors(indent + 1)}
 ${print_constr_defs(indent + 1)}
 ${irdl_verification(indent + 1)}
