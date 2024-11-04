@@ -113,11 +113,17 @@ object Main {
 // CHECK-NEXT:  ) extends RegisteredOperation(name = "test.variadic_operand") {
 // CHECK:         def sing_op1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def sing_op1_=(value: Value[Attribute]): Unit = {operands(0) = value}
-// CHECK:         def var_op1: Seq[Value[Attribute]] = operands.slice(1, operands.length - 1).toSeq
+// CHECK:         def var_op1: Seq[Value[Attribute]] = {
+// CHECK-NEXT:        val from = 1
+// CHECK-NEXT:        val to = operands.length - 1
+// CHECK-NEXT:        operands.slice(from, to).toSeq
+// CHECK-NEXT:    }
 // CHECK-NEXT:    def var_op1_=(values: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val diff = values.length - (operands.length - 2)
-// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(1, operands.length)).zipWithIndex do
-// CHECK-NEXT:        operands(i + 1) = value
+// CHECK-NEXT:      val from = 1
+// CHECK-NEXT:      val to = operands.length - 1
+// CHECK-NEXT:      val diff = values.length - (to - from)
+// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
+// CHECK-NEXT:        operands(from + i) = value
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        operands.trimEnd(-diff)
 // CHECK-NEXT:    }
@@ -170,14 +176,34 @@ object Main {
 // CHECK-NEXT:      }
 // CHECK:         def sing_op1: Value[Attribute] = operands(operandSegmentSizes.slice(0, 0).reduce(_ + _))
 // CHECK-NEXT:    def sing_op1_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 0).reduce(_ + _)) = value}
-// CHECK:         def var_op1: Seq[Value[Attribute]] =
-// CHECK-NEXT:      val first = operandSegmentSizes.slice(0, 1).reduce(_ + _)
-// CHECK-NEXT:      val last = first + operandSegmentSizes(1)
-// CHECK-NEXT:      operands.slice(first, last).toSeq
-// CHECK:         def var_op2: Seq[Value[Attribute]] =
-// CHECK-NEXT:      val first = operandSegmentSizes.slice(0, 2).reduce(_ + _)
-// CHECK-NEXT:      val last = first + operandSegmentSizes(2)
-// CHECK-NEXT:      operands.slice(first, last).toSeq
+// CHECK:         def var_op1: Seq[Value[Attribute]] = {
+// CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 1).reduce(_ + _)
+// CHECK-NEXT:        val to = from + operandSegmentSizes(1)
+// CHECK-NEXT:        operands.slice(from, to).toSeq
+// CHECK-NEXT:    }
+// CHECK-NEXT:    def var_op1_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 1).reduce(_ + _)
+// CHECK-NEXT:      val to = from + operandSegmentSizes(1)
+// CHECK-NEXT:      val diff = values.length - (to - from)
+// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
+// CHECK-NEXT:        operands(from + i) = value
+// CHECK-NEXT:      if (diff < 0)
+// CHECK-NEXT:        operands.trimEnd(-diff)
+// CHECK-NEXT:    }
+// CHECK:         def var_op2: Seq[Value[Attribute]] = {
+// CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 2).reduce(_ + _)
+// CHECK-NEXT:        val to = from + operandSegmentSizes(2)
+// CHECK-NEXT:        operands.slice(from, to).toSeq
+// CHECK-NEXT:    }
+// CHECK-NEXT:    def var_op2_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 2).reduce(_ + _)
+// CHECK-NEXT:      val to = from + operandSegmentSizes(2)
+// CHECK-NEXT:      val diff = values.length - (to - from)
+// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
+// CHECK-NEXT:        operands(from + i) = value
+// CHECK-NEXT:      if (diff < 0)
+// CHECK-NEXT:        operands.trimEnd(-diff)
+// CHECK-NEXT:    }
 // CHECK:         def sing_op2: Value[Attribute] = operands(operandSegmentSizes.slice(0, 3).reduce(_ + _))
 // CHECK-NEXT:    def sing_op2_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 3).reduce(_ + _)) = value}
 // CHECK:         def region1: Region = regions(0)
