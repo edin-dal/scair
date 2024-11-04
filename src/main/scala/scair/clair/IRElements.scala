@@ -171,16 +171,33 @@ case class OperationDef(
       s"  def ${name}_=(value: Value[Attribute]): Unit = {operands($index) = value}\n"
 
   def segmented_single_operand_accessor(name: String, index: String) =
-    s"  def ${name}: Value[Attribute] = operands(operandSegmentSizes.slice(0, $index).reduce(_ + _))\n" +
-      s"  def ${name}_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, $index).reduce(_ + _)) = value}\n"
+    single_operand_accessor(
+      name,
+      s"operandSegmentSizes.slice(0, $index).reduce(_ + _)"
+    )
+
+  def variadic_operand_accessor(name: String, from: String, to: String) =
+    s"""  def ${name}: Seq[Value[Attribute]] = {
+      val from = $from
+      val to = $to
+      operands.slice(from, to).toSeq
+  }
+  def ${name}_=(values: Seq[Value[Attribute]]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = values.length - (to - from)
+    for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
+      operands(from + i) = value
+    if (diff < 0)
+      operands.trimEnd(-diff)
+  }\n\n"""
 
   def segmented_variadic_operand_accessor(name: String, index: String) =
-    s"""  def ${name}: Seq[Value[Attribute]] = 
-    val first = operandSegmentSizes.slice(0, $index).reduce(_ + _)
-    val last = first + operandSegmentSizes($index)
-    operands.slice(first, last).toSeq
-""" // +
-  //   s"  def ${name}_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, $index).reduce(_ + _)) = value}\n"
+    variadic_operand_accessor(
+      name,
+      s"operandSegmentSizes.slice(0, $index).reduce(_ + _)",
+      s"from + operandSegmentSizes($index)"
+    )
 
   def operands_accessors(implicit indent: Int): Seq[String] = {
     n_variadic_operands match {
@@ -195,16 +212,11 @@ case class OperationDef(
           yield single_operand_accessor(odef.id, i.toString)
         )
           :+
-            (s"""  def ${operands(
-                variadic_index
-              ).id}: Seq[Value[Attribute]] = operands.slice($variadic_index, operands.length - ${operands.length - variadic_index - 1}).toSeq
-  def ${operands(variadic_index).id}_=(values: Seq[Value[Attribute]]): Unit = {
-    val diff = values.length - (operands.length - ${operands.length - 1})
-    for (value, i) <- (values ++ operands.slice($variadic_index, operands.length)).zipWithIndex do
-      operands(i + $variadic_index) = value
-    if (diff < 0)
-      operands.trimEnd(-diff)
-  }\n\n""")) ++
+            (variadic_operand_accessor(
+              operands(variadic_index).id,
+              variadic_index.toString,
+              s"operands.length - ${operands.length - variadic_index - 1}"
+            ))) ++
           (for (
             (odef, i) <- operands.zipWithIndex
               .slice(
