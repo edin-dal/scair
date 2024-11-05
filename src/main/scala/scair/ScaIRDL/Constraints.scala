@@ -46,6 +46,8 @@ object AnyAttr extends IRDLConstraint {
       that_attr: Attribute,
       constraint_ctx: ConstraintContext
   ): Unit = {}
+
+  override def toString(): String = "AnyAttr"
 }
 
 case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
