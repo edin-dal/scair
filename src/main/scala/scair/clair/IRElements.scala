@@ -74,7 +74,8 @@ case class ResultDef(
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 case class RegionDef(
-    val id: String
+    val id: String,
+    val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 case class SuccessorDef(
     val id: String
@@ -200,10 +201,12 @@ case class OperationDef(
     operands.filter(_.variadicity != Variadicity.Single).length
   def n_variadic_results: Int =
     results.filter(_.variadicity != Variadicity.Single).length
+  def n_variadic_regions: Int =
+    regions.filter(_.variadicity != Variadicity.Single).length
 
   def single_operand_accessor(name: String, index: String) =
     s"  def ${name}: Value[Attribute] = operands($index)\n" +
-      s"  def ${name}_=(value: Value[Attribute]): Unit = {operands($index) = value}\n"
+      s"  def ${name}_=(new_operand: Value[Attribute]): Unit = {operands($index) = new_operand}\n"
 
   def segmented_single_operand_accessor(name: String, index: String) =
     single_operand_accessor(
@@ -217,12 +220,12 @@ case class OperationDef(
       val to = $to
       operands.slice(from, to).toSeq
   }
-  def ${name}_=(values: Seq[Value[Attribute]]): Unit = {
+  def ${name}_=(new_operands: Seq[Value[Attribute]]): Unit = {
     val from = $from
     val to = $to
-    val diff = values.length - (to - from)
-    for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
-      operands(from + i) = value
+    val diff = new_operands.length - (to - from)
+    for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
+      operands(from + i) = operand
     if (diff < 0)
       operands.trimEnd(-diff)
   }\n\n"""
@@ -282,7 +285,7 @@ case class OperationDef(
   // hence just a TODO for later.
   def single_result_accessor(name: String, index: String) =
     s"  def ${name}: Value[Attribute] = results($index)\n" +
-      s"  def ${name}_=(value: Value[Attribute]): Unit = {results($index) = value}\n"
+      s"  def ${name}_=(new_result: Value[Attribute]): Unit = {results($index) = new_result}\n"
 
   def segmented_single_result_accessor(name: String, index: String) =
     single_result_accessor(
@@ -299,12 +302,12 @@ case class OperationDef(
       val to = $to
       results.slice(from, to).toSeq
   }
-  def ${name}_=(values: Seq[Value[Attribute]]): Unit = {
+  def ${name}_=(new_results: Seq[Value[Attribute]]): Unit = {
     val from = $from
     val to = $to
-    val diff = values.length - (to - from)
-    for (value, i) <- (values ++ results.slice(to, results.length)).zipWithIndex do
-      results(from + i) = value
+    val diff = new_results.length - (to - from)
+    for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+      results(from + i) = new_results
     if (diff < 0)
       results.trimEnd(-diff)
   }\n\n"""
@@ -359,21 +362,81 @@ case class OperationDef(
     }
   }
 
+  def single_region_accessor(name: String, index: String) =
+    s"  def ${name}: Region = regions($index)\n" +
+      s"  def ${name}_=(new_region: Region): Unit = {regions($index) = new_region}\n"
+
+  def variadic_region_accessor(name: String, from: String, to: String) =
+    s"""  def ${name}: Seq[Region] = {
+      val from = $from
+      val to = $to
+      regions.slice(from, to).toSeq
+  }
+  def ${name}_=(new_regions: Seq[Region]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_regions.length - (to - from)
+    for (region, i) <- (new_regions ++ regions.slice(to, regions.length)).zipWithIndex do
+      regions(from + i) = region
+    if (diff < 0)
+      regions.trimEnd(-diff)
+  }\n\n"""
+
+  def regions_accessors(implicit indent: Int): Seq[String] = {
+    n_variadic_regions match {
+      case 0 =>
+        for ((odef, i) <- regions.zipWithIndex)
+          yield single_region_accessor(odef.id, i.toString)
+      case 1 => {
+        val variadic_index =
+          regions.indexWhere(_.variadicity != Variadicity.Single);
+        ((
+          for (odef, i) <- regions.slice(0, variadic_index).zipWithIndex
+          yield single_region_accessor(odef.id, i.toString)
+        )
+          :+
+            (variadic_region_accessor(
+              regions(variadic_index).id,
+              variadic_index.toString,
+              s"regions.length - ${regions.length - variadic_index - 1}"
+            ))) ++
+          (for (
+            (odef, i) <- regions.zipWithIndex
+              .slice(
+                variadic_index + 1,
+                regions.length
+              )
+          )
+            yield single_region_accessor(
+              odef.id,
+              s"regions.length - ${regions.length - i}"
+            ))
+
+      }
+      // TODO: Discuss this
+      // Multivariadic regions and successors are a thing in xDSL, not in MLIR.
+      // Thing is, given the architecture of frameworks following IRDL principles,
+      // it might end up *more* trivial to just support them, following the same
+      // logic than operands and results.
+      // But, we don't need them for MLIR-compatibility. So skipping for now!
+      case _: Int =>
+        throw new NotImplementedError("Multivariadic regions not implemented")
+    }
+  }
+
   def accessors(implicit indent: Int): String = {
     (operands_accessors ++
       results_accessors ++
-      (for (rdef, i) <- regions.zipWithIndex
-      yield s"  def ${rdef.id}: Region = regions($i)\n" +
-        s"  def ${rdef.id}_=(value: Region): Unit = {regions($i) = value}\n") ++
+      regions_accessors ++
       (for (sdef, i) <- successors.zipWithIndex
       yield s"  def ${sdef.id}: Block = successors($i)\n" +
-        s"  def ${sdef.id}_=(value: Block): Unit = {successors($i) = value}\n") ++
+        s"  def ${sdef.id}_=(new_block: Block): Unit = {successors($i) = new_block}\n") ++
       (for pdef <- OpProperty
-      yield s"  def ${pdef.id}: Attributes = dictionaryProperties(${pdef.id})\n" +
-        s"  def ${pdef.id}_=(value: Attributes): Unit = {dictionaryProperties(${pdef.id}) = value}\n") ++
+      yield s"  def ${pdef.id}: Attribute = dictionaryProperties(${pdef.id})\n" +
+        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {dictionaryProperties(${pdef.id}) = new_attribute}\n") ++
       (for adef <- OpAttribute
-      yield s"  def ${adef.id}: Attributes = dictionaryAttributes(${adef.id})\n" +
-        s"  def ${adef.id}_=(value: Attributes): Unit = {dictionaryAttributes(${adef.id}) = value}\n"))
+      yield s"  def ${adef.id}: Attribute = dictionaryAttributes(${adef.id})\n" +
+        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {dictionaryAttributes(${adef.id}) = new_attribute}\n"))
       .mkString("\n")
 
   }
@@ -430,10 +493,21 @@ case class OperationDef(
       }
     }
 
+  def regions_verification(implicit indent: Int): String =
+    n_variadic_regions match {
+      case 0 =>
+        s"""if (regions.length != ${regions.length}) then throw new Exception(s"Expected ${regions.length} regions, got $${regions.length}")"""
+      case 1 => {
+        s"""if (regions.length < ${regions.length - 1}) then throw new Exception(s"Expected at least ${regions.length - 1} regions, got $${regions.length}")"""
+      }
+      case _: Int =>
+        throw new NotImplementedError("Multivariadic regions not implemented")
+    }
+
   def constructs_verification(implicit indent: Int): String = s"""
     ${operands_verification(indent + 1)}
     ${results_verification(indent + 1)}
-    if (regions.length != ${regions.length}) then throw new Exception("Expected ${regions.length} regions, got regions.length")
+    ${regions_verification(indent + 1)}
     if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
     if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
