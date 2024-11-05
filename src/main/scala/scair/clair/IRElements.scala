@@ -78,7 +78,8 @@ case class RegionDef(
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 case class SuccessorDef(
-    val id: String
+    val id: String,
+    val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 case class OpPropertyDef(val id: String, val const: IRDLConstraint = AnyAttr)
     extends OpInput {}
@@ -203,6 +204,8 @@ case class OperationDef(
     results.filter(_.variadicity != Variadicity.Single).length
   def n_variadic_regions: Int =
     regions.filter(_.variadicity != Variadicity.Single).length
+  def n_variadic_successors: Int =
+    successors.filter(_.variadicity != Variadicity.Single).length
 
   def single_operand_accessor(name: String, index: String) =
     s"  def ${name}: Value[Attribute] = operands($index)\n" +
@@ -424,13 +427,69 @@ case class OperationDef(
     }
   }
 
+  def single_successor_accessor(name: String, index: String) =
+    s"  def ${name}: Block = successors($index)\n" +
+      s"  def ${name}_=(new_successor: Block): Unit = {successors($index) = new_successor}\n"
+
+  def variadic_successor_accessor(name: String, from: String, to: String) =
+    s"""  def ${name}: Seq[Block] = {
+      val from = $from
+      val to = $to
+      successors.slice(from, to).toSeq
+  }
+  def ${name}_=(new_successors: Seq[Block]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_successors.length - (to - from)
+    for (successor, i) <- (new_successors ++ successors.slice(to, successors.length)).zipWithIndex do
+      successors(from + i) = successor
+    if (diff < 0)
+      successors.trimEnd(-diff)
+  }\n\n"""
+
+  def successors_accessors(implicit indent: Int): Seq[String] = {
+    n_variadic_successors match {
+      case 0 =>
+        for ((odef, i) <- successors.zipWithIndex)
+          yield single_successor_accessor(odef.id, i.toString)
+      case 1 => {
+        val variadic_index =
+          successors.indexWhere(_.variadicity != Variadicity.Single);
+        ((
+          for (odef, i) <- successors.slice(0, variadic_index).zipWithIndex
+          yield single_successor_accessor(odef.id, i.toString)
+        )
+          :+
+            (variadic_successor_accessor(
+              successors(variadic_index).id,
+              variadic_index.toString,
+              s"successors.length - ${successors.length - variadic_index - 1}"
+            ))) ++
+          (for (
+            (odef, i) <- successors.zipWithIndex
+              .slice(
+                variadic_index + 1,
+                successors.length
+              )
+          )
+            yield single_successor_accessor(
+              odef.id,
+              s"successors.length - ${successors.length - i}"
+            ))
+
+      }
+      case _: Int =>
+        throw new NotImplementedError(
+          "Multivariadic successors not implemented"
+        )
+    }
+  }
+
   def accessors(implicit indent: Int): String = {
     (operands_accessors ++
       results_accessors ++
       regions_accessors ++
-      (for (sdef, i) <- successors.zipWithIndex
-      yield s"  def ${sdef.id}: Block = successors($i)\n" +
-        s"  def ${sdef.id}_=(new_block: Block): Unit = {successors($i) = new_block}\n") ++
+      successors_accessors ++
       (for pdef <- OpProperty
       yield s"  def ${pdef.id}: Attribute = dictionaryProperties(${pdef.id})\n" +
         s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {dictionaryProperties(${pdef.id}) = new_attribute}\n") ++
@@ -504,11 +563,22 @@ case class OperationDef(
         throw new NotImplementedError("Multivariadic regions not implemented")
     }
 
+  def successors_verification(implicit indent: Int): String =
+    n_variadic_successors match {
+      case 0 =>
+        s"""if (successors.length != ${successors.length}) then throw new Exception(s"Expected ${successors.length} successors, got $${successors.length}")"""
+      case 1 => {
+        s"""if (successors.length < ${successors.length - 1}) then throw new Exception(s"Expected at least ${successors.length - 1} successors, got $${successors.length}")"""
+      }
+      case _: Int =>
+        throw new NotImplementedError("Multivariadic regions not implemented")
+    }
+
   def constructs_verification(implicit indent: Int): String = s"""
     ${operands_verification(indent + 1)}
     ${results_verification(indent + 1)}
     ${regions_verification(indent + 1)}
-    if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
+    ${successors_verification(indent + 1)}
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
     if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
 """
