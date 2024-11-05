@@ -283,7 +283,7 @@ case class OperationDef(
       }
       case _: Int => {
         s"""val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
-    if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
+    if (operandSegmentSizesSum != $${operands.length}) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
           (for (
             (odef, i) <- operands.zipWithIndex.filter(
               _._1.variadicity == Variadicity.Single
