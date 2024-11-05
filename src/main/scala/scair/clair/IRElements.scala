@@ -245,6 +245,9 @@ case class OperationDef(
     }
   }
 
+  // TODO: We *probably* really don't want this setter or at least that way.
+  // That's more of a generic framework question though and is orthogonal to this codegen thing
+  // hence just a TODO for later.
   def single_result_accessor(name: String, index: String) =
     s"  def ${name}: Value[Attribute] = results($index)\n" +
       s"  def ${name}_=(value: Value[Attribute]): Unit = {results($index) = value}\n"
@@ -255,6 +258,9 @@ case class OperationDef(
       s"resultSegmentSizes.slice(0, $index).reduce(_ + _)"
     )
 
+  // TODO: We *probably* really don't want this setter or at least that way.
+  // That's more of a generic framework question though and is orthogonal to this codegen thing
+  // hence just a TODO for later.
   def variadic_result_accessor(name: String, from: String, to: String) =
     s"""  def ${name}: Seq[Value[Attribute]] = {
       val from = $from
