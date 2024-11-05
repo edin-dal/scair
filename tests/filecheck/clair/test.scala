@@ -254,6 +254,20 @@ object Main {
 // CHECK-NEXT:        case _ => throw new Exception("Unreachable exception as per above constraint check.")
 // CHECK-NEXT:      }
 
+// CHECK:         def resultSegmentSizes: Seq[Int] =
+// CHECK-NEXT:      if (!dictionaryProperties.contains("resultSegmentSizes")) then throw new Exception("Expected resultSegmentSizes property")
+// CHECK-NEXT:      val resultSegmentSizes_attr = dictionaryProperties("resultSegmentSizes") match {
+// CHECK-NEXT:        case right: DenseArrayAttr => right
+// CHECK-NEXT:        case _ => throw new Exception("Expected resultSegmentSizes to be a DenseArrayAttr")
+// CHECK-NEXT:      }
+// CHECK-NEXT:      ParametrizedAttrConstraint[scair.dialects.builtin.DenseArrayAttr](List(EqualAttr(IntegerType(IntData(32),Signless)), AllOf(List(BaseAttr[scair.dialects.builtin.IntegerAttr](), ParametrizedAttrConstraint[scair.dialects.builtin.IntegerAttr](List(BaseAttr[scair.dialects.builtin.IntData](), EqualAttr(IntegerType(IntData(32),Signless)))))))).verify(resultSegmentSizes_attr, ConstraintContext())
+// CHECK-NEXT:      if (resultSegmentSizes_attr.length != 4) then throw new Exception(s"Expected resultSegmentSizes to have 4 elements, got ${resultSegmentSizes_attr.length}")
+
+// CHECK:           for (s <- resultSegmentSizes_attr) yield s match {
+// CHECK-NEXT:        case right: IntegerAttr => right.value.data.toInt
+// CHECK-NEXT:        case _ => throw new Exception("Unreachable exception as per above constraint check.")
+// CHECK-NEXT:      }
+
 // CHECK:         def sing_op1: Value[Attribute] = operands(operandSegmentSizes.slice(0, 0).reduce(_ + _))
 // CHECK-NEXT:    def sing_op1_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 0).reduce(_ + _)) = value}
 

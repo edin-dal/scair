@@ -149,8 +149,40 @@ case class OperationDef(
     }
     """
 
+  def result_segment_sizes_helper: String =
+    s"""def resultSegmentSizes: Seq[Int] =
+    if (!dictionaryProperties.contains("resultSegmentSizes")) then throw new Exception("Expected resultSegmentSizes property")
+    val resultSegmentSizes_attr = dictionaryProperties("resultSegmentSizes") match {
+      case right: DenseArrayAttr => right
+      case _ => throw new Exception("Expected resultSegmentSizes to be a DenseArrayAttr")
+    }
+    ${ParametrizedAttrConstraint[DenseArrayAttr](
+        Seq(
+          EqualAttr(IntegerType(IntData(32), Signless)),
+          AllOf(
+            Seq(
+              BaseAttr[IntegerAttr](),
+              ParametrizedAttrConstraint[IntegerAttr](
+                Seq(
+                  BaseAttr[IntData](),
+                  EqualAttr(IntegerType(IntData(32), Signless))
+                )
+              )
+            )
+          )
+        )
+      )}.verify(resultSegmentSizes_attr, ConstraintContext())
+    if (resultSegmentSizes_attr.length != ${results.length}) then throw new Exception(s"Expected resultSegmentSizes to have ${results.length} elements, got $${resultSegmentSizes_attr.length}")
+
+    for (s <- resultSegmentSizes_attr) yield s match {
+      case right: IntegerAttr => right.value.data.toInt
+      case _ => throw new Exception("Unreachable exception as per above constraint check.")
+    }
+    """
+
   def helpers(implicit indent: Int): String = s"""
   ${if (n_variadic_operands > 1) then operand_segment_sizes_helper else ""}
+  ${if (n_variadic_results > 1) then result_segment_sizes_helper else ""}
   """
 
   def print_constr_defs(implicit indent: Int): String = {
