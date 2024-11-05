@@ -132,7 +132,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val attr4 = IndexType
     val attr5 = ArrayAttribute(Seq(IndexType, attr4, I64))
 
-    val or_constraint = AnyOf(Seq(attr1, attr2, attr3, attr4, attr5))
+    val or_constraint = attr1 || attr2 || attr3 || attr4 || attr5
 
     or_constraint.verify(that_attr, constraint_ctx)
   }
@@ -147,12 +147,12 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val attr3 = Float32Type
     val attr4 = IndexType
 
-    val or_constraint = AnyOf(Seq(attr1, attr2, attr3, attr4))
+    val or_constraint = attr1 || attr2 || attr3 || attr4
 
     val exception = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
-      "builtin.array_attr does not match any of List(EqualAttr(IntegerAttr(IntData(5),IntegerType(IntData(32),Signless))), EqualAttr(IntegerAttr(IntData(6),IntegerType(IntData(32),Signless))), EqualAttr(Float32Type), EqualAttr(IndexType))\n"
+      "builtin.array_attr does not match IntegerAttr(IntData(5),IntegerType(IntData(32),Signless)) || IntegerAttr(IntData(6),IntegerType(IntData(32),Signless)) || Float32Type || IndexType\n"
   }
 
   "OR Constraint Test 3" should "verify AnyOf constraint (should PASS)" in {
@@ -166,7 +166,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val attrcnst1 = BaseAttr[IndexType.type]()
     val attrcnst2 = EqualAttr(ArrayAttribute(Seq(IndexType, IndexType, I64)))
 
-    val or_constraint = AnyOf(Seq(attr1, attr2, attr3, attrcnst1, attrcnst2))
+    val or_constraint = attr1 || attr2 || attr3 || attrcnst1 || attrcnst2
 
     or_constraint.verify(that_attr, constraint_ctx)
   }
@@ -184,7 +184,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val attrcnst2 = EqualAttr(ArrayAttribute(Seq(IndexType, I32, I64)))
 
     val or_constraint =
-      AnyOf(Seq(attr1, attr2, attr3, attr4, attrcnst1, attrcnst2))
+      attr1 || attr2 || attr3 || attr4 || attrcnst1 || attrcnst2
 
     val exceptMSG = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)

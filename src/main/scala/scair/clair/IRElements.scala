@@ -95,6 +95,7 @@ case class DialectDef(
 import scair.ir._
 import scair.dialects.builtin._
 import scair.scairdl.constraints._
+import scair.scairdl.constraints.attr2constraint
   """ +
     (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
       .mkString("\n") + s"""
