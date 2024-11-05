@@ -359,11 +359,11 @@ object Main {
 // CHECK-NEXT:      val verification_context = new ConstraintContext()
 
 // CHECK:           val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
-// CHECK-NEXT:      if (operandSegmentSizesSum != ${operands.length}) then throw new Exception(s"Expected ${operandSegmentSizesSum} operands, got ${operands.length}")
+// CHECK-NEXT:      if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected ${operandSegmentSizesSum} operands, got ${operands.length}")
 // CHECK-NEXT:      if operandSegmentSizes(0) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand sing_op1 at index 0, got ${operandSegmentSizes(0)}")
 // CHECK-NEXT:      if operandSegmentSizes(3) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand sing_op2 at index 3, got ${operandSegmentSizes(3)}")
 // CHECK-NEXT:      val resultSegmentSizesSum = resultSegmentSizes.reduce(_ + _)
-// CHECK-NEXT:      if (resultSegmentSizesSum != ${results.length}) then throw new Exception(s"Expected ${resultSegmentSizesSum} results, got ${results.length}")
+// CHECK-NEXT:      if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected ${resultSegmentSizesSum} results, got ${results.length}")
 // CHECK-NEXT:      if resultSegmentSizes(0) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res1 at index 0, got ${resultSegmentSizes(0)}")
 // CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
 // CHECK-NEXT:      if (regions.length != 1) then throw new Exception("Expected 1 regions, got regions.length")
