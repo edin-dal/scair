@@ -325,6 +325,15 @@ case class Region(
   }
 }
 
+/*≡==--=≡≡≡=--=≡≡*\
+||    OPTRAIT    ||
+\*≡==---=≡=---==≡*/
+
+abstract class OpTrait {
+  def op: Operation
+  def trait_verify(): Unit = ()
+}
+
 // ==----------== //
 // =-OPERATIONS-= //
 // ==----------== //
@@ -339,7 +348,9 @@ sealed abstract class Operation(
       DictType.empty[String, Attribute],
     val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) {
+) extends OpTrait {
+
+  def op: Operation = this
 
   var container_block: Option[Block] = None
 
@@ -394,6 +405,7 @@ sealed abstract class Operation(
     for ((key, attr) <- dictionaryProperties) attr.custom_verify()
     for ((key, attr) <- dictionaryAttributes) attr.custom_verify()
     custom_verify()
+    trait_verify()
   }
 
   def custom_print(p: Printer): String =
