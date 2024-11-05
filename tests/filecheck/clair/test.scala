@@ -24,7 +24,8 @@ object Main {
             ResultDef("sing_res2")
           ),
           regions = List(RegionDef("region1"), RegionDef("region2")),
-          successors = List(SuccessorDef("successor1"))
+          successors =
+            List(SuccessorDef("successor1"), SuccessorDef("successor2"))
         ),
         OperationDef(
           "test.variadic_operand",
@@ -47,7 +48,11 @@ object Main {
             RegionDef("var_region1", variadicity = Variadicity.Variadic),
             RegionDef("region2")
           ),
-          successors = List(SuccessorDef("successor1"))
+          successors = List(
+            SuccessorDef("successor1"),
+            SuccessorDef("var_succsessor", variadicity = Variadicity.Variadic),
+            SuccessorDef("successor2")
+          )
         ),
         OperationDef(
           "test.multi_variadic_operand",
@@ -72,7 +77,11 @@ object Main {
             RegionDef("var_region1", variadicity = Variadicity.Variadic),
             RegionDef("region2")
           ),
-          successors = List(SuccessorDef("successor1"))
+          successors = List(
+            SuccessorDef("successor1"),
+            SuccessorDef("var_succsessor", variadicity = Variadicity.Variadic),
+            SuccessorDef("successor2")
+          )
         )
       ),
       ListType(AttributeDef("test.type", "TypeAttr", typee = 1))
@@ -121,7 +130,10 @@ object Main {
 // CHECK-NEXT:    def region2_=(new_region: Region): Unit = {regions(1) = new_region}
 
 // CHECK:         def successor1: Block = successors(0)
-// CHECK-NEXT:    def successor1_=(new_block: Block): Unit = {successors(0) = new_block}
+// CHECK-NEXT:    def successor1_=(new_successor: Block): Unit = {successors(0) = new_successor}
+
+// CHECK:         def successor2: Block = successors(1)
+// CHECK-NEXT:    def successor2_=(new_successor: Block): Unit = {successors(1) = new_successor}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
 // CHECK-NEXT:    val sing_op2_constr = AnyOf(List(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
@@ -134,7 +146,7 @@ object Main {
 // CHECK:           if (operands.length != 2) then throw new Exception(s"Expected 2 operands, got ${operands.length}")
 // CHECK-NEXT:      if (results.length != 2) then throw new Exception(s"Expected 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 2) then throw new Exception(s"Expected 2 regions, got ${regions.length}")
-// CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
+// CHECK-NEXT:      if (successors.length != 2) then throw new Exception(s"Expected 2 successors, got ${successors.length}")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
 
@@ -225,7 +237,25 @@ object Main {
 // CHECK-NEXT:    def region2_=(new_region: Region): Unit = {regions(regions.length - 1) = new_region}
 
 // CHECK:         def successor1: Block = successors(0)
-// CHECK-NEXT:    def successor1_=(new_block: Block): Unit = {successors(0) = new_block}
+// CHECK-NEXT:    def successor1_=(new_successor: Block): Unit = {successors(0) = new_successor}
+
+// CHECK:         def var_succsessor: Seq[Block] = {
+// CHECK-NEXT:        val from = 1
+// CHECK-NEXT:        val to = successors.length - 1
+// CHECK-NEXT:        successors.slice(from, to).toSeq
+// CHECK-NEXT:    }
+// CHECK-NEXT:    def var_succsessor_=(new_successors: Seq[Block]): Unit = {
+// CHECK-NEXT:      val from = 1
+// CHECK-NEXT:      val to = successors.length - 1
+// CHECK-NEXT:      val diff = new_successors.length - (to - from)
+// CHECK-NEXT:      for (successor, i) <- (new_successors ++ successors.slice(to, successors.length)).zipWithIndex do
+// CHECK-NEXT:        successors(from + i) = successor
+// CHECK-NEXT:      if (diff < 0)
+// CHECK-NEXT:        successors.trimEnd(-diff)
+// CHECK-NEXT:    }
+
+// CHECK:         def successor2: Block = successors(successors.length - 1)
+// CHECK-NEXT:    def successor2_=(new_successor: Block): Unit = {successors(successors.length - 1) = new_successor}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
 // CHECK-NEXT:    val var_op1_constr = EqualAttr(IntData(5))
@@ -240,7 +270,7 @@ object Main {
 // CHECK:           if (operands.length < 2) then throw new Exception(s"Expected at least 2 operands, got ${operands.length}")
 // CHECK-NEXT:      if (results.length < 2) then throw new Exception(s"Expected at least 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
-// CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
+// CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
 
@@ -391,7 +421,25 @@ object Main {
 // CHECK-NEXT:    def region2_=(new_region: Region): Unit = {regions(regions.length - 1) = new_region}
 
 // CHECK:         def successor1: Block = successors(0)
-// CHECK-NEXT:    def successor1_=(new_block: Block): Unit = {successors(0) = new_block}
+// CHECK-NEXT:    def successor1_=(new_successor: Block): Unit = {successors(0) = new_successor}
+
+// CHECK:         def var_succsessor: Seq[Block] = {
+// CHECK-NEXT:        val from = 1
+// CHECK-NEXT:        val to = successors.length - 1
+// CHECK-NEXT:        successors.slice(from, to).toSeq
+// CHECK-NEXT:    }
+// CHECK-NEXT:    def var_succsessor_=(new_successors: Seq[Block]): Unit = {
+// CHECK-NEXT:      val from = 1
+// CHECK-NEXT:      val to = successors.length - 1
+// CHECK-NEXT:      val diff = new_successors.length - (to - from)
+// CHECK-NEXT:      for (successor, i) <- (new_successors ++ successors.slice(to, successors.length)).zipWithIndex do
+// CHECK-NEXT:        successors(from + i) = successor
+// CHECK-NEXT:      if (diff < 0)
+// CHECK-NEXT:        successors.trimEnd(-diff)
+// CHECK-NEXT:    }
+
+// CHECK:         def successor2: Block = successors(successors.length - 1)
+// CHECK-NEXT:    def successor2_=(new_successor: Block): Unit = {successors(successors.length - 1) = new_successor}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
 // CHECK-NEXT:    val var_op1_constr = EqualAttr(IntData(5))
@@ -414,7 +462,7 @@ object Main {
 // CHECK-NEXT:      if resultSegmentSizes(0) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res1 at index 0, got ${resultSegmentSizes(0)}")
 // CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
-// CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
+// CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
 
