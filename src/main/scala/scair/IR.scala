@@ -330,8 +330,8 @@ case class Region(
 \*≡==---=≡=---==≡*/
 
 abstract class OpTrait {
-    def op: Operation
-    def trait_verify(): Unit = ()
+  def op: Operation
+  def trait_verify(): Unit = ()
 }
 
 // ==----------== //
