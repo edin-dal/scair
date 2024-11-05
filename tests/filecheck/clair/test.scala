@@ -3,6 +3,7 @@
 import scair.clair.ir._
 import scair.dialects.builtin.IntData
 import scair.scairdl.constraints._
+import scair.scairdl.constraints.attr2constraint
 
 object Main {
   def main(args: Array[String]) = {
@@ -16,7 +17,7 @@ object Main {
             OperandDef("sing_op1", BaseAttr[IntData]()),
             OperandDef(
               "sing_op2",
-              AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+              IntData(5) || IntData(6)
             )
           ),
           results = List(
@@ -32,10 +33,10 @@ object Main {
           "VariadicOperandOp",
           operands = List(
             OperandDef("sing_op1", BaseAttr[IntData]()),
-            OperandDef("var_op1", EqualAttr(IntData(5)), Variadicity.Variadic),
+            OperandDef("var_op1", IntData(5), Variadicity.Variadic),
             OperandDef(
               "sing_op2",
-              AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+              IntData(5) || IntData(6)
             )
           ),
           results = List(
@@ -59,11 +60,11 @@ object Main {
           "MultiVariadicOperandOp",
           operands = List(
             OperandDef("sing_op1", BaseAttr[IntData]()),
-            OperandDef("var_op1", EqualAttr(IntData(5)), Variadicity.Variadic),
-            OperandDef("var_op2", EqualAttr(IntData(5)), Variadicity.Variadic),
+            OperandDef("var_op1", IntData(5), Variadicity.Variadic),
+            OperandDef("var_op2", IntData(5), Variadicity.Variadic),
             OperandDef(
               "sing_op2",
-              AnyOf(Seq(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+              IntData(5) || IntData(6)
             )
           ),
           results = List(
@@ -94,6 +95,7 @@ object Main {
 // CHECK:       import scair.ir._
 // CHECK-NEXT:  import scair.dialects.builtin._
 // CHECK-NEXT:  import scair.scairdl.constraints._
+// CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
 
 // CHECK:       object NoVariadicsOp extends DialectOperation {
 // CHECK-NEXT:    override def name = "test.no_variadics"
@@ -136,7 +138,7 @@ object Main {
 // CHECK-NEXT:    def successor2_=(new_successor: Block): Unit = {successors(1) = new_successor}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
-// CHECK-NEXT:    val sing_op2_constr = AnyOf(List(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+// CHECK-NEXT:    val sing_op2_constr = IntData(5) || IntData(6)
 // CHECK-NEXT:    val sing_res1_constr = AnyAttr
 // CHECK-NEXT:    val sing_res2_constr = AnyAttr
 
@@ -258,8 +260,8 @@ object Main {
 // CHECK-NEXT:    def successor2_=(new_successor: Block): Unit = {successors(successors.length - 1) = new_successor}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
-// CHECK-NEXT:    val var_op1_constr = EqualAttr(IntData(5))
-// CHECK-NEXT:    val sing_op2_constr = AnyOf(List(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+// CHECK-NEXT:    val var_op1_constr = IntData(5)
+// CHECK-NEXT:    val sing_op2_constr = IntData(5) || IntData(6)
 // CHECK-NEXT:    val sing_res1_constr = AnyAttr
 // CHECK-NEXT:    val var_res1_constr = AnyAttr
 // CHECK-NEXT:    val sing_res2_constr = AnyAttr
@@ -305,7 +307,7 @@ object Main {
 // CHECK-NEXT:        case right: DenseArrayAttr => right
 // CHECK-NEXT:        case _ => throw new Exception("Expected operandSegmentSizes to be a DenseArrayAttr")
 // CHECK-NEXT:      }
-// CHECK-NEXT:      ParametrizedAttrConstraint[scair.dialects.builtin.DenseArrayAttr](List(EqualAttr(IntegerType(IntData(32),Signless)), AllOf(List(BaseAttr[scair.dialects.builtin.IntegerAttr](), ParametrizedAttrConstraint[scair.dialects.builtin.IntegerAttr](List(BaseAttr[scair.dialects.builtin.IntData](), EqualAttr(IntegerType(IntData(32),Signless)))))))).verify(operandSegmentSizes_attr, ConstraintContext())
+// CHECK-NEXT:      ParametrizedAttrConstraint[scair.dialects.builtin.DenseArrayAttr](List(IntegerType(IntData(32),Signless), BaseAttr[scair.dialects.builtin.IntegerAttr]() && ParametrizedAttrConstraint[scair.dialects.builtin.IntegerAttr](List(BaseAttr[scair.dialects.builtin.IntData](), IntegerType(IntData(32),Signless))))).verify(operandSegmentSizes_attr, ConstraintContext())
 // CHECK-NEXT:      if (operandSegmentSizes_attr.length != 4) then throw new Exception(s"Expected operandSegmentSizes to have 4 elements, got ${operandSegmentSizes_attr.length}")
 
 // CHECK:           for (s <- operandSegmentSizes_attr) yield s match {
@@ -319,7 +321,7 @@ object Main {
 // CHECK-NEXT:        case right: DenseArrayAttr => right
 // CHECK-NEXT:        case _ => throw new Exception("Expected resultSegmentSizes to be a DenseArrayAttr")
 // CHECK-NEXT:      }
-// CHECK-NEXT:      ParametrizedAttrConstraint[scair.dialects.builtin.DenseArrayAttr](List(EqualAttr(IntegerType(IntData(32),Signless)), AllOf(List(BaseAttr[scair.dialects.builtin.IntegerAttr](), ParametrizedAttrConstraint[scair.dialects.builtin.IntegerAttr](List(BaseAttr[scair.dialects.builtin.IntData](), EqualAttr(IntegerType(IntData(32),Signless)))))))).verify(resultSegmentSizes_attr, ConstraintContext())
+// CHECK-NEXT:      ParametrizedAttrConstraint[scair.dialects.builtin.DenseArrayAttr](List(IntegerType(IntData(32),Signless), BaseAttr[scair.dialects.builtin.IntegerAttr]() && ParametrizedAttrConstraint[scair.dialects.builtin.IntegerAttr](List(BaseAttr[scair.dialects.builtin.IntData](), IntegerType(IntData(32),Signless))))).verify(resultSegmentSizes_attr, ConstraintContext())
 // CHECK-NEXT:      if (resultSegmentSizes_attr.length != 4) then throw new Exception(s"Expected resultSegmentSizes to have 4 elements, got ${resultSegmentSizes_attr.length}")
 
 // CHECK:           for (s <- resultSegmentSizes_attr) yield s match {
@@ -442,9 +444,9 @@ object Main {
 // CHECK-NEXT:    def successor2_=(new_successor: Block): Unit = {successors(successors.length - 1) = new_successor}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
-// CHECK-NEXT:    val var_op1_constr = EqualAttr(IntData(5))
-// CHECK-NEXT:    val var_op2_constr = EqualAttr(IntData(5))
-// CHECK-NEXT:    val sing_op2_constr = AnyOf(List(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
+// CHECK-NEXT:    val var_op1_constr = IntData(5)
+// CHECK-NEXT:    val var_op2_constr = IntData(5)
+// CHECK-NEXT:    val sing_op2_constr = IntData(5) || IntData(6)
 // CHECK-NEXT:    val sing_res1_constr = AnyAttr
 // CHECK-NEXT:    val var_res1_constr = AnyAttr
 // CHECK-NEXT:    val var_res2_constr = AnyAttr

@@ -38,6 +38,10 @@ abstract class IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit =
     for (attr <- those_attrs) verify(attr, constraint_ctx)
+
+  def &&(that: IRDLConstraint): IRDLConstraint = AllOf(Seq(this, that))
+
+  def ||(that: IRDLConstraint): IRDLConstraint = AnyOf(Seq(this, that))
 }
 
 object AnyAttr extends IRDLConstraint {
@@ -64,6 +68,8 @@ case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
       throw new VerifyException(errstr)
     }
   }
+
+  override def toString = this_attr.toString
 }
 
 given attr2constraint: Conversion[Attribute, IRDLConstraint] with {
@@ -90,7 +96,12 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
     s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]()"
 }
 
-case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
+case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
+
+  val constraints: Seq[IRDLConstraint] = constraints_in.flatMap(_ match {
+    case x: AnyOf => x.constraints
+    case y        => Seq(y)
+  })
 
   override def verify(
       that_attr: Attribute,
@@ -99,7 +110,7 @@ case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
 
     val that_attr_class = that_attr.getClass
     if (
-      !these_attrs.exists(entry => {
+      !constraints.exists(entry => {
         Try {
           entry.verify(that_attr, constraint_ctx)
           true
@@ -110,22 +121,28 @@ case class AnyOf(val these_attrs: Seq[IRDLConstraint]) extends IRDLConstraint {
       })
     ) {
       val errstr =
-        s"${that_attr.name} does not match any of ${these_attrs.map(_ match {
-            case x: Attribute      => x.custom_print
-            case y: IRDLConstraint => y.toString
-          })}\n"
+        s"${that_attr.name} does not match $toString\n"
       throw new VerifyException(errstr)
     }
   }
+
+  override def toString = constraints.mkString(" || ")
 }
 
-case class AllOf(val constraints: Seq[IRDLConstraint]) extends IRDLConstraint {
+case class AllOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
+
+  val constraints: Seq[IRDLConstraint] = constraints_in.flatMap(_ match {
+    case x: AllOf => x.constraints
+    case y        => Seq(y)
+  })
 
   override def verify(
       that_attr: Attribute,
       constraint_ctx: ConstraintContext
   ): Unit =
     for (c <- constraints) c.verify(that_attr, constraint_ctx)
+
+  override def toString = constraints.mkString(" && ")
 }
 
 case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
