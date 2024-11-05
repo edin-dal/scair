@@ -397,7 +397,7 @@ case class OperationDef(
       }
       case _: Int => {
         s"""val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
-    if (operandSegmentSizesSum != $${operands.length}) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
+    if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
           (for (
             (odef, i) <- operands.zipWithIndex.filter(
               _._1.variadicity == Variadicity.Single
@@ -418,7 +418,7 @@ case class OperationDef(
       }
       case _: Int => {
         s"""val resultSegmentSizesSum = resultSegmentSizes.reduce(_ + _)
-    if (resultSegmentSizesSum != $${results.length}) then throw new Exception(s"Expected $${resultSegmentSizesSum} results, got $${results.length}")\n""" +
+    if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected $${resultSegmentSizesSum} results, got $${results.length}")\n""" +
           (for (
             (odef, i) <- results.zipWithIndex.filter(
               _._1.variadicity == Variadicity.Single
