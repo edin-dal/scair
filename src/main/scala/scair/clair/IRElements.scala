@@ -70,7 +70,8 @@ case class OperandDef(
 ) extends OpInput {}
 case class ResultDef(
     val id: String,
-    val const: IRDLConstraint = AnyAttr
+    val const: IRDLConstraint = AnyAttr,
+    val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 case class RegionDef(
     val id: String
@@ -165,6 +166,8 @@ case class OperationDef(
 
   def n_variadic_operands: Int =
     operands.filter(_.variadicity != Variadicity.Single).length
+  def n_variadic_results: Int =
+    results.filter(_.variadicity != Variadicity.Single).length
 
   def single_operand_accessor(name: String, index: String) =
     s"  def ${name}: Value[Attribute] = operands($index)\n" +
@@ -240,14 +243,87 @@ case class OperationDef(
           }
       }
     }
+  }
 
+  def single_result_accessor(name: String, index: String) =
+    s"  def ${name}: Value[Attribute] = results($index)\n" +
+      s"  def ${name}_=(value: Value[Attribute]): Unit = {results($index) = value}\n"
+
+  def segmented_single_result_accessor(name: String, index: String) =
+    single_result_accessor(
+      name,
+      s"resultSegmentSizes.slice(0, $index).reduce(_ + _)"
+    )
+
+  def variadic_result_accessor(name: String, from: String, to: String) =
+    s"""  def ${name}: Seq[Value[Attribute]] = {
+      val from = $from
+      val to = $to
+      results.slice(from, to).toSeq
+  }
+  def ${name}_=(values: Seq[Value[Attribute]]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = values.length - (to - from)
+    for (value, i) <- (values ++ results.slice(to, results.length)).zipWithIndex do
+      results(from + i) = value
+    if (diff < 0)
+      results.trimEnd(-diff)
+  }\n\n"""
+
+  def segmented_variadic_result_accessor(name: String, index: String) =
+    variadic_result_accessor(
+      name,
+      s"resultSegmentSizes.slice(0, $index).reduce(_ + _)",
+      s"from + resultSegmentSizes($index)"
+    )
+
+  def results_accessors(implicit indent: Int): Seq[String] = {
+    n_variadic_results match {
+      case 0 =>
+        for ((odef, i) <- results.zipWithIndex)
+          yield single_result_accessor(odef.id, i.toString)
+      case 1 => {
+        val variadic_index =
+          results.indexWhere(_.variadicity != Variadicity.Single);
+        ((
+          for (odef, i) <- results.slice(0, variadic_index).zipWithIndex
+          yield single_result_accessor(odef.id, i.toString)
+        )
+          :+
+            (variadic_result_accessor(
+              results(variadic_index).id,
+              variadic_index.toString,
+              s"results.length - ${results.length - variadic_index - 1}"
+            ))) ++
+          (for (
+            (odef, i) <- results.zipWithIndex
+              .slice(
+                variadic_index + 1,
+                results.length
+              )
+          )
+            yield single_result_accessor(
+              odef.id,
+              s"results.length - ${results.length - i}"
+            ))
+
+      }
+      case _: Int => {
+        for ((odef, i) <- results.zipWithIndex)
+          yield odef.variadicity match {
+            case Variadicity.Single =>
+              segmented_single_result_accessor(odef.id, i.toString)
+            case Variadicity.Variadic =>
+              segmented_variadic_result_accessor(odef.id, i.toString)
+          }
+      }
+    }
   }
 
   def accessors(implicit indent: Int): String = {
     (operands_accessors ++
-      (for (rdef, i) <- results.zipWithIndex
-      yield s"  def ${rdef.id}: Value[Attribute] = results($i)\n" +
-        s"  def ${rdef.id}_=(value: Value[Attribute]): Unit = {results($i) = value}\n") ++
+      results_accessors ++
       (for (rdef, i) <- regions.zipWithIndex
       yield s"  def ${rdef.id}: Region = regions($i)\n" +
         s"  def ${rdef.id}_=(value: Region): Unit = {regions($i) = value}\n") ++
@@ -295,9 +371,30 @@ case class OperationDef(
       }
     }
 
+  def results_verification(implicit indent: Int): String =
+    n_variadic_results match {
+      case 0 =>
+        s"""if (results.length != ${results.length}) then throw new Exception(s"Expected ${results.length} results, got $${results.length}")"""
+      case 1 => {
+        s"""if (results.length < ${results.length - 1}) then throw new Exception(s"Expected at least ${results.length - 1} results, got $${results.length}")"""
+      }
+      case _: Int => {
+        s"""val resultSegmentSizesSum = resultSegmentSizes.reduce(_ + _)
+    if (resultSegmentSizesSum != $${results.length}) then throw new Exception(s"Expected $${resultSegmentSizesSum} results, got $${results.length}")\n""" +
+          (for (
+            (odef, i) <- results.zipWithIndex.filter(
+              _._1.variadicity == Variadicity.Single
+            )
+          )
+            yield s"""    if resultSegmentSizes($i) != 1 then throw new Exception("result segment size expected to be 1 for singular result ${odef.id} at index $i, got $${resultSegmentSizes($i)}")""")
+            .mkString("\n")
+
+      }
+    }
+
   def constructs_verification(implicit indent: Int): String = s"""
-    ${operands_verification(indent + 1)} 
-    if (results.length != ${results.length}) then throw new Exception("Expected ${results.length} results, got results.length")
+    ${operands_verification(indent + 1)}
+    ${results_verification(indent + 1)}
     if (regions.length != ${regions.length}) then throw new Exception("Expected ${regions.length} regions, got regions.length")
     if (successors.length != ${successors.length}) then throw new Exception("Expected ${successors.length} successors, got successors.length")
     if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
