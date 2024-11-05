@@ -23,7 +23,7 @@ object Main {
             ResultDef("sing_res1"),
             ResultDef("sing_res2")
           ),
-          regions = List(RegionDef("region1")),
+          regions = List(RegionDef("region1"), RegionDef("region2")),
           successors = List(SuccessorDef("successor1"))
         ),
         OperationDef(
@@ -42,7 +42,11 @@ object Main {
             ResultDef("var_res1", variadicity = Variadicity.Variadic),
             ResultDef("sing_res2")
           ),
-          regions = List(RegionDef("region1")),
+          regions = List(
+            RegionDef("region1"),
+            RegionDef("var_region1", variadicity = Variadicity.Variadic),
+            RegionDef("region2")
+          ),
           successors = List(SuccessorDef("successor1"))
         ),
         OperationDef(
@@ -63,7 +67,11 @@ object Main {
             ResultDef("var_res2", variadicity = Variadicity.Variadic),
             ResultDef("sing_res2")
           ),
-          regions = List(RegionDef("region1")),
+          regions = List(
+            RegionDef("region1"),
+            RegionDef("var_region1", variadicity = Variadicity.Variadic),
+            RegionDef("region2")
+          ),
           successors = List(SuccessorDef("successor1"))
         )
       ),
@@ -95,22 +103,25 @@ object Main {
 // CHECK-NEXT:  ) extends RegisteredOperation(name = "test.no_variadics") {
 
 // CHECK:         def sing_op1: Value[Attribute] = operands(0)
-// CHECK-NEXT:    def sing_op1_=(value: Value[Attribute]): Unit = {operands(0) = value}
+// CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
 
 // CHECK:         def sing_op2: Value[Attribute] = operands(1)
-// CHECK-NEXT:    def sing_op2_=(value: Value[Attribute]): Unit = {operands(1) = value}
+// CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(1) = new_operand}
 
 // CHECK:         def sing_res1: Value[Attribute] = results(0)
-// CHECK-NEXT:    def sing_res1_=(value: Value[Attribute]): Unit = {results(0) = value}
+// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
 
 // CHECK:         def sing_res2: Value[Attribute] = results(1)
-// CHECK-NEXT:    def sing_res2_=(value: Value[Attribute]): Unit = {results(1) = value}
+// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(1) = new_result}
 
 // CHECK:         def region1: Region = regions(0)
-// CHECK-NEXT:    def region1_=(value: Region): Unit = {regions(0) = value}
+// CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}
+
+// CHECK:         def region2: Region = regions(1)
+// CHECK-NEXT:    def region2_=(new_region: Region): Unit = {regions(1) = new_region}
 
 // CHECK:         def successor1: Block = successors(0)
-// CHECK-NEXT:    def successor1_=(value: Block): Unit = {successors(0) = value}
+// CHECK-NEXT:    def successor1_=(new_block: Block): Unit = {successors(0) = new_block}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
 // CHECK-NEXT:    val sing_op2_constr = AnyOf(List(EqualAttr(IntData(5)), EqualAttr(IntData(6))))
@@ -122,7 +133,7 @@ object Main {
 
 // CHECK:           if (operands.length != 2) then throw new Exception(s"Expected 2 operands, got ${operands.length}")
 // CHECK-NEXT:      if (results.length != 2) then throw new Exception(s"Expected 2 results, got ${results.length}")
-// CHECK-NEXT:      if (regions.length != 1) then throw new Exception("Expected 1 regions, got regions.length")
+// CHECK-NEXT:      if (regions.length != 2) then throw new Exception(s"Expected 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
@@ -151,52 +162,70 @@ object Main {
 // CHECK-NEXT:  ) extends RegisteredOperation(name = "test.variadic_operand") {
 
 // CHECK:         def sing_op1: Value[Attribute] = operands(0)
-// CHECK-NEXT:    def sing_op1_=(value: Value[Attribute]): Unit = {operands(0) = value}
+// CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
 
 // CHECK:         def var_op1: Seq[Value[Attribute]] = {
 // CHECK-NEXT:        val from = 1
 // CHECK-NEXT:        val to = operands.length - 1
 // CHECK-NEXT:        operands.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_op1_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:    def var_op1_=(new_operands: Seq[Value[Attribute]]): Unit = {
 // CHECK-NEXT:      val from = 1
 // CHECK-NEXT:      val to = operands.length - 1
-// CHECK-NEXT:      val diff = values.length - (to - from)
-// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
-// CHECK-NEXT:        operands(from + i) = value
+// CHECK-NEXT:      val diff = new_operands.length - (to - from)
+// CHECK-NEXT:      for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
+// CHECK-NEXT:        operands(from + i) = operand
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        operands.trimEnd(-diff)
 // CHECK-NEXT:    }
 
 // CHECK:         def sing_op2: Value[Attribute] = operands(operands.length - 1)
-// CHECK-NEXT:    def sing_op2_=(value: Value[Attribute]): Unit = {operands(operands.length - 1) = value}
+// CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(operands.length - 1) = new_operand}
 
 // CHECK:         def sing_res1: Value[Attribute] = results(0)
-// CHECK-NEXT:    def sing_res1_=(value: Value[Attribute]): Unit = {results(0) = value}
+// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
 
 // CHECK:         def var_res1: Seq[Value[Attribute]] = {
 // CHECK-NEXT:        val from = 1
 // CHECK-NEXT:        val to = results.length - 1
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_res1_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:    def var_res1_=(new_results: Seq[Value[Attribute]]): Unit = {
 // CHECK-NEXT:      val from = 1
 // CHECK-NEXT:      val to = results.length - 1
-// CHECK-NEXT:      val diff = values.length - (to - from)
-// CHECK-NEXT:      for (value, i) <- (values ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = value
+// CHECK-NEXT:      val diff = new_results.length - (to - from)
+// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+// CHECK-NEXT:        results(from + i) = new_results
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
 
 // CHECK:         def sing_res2: Value[Attribute] = results(results.length - 1)
-// CHECK-NEXT:    def sing_res2_=(value: Value[Attribute]): Unit = {results(results.length - 1) = value}
+// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(results.length - 1) = new_result}
 
 // CHECK:         def region1: Region = regions(0)
-// CHECK-NEXT:    def region1_=(value: Region): Unit = {regions(0) = value}
+// CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}
+
+// CHECK:         def var_region1: Seq[Region] = {
+// CHECK-NEXT:        val from = 1
+// CHECK-NEXT:        val to = regions.length - 1
+// CHECK-NEXT:        regions.slice(from, to).toSeq
+// CHECK-NEXT:    }
+// CHECK-NEXT:    def var_region1_=(new_regions: Seq[Region]): Unit = {
+// CHECK-NEXT:      val from = 1
+// CHECK-NEXT:      val to = regions.length - 1
+// CHECK-NEXT:      val diff = new_regions.length - (to - from)
+// CHECK-NEXT:      for (region, i) <- (new_regions ++ regions.slice(to, regions.length)).zipWithIndex do
+// CHECK-NEXT:        regions(from + i) = region
+// CHECK-NEXT:      if (diff < 0)
+// CHECK-NEXT:        regions.trimEnd(-diff)
+// CHECK-NEXT:    }
+
+// CHECK:         def region2: Region = regions(regions.length - 1)
+// CHECK-NEXT:    def region2_=(new_region: Region): Unit = {regions(regions.length - 1) = new_region}
 
 // CHECK:         def successor1: Block = successors(0)
-// CHECK-NEXT:    def successor1_=(value: Block): Unit = {successors(0) = value}
+// CHECK-NEXT:    def successor1_=(new_block: Block): Unit = {successors(0) = new_block}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
 // CHECK-NEXT:    val var_op1_constr = EqualAttr(IntData(5))
@@ -210,7 +239,7 @@ object Main {
 
 // CHECK:           if (operands.length < 2) then throw new Exception(s"Expected at least 2 operands, got ${operands.length}")
 // CHECK-NEXT:      if (results.length < 2) then throw new Exception(s"Expected at least 2 results, got ${results.length}")
-// CHECK-NEXT:      if (regions.length != 1) then throw new Exception("Expected 1 regions, got regions.length")
+// CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
@@ -269,19 +298,19 @@ object Main {
 // CHECK-NEXT:      }
 
 // CHECK:         def sing_op1: Value[Attribute] = operands(operandSegmentSizes.slice(0, 0).reduce(_ + _))
-// CHECK-NEXT:    def sing_op1_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 0).reduce(_ + _)) = value}
+// CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 0).reduce(_ + _)) = new_operand}
 
 // CHECK:         def var_op1: Seq[Value[Attribute]] = {
 // CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 1).reduce(_ + _)
 // CHECK-NEXT:        val to = from + operandSegmentSizes(1)
 // CHECK-NEXT:        operands.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_op1_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:    def var_op1_=(new_operands: Seq[Value[Attribute]]): Unit = {
 // CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 1).reduce(_ + _)
 // CHECK-NEXT:      val to = from + operandSegmentSizes(1)
-// CHECK-NEXT:      val diff = values.length - (to - from)
-// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
-// CHECK-NEXT:        operands(from + i) = value
+// CHECK-NEXT:      val diff = new_operands.length - (to - from)
+// CHECK-NEXT:      for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
+// CHECK-NEXT:        operands(from + i) = operand
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        operands.trimEnd(-diff)
 // CHECK-NEXT:    }
@@ -291,33 +320,33 @@ object Main {
 // CHECK-NEXT:        val to = from + operandSegmentSizes(2)
 // CHECK-NEXT:        operands.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_op2_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:    def var_op2_=(new_operands: Seq[Value[Attribute]]): Unit = {
 // CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 2).reduce(_ + _)
 // CHECK-NEXT:      val to = from + operandSegmentSizes(2)
-// CHECK-NEXT:      val diff = values.length - (to - from)
-// CHECK-NEXT:      for (value, i) <- (values ++ operands.slice(to, operands.length)).zipWithIndex do
-// CHECK-NEXT:        operands(from + i) = value
+// CHECK-NEXT:      val diff = new_operands.length - (to - from)
+// CHECK-NEXT:      for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
+// CHECK-NEXT:        operands(from + i) = operand
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        operands.trimEnd(-diff)
 // CHECK-NEXT:    }
 
 // CHECK:         def sing_op2: Value[Attribute] = operands(operandSegmentSizes.slice(0, 3).reduce(_ + _))
-// CHECK-NEXT:    def sing_op2_=(value: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 3).reduce(_ + _)) = value}
+// CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 3).reduce(_ + _)) = new_operand}
 
 // CHECK:         def sing_res1: Value[Attribute] = results(resultSegmentSizes.slice(0, 0).reduce(_ + _))
-// CHECK-NEXT:    def sing_res1_=(value: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 0).reduce(_ + _)) = value}
+// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 0).reduce(_ + _)) = new_result}
 
 // CHECK:         def var_res1: Seq[Value[Attribute]] = {
 // CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 1).reduce(_ + _)
 // CHECK-NEXT:        val to = from + resultSegmentSizes(1)
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_res1_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:    def var_res1_=(new_results: Seq[Value[Attribute]]): Unit = {
 // CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 1).reduce(_ + _)
 // CHECK-NEXT:      val to = from + resultSegmentSizes(1)
-// CHECK-NEXT:      val diff = values.length - (to - from)
-// CHECK-NEXT:      for (value, i) <- (values ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = value
+// CHECK-NEXT:      val diff = new_results.length - (to - from)
+// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+// CHECK-NEXT:        results(from + i) = new_results
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
@@ -327,24 +356,42 @@ object Main {
 // CHECK-NEXT:        val to = from + resultSegmentSizes(2)
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_res2_=(values: Seq[Value[Attribute]]): Unit = {
+// CHECK-NEXT:    def var_res2_=(new_results: Seq[Value[Attribute]]): Unit = {
 // CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 2).reduce(_ + _)
 // CHECK-NEXT:      val to = from + resultSegmentSizes(2)
-// CHECK-NEXT:      val diff = values.length - (to - from)
-// CHECK-NEXT:      for (value, i) <- (values ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = value
+// CHECK-NEXT:      val diff = new_results.length - (to - from)
+// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+// CHECK-NEXT:        results(from + i) = new_results
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
 
 // CHECK:         def sing_res2: Value[Attribute] = results(resultSegmentSizes.slice(0, 3).reduce(_ + _))
-// CHECK-NEXT:    def sing_res2_=(value: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 3).reduce(_ + _)) = value}
+// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 3).reduce(_ + _)) = new_result}
 
 // CHECK:         def region1: Region = regions(0)
-// CHECK-NEXT:    def region1_=(value: Region): Unit = {regions(0) = value}
+// CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}
+
+// CHECK:         def var_region1: Seq[Region] = {
+// CHECK-NEXT:        val from = 1
+// CHECK-NEXT:        val to = regions.length - 1
+// CHECK-NEXT:        regions.slice(from, to).toSeq
+// CHECK-NEXT:    }
+// CHECK-NEXT:    def var_region1_=(new_regions: Seq[Region]): Unit = {
+// CHECK-NEXT:      val from = 1
+// CHECK-NEXT:      val to = regions.length - 1
+// CHECK-NEXT:      val diff = new_regions.length - (to - from)
+// CHECK-NEXT:      for (region, i) <- (new_regions ++ regions.slice(to, regions.length)).zipWithIndex do
+// CHECK-NEXT:        regions(from + i) = region
+// CHECK-NEXT:      if (diff < 0)
+// CHECK-NEXT:        regions.trimEnd(-diff)
+// CHECK-NEXT:    }
+
+// CHECK:         def region2: Region = regions(regions.length - 1)
+// CHECK-NEXT:    def region2_=(new_region: Region): Unit = {regions(regions.length - 1) = new_region}
 
 // CHECK:         def successor1: Block = successors(0)
-// CHECK-NEXT:    def successor1_=(value: Block): Unit = {successors(0) = value}
+// CHECK-NEXT:    def successor1_=(new_block: Block): Unit = {successors(0) = new_block}
 
 // CHECK:         val sing_op1_constr = BaseAttr[scair.dialects.builtin.IntData]()
 // CHECK-NEXT:    val var_op1_constr = EqualAttr(IntData(5))
@@ -366,7 +413,7 @@ object Main {
 // CHECK-NEXT:      if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected ${resultSegmentSizesSum} results, got ${results.length}")
 // CHECK-NEXT:      if resultSegmentSizes(0) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res1 at index 0, got ${resultSegmentSizes(0)}")
 // CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
-// CHECK-NEXT:      if (regions.length != 1) then throw new Exception("Expected 1 regions, got regions.length")
+// CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 1) then throw new Exception("Expected 1 successors, got successors.length")
 // CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
 // CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
