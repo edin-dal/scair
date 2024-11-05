@@ -50,7 +50,7 @@ object Main {
           ),
           successors = List(
             SuccessorDef("successor1"),
-            SuccessorDef("var_succsessor", variadicity = Variadicity.Variadic),
+            SuccessorDef("var_successor", variadicity = Variadicity.Variadic),
             SuccessorDef("successor2")
           )
         ),
@@ -79,7 +79,7 @@ object Main {
           ),
           successors = List(
             SuccessorDef("successor1"),
-            SuccessorDef("var_succsessor", variadicity = Variadicity.Variadic),
+            SuccessorDef("var_successor", variadicity = Variadicity.Variadic),
             SuccessorDef("successor2")
           )
         )
@@ -239,12 +239,12 @@ object Main {
 // CHECK:         def successor1: Block = successors(0)
 // CHECK-NEXT:    def successor1_=(new_successor: Block): Unit = {successors(0) = new_successor}
 
-// CHECK:         def var_succsessor: Seq[Block] = {
+// CHECK:         def var_successor: Seq[Block] = {
 // CHECK-NEXT:        val from = 1
 // CHECK-NEXT:        val to = successors.length - 1
 // CHECK-NEXT:        successors.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_succsessor_=(new_successors: Seq[Block]): Unit = {
+// CHECK-NEXT:    def var_successor_=(new_successors: Seq[Block]): Unit = {
 // CHECK-NEXT:      val from = 1
 // CHECK-NEXT:      val to = successors.length - 1
 // CHECK-NEXT:      val diff = new_successors.length - (to - from)
@@ -423,12 +423,12 @@ object Main {
 // CHECK:         def successor1: Block = successors(0)
 // CHECK-NEXT:    def successor1_=(new_successor: Block): Unit = {successors(0) = new_successor}
 
-// CHECK:         def var_succsessor: Seq[Block] = {
+// CHECK:         def var_successor: Seq[Block] = {
 // CHECK-NEXT:        val from = 1
 // CHECK-NEXT:        val to = successors.length - 1
 // CHECK-NEXT:        successors.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_succsessor_=(new_successors: Seq[Block]): Unit = {
+// CHECK-NEXT:    def var_successor_=(new_successors: Seq[Block]): Unit = {
 // CHECK-NEXT:      val from = 1
 // CHECK-NEXT:      val to = successors.length - 1
 // CHECK-NEXT:      val diff = new_successors.length - (to - from)
