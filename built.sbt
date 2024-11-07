@@ -1,6 +1,8 @@
+import sbt.internal.shaded.com.google.protobuf.compiler.PluginProtos.CodeGeneratorRequest
 val scala_version = "3.3.1"
 
 import scala.sys.process._
+import java.io.File
 
 ThisBuild / scalaVersion := scala_version
 
@@ -15,7 +17,33 @@ lazy val root = (project in file(".")).aggregate(core, ScaIRDL, clair, dialects,
 lazy val core = project in file("core")
 lazy val ScaIRDL = project.dependsOn(core) in file("ScaIRDL")
 lazy val clair = project.dependsOn(ScaIRDL) in file("clair")
+
 lazy val dialects = project.dependsOn(clair) in file("dialects")
+val mySourceGenerator = taskKey[Seq[File]]("...")
+
+def generate_dialect(managed: File, def_file: File): Seq[File] = {
+  println(s"managed: $managed")
+  println(s"def_file: $def_file")
+  val imp_path = s"${managed.getPath}/${def_file.base}.wow.scala"
+  println(s"imp_path: $imp_path")
+  val imp_file = new File(imp_path)
+
+  IO.write(
+    imp_file,
+    s"""package scair.dialects.wooow
+object Wow
+  """
+  )
+  Seq(imp_file)
+}
+
+dialects / Compile / mySourceGenerator := generate_dialect(
+  (dialects / Compile / sourceManaged).value,
+  file("Affine/Affine_ops.scala")
+)
+
+dialects / Compile / sourceGenerators += (dialects / Compile / mySourceGenerator).taskValue
+
 lazy val transformations =
   project.dependsOn(core, dialects) in file("transformations")
 lazy val tools = (project in file("tools")).dependsOn(dialects, transformations).enablePlugins(JavaAppPackaging)
