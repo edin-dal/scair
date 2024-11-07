@@ -1,6 +1,6 @@
 // RUN: scala -classpath ../../target/scala-3.3.1/classes/ %s | filecheck %s
 
-import scair.clair.ir._
+import scair.scairdl.irdef._
 import scair.dialects.builtin.IntData
 import scair.scairdl.constraints._
 import scair.scairdl.constraints.attr2constraint
