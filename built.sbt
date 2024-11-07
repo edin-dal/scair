@@ -16,7 +16,7 @@ enablePlugins(JavaAppPackaging)
 // dependent tasks
 watchSources += new WatchSource(
   baseDirectory.value,
-  FileFilter.globFilter("*.mlir"),
+  FileFilter.globFilter("*.{mlir,scala}"),
   NothingFilter
 )
 
@@ -31,7 +31,7 @@ filechecks := {
     sys.error("Filechecks failed")
   }
 }
-filechecks / fileInputs += (baseDirectory.value / "tests" / "filecheck" / "*.mlir").toGlob
+filechecks / fileInputs += (baseDirectory.value / "tests" / "filecheck").toGlob / ** / "*.{mlir,scala}"
 
 lazy val testAll = taskKey[Unit]("Run all tests")
 testAll := {
