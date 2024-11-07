@@ -12,11 +12,21 @@ libraryDependencies ++= Seq(
 
 enablePlugins(JavaAppPackaging)
 
+lazy val core = project in file("core")
+lazy val parser = project.dependsOn(core) in file("parser")
+lazy val printer = project.dependsOn(core) in file("printer")
+lazy val ScaIRDL = project.dependsOn(core) in file("ScaIRDL")
+lazy val clair = project.dependsOn(ScaIRDL) in file("clair")
+lazy val dialects = project.dependsOn(clair) in file("dialects")
+lazy val transformations =
+  project.dependsOn(core, dialects) in file("transformations")
+lazy val tools = project.dependsOn(dialects, transformations) in file("tools")
+
 // Add .mlir files to watchSources, i.e., SBT can watch them to retrigger
 // dependent tasks
 watchSources += new WatchSource(
   baseDirectory.value,
-  FileFilter.globFilter("*.mlir"),
+  FileFilter.globFilter("*.{mlir,scala}"),
   NothingFilter
 )
 
@@ -31,7 +41,7 @@ filechecks := {
     sys.error("Filechecks failed")
   }
 }
-filechecks / fileInputs += (baseDirectory.value / "tests" / "filecheck" / "*.mlir").toGlob
+filechecks / fileInputs += (baseDirectory.value / "tests" / "filecheck").toGlob / ** / "*.{mlir,scala}"
 
 lazy val testAll = taskKey[Unit]("Run all tests")
 testAll := {

@@ -1,4 +1,4 @@
-package scair.clair.ir
+package scair.scairdl.irdef
 
 import scala.collection.mutable
 import scala.compiletime.ops.int
