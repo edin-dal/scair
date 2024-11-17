@@ -5,6 +5,10 @@ import scala.compiletime._
 import scair.scairdl.irdef._
 import scair.scairdl.constraints._
 import Variadicity._
+import scala.reflect._
+import scair.ir._
+import scair.dialects.builtin._
+
 
 /*≡≡=---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   DIFFERENT CLASSES   ||
@@ -13,13 +17,15 @@ import Variadicity._
 abstract class DialectOperation
 abstract class DialectAttribute
 
-abstract class Input[T]
-case class Operand[T]() extends Input[T]
-case class Result[T]() extends Input[T]
+sealed abstract class AnyAttribute extends TypeAttribute  
+
+abstract class Input[T <: Attribute]
+case class Operand[T <: Attribute]() extends Input[T]
+case class Result[T <: Attribute]() extends Input[T]
 case class Region() extends Input[Nothing]
 case class Successor() extends Input[Nothing]
-case class Property[T]() extends Input[T]
-case class Attribute[T]() extends Input[T]
+case class Property[T <: Attribute]() extends Input[T]
+case class Attr[T <: Attribute]() extends Input[T]
 
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
 ||    MIRROR LOGIC    ||
@@ -30,14 +36,26 @@ case class Attribute[T]() extends Input[T]
   * @return
   *   IRDLConstraint
   */
-inline def indent[T]: IRDLConstraint = {
+inline def indent[T <: Attribute: ClassTag]: IRDLConstraint = {
 
   inline erasedValue[T] match
-    case AnyAttr => AnyAttr
+    case _: AnyAttribute => AnyAttr
+    case _: Attribute    => BaseAttr[T]()
     case _ =>
       throw new Exception(
         "The Clair front-end currently supports only AnyAttr Constraint"
       )
+}
+
+/** 
+  * Instantiates a ClassTag for the given type T. This is necessary as some constraints
+  * deal with ClassTags.
+  *
+  * @return
+  *   An IRDLConstraint given a type T.
+  */
+inline def getConstraint[T <: Attribute]: IRDLConstraint = {
+  indent[T](using summonInline[ClassTag[T]])
 }
 
 /** Produces an OpInput to OperationDef given a definition of a Type.
@@ -53,14 +71,14 @@ inline def getOpInput[Elem]: String => OpInput = {
       (name: String) =>
         OperandDef(
           id = name,
-          indent[t],
+          getConstraint[t],
           Single
         )
     case _: Result[t] =>
       (name: String) =>
         ResultDef(
           id = name,
-          indent[t],
+          getConstraint[t],
           Single
         )
     case _: Region =>
@@ -79,17 +97,17 @@ inline def getOpInput[Elem]: String => OpInput = {
       (name: String) =>
         OpPropertyDef(
           id = name,
-          indent[t]
+          getConstraint[t]
         )
-    case _: Attribute[t] =>
+    case _: Attr[t] =>
       (name: String) =>
         OpAttributeDef(
           id = name,
-          indent[t]
+          getConstraint[t]
         )
     case _ =>
       throw new Exception(
-        "You can only pass in Operand, Result, Region, Successor, Property or Attribute to the Operation definition"
+        "You can only pass in Operand, Result, Region, Successor, Property or Attr to the Operation definition"
       )
 }
 
@@ -206,7 +224,7 @@ inline def getAttrDef[T](using
 
     case _ =>
       println(attrName)
-      throw new Exception("Attribute definition expected.")
+      throw new Exception("Attr definition expected.")
 }
 
 /** Instantiates a Mirror Product for the given element.
@@ -291,19 +309,19 @@ object FrontEnd {
   enum CMathAttr extends DialectAttribute:
 
     case Complex(
-        e1: Operand[AnyAttr.type]
+        e1: Operand[IntegerAttr]
     )
 
   enum CMath extends DialectOperation:
 
     case Norm(
-        e1: Operand[AnyAttr.type],
-        e2: Result[AnyAttr.type],
+        e1: Operand[IntegerAttr],
+        e2: Result[AnyAttribute],
         e3: Region
     )
     case Mul[Operation](
-        e1: Operand[AnyAttr.type],
-        e2: Result[AnyAttr.type]
+        e1: Operand[IntegerAttr],
+        e2: Result[AnyAttribute]
     )
 
   object CMath {
