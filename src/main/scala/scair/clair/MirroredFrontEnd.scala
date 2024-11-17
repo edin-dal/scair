@@ -10,7 +10,8 @@ import Variadicity._
 ||   DIFFERENT CLASSES   ||
 \*≡==----=≡≡≡≡≡≡≡=----==≡*/
 
-abstract class Dialect
+abstract class DialectOperation
+abstract class DialectAttribute
 
 abstract class Input[T]
 case class Operand[T]() extends Input[T]
@@ -30,6 +31,7 @@ case class Attribute[T]() extends Input[T]
   *   IRDLConstraint
   */
 inline def indent[T]: IRDLConstraint = {
+
   inline erasedValue[T] match
     case AnyAttr => AnyAttr
     case _ =>
@@ -45,6 +47,7 @@ inline def indent[T]: IRDLConstraint = {
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
 inline def getOpInput[Elem]: String => OpInput = {
+
   inline erasedValue[Elem] match
     case _: Operand[t] =>
       (name: String) =>
@@ -96,9 +99,10 @@ inline def getOpInput[Elem]: String => OpInput = {
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-inline def summonOpInput[Elems <: Tuple]: List[String => OpInput] = {
+inline def summonInput[Elems <: Tuple]: List[String => OpInput] = {
+
   inline erasedValue[Elems] match
-    case _: (elem *: elems) => getOpInput[elem] :: summonOpInput[elems]
+    case _: (elem *: elems) => getOpInput[elem] :: summonInput[elems]
     case _: EmptyTuple      => Nil
 }
 
@@ -108,6 +112,7 @@ inline def summonOpInput[Elems <: Tuple]: List[String => OpInput] = {
   *   Tuple of String types
   */
 inline def stringifyLabels[Elems <: Tuple]: List[String] = {
+
   inline erasedValue[Elems] match
     case _: (elem *: elems) =>
       constValue[elem].asInstanceOf[String] :: stringifyLabels[elems]
@@ -129,8 +134,8 @@ inline def getOpDef[T](using
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
 
   inline erasedValue[T] match
-    case _: Dialect =>
-      val inputs = summonOpInput[m.MirroredElemTypes]
+    case _: DialectOperation  =>
+      val inputs = summonInput[m.MirroredElemTypes]
 
       val operands: ListType[OperandDef] = ListType()
       val results: ListType[ResultDef] = ListType()
@@ -161,16 +166,66 @@ inline def getOpDef[T](using
         )
 
     case _ =>
-      throw new Exception("bruh, don't even try this.")
+      throw new Exception("Operation definition expected.")
+
+}
+
+/** Generates a AttributeDef given param m.
+  *
+  * @param m
+  *   \- Mirror Product of an dialect enum case.
+  * @return
+  *   Lambda that produces an AttributeDef given a dialect name.
+  */
+inline def getAttrDef[T](using
+    m: Mirror.ProductOf[T]
+): String => AttributeDef = {
+
+  val attrName = constValue[m.MirroredLabel]
+  val paramLabels = stringifyLabels[m.MirroredElemLabels]
+
+  inline erasedValue[T] match
+    case _: DialectAttribute  =>
+      val inputs = summonInput[m.MirroredElemTypes]
+
+      val operands: ListType[OperandDef] = ListType()
+
+      for ((name, input) <- paramLabels zip inputs) yield input(name) match {
+        case a: OperandDef => operands += a
+        case _ => 
+
+          throw new Exception("Attributes only accept Operands.")
+      }
+
+      (dialect: String) =>
+        AttributeDef(
+          dialect + "." + attrName.toLowerCase,
+          attrName,
+          operands.toSeq,
+          0
+        )
+
+    case _ =>
+      println(attrName)
+      throw new Exception("Attribute definition expected.")
 }
 
 /** Instantiates a Mirror Product for the given element.
   *
   * @return
-  *   Lambda that produces an Operadtion Def given a dialect name.
+  *   Lambda that produces an OperadtionDef given a string of dialect name.
   */
 inline def summonOpDef[Elem]: String => OperationDef = {
   getOpDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
+}
+
+/** Instantiates a Mirror Product for the given element.
+  *
+  * @return
+  *   Lambda that produces an AttributeDef given a string of dialect name.
+  */
+inline def summonAttrDef[Elem]: String => AttributeDef = {
+  getAttrDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
 }
 
 /** Generates a list of OperationDef given enum cases.
@@ -180,27 +235,45 @@ inline def summonOpDef[Elem]: String => OperationDef = {
 inline def summonDialectOps[Prods <: Tuple](
     dialect_name: String
 ): ListType[OperationDef] = {
+
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
       summonOpDef[prod](dialect_name) +: summonDialectOps[prods](dialect_name)
     case _: EmptyTuple => ListType.empty
 }
 
+/** Generates a list of AttributeDef given enum cases.
+  *
+  * @param dialect_name
+  */
+inline def summonDialectAttrs[Prods <: Tuple](
+    dialect_name: String
+): ListType[AttributeDef] = {
+
+  inline erasedValue[Prods] match
+    case _: (prod *: prods) =>
+      summonAttrDef[prod](dialect_name) +: summonDialectAttrs[prods](dialect_name)
+    case _: EmptyTuple => ListType.empty
+}
+
+
 /** Generates the DialectDef object from the enum definition.
   *
   * @param m
   *   \- Sum Mirror of a given dialect
   */
-inline def summonDialect[T <: Dialect](using
-    m: Mirror.SumOf[T]
+inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
+    m1: Mirror.SumOf[T1], m2: Mirror.SumOf[T2]
 ): DialectDef = {
-  val dialect_name = constValue[m.MirroredLabel].toLowerCase
-  val elems = summonDialectOps[m.MirroredElemTypes](dialect_name)
+
+  val dialect_name = constValue[m1.MirroredLabel].toLowerCase
+  val opsDefs = summonDialectOps[m1.MirroredElemTypes](dialect_name)
+  val attrDefs = summonDialectAttrs[m2.MirroredElemTypes](dialect_name)
 
   DialectDef(
     dialect_name,
-    elems,
-    ListType()
+    opsDefs,
+    attrDefs
   )
 }
 
@@ -214,19 +287,26 @@ object FrontEnd {
   //   constValue[T].asInstanceOf[Int].toString
   // }
 
-  enum CMath extends Dialect:
+  enum CMathAttr extends DialectAttribute: 
+  
+    case Complex(
+      e1: Operand[AnyAttr.type]
+    ) 
+
+  enum CMath extends DialectOperation:
+
     case Norm(
-        e1: Operand[AnyAttr.type],
-        e2: Result[AnyAttr.type],
-        e3: Region
-    )
-    case Mul(
-        e1: Operand[AnyAttr.type],
-        e2: Result[AnyAttr.type]
-    )
+      e1: Operand[AnyAttr.type],
+      e2: Result[AnyAttr.type],
+      e3: Region
+    ) 
+    case Mul[Operation](
+      e1: Operand[AnyAttr.type],
+      e2: Result[AnyAttr.type]
+    ) 
 
   object CMath {
-    val generator = summonDialect[CMath]
+    val generator = summonDialect[CMath, CMathAttr]
   }
 
   def main(args: Array[String]): Unit = {
