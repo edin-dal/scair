@@ -9,7 +9,6 @@ import scala.reflect._
 import scair.ir._
 import scair.dialects.builtin._
 
-
 /*≡≡=---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   DIFFERENT CLASSES   ||
 \*≡==----=≡≡≡≡≡≡≡=----==≡*/
@@ -17,7 +16,7 @@ import scair.dialects.builtin._
 abstract class DialectOperation
 abstract class DialectAttribute
 
-sealed abstract class AnyAttribute extends TypeAttribute  
+sealed abstract class AnyAttribute extends TypeAttribute
 
 abstract class Input[T <: Attribute]
 case class Operand[T <: Attribute]() extends Input[T]
@@ -47,9 +46,8 @@ inline def indent[T <: Attribute: ClassTag]: IRDLConstraint = {
       )
 }
 
-/** 
-  * Instantiates a ClassTag for the given type T. This is necessary as some constraints
-  * deal with ClassTags.
+/** Instantiates a ClassTag for the given type T. This is necessary as some
+  * constraints deal with ClassTags.
   *
   * @return
   *   An IRDLConstraint given a type T.
