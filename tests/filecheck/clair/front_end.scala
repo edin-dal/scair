@@ -8,7 +8,7 @@ enum CMathAttr extends DialectAttribute:
     e1: Operand[AnyAttr.type]
   ) 
 
-enum CMath extends Dialect:
+enum CMath extends DialectOperation:
   case Norm(
       e1: Operand[AnyAttr.type],
       e2: Result[AnyAttr.type],

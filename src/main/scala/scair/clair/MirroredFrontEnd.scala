@@ -134,7 +134,7 @@ inline def getOpDef[T](using
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
 
   inline erasedValue[T] match
-    case _: DialectOperation  =>
+    case _: DialectOperation =>
       val inputs = summonInput[m.MirroredElemTypes]
 
       val operands: ListType[OperandDef] = ListType()
@@ -185,15 +185,14 @@ inline def getAttrDef[T](using
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
 
   inline erasedValue[T] match
-    case _: DialectAttribute  =>
+    case _: DialectAttribute =>
       val inputs = summonInput[m.MirroredElemTypes]
 
       val operands: ListType[OperandDef] = ListType()
 
       for ((name, input) <- paramLabels zip inputs) yield input(name) match {
         case a: OperandDef => operands += a
-        case _ => 
-
+        case _ =>
           throw new Exception("Attributes only accept Operands.")
       }
 
@@ -252,10 +251,11 @@ inline def summonDialectAttrs[Prods <: Tuple](
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
-      summonAttrDef[prod](dialect_name) +: summonDialectAttrs[prods](dialect_name)
+      summonAttrDef[prod](dialect_name) +: summonDialectAttrs[prods](
+        dialect_name
+      )
     case _: EmptyTuple => ListType.empty
 }
-
 
 /** Generates the DialectDef object from the enum definition.
   *
@@ -263,7 +263,8 @@ inline def summonDialectAttrs[Prods <: Tuple](
   *   \- Sum Mirror of a given dialect
   */
 inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
-    m1: Mirror.SumOf[T1], m2: Mirror.SumOf[T2]
+    m1: Mirror.SumOf[T1],
+    m2: Mirror.SumOf[T2]
 ): DialectDef = {
 
   val dialect_name = constValue[m1.MirroredLabel].toLowerCase
@@ -287,23 +288,23 @@ object FrontEnd {
   //   constValue[T].asInstanceOf[Int].toString
   // }
 
-  enum CMathAttr extends DialectAttribute: 
-  
+  enum CMathAttr extends DialectAttribute:
+
     case Complex(
-      e1: Operand[AnyAttr.type]
-    ) 
+        e1: Operand[AnyAttr.type]
+    )
 
   enum CMath extends DialectOperation:
 
     case Norm(
-      e1: Operand[AnyAttr.type],
-      e2: Result[AnyAttr.type],
-      e3: Region
-    ) 
+        e1: Operand[AnyAttr.type],
+        e2: Result[AnyAttr.type],
+        e3: Region
+    )
     case Mul[Operation](
-      e1: Operand[AnyAttr.type],
-      e2: Result[AnyAttr.type]
-    ) 
+        e1: Operand[AnyAttr.type],
+        e2: Result[AnyAttr.type]
+    )
 
   object CMath {
     val generator = summonDialect[CMath, CMathAttr]
