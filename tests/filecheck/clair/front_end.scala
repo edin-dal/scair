@@ -3,7 +3,12 @@
 import scair.scairdl.constraints._
 import scair.clair.mirrored._
 
-enum CMath extends Dialect:
+enum CMathAttr extends DialectAttribute: 
+  case Complex(
+    e1: Operand[AnyAttr.type]
+  ) 
+
+enum CMath extends DialectOperation:
   case Norm(
       e1: Operand[AnyAttr.type],
       e2: Result[AnyAttr.type],
@@ -15,7 +20,7 @@ enum CMath extends Dialect:
   )
 
 object CMath {
-  val generator = summonDialect[CMath]
+  val generator = summonDialect[CMath, CMathAttr]
 }
 
 def main(args: Array[String]): Unit = {
@@ -111,7 +116,17 @@ def main(args: Array[String]): Unit = {
 
 // CHECK:       }
 
+// CHECK:       object Complex extends DialectAttribute {
+// CHECK-NEXT:    override def name = "cmath.complex"
+// CHECK-NEXT:    override def factory = Complex.apply
+// CHECK-NEXT:  }
+
+// CHECK:       case class Complex(override val parameters: Seq[Attribute]) extends ParametrizedAttribute(name = "cmath.complex", parameters = parameters)  {
+// CHECK-NEXT:    override def custom_verify(): Unit =
+// CHECK-NEXT:      if (parameters.length != 1) then throw new Exception("Expected 1 parameters, got parameters.length")
+// CHECK-NEXT:  }
+
 // CHECK:       val cmath: Dialect = new Dialect(
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
-// CHECK-NEXT:    attributes = Seq()
+// CHECK-NEXT:    attributes = Seq(Complex)
 // CHECK-NEXT:  )
