@@ -2,26 +2,29 @@
 
 import scair.scairdl.constraints._
 import scair.clair.mirrored._
+import scair.dialects.builtin.IntegerAttr
 
-enum CMathAttr extends DialectAttribute: 
-  case Complex(
-    e1: Operand[AnyAttr.type]
-  ) 
+  enum CMathAttr extends DialectAttribute:
 
-enum CMath extends DialectOperation:
-  case Norm(
-      e1: Operand[AnyAttr.type],
-      e2: Result[AnyAttr.type],
-      e3: Region
-  )
-  case Mul(
-      e1: Operand[AnyAttr.type],
-      e2: Result[AnyAttr.type]
-  )
+    case Complex(
+        e1: Operand[IntegerAttr]
+    )
 
-object CMath {
-  val generator = summonDialect[CMath, CMathAttr]
-}
+  enum CMath extends DialectOperation:
+
+    case Norm(
+        e1: Operand[IntegerAttr],
+        e2: Result[AnyAttribute],
+        e3: Region
+    )
+    case Mul[Operation](
+        e1: Operand[IntegerAttr],
+        e2: Result[AnyAttribute]
+    )
+
+  object CMath {
+    val generator = summonDialect[CMath, CMathAttr]
+  }
 
 def main(args: Array[String]): Unit = {
   println(CMath.generator.print(0))
@@ -58,7 +61,7 @@ def main(args: Array[String]): Unit = {
 // CHECK:         def e3: Region = regions(0)
 // CHECK-NEXT:    def e3_=(new_region: Region): Unit = {regions(0) = new_region}
 
-// CHECK:         val e1_constr = AnyAttr
+// CHECK:         val e1_constr = BaseAttr[scair.dialects.builtin.IntegerAttr]()
 // CHECK-NEXT:    val e2_constr = AnyAttr
 
 // CHECK:         override def custom_verify(): Unit =
@@ -98,7 +101,7 @@ def main(args: Array[String]): Unit = {
 // CHECK:         def e2: Value[Attribute] = results(0)
 // CHECK-NEXT:    def e2_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
 
-// CHECK:         val e1_constr = AnyAttr
+// CHECK:         val e1_constr = BaseAttr[scair.dialects.builtin.IntegerAttr]()
 // CHECK-NEXT:    val e2_constr = AnyAttr
 
 // CHECK:         override def custom_verify(): Unit =
