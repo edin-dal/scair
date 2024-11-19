@@ -279,16 +279,15 @@ inline def summonDialectAttrs[Prods <: Tuple](
   *   \- Sum Mirror of a given dialect
   */
 inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
-    m1: Mirror.SumOf[T1],
-    m2: Mirror.SumOf[T2]
+    ops: Mirror.SumOf[T1],
+    attrs: Mirror.SumOf[T2]
 ): DialectDef = {
   // Remove the ops suffix from the dialect operations enum name
-  val dialect_name = constValue[m1.MirroredLabel].toLowerCase match {
-    case s"${name}ops" => name
-    case name          => name
-  }
-  val opsDefs = summonDialectOps[m1.MirroredElemTypes](dialect_name)
-  val attrDefs = summonDialectAttrs[m2.MirroredElemTypes](dialect_name)
+  val ops_name = constValue[ops.MirroredLabel]
+  val attrs_name = constValue[attrs.MirroredLabel]
+  val dialect_name = (ops_name, attrs_name).zipped.takeWhile(_ == _).map(_._1).mkString
+  val opsDefs = summonDialectOps[ops.MirroredElemTypes](dialect_name.toLowerCase)
+  val attrDefs = summonDialectAttrs[attrs.MirroredElemTypes](dialect_name.toLowerCase)
 
   DialectDef(
     dialect_name,

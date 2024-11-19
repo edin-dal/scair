@@ -123,7 +123,7 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 // CHECK-NEXT:      if (parameters.length != 1) then throw new Exception("Expected 1 parameters, got parameters.length")
 // CHECK-NEXT:  }
 
-// CHECK:       val cmath: Dialect = new Dialect(
+// CHECK:       val CMath: Dialect = new Dialect(
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
 // CHECK-NEXT:    attributes = Seq(Complex)
 // CHECK-NEXT:  )
