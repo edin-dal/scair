@@ -28,7 +28,6 @@ lazy val clair = project.dependsOn(ScaIRDL) in file("clair")
 lazy val native_dialects = project.dependsOn(clair) in file("dialects")
 lazy val gen_dialects =
   project.dependsOn(native_dialects) in file("gen_dialects")
-val mySourceGenerator = taskKey[Seq[File]]("...")
 
 gen_dialects / Compile / sourceGenerators += Def.taskDyn {
   val managed_sources = (Compile / sourceManaged).value.getAbsolutePath()
