@@ -29,24 +29,33 @@ lazy val native_dialects = project.dependsOn(clair) in file("dialects")
 lazy val gen_dialects =
   project.dependsOn(native_dialects) in file("gen_dialects")
 
-gen_dialects / Compile / sourceGenerators += Def.taskDyn {
+
+lazy val dialect_source = taskKey[Seq[String]]("A list of things")
+dialect_source := Seq("scair.dialects.example.ExampleDialect", "scair.dialects.cmath.CMathGen")
+
+def generate_one_dialect_task(_dialect_source: String, dialect_gen_file:String) = Def.task {
+  (Compile / runMain)
+    .toTask(
+      f" ${_dialect_source} $dialect_gen_file"
+    )
+    .value
+  Seq[File](new File(dialect_gen_file))
+}
+
+def generate_all_dialects() = Def.taskDyn {
   val managed_sources = (Compile / sourceManaged).value.getAbsolutePath()
   println(managed_sources)
   // Insert your generation logic here
   println("Running dialects generation...")
+  val _dialect_sources = dialect_source.value
   // For example, running your generator logic:
-  val dialect_source = "scair.dialects.example.ExampleDialect"
-  val dialect_gen_file =
-    f"$managed_sources/scala/${dialect_source.replace(".", "/")}.gen.scala"
-  Def.task {
-    (Compile / runMain)
-      .toTask(
-        f" $dialect_source $dialect_gen_file"
-      )
-      .value
-    Seq[File](new File(dialect_gen_file))
-  }
-}.taskValue
+  val dialect_gen_file = _dialect_sources.map(f => f"$managed_sources/scala/${f.replace(".", "/")}.gen.scala")
+
+  (_dialect_sources, dialect_gen_file).zipped.map((s,g) => generate_one_dialect_task(s, g)).join
+  generate_one_dialect_task(_dialect_sources(0), dialect_gen_file(0))
+}
+
+gen_dialects / Compile / sourceGenerators += generate_all_dialects().taskValue
 
 // Give the poor generated sources what they need to compile
 // (The project's class directory, i.e., whatever's already compiled (`scair. ...`))
