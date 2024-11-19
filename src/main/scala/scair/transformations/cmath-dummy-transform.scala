@@ -1,4 +1,4 @@
-package scair.dialects.CMath.transformations.cdt
+package scair.transformations.cdt
 
 import scair.ir._
 import scair.dialects.builtin.StringData
