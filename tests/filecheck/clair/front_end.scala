@@ -1,4 +1,4 @@
-// RUN: scala -classpath ../../target/scala-3.3.1/classes/ %s | filecheck %s
+// RUN: scala full-classpath %s | filecheck %s
 
 import scair.scairdl.constraints._
 import scair.clair.mirrored._
@@ -25,10 +25,10 @@ import scair.dialects.builtin.IntegerAttr
   object CMath {
     val generator = summonDialect[CMath, CMathAttr]
   }
-
+object Main{
 def main(args: Array[String]): Unit = {
   println(CMath.generator.print(0))
-}
+}}
 
 
 // CHECK:       import scair.ir._
