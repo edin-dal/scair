@@ -12,41 +12,55 @@ ThisBuild / libraryDependencies ++= Seq(
   "com.github.scopt" %% "scopt" % "4.1.0"
 )
 
-lazy val root = (project in file(".")).aggregate(core, ScaIRDL, clair, dialects, transformations, tools)
+lazy val root = (project in file(".")).aggregate(
+  core,
+  ScaIRDL,
+  clair,
+  dialects,
+  transformations,
+  tools
+)
 
 lazy val core = project in file("core")
 lazy val ScaIRDL = project.dependsOn(core) in file("ScaIRDL")
 lazy val clair = project.dependsOn(ScaIRDL) in file("clair")
 
-lazy val dialects = project.dependsOn(clair) in file("dialects")
+lazy val native_dialects = project.dependsOn(clair) in file("dialects")
+lazy val gen_dialects =
+  project.dependsOn(native_dialects) in file("gen_dialects")
 val mySourceGenerator = taskKey[Seq[File]]("...")
 
-def generate_dialect(managed: File, def_file: File): Seq[File] = {
-  println(s"managed: $managed")
-  println(s"def_file: $def_file")
-  val imp_path = s"${managed.getPath}/${def_file.base}.wow.scala"
-  println(s"imp_path: $imp_path")
-  val imp_file = new File(imp_path)
+gen_dialects / Compile / sourceGenerators += Def.taskDyn {
+  val managed_sources = (Compile / sourceManaged).value.getAbsolutePath()
+  println(managed_sources)
+  // Insert your generation logic here
+  println("Running dialects generation...")
+  // For example, running your generator logic:
+  val dialect_source = "scair.dialects.example.ExampleDialect"
+  val dialect_gen_file =
+    f"$managed_sources/scala/${dialect_source.replace(".", "/")}.gen.scala"
+  Def.task {
+    (Compile / runMain)
+      .toTask(
+        f" $dialect_source $dialect_gen_file"
+      )
+      .value
+    Seq[File](new File(dialect_gen_file))
+  }
+}.taskValue
 
-  IO.write(
-    imp_file,
-    s"""package scair.dialects.wooow
-object Wow
-  """
-  )
-  Seq(imp_file)
-}
-
-dialects / Compile / mySourceGenerator := generate_dialect(
-  (dialects / Compile / sourceManaged).value,
-  file("Affine/Affine_ops.scala")
-)
-
-dialects / Compile / sourceGenerators += (dialects / Compile / mySourceGenerator).taskValue
+// Give the poor generated sources what they need to compile
+// (The project's class directory, i.e., whatever's already compiled (`scair. ...`))
+gen_dialects / Compile / unmanagedClasspath += (Compile / classDirectory).value
+// And the external dependencies (Things like The Scala stdlib and fastparse!)
+gen_dialects / Compile / unmanagedClasspath ++= (Compile / externalDependencyClasspath).value
 
 lazy val transformations =
-  project.dependsOn(core, dialects) in file("transformations")
-lazy val tools = (project in file("tools")).dependsOn(dialects, transformations).enablePlugins(JavaAppPackaging)
+  project.dependsOn(core, gen_dialects) in file("transformations")
+lazy val tools =
+  project
+    .dependsOn(gen_dialects, transformations)
+    .enablePlugins(JavaAppPackaging) in file("tools")
 
 // Add .mlir files to watchSources, i.e., SBT can watch them to retrigger
 // dependent tasks

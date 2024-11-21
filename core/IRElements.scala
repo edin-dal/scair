@@ -86,10 +86,13 @@ case class OpPropertyDef(val id: String, val const: IRDLConstraint = AnyAttr)
 case class OpAttributeDef(val id: String, val const: IRDLConstraint = AnyAttr)
     extends OpInput {}
 
+object DialectDef {
+  def empty: DialectDef = DialectDef("empty")
+}
 case class DialectDef(
     val name: String,
-    val operations: ListType[OperationDef] = ListType(),
-    val attributes: ListType[AttributeDef] = ListType()
+    val operations: Seq[OperationDef] = Seq(),
+    val attributes: Seq[AttributeDef] = Seq()
 ) {
   def print(indent: Int): String = s"""
 import scair.ir._

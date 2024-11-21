@@ -9,7 +9,7 @@ object Main {
   def main(args: Array[String]) = {
     val dialect = DialectDef(
       "test",
-      ListType(
+      Seq(
         OperationDef(
           "test.no_variadics",
           "NoVariadicsOp",
@@ -85,14 +85,14 @@ object Main {
           )
         )
       ),
-      ListType(AttributeDef("test.type", "TypeAttr", typee = 1))
+      Seq(AttributeDef("test.type", "TypeAttr", typee = 1))
     )
 
     println(dialect.print(0))
   }
 }
 
-// CHECK:       import scair.ir._
+// CHECK-NEXT:  import scair.ir._
 // CHECK-NEXT:  import scair.dialects.builtin._
 // CHECK-NEXT:  import scair.scairdl.constraints._
 // CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
