@@ -1,35 +1,29 @@
-// RUN: scala full-classpath %s | filecheck %s
+// RUN: scala full-classpath %s - | filecheck %s
 
 import scair.scairdl.constraints._
 import scair.clair.mirrored._
 import scair.dialects.builtin.IntegerAttr
+import scair.scairdl.irdef._
 
-  enum CMathAttr extends DialectAttribute:
+enum CMathAttrs extends DialectAttribute:
 
-    case Complex(
-        e1: Operand[IntegerAttr]
-    )
+  case Complex(
+      e1: Operand[IntegerAttr]
+  )
 
-  enum CMath extends DialectOperation:
+enum CMathOps extends DialectOperation:
 
-    case Norm(
-        e1: Operand[IntegerAttr],
-        e2: Result[AnyAttribute],
-        e3: Region
-    )
-    case Mul[Operation](
-        e1: Operand[IntegerAttr],
-        e2: Result[AnyAttribute]
-    )
+  case Norm(
+      e1: Operand[IntegerAttr],
+      e2: Result[AnyAttribute],
+      e3: Region
+  )
+  case Mul[Operation](
+      e1: Operand[IntegerAttr],
+      e2: Result[AnyAttribute]
+  )
 
-  object CMath {
-    val generator = summonDialect[CMath, CMathAttr]
-  }
-object Main{
-def main(args: Array[String]): Unit = {
-  println(CMath.generator.print(0))
-}}
-
+object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 
 // CHECK:       import scair.ir._
 // CHECK-NEXT:  import scair.dialects.builtin._

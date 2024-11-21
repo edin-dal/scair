@@ -249,12 +249,12 @@ inline def summonAttrDef[Elem]: String => AttributeDef = {
   */
 inline def summonDialectOps[Prods <: Tuple](
     dialect_name: String
-): ListType[OperationDef] = {
+): Seq[OperationDef] = {
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
       summonOpDef[prod](dialect_name) +: summonDialectOps[prods](dialect_name)
-    case _: EmptyTuple => ListType.empty
+    case _: EmptyTuple => Seq.empty
 }
 
 /** Generates a list of AttributeDef given enum cases.
@@ -263,14 +263,14 @@ inline def summonDialectOps[Prods <: Tuple](
   */
 inline def summonDialectAttrs[Prods <: Tuple](
     dialect_name: String
-): ListType[AttributeDef] = {
+): Seq[AttributeDef] = {
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
       summonAttrDef[prod](dialect_name) +: summonDialectAttrs[prods](
         dialect_name
       )
-    case _: EmptyTuple => ListType.empty
+    case _: EmptyTuple => Seq.empty
 }
 
 /** Generates the DialectDef object from the enum definition.
@@ -282,8 +282,11 @@ inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
     m1: Mirror.SumOf[T1],
     m2: Mirror.SumOf[T2]
 ): DialectDef = {
-
-  val dialect_name = constValue[m1.MirroredLabel].toLowerCase
+  // Remove the ops suffix from the dialect operations enum name
+  val dialect_name = constValue[m1.MirroredLabel].toLowerCase match {
+    case s"${name}ops" => name
+    case name          => name
+  }
   val opsDefs = summonDialectOps[m1.MirroredElemTypes](dialect_name)
   val attrDefs = summonDialectAttrs[m2.MirroredElemTypes](dialect_name)
 
@@ -326,7 +329,4 @@ object FrontEnd {
     val generator = summonDialect[CMath, CMathAttr]
   }
 
-  def main(args: Array[String]): Unit = {
-    println(CMath.generator.print(0))
-  }
 }

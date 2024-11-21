@@ -1,4 +1,5 @@
 package scair.scairdl.irdef
+import java.io.{File, PrintStream}
 
 import scala.collection.mutable
 import scala.compiletime.ops.int
@@ -639,4 +640,37 @@ case class $className(override val parameters: Seq[Attribute]) extends Parametri
     if (parameters.length != ${parameters.length}) then throw new Exception("Expected ${parameters.length} parameters, got parameters.length")
 }
   """
+}
+
+/** A helper class that generates a dialect implementation from a given dialect
+  * definition.
+  *
+  * @param dialect_def
+  *   The dialect definition to generate the implementation from.
+  */
+class ScaIRDLDialect(final val dialect_def: DialectDef) {
+
+  /** Generates the dialect implementation.
+    *
+    * @param arg
+    *   The path to the file to write the generated dialect implementation to.
+    *   If the path is "-", the implementation will be written to the standard
+    *   output.
+    */
+  final def main(args: Array[String]): Unit = {
+
+    val writer = args(0) match {
+      case "-" => System.out
+      case arg => {
+        val file = File(arg)
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        PrintStream(file)
+      }
+    }
+
+    writer.write(dialect_def.print(0).getBytes())
+    writer.flush()
+    writer.close()
+  }
 }
