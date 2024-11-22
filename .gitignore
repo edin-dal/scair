@@ -33,3 +33,5 @@ project/.bloop
 
 tests/filecheck/.scala-build/
 tests/filecheck/clair/.scala-build/
+
+project/metals.sbt
