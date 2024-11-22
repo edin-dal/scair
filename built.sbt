@@ -5,7 +5,7 @@ import java.io.File
 ThisBuild / scalaVersion := "3.3.1"
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
-Test / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % "test"
+ThisBuild / Test / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % "test"
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
 lazy val scair = (project in file(".")).aggregate(
