@@ -2,7 +2,7 @@ package scair.transformations.cdt
 
 import scair.ir._
 import scair.dialects.builtin.StringData
-import scair.dialects.CMath.cmath.{Mul, Norm}
+import scair.dialects.cmath.{Mul, Norm}
 import scair.transformations.{
   ModulePass,
   PatternRewriter,

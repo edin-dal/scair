@@ -9,7 +9,7 @@ object Main {
   def main(args: Array[String]) = {
     val dialect = DialectDef(
       "test",
-      ListType(
+      Seq(
         OperationDef(
           "test.no_variadics",
           "NoVariadicsOp",
@@ -85,12 +85,13 @@ object Main {
           )
         )
       ),
-      ListType(AttributeDef("test.type", "TypeAttr", typee = 1))
+      Seq(AttributeDef("test.type", "TypeAttr", typee = 1))
     )
 
     println(dialect.print(0))
   }
 }
+// CHECK:       package scair.dialects.test
 
 // CHECK:       import scair.ir._
 // CHECK-NEXT:  import scair.dialects.builtin._
@@ -149,8 +150,8 @@ object Main {
 // CHECK-NEXT:      if (results.length != 2) then throw new Exception(s"Expected 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 2) then throw new Exception(s"Expected 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 2) then throw new Exception(s"Expected 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
+// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
+// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      sing_op2_constr.verify(sing_op2.typ, verification_context)
@@ -273,8 +274,8 @@ object Main {
 // CHECK-NEXT:      if (results.length < 2) then throw new Exception(s"Expected at least 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
+// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
+// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      var_op1_constr.verify(var_op1.typ, verification_context)
@@ -457,16 +458,16 @@ object Main {
 
 // CHECK:           val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
 // CHECK-NEXT:      if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected ${operandSegmentSizesSum} operands, got ${operands.length}")
-// CHECK-NEXT:      if operandSegmentSizes(0) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand sing_op1 at index 0, got ${operandSegmentSizes(0)}")
-// CHECK-NEXT:      if operandSegmentSizes(3) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand sing_op2 at index 3, got ${operandSegmentSizes(3)}")
+// CHECK-NEXT:      if operandSegmentSizes(0) != 1 then throw new Exception(s"operand segment size expected to be 1 for singular operand sing_op1 at index 0, got ${operandSegmentSizes(0)}")
+// CHECK-NEXT:      if operandSegmentSizes(3) != 1 then throw new Exception(s"operand segment size expected to be 1 for singular operand sing_op2 at index 3, got ${operandSegmentSizes(3)}")
 // CHECK-NEXT:      val resultSegmentSizesSum = resultSegmentSizes.reduce(_ + _)
 // CHECK-NEXT:      if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected ${resultSegmentSizesSum} results, got ${results.length}")
-// CHECK-NEXT:      if resultSegmentSizes(0) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res1 at index 0, got ${resultSegmentSizes(0)}")
-// CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception("result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
+// CHECK-NEXT:      if resultSegmentSizes(0) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result sing_res1 at index 0, got ${resultSegmentSizes(0)}")
+// CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
+// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
+// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      var_op1_constr.verify(var_op1.typ, verification_context)
@@ -486,7 +487,7 @@ object Main {
 
 // CHECK:       case class TypeAttr(override val parameters: Seq[Attribute]) extends ParametrizedAttribute(name = "test.type", parameters = parameters) with TypeAttribute {
 // CHECK-NEXT:    override def custom_verify(): Unit =
-// CHECK-NEXT:      if (parameters.length != 0) then throw new Exception("Expected 0 parameters, got parameters.length")
+// CHECK-NEXT:      if (parameters.length != 0) then throw new Exception(s"Expected 0 parameters, got ${parameters.length}")
 // CHECK-NEXT:  }
 
 // CHECK:       val test: Dialect = new Dialect(

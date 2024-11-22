@@ -1,4 +1,5 @@
 package scair.scairdl.irdef
+import java.io.{File, PrintStream}
 
 import scala.collection.mutable
 import scala.compiletime.ops.int
@@ -86,19 +87,24 @@ case class OpPropertyDef(val id: String, val const: IRDLConstraint = AnyAttr)
 case class OpAttributeDef(val id: String, val const: IRDLConstraint = AnyAttr)
     extends OpInput {}
 
+object DialectDef {
+  def empty: DialectDef = DialectDef("empty")
+}
 case class DialectDef(
     val name: String,
-    val operations: ListType[OperationDef] = ListType(),
-    val attributes: ListType[AttributeDef] = ListType()
+    val operations: Seq[OperationDef] = Seq(),
+    val attributes: Seq[AttributeDef] = Seq()
 ) {
-  def print(indent: Int): String = s"""
+  def print(indent: Int): String =
+    s"""package scair.dialects.${name.toLowerCase}
+
 import scair.ir._
 import scair.dialects.builtin._
 import scair.scairdl.constraints._
 import scair.scairdl.constraints.attr2constraint
   """ +
-    (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
-      .mkString("\n") + s"""
+      (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
+        .mkString("\n") + s"""
 val $name: Dialect = new Dialect(
   operations = Seq(${operations.map(_.className).mkString(", ")}),
   attributes = Seq(${attributes.map(_.className).mkString(", ")})
@@ -526,7 +532,7 @@ case class OperationDef(
               _._1.variadicity == Variadicity.Single
             )
           )
-            yield s"""    if operandSegmentSizes($i) != 1 then throw new Exception("operand segment size expected to be 1 for singular operand ${odef.id} at index $i, got $${operandSegmentSizes($i)}")""")
+            yield s"""    if operandSegmentSizes($i) != 1 then throw new Exception(s"operand segment size expected to be 1 for singular operand ${odef.id} at index $i, got $${operandSegmentSizes($i)}")""")
             .mkString("\n")
 
       }
@@ -547,7 +553,7 @@ case class OperationDef(
               _._1.variadicity == Variadicity.Single
             )
           )
-            yield s"""    if resultSegmentSizes($i) != 1 then throw new Exception("result segment size expected to be 1 for singular result ${odef.id} at index $i, got $${resultSegmentSizes($i)}")""")
+            yield s"""    if resultSegmentSizes($i) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result ${odef.id} at index $i, got $${resultSegmentSizes($i)}")""")
             .mkString("\n")
 
       }
@@ -580,8 +586,8 @@ case class OperationDef(
     ${results_verification(indent + 1)}
     ${regions_verification(indent + 1)}
     ${successors_verification(indent + 1)}
-    if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception("Expected ${OpProperty.length} properties, got dictionaryProperties.size")
-    if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception("Expected ${OpAttribute.length} attributes, got dictionaryAttributes.size")
+    if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception(s"Expected ${OpProperty.length} properties, got $${dictionaryProperties.size}")
+    if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception(s"Expected ${OpAttribute.length} attributes, got $${dictionaryAttributes.size}")
 """
 
   def irdl_verification(implicit indent: Int): String = s"""
@@ -633,7 +639,40 @@ case class $className(override val parameters: Seq[Attribute]) extends Parametri
       if typee != 0 then "with TypeAttribute" else ""
     } {
   override def custom_verify(): Unit = 
-    if (parameters.length != ${parameters.length}) then throw new Exception("Expected ${parameters.length} parameters, got parameters.length")
+    if (parameters.length != ${parameters.length}) then throw new Exception(s"Expected ${parameters.length} parameters, got $${parameters.length}")
 }
   """
+}
+
+/** A helper class that generates a dialect implementation from a given dialect
+  * definition.
+  *
+  * @param dialect_def
+  *   The dialect definition to generate the implementation from.
+  */
+class ScaIRDLDialect(final val dialect_def: DialectDef) {
+
+  /** Generates the dialect implementation.
+    *
+    * @param arg
+    *   The path to the file to write the generated dialect implementation to.
+    *   If the path is "-", the implementation will be written to the standard
+    *   output.
+    */
+  final def main(args: Array[String]): Unit = {
+
+    val writer = args(0) match {
+      case "-" => System.out
+      case arg => {
+        val file = File(arg)
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        PrintStream(file)
+      }
+    }
+
+    writer.write(dialect_def.print(0).getBytes())
+    writer.flush()
+    writer.close()
+  }
 }
