@@ -1,4 +1,4 @@
-// RUN: scala -classpath ../../target/scala-3.3.1/classes/ %s | filecheck %s
+// RUN: scala full-classpath %s | filecheck %s
 
 import scair.scairdl.irdef._
 import scair.dialects.builtin.IntData
