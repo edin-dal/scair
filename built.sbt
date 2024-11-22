@@ -1,10 +1,8 @@
 import sbt.internal.shaded.com.google.protobuf.compiler.PluginProtos.CodeGeneratorRequest
-val scala_version = "3.3.1"
-
 import scala.sys.process._
 import java.io.File
 
-ThisBuild / scalaVersion := scala_version
+ThisBuild / scalaVersion := "3.3.1"
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 Test / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % "test"
