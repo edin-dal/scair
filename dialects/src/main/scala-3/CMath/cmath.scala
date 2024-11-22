@@ -1,207 +1,25 @@
-package scair.dialects.CMath.cmath
+package scair.dialects.cmathgen
 
-import fastparse._
-import scair.dialects.builtin._
-import scala.collection.immutable
-import scala.collection.mutable
-import scair.{Printer, Parser}
-import scair.ir._
+import scair.scairdl.constraints._
+import scair.clair.mirrored._
+import scair.dialects.builtin.{FloatType}
+import scair.scairdl.irdef._
 
-import scair.exceptions.VerifyException
+enum CMathAttrs extends DialectAttribute:
 
-//////////////////
-// COMPLEX TYPE //
-//////////////////
-
-object ComplexType extends DialectAttribute {
-  override def name: String = "cmath.complex"
-  override def factory = ComplexType.apply
-}
-
-case class ComplexType(val body: Seq[Attribute])
-    extends ParametrizedAttribute("cmath.complex", body)
-    with TypeAttribute {
-
-  override def custom_verify(): Unit =
-    if (body.length != 1) {
-      throw new VerifyException(
-        "TupleStream Tuple must contain 1 elements only."
-      )
-    } else
-      body(0) match {
-        case Float32Type =>
-        case Float64Type =>
-        case _ =>
-          throw new VerifyException(
-            "Complex type must be constructed with either 'f32' or 'f64' attribute."
-          )
-      }
-}
-
-////////////////////
-// NORM OPERATION //
-////////////////////
-import scair.Parser.ValueId
-object Norm extends DialectOperation {
-  override def name: String = "cmath.norm"
-  override def factory: FactoryType = Norm.apply
-
-  // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      resNames: Seq[String],
-      parser: Parser
-  ): P[Operation] = {
-    import scair.Parser.whitespace
-    P(
-      "(" ~ ValueId ~ ":" ~ ComplexType.parse(
-        parser
-      ) ~ ")" ~ "=>" ~ (parser.Float32TypeP | parser.Float64TypeP)
-    ).map(
-      (
-          operand: String,
-          itstype: Attribute,
-          returntype: Attribute
-      ) =>
-        parser.verifyCustomOp(
-          opGen = factory,
-          opName = name,
-          resultNames = resNames,
-          resultTypes = Seq(returntype),
-          operandNames = Seq(operand),
-          operandTypes = Seq(itstype)
-        )
-    )
-  }
-  // ==----------------------== //
-}
-
-case class Norm(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "cmath.norm") {
-
-  override def custom_print(
-      p: Printer
-  ): String = {
-    val oper = p.printValue(operands(0))
-    val operType =
-      s"<${operands(0).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
-
-    s"${name} (${oper} : ${operType}) => ${p.printAttribute(results(0).typ)}"
-  }
-
-  override def custom_verify(): Unit = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length,
-    dictionaryProperties.size,
-    dictionaryAttributes.size
-  ) match {
-    case (1, 0, 1, 0, 0, 0) =>
-    case _ =>
-      throw new VerifyException(
-        "Norm Operation must only contain 1 operand of 'complex' type, and 1 result of 'f32' or 'f64'."
-      )
-  }
-}
-
-///////////////////
-// MUL OPERATION //
-///////////////////
-
-object Mul extends DialectOperation {
-  override def name: String = "cmath.mul"
-  override def factory: FactoryType = Mul.apply
-
-  // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      resNames: Seq[String],
-      parser: Parser
-  ): P[Operation] = {
-    import scair.Parser.whitespace
-    P(
-      "(" ~ ValueId ~ ":" ~ ComplexType.parse(
-        parser
-      ) ~ "," ~ ValueId ~ ":" ~ ComplexType.parse(
-        parser
-      ) ~ ")" ~ "=>" ~ ComplexType.parse(parser)
-    ).map(
-      (
-          operand1: String,
-          itstype1: Attribute,
-          operand2: String,
-          itstype2: Attribute,
-          returntype: Attribute
-      ) =>
-        parser.verifyCustomOp(
-          opGen = factory,
-          opName = name,
-          resultNames = resNames,
-          resultTypes = Seq(returntype),
-          operandNames = Seq(operand1, operand2),
-          operandTypes = Seq(itstype1, itstype2)
-        )
-    )
-  }
-  // ==----------------------== //
-}
-
-case class Mul(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "cmath.mul") {
-
-  override def custom_print(
-      p: Printer
-  ): String = {
-    val oper = p.printValue(operands(0))
-    val operType =
-      s"<${operands(0).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
-    val oper1 = p.printValue(operands(1))
-    val operType1 =
-      s"<${operands(1).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
-
-    val resType =
-      s"<${results(0).typ.asInstanceOf[ParametrizedAttribute].parameters(0).custom_print}>"
-
-    s"${name} (${oper} : ${operType}, ${oper1} : ${operType1}) => ${resType}"
-  }
-
-  override def custom_verify(): Unit = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length,
-    dictionaryProperties.size,
-    dictionaryAttributes.size
-  ) match {
-    case (2, 0, 1, 0, 0, 0) =>
-    case _ =>
-      throw new VerifyException(
-        "Mul Operation must only contain 2 operands and 1 result of 'complex' type."
-      )
-  }
-}
-
-///////////
-// CMATH //
-///////////
-
-val CMath: Dialect =
-  new Dialect(
-    operations = Seq(Norm, Mul),
-    attributes = Seq(ComplexType)
+  case Complex(
+      e1: Operand[FloatType]
   )
+enum CMathOps extends DialectOperation:
+
+  case Norm(
+      in: Operand[AnyAttribute],
+      res: Result[FloatType]
+  )
+  case Mul[Operation](
+      lhs: Operand[AnyAttribute],
+      rhs: Operand[AnyAttribute],
+      res: Result[AnyAttribute]
+  )
+
+object CMathGen extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])

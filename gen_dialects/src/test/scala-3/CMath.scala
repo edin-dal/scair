@@ -12,7 +12,7 @@ import org.scalatest.prop.Tables.Table
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 
 import scair.dialects.builtin._
-import scair.dialects.CMath.cmath._
+import scair.dialects.cmath._
 import scair.ir._
 
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
@@ -38,7 +38,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
   val strToAttributeTests =
     Table(
       ("input", "result", "expected"),
-      ("!cmath.complex<f32>", "Success", ComplexType(Seq(Float32Type)))
+      ("!cmath.complex<f32>", "Success", Complex(Seq(Float32Type)))
     )
 
   forAll(strToAttributeTests) { (input, result, expected) =>

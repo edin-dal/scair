@@ -13,7 +13,7 @@ import scala.collection.mutable
 import scala.util.{Try, Success, Failure}
 
 import scair.dialects.builtin._
-import scair.dialects.CMath.cmath._
+import scair.dialects.cmath._
 
 class TransformationsTest
     extends AnyFlatSpec
@@ -30,6 +30,7 @@ class TransformationsTest
 //     }
   val ctx = new MLContext()
   ctx.registerDialect(CMath)
+
   var parser: Parser = new Parser(ctx)
   var printer = new Printer(true)
 

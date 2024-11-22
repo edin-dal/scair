@@ -25,6 +25,8 @@ enum CMathOps extends DialectOperation:
 
 object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 
+// CHECK:       package scair.dialects.cmath
+
 // CHECK:       import scair.ir._
 // CHECK-NEXT:  import scair.dialects.builtin._
 // CHECK-NEXT:  import scair.scairdl.constraints._
@@ -65,8 +67,8 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 // CHECK-NEXT:      if (results.length != 1) then throw new Exception(s"Expected 1 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 1) then throw new Exception(s"Expected 1 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 0) then throw new Exception(s"Expected 0 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
+// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
+// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           e1_constr.verify(e1.typ, verification_context)
 // CHECK-NEXT:      e2_constr.verify(e2.typ, verification_context)
@@ -105,8 +107,8 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 // CHECK-NEXT:      if (results.length != 1) then throw new Exception(s"Expected 1 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 0) then throw new Exception(s"Expected 0 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 0) then throw new Exception(s"Expected 0 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception("Expected 0 properties, got dictionaryProperties.size")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception("Expected 0 attributes, got dictionaryAttributes.size")
+// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
+// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           e1_constr.verify(e1.typ, verification_context)
 // CHECK-NEXT:      e2_constr.verify(e2.typ, verification_context)
@@ -120,7 +122,7 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 
 // CHECK:       case class Complex(override val parameters: Seq[Attribute]) extends ParametrizedAttribute(name = "cmath.complex", parameters = parameters)  {
 // CHECK-NEXT:    override def custom_verify(): Unit =
-// CHECK-NEXT:      if (parameters.length != 1) then throw new Exception("Expected 1 parameters, got parameters.length")
+// CHECK-NEXT:      if (parameters.length != 1) then throw new Exception(s"Expected 1 parameters, got ${parameters.length}")
 // CHECK-NEXT:  }
 
 // CHECK:       val CMath: Dialect = new Dialect(

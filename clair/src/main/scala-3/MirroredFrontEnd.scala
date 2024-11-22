@@ -285,9 +285,12 @@ inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
   // Remove the ops suffix from the dialect operations enum name
   val ops_name = constValue[ops.MirroredLabel]
   val attrs_name = constValue[attrs.MirroredLabel]
-  val dialect_name = (ops_name, attrs_name).zipped.takeWhile(_ == _).map(_._1).mkString
-  val opsDefs = summonDialectOps[ops.MirroredElemTypes](dialect_name.toLowerCase)
-  val attrDefs = summonDialectAttrs[attrs.MirroredElemTypes](dialect_name.toLowerCase)
+  val dialect_name =
+    (ops_name, attrs_name).zipped.takeWhile(_ == _).map(_._1).mkString
+  val opsDefs =
+    summonDialectOps[ops.MirroredElemTypes](dialect_name.toLowerCase)
+  val attrDefs =
+    summonDialectAttrs[attrs.MirroredElemTypes](dialect_name.toLowerCase)
 
   DialectDef(
     dialect_name,
