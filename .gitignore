@@ -29,7 +29,6 @@ project/plugins/project/
 
 # Not sure what we're doing
 .bloop/
-project/.bloop
 
 .scala-build/
 
