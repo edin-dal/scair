@@ -31,7 +31,7 @@ project/plugins/project/
 .bloop/
 project/.bloop
 
-tests/filecheck/.scala-build/
-tests/filecheck/clair/.scala-build/
+.scala-build/
+
 
 metals.sbt
