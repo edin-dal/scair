@@ -35,7 +35,6 @@ lazy val gen_dialects =
     .dependsOn(native_dialects)
     .settings(
       dialect_source := Seq(
-        "scair.dialects.example.ExampleDialect",
         "scair.dialects.cmathgen.CMathGen"
       ),
       // Add the generated sources to the source directories
