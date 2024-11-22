@@ -29,8 +29,5 @@ project/plugins/project/
 
 # Not sure what we're doing
 .bloop/
-
 .scala-build/
-
-
 metals.sbt
