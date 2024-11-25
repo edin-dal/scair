@@ -93,7 +93,7 @@ case class SegmentedOpConstraint(
 ||      APPLY OP      ||
 \*≡==----==≡≡==----==≡*/
 
-object ApplyOp extends DialectOperation {
+object ApplyOp extends OperationObject {
   override def name: String = "affine.apply"
   override def factory: FactoryType = ApplyOp.apply
 }
@@ -135,7 +135,7 @@ case class ApplyOp(
 ||      FOR OP      ||
 \*≡==----=≡≡=----==≡*/
 
-object ForOp extends DialectOperation {
+object ForOp extends OperationObject {
   override def name: String = "affine.for"
   override def factory: FactoryType = ForOp.apply
 }
@@ -191,7 +191,7 @@ case class ForOp(
 ||     PARALLEL OP     ||
 \*≡==----==≡≡≡==----==≡*/
 
-object ParallelOp extends DialectOperation {
+object ParallelOp extends OperationObject {
   override def name: String = "affine.parallel"
   override def factory: FactoryType = ParallelOp.apply
 }
@@ -254,7 +254,7 @@ case class ParallelOp(
 ||     IF OP     ||
 \*≡==---=≡=---==≡*/
 
-object IfOp extends DialectOperation {
+object IfOp extends OperationObject {
   override def name: String = "affine.if"
   override def factory: FactoryType = IfOp.apply
 }
@@ -290,7 +290,7 @@ case class IfOp(
 
 // TODO: operands: any, memref & indices
 
-object StoreOp extends DialectOperation {
+object StoreOp extends OperationObject {
   override def name: String = "affine.store"
   override def factory: FactoryType = StoreOp.apply
 }
@@ -330,7 +330,7 @@ case class StoreOp(
 
 // TODO: operands: memref & indices
 
-object LoadOp extends DialectOperation {
+object LoadOp extends OperationObject {
   override def name: String = "affine.load"
   override def factory: FactoryType = LoadOp.apply
 }
@@ -369,7 +369,7 @@ case class LoadOp(
 ||     MIN OP     ||
 \*≡==---=≡≡=---==≡*/
 
-object MinOp extends DialectOperation {
+object MinOp extends OperationObject {
   override def name: String = "affine.min"
   override def factory: FactoryType = MinOp.apply
 }
@@ -411,7 +411,7 @@ case class MinOp(
 ||    YIELD OP    ||
 \*≡==---=≡≡=---==≡*/
 
-object YieldOp extends DialectOperation {
+object YieldOp extends OperationObject {
   override def name: String = "affine.yield"
   override def factory: FactoryType = YieldOp.apply
 }

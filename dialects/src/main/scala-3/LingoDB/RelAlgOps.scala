@@ -96,7 +96,7 @@ object RelAlg_SetSemantic
 //   SortSpecificationAttr   //
 // ==---------------------== //
 
-object SortSpecificationAttr extends DialectAttribute {
+object SortSpecificationAttr extends AttributeObject {
   override def name: String = "db.sortspec"
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P(
@@ -145,7 +145,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
 //   BaseTableOp   //
 // ==-----------== //
 
-object BaseTableOp extends DialectOperation {
+object BaseTableOp extends OperationObject {
   override def name: String = "relalg.basetable"
   override def factory = BaseTableOp.apply
 
@@ -218,7 +218,7 @@ case class BaseTableOp(
 //   SelectionOp   //
 // ==-----------== //
 
-object SelectionOp extends DialectOperation {
+object SelectionOp extends OperationObject {
   override def name: String = "relalg.selection"
   override def factory = SelectionOp.apply
 
@@ -288,7 +288,7 @@ case class SelectionOp(
 //   MapOp   //
 // ==-----== //
 
-object MapOp extends DialectOperation {
+object MapOp extends OperationObject {
   override def name: String = "relalg.map"
   override def factory = MapOp.apply
 
@@ -375,7 +375,7 @@ case class MapOp(
 //   AggregationOp   //
 // ==-------------== //
 
-object AggregationOp extends DialectOperation {
+object AggregationOp extends OperationObject {
   override def name: String = "relalg.aggregation"
   override def factory = AggregationOp.apply
 
@@ -485,7 +485,7 @@ case class AggregationOp(
 //   CountRowsOp   //
 // ==-----------== //
 
-object CountRowsOp extends DialectOperation {
+object CountRowsOp extends OperationObject {
   override def name: String = "relalg.count"
   override def factory = CountRowsOp.apply
 
@@ -554,7 +554,7 @@ case class CountRowsOp(
 //   AggrFuncOp   //
 // ==----------== //
 
-object AggrFuncOp extends DialectOperation {
+object AggrFuncOp extends OperationObject {
   override def name: String = "relalg.aggrfn"
   override def factory = AggrFuncOp.apply
 
@@ -650,7 +650,7 @@ case class AggrFuncOp(
 //   SortOp   //
 // ==------== //
 
-object SortOp extends DialectOperation {
+object SortOp extends OperationObject {
   override def name: String = "relalg.sort"
   override def factory = SortOp.apply
 
@@ -739,7 +739,7 @@ case class SortOp(
 //   MaterializeOp   //
 // ==-------------== //
 
-object MaterializeOp extends DialectOperation {
+object MaterializeOp extends OperationObject {
   override def name: String = "relalg.materialize"
   override def factory = MaterializeOp.apply
 

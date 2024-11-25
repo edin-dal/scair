@@ -5,8 +5,8 @@ import scair.ir._
 
 class MLContext() {
 
-  val dialectOpContext: mutable.Map[String, DialectOperation] = mutable.Map()
-  val dialectAttrContext: mutable.Map[String, DialectAttribute] = mutable.Map()
+  val dialectOpContext: mutable.Map[String, OperationObject] = mutable.Map()
+  val dialectAttrContext: mutable.Map[String, AttributeObject] = mutable.Map()
 
   def getOperation(name: String) = dialectOpContext.get(name)
 
