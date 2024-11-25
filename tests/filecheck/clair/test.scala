@@ -98,7 +98,7 @@ object Main {
 // CHECK-NEXT:  import scair.scairdl.constraints._
 // CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
 
-// CHECK:       object NoVariadicsOp extends DialectOperation {
+// CHECK:       object NoVariadicsOp extends OperationObject {
 // CHECK-NEXT:    override def name = "test.no_variadics"
 // CHECK-NEXT:    override def factory = NoVariadicsOp.apply
 // CHECK-NEXT:  }
@@ -160,7 +160,7 @@ object Main {
 
 // CHECK:       }
 
-// CHECK:       object VariadicOperandOp extends DialectOperation {
+// CHECK:       object VariadicOperandOp extends OperationObject {
 // CHECK-NEXT:    override def name = "test.variadic_operand"
 // CHECK-NEXT:    override def factory = VariadicOperandOp.apply
 // CHECK-NEXT:  }
@@ -286,7 +286,7 @@ object Main {
 
 // CHECK:       }
 
-// CHECK:       object MultiVariadicOperandOp extends DialectOperation {
+// CHECK:       object MultiVariadicOperandOp extends OperationObject {
 // CHECK-NEXT:    override def name = "test.multi_variadic_operand"
 // CHECK-NEXT:    override def factory = MultiVariadicOperandOp.apply
 // CHECK-NEXT:  }
@@ -480,7 +480,7 @@ object Main {
 
 // CHECK:       }
 
-// CHECK:       object TypeAttr extends DialectAttribute {
+// CHECK:       object TypeAttr extends AttributeObject {
 // CHECK-NEXT:    override def name = "test.type"
 // CHECK-NEXT:    override def factory = TypeAttr.apply
 // CHECK-NEXT:  }
