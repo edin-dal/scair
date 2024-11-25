@@ -13,8 +13,12 @@ import scair.dialects.builtin._
 ||   DIFFERENT CLASSES   ||
 \*≡==----=≡≡≡≡≡≡≡=----==≡*/
 
-abstract class DialectOperation
-abstract class DialectAttribute
+class DialectOperation extends RegisteredOperation("frontend.magic")
+class DialectAttribute
+    extends ParametrizedAttribute(
+      name = "frontend.magic",
+      parameters = Seq[Attribute | Seq[Attribute]]()
+    )
 
 sealed abstract class AnyAttribute extends TypeAttribute
 
