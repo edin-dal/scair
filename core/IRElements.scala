@@ -598,7 +598,7 @@ case class OperationDef(
 """
 
   def print(implicit indent: Int): String = s"""
-object $className extends DialectOperation {
+object $className extends OperationObject {
   override def name = "$name"
   override def factory = $className.apply
 }
@@ -630,7 +630,7 @@ case class AttributeDef(
     val typee: Int = 0
 ) {
   def print(indent: Int): String = s"""
-object $className extends DialectAttribute {
+object $className extends AttributeObject {
   override def name = "$name"
   override def factory = $className.apply
 }
