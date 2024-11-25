@@ -17,7 +17,7 @@ import scair.exceptions.VerifyException
 //   StateMembers   //
 // ==------------== //
 
-object StateMembers extends DialectAttribute {
+object StateMembers extends AttributeObject {
   override def name: String = "subop.state_members"
   override def parse[$: P](parser: AttrParser) = P(
     "[" ~ (BareId.map(StringData(_)) ~ ":" ~ parser.Type)
@@ -47,7 +47,7 @@ case class StateMembers(
 //   ResultTable   //
 // ==-----------== //
 
-object ResultTable extends DialectAttribute {
+object ResultTable extends AttributeObject {
   override def name: String = "subop.result_table"
   override def parse[$: P](parser: AttrParser) = P(
     "<" ~ StateMembers.parse(parser) ~ ">"
@@ -70,7 +70,7 @@ case class ResultTable(
 //   SetResultOp   //
 // ==-----------== //
 
-object SetResultOp extends DialectOperation {
+object SetResultOp extends OperationObject {
   override def name: String = "subop.set_result"
   override def factory = SetResultOp.apply
 

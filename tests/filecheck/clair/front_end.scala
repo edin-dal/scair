@@ -32,7 +32,7 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 // CHECK-NEXT:  import scair.scairdl.constraints._
 // CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
 
-// CHECK:       object Norm extends DialectOperation {
+// CHECK:       object Norm extends OperationObject {
 // CHECK-NEXT:    override def name = "cmath.norm"
 // CHECK-NEXT:    override def factory = Norm.apply
 // CHECK-NEXT:  }
@@ -75,7 +75,7 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 
 // CHECK:       }
 
-// CHECK:       object Mul extends DialectOperation {
+// CHECK:       object Mul extends OperationObject {
 // CHECK-NEXT:    override def name = "cmath.mul"
 // CHECK-NEXT:    override def factory = Mul.apply
 // CHECK-NEXT:  }
@@ -115,7 +115,7 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 
 // CHECK:       }
 
-// CHECK:       object Complex extends DialectAttribute {
+// CHECK:       object Complex extends AttributeObject {
 // CHECK-NEXT:    override def name = "cmath.complex"
 // CHECK-NEXT:    override def factory = Complex.apply
 // CHECK-NEXT:  }

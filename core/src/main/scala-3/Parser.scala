@@ -847,7 +847,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
       Scope.useBlocks(successors)
 
-    val opObject: Option[DialectOperation] = ctx.getOperation(opName)
+    val opObject: Option[OperationObject] = ctx.getOperation(opName)
 
     val op = opObject match {
       case Some(x) =>

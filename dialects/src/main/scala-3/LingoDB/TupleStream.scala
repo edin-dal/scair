@@ -16,7 +16,7 @@ import scair.ir._
 //   Tuple   //
 // ==-----== //
 
-object TupleStreamTuple extends DialectAttribute {
+object TupleStreamTuple extends AttributeObject {
   override def name: String = "tuples.tuple"
   override def factory = TupleStreamTuple.apply
 }
@@ -39,7 +39,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 //   TupleStream   //
 // ==-----------== //
 
-object TupleStream extends DialectAttribute {
+object TupleStream extends AttributeObject {
   override def name: String = "tuples.tuplestream"
   override def factory = TupleStream.apply
 }
@@ -72,7 +72,7 @@ case class TupleStream(val tuples: Seq[Attribute])
 //   ColumnDefAttr   //
 // ==-------------== //
 
-object ColumnDefAttr extends DialectAttribute {
+object ColumnDefAttr extends AttributeObject {
   override def name: String = "tuples.column_def"
   override def parse[$: P](parser: AttrParser): P[Attribute] = P(
     parser.SymbolRefAttrP ~ "(" ~ "{" ~ parser.AttributeEntry ~ "}" ~ ")"
@@ -91,7 +91,7 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
 //   ColumnRefAttr   //
 // ==-------------== //
 
-object ColumnRefAttr extends DialectAttribute {
+object ColumnRefAttr extends AttributeObject {
   override def name: String = "tuples.column_ref"
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P(parser.SymbolRefAttrP).map(x =>
@@ -114,7 +114,7 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
 //   ReturnOp   //
 // ==--------== //
 
-object ReturnOp extends DialectOperation {
+object ReturnOp extends OperationObject {
   override def name: String = "tuples.return"
   override def factory = ReturnOp.apply
 
@@ -173,7 +173,7 @@ case class ReturnOp(
 //   GetColumnOp   //
 // ==-----------== //
 
-object GetColumnOp extends DialectOperation {
+object GetColumnOp extends OperationObject {
   override def name: String = "tuples.getcol"
   override def factory = GetColumnOp.apply
 

@@ -471,7 +471,7 @@ class RegisteredOperation(
 // =--DIALECTS--= //
 // ==----------== //
 
-trait DialectOperation {
+trait OperationObject {
   def name: String
   def parse[$: P](resNames: Seq[String], parser: Parser): P[Operation] =
     throw new Exception(
@@ -505,7 +505,7 @@ trait DialectOperation {
   )
 }
 
-trait DialectAttribute {
+trait AttributeObject {
   def name: String
   type FactoryType = (Seq[Attribute]) => Attribute
   def factory: FactoryType = ???
@@ -516,8 +516,8 @@ trait DialectAttribute {
 }
 
 final case class Dialect(
-    val operations: Seq[DialectOperation],
-    val attributes: Seq[DialectAttribute]
+    val operations: Seq[OperationObject],
+    val attributes: Seq[AttributeObject]
 ) {}
 
 object IR {}

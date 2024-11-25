@@ -78,7 +78,7 @@ object DB_CmpPredicateAttr
 //   CharType   //
 // ==--------== //
 
-object DB_CharType extends DialectAttribute {
+object DB_CharType extends AttributeObject {
   override def name: String = "db.char"
   override def factory = DB_CharType.apply
 }
@@ -108,7 +108,7 @@ case class DB_CharType(val typ: Seq[Attribute])
 //   DateType   //
 // ==--------== //
 
-object DB_DateType extends DialectAttribute {
+object DB_DateType extends AttributeObject {
   override def name: String = "db.date"
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P("<" ~ DB_DateUnitAttr.caseParser ~ ">")
@@ -126,7 +126,7 @@ case class DB_DateType(val unit: DB_DateUnit_Case)
 //   IntervalType   //
 // ==------------== //
 
-object DB_IntervalType extends DialectAttribute {
+object DB_IntervalType extends AttributeObject {
   override def name: String = "db.interval"
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P("<" ~ DB_IntervalUnitAttr.caseParser ~ ">").map(DB_IntervalType(_))
@@ -155,7 +155,7 @@ case class DB_IntervalType(val unit: Attribute)
 //   DecimalType   //
 // ==-----------== //
 
-object DB_DecimalType extends DialectAttribute {
+object DB_DecimalType extends AttributeObject {
   override def name: String = "db.decimal"
   override def factory = DB_DecimalType.apply
 }
@@ -195,7 +195,7 @@ case class DB_DecimalType(val typ: Seq[Attribute])
 //   StringType   //
 // ==-----------== //
 
-object DB_StringType extends DialectAttribute {
+object DB_StringType extends AttributeObject {
   override def name: String = "db.string"
   override def factory = DB_StringType.apply
 }
@@ -229,7 +229,7 @@ case class DB_StringType(val typ: Seq[Attribute])
 //   ConstantOp   //
 // ==----------== //
 
-object DB_ConstantOp extends DialectOperation {
+object DB_ConstantOp extends OperationObject {
   override def name: String = "db.constant"
   override def factory = DB_ConstantOp.apply
 
@@ -285,7 +285,7 @@ case class DB_ConstantOp(
 //   CompareOp   //
 // ==----------== //
 
-object DB_CmpOp extends DialectOperation {
+object DB_CmpOp extends OperationObject {
   override def name: String = "db.compare"
   override def factory = DB_CmpOp.apply
 
@@ -353,7 +353,7 @@ case class DB_CmpOp(
 //   MulOp   //
 // ==-----== //
 
-object DB_MulOp extends DialectOperation {
+object DB_MulOp extends OperationObject {
   override def name: String = "db.mul"
   override def factory = DB_MulOp.apply
 
@@ -477,7 +477,7 @@ case class DB_MulOp(
 //   DivOp   //
 // ==-----== //
 
-object DB_DivOp extends DialectOperation {
+object DB_DivOp extends OperationObject {
   override def name: String = "db.div"
   override def factory = DB_DivOp.apply
 
@@ -604,7 +604,7 @@ case class DB_DivOp(
 //   AddOp   //
 // ==-----== //
 
-object DB_AddOp extends DialectOperation {
+object DB_AddOp extends OperationObject {
   override def name: String = "db.add"
   override def factory = DB_AddOp.apply
 
@@ -671,7 +671,7 @@ case class DB_AddOp(
 //   SubOp   //
 // ==-----== //
 
-object DB_SubOp extends DialectOperation {
+object DB_SubOp extends OperationObject {
   override def name: String = "db.sub"
   override def factory = DB_SubOp.apply
 
@@ -738,7 +738,7 @@ case class DB_SubOp(
 //   CastOp   //
 // ==-----== //
 
-object CastOp extends DialectOperation {
+object CastOp extends OperationObject {
   override def name: String = "db.cast"
   override def factory = CastOp.apply
 
