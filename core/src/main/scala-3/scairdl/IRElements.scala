@@ -82,10 +82,14 @@ case class SuccessorDef(
     val id: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
-case class OpPropertyDef(val id: String, val const: IRDLConstraint = AnyAttr)
-    extends OpInput {}
-case class OpAttributeDef(val id: String, val const: IRDLConstraint = AnyAttr)
-    extends OpInput {}
+case class OpPropertyDef(
+    val id: String,
+    val const: IRDLConstraint = AnyAttr
+) extends OpInput {}
+case class OpAttributeDef(
+    val id: String,
+    val const: IRDLConstraint = AnyAttr
+) extends OpInput {}
 
 object DialectDef {
   def empty: DialectDef = DialectDef("empty")
