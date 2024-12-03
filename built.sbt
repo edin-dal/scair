@@ -47,6 +47,9 @@ lazy val tools =
   (project in file("tools"))
     .dependsOn(gen_dialects, transformations)
     .enablePlugins(JavaAppPackaging)
+    .settings(
+      Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
+    )
 
 ///////////////////////////
 // Testing configuration //

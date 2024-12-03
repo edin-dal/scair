@@ -1,5 +1,3 @@
-package scair
-
 import java.io.File
 import scopt.OParser
 import scala.io.Source
@@ -7,24 +5,11 @@ import scala.util.{Try, Success, Failure}
 import scair.Printer
 import scair.ir._
 import scair.transformations.TransformContext
+import scair.MLContext
 import scair.dialects.builtin.ModuleOp
 import scair.scairdl.constraints.AnyAttr.verify
 import scair.core.utils.Args
 import scair.utils.{allDialects, allPasses}
-
-extension (ctx: MLContext)
-  def register_all_dialects(): Unit = {
-    for (dialect <- allDialects) {
-      ctx.registerDialect(dialect)
-    }
-  }
-
-extension (ctx: TransformContext)
-  def register_all_passes(): Unit = {
-    for (pass <- allPasses) {
-      ctx.passContext += pass.name -> pass
-    }
-  }
 
 object ScairOpt {
   def main(args: Array[String]): Unit = {
@@ -75,6 +60,7 @@ object ScairOpt {
     // Parse the CLI args
     OParser.parse(argparser, args, Args()) match {
       case Some(args) =>
+        import MyExtensions._
         // Open the input file or stdin
         val input = args.input match {
           case Some(file) => Source.fromFile(file)
@@ -154,5 +140,21 @@ object ScairOpt {
 
       case _ =>
     }
+  }
+
+  object MyExtensions {
+    extension (ctx: MLContext)
+      def register_all_dialects(): Unit = {
+        for (dialect <- allDialects) {
+          ctx.registerDialect(dialect)
+        }
+      }
+
+    extension (ctx: TransformContext)
+      def register_all_passes(): Unit = {
+        for (pass <- allPasses) {
+          ctx.passContext += pass.name -> pass
+        }
+      }
   }
 }
