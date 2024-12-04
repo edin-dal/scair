@@ -69,6 +69,14 @@ inline def getConstraint[T <: Attribute]: IRDLConstraint = {
   indent[T](using summonInline[ClassTag[T]])
 }
 
+inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
+  case _: Variadic[t] => Variadic
+  case _              => Single
+
+type unwrappedInput[Elem] = Elem match
+  case Variadic[t] => t
+  case _           => Elem
+
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
@@ -76,64 +84,47 @@ inline def getConstraint[T <: Attribute]: IRDLConstraint = {
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
 inline def getOpInput[Elem]: String => OpInput = {
-
-  val idOpInput = [T] =>
-    (variadicity: Variadicity, errMsg: String) => {
-
-      inline erasedValue[T] match
-        case _: Operand[t] =>
-          (name: String) =>
-            OperandDef(
-              id = name,
-              getConstraint[t],
-              variadicity
-            )
-        case _: Result[t] =>
-          (name: String) =>
-            ResultDef(
-              id = name,
-              getConstraint[t],
-              variadicity
-            )
-        case _: Region =>
-          (name: String) =>
-            RegionDef(
-              id = name,
-              variadicity
-            )
-        case _: Successor =>
-          (name: String) =>
-            SuccessorDef(
-              id = name,
-              variadicity
-            )
-        case _: Property[t] =>
-          (name: String) =>
-            OpPropertyDef(
-              id = name,
-              getConstraint[t]
-            )
-        case _: Attr[t] =>
-          (name: String) =>
-            OpAttributeDef(
-              id = name,
-              getConstraint[t]
-            )
-        case _ =>
-          throw new Exception(errMsg)
-  }
-
-  inline erasedValue[Elem] match
-    case _: Variadic[t] =>
-      idOpInput[t](
-        variadicity = Variadic,
-        errMsg = ErrorMessages.invalidVariadicOpInput
-      )
+  inline erasedValue[unwrappedInput[Elem]] match
+    case _: Operand[t] =>
+      (name: String) =>
+        OperandDef(
+          id = name,
+          getConstraint[t],
+          inputVariadicity[Elem]
+        )
+    case _: Result[t] =>
+      (name: String) =>
+        ResultDef(
+          id = name,
+          getConstraint[t],
+          inputVariadicity[Elem]
+        )
+    case _: Region =>
+      (name: String) =>
+        RegionDef(
+          id = name,
+          inputVariadicity[Elem]
+        )
+    case _: Successor =>
+      (name: String) =>
+        SuccessorDef(
+          id = name,
+          inputVariadicity[Elem]
+        )
+    case _: Property[t] =>
+      (name: String) =>
+        OpPropertyDef(
+          id = name,
+          getConstraint[t]
+        )
+    case _: Attr[t] =>
+      (name: String) =>
+        OpAttributeDef(
+          id = name,
+          getConstraint[t]
+        )
     case _ =>
-      idOpInput[Elem](
-        variadicity = Single,
-        errMsg = ErrorMessages.invalidOpInput
-      )
+      throw new Exception("aiowdjaowidjawoidjowij")
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to

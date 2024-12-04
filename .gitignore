@@ -29,7 +29,5 @@ project/plugins/project/
 
 # Not sure what we're doing
 .bloop/
-project/.bloop
-
-tests/filecheck/.scala-build/
-tests/filecheck/clair/.scala-build/
+.scala-build/
+metals.sbt
