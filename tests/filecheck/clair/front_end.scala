@@ -25,7 +25,7 @@ object Main {
         e2: Result[AnyAttribute]
     )
 
-  object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
+  object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs]())
 }
 
 // CHECK:       package scair.dialects.cmath

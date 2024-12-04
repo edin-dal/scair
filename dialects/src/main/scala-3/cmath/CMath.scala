@@ -22,4 +22,4 @@ enum CMathOps extends DialectOperation:
       res: Result[AnyAttribute]
   )
 
-object CMathGen extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
+object CMathGen extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs]())

@@ -3,10 +3,12 @@ import java.io.{File, PrintStream}
 
 import scala.collection.mutable
 import scala.compiletime.ops.int
+import scala.reflect._
 
 import scair.scairdl.constraints._
 import scair.dialects.builtin._
 import scair.transformations.InsertPoint.after
+import scair.ir.{Attribute, Operation}
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -31,6 +33,16 @@ type DictType[A, B] = mutable.Map[A, B]
 
 val ListType = mutable.ListBuffer
 type ListType[A] = mutable.ListBuffer[A]
+
+abstract class EscapeHatch[T: ClassTag] {
+  val importt: String =
+    s"import ${implicitly[ClassTag[T]].runtimeClass.getName.replace("$", ".")}"
+  val name: String = importt.split("\\.").last
+}
+
+class AttrEscapeHatch[T <: Attribute: ClassTag]() extends EscapeHatch[T]
+
+class OpEscapeHatch[T <: Operation: ClassTag]() extends EscapeHatch[T]
 
 /*≡≡=--=≡≡≡=--=≡≡*\
 ||     TYPES     ||
@@ -97,7 +109,9 @@ object DialectDef {
 case class DialectDef(
     val name: String,
     val operations: Seq[OperationDef] = Seq(),
-    val attributes: Seq[AttributeDef] = Seq()
+    val attributes: Seq[AttributeDef] = Seq(),
+    val opHatches: Seq[OpEscapeHatch[_]] = Seq(),
+    val attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
 ) {
   def print(indent: Int): String =
     s"""package scair.dialects.${name.toLowerCase}
@@ -105,13 +119,25 @@ case class DialectDef(
 import scair.ir._
 import scair.dialects.builtin._
 import scair.scairdl.constraints._
-import scair.scairdl.constraints.attr2constraint
-  """ +
+import scair.scairdl.constraints.attr2constraint"""
+      + { for (hatch <- opHatches) yield hatch.importt }
+        .mkString("\n", "\n", "\n") +
+      { for (hatch <- attrHatches) yield hatch.importt }
+        .mkString("", "\n", "\n") +
       (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
         .mkString("\n") + s"""
 val $name: Dialect = new Dialect(
-  operations = Seq(${operations.map(_.className).mkString(", ")}),
-  attributes = Seq(${attributes.map(_.className).mkString(", ")})
+  operations = Seq(${operations.map(_.className).mkString(", ")}${
+          if opHatches.length != 0 then
+            ", " + { for (hatch <- opHatches) yield hatch.name }.mkString(", ")
+          else ""
+        }),
+  attributes = Seq(${attributes.map(_.className).mkString(", ")}${
+          if attrHatches.length != 0 then
+            ", " + { for (hatch <- attrHatches) yield hatch.name }
+              .mkString(", ")
+          else ""
+        })
 )
   """
 }
