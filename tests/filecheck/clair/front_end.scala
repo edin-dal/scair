@@ -5,28 +5,25 @@ import scair.clair.mirrored._
 import scair.dialects.builtin.IntegerAttr
 import scair.scairdl.irdef._
 
-object Main {
+enum CMathAttrs extends DialectAttribute:
 
-  enum CMathAttrs extends DialectAttribute:
+  case Complex(
+      e1: Operand[IntegerAttr]
+  )
 
-    case Complex(
-        e1: Operand[IntegerAttr]
-    )
+enum CMathOps extends DialectOperation:
 
-  enum CMathOps extends DialectOperation:
+  case Norm(
+      e1: Operand[IntegerAttr],
+      e2: Result[AnyAttribute],
+      e3: Region
+  )
+  case Mul[Operation](
+      e1: Operand[IntegerAttr],
+      e2: Result[AnyAttribute]
+  )
 
-    case Norm(
-        e1: Operand[IntegerAttr],
-        e2: Result[AnyAttribute],
-        e3: Region
-    )
-    case Mul[Operation](
-        e1: Operand[IntegerAttr],
-        e2: Result[AnyAttribute]
-    )
-
-  object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
-}
+object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
 
 // CHECK:       package scair.dialects.cmath
 
