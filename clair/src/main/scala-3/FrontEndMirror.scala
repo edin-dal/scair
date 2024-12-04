@@ -26,6 +26,19 @@ case class Successor() extends Input[Nothing]
 case class Property[T <: Attribute]() extends Input[T]
 case class Attr[T <: Attribute]() extends Input[T]
 
+abstract class Variadic[T]
+
+/*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
+||   ERROR HANDLING   ||
+\*≡==----=≡≡≡≡=----==≡*/
+
+object ErrorMessages {
+  val invalidOpInput =
+    "You can only pass in Operand, Result, Region, Successor, Property or Attr to the Operation definition"
+  val invalidVariadicOpInput =
+    "Variadicity is supported only for Operand, Result, Region or Successor."
+}
+
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
@@ -42,7 +55,7 @@ inline def indent[T <: Attribute: ClassTag]: IRDLConstraint = {
     case _: Attribute    => BaseAttr[T]()
     case _ =>
       throw new Exception(
-        "The Clair front-end currently supports only AnyAttr Constraint"
+        "The Clair front-end currently supports only AnyAttr and BaseAttr Constraints"
       )
 }
 
@@ -56,6 +69,14 @@ inline def getConstraint[T <: Attribute]: IRDLConstraint = {
   indent[T](using summonInline[ClassTag[T]])
 }
 
+inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
+  case _: Variadic[t] => Variadic
+  case _              => Single
+
+type unwrappedInput[Elem] = Elem match
+  case Variadic[t] => t
+  case _           => Elem
+
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
@@ -64,32 +85,32 @@ inline def getConstraint[T <: Attribute]: IRDLConstraint = {
   */
 inline def getOpInput[Elem]: String => OpInput = {
 
-  inline erasedValue[Elem] match
+  inline erasedValue[unwrappedInput[Elem]] match
     case _: Operand[t] =>
       (name: String) =>
         OperandDef(
           id = name,
           getConstraint[t],
-          Single
+          inputVariadicity[Elem]
         )
     case _: Result[t] =>
       (name: String) =>
         ResultDef(
           id = name,
           getConstraint[t],
-          Single
+          inputVariadicity[Elem]
         )
     case _: Region =>
       (name: String) =>
         RegionDef(
           id = name,
-          Single
+          inputVariadicity[Elem]
         )
     case _: Successor =>
       (name: String) =>
         SuccessorDef(
           id = name,
-          Single
+          inputVariadicity[Elem]
         )
     case _: Property[t] =>
       (name: String) =>
@@ -104,9 +125,7 @@ inline def getOpInput[Elem]: String => OpInput = {
           getConstraint[t]
         )
     case _ =>
-      throw new Exception(
-        "You can only pass in Operand, Result, Region, Successor, Property or Attr to the Operation definition"
-      )
+      throw new Exception("aiowdjaowidjawoidjowij")
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -318,7 +337,7 @@ object FrontEnd {
   enum CMath extends DialectOperation:
 
     case Norm(
-        e1: Operand[IntegerAttr],
+        e1: Variadic[Operand[IntegerAttr]],
         e2: Result[AnyAttribute],
         e3: Region
     )
@@ -329,6 +348,10 @@ object FrontEnd {
 
   object CMath {
     val generator = summonDialect[CMath, CMathAttr]
+  }
+
+  def main(args: Array[String]): Unit = {
+    println(CMath.generator.print(0))
   }
 
 }
