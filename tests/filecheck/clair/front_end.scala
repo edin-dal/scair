@@ -25,6 +25,7 @@ enum CMathOps extends DialectOperation:
 
 object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs]())
 
+
 // CHECK:       package scair.dialects.cmath
 
 // CHECK:       import scair.ir._
