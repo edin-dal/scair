@@ -84,7 +84,6 @@ type unwrappedInput[Elem] = Elem match
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
 inline def getOpInput[Elem]: String => OpInput = {
-
   inline erasedValue[unwrappedInput[Elem]] match
     case _: Operand[t] =>
       (name: String) =>
