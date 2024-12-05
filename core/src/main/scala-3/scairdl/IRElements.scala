@@ -37,7 +37,7 @@ type ListType[A] = mutable.ListBuffer[A]
 abstract class EscapeHatch[T: ClassTag] {
   val importt: String =
     s"import ${implicitly[ClassTag[T]].runtimeClass.getName.replace("$", ".")}"
-  val name: String = importt.split("\\.").last
+  val name: String = importt.split("\\.").last.split(" ").last
 }
 
 class AttrEscapeHatch[T <: Attribute: ClassTag]() extends EscapeHatch[T]

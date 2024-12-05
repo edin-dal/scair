@@ -4,6 +4,13 @@ import scair.scairdl.constraints._
 import scair.clair.mirrored._
 import scair.dialects.builtin.IntegerAttr
 import scair.scairdl.irdef._
+import scair.ir.{DataAttribute, AttributeObject}
+
+object SampleData extends AttributeObject {
+  override def name: String = "sample"
+}
+
+case class SampleData(val d: String) extends DataAttribute[String]("sample", d)
 
 enum CMathAttrs extends DialectAttribute:
 
@@ -23,8 +30,13 @@ enum CMathOps extends DialectOperation:
       e2: Result[AnyAttribute]
   )
 
-object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs]())
-
+object CMath
+    extends ScaIRDLDialect(
+      summonDialect[CMathOps, CMathAttrs](
+        Seq(),
+        Seq(new AttrEscapeHatch[SampleData])
+      )
+    )
 
 // CHECK:       package scair.dialects.cmath
 
@@ -32,6 +44,8 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs]())
 // CHECK-NEXT:  import scair.dialects.builtin._
 // CHECK-NEXT:  import scair.scairdl.constraints._
 // CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
+
+// CHECK:       import SampleData
 
 // CHECK:       object Norm extends OperationObject {
 // CHECK-NEXT:    override def name = "cmath.norm"
@@ -128,5 +142,5 @@ object CMath extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs]())
 
 // CHECK:       val CMath: Dialect = new Dialect(
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
-// CHECK-NEXT:    attributes = Seq(Complex)
+// CHECK-NEXT:    attributes = Seq(Complex, SampleData)
 // CHECK-NEXT:  )
