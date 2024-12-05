@@ -1,3 +1,5 @@
+import java.io.PrintWriter
+import sbt.util.FileInfo.full
 import sbt.internal.shaded.com.google.protobuf.compiler.PluginProtos.CodeGeneratorRequest
 import scala.sys.process._
 import java.io.File
@@ -63,9 +65,23 @@ watchSources += new WatchSource(
   NothingFilter
 )
 
+// Populate a file with the full classpath to compile some scala sources
+lazy val filechecks_classpath = taskKey[Unit]("File checks classpath")
+filechecks_classpath := {
+  val full_cp = (tools / Compile / fullClasspath).value
+  val file = new PrintWriter("full-classpath")
+  file.print(
+    full_cp.map(_.data).mkString(":")
+  )
+  file.flush()
+  file.close()
+}
+
 //Define a filecheck SBT task
 lazy val filechecks = taskKey[Unit]("File checks")
 filechecks := {
+  // It expects this task to populate a helper file
+  (filechecks_classpath).value
   // It depends on scair-opt, built by the "stage" task currently
   (tools / stage).value
   // And then it's about running lit

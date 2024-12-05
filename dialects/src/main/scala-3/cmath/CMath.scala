@@ -4,6 +4,14 @@ import scair.scairdl.constraints._
 import scair.clair.mirrored._
 import scair.dialects.builtin.{FloatType}
 import scair.scairdl.irdef._
+import scair.ir.AttributeObject
+import scair.ir.DataAttribute
+
+object SampleData extends AttributeObject {
+  override def name: String = "sample"
+}
+
+case class SampleData(val d: String) extends DataAttribute[String]("sample", d)
 
 enum CMathAttrs extends DialectAttribute:
 
@@ -22,4 +30,10 @@ enum CMathOps extends DialectOperation:
       res: Result[AnyAttribute]
   )
 
-object CMathGen extends ScaIRDLDialect(summonDialect[CMathOps, CMathAttrs])
+object CMathGen
+    extends ScaIRDLDialect(
+      summonDialect[CMathOps, CMathAttrs](
+        Seq(),
+        Seq(new AttrEscapeHatch[SampleData])
+      )
+    )

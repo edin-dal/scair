@@ -8,6 +8,7 @@ import Variadicity._
 import scala.reflect._
 import scair.ir._
 import scair.dialects.builtin._
+import scair.scairdl.irdef.{AttrEscapeHatch, OpEscapeHatch}
 
 /*≡≡=---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   DIFFERENT CLASSES   ||
@@ -296,7 +297,10 @@ inline def summonDialectAttrs[Prods <: Tuple](
   * @param m
   *   \- Sum Mirror of a given dialect
   */
-inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
+inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](
+    opHatches: Seq[OpEscapeHatch[_]] = Seq(),
+    attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
+)(using
     ops: Mirror.SumOf[T1],
     attrs: Mirror.SumOf[T2]
 ): DialectDef = {
@@ -313,7 +317,9 @@ inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](using
   DialectDef(
     dialect_name,
     opsDefs,
-    attrDefs
+    attrDefs,
+    opHatches,
+    attrHatches
   )
 }
 
@@ -326,6 +332,14 @@ object FrontEnd {
   // inline def regionindent[T]: String = {
   //   constValue[T].asInstanceOf[Int].toString
   // }
+  import scair.ir.{DataAttribute, AttributeObject}
+
+  object SampleData extends AttributeObject {
+    override def name: String = "sample"
+  }
+
+  case class SampleData(val d: String)
+      extends DataAttribute[String]("sample", d)
 
   enum CMathAttr extends DialectAttribute:
 
@@ -346,11 +360,14 @@ object FrontEnd {
     )
 
   object CMath {
-    val generator = summonDialect[CMath, CMathAttr]
+    val opHatches = Seq()
+    val attrHatches = Seq(new AttrEscapeHatch[SampleData])
+    val generator = summonDialect[CMath, CMathAttr](opHatches, attrHatches)
   }
 
   def main(args: Array[String]): Unit = {
     println(CMath.generator.print(0))
+    println(new AttrEscapeHatch[SampleData].importt)
   }
 
 }

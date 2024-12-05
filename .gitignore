@@ -31,3 +31,6 @@ project/plugins/project/
 .bloop/
 .scala-build/
 metals.sbt
+
+# Scair Shennanigans
+full-classpath
