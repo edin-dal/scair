@@ -528,23 +528,27 @@ case class OperationDef(
       regions_accessors ++
       successors_accessors ++
       (for pdef <- OpProperty
-      yield s"  def ${pdef.id}: Attribute = dictionaryProperties(${pdef.id})\n" +
-        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {dictionaryProperties(${pdef.id}) = new_attribute}\n") ++
+      yield s"  def ${pdef.id}: Attribute = dictionaryProperties(\"${pdef.id}\")\n" +
+        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {dictionaryProperties(\"${pdef.id}\") = new_attribute}\n") ++
       (for adef <- OpAttribute
-      yield s"  def ${adef.id}: Attribute = dictionaryAttributes(${adef.id})\n" +
-        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {dictionaryAttributes(${adef.id}) = new_attribute}\n"))
+      yield s"  def ${adef.id}: Attribute = dictionaryAttributes(\"${adef.id}\")\n" +
+        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {dictionaryAttributes(\"${adef.id}\") = new_attribute}\n"))
       .mkString("\n")
 
   }
 
   def constraints_verification(implicit indent: Int): String = {
-    val ver = { (x: String) =>
+    val verify_value = { (x: String) =>
       s"${x}_constr.verify($x.typ, verification_context)"
     }
-    ((for (odef <- operands) yield ver(odef.id)) ++
-      (for (rdef <- results) yield ver(rdef.id)) ++
-      (for (pdef <- OpProperty) yield ver(pdef.id)) ++
-      (for (adef <- OpAttribute) yield ver(adef.id))).mkString("\n    ")
+    val verify_attribute = { (x: String) =>
+      s"${x}_constr.verify($x, verification_context)"
+    }
+    ((for (odef <- operands) yield verify_value(odef.id)) ++
+      (for (rdef <- results) yield verify_value(rdef.id)) ++
+      (for (pdef <- OpProperty) yield verify_attribute(pdef.id)) ++
+      (for (adef <- OpAttribute)
+        yield verify_attribute(adef.id))).mkString("\n    ")
   }
 
   def operands_verification(implicit indent: Int): String =
