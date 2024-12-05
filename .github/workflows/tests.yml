@@ -110,8 +110,5 @@ jobs:
       with:
         apps: scala:3.3.1 sbt
         
-    - name: Package scair-opt
-      run: sbt stage
-
-    - name: Run filechecks
-      run: lit tests/filecheck -v
+    - name: Filechecks and dependencies
+      run: sbt filechecks
