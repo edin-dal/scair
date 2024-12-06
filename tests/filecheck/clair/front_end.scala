@@ -29,7 +29,7 @@ enum CMath extends DialectFE:
       e2: Result[AnyAttribute]
   ) extends CMath with OperationFE
 
-object CMath
+object CMathGen
     extends ScaIRDLDialect(
       summonDialect[CMath](
         Seq(),
