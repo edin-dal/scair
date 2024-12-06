@@ -7,8 +7,9 @@ import scair.dialects.affine.floordiv
 import scair.ir.AttributeObject
 import scair.clair.mirrored.Operand
 import scair.dialects.builtin.FloatType
-import scair.clair.mirrored.DialectOperation
-import scair.clair.mirrored.DialectAttribute
+import scair.clair.mirrored.OperationFE
+import scair.clair.mirrored.AttributeFE
+import scair.clair.mirrored.DialectFE
 import scair.clair.mirrored.Result
 import scair.clair.mirrored.Property
 import scair.scairdl.irdef.ScaIRDLDialect
@@ -105,10 +106,6 @@ case class FastMathFlagsAttr(val flags: FastMathFlags)
           .mkString(",")
     s"arith.fastmath<$p>"
 
-enum ArithAttrs extends DialectAttribute:
-  // TODO: Remove when we have the possibility to define none
-  case FakeAttr()
-
 // TODO: This should be smth like IntegerType | IndexType, but is not yet supported
 // in the frontend.
 type AnyIntegerType = AnyAttribute
@@ -124,89 +121,89 @@ type I64 = IntegerType
 // So it's just as fine as long as doing generic syntax goes.
 type IntegerPredicate = I64
 
-enum ArithOps extends DialectOperation:
+enum Arith extends DialectFE:
   case AddfOp(
       lhs: Operand[FloatType],
       rhs: Operand[FloatType],
       res: Result[FloatType],
       flags: Property[FastMathFlagsAttr]
-  )
+  ) extends Arith with OperationFE
   case MulfOp(
       lhs: Operand[FloatType],
       rhs: Operand[FloatType],
       res: Result[FloatType],
       flags: Property[FastMathFlagsAttr]
-  )
+  ) extends Arith with OperationFE
   case DivfOp(
       lhs: Operand[FloatType],
       rhs: Operand[FloatType],
       res: Result[FloatType],
       flags: Property[FastMathFlagsAttr]
-  )
+  ) extends Arith with OperationFE
   // TODO Apparently there's a new overflow flag here, overlooking for now.
   case AddiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case SubiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case MuliOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case DivuiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case DivsiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case RemuiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case RemsiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[AnyIntegerType]
-  )
+  ) extends Arith with OperationFE
   case CmpiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[I1],
       predicate: Property[IntegerPredicate]
-  )
+  ) extends Arith with OperationFE
   case AndiOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[I1]
-  )
+  ) extends Arith with OperationFE
   case OriOp(
       lhs: Operand[AnyIntegerType],
       rhs: Operand[AnyIntegerType],
       res: Result[I1]
-  )
+  ) extends Arith with OperationFE
   case SitofpOp(
       in: Operand[AnyIntegerType],
       res: Result[FloatType]
-  )
+  ) extends Arith with OperationFE
   case IndexCastOp(
       in: Operand[IndexType.type],
       res: Result[IndexType.type]
-  )
+  ) extends Arith with OperationFE
 
 object ArithGen
     extends ScaIRDLDialect(
-      summonDialect[ArithOps, ArithAttrs](
+      summonDialect[Arith](
         Seq(),
         Seq(new AttrEscapeHatch[FastMathFlagsAttr])
       )

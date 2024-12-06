@@ -127,17 +127,10 @@ import scair.scairdl.constraints.attr2constraint"""
       (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
         .mkString("\n") + s"""
 val $name: Dialect = new Dialect(
-  operations = Seq(${operations.map(_.className).mkString(", ")}${
-          if opHatches.length != 0 then
-            ", " + { for (hatch <- opHatches) yield hatch.name }.mkString(", ")
-          else ""
-        }),
-  attributes = Seq(${attributes.map(_.className).mkString(", ")}${
-          if attrHatches.length != 0 then
-            ", " + { for (hatch <- attrHatches) yield hatch.name }
-              .mkString(", ")
-          else ""
-        })
+  operations = Seq(${(operations.map(_.className) ++ opHatches.map(_.name))
+          .mkString(", ")}),
+  attributes = Seq(${(attributes.map(_.className) ++ attrHatches.map(_.name))
+          .mkString(", ")})
 )
   """
 }
