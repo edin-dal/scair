@@ -18,6 +18,13 @@ import scair.AttrParser
 import scair.ir.Attribute
 import fastparse.ParsingRun
 import scair.scairdl.irdef.DialectDef.empty
+import scair.dialects.builtin.IntegerType
+import scair.dialects.builtin.IndexType
+import scair.clair.mirrored.AnyAttribute
+
+// TODO: Upstream Arith natively support vector or other containers of it's operands and results type
+// i.e., add vectors not just integers.
+// Let's keep it progressive here though.
 
 // TODO, think about providing bunch of helpers for this kind of attribute
 enum FastMathFlag:
@@ -102,12 +109,99 @@ enum ArithAttrs extends DialectAttribute:
   // TODO: Remove when we have the possibility to define none
   case FakeAttr()
 
+// TODO: This should be smth like IntegerType | IndexType, but is not yet supported
+// in the frontend.
+type AnyIntegerType = AnyAttribute
+// TODO: This should constrain to specifically i1, MLIR's take at a boolean type.
+// Not yet supported in the frontend.
+type I1 = IntegerType
+// TODO: This should constrain to specifically i64.
+// Not yet supported in the frontend.
+type I64 = IntegerType
+// TODO: This should be encapsulated in a specific kind of enum attribute.
+// This specific kind (not all enums...) are implemented as i64 attributes
+// and only used differently in operation-level custom syntaxes (MLIR legacy, no fancy reason)
+// So it's just as fine as long as doing generic syntax goes.
+type IntegerPredicate = I64
+
 enum ArithOps extends DialectOperation:
   case AddfOp(
       lhs: Operand[FloatType],
       rhs: Operand[FloatType],
       res: Result[FloatType],
       flags: Property[FastMathFlagsAttr]
+  )
+  case MulfOp(
+      lhs: Operand[FloatType],
+      rhs: Operand[FloatType],
+      res: Result[FloatType],
+      flags: Property[FastMathFlagsAttr]
+  )
+  case DivfOp(
+      lhs: Operand[FloatType],
+      rhs: Operand[FloatType],
+      res: Result[FloatType],
+      flags: Property[FastMathFlagsAttr]
+  )
+  // TODO Apparently there's a new overflow flag here, overlooking for now.
+  case AddiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case SubiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case MuliOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case DivuiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case DivsiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case RemuiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case RemsiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[AnyIntegerType]
+  )
+  case CmpiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[I1],
+      predicate: Property[IntegerPredicate]
+  )
+  case AndiOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[I1]
+  )
+  case OriOp(
+      lhs: Operand[AnyIntegerType],
+      rhs: Operand[AnyIntegerType],
+      res: Result[I1]
+  )
+  case SitofpOp(
+      in: Operand[AnyIntegerType],
+      res: Result[FloatType]
+  )
+  case IndexCastOp(
+      in: Operand[IndexType.type],
+      res: Result[IndexType.type]
   )
 
 object ArithGen
