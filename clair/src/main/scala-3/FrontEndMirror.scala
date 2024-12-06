@@ -14,8 +14,9 @@ import scair.scairdl.irdef.{AttrEscapeHatch, OpEscapeHatch}
 ||   DIFFERENT CLASSES   ||
 \*≡==----=≡≡≡≡≡≡≡=----==≡*/
 
-abstract class DialectOperation
-abstract class DialectAttribute
+abstract class DialectFE
+trait OperationFE extends DialectFE
+trait AttributeFE extends DialectFE
 
 sealed abstract class AnyAttribute extends TypeAttribute
 
@@ -84,7 +85,7 @@ type unwrappedInput[Elem] = Elem match
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
-inline def getOpInput[Elem]: String => OpInput = {
+inline def getDefInput[Elem]: String => OpInput = {
   inline erasedValue[unwrappedInput[Elem]] match
     case _: Operand[t] =>
       (name: String) =>
@@ -137,7 +138,7 @@ inline def getOpInput[Elem]: String => OpInput = {
 inline def summonInput[Elems <: Tuple]: List[String => OpInput] = {
 
   inline erasedValue[Elems] match
-    case _: (elem *: elems) => getOpInput[elem] :: summonInput[elems]
+    case _: (elem *: elems) => getDefInput[elem] :: summonInput[elems]
     case _: EmptyTuple      => Nil
 }
 
@@ -161,15 +162,15 @@ inline def stringifyLabels[Elems <: Tuple]: List[String] = {
   * @return
   *   Lambda that produces an Operadtion Def given a dialect name.
   */
-inline def getOpDef[T](using
+inline def getDef[T](dialect_name: String)(using
     m: Mirror.ProductOf[T]
-): String => OperationDef = {
+): OperationDef | AttributeDef = {
 
-  val opName = constValue[m.MirroredLabel]
+  val defname = constValue[m.MirroredLabel]
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
 
   inline erasedValue[T] match
-    case _: DialectOperation =>
+    case _: OperationFE =>
       val inputs = summonInput[m.MirroredElemTypes]
 
       val operands: ListType[OperandDef] = ListType()
@@ -188,39 +189,18 @@ inline def getOpDef[T](using
         case f: OpAttributeDef => opAttribute += f
       }
 
-      (dialect: String) =>
-        OperationDef(
-          dialect + "." + opName.toLowerCase,
-          opName,
-          operands.toSeq,
-          results.toSeq,
-          regions.toSeq,
-          successors.toSeq,
-          opProperty.toSeq,
-          opAttribute.toSeq
-        )
+      OperationDef(
+        dialect_name + "." + defname.toLowerCase,
+        defname,
+        operands.toSeq,
+        results.toSeq,
+        regions.toSeq,
+        successors.toSeq,
+        opProperty.toSeq,
+        opAttribute.toSeq
+      )
 
-    case _ =>
-      throw new Exception("Operation definition expected.")
-
-}
-
-/** Generates a AttributeDef given param m.
-  *
-  * @param m
-  *   \- Mirror Product of an dialect enum case.
-  * @return
-  *   Lambda that produces an AttributeDef given a dialect name.
-  */
-inline def getAttrDef[T](using
-    m: Mirror.ProductOf[T]
-): String => AttributeDef = {
-
-  val attrName = constValue[m.MirroredLabel]
-  val paramLabels = stringifyLabels[m.MirroredElemLabels]
-
-  inline erasedValue[T] match
-    case _: DialectAttribute =>
+    case _: AttributeFE =>
       val inputs = summonInput[m.MirroredElemTypes]
 
       val operands: ListType[OperandDef] = ListType()
@@ -231,17 +211,16 @@ inline def getAttrDef[T](using
           throw new Exception("Attributes only accept Operands.")
       }
 
-      (dialect: String) =>
-        AttributeDef(
-          dialect + "." + attrName.toLowerCase,
-          attrName,
-          operands.toSeq,
-          0
-        )
+      AttributeDef(
+        dialect_name + "." + defname.toLowerCase,
+        defname,
+        operands.toSeq,
+        0
+      )
 
     case _ =>
-      println(attrName)
-      throw new Exception("Attr definition expected.")
+      throw new Exception("OperationFE or AttributeFE definition expected.")
+
 }
 
 /** Instantiates a Mirror Product for the given element.
@@ -249,46 +228,24 @@ inline def getAttrDef[T](using
   * @return
   *   Lambda that produces an OperadtionDef given a string of dialect name.
   */
-inline def summonOpDef[Elem]: String => OperationDef = {
-  getOpDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
-}
-
-/** Instantiates a Mirror Product for the given element.
-  *
-  * @return
-  *   Lambda that produces an AttributeDef given a string of dialect name.
-  */
-inline def summonAttrDef[Elem]: String => AttributeDef = {
-  getAttrDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
+inline def summonDef[Elem](
+    dialect_name: String
+): OperationDef | AttributeDef = {
+  getDef[Elem](dialect_name)(using summonInline[Mirror.ProductOf[Elem]])
 }
 
 /** Generates a list of OperationDef given enum cases.
   *
   * @param dialect_name
   */
-inline def summonDialectOps[Prods <: Tuple](
+inline def summonDialectDefs[Prods <: Tuple](
     dialect_name: String
-): Seq[OperationDef] = {
+): Seq[OperationDef | AttributeDef] = {
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
-      summonOpDef[prod](dialect_name) +: summonDialectOps[prods](dialect_name)
-    case _: EmptyTuple => Seq.empty
-}
+      summonDef[prod](dialect_name) +: summonDialectDefs[prods](dialect_name)
 
-/** Generates a list of AttributeDef given enum cases.
-  *
-  * @param dialect_name
-  */
-inline def summonDialectAttrs[Prods <: Tuple](
-    dialect_name: String
-): Seq[AttributeDef] = {
-
-  inline erasedValue[Prods] match
-    case _: (prod *: prods) =>
-      summonAttrDef[prod](dialect_name) +: summonDialectAttrs[prods](
-        dialect_name
-      )
     case _: EmptyTuple => Seq.empty
 }
 
@@ -297,26 +254,23 @@ inline def summonDialectAttrs[Prods <: Tuple](
   * @param m
   *   \- Sum Mirror of a given dialect
   */
-inline def summonDialect[T1 <: DialectOperation, T2 <: DialectAttribute](
+inline def summonDialect[T <: DialectFE](
     opHatches: Seq[OpEscapeHatch[_]] = Seq(),
     attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
 )(using
-    ops: Mirror.SumOf[T1],
-    attrs: Mirror.SumOf[T2]
+    ops: Mirror.SumOf[T]
 ): DialectDef = {
-  // Remove the ops suffix from the dialect operations enum name
-  val ops_name = constValue[ops.MirroredLabel]
-  val attrs_name = constValue[attrs.MirroredLabel]
-  val dialect_name =
-    (ops_name, attrs_name).zipped.takeWhile(_ == _).map(_._1).mkString
-  val opsDefs =
-    summonDialectOps[ops.MirroredElemTypes](dialect_name.toLowerCase)
-  val attrDefs =
-    summonDialectAttrs[attrs.MirroredElemTypes](dialect_name.toLowerCase)
+
+  val dialect_name = constValue[ops.MirroredLabel]
+  val defs =
+    summonDialectDefs[ops.MirroredElemTypes](dialect_name.toLowerCase)
+
+  val opDefs = defs.collect { case op: OperationDef => op }
+  val attrDefs = defs.collect { case attr: AttributeDef => attr }
 
   DialectDef(
     dialect_name,
-    opsDefs,
+    opDefs,
     attrDefs,
     opHatches,
     attrHatches
@@ -341,28 +295,27 @@ object FrontEnd {
   case class SampleData(val d: String)
       extends DataAttribute[String]("sample", d)
 
-  enum CMathAttr extends DialectAttribute:
+  enum CMath extends DialectFE:
 
     case Complex(
         e1: Operand[IntegerAttr]
-    )
-
-  enum CMath extends DialectOperation:
+    ) extends CMath with AttributeFE
 
     case Norm(
         e1: Variadic[Operand[IntegerAttr]],
         e2: Result[AnyAttribute],
         e3: Region
-    )
-    case Mul[Operation](
+    ) extends CMath with OperationFE
+
+    case Mul(
         e1: Operand[IntegerAttr],
         e2: Result[AnyAttribute]
-    )
+    ) extends CMath with OperationFE
 
   object CMath {
     val opHatches = Seq()
     val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-    val generator = summonDialect[CMath, CMathAttr](opHatches, attrHatches)
+    val generator = summonDialect[CMath](opHatches, attrHatches)
   }
 
   def main(args: Array[String]): Unit = {

@@ -12,27 +12,26 @@ object SampleData extends AttributeObject {
 
 case class SampleData(val d: String) extends DataAttribute[String]("sample", d)
 
-enum CMathAttrs extends DialectAttribute:
+enum CMath extends DialectFE:
 
   case Complex(
       e1: Operand[IntegerAttr]
-  )
-
-enum CMathOps extends DialectOperation:
+  ) extends CMath with AttributeFE
 
   case Norm(
       e1: Operand[IntegerAttr],
       e2: Result[AnyAttribute],
       e3: Region
-  )
+  ) extends CMath with OperationFE
+
   case Mul[Operation](
       e1: Operand[IntegerAttr],
       e2: Result[AnyAttribute]
-  )
+  ) extends CMath with OperationFE
 
-object CMath
+object CMathGen
     extends ScaIRDLDialect(
-      summonDialect[CMathOps, CMathAttrs](
+      summonDialect[CMath](
         Seq(),
         Seq(new AttrEscapeHatch[SampleData])
       )
