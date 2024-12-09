@@ -5,21 +5,20 @@ import scair.clair.mirrored._
 import scair.dialects.builtin.{FloatType}
 import scair.scairdl.irdef._
 
-enum CMath extends DialectFE:
+case class Complex(
+    e1: Operand[FloatType]
+) extends TypeAttributeFE
 
-  case Complex(
-      e1: Operand[FloatType]
-  ) extends CMath with TypeAttributeFE
+case class Norm(
+    in: Operand[Complex],
+    res: Result[FloatType]
+) extends OperationFE
 
-  case Norm(
-      in: Operand[Complex],
-      res: Result[FloatType]
-  ) extends CMath with OperationFE
+case class Mul(
+    lhs: Operand[Complex],
+    rhs: Operand[Complex],
+    res: Result[Complex]
+) extends OperationFE
 
-  case Mul[Operation](
-      lhs: Operand[Complex],
-      rhs: Operand[Complex],
-      res: Result[Complex]
-  ) extends CMath with OperationFE
-
-object CMathGen extends ScaIRDLDialect(summonDialect[CMath]())
+object CMathGen
+    extends ScaIRDLDialect(summonDialect[(Complex, Norm, Mul)]("CMath"))
