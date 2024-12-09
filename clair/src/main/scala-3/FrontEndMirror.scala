@@ -77,7 +77,9 @@ inline def constraintFromAttr[T <: Attribute: ClassTag]: IRDLConstraint = {
   * @return
   *   IRDLConstraint
   */
-inline def constraintFromAttrFE[T <: AttributeFE](using m: Mirror.ProductOf[T]): IRDLConstraint = {
+inline def constraintFromAttrFE[T <: AttributeFE](using
+    m: Mirror.ProductOf[T]
+): IRDLConstraint = {
   val attr_name = constValue[m.MirroredLabel]
   ConstraintRef(attr_name)
 }
@@ -95,7 +97,7 @@ inline def getConstraint[T <: Attribute | AttributeFE]: IRDLConstraint = {
       type RefT = T & Attribute // absorbtion => A & (A | B) == A
       constraintFromAttr[RefT](using summonInline[ClassTag[RefT]])
 
-    case _: AttributeFE => 
+    case _: AttributeFE =>
       type RefT = T & AttributeFE // absorbtion => A & (A | B) == A
       constraintFromAttrFE[RefT](using summonInline[Mirror.ProductOf[RefT]])
 }
@@ -230,13 +232,12 @@ inline def getDef[T](dialect_name: String)(using
       )
 
     case _: AttributeFE =>
-      
       val inputs = summonInput[m.MirroredElemTypes]
       val operands: ListType[OperandDef] = ListType()
 
       val typee = inline erasedValue[T] match
         case _: TypeAttributeFE => 1
-        case _ => 0
+        case _                  => 0
 
       for ((name, input) <- paramLabels zip inputs) yield input(name) match {
         case a: OperandDef => operands += a
