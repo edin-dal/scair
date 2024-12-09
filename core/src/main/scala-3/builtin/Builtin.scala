@@ -210,6 +210,43 @@ case class UnrankedTensorType(override val typ: Attribute)
   override def custom_print = s"tensor<*x${typ.custom_print}>"
 }
 
+/////////////////
+// MEMREF TYPE //
+/////////////////
+
+abstract class MemrefType(
+    override val name: String,
+    val typ: Attribute,
+    val features: Seq[Attribute]
+) extends ParametrizedAttribute(name, features)
+    with TypeAttribute
+
+case class RankedMemrefType(
+    val dimensionList: Seq[IntData],
+    override val typ: Attribute
+) extends MemrefType(
+      name = "builtin.ranked_tensor",
+      typ,
+      features = dimensionList :+ typ
+    ) {
+
+  override def custom_print: String = {
+
+    val shapeString =
+      (dimensionList.map(x =>
+        if (x.data == -1) "?" else x.custom_print
+      ) :+ typ.custom_print)
+        .mkString("x")
+
+    return s"memref<${shapeString}>"
+  }
+}
+
+case class UnrankedMemrefType(override val typ: Attribute)
+    extends MemrefType("builtin.unranked_memref", typ, Seq(typ)) {
+  override def custom_print = s"tensor<*x${typ.custom_print}>"
+}
+
 //////////////////////////
 // SYMBOL REF ATTRIBUTE //
 //////////////////////////
