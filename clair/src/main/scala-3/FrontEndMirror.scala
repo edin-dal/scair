@@ -348,7 +348,8 @@ object FrontEnd {
   object CMath {
     val opHatches = Seq()
     val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-    val generator = summonDialect[(Complex, Norm, Mul)]("CMath", opHatches, attrHatches)
+    val generator =
+      summonDialect[(Complex, Norm, Mul)]("CMath", opHatches, attrHatches)
   }
 
   def main(args: Array[String]): Unit = {
