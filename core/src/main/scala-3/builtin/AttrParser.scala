@@ -251,7 +251,7 @@ class AttrParser(val ctx: MLContext) {
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringData(x),
-      ArrayAttribute(y.map(z => StringData(z)))
+      y.map(z => StringData(z))
     )
   )
 

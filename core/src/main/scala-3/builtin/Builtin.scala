@@ -253,13 +253,13 @@ case class UnrankedMemrefType(override val typ: Attribute)
 
 case class SymbolRefAttr(
     val rootRef: StringData,
-    val nestedRefs: ArrayAttribute[StringData]
+    val nestedRefs: Seq[StringData]
 ) extends ParametrizedAttribute(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)
     ) {
   override def custom_print =
-    s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
+    (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
 }
 
 ////////////////////
