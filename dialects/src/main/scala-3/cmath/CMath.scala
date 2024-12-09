@@ -4,14 +4,6 @@ import scair.scairdl.constraints._
 import scair.clair.mirrored._
 import scair.dialects.builtin.{FloatType}
 import scair.scairdl.irdef._
-import scair.ir.AttributeObject
-import scair.ir.DataAttribute
-
-object SampleData extends AttributeObject {
-  override def name: String = "sample"
-}
-
-case class SampleData(val d: String) extends DataAttribute[String]("sample", d)
 
 enum CMath extends DialectFE:
 
@@ -30,10 +22,4 @@ enum CMath extends DialectFE:
       res: Result[Complex]
   ) extends CMath with OperationFE
 
-object CMathGen
-    extends ScaIRDLDialect(
-      summonDialect[CMath](
-        Seq(),
-        Seq(new AttrEscapeHatch[SampleData])
-      )
-    )
+object CMathGen extends ScaIRDLDialect(summonDialect[CMath]())
