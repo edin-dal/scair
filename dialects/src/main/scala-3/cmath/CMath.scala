@@ -9,17 +9,17 @@ enum CMath extends DialectFE:
 
   case Complex(
       e1: Operand[FloatType]
-  ) extends CMath with AttributeFE
+  ) extends CMath with TypeAttributeFE
 
   case Norm(
-      in: Operand[AnyAttribute],
+      in: Operand[Complex],
       res: Result[FloatType]
   ) extends CMath with OperationFE
 
   case Mul[Operation](
-      lhs: Operand[AnyAttribute],
-      rhs: Operand[AnyAttribute],
-      res: Result[AnyAttribute]
+      lhs: Operand[Complex],
+      rhs: Operand[Complex],
+      res: Result[Complex]
   ) extends CMath with OperationFE
 
 object CMathGen extends ScaIRDLDialect(summonDialect[CMath]())

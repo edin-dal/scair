@@ -7,7 +7,7 @@
 
 // CHECK:       builtin.module {
 // CHECK-NEXT:  ^bb0():
-// CHECK-NEXT:    "test.op"() {invalid_type = #cmath.complex<i8>} : () -> ()
+// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<i8>} : () -> ()
 // CHECK-NEXT:  }
 
 // -----
