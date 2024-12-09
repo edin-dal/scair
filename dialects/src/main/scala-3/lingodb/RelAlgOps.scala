@@ -1,26 +1,23 @@
 package scair.dialects.LingoDB.RelAlgOps
 
-import scair.dialects.LingoDB.TupleStream._
-import scair.dialects.LingoDB.SubOperatorOps._
-import scair.dialects.LingoDB.DBOps._
+import fastparse.*
+import scair.AttrParser
+import scair.EnumAttr.I64EnumAttr
+import scair.EnumAttr.I64EnumAttrCase
+import scair.Parser
+import scair.Parser.BareId
+import scair.Parser.E
+import scair.Parser.ValueId
+import scair.Parser.optionlessSeq
+import scair.Parser.whitespace
+import scair.dialects.LingoDB.SubOperatorOps.*
+import scair.dialects.LingoDB.TupleStream.*
+import scair.dialects.builtin.*
+import scair.exceptions.VerifyException
+import scair.ir.*
 
-import fastparse._
-import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
-import scair.dialects.builtin._
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.{Parser, AttrParser}
-import scair.Parser.{
-  whitespace,
-  E,
-  optionlessSeq,
-  giveBack,
-  Scope,
-  ValueId,
-  BareId
-}
-import scair.exceptions.VerifyException
-import scair.ir._
 
 // ==---== //
 //  Enums

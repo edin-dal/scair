@@ -1,19 +1,15 @@
 package scair
 
-import org.scalatest._
-import flatspec._
-import matchers.should.Matchers._
-import prop._
-
-import fastparse._, MultiLineWhitespace._
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import org.scalatest.prop.Tables.Table
+import fastparse.*
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
+import org.scalatest.prop.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
-
-import scair.dialects.builtin._
-import scair.dialects.cmath._
-import scair.ir._
+import org.scalatest.prop.Tables.Table
+import scair.dialects.builtin.*
+import scair.dialects.cmath.*
+import scair.ir.*
 
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 

@@ -1,6 +1,6 @@
 package scair.transformations
 
-import scair.ir._
+import scair.ir.*
 
 abstract class ModulePass {
   val name: String

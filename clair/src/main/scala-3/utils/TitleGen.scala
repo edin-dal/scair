@@ -30,7 +30,6 @@ object SubTitleGen {
 }
 
 object TitleGen {
-  import Letters._
 
   def generate(title: String): String = {
 

@@ -1,25 +1,20 @@
 package scair
 
-import fastparse._
-import fastparse.internal.Util
+import fastparse.*
 import fastparse.Parsed.Failure
-
-import scala.collection.mutable
-import scala.annotation.tailrec
-import scala.annotation.switch
-
+import fastparse.internal.Util
 import scair.core.utils.Args
-import scair.ir._
-import scair.MLContext
 import scair.dialects.builtin.ModuleOp
+import scair.ir.*
 
-import java.lang.Long.parseLong
 import java.lang.Float.parseFloat
-import Math.pow
+import java.lang.Long.parseLong
+import java.lang.Math.pow
+import scala.annotation.switch
+import scala.annotation.tailrec
+import scala.collection.mutable
 
 object Parser {
-
-  import scala.util.control.NoStackTrace
 
   /** Whitespace syntax that supports // line-comments, *without* /* */
     * comments, as is the case in the MLIR Language Spec.

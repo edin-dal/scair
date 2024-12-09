@@ -1,16 +1,18 @@
 package scair.dialects.builtin
 
-import scala.compiletime.ops.string
-import scala.collection.{immutable, mutable}
-
-import scair.dialects.affine.{AffineMap, AffineSet}
-import scair.scairdl.constraints.{BaseAttr, EqualAttr, ConstraintContext}
-import scair.{Parser, Printer}
-import scair.ir._
-
+import fastparse.*
+import scair.Parser
 import scair.Parser.whitespace
-import fastparse._
+import scair.Printer
+import scair.dialects.affine.AffineMap
+import scair.dialects.affine.AffineSet
 import scair.exceptions.VerifyException
+import scair.ir.*
+import scair.scairdl.constraints.BaseAttr
+import scair.scairdl.constraints.ConstraintContext
+
+import scala.collection.immutable
+import scala.collection.mutable
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║

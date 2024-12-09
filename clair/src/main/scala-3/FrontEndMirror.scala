@@ -1,14 +1,16 @@
 package scair.clair.mirrored
 
-import scala.deriving._
-import scala.compiletime._
-import scair.scairdl.irdef._
-import scair.scairdl.constraints._
-import Variadicity._
-import scala.reflect._
-import scair.ir._
-import scair.dialects.builtin._
-import scair.scairdl.irdef.{AttrEscapeHatch, OpEscapeHatch}
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.scairdl.constraints.*
+import scair.scairdl.irdef.*
+import scair.scairdl.irdef.AttrEscapeHatch
+import scair.scairdl.irdef.OpEscapeHatch
+import scair.scairdl.irdef.Variadicity.*
+
+import scala.compiletime.*
+import scala.deriving.*
+import scala.reflect.*
 
 /*≡≡=---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   DIFFERENT CLASSES   ||

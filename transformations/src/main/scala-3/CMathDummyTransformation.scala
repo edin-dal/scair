@@ -1,15 +1,13 @@
 package scair.transformations.cdt
 
-import scair.ir._
 import scair.dialects.builtin.StringData
-import scair.dialects.cmath.{Mul, Norm}
-import scair.transformations.{
-  ModulePass,
-  PatternRewriter,
-  RewritePattern,
-  PatternRewriteWalker
-}
-import scair.MLContext
+import scair.dialects.cmath.Mul
+import scair.dialects.cmath.Norm
+import scair.ir.*
+import scair.transformations.ModulePass
+import scair.transformations.PatternRewriteWalker
+import scair.transformations.PatternRewriter
+import scair.transformations.RewritePattern
 
 object AddDummyAttributeToDict extends RewritePattern {
   override def match_and_rewrite(

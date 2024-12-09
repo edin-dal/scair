@@ -1,15 +1,9 @@
 package scair.dialects.affine
 
-import fastparse._
-import scair.Parser.{
-  whitespace,
-  DecimalLiteral,
-  IntegerLiteral,
-  BareId,
-  SuffixId
-}
-
-import scair.ir._
+import fastparse.*
+import scair.Parser.DecimalLiteral
+import scair.Parser.IntegerLiteral
+import scair.Parser.whitespace
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

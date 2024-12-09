@@ -1,9 +1,9 @@
 package scair.transformations
 
-import scala.collection.mutable.Stack
-
 import scair.dialects.builtin.ModuleOp
-import scair.ir._
+import scair.ir.*
+
+import scala.collection.mutable.Stack
 
 // ==---------== //
 //  Utils realm  //

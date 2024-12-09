@@ -1,14 +1,13 @@
 package scair.scairdl.irdef
-import java.io.{File, PrintStream}
+import scair.dialects.builtin.*
+import scair.ir.Attribute
+import scair.ir.Operation
+import scair.scairdl.constraints.*
 
+import java.io.File
+import java.io.PrintStream
 import scala.collection.mutable
-import scala.compiletime.ops.int
-import scala.reflect._
-
-import scair.scairdl.constraints._
-import scair.dialects.builtin._
-import scair.transformations.InsertPoint.after
-import scair.ir.{Attribute, Operation}
+import scala.reflect.*
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗

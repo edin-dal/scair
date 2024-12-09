@@ -1,17 +1,13 @@
 package scair
 
-import org.scalatest._
-import Inspectors._
-import flatspec._
-import matchers.should.Matchers._
-import prop._
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
+import scair.Parser.*
+import scair.ir.*
+import scair.traits.*
 
 import scala.collection.mutable
-import Parser._
-
-import scair.dialects.builtin._
-import scair.ir._
-import scair.traits._
 
 object FillerOp extends OperationObject {
   override def name: String = "filler"

@@ -1,20 +1,14 @@
 package scair
 
-import org.scalatest._
-import flatspec._
-import matchers.should.Matchers._
-import prop._
-
-import fastparse._, MultiLineWhitespace._
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import org.scalatest.prop.Tables.Table
+import fastparse.*
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
+import org.scalatest.prop.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
-
-import scala.collection.mutable.ArrayBuffer
-
-import scair.dialects.builtin._
-import scair.dialects.LingoDB.TupleStream._
+import org.scalatest.prop.Tables.Table
+import scair.dialects.LingoDB.TupleStream.*
+import scair.dialects.builtin.*
 
 class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
   val ctx = new MLContext()

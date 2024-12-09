@@ -28,9 +28,9 @@ jobs:
       with:
         apps: scala:3.3.1 sbt
 
-    # Run scalafmt, check if the code is formatted as expected
-    - name: Run scalafmt
-      run: sbt scalafmtCheckAll
+    # Check if the code is formatted as expected
+    - name: Run format checks
+      run: sbt formatCheckAll
 
   # Unit tests
   unit-tests:

@@ -1,19 +1,11 @@
 package scair
 
-import org.scalatest._
-import flatspec._
-import matchers.should.Matchers._
-import prop._
-
-import fastparse._, MultiLineWhitespace._
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import org.scalatest.prop.Tables.Table
-import org.scalatest.prop.TableDrivenPropertyChecks.forAll
-
-import scair.dialects.builtin._
-import scair.ir._
-import scair.scairdl.constraints._
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.scairdl.constraints.*
 import scair.scairdl.constraints.attr2constraint
 class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 

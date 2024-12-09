@@ -1,15 +1,17 @@
-import java.io.File
-import scopt.OParser
-import scala.io.Source
-import scala.util.{Try, Success, Failure}
-import scair.Printer
-import scair.ir._
-import scair.transformations.TransformContext
 import scair.MLContext
-import scair.dialects.builtin.ModuleOp
-import scair.scairdl.constraints.AnyAttr.verify
+import scair.Printer
 import scair.core.utils.Args
-import scair.utils.{allDialects, allPasses}
+import scair.dialects.builtin.ModuleOp
+import scair.ir.*
+import scair.transformations.TransformContext
+import scair.utils.allDialects
+import scair.utils.allPasses
+import scopt.OParser
+
+import scala.io.Source
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 object ScairOpt {
   def main(args: Array[String]): Unit = {
