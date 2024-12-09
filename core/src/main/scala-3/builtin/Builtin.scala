@@ -309,6 +309,29 @@ case class DenseArrayAttr(
   def iterator: Iterator[Attribute] = data.iterator
 }
 
+//////////////////
+// FunctionType //
+//////////////////
+
+case class FunctionType(
+    val inputs: Seq[Attribute],
+    val outputs: Seq[Attribute]
+) extends ParametrizedAttribute(
+      "builtin.function_type",
+      Seq(inputs, outputs)
+    )
+    with TypeAttribute {
+
+  override def custom_print = {
+    val inputsString = inputs.map(_.custom_print).mkString(", ")
+    val outputsString = outputs.map(_.custom_print).mkString(", ")
+    outputs.length match {
+      case 1 => s"(${inputsString}) -> ${outputsString}"
+      case _ => s"(${inputsString}) -> (${outputsString})"
+    }
+  }
+}
+
 //////////////////////////////
 // DenseIntOrFPElementsAttr //
 //////////////////////////////
