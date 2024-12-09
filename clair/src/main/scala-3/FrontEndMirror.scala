@@ -17,18 +17,29 @@ import scair.scairdl.irdef.{AttrEscapeHatch, OpEscapeHatch}
 abstract class DialectFE
 trait OperationFE extends DialectFE
 trait AttributeFE extends DialectFE
+trait TypeAttributeFE extends AttributeFE
 
 sealed abstract class AnyAttribute extends TypeAttribute
 
-abstract class Input[T <: Attribute]
-case class Operand[T <: Attribute]() extends Input[T]
-case class Result[T <: Attribute]() extends Input[T]
+abstract class Input[T <: Attribute | AttributeFE]
+case class Operand[T <: Attribute | AttributeFE]() extends Input[T]
+case class Result[T <: Attribute | AttributeFE]() extends Input[T]
 case class Region() extends Input[Nothing]
 case class Successor() extends Input[Nothing]
-case class Property[T <: Attribute]() extends Input[T]
-case class Attr[T <: Attribute]() extends Input[T]
+case class Property[T <: Attribute | AttributeFE]() extends Input[T]
+case class Attr[T <: Attribute | AttributeFE]() extends Input[T]
 
 abstract class Variadic[T]
+
+case class ConstraintRef(attr_name: String) extends IRDLConstraint {
+
+  override def verify(
+      that_attr: Attribute,
+      constraint_ctx: ConstraintContext
+  ): Unit = ()
+
+  override def toString = s"BaseAttr[${attr_name}]()"
+}
 
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
 ||   ERROR HANDLING   ||
@@ -50,7 +61,7 @@ object ErrorMessages {
   * @return
   *   IRDLConstraint
   */
-inline def indent[T <: Attribute: ClassTag]: IRDLConstraint = {
+inline def constraintFromAttr[T <: Attribute: ClassTag]: IRDLConstraint = {
 
   inline erasedValue[T] match
     case _: AnyAttribute => AnyAttr
@@ -61,14 +72,32 @@ inline def indent[T <: Attribute: ClassTag]: IRDLConstraint = {
       )
 }
 
+/** Given a AttributeFE, produces a corresponding constraint reference.
+  *
+  * @return
+  *   IRDLConstraint
+  */
+inline def constraintFromAttrFE[T <: AttributeFE](using m: Mirror.ProductOf[T]): IRDLConstraint = {
+  val attr_name = constValue[m.MirroredLabel]
+  ConstraintRef(attr_name)
+}
+
 /** Instantiates a ClassTag for the given type T. This is necessary as some
   * constraints deal with ClassTags.
   *
   * @return
   *   An IRDLConstraint given a type T.
   */
-inline def getConstraint[T <: Attribute]: IRDLConstraint = {
-  indent[T](using summonInline[ClassTag[T]])
+inline def getConstraint[T <: Attribute | AttributeFE]: IRDLConstraint = {
+  inline erasedValue[T] match
+
+    case _: Attribute =>
+      type RefT = T & Attribute // absorbtion => A & (A | B) == A
+      constraintFromAttr[RefT](using summonInline[ClassTag[RefT]])
+
+    case _: AttributeFE => 
+      type RefT = T & AttributeFE // absorbtion => A & (A | B) == A
+      constraintFromAttrFE[RefT](using summonInline[Mirror.ProductOf[RefT]])
 }
 
 inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
@@ -201,9 +230,13 @@ inline def getDef[T](dialect_name: String)(using
       )
 
     case _: AttributeFE =>
+      
       val inputs = summonInput[m.MirroredElemTypes]
-
       val operands: ListType[OperandDef] = ListType()
+
+      val typee = inline erasedValue[T] match
+        case _: TypeAttributeFE => 1
+        case _ => 0
 
       for ((name, input) <- paramLabels zip inputs) yield input(name) match {
         case a: OperandDef => operands += a
@@ -215,7 +248,7 @@ inline def getDef[T](dialect_name: String)(using
         dialect_name + "." + defname.toLowerCase,
         defname,
         operands.toSeq,
-        0
+        typee
       )
 
     case _ =>
@@ -301,6 +334,10 @@ object FrontEnd {
         e1: Operand[IntegerAttr]
     ) extends CMath with AttributeFE
 
+    case ComplexType(
+        e1: Operand[IntegerAttr]
+    ) extends CMath with TypeAttributeFE
+
     case Norm(
         e1: Variadic[Operand[IntegerAttr]],
         e2: Result[AnyAttribute],
@@ -308,7 +345,7 @@ object FrontEnd {
     ) extends CMath with OperationFE
 
     case Mul(
-        e1: Operand[IntegerAttr],
+        e1: Variadic[Operand[Complex]],
         e2: Result[AnyAttribute]
     ) extends CMath with OperationFE
 
