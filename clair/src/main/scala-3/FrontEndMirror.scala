@@ -312,50 +312,48 @@ inline def summonDialect[Prods <: Tuple](
 ||     TESTING     ||
 \*≡==----=≡=----==≡*/
 
-// object FrontEnd {
+object FrontEnd {
 
-//   // inline def regionindent[T]: String = {
-//   //   constValue[T].asInstanceOf[Int].toString
-//   // }
-//   import scair.ir.{DataAttribute, AttributeObject}
+  // inline def regionindent[T]: String = {
+  //   constValue[T].asInstanceOf[Int].toString
+  // }
+  import scair.ir.{DataAttribute, AttributeObject}
 
-//   object SampleData extends AttributeObject {
-//     override def name: String = "sample"
-//   }
+  object SampleData extends AttributeObject {
+    override def name: String = "sample"
+  }
 
-//   case class SampleData(val d: String)
-//       extends DataAttribute[String]("sample", d)
+  case class SampleData(val d: String)
+      extends DataAttribute[String]("sample", d)
 
-//   enum CMath extends DialectFE:
+  case class Complex(
+      e1: Operand[IntegerAttr]
+  ) extends AttributeFE
 
-//     case Complex(
-//         e1: Operand[IntegerAttr]
-//     ) extends CMath with AttributeFE
+  case class ComplexType(
+      e1: Operand[IntegerAttr]
+  ) extends TypeAttributeFE
 
-//     case ComplexType(
-//         e1: Operand[IntegerAttr]
-//     ) extends CMath with TypeAttributeFE
+  case class Norm(
+      e1: Variadic[Operand[IntegerAttr]],
+      e2: Result[AnyAttribute],
+      e3: Region
+  ) extends OperationFE
 
-//     case Norm(
-//         e1: Variadic[Operand[IntegerAttr]],
-//         e2: Result[AnyAttribute],
-//         e3: Region
-//     ) extends CMath with OperationFE
+  case class Mul(
+      e1: Variadic[Operand[Complex]],
+      e2: Result[AnyAttribute]
+  ) extends OperationFE
 
-//     case Mul(
-//         e1: Variadic[Operand[Complex]],
-//         e2: Result[AnyAttribute]
-//     ) extends CMath with OperationFE
+  object CMath {
+    val opHatches = Seq()
+    val attrHatches = Seq(new AttrEscapeHatch[SampleData])
+    val generator = summonDialect[(Complex, Norm, Mul)]("CMath", opHatches, attrHatches)
+  }
 
-//   object CMath {
-//     val opHatches = Seq()
-//     val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-//     val generator = summonDialect[CMath](opHatches, attrHatches)
-//   }
+  def main(args: Array[String]): Unit = {
+    println(CMath.generator.print(0))
+    println(new AttrEscapeHatch[SampleData].importt)
+  }
 
-//   def main(args: Array[String]): Unit = {
-//     println(CMath.generator.print(0))
-//     println(new AttrEscapeHatch[SampleData].importt)
-//   }
-
-// }
+}
