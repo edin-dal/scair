@@ -288,16 +288,13 @@ inline def summonDialectDefs[Prods <: Tuple](
   * @param m
   *   \- Sum Mirror of a given dialect
   */
-inline def summonDialect[T <: DialectFE](
+inline def summonDialect[Prods <: Tuple](
+    dialect_name: String,
     opHatches: Seq[OpEscapeHatch[_]] = Seq(),
     attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
-)(using
-    ops: Mirror.SumOf[T]
 ): DialectDef = {
-
-  val dialect_name = constValue[ops.MirroredLabel]
   val defs =
-    summonDialectDefs[ops.MirroredElemTypes](dialect_name.toLowerCase)
+    summonDialectDefs[Prods](dialect_name.toLowerCase)
 
   val opDefs = defs.collect { case op: OperationDef => op }
   val attrDefs = defs.collect { case attr: AttributeDef => attr }
@@ -315,50 +312,50 @@ inline def summonDialect[T <: DialectFE](
 ||     TESTING     ||
 \*≡==----=≡=----==≡*/
 
-object FrontEnd {
+// object FrontEnd {
 
-  // inline def regionindent[T]: String = {
-  //   constValue[T].asInstanceOf[Int].toString
-  // }
-  import scair.ir.{DataAttribute, AttributeObject}
+//   // inline def regionindent[T]: String = {
+//   //   constValue[T].asInstanceOf[Int].toString
+//   // }
+//   import scair.ir.{DataAttribute, AttributeObject}
 
-  object SampleData extends AttributeObject {
-    override def name: String = "sample"
-  }
+//   object SampleData extends AttributeObject {
+//     override def name: String = "sample"
+//   }
 
-  case class SampleData(val d: String)
-      extends DataAttribute[String]("sample", d)
+//   case class SampleData(val d: String)
+//       extends DataAttribute[String]("sample", d)
 
-  enum CMath extends DialectFE:
+//   enum CMath extends DialectFE:
 
-    case Complex(
-        e1: Operand[IntegerAttr]
-    ) extends CMath with AttributeFE
+//     case Complex(
+//         e1: Operand[IntegerAttr]
+//     ) extends CMath with AttributeFE
 
-    case ComplexType(
-        e1: Operand[IntegerAttr]
-    ) extends CMath with TypeAttributeFE
+//     case ComplexType(
+//         e1: Operand[IntegerAttr]
+//     ) extends CMath with TypeAttributeFE
 
-    case Norm(
-        e1: Variadic[Operand[IntegerAttr]],
-        e2: Result[AnyAttribute],
-        e3: Region
-    ) extends CMath with OperationFE
+//     case Norm(
+//         e1: Variadic[Operand[IntegerAttr]],
+//         e2: Result[AnyAttribute],
+//         e3: Region
+//     ) extends CMath with OperationFE
 
-    case Mul(
-        e1: Variadic[Operand[Complex]],
-        e2: Result[AnyAttribute]
-    ) extends CMath with OperationFE
+//     case Mul(
+//         e1: Variadic[Operand[Complex]],
+//         e2: Result[AnyAttribute]
+//     ) extends CMath with OperationFE
 
-  object CMath {
-    val opHatches = Seq()
-    val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-    val generator = summonDialect[CMath](opHatches, attrHatches)
-  }
+//   object CMath {
+//     val opHatches = Seq()
+//     val attrHatches = Seq(new AttrEscapeHatch[SampleData])
+//     val generator = summonDialect[CMath](opHatches, attrHatches)
+//   }
 
-  def main(args: Array[String]): Unit = {
-    println(CMath.generator.print(0))
-    println(new AttrEscapeHatch[SampleData].importt)
-  }
+//   def main(args: Array[String]): Unit = {
+//     println(CMath.generator.print(0))
+//     println(new AttrEscapeHatch[SampleData].importt)
+//   }
 
-}
+// }

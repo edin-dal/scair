@@ -121,89 +121,107 @@ type I64 = IntegerType
 // So it's just as fine as long as doing generic syntax goes.
 type IntegerPredicate = I64
 
-enum Arith extends DialectFE:
-  case AddfOp(
-      lhs: Operand[FloatType],
-      rhs: Operand[FloatType],
-      res: Result[FloatType],
-      flags: Property[FastMathFlagsAttr]
-  ) extends Arith with OperationFE
-  case MulfOp(
-      lhs: Operand[FloatType],
-      rhs: Operand[FloatType],
-      res: Result[FloatType],
-      flags: Property[FastMathFlagsAttr]
-  ) extends Arith with OperationFE
-  case DivfOp(
-      lhs: Operand[FloatType],
-      rhs: Operand[FloatType],
-      res: Result[FloatType],
-      flags: Property[FastMathFlagsAttr]
-  ) extends Arith with OperationFE
-  // TODO Apparently there's a new overflow flag here, overlooking for now.
-  case AddiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case SubiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case MuliOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case DivuiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case DivsiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case RemuiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case RemsiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[AnyIntegerType]
-  ) extends Arith with OperationFE
-  case CmpiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[I1],
-      predicate: Property[IntegerPredicate]
-  ) extends Arith with OperationFE
-  case AndiOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[I1]
-  ) extends Arith with OperationFE
-  case OriOp(
-      lhs: Operand[AnyIntegerType],
-      rhs: Operand[AnyIntegerType],
-      res: Result[I1]
-  ) extends Arith with OperationFE
-  case SitofpOp(
-      in: Operand[AnyIntegerType],
-      res: Result[FloatType]
-  ) extends Arith with OperationFE
-  case IndexCastOp(
-      in: Operand[IndexType.type],
-      res: Result[IndexType.type]
-  ) extends Arith with OperationFE
+case class AddfOp(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[FloatType],
+    flags: Property[FastMathFlagsAttr]
+) extends OperationFE
+case class MulfOp(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[FloatType],
+    flags: Property[FastMathFlagsAttr]
+) extends OperationFE
+case class DivfOp(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[FloatType],
+    flags: Property[FastMathFlagsAttr]
+) extends OperationFE
+// TODO Apparently there's a new overflow flag here, overlooking for now.
+case class AddiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class SubiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class MuliOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class DivuiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class DivsiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class RemuiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class RemsiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
+) extends OperationFE
+case class CmpiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[I1],
+    predicate: Property[IntegerPredicate]
+) extends OperationFE
+case class AndiOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[I1]
+) extends OperationFE
+case class OriOp(
+    lhs: Operand[AnyIntegerType],
+    rhs: Operand[AnyIntegerType],
+    res: Result[I1]
+) extends OperationFE
+case class SitofpOp(
+    in: Operand[AnyIntegerType],
+    res: Result[FloatType]
+) extends OperationFE
+case class IndexCastOp(
+    in: Operand[IndexType.type],
+    res: Result[IndexType.type]
+) extends OperationFE
 
 object ArithGen
     extends ScaIRDLDialect(
-      summonDialect[Arith](
+      summonDialect[
+        (
+            AddfOp,
+            MulfOp,
+            DivfOp,
+            AddiOp,
+            SubiOp,
+            MuliOp,
+            DivuiOp,
+            DivsiOp,
+            RemuiOp,
+            RemsiOp,
+            CmpiOp,
+            AndiOp,
+            OriOp,
+            SitofpOp,
+            IndexCastOp
+        )
+      ](
+        "Arith",
         Seq(),
         Seq(new AttrEscapeHatch[FastMathFlagsAttr])
       )
