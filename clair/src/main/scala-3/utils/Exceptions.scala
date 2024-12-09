@@ -1,8 +1,8 @@
 package scair.clair
 
 import fastparse.Parsed
-import scala.util.{Try, Success, Failure}
-import scala.io.AnsiColor._
+
+import scala.io.AnsiColor.*
 
 private val clairErr = s"[${RED}claierror${RESET}]   "
 

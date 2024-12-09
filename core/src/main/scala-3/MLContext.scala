@@ -1,7 +1,8 @@
 package scair
 
+import scair.ir.*
+
 import scala.collection.mutable
-import scair.ir._
 
 class MLContext() {
 

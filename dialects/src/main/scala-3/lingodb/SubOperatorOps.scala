@@ -1,13 +1,17 @@
 package scair.dialects.LingoDB.SubOperatorOps
 
-import fastparse._
-import scair.dialects.builtin._
+import fastparse.*
+import scair.AttrParser
+import scair.Parser
+import scair.Parser.BareId
+import scair.Parser.ValueId
+import scair.Parser.whitespace
+import scair.dialects.builtin.*
+import scair.exceptions.VerifyException
+import scair.ir.*
+
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.{Parser, AttrParser}
-import scair.Parser.{whitespace, BareId, ValueId}
-import scair.ir._
-import scair.exceptions.VerifyException
 
 ////////////////
 // ATTRIBUTES //

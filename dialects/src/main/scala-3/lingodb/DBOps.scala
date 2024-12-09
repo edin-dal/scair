@@ -1,15 +1,19 @@
 package scair.dialects.LingoDB.DBOps
 
-import scala.math.max
-import fastparse._
-import scair.EnumAttr.{I64EnumAttrCase, I64EnumAttr}
-import scair.dialects.builtin._
+import fastparse.*
+import scair.AttrParser
+import scair.EnumAttr.I64EnumAttr
+import scair.EnumAttr.I64EnumAttrCase
+import scair.Parser
+import scair.Parser.ValueId
+import scair.Parser.whitespace
+import scair.dialects.builtin.*
+import scair.exceptions.VerifyException
+import scair.ir.*
+
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.{Parser, AttrParser}
-import scair.Parser.{whitespace, ValueId}
-import scair.ir._
-import scair.exceptions.VerifyException
+import scala.math.max
 
 // ==---== //
 //  Enums

@@ -1,10 +1,12 @@
 import java.io.PrintWriter
 import sbt.util.FileInfo.full
-import sbt.internal.shaded.com.google.protobuf.compiler.PluginProtos.CodeGeneratorRequest
 import scala.sys.process._
 import java.io.File
 
-ThisBuild / scalaVersion := "3.3.1"
+ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+ThisBuild / scalacOptions += "-Wunused:imports"
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
@@ -98,14 +100,16 @@ filechecks / fileInputs += (baseDirectory.value / "tests" / "filecheck").toGlob 
 // Nicety to have sbt ~testAll running when develloping features or content!
 lazy val testAll = taskKey[Unit]("Run all tests")
 testAll := {
-  // Incremental format check
-  scalafmtCheckAll.value
   // Incremental unit tests
   (Test / testQuick).toTask("").value
   // Filechecks
   // Incrementality to add later!
   filechecks.value
 }
+
+addCommandAlias("formatCheckAll", "scalafixAll --check;scalafmtCheckAll;")
+
+addCommandAlias("formatAll", "scalafixAll;scalafmtAll;")
 
 ///////////////////////
 // Utility functions //

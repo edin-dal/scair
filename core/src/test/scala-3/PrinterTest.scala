@@ -1,16 +1,10 @@
 package scair
 
-import org.scalatest._
-import Inspectors._
-import flatspec._
-import matchers.should.Matchers._
-import prop._
-
-import scala.collection.mutable
-import Parser._
-
-import scair.dialects.builtin._
-import scair.ir._
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
+import scair.dialects.builtin.*
+import scair.ir.*
 
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 

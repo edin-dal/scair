@@ -1,8 +1,9 @@
 package scair.EnumAttr
-import fastparse._
-import scair.dialects.builtin.{IntegerType, Signless, I32, I64}
-import java.lang.StringBuilder
-import scair.ir._
+import fastparse.*
+import scair.dialects.builtin.I32
+import scair.dialects.builtin.I64
+import scair.dialects.builtin.IntegerType
+import scair.ir.*
 
 // ==--------------------------== //
 //   Enum Attribute Inhertiance   //

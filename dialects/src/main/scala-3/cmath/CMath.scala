@@ -1,9 +1,9 @@
 package scair.dialects.cmathgen
 
-import scair.scairdl.constraints._
-import scair.clair.mirrored._
-import scair.dialects.builtin.{FloatType}
-import scair.scairdl.irdef._
+import scair.clair.mirrored.*
+import scair.dialects.builtin.FloatType
+import scair.scairdl.constraints.*
+import scair.scairdl.irdef.*
 
 case class Complex(
     e1: Operand[FloatType]

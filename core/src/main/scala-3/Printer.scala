@@ -1,9 +1,9 @@
 package scair
 
-import fastparse._, MultiLineWhitespace._
+import fastparse.*
+import scair.ir.*
+
 import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import scair.ir._
 
 class Printer(val strictly_generic: Boolean) {
 

@@ -1,12 +1,12 @@
 package scair.scairdl.constraints
 
-import scala.reflect.ClassTag
-
-import scair.ir._
 import scair.exceptions.VerifyException
-import scala.util.Try
-import scala.util.Success
+import scair.ir.*
+
+import scala.reflect.ClassTag
 import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 // USEFUL COMMANDS
 

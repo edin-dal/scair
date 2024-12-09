@@ -1,14 +1,13 @@
 package scair
 
-import fastparse._
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-import scair.ir._
-import Parser._
-import java.lang.Float.intBitsToFloat
+import fastparse.*
+import scair.Parser.*
+import scair.dialects.affine.AffineMapP
+import scair.dialects.affine.AffineSetP
+import scair.dialects.builtin.*
+import scair.ir.*
 
-import scair.dialects.affine.{AffineMapP, AffineSetP}
-import scair.dialects.builtin._
+import java.lang.Float.intBitsToFloat
 
 class AttrParser(val ctx: MLContext) {
 

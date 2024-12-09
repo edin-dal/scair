@@ -1,19 +1,13 @@
 package scair
 
-import org.scalatest._
-import Inspectors._
-import flatspec._
-import matchers.should.Matchers._
-import prop._
-import Tables._
-import exceptions._
-
-import fastparse._, MultiLineWhitespace._
-import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
-
-import scair.ir._
-import scair.dialects.builtin._
+import fastparse.*
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
+import org.scalatest.prop.*
+import org.scalatest.prop.Tables.*
+import scair.dialects.builtin.*
+import scair.ir.*
 
 class ParserTest
     extends AnyFlatSpec

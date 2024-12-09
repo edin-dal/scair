@@ -1,29 +1,23 @@
 package scair.dialects.affine
 
-import fastparse._
+import scair.dialects.affine.*
+import scair.dialects.builtin.AffineMapAttr
+import scair.dialects.builtin.ArrayAttribute
+import scair.dialects.builtin.DenseArrayAttr
+import scair.dialects.builtin.DenseIntOrFPElementsAttr
+import scair.dialects.builtin.IndexType
+import scair.dialects.builtin.IntegerAttr
+import scair.dialects.builtin.IntegerType
+import scair.exceptions.VerifyException
+import scair.ir.*
+import scair.scairdl.constraints.AnyAttr
+import scair.scairdl.constraints.BaseAttr
+import scair.scairdl.constraints.ConstraintContext
+import scair.scairdl.constraints.IRDLConstraint
+import scair.scairdl.constraints.ParametrizedAttrConstraint
+
 import scala.collection.immutable
 import scala.collection.mutable
-
-import scair.dialects.affine._
-import scair.dialects.builtin.{
-  AffineMapAttr,
-  AffineSetAttr,
-  IntegerAttr,
-  IndexType,
-  DenseArrayAttr,
-  DenseIntOrFPElementsAttr,
-  ArrayAttribute,
-  IntegerType
-}
-import scair.exceptions.VerifyException
-import scair.ir._
-import scair.scairdl.constraints.{
-  IRDLConstraint,
-  ConstraintContext,
-  BaseAttr,
-  ParametrizedAttrConstraint,
-  AnyAttr
-}
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

@@ -1,27 +1,24 @@
 package scair.dialects.arithgen
 
-import fastparse._
-import scala.collection.immutable._
-import scala.collection.BitSetOps
-import scair.dialects.affine.floordiv
-import scair.ir.AttributeObject
-import scair.clair.mirrored.Operand
-import scair.dialects.builtin.FloatType
-import scair.clair.mirrored.OperationFE
-import scair.clair.mirrored.AttributeFE
-import scair.clair.mirrored.DialectFE
-import scair.clair.mirrored.Result
-import scair.clair.mirrored.Property
-import scair.scairdl.irdef.ScaIRDLDialect
-import scair.clair.mirrored.summonDialect
-import scair.scairdl.irdef.AttrEscapeHatch
-import scair.AttrParser
-import scair.ir.Attribute
+import fastparse.*
 import fastparse.ParsingRun
-import scair.scairdl.irdef.DialectDef.empty
-import scair.dialects.builtin.IntegerType
-import scair.dialects.builtin.IndexType
+import scair.AttrParser
 import scair.clair.mirrored.AnyAttribute
+import scair.clair.mirrored.DialectFE
+import scair.clair.mirrored.Operand
+import scair.clair.mirrored.OperationFE
+import scair.clair.mirrored.Property
+import scair.clair.mirrored.Result
+import scair.clair.mirrored.summonDialect
+import scair.dialects.builtin.FloatType
+import scair.dialects.builtin.IndexType
+import scair.dialects.builtin.IntegerType
+import scair.ir.Attribute
+import scair.ir.AttributeObject
+import scair.scairdl.irdef.AttrEscapeHatch
+import scair.scairdl.irdef.ScaIRDLDialect
+
+import scala.collection.immutable.*
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.

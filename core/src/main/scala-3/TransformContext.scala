@@ -1,7 +1,8 @@
 package scair.transformations
 
+import scair.*
+
 import scala.collection.mutable
-import scair._
 
 class TransformContext() {
 

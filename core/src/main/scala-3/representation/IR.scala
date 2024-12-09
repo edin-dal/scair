@@ -1,10 +1,13 @@
 package scair.ir
 
-import scala.collection.mutable.{Map, LinkedHashMap, ListBuffer}
-import scair.Parser._
-import scair.exceptions.VerifyException
-import fastparse._
-import scair.{Parser, Printer, AttrParser}
+import fastparse.*
+import scair.AttrParser
+import scair.Parser
+import scair.Parser.*
+import scair.Printer
+
+import scala.collection.mutable.LinkedHashMap
+import scala.collection.mutable.ListBuffer
 
 // ==---------== //
 // =---UTILS---= //
