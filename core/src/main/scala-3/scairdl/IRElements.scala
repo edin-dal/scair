@@ -612,8 +612,6 @@ case class OperationDef(
     ${results_verification(indent + 1)}
     ${regions_verification(indent + 1)}
     ${successors_verification(indent + 1)}
-    if (dictionaryProperties.size != ${OpProperty.length}) then throw new Exception(s"Expected ${OpProperty.length} properties, got $${dictionaryProperties.size}")
-    if (dictionaryAttributes.size != ${OpAttribute.length}) then throw new Exception(s"Expected ${OpAttribute.length} attributes, got $${dictionaryAttributes.size}")
 """
 
   def irdl_verification(implicit indent: Int): String = s"""

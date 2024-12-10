@@ -268,7 +268,7 @@ case class SymbolRefAttr(
 
 case class DenseArrayAttr(
     val typ: Attribute,
-    val data: Seq[Attribute]
+    val data: Seq[IntegerAttr | FloatAttr]
 ) extends ParametrizedAttribute("builtin.dense", Seq(typ, data))
     with Seq[Attribute] {
 

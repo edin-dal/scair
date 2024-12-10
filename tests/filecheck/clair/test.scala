@@ -150,8 +150,6 @@ object Main {
 // CHECK-NEXT:      if (results.length != 2) then throw new Exception(s"Expected 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 2) then throw new Exception(s"Expected 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 2) then throw new Exception(s"Expected 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      sing_op2_constr.verify(sing_op2.typ, verification_context)
@@ -274,8 +272,6 @@ object Main {
 // CHECK-NEXT:      if (results.length < 2) then throw new Exception(s"Expected at least 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      var_op1_constr.verify(var_op1.typ, verification_context)
@@ -466,8 +462,6 @@ object Main {
 // CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      var_op1_constr.verify(var_op1.typ, verification_context)

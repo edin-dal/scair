@@ -6,22 +6,24 @@ import scair.dialects.builtin.MemrefType
 import scair.ir.Attribute
 import scair.scairdl.constraints.*
 import scair.scairdl.irdef.*
+import scair.dialects.builtin.IntegerAttr
 
-case class AllocOp(
-    dynamicSizes: Operand[IndexType.type],
-    symbolOperands: Operand[IndexType.type],
-    memref: Result[MemrefType]
+case class Alloc(
+    dynamicSizes: Variadic[Operand[IndexType.type]],
+    symbolOperands: Variadic[Operand[IndexType.type]],
+    memref: Result[MemrefType],
+    alignment: Property[IntegerAttr]
 ) extends OperationFE
 
-case class DeallocOp(
+case class Dealloc(
     memref: Operand[MemrefType]
 ) extends OperationFE
-case class LoadOp(
+case class Load(
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
     result: Result[MemrefType]
 ) extends OperationFE
-case class StoreOp(
+case class Store(
     value: Operand[MemrefType],
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]]
@@ -29,5 +31,5 @@ case class StoreOp(
 
 object MemrefGen
     extends ScaIRDLDialect(
-      summonDialect[(AllocOp, DeallocOp, LoadOp, StoreOp)]("Memref")
+      summonDialect[(Alloc, Dealloc, Load, Store)]("Memref")
     )

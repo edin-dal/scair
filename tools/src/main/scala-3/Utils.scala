@@ -7,7 +7,7 @@ import scair.dialects.LingoDB.TupleStream.TupleStreamDialect
 import scair.dialects.affine.Affine
 import scair.dialects.arith.Arith
 import scair.dialects.cmath.CMath
-import scair.dialects.func.Func
+import scair.dialects._func._Func
 import scair.dialects.memref.Memref
 import scair.ir.Dialect
 
@@ -15,7 +15,7 @@ val allDialects: Seq[Dialect] =
   Seq(
     Arith,
     CMath,
-    Func,
+    _Func,
     Memref,
     TupleStreamDialect,
     DBOps,

@@ -19,6 +19,7 @@ import scair.scairdl.irdef.AttrEscapeHatch
 import scair.scairdl.irdef.ScaIRDLDialect
 
 import scala.collection.immutable.*
+import scair.dialects.builtin.IntegerAttr
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
@@ -116,83 +117,84 @@ type I64 = IntegerType
 // This specific kind (not all enums...) are implemented as i64 attributes
 // and only used differently in operation-level custom syntaxes (MLIR legacy, no fancy reason)
 // So it's just as fine as long as doing generic syntax goes.
-type IntegerPredicate = I64
+// TODO: Should be integerattr[i64] or smth but frontend doesn't support it yet.
+type IntegerPredicate = IntegerAttr
 
-case class AddfOp(
+case class Addf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
-    flags: Property[FastMathFlagsAttr]
+    fastmath: Property[FastMathFlagsAttr]
 ) extends OperationFE
-case class MulfOp(
+case class Mulf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
-    flags: Property[FastMathFlagsAttr]
+    fastmath: Property[FastMathFlagsAttr]
 ) extends OperationFE
-case class DivfOp(
+case class Divf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
-    flags: Property[FastMathFlagsAttr]
+    fastmath: Property[FastMathFlagsAttr]
 ) extends OperationFE
 // TODO Apparently there's a new overflow flag here, overlooking for now.
-case class AddiOp(
+case class Addi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class SubiOp(
+case class Subi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class MuliOp(
+case class Muli(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class DivuiOp(
+case class Divui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class DivsiOp(
+case class Divsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class RemuiOp(
+case class Remui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class RemsiOp(
+case class Remsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
-case class CmpiOp(
+case class Cmpi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[I1],
     predicate: Property[IntegerPredicate]
 ) extends OperationFE
-case class AndiOp(
+case class Andi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[I1]
 ) extends OperationFE
-case class OriOp(
+case class Ori(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[I1]
 ) extends OperationFE
-case class SitofpOp(
+case class Sitofp(
     in: Operand[AnyIntegerType],
     res: Result[FloatType]
 ) extends OperationFE
-case class IndexCastOp(
+case class IndexCast(
     in: Operand[IndexType.type],
     res: Result[IndexType.type]
 ) extends OperationFE
@@ -201,21 +203,21 @@ object ArithGen
     extends ScaIRDLDialect(
       summonDialect[
         (
-            AddfOp,
-            MulfOp,
-            DivfOp,
-            AddiOp,
-            SubiOp,
-            MuliOp,
-            DivuiOp,
-            DivsiOp,
-            RemuiOp,
-            RemsiOp,
-            CmpiOp,
-            AndiOp,
-            OriOp,
-            SitofpOp,
-            IndexCastOp
+            Addf,
+            Mulf,
+            Divf,
+            Addi,
+            Subi,
+            Muli,
+            Divui,
+            Divsi,
+            Remui,
+            Remsi,
+            Cmpi,
+            Andi,
+            Ori,
+            Sitofp,
+            IndexCast
         )
       ](
         "Arith",
