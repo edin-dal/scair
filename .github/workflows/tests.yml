@@ -89,6 +89,70 @@ jobs:
 
     steps:
 
+    ##############
+    # MLIR SETUP #
+    ##############
+
+    # Get from cache
+    - name: Cache MLIR build
+      id: cache-binary
+      uses: actions/cache@v4
+      with:
+        path: llvm-project/build
+        key: mlir-${{ runner.os }}-${{ env.MLIR-Version }}
+        restore-keys: mlir-${{ runner.os }}-${{ env.MLIR-Version }}
+      
+    # Otherwise, get it and build it
+      
+    - name: Checkout MLIR
+      if: steps.cache-binary.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: llvm/llvm-project.git
+        path: llvm-project
+        ref: ${{ env.MLIR-Version }}
+
+    - name: Clang Setup
+      if: steps.cache-binary.outputs.cache-hit != 'true'
+      uses: egor-tensin/setup-clang@v1
+
+    - name: Ninja Setup
+      if: steps.cache-binary.outputs.cache-hit != 'true'
+      uses: lukka/get-cmake@9e431acfe656e5db66cd4930386328fce59cfaba
+
+    - name: MLIR configuration
+      if: steps.cache-binary.outputs.cache-hit != 'true'
+      run: |
+        mkdir llvm-project/build
+        cd llvm-project/build
+        cmake -G Ninja ../llvm \
+          -DLLVM_ENABLE_PROJECTS=mlir \
+          -DLLVM_TARGETS_TO_BUILD="Native" \
+          -DLLVM_ENABLE_LLD=ON \
+          -DLLVM_INCLUDE_BENCHMARKS=OFF \
+          -DLLVM_INCLUDE_EXAMPLES=OFF \
+          -DLLVM_INCLUDE_TESTS=OFF \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_BUILD_TYPE=Release
+
+    - name: MLIR build
+      if: steps.cache-binary.outputs.cache-hit != 'true'
+      run: |
+        cd llvm-project/build
+        cmake --build . --target mlir-opt mlir-cpu-runner
+    
+    # Either way, install from build directory
+
+    - name: MLIR install
+      run: |
+        cd llvm-project/build
+        cmake --build . --target install
+    
+    #############
+    # FILECHECK #
+    #############
+
     - name: Python Setup
       uses: actions/setup-python@v5
       with:
