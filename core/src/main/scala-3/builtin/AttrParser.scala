@@ -216,6 +216,32 @@ class AttrParser(val ctx: MLContext) {
 
   def Encoding[$: P] = P(AttributeValue)
 
+  /////////////////
+  // MEMREF TYPE //
+  /////////////////
+
+  // memref-type           ::=   `memref` `<` (ranked-memref-type | unranked-memref-type) `>`
+  // ranked-memref-type    ::=   dimension-list type
+  // unranked-memref-type  ::=   `*` `x` type
+  // dimension-list        ::=   (dimension `x`)*
+  // dimension             ::=   `?` | decimal-literal
+
+  def MemrefTypeP[$: P]: P[MemrefType] = P(
+    "memref" ~ "<" ~/ (UnrankedMemrefTypeP | RankedMemrefTypeP) ~ ">"
+  )
+
+  def RankedMemrefTypeP[$: P]: P[MemrefType] = P(
+    DimensionList ~ Type ~ ("," ~ Encoding).?
+  ).map((x: (ArrayAttribute[IntData], Attribute, Option[Attribute])) =>
+    RankedMemrefType(
+      dimensionList = x._1.data,
+      typ = x._2
+    )
+  )
+
+  def UnrankedMemrefTypeP[$: P]: P[MemrefType] =
+    P("*" ~ "x" ~ Type).map((x: Attribute) => UnrankedMemrefType(typ = x))
+
   //////////////////////////
   // SYMBOL REF ATTRIBUTE //
   //////////////////////////
@@ -298,6 +324,7 @@ class AttrParser(val ctx: MLContext) {
       DenseArrayAttributeP |
       StringAttributeP |
       TensorTypeP |
+      MemrefTypeP |
       SymbolRefAttrP |
       FloatAttrP |
       IntegerAttrP |
