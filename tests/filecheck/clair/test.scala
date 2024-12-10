@@ -150,8 +150,6 @@ object Main {
 // CHECK-NEXT:      if (results.length != 2) then throw new Exception(s"Expected 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 2) then throw new Exception(s"Expected 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 2) then throw new Exception(s"Expected 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      sing_op2_constr.verify(sing_op2.typ, verification_context)
@@ -274,8 +272,6 @@ object Main {
 // CHECK-NEXT:      if (results.length < 2) then throw new Exception(s"Expected at least 2 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      var_op1_constr.verify(var_op1.typ, verification_context)
@@ -330,16 +326,16 @@ object Main {
 // CHECK-NEXT:        case _ => throw new Exception("Unreachable exception as per above constraint check.")
 // CHECK-NEXT:      }
 
-// CHECK:         def sing_op1: Value[Attribute] = operands(operandSegmentSizes.slice(0, 0).reduce(_ + _))
-// CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 0).reduce(_ + _)) = new_operand}
+// CHECK:         def sing_op1: Value[Attribute] = operands(operandSegmentSizes.slice(0, 0).fold(0)(_ + _))
+// CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 0).fold(0)(_ + _)) = new_operand}
 
 // CHECK:         def var_op1: Seq[Value[Attribute]] = {
-// CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 1).reduce(_ + _)
+// CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 1).fold(0)(_ + _)
 // CHECK-NEXT:        val to = from + operandSegmentSizes(1)
 // CHECK-NEXT:        operands.slice(from, to).toSeq
 // CHECK-NEXT:    }
 // CHECK-NEXT:    def var_op1_=(new_operands: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 1).reduce(_ + _)
+// CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 1).fold(0)(_ + _)
 // CHECK-NEXT:      val to = from + operandSegmentSizes(1)
 // CHECK-NEXT:      val diff = new_operands.length - (to - from)
 // CHECK-NEXT:      for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
@@ -349,12 +345,12 @@ object Main {
 // CHECK-NEXT:    }
 
 // CHECK:         def var_op2: Seq[Value[Attribute]] = {
-// CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 2).reduce(_ + _)
+// CHECK-NEXT:        val from = operandSegmentSizes.slice(0, 2).fold(0)(_ + _)
 // CHECK-NEXT:        val to = from + operandSegmentSizes(2)
 // CHECK-NEXT:        operands.slice(from, to).toSeq
 // CHECK-NEXT:    }
 // CHECK-NEXT:    def var_op2_=(new_operands: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 2).reduce(_ + _)
+// CHECK-NEXT:      val from = operandSegmentSizes.slice(0, 2).fold(0)(_ + _)
 // CHECK-NEXT:      val to = from + operandSegmentSizes(2)
 // CHECK-NEXT:      val diff = new_operands.length - (to - from)
 // CHECK-NEXT:      for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
@@ -363,19 +359,19 @@ object Main {
 // CHECK-NEXT:        operands.trimEnd(-diff)
 // CHECK-NEXT:    }
 
-// CHECK:         def sing_op2: Value[Attribute] = operands(operandSegmentSizes.slice(0, 3).reduce(_ + _))
-// CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 3).reduce(_ + _)) = new_operand}
+// CHECK:         def sing_op2: Value[Attribute] = operands(operandSegmentSizes.slice(0, 3).fold(0)(_ + _))
+// CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 3).fold(0)(_ + _)) = new_operand}
 
-// CHECK:         def sing_res1: Value[Attribute] = results(resultSegmentSizes.slice(0, 0).reduce(_ + _))
-// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 0).reduce(_ + _)) = new_result}
+// CHECK:         def sing_res1: Value[Attribute] = results(resultSegmentSizes.slice(0, 0).fold(0)(_ + _))
+// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 0).fold(0)(_ + _)) = new_result}
 
 // CHECK:         def var_res1: Seq[Value[Attribute]] = {
-// CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 1).reduce(_ + _)
+// CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 1).fold(0)(_ + _)
 // CHECK-NEXT:        val to = from + resultSegmentSizes(1)
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
 // CHECK-NEXT:    def var_res1_=(new_results: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 1).reduce(_ + _)
+// CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 1).fold(0)(_ + _)
 // CHECK-NEXT:      val to = from + resultSegmentSizes(1)
 // CHECK-NEXT:      val diff = new_results.length - (to - from)
 // CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
@@ -385,12 +381,12 @@ object Main {
 // CHECK-NEXT:    }
 
 // CHECK:         def var_res2: Seq[Value[Attribute]] = {
-// CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 2).reduce(_ + _)
+// CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 2).fold(0)(_ + _)
 // CHECK-NEXT:        val to = from + resultSegmentSizes(2)
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
 // CHECK-NEXT:    def var_res2_=(new_results: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 2).reduce(_ + _)
+// CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 2).fold(0)(_ + _)
 // CHECK-NEXT:      val to = from + resultSegmentSizes(2)
 // CHECK-NEXT:      val diff = new_results.length - (to - from)
 // CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
@@ -399,8 +395,8 @@ object Main {
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
 
-// CHECK:         def sing_res2: Value[Attribute] = results(resultSegmentSizes.slice(0, 3).reduce(_ + _))
-// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 3).reduce(_ + _)) = new_result}
+// CHECK:         def sing_res2: Value[Attribute] = results(resultSegmentSizes.slice(0, 3).fold(0)(_ + _))
+// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 3).fold(0)(_ + _)) = new_result}
 
 // CHECK:         def region1: Region = regions(0)
 // CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}
@@ -456,18 +452,16 @@ object Main {
 // CHECK:         override def custom_verify(): Unit =
 // CHECK-NEXT:      val verification_context = new ConstraintContext()
 
-// CHECK:           val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
+// CHECK:           val operandSegmentSizesSum = operandSegmentSizes.fold(0)(_ + _)
 // CHECK-NEXT:      if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected ${operandSegmentSizesSum} operands, got ${operands.length}")
 // CHECK-NEXT:      if operandSegmentSizes(0) != 1 then throw new Exception(s"operand segment size expected to be 1 for singular operand sing_op1 at index 0, got ${operandSegmentSizes(0)}")
 // CHECK-NEXT:      if operandSegmentSizes(3) != 1 then throw new Exception(s"operand segment size expected to be 1 for singular operand sing_op2 at index 3, got ${operandSegmentSizes(3)}")
-// CHECK-NEXT:      val resultSegmentSizesSum = resultSegmentSizes.reduce(_ + _)
+// CHECK-NEXT:      val resultSegmentSizesSum = resultSegmentSizes.fold(0)(_ + _)
 // CHECK-NEXT:      if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected ${resultSegmentSizesSum} results, got ${results.length}")
 // CHECK-NEXT:      if resultSegmentSizes(0) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result sing_res1 at index 0, got ${resultSegmentSizes(0)}")
 // CHECK-NEXT:      if resultSegmentSizes(3) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result sing_res2 at index 3, got ${resultSegmentSizes(3)}")
 // CHECK-NEXT:      if (regions.length < 2) then throw new Exception(s"Expected at least 2 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length < 2) then throw new Exception(s"Expected at least 2 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           sing_op1_constr.verify(sing_op1.typ, verification_context)
 // CHECK-NEXT:      var_op1_constr.verify(var_op1.typ, verification_context)

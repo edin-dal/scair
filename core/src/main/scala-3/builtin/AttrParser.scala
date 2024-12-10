@@ -165,9 +165,15 @@ class AttrParser(val ctx: MLContext) {
   // dense-array-attribute  ::=  `array` `<` (integer-type | float-type) (`:` tensor-literal)? `>`
 
   def DenseArrayAttributeP[$: P]: P[DenseArrayAttr] = P(
-    "array<" ~ ((AttributeValue) ~ (":" ~ AttributeValue.rep(sep = ",")).?.map(
+    "array<" ~ (((IntegerTypeP) ~ (":" ~ IntDataP.rep(sep = ",")).?.map(
       _.getOrElse(Seq())
-    )).map((typ: Attribute, x: Seq[Attribute]) => DenseArrayAttr(typ, x)) ~ ">"
+    )).map((typ: IntegerType, x: Seq[IntData]) =>
+      DenseArrayAttr(typ, x.map(IntegerAttr(_, typ)))
+    ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).?.map(
+      _.getOrElse(Seq())
+    )).map((typ: FloatType, x: Seq[FloatData]) =>
+      DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
+    )) ~ ">"
   )
 
   //////////////////////

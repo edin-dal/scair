@@ -80,8 +80,6 @@ object CMathGen
 // CHECK-NEXT:      if (results.length != 1) then throw new Exception(s"Expected 1 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 1) then throw new Exception(s"Expected 1 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 0) then throw new Exception(s"Expected 0 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           e1_constr.verify(e1.typ, verification_context)
 // CHECK-NEXT:      e2_constr.verify(e2.typ, verification_context)
@@ -120,8 +118,6 @@ object CMathGen
 // CHECK-NEXT:      if (results.length != 1) then throw new Exception(s"Expected 1 results, got ${results.length}")
 // CHECK-NEXT:      if (regions.length != 0) then throw new Exception(s"Expected 0 regions, got ${regions.length}")
 // CHECK-NEXT:      if (successors.length != 0) then throw new Exception(s"Expected 0 successors, got ${successors.length}")
-// CHECK-NEXT:      if (dictionaryProperties.size != 0) then throw new Exception(s"Expected 0 properties, got ${dictionaryProperties.size}")
-// CHECK-NEXT:      if (dictionaryAttributes.size != 0) then throw new Exception(s"Expected 0 attributes, got ${dictionaryAttributes.size}")
 
 // CHECK:           e1_constr.verify(e1.typ, verification_context)
 // CHECK-NEXT:      e2_constr.verify(e2.typ, verification_context)
