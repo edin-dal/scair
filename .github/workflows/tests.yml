@@ -86,6 +86,8 @@ jobs:
     name: "Filechecks"
 
     runs-on: ubuntu-latest
+    env:
+      MLIR-Version: d401987fe349a87c53fe25829215b080b70c0c1a
 
     steps:
 
