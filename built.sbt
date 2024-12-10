@@ -42,6 +42,7 @@ lazy val gen_dialects =
         "scair.dialects.arithgen.ArithGen",
         "scair.dialects.cmathgen.CMathGen",
         "scair.dialects.funcgen.FuncGen",
+        "scair.dialects.llvmgen.LLVMGen",
         "scair.dialects.memrefgen.MemrefGen"
       ),
       // Add the generated sources to the source directories
