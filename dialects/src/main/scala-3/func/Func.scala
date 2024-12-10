@@ -2,8 +2,8 @@ package scair.dialects.funcgen
 
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
-import scair.scairdl.irdef.ScaIRDLDialect
 import scair.ir.Attribute
+import scair.scairdl.irdef.ScaIRDLDialect
 
 case class CallOp(
     callee: Property[SymbolRefAttr],
