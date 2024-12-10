@@ -1,10 +1,11 @@
 package scair.dialects.memrefgen
 
-import scair.scairdl.constraints._
-import scair.clair.mirrored._
-import scair.scairdl.irdef._
+import scair.clair.mirrored.*
+import scair.dialects.builtin.IndexType
+import scair.dialects.builtin.MemrefType
 import scair.ir.Attribute
-import scair.dialects.builtin.{MemrefType, IndexType}
+import scair.scairdl.constraints.*
+import scair.scairdl.irdef.*
 
 case class AllocOp(
     dynamicSizes: Operand[IndexType.type],
