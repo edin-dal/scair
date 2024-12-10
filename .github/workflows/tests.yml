@@ -144,13 +144,6 @@ jobs:
         cd llvm-project/build
         cmake --build . --target mlir-opt mlir-cpu-runner
     
-    # Either way, install from build directory
-
-    - name: MLIR install
-      run: |
-        cd llvm-project/build
-        cmake --build . --target install
-    
     #############
     # FILECHECK #
     #############
@@ -192,4 +185,6 @@ jobs:
         apps: scala:3.3.1 sbt
         
     - name: Filechecks and dependencies
-      run: sbt filechecks
+      run: |
+        export PATH=$PATH:${GITHUB_WORKSPACE}/llvm-project/build/bin/
+        sbt filechecks
