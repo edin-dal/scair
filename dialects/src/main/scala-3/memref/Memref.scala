@@ -2,11 +2,11 @@ package scair.dialects.memrefgen
 
 import scair.clair.mirrored.*
 import scair.dialects.builtin.IndexType
+import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.MemrefType
 import scair.ir.Attribute
 import scair.scairdl.constraints.*
 import scair.scairdl.irdef.*
-import scair.dialects.builtin.IntegerAttr
 
 case class Alloc(
     dynamicSizes: Variadic[Operand[IndexType.type]],

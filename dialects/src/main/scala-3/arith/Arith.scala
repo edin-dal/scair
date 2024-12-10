@@ -12,6 +12,7 @@ import scair.clair.mirrored.Result
 import scair.clair.mirrored.summonDialect
 import scair.dialects.builtin.FloatType
 import scair.dialects.builtin.IndexType
+import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
 import scair.ir.Attribute
 import scair.ir.AttributeObject
@@ -19,7 +20,6 @@ import scair.scairdl.irdef.AttrEscapeHatch
 import scair.scairdl.irdef.ScaIRDLDialect
 
 import scala.collection.immutable.*
-import scair.dialects.builtin.IntegerAttr
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
