@@ -992,14 +992,6 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] type-alias-def ::= `!` alias-name `=` type
   // [x] type-alias ::= `!` alias-name
 
-  def ParenTypeList[$: P] = P(
-    "(" ~ Type.rep(sep = ",") ~ ")"
-  )
-
-  def FunctionType[$: P] = P(
-    ParenTypeList ~ "->" ~ (ParenTypeList | Type.rep(exactly = 1))
-  )
-
   def TypeAliasDef[$: P] = P(
     "!" ~~ AliasName ~ "=" ~ Type
   )

@@ -253,13 +253,13 @@ case class UnrankedMemrefType(override val typ: Attribute)
 
 case class SymbolRefAttr(
     val rootRef: StringData,
-    val nestedRefs: ArrayAttribute[StringData]
+    val nestedRefs: Seq[StringData]
 ) extends ParametrizedAttribute(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)
     ) {
   override def custom_print =
-    s"@${rootRef.data}::${nestedRefs.data.map(x => s"@${x.data}").mkString("::")}"
+    (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
 }
 
 ////////////////////
@@ -307,6 +307,29 @@ case class DenseArrayAttr(
   def length: Int = data.length
 
   def iterator: Iterator[Attribute] = data.iterator
+}
+
+//////////////////
+// FunctionType //
+//////////////////
+
+case class FunctionType(
+    val inputs: Seq[Attribute],
+    val outputs: Seq[Attribute]
+) extends ParametrizedAttribute(
+      "builtin.function_type",
+      Seq(inputs, outputs)
+    )
+    with TypeAttribute {
+
+  override def custom_print = {
+    val inputsString = inputs.map(_.custom_print).mkString(", ")
+    val outputsString = outputs.map(_.custom_print).mkString(", ")
+    outputs.length match {
+      case 1 => s"(${inputsString}) -> ${outputsString}"
+      case _ => s"(${inputsString}) -> (${outputsString})"
+    }
+  }
 }
 
 //////////////////////////////

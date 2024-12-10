@@ -251,7 +251,7 @@ class AttrParser(val ctx: MLContext) {
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringData(x),
-      ArrayAttribute(y.map(z => StringData(z)))
+      y.map(z => StringData(z))
     )
   )
 
@@ -316,12 +316,31 @@ class AttrParser(val ctx: MLContext) {
   // BUILT IN //
   //////////////
 
+  ///////////////////
+  // FUNCTION TYPE //
+  ///////////////////
+
+  def ParenTypeList[$: P] = P(
+    "(" ~ Type.rep(sep = ",") ~ ")"
+  )
+
+  def FunctionType[$: P] = P(
+    ParenTypeList ~ "->" ~ (ParenTypeList | Type.rep(exactly = 1))
+  )
+
+  def FunctionTypeP[$: P]: P[FunctionType] = P(
+    FunctionType.map((inputs, outputs) =>
+      scair.dialects.builtin.FunctionType(inputs, outputs)
+    )
+  )
+
   def BuiltIn[$: P]: P[Attribute] = P(
     FloatTypeP |
       IntegerTypeP |
       IndexTypeP |
       ArrayAttributeP |
       DenseArrayAttributeP |
+      FunctionTypeP |
       StringAttributeP |
       TensorTypeP |
       MemrefTypeP |
@@ -329,8 +348,7 @@ class AttrParser(val ctx: MLContext) {
       FloatAttrP |
       IntegerAttrP |
       DenseIntOrFPElementsAttrP |
-      AffineMapAttrP |
-      AffineSetAttrP
+      AffineMapAttrP | AffineSetAttrP
   )
 
   def main(args: Array[String]): Unit = {

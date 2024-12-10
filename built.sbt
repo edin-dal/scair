@@ -41,6 +41,7 @@ lazy val gen_dialects =
       dialect_source := Seq(
         "scair.dialects.arithgen.ArithGen",
         "scair.dialects.cmathgen.CMathGen",
+        "scair.dialects.funcgen.FuncGen",
         "scair.dialects.memrefgen.MemrefGen"
       ),
       // Add the generated sources to the source directories
