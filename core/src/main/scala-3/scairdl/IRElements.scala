@@ -243,7 +243,7 @@ case class OperationDef(
   def segmented_single_operand_accessor(name: String, index: String) =
     single_operand_accessor(
       name,
-      s"operandSegmentSizes.slice(0, $index).reduce(_ + _)"
+      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)"
     )
 
   def variadic_operand_accessor(name: String, from: String, to: String) =
@@ -265,7 +265,7 @@ case class OperationDef(
   def segmented_variadic_operand_accessor(name: String, index: String) =
     variadic_operand_accessor(
       name,
-      s"operandSegmentSizes.slice(0, $index).reduce(_ + _)",
+      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)",
       s"from + operandSegmentSizes($index)"
     )
 
@@ -322,7 +322,7 @@ case class OperationDef(
   def segmented_single_result_accessor(name: String, index: String) =
     single_result_accessor(
       name,
-      s"resultSegmentSizes.slice(0, $index).reduce(_ + _)"
+      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)"
     )
 
   // TODO: We *probably* really don't want this setter or at least that way.
@@ -347,7 +347,7 @@ case class OperationDef(
   def segmented_variadic_result_accessor(name: String, index: String) =
     variadic_result_accessor(
       name,
-      s"resultSegmentSizes.slice(0, $index).reduce(_ + _)",
+      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)",
       s"from + resultSegmentSizes($index)"
     )
 
@@ -551,7 +551,7 @@ case class OperationDef(
         s"""if (operands.length < ${operands.length - 1}) then throw new Exception(s"Expected at least ${operands.length - 1} operands, got $${operands.length}")"""
       }
       case _: Int => {
-        s"""val operandSegmentSizesSum = operandSegmentSizes.reduce(_ + _)
+        s"""val operandSegmentSizesSum = operandSegmentSizes.fold(0)(_ + _)
     if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
           (for (
             (odef, i) <- operands.zipWithIndex.filter(
@@ -572,7 +572,7 @@ case class OperationDef(
         s"""if (results.length < ${results.length - 1}) then throw new Exception(s"Expected at least ${results.length - 1} results, got $${results.length}")"""
       }
       case _: Int => {
-        s"""val resultSegmentSizesSum = resultSegmentSizes.reduce(_ + _)
+        s"""val resultSegmentSizesSum = resultSegmentSizes.fold(0)(_ + _)
     if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected $${resultSegmentSizesSum} results, got $${results.length}")\n""" +
           (for (
             (odef, i) <- results.zipWithIndex.filter(

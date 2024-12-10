@@ -21,10 +21,10 @@ case class Dealloc(
 case class Load(
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
-    result: Result[MemrefType]
+    result: Result[AnyAttribute]
 ) extends OperationFE
 case class Store(
-    value: Operand[MemrefType],
+    value: Operand[AnyAttribute],
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]]
 ) extends OperationFE
