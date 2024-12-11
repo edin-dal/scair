@@ -443,8 +443,9 @@ object Parser {
 
   def sequenceValues(value: (String, Option[Long])): Seq[String] =
     value match {
-      case (name, Some(totalNo)) => (0 to totalNo.toInt).map(no => s"$name#$no")
-      case (name, None)          => Seq(name)
+      case (name, Some(totalNo)) =>
+        (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
+      case (name, None) => Seq(name)
     }
 
   def OpResult[$: P] =
@@ -672,7 +673,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     if (resultNames.length != resultTypes.length) {
       throw new Exception(
-        s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
+        s"Number of results (${resultNames.length}) does not match the number of the corresponding result types (${resultTypes.length}) in \"${opName}\"."
       )
     }
 
@@ -800,7 +801,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     if (results.length != resultsTypes.length) {
       throw new Exception(
-        s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
+        s"Number of results (${results.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
     }
 
