@@ -23,10 +23,12 @@ class ParserTest
       case "Failure" => Parsed.Failure(_, _, _)
     }
 
-  var parser: Parser = new Parser(new MLContext())
+  val ctx = new MLContext()
+  val args = scair.core.utils.Args(allow_unregistered = true)
+  var parser: Parser = new Parser(ctx, args)
 
   before {
-    parser = new Parser(new MLContext())
+    parser = new Parser(ctx, args)
   }
 
   val digitTests = Table(
@@ -244,7 +246,7 @@ class ParserTest
       parser.parseThis(
         text =
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"() : () -> (i32, i64, i32)\n" +
+            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
         pattern = parser.Region(_)
       ) should matchPattern {
@@ -323,7 +325,7 @@ class ParserTest
         parser.parseThis(
           text =
             "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"() : () -> (i32, i64, i32)\n" +
+              "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
               "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
           pattern = parser.Region(_)
         )
@@ -334,7 +336,7 @@ class ParserTest
   "Operation  Test - Failure" should "Test faulty Operation IR" in {
     withClue("Test 2: ") {
 
-      val text = """"test.op"[^bb3]({
+      val text = """"op1"()[^bb3]({
                    |^bb3(%4: i32):
                    |  %5, %6, %7 = "test.op"() : () -> (i32, i64, i32)
                    |  "test.op"(%6, %5) : (i64, i32) -> ()
@@ -354,7 +356,7 @@ class ParserTest
 
   "Operation  Test" should "Test forward block reference" in {
     withClue("Test 3:") {
-      val text = """"test.op"({
+      val text = """"op1"()({
                  |  ^bb3():
                  |    "test.op"()[^bb4] : () -> ()
                  |  ^bb4():

@@ -15,13 +15,14 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 
   val ctx = new MLContext()
   ctx.registerDialect(CMathDialect)
+  val args = scair.core.utils.Args(allow_unregistered = true)
 
-  var parser = new Parser(ctx)
+  var parser = new Parser(ctx, args)
 
   var printer = new Printer(true)
 
   before {
-    parser = new Parser(ctx)
+    parser = new Parser(ctx, args)
     printer = new Printer(true)
   }
 
@@ -49,7 +50,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Cmath simple object creation test :)" should "match parsed string against expected string" in {
 
-    val input = """"test.op"() ({
+    val input = """"op1"() ({
                    |^bb0(%1 : f32, %3 : f32, %4 : f32):
                    |    %0 = "cmath.norm"(%1) : (f32) -> (f64)
                    |    %2 = "cmath.mul"(%3, %4) : (f32, f32) -> (f32)

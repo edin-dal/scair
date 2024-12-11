@@ -18,7 +18,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   var printer = new Printer(true)
 
   before {
-    parser = new Parser(ctx)
+    parser = new Parser(ctx, args)
     printer = new Printer(true)
   }
 
@@ -202,7 +202,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         )
       )
 
-    val expected = """"test.op"() ({
+    val expected = """"op1"() ({
                      |^bb0(%0: f128):
                      |  %1, %2, %3 = "test.op"() : () -> (f32, f64, f80)
                      |  "test.op"(%2, %1) : (f64, f32) -> ()
@@ -289,7 +289,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         )
       )
 
-    val input = """"test.op"({
+    val input = """"op1"()({
                      |  ^bb0(%0: f16):
                      |    %1, %2, %3 = "test.op"() : () -> (f32, f64, f80)
                      |    "test.op"(%2, %1) : (f64, f32) -> ()
@@ -309,7 +309,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   "parsingInteger" should "match parsed string against expected string" in {
 
-    val input = """"test.op"({
+    val input = """"op1"()({
                      |  ^bb0(%0: f128):
                      |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
                      |  }) : () -> ()""".stripMargin

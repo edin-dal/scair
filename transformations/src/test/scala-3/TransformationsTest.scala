@@ -24,11 +24,12 @@ class TransformationsTest
   val ctx = new MLContext()
   ctx.registerDialect(CMathDialect)
 
-  var parser: Parser = new Parser(ctx)
+  val args = scair.core.utils.Args(allow_unregistered = true)
+  var parser: Parser = new Parser(ctx, args)
   var printer = new Printer(true)
 
   before {
-    parser = new Parser(ctx)
+    parser = new Parser(ctx, args)
     printer = new Printer(true)
   }
 
