@@ -1,11 +1,11 @@
 package scair.dialects.llvmgen
 
 import scair.clair.mirrored.*
+import scair.dialects.builtin.DenseArrayAttr
+import scair.dialects.builtin.IntegerType
 import scair.ir.Attribute
 import scair.scairdl.constraints.*
 import scair.scairdl.irdef.*
-import scair.dialects.builtin.IntegerType
-import scair.dialects.builtin.DenseArrayAttr
 
 case class Ptr(
 ) extends AttributeFE

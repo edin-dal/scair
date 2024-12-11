@@ -9,8 +9,8 @@ import scair.dialects.arith.ArithDialect
 import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.cmath.CMathDialect
 import scair.dialects.func.FuncDialect
-import scair.dialects.memref.MemrefDialect
 import scair.dialects.llvm.LLVMDialect
+import scair.dialects.memref.MemrefDialect
 import scair.dialects.test.Test
 import scair.ir.Dialect
 
