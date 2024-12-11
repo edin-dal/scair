@@ -7,22 +7,22 @@ import scair.scairdl.irdef.*
 import scair.dialects.builtin.IntegerType
 import scair.dialects.builtin.DenseIntOrFPElementsAttr
 
-case class PtrType(
+case class Ptr(
 ) extends AttributeFE
     with TypeAttributeFE
-case class LoadOp(
-    ptr: Operand[PtrType],
+case class Load(
+    ptr: Operand[Ptr],
     result: Result[Attribute]
 ) extends OperationFE
-case class GetElementPtrOp(
-    base: Operand[PtrType],
+case class GetElementPtr(
+    base: Operand[Ptr],
     dynamicIndices: Variadic[Operand[IntegerType]],
-    res: Result[PtrType],
+    res: Result[Ptr],
     rawConstantIndices: Property[DenseIntOrFPElementsAttr],
     elem_type: Property[Attribute]
 ) extends OperationFE
 
 object LLVMGen
     extends ScaIRDLDialect(
-      summonDialect[(GetElementPtrOp, PtrType, LoadOp)]("LLVM")
+      summonDialect[(GetElementPtr, Ptr, Load)]("LLVM")
     )
