@@ -14,7 +14,7 @@ import scair.ir.*
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 
   val ctx = new MLContext()
-  ctx.registerDialect(CMath)
+  ctx.registerDialect(CMathDialect)
 
   var parser = new Parser(ctx)
 

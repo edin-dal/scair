@@ -22,7 +22,7 @@ class TransformationsTest
 //       case "Failure" => Parsed.Failure(_, _, _)
 //     }
   val ctx = new MLContext()
-  ctx.registerDialect(CMath)
+  ctx.registerDialect(CMathDialect)
 
   var parser: Parser = new Parser(ctx)
   var printer = new Printer(true)

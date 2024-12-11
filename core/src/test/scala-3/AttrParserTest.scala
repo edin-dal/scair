@@ -13,7 +13,8 @@ import scair.ir.*
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   val ctx = MLContext()
-  var parser = new Parser(ctx)
+  val args = scair.core.utils.Args(allow_unregistered = true)
+  var parser = new Parser(ctx, args)
   var printer = new Printer(true)
 
   before {

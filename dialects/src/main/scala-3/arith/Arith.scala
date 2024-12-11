@@ -11,7 +11,6 @@ import scair.clair.mirrored.Property
 import scair.clair.mirrored.Result
 import scair.clair.mirrored.summonDialect
 import scair.dialects.builtin.FloatType
-import scair.dialects.builtin.IndexType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
 import scair.ir.Attribute

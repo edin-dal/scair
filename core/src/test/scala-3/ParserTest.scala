@@ -200,8 +200,8 @@ class ParserTest
     withClue("Test 1: ") {
       parser.parseThis(
         text =
-          "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op"() : () -> (i32, i64, i32)\n" +
-            "\"test.op"(%1, %0) : (i64, i32) -> ()",
+          "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+            "\"test.op\"(%1, %0) : (i64, i32) -> ()",
         pattern = parser.Block(_)
       ) should matchPattern {
         case Parsed.Success(
@@ -243,9 +243,9 @@ class ParserTest
     withClue("Test 1: ") {
       parser.parseThis(
         text =
-          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op"() : () -> (i32, i64, i32)\n" +
-            "\"test.op"() : () -> (i32, i64, i32)\n" +
-            "\"test.op"(%8, %7) : (i64, i32) -> ()" + "}",
+          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+            "\"test.op\"() : () -> (i32, i64, i32)\n" +
+            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
         pattern = parser.Region(_)
       ) should matchPattern {
         case Parsed.Success(
@@ -322,9 +322,9 @@ class ParserTest
       val exception = intercept[Exception](
         parser.parseThis(
           text =
-            "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op"() : () -> (i32, i64, i32)\n" +
-              "\"test.op"() : () -> (i32, i64, i32)\n" +
-              "\"test.op"(%8, %7) : (i64, i32) -> ()" + "}",
+            "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+              "\"test.op\"() : () -> (i32, i64, i32)\n" +
+              "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
           pattern = parser.Region(_)
         )
       ).getMessage shouldBe "Block cannot be defined twice within the same scope - ^bb0"
@@ -384,7 +384,7 @@ class ParserTest
   "TopLevel Tests" should "Test full programs" in {
     withClue("Test 1: ") {
       parser.parseThis(
-        text = "%0, %1, %2 = \"test.op"() : () -> (i32, i64, i32)",
+        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
         pattern = parser.TopLevel(_)
       ) should matchPattern {
         case Parsed.Success(
