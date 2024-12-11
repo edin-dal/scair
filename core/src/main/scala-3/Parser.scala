@@ -892,7 +892,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(OperationPat.rep(at_least_this_many).map(_.to(ListType)))
 
   def OperationPat[$: P]: P[Operation] = P(
-    OpResultList.?.map(
+    OpResultList.?./.map(
       optionlessSeq
     ).flatMap(Op(_)) ~/ TrailingLocation.?
   )
@@ -905,11 +905,11 @@ class Parser(val context: MLContext, val args: Args = Args())
   })
 
   def GenericOperation[$: P](resNames: Seq[String]) = P(
-    StringLiteral ~ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
-      ~ SuccessorList.?.map(optionlessSeq)
-      ~ DictionaryProperties.?.map(optionlessSeq)
-      ~ RegionList.?.map(optionlessSeq)
-      ~ DictionaryAttribute.?.map(optionlessSeq) ~ ":" ~ FunctionType
+    StringLiteral ~/ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
+      ~/ SuccessorList.?.map(optionlessSeq)
+      ~/ DictionaryProperties.?.map(optionlessSeq)
+      ~/ RegionList.?.map(optionlessSeq)
+      ~/ DictionaryAttribute.?.map(optionlessSeq) ~/ ":" ~/ FunctionType
   ).map(generateOperation(resNames, _))
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(

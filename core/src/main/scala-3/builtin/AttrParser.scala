@@ -30,6 +30,9 @@ class AttrParser(val ctx: MLContext) {
         case Some(y) =>
           y.parse(this)
         case None =>
+          println(
+            s"Type ${x} is not defined in any supported Dialect."
+          )
           throw new Exception(
             s"Type ${x} is not defined in any supported Dialect."
           )
