@@ -23,7 +23,6 @@ val allDialects: Seq[Dialect] =
     LLVMDialect,
     MemrefDialect,
     TupleStreamDialect,
-    LLVM,
     DBOps,
     SubOperatorOps,
     RelAlgOps,
