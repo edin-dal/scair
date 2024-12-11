@@ -341,7 +341,9 @@ object Parser {
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(Digit.rep(1).!).map((literal: String) => parseLong(literal))
+    P(("-" | "+").?.! ~ Digit.rep(1).!).map((sign: String, literal: String) =>
+      parseLong(sign + literal)
+    )
 
   def HexadecimalLiteral[$: P] =
     P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => parseLong(hex, 16))
