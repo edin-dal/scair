@@ -194,9 +194,9 @@ case class Sitofp(
     in: Operand[AnyIntegerType],
     res: Result[FloatType]
 ) extends OperationFE
-case class IndexCast(
-    in: Operand[IndexType.type],
-    res: Result[IndexType.type]
+case class Index_Cast(
+    in: Operand[AnyIntegerType],
+    res: Result[AnyIntegerType]
 ) extends OperationFE
 
 object ArithGen
@@ -217,7 +217,7 @@ object ArithGen
             Andi,
             Ori,
             Sitofp,
-            IndexCast
+            Index_Cast
         )
       ](
         "Arith",

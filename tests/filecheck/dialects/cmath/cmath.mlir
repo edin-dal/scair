@@ -1,6 +1,6 @@
 // RUN: scair-opt %s -g | filecheck %s
 
-"op1"() ({
+"test.op"() ({
 ^bb0(%1 : !cmath.complex<f32>, %3 : !cmath.complex<f32>, %4 : !cmath.complex<f32>):
   "test.op"() : () -> ()
   %0 = "cmath.norm"(%1) : (!cmath.complex<f32>) -> (f32)
@@ -8,7 +8,7 @@
 
 // CHECK: "builtin.module"() ({
 // CHECK: ^bb0():
-// CHECK:   "op1"() ({
+// CHECK:   "test.op"() ({
 // CHECK:   ^bb1(%0: !cmath.complex<f32>, %1: !cmath.complex<f32>, %2: !cmath.complex<f32>):
 // CHECK:     "test.op"() : () -> ()
 // CHECK:     %3 = "cmath.norm"(%0) : (!cmath.complex<f32>) -> (f32)

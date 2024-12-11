@@ -27,7 +27,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
       )
     val expected = """{
                      |^bb0():
-                     |  "op1"() : () -> ()
+                     |  "test.op" : () -> ()
                      |}""".stripMargin
     val result = printer.printRegion(region)
     result shouldEqual expected
@@ -39,7 +39,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
       ListType(Value(I32))
     )
     val expected = """^bb0(%0: i32):
-                     |  "op1"() : () -> ()""".stripMargin
+                     |  "test.op" : () -> ()""".stripMargin
     val result = printer.printBlock(block)
     result shouldEqual expected
   }
@@ -109,7 +109,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
           )
         )
       )
-    val expected = """"op1"() ({
+    val expected = """"test.op"() ({
                      |^bb0():
                      |
                      |^bb1():

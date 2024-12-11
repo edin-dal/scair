@@ -134,7 +134,7 @@ object CMathGen
 // CHECK-NEXT:      if (parameters.length != 1) then throw new Exception(s"Expected 1 parameters, got ${parameters.length}")
 // CHECK-NEXT:  }
 
-// CHECK:       val CMath: Dialect = new Dialect(
+// CHECK:       val CMathDialect: Dialect = new Dialect(
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
 // CHECK-NEXT:    attributes = Seq(Complex, SampleData)
 // CHECK-NEXT:  )

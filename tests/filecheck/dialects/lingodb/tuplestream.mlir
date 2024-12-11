@@ -1,6 +1,6 @@
 // RUN: scair-opt %s -s | filecheck %s
 
-"op1"() ({
+"test.op"() ({
 ^bb0():
   %0 = "test.op"() : () -> (!tuples.tuple<f32, f32>)
   %1 = "test.op"() : () -> (!tuples.tuplestream<f32, f32>)
@@ -10,7 +10,7 @@
 
 // CHECK: builtin.module {
 // CHECK: ^bb0():
-// CHECK:   "op1"() ({
+// CHECK:   "test.op"() ({
 // CHECK:   ^bb1():
 // CHECK:     %0 = "test.op"() : () -> (!tuples.tuple<f32, f32>)
 // CHECK:     %1 = "test.op"() : () -> (!tuples.tuplestream<f32, f32>)

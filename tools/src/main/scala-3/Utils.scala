@@ -4,24 +4,28 @@ import scair.dialects.LingoDB.DBOps.DBOps
 import scair.dialects.LingoDB.RelAlgOps.RelAlgOps
 import scair.dialects.LingoDB.SubOperatorOps.SubOperatorOps
 import scair.dialects.LingoDB.TupleStream.TupleStreamDialect
-import scair.dialects._func._Func
+import scair.dialects.builtin.BuiltinDialect
+import scair.dialects.func.FuncDialect
 import scair.dialects.affine.Affine
-import scair.dialects.arith.Arith
-import scair.dialects.cmath.CMath
-import scair.dialects.memref.Memref
+import scair.dialects.arith.ArithDialect
+import scair.dialects.cmath.CMathDialect
+import scair.dialects.memref.MemrefDialect
+import scair.dialects.test.Test
 import scair.ir.Dialect
 
 val allDialects: Seq[Dialect] =
   Seq(
-    Arith,
-    CMath,
-    _Func,
-    Memref,
+    ArithDialect,
+    BuiltinDialect,
+    CMathDialect,
+    FuncDialect,
+    MemrefDialect,
     TupleStreamDialect,
     DBOps,
     SubOperatorOps,
     RelAlgOps,
-    Affine
+    Affine,
+    Test
   )
 
 import scair.transformations.ModulePass

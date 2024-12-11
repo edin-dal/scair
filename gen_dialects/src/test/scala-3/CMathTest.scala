@@ -49,7 +49,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Cmath simple object creation test :)" should "match parsed string against expected string" in {
 
-    val input = """"op1"() ({
+    val input = """"test.op"() ({
                    |^bb0(%1 : f32, %3 : f32, %4 : f32):
                    |    %0 = "cmath.norm"(%1) : (f32) -> (f64)
                    |    %2 = "cmath.mul"(%3, %4) : (f32, f32) -> (f32)

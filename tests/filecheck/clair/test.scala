@@ -484,7 +484,7 @@ object Main {
 // CHECK-NEXT:      if (parameters.length != 0) then throw new Exception(s"Expected 0 parameters, got ${parameters.length}")
 // CHECK-NEXT:  }
 
-// CHECK:       val test: Dialect = new Dialect(
+// CHECK:       val testDialect: Dialect = new Dialect(
 // CHECK-NEXT:    operations = Seq(NoVariadicsOp, VariadicOperandOp, MultiVariadicOperandOp),
 // CHECK-NEXT:    attributes = Seq(TypeAttr)
 // CHECK-NEXT:  )

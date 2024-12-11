@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p test-ins-pass | filecheck %s
+// RUN: scair-opt %s -p test-ins-pass --allow-unregistered-dialect | filecheck %s
 
 "test.op"() : () -> ()
 "test.op"() : () -> ()
