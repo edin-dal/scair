@@ -125,7 +125,7 @@ import scair.scairdl.constraints.attr2constraint"""
         .mkString("", "\n", "\n") +
       (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
         .mkString("\n") + s"""
-val $name: Dialect = new Dialect(
+val ${name}Dialect: Dialect = new Dialect(
   operations = Seq(${(operations.map(_.className) ++ opHatches.map(_.name))
           .mkString(", ")}),
   attributes = Seq(${(attributes.map(_.className) ++ attrHatches.map(_.name))

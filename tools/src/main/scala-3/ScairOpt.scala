@@ -28,6 +28,12 @@ object ScairOpt {
           .optional()
           .text("input file")
           .action((x, c) => c.copy(input = Some(x))),
+        opt[Unit]('a', "allow-unregistered-dialect")
+          .optional()
+          .text(
+            "Accept unregistered operations and attributes, best effort with generic syntax."
+          )
+          .action((_, c) => c.copy(allow_unregistered = true)),
         opt[Unit]('s', "skip_verify")
           .optional()
           .text("Skip verification")

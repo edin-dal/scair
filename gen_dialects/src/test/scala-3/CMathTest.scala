@@ -14,14 +14,15 @@ import scair.ir.*
 class CMathTest extends AnyFlatSpec with BeforeAndAfter {
 
   val ctx = new MLContext()
-  ctx.registerDialect(CMath)
+  ctx.registerDialect(CMathDialect)
+  val args = scair.core.utils.Args(allow_unregistered = true)
 
-  var parser = new Parser(ctx)
+  var parser = new Parser(ctx, args)
 
   var printer = new Printer(true)
 
   before {
-    parser = new Parser(ctx)
+    parser = new Parser(ctx, args)
     printer = new Printer(true)
   }
 

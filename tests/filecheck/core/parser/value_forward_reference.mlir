@@ -1,6 +1,6 @@
 // RUN: scair-opt %s | filecheck %s
 
-"op1"() ({
+"test.op"() ({
 ^bb0():
   "test.op"(%0) : (i32) -> ()
   "test.op"()({
@@ -13,7 +13,7 @@
 
 // CHECK: builtin.module {
 // CHECK: ^bb0():
-// CHECK:   "op1"() ({
+// CHECK:   "test.op"() ({
 // CHECK:   ^bb1():
 // CHECK:     "test.op"(%0) : (i32) -> ()
 // CHECK:     "test.op"() ({

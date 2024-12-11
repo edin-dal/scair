@@ -855,15 +855,20 @@ class Parser(val context: MLContext, val args: Args = Args())
           regions = regions
         )
       case None =>
-        new UnregisteredOperation(
-          name = opName,
-          operands = useAndRefValueSeqs._1,
-          successors = useAndRefBlockSeqs._1,
-          dictionaryProperties = dictPropertiesMap,
-          results = resultss,
-          dictionaryAttributes = dictAttributesMap,
-          regions = regions
-        )
+        if args.allow_unregistered then
+          new UnregisteredOperation(
+            name = opName,
+            operands = useAndRefValueSeqs._1,
+            successors = useAndRefBlockSeqs._1,
+            dictionaryProperties = dictPropertiesMap,
+            results = resultss,
+            dictionaryAttributes = dictAttributesMap,
+            regions = regions
+          )
+        else
+          throw new Exception(
+            s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+          )
     }
 
     // adding uses for known operands

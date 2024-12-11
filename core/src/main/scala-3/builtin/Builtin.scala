@@ -397,7 +397,9 @@ case class AffineSetAttr(val affine_set: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-object ModuleOp {
+object ModuleOp extends OperationObject {
+  override def name = "builtin.module"
+  override def factory = ModuleOp.apply
   // ==--- Custom Parsing ---== //
   def parse[$: P](parser: Parser): P[Operation] = P(
     "builtin.module" ~ parser.Region.rep(exactly = 1)
@@ -420,3 +422,5 @@ case class ModuleOp(
   ): String =
     s"builtin.module ${p.printRegion(regions(0))}"
 }
+
+val BuiltinDialect = Dialect(Seq(ModuleOp), Seq())

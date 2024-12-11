@@ -13,7 +13,8 @@ case class Call(
 case class Func(
     sym_name: Property[StringData],
     function_type: Property[FunctionType],
-    sym_visibility: Property[StringData],
+    // TODO: This needs optional
+    // sym_visibility: Property[StringData],
     body: Region
 ) extends OperationFE
 case class Return(
@@ -29,7 +30,7 @@ object FuncGen
             Return
         )
       ](
-        "_Func",
+        "Func",
         Seq(),
         Seq()
       )

@@ -23,10 +23,12 @@ class ParserTest
       case "Failure" => Parsed.Failure(_, _, _)
     }
 
-  var parser: Parser = new Parser(new MLContext())
+  val ctx = new MLContext()
+  val args = scair.core.utils.Args(allow_unregistered = true)
+  var parser: Parser = new Parser(ctx, args)
 
   before {
-    parser = new Parser(new MLContext())
+    parser = new Parser(ctx, args)
   }
 
   val digitTests = Table(

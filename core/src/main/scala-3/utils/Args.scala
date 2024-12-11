@@ -1,6 +1,7 @@
 package scair.core.utils
 
 case class Args(
+    val allow_unregistered: Boolean = false,
     val input: Option[String] = None,
     val skip_verify: Boolean = false,
     val split_input_file: Boolean = false,

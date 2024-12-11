@@ -1,6 +1,6 @@
 // RUN: scair-opt %s | filecheck %s
 
-"op1"() ({
+"test.op"() ({
 ^bb0():
   "test.op"()[^bb1] : () -> ()
 ^bb1():
@@ -9,21 +9,21 @@
 
 // CHECK: builtin.module {
 
-// CHECK:      "op1"() ({
+// CHECK:      "test.op"() ({
 // CHECK-NEXT: ^bb1():
 // CHECK-NEXT:   "test.op"()[^bb2] : () -> ()
 // CHECK-NEXT: ^bb2():
 // CHECK-NEXT:   "test.op"()[^bb1] : () -> ()
 // CHECK-NEXT: }) : () -> ()
 
-"op1"() ({
+"test.op"() ({
 ^bb0():
   "test.op"() : () -> ()
 ^bb1():
   "test.op"()[^bb0] : () -> ()
 }) : () -> ()
 
-// CHECK:      "op1"() ({
+// CHECK:      "test.op"() ({
 // CHECK-NEXT: ^bb3():
 // CHECK-NEXT:   "test.op"() : () -> ()
 // CHECK-NEXT: ^bb4():

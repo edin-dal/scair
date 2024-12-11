@@ -1,6 +1,6 @@
 // RUN: scair-opt %s | filecheck %s
 
-"op1"() ({
+"test.op"() ({
 ^bb0(%0: i32): // Some comment at end of line
   %1, %2, %3 = "test.op"() : () -> (i32, i64, i32)
   // Some comment-only line, plus some extra whitspace there
@@ -12,7 +12,7 @@
 
 // CHECK:      builtin.module {
 // CHECK:      ^bb0():
-// CHECK:        "op1"() ({
+// CHECK:        "test.op"() ({
 // CHECK-NEXT:   ^bb1(%0: i32):
 // CHECK-NEXT:     %1, %2, %3 = "test.op"() : () -> (i32, i64, i32)
 // CHECK-NEXT:     "test.op"(%2, %1) : (i64, i32) -> ()

@@ -211,12 +211,12 @@ object Printer {
     val parser = new Parser(MLContext())
     val printer = new Printer(true)
 
-    val input = """"op1"()({
+    val input = """"test.op"({
                   |  ^bb0(%0: f128):
                   |    %1, %2, %3 = "test.op"() : () -> (f32, si64, ui80)
                   |  }) : () -> ()""".stripMargin
 
-    val text = """"op1"()({
+    val text = """"test.op"({
                  |  ^bb3():
                  |    "test.op"()[^bb4] : () -> ()
                  |  ^bb4():
@@ -225,13 +225,13 @@ object Printer {
 
     val text2 = """"builtin.module"() ({
                   |^bb0():
-                  |  %0 = "test.op1"() {"quoted" = i3298} : () -> (i32)
-                  |  "test.op2"() {hello = tensor<f32>} : () -> ()
-                  |  "test.op3"() {hello = tensor<1xf32>} : () -> ()
-                  |  "test.op4"() {hello = tensor<?xf32>} : () -> ()
-                  |  "test.op5"() {hello = tensor<3x?x5xf32>} : () -> ()
-                  |  "test.op6"() {hello = tensor<?x5x?xf32>} : () -> ()
-                  |  "test.op7"(%0) : (i32) -> ()
+                  |  %0 = "test.op"() {"quoted" = i3298} : () -> (i32)
+                  |  "test.op"() {hello = tensor<f32>} : () -> ()
+                  |  "test.op"() {hello = tensor<1xf32>} : () -> ()
+                  |  "test.op"() {hello = tensor<?xf32>} : () -> ()
+                  |  "test.op"() {hello = tensor<3x?x5xf32>} : () -> ()
+                  |  "test.op"() {hello = tensor<?x5x?xf32>} : () -> ()
+                  |  "test.op"(%0) : (i32) -> ()
                   |}) : () -> ()""".stripMargin
 
     val Parsed.Success(res, x) = parser.parseThis(

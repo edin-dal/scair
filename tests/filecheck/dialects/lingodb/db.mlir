@@ -1,7 +1,5 @@
 // RUN: scair-opt %s -s | filecheck %s
 
-"op1"() ({
-^bb0():
   %0 = "test.op"() : () -> (i32)
   %1 = db.constant(1 : i32) : !db.decimal<12, 2>
   %2 = db.constant(1 : i32) : !db.decimal<12, 2>
@@ -15,8 +13,6 @@
 
 // CHECK: builtin.module {
 // CHECK: ^bb0():
-// CHECK:   "op1"() ({
-// CHECK:   ^bb1():
 // CHECK:     %0 = "test.op"() : () -> (i32)
 // CHECK:     %1 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
 // CHECK:     %2 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
@@ -27,6 +23,5 @@
 // CHECK:     %7 = "test.op"() : () -> (!db.char<1>)
 // CHECK:     %8 = "test.op"() : () -> (!db.date<day>)
 // CHECK:     %9 = "test.op"() : () -> (!db.string<>)
-// CHECK:   }) : () -> ()
+// CHECK:   }
 
-}) : () -> ()
