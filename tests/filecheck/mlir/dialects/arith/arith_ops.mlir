@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 %lhsi1, %rhsi1 = "test.op"() : () -> (i1, i1)
 %lhsi32, %rhsi32 = "test.op"() : () -> (i32, i32)
