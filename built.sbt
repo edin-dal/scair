@@ -39,6 +39,7 @@ lazy val gen_dialects =
     .dependsOn(native_dialects)
     .settings(
       dialect_source := Seq(
+        "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
         "scair.dialects.cmathgen.CMathGen",
         "scair.dialects.funcgen.FuncGen",

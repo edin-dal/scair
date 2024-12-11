@@ -108,9 +108,8 @@ class AttrParser(val ctx: MLContext) {
         IntegerAttr(
           x,
           y match {
-            case x: Some[IntegerType]    => x.get
-            case y: Some[IndexType.type] => y.get
-            case None                    => I64
+            case yy: Some[IntegerType | IndexType.type] => yy.get
+            case None                                   => I64
           }
         )
       )
@@ -209,13 +208,15 @@ class AttrParser(val ctx: MLContext) {
   ).map((x: (ArrayAttribute[IntData], Attribute, Option[Attribute])) =>
     RankedTensorType(
       dimensionList = x._1,
-      typ = x._2,
+      elementType = x._2,
       encoding = x._3
     )
   )
 
   def UnrankedTensorTypeP[$: P]: P[TensorType] =
-    P("*" ~ "x" ~ Type).map((x: Attribute) => UnrankedTensorType(typ = x))
+    P("*" ~ "x" ~ Type).map((x: Attribute) =>
+      UnrankedTensorType(elementType = x)
+    )
 
   def DimensionList[$: P] =
     P((Dimension ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
@@ -240,17 +241,27 @@ class AttrParser(val ctx: MLContext) {
   )
 
   def RankedMemrefTypeP[$: P]: P[MemrefType] = P(
-    DimensionList ~ Type ~ ("," ~ Encoding).?
-  ).map((x: (ArrayAttribute[IntData], Attribute, Option[Attribute])) =>
+    DimensionList ~ Type
+  ).map((x: (ArrayAttribute[IntData], Attribute)) =>
     RankedMemrefType(
-      dimensionList = x._1.data,
-      typ = x._2
+      shape = x._1.data,
+      elementType = x._2
     )
   )
 
-  def UnrankedMemrefTypeP[$: P]: P[MemrefType] =
-    P("*" ~ "x" ~ Type).map((x: Attribute) => UnrankedMemrefType(typ = x))
+  def UnrankedMemrefTypeP[$: P]: P[UnrankedMemrefType] =
+    P("*" ~ "x" ~ Type).map((x: Attribute) =>
+      UnrankedMemrefType(elementType = x)
+    )
 
+  def VectorTypeP[$: P]: P[VectorType] = P(
+    "vector<" ~/ DimensionList ~/ Type ~/ ">"
+  ).map((x: (ArrayAttribute[IntData], Attribute)) =>
+    VectorType(
+      shape = x._1.data,
+      elementType = x._2
+    )
+  )
   //////////////////////////
   // SYMBOL REF ATTRIBUTE //
   //////////////////////////
@@ -272,8 +283,14 @@ class AttrParser(val ctx: MLContext) {
   // TO-DO : Figure out why it is throwing an error when you get rid of asInstanceOf...
 
   def DenseIntOrFPElementsAttrP[$: P]: P[DenseIntOrFPElementsAttr] =
-    P("dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~ TensorTypeP).map((x, y) =>
-      DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])
+    P(
+      "dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~ (TensorTypeP | MemrefTypeP | VectorTypeP)
+    ).map((x, y) =>
+      y match {
+        case yy: (TensorType | MemrefType | VectorType) =>
+          DenseIntOrFPElementsAttr(yy, x.asInstanceOf[TensorLiteralArray])
+      }
+      // DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])
     )
 
   def TensorLiteral[$: P]: P[TensorLiteralArray] =
@@ -353,6 +370,7 @@ class AttrParser(val ctx: MLContext) {
       StringAttributeP |
       TensorTypeP |
       MemrefTypeP |
+      VectorTypeP |
       SymbolRefAttrP |
       FloatAttrP |
       IntegerAttrP |
