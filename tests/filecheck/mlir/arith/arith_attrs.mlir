@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 "test.op"() {"none" = #arith.fastmath<none>} : () -> ()
 // CHECK:    "test.op"() {none = #arith.fastmath<none>} : () -> ()
