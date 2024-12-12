@@ -25,8 +25,7 @@
 "memref.dealloc"(%m3) : (memref<3x?x5xf32>) -> ()
 "memref.dealloc"(%m4) : (memref<?x5x?xf32>) -> ()
 
-// CHECK:       builtin.module {
-// CHECK-NEXT:  ^bb0():
+// CHECK: builtin.module {
 // CHECK-NEXT:    %0, %1 = "test.op"() : () -> (index, index)
 // CHECK-NEXT:    %2 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<f32>)
 // CHECK-NEXT:    %3 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<1xf32>)
