@@ -141,7 +141,6 @@ jobs:
           -DLLVM_ENABLE_LLD=ON \
           -DLLVM_INCLUDE_BENCHMARKS=OFF \
           -DLLVM_INCLUDE_EXAMPLES=OFF \
-          -DLLVM_INCLUDE_TESTS=OFF \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
           -DCMAKE_C_FLAGS="-pipe" \
