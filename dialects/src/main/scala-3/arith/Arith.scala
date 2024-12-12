@@ -101,7 +101,7 @@ case class FastMathFlagsAttr(val flags: FastMathFlags)
             case FastMathFlag.afn      => "afn"
           }
           .mkString(",")
-    s"arith.fastmath<$p>"
+    s"#arith.fastmath<$p>"
 
 // TODO: This should be smth like IntegerType | IndexType, but is not yet supported
 // in the frontend.
