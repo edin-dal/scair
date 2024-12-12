@@ -5,8 +5,7 @@
 // TODO: This should fail because cmath.complex expect f32 | f64. This needs frontend
 // support
 
-// CHECK:       builtin.module {
-// CHECK-NEXT:  ^bb0():
+// CHECK: builtin.module {
 // CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<i8>} : () -> ()
 // CHECK-NEXT:  }
 

@@ -12,7 +12,6 @@
   %9 = "test.op"() : () -> (!db.string)
 
 // CHECK: builtin.module {
-// CHECK: ^bb0():
 // CHECK:     %0 = "test.op"() : () -> (i32)
 // CHECK:     %1 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
 // CHECK:     %2 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)

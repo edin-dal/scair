@@ -9,7 +9,6 @@
 "test.op"(%0) : (i32) -> ()
 
 // CHECK: builtin.module {
-// CHECK: ^bb0():
 // CHECK:   %0 = "test.op"() {hello = "world", quoted = i3298} : () -> (i32)
 // CHECK:   "test.op"() {hello = memref<f32>} : () -> ()
 // CHECK:   "test.op"() {hello = memref<1xf32>} : () -> ()
