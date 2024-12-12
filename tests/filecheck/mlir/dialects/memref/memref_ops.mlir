@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 %0, %1 = "test.op"() : () -> (index, index)
 %m0 = "memref.alloc"() <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 0, 0>}> : () -> memref<f32>
@@ -11,8 +11,8 @@
 "memref.store"(%2, %m0) : (f32, memref<f32>) -> ()
 %3 = "memref.load"(%m1, %0) : (memref<1xf32>, index) -> f32
 "memref.store"(%3, %m1, %1) : (f32, memref<1xf32>, index) -> ()
-%4 = "memref.load"(%m2, %0, %1) : (memref<?xf32>, index, index) -> f32
-"memref.store"(%4, %m2, %1, %0) : (f32, memref<?xf32>, index, index) -> ()
+%4 = "memref.load"(%m2, %0) : (memref<?xf32>, index) -> f32
+"memref.store"(%4, %m2, %1) : (f32, memref<?xf32>, index) -> ()
 %5 = "memref.load"(%m3, %0, %1, %0) : (memref<3x?x5xf32>, index, index, index) -> f32
 "memref.store"(%5, %m3, %1, %0, %1) : (f32, memref<3x?x5xf32>, index, index, index) -> ()
 %6 = "memref.load"(%m4, %0, %1, %0) : (memref<?x5x?xf32>, index, index, index) -> f32
@@ -36,8 +36,8 @@
 // CHECK-NEXT:    "memref.store"(%7, %2) : (f32, memref<f32>) -> ()
 // CHECK-NEXT:    %8 = "memref.load"(%3, %0) : (memref<1xf32>, index) -> (f32)
 // CHECK-NEXT:    "memref.store"(%8, %3, %1) : (f32, memref<1xf32>, index) -> ()
-// CHECK-NEXT:    %9 = "memref.load"(%4, %0, %1) : (memref<?xf32>, index, index) -> (f32)
-// CHECK-NEXT:    "memref.store"(%9, %4, %1, %0) : (f32, memref<?xf32>, index, index) -> ()
+// CHECK-NEXT:    %9 = "memref.load"(%4, %0) : (memref<?xf32>, index) -> (f32)
+// CHECK-NEXT:    "memref.store"(%9, %4, %1) : (f32, memref<?xf32>, index) -> ()
 // CHECK-NEXT:    %10 = "memref.load"(%5, %0, %1, %0) : (memref<3x?x5xf32>, index, index, index) -> (f32)
 // CHECK-NEXT:    "memref.store"(%10, %5, %1, %0, %1) : (f32, memref<3x?x5xf32>, index, index, index) -> ()
 // CHECK-NEXT:    %11 = "memref.load"(%6, %0, %1, %0) : (memref<?x5x?xf32>, index, index, index) -> (f32)
