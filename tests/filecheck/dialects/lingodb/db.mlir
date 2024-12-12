@@ -9,7 +9,7 @@
   %6 = db.compare lte %3 : !db.decimal<12, 2>, %5 : !db.decimal<12, 2>
   %7 = "test.op"() : () -> (!db.char<1>)
   %8 = "test.op"() : () -> (!db.date<day>)
-  %9 = "test.op"() : () -> (!db.string<>)
+  %9 = "test.op"() : () -> (!db.string)
 
 // CHECK: builtin.module {
 // CHECK: ^bb0():
@@ -22,6 +22,6 @@
 // CHECK:     %6 = "db.compare"(%3, %5) {predicate = lte} : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (i1)
 // CHECK:     %7 = "test.op"() : () -> (!db.char<1>)
 // CHECK:     %8 = "test.op"() : () -> (!db.date<day>)
-// CHECK:     %9 = "test.op"() : () -> (!db.string<>)
+// CHECK:     %9 = "test.op"() : () -> (!db.string)
 // CHECK:   }
 
