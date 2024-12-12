@@ -93,8 +93,10 @@ class Printer(val strictly_generic: Boolean) {
     val close: String = "\n" + indent * indentLevel + "}"
 
     val regionBlocks: String = (region.blocks match {
-      case Nil => Seq("")
+      case Nil             => Seq("")
       case entry :: blocks =>
+        // If the entry block has no arguments, we can avoid printing the header
+        // Unless it is empty, which would make the next block read as the entry!
         (if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
            printBlock(entry, indentLevel)
          else printOperations(entry.operations.toSeq, indentLevel + 1))
