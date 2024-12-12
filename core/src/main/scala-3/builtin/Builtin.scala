@@ -2,7 +2,6 @@ package scair.dialects.builtin
 
 import fastparse.*
 import scair.Parser
-import scair.Parser.whitespace
 import scair.Printer
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
@@ -401,9 +400,16 @@ object ModuleOp extends OperationObject {
   override def name = "builtin.module"
   override def factory = ModuleOp.apply
   // ==--- Custom Parsing ---== //
-  def parse[$: P](parser: Parser): P[Operation] = P(
-    "builtin.module" ~ parser.Region.rep(exactly = 1)
-  ).map((x: Seq[Region]) => ModuleOp(regions = x.to(ListType)))
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] =
+    if resNames != Nil then
+      throw new Exception("ModuleOp does not have results")
+    else
+      P(
+        parser.Region
+      ).map((x: Region) => ModuleOp(regions = ListType(x)))
   // ==----------------------== //
 }
 
