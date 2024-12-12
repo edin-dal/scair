@@ -12,7 +12,7 @@
 
 // -----
 
-"test.op"() {"invalid_type" = !cmath.complex<>} : () -> ()
+"test.op"() {"invalid_type" = !cmath.complex} : () -> ()
 // CHECK: Expected 1 parameters, got 0
 
 // -----
