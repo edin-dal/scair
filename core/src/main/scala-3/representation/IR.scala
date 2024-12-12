@@ -70,7 +70,10 @@ abstract class ParametrizedAttribute(
     val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 ) extends Attribute {
   override def custom_print =
-    s"${prefix}${name}<${parameters.map(x => x.custom_print).mkString(", ")}>"
+    s"${prefix}${name}${
+        if parameters.size > 0 then parameters.map(x => x.custom_print).mkString("<", ", ", ">")
+        else ""
+      }"
   override def equals(attr: Any): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
