@@ -618,23 +618,24 @@ class Parser(val context: MLContext, val args: Args = Args())
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (ModuleOp.parse(this) | Operations(0)) ~ E({
+    Start ~ (Operations(0)) ~ E({
       Scope.checkValueWaitlist()
       Scope.checkBlockWaitlist()
     }) ~ End
-  ).map((toplevel: Operation | ListType[Operation]) =>
-    toplevel match {
-      case x: ModuleOp => x
-      case y: ListType[Operation] =>
-        val block = new Block(operations = y)
+  ).map((toplevel: ListType[Operation]) =>
+    toplevel.toList match {
+      case (head: ModuleOp) :: Nil => head
+      case _ =>
+        val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
         val moduleOp = new ModuleOp(regions = ListType(region))
 
-        for (op <- y) op.container_block = Some(block)
+        for (op <- toplevel) op.container_block = Some(block)
         block.container_region = Some(region)
         region.container_operation = Some(moduleOp)
 
         moduleOp
+
     }
   )
 

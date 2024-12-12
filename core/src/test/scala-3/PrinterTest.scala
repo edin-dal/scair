@@ -26,7 +26,6 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
         Seq(Block(ListType(UnregisteredOperation("op1"))))
       )
     val expected = """{
-                     |^bb0():
                      |  "op1"() : () -> ()
                      |}""".stripMargin
     val result = printer.printRegion(region)
@@ -67,7 +66,6 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
       )
     )
     val expected = """%0 = "op1"(%1) ({
-                     |^bb0():
                      |  "op2"() : () -> ()
                      |}) : (f32) -> (f32)""".stripMargin
     val result = printer.printOperation(operation)

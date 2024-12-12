@@ -16,11 +16,10 @@
 %4, %5 = "cmath.mul"(%1, %2) : (!cmath.complex<index>, !cmath.complex<f32>) -> (f32, f32)
 
 // CHECK:       "builtin.module"() ({
-// CHECK-NEXT:  ^bb0():
 // CHECK-NEXT:    %0, %1, %2 = "test.op"() ({
-// CHECK-NEXT:    ^bb1(%3: f32, %4: f32, %5: f32):
+// CHECK-NEXT:    ^bb0(%3: f32, %4: f32, %5: f32):
 // CHECK-NEXT:      "test.op"() ({
-// CHECK-NEXT:      ^bb2(%6: f32, %7: f32, %8: f32):
+// CHECK-NEXT:      ^bb1(%6: f32, %7: f32, %8: f32):
 // CHECK-NEXT:        "unregistered.op"() {dummy = "UnregDumDum"} : () -> ()
 // CHECK-NEXT:        %9 = "cmath.norm"(%3) {dummy = "NormDumDum"} : (f32) -> (f64)
 // CHECK-NEXT:        %10 = "cmath.mul"(%4, %5) {dummy = "MulDumDum"} : (f32, f32) -> (f32)
