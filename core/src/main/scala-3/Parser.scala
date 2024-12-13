@@ -341,7 +341,9 @@ object Parser {
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(Digit.rep(1).!).map((literal: String) => parseLong(literal))
+    P(("-" | "+").?.! ~ Digit.rep(1).!).map((sign: String, literal: String) =>
+      parseLong(sign + literal)
+    )
 
   def HexadecimalLiteral[$: P] =
     P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => parseLong(hex, 16))
@@ -443,8 +445,9 @@ object Parser {
 
   def sequenceValues(value: (String, Option[Long])): Seq[String] =
     value match {
-      case (name, Some(totalNo)) => (0 to totalNo.toInt).map(no => s"$name#$no")
-      case (name, None)          => Seq(name)
+      case (name, Some(totalNo)) =>
+        (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
+      case (name, None) => Seq(name)
     }
 
   def OpResult[$: P] =
@@ -615,23 +618,24 @@ class Parser(val context: MLContext, val args: Args = Args())
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (ModuleOp.parse(this) | Operations(0)) ~ E({
+    Start ~ (Operations(0)) ~ E({
       Scope.checkValueWaitlist()
       Scope.checkBlockWaitlist()
     }) ~ End
-  ).map((toplevel: Operation | ListType[Operation]) =>
-    toplevel match {
-      case x: ModuleOp => x
-      case y: ListType[Operation] =>
-        val block = new Block(operations = y)
+  ).map((toplevel: ListType[Operation]) =>
+    toplevel.toList match {
+      case (head: ModuleOp) :: Nil => head
+      case _ =>
+        val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
         val moduleOp = new ModuleOp(regions = ListType(region))
 
-        for (op <- y) op.container_block = Some(block)
+        for (op <- toplevel) op.container_block = Some(block)
         block.container_region = Some(region)
         region.container_operation = Some(moduleOp)
 
         moduleOp
+
     }
   )
 
@@ -672,7 +676,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     if (resultNames.length != resultTypes.length) {
       throw new Exception(
-        s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
+        s"Number of results (${resultNames.length}) does not match the number of the corresponding result types (${resultTypes.length}) in \"${opName}\"."
       )
     }
 
@@ -800,7 +804,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     if (results.length != resultsTypes.length) {
       throw new Exception(
-        s"Number of results does not match the number of the corresponding result types in \"${opName}\"."
+        s"Number of results (${results.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
     }
 

@@ -7,7 +7,6 @@
 "test.op"() : () -> ()
 
 // CHECK: builtin.module {
-// CHECK: ^bb0():
 // CHECK:   "test.op"() {replaced = "false"} : () -> ()
 // CHECK:   "test.op"() {replaced = "false"} : () -> ()
 // CHECK:   "dummy1"() : () -> ()
