@@ -170,20 +170,20 @@ trait ShapedType extends TypeAttribute
 
 abstract class TensorType(
     override val name: String,
-    val typ: Attribute,
+    val elementType: Attribute,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)
     with TypeAttribute
 
 case class RankedTensorType(
     val dimensionList: ArrayAttribute[IntData],
-    override val typ: Attribute,
+    override val elementType: Attribute,
     val encoding: Option[Attribute]
 ) extends TensorType(
       name = "builtin.ranked_tensor",
-      typ,
+      elementType,
       features = dimensionList +:
-        typ +:
+        elementType +:
         encoding.toSeq
     ) {
 
@@ -192,7 +192,7 @@ case class RankedTensorType(
     val shapeString =
       (dimensionList.data.map(x =>
         if (x.data == -1) "?" else x.custom_print
-      ) :+ typ.custom_print)
+      ) :+ elementType.custom_print)
         .mkString("x")
 
     val encodingString = encoding match {
@@ -204,9 +204,13 @@ case class RankedTensorType(
   }
 }
 
-case class UnrankedTensorType(override val typ: Attribute)
-    extends TensorType("builtin.unranked_tensor", typ, Seq(typ)) {
-  override def custom_print = s"tensor<*x${typ.custom_print}>"
+case class UnrankedTensorType(override val elementType: Attribute)
+    extends TensorType(
+      "builtin.unranked_tensor",
+      elementType,
+      Seq(elementType)
+    ) {
+  override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
 /////////////////
@@ -215,35 +219,65 @@ case class UnrankedTensorType(override val typ: Attribute)
 
 abstract class MemrefType(
     override val name: String,
-    val typ: Attribute,
+    val elementType: Attribute,
     val features: Seq[Attribute]
 ) extends ParametrizedAttribute(name, features)
     with TypeAttribute
 
 case class RankedMemrefType(
-    val dimensionList: Seq[IntData],
-    override val typ: Attribute
+    val shape: Seq[IntData],
+    override val elementType: Attribute
 ) extends MemrefType(
       name = "builtin.ranked_tensor",
-      typ,
-      features = dimensionList :+ typ
+      elementType,
+      features = shape :+ elementType
     ) {
 
   override def custom_print: String = {
 
     val shapeString =
-      (dimensionList.map(x =>
+      (shape.map(x =>
         if (x.data == -1) "?" else x.custom_print
-      ) :+ typ.custom_print)
+      ) :+ elementType.custom_print)
         .mkString("x")
 
     return s"memref<${shapeString}>"
   }
 }
 
-case class UnrankedMemrefType(override val typ: Attribute)
-    extends MemrefType("builtin.unranked_memref", typ, Seq(typ)) {
-  override def custom_print = s"tensor<*x${typ.custom_print}>"
+case class UnrankedMemrefType(override val elementType: Attribute)
+    extends MemrefType(
+      "builtin.unranked_memref",
+      elementType,
+      Seq(elementType)
+    ) {
+  override def custom_print = s"tensor<*x${elementType.custom_print}>"
+}
+
+/////////////////
+// VECTOR TYPE //
+/////////////////
+
+case class VectorType(
+    val shape: Seq[IntData],
+    val elementType: Attribute,
+    val scalableDims: Seq[IntData]
+) extends ParametrizedAttribute(
+      name = "builtin.vector",
+      parameters = Seq(shape, elementType, scalableDims)
+    ) {
+
+  override def custom_print: String = {
+
+    val shapeString =
+      ((shape, scalableDims).zipped
+        .map((size, scalable) =>
+          if scalable.data != 0 then s"[${size.data}]" else s"${size.data}"
+        ) :+ elementType.custom_print)
+        .mkString("x")
+
+    return s"vector<${shapeString}>"
+  }
 }
 
 //////////////////////////
@@ -341,14 +375,20 @@ type TensorLiteralArray =
   ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
 
 case class DenseIntOrFPElementsAttr(
-    val typ: TensorType,
+    val typ: TensorType | MemrefType | VectorType,
     val data: TensorLiteralArray
 ) extends ParametrizedAttribute("builtin.dense") {
+
+  def elementType = typ match {
+    case x: TensorType => x.elementType
+    case x: MemrefType => x.elementType
+    case x: VectorType => x.elementType
+  }
 
   val int_or_float = BaseAttr[IntegerType | FloatType]()
 
   override def custom_verify(): Unit =
-    int_or_float.verify(typ.typ, new ConstraintContext())
+    int_or_float.verify(elementType, new ConstraintContext())
     for (x <- data.attrValues) int_or_float.verify(x, new ConstraintContext())
 
   override def custom_print = {
