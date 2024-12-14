@@ -156,7 +156,12 @@ def AffineMultiplyExpr[$: P](
     dims: Seq[String],
     symbs: Seq[String]
 ): P[AffineBinaryOpExpr] =
-  P(AffineConstantP(dims, symbs) ~ "*" ~ AffineSinglesP(dims, symbs))
+  P(
+    AffineConstantP(dims, symbs) ~ "*" ~ AffineSinglesP(
+      dims,
+      symbs
+    ) | AffineSinglesP(dims, symbs) ~ "*" ~ AffineConstantP(dims, symbs)
+  )
     .map(AffineBinaryOpExpr(multiply, _, _))
 
 def AffineCeilDivExpr[$: P](
