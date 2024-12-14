@@ -260,16 +260,21 @@ case class UnrankedMemrefType(override val elementType: Attribute)
 
 case class VectorType(
     val shape: Seq[IntData],
-    val elementType: Attribute
+    val elementType: Attribute,
+    val scalableDims: Seq[IntData]
 ) extends ParametrizedAttribute(
       name = "builtin.vector",
-      parameters = Seq(shape, elementType)
+      parameters = Seq(shape, elementType, scalableDims)
     ) {
 
   override def custom_print: String = {
 
     val shapeString =
-      parameters.map(_.custom_print).mkString("x")
+      ((shape, scalableDims).zipped
+        .map((size, scalable) =>
+          if scalable.data != 0 then s"[${size.data}]" else s"${size.data}"
+        ) :+ elementType.custom_print)
+        .mkString("x")
 
     return s"vector<${shapeString}>"
   }

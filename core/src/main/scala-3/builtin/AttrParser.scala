@@ -254,12 +254,21 @@ class AttrParser(val ctx: MLContext) {
       UnrankedMemrefType(elementType = x)
     )
 
+  def VectorDimensionList[$: P] =
+    P(
+      ((DecimalLiteral
+        .map(x => (IntData(x), IntData(0))) | "[" ~ DecimalLiteral.map(x =>
+        (IntData(x), IntData(1))
+      ) ~ "]") ~ "x").rep(1).map(_.unzip)
+    )
+
   def VectorTypeP[$: P]: P[VectorType] = P(
-    "vector<" ~/ DimensionList ~/ Type ~/ ">"
-  ).map((x: (ArrayAttribute[IntData], Attribute)) =>
+    "vector<" ~/ VectorDimensionList ~/ Type ~/ ">"
+  ).map((shape: Seq[IntData], scalableDims: Seq[IntData], typ: Attribute) =>
     VectorType(
-      shape = x._1.data,
-      elementType = x._2
+      shape = shape,
+      elementType = typ,
+      scalableDims = scalableDims
     )
   )
   //////////////////////////
