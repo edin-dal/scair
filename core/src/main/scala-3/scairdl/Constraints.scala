@@ -59,8 +59,10 @@ def check_equal[T <: Attribute: ClassTag](that_attr: Attribute): Boolean =
 /** Represents the context for constraints, holding variable constraints.
   */
 class ConstraintContext() {
+
   val var_constraints: DictType[String, Attribute] =
     DictType.empty[String, Attribute]
+
 }
 
 /** Abstract class representing an IRDL constraint.
@@ -227,6 +229,7 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
     */
   override def toString =
     s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]()"
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -384,6 +387,7 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
     */
   override def toString =
     s"ParametrizedAttrConstraint[${implicitly[ClassTag[T]].runtimeClass.getName}](${constraints})"
+
 }
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -430,4 +434,5 @@ case class VarConstraint(val name: String, val constraint: IRDLConstraint)
         var_consts += ((name, that_attr))
     }
   }
+
 }

@@ -135,4 +135,5 @@ class TransformationsTest
         "given as a point of reference does not exist in the current block."
     }
   }
+
 }

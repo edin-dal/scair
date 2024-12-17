@@ -39,6 +39,7 @@ sealed abstract class Signedness(override val name: String, val dat: String)
     extends DataAttribute[String](name, dat) {
   override def custom_print = dat
 }
+
 case object Signed extends Signedness("signed", "si")
 case object Unsigned extends Signedness("unsigned", "ui")
 case object Signless extends Signedness("signless", "i")
@@ -52,15 +53,19 @@ abstract class FloatType(val namee: String) extends ParametrizedAttribute(namee)
 case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
   override def custom_print = "f16"
 }
+
 case object Float32Type extends FloatType("builtin.f32") with TypeAttribute {
   override def custom_print = "f32"
 }
+
 case object Float64Type extends FloatType("builtin.f64") with TypeAttribute {
   override def custom_print = "f64"
 }
+
 case object Float80Type extends FloatType("builtin.f80") with TypeAttribute {
   override def custom_print = "f80"
 }
+
 case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
   override def custom_print = "f128"
 }
@@ -81,11 +86,13 @@ case class IntData(val value: Long)
 case class IntegerType(val width: IntData, val sign: Signedness)
     extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
     with TypeAttribute {
+
   override def custom_print = sign match {
     case Signless => s"${sign.custom_print}${width.custom_print}"
     case Signed   => s"${sign.custom_print}${width.custom_print}"
     case Unsigned => s"${sign.custom_print}${width.custom_print}"
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -105,6 +112,7 @@ case class IntegerAttr(
     case (_, IntegerType(IntData(64), Signless)) => s"${value.custom_print}"
     case (_, _) => s"${value.custom_print} : ${typ.custom_print}"
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -122,10 +130,12 @@ case class FloatData(val value: Double)
 
 case class FloatAttr(val value: FloatData, val typ: FloatType)
     extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
+
   override def custom_print = (value, typ) match {
     case (_, Float64Type) => s"${value.custom_print}"
     case (_, _)           => s"${value.custom_print} : ${typ.custom_print}"
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -144,8 +154,10 @@ case object IndexType
 
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
+
   override def custom_print =
     "[" + attrValues.map(x => x.custom_print).mkString(", ") + "]"
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -202,6 +214,7 @@ case class RankedTensorType(
 
     return s"tensor<${shapeString}${encodingString}>"
   }
+
 }
 
 case class UnrankedTensorType(override val elementType: Attribute)
@@ -243,6 +256,7 @@ case class RankedMemrefType(
 
     return s"memref<${shapeString}>"
   }
+
 }
 
 case class UnrankedMemrefType(override val elementType: Attribute)
@@ -278,6 +292,7 @@ case class VectorType(
 
     return s"vector<${shapeString}>"
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -291,8 +306,10 @@ case class SymbolRefAttr(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)
     ) {
+
   override def custom_print =
     (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -363,6 +380,7 @@ case class FunctionType(
       case _ => s"(${inputsString}) -> (${outputsString})"
     }
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -403,6 +421,7 @@ case class DenseIntOrFPElementsAttr(
         else { values.map(_.custom_print).mkString("[", ", ", "]") }
       }> : ${typ.custom_print}"
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -437,6 +456,7 @@ case class AffineSetAttr(val affine_set: AffineSet)
 object ModuleOp extends OperationObject {
   override def name = "builtin.module"
   override def factory = ModuleOp.apply
+
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       resNames: Seq[String],
@@ -449,6 +469,7 @@ object ModuleOp extends OperationObject {
         parser.Region
       ).map((x: Region) => ModuleOp(regions = ListType(x)))
   // ==----------------------== //
+
 }
 
 case class ModuleOp(
@@ -461,10 +482,12 @@ case class ModuleOp(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "builtin.module") {
+
   override def custom_print(
       p: Printer
   ): String =
     s"builtin.module ${p.printRegion(regions(0))}"
+
 }
 
 val BuiltinDialect = Dialect(Seq(ModuleOp), Seq())

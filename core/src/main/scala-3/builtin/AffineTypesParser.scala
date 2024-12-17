@@ -262,6 +262,7 @@ def EqualP[$: P](
   )
 
 object TestAffine {
+
   def main(args: Array[String]): Unit = {
     val parsed =
       parse("d0 + d1", AffineExprP(Seq("d0", "d1"), Seq())(_))
@@ -273,4 +274,5 @@ object TestAffine {
       parse("(d0, d1)[s0] : (d0 + d1 + s0 >= d1 + s0)", AffineSetP(_))
     println(parsed2)
   }
+
 }

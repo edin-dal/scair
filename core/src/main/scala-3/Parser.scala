@@ -285,6 +285,7 @@ object Parser {
         }
       }
     }
+
   }
 
   class Scope(
@@ -317,6 +318,7 @@ object Parser {
       case None =>
         scope
     }
+
   }
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -1011,4 +1013,5 @@ class Parser(val context: MLContext, val args: Args = Args())
   ): fastparse.Parsed[B] = {
     return parse(text, pattern)
   }
+
 }

@@ -65,6 +65,7 @@ object InsertPoint {
   def at_end_of(block: Block): InsertPoint = {
     new InsertPoint(block)
   }
+
 }
 
 case class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
@@ -82,6 +83,7 @@ case class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
       )
     }
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -169,6 +171,7 @@ object RewriteMethods {
     block.insert_ops_after(op, ops)
     block.erase_op(op)
   }
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -246,6 +249,7 @@ class PatternRewriter(
   ): Unit = {
     RewriteMethods.replace_op(op, new_ops, new_results)
   }
+
 }
 
 abstract class RewritePattern {
@@ -305,4 +309,5 @@ class PatternRewriteWalker(
     }
     return rewriter_done_action
   }
+
 }

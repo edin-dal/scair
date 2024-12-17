@@ -10,10 +10,12 @@ import scair.scairdl.irdef.*
 case class Ptr(
 ) extends AttributeFE
     with TypeAttributeFE
+
 case class Load(
     ptr: Operand[Ptr],
     result: Result[Attribute]
 ) extends OperationFE
+
 case class GetElementPtr(
     base: Operand[Ptr],
     dynamicIndices: Variadic[Operand[IntegerType]],

@@ -29,6 +29,7 @@ trait IsTerminator extends OpTrait {
     }
     super.trait_verify()
   }
+
 }
 
 /*≡==---=≡≡≡≡≡=---=≡≡*\
@@ -45,4 +46,5 @@ trait NoTerminator extends OpTrait {
 
     super.trait_verify()
   }
+
 }

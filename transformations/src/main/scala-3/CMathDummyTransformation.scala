@@ -10,6 +10,7 @@ import scair.transformations.PatternRewriter
 import scair.transformations.RewritePattern
 
 object AddDummyAttributeToDict extends RewritePattern {
+
   override def match_and_rewrite(
       op: Operation,
       rewriter: PatternRewriter
@@ -26,6 +27,7 @@ object AddDummyAttributeToDict extends RewritePattern {
     }
     rewriter.has_done_action = true
   }
+
 }
 
 object TestInsertingDummyOperation extends RewritePattern {
@@ -54,6 +56,7 @@ object TestInsertingDummyOperation extends RewritePattern {
 
     rewriter.has_done_action = true
   }
+
 }
 
 object TestReplacingDummyOperation extends RewritePattern {
@@ -63,8 +66,10 @@ object TestReplacingDummyOperation extends RewritePattern {
 
   val op1 =
     new UnregisteredOperation("dummy-op1")
+
   val op2 =
     new UnregisteredOperation("dummy-op2")
+
   val op3 =
     new UnregisteredOperation("dummy-return", results = ListType(val1, val2))
 
@@ -93,6 +98,7 @@ object TestReplacingDummyOperation extends RewritePattern {
 
     rewriter.has_done_action = true
   }
+
 }
 
 object DummyPass extends ModulePass {
@@ -104,6 +110,7 @@ object DummyPass extends ModulePass {
 
     return op
   }
+
 }
 
 object TestInsertionPass extends ModulePass {
@@ -115,6 +122,7 @@ object TestInsertionPass extends ModulePass {
 
     return op
   }
+
 }
 
 object TestReplacementPass extends ModulePass {
@@ -126,4 +134,5 @@ object TestReplacementPass extends ModulePass {
 
     return op
   }
+
 }

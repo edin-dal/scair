@@ -1,4 +1,5 @@
 package scair.scairdl.irdef
+
 import scair.dialects.builtin.*
 import scair.ir.Attribute
 import scair.ir.Operation
@@ -34,8 +35,10 @@ val ListType = mutable.ListBuffer
 type ListType[A] = mutable.ListBuffer[A]
 
 abstract class EscapeHatch[T: ClassTag] {
+
   val importt: String =
     s"import ${implicitly[ClassTag[T]].runtimeClass.getName.replace("$", ".")}"
+
   val name: String = importt.split("\\.").last.split(" ").last
 }
 
@@ -74,23 +77,28 @@ case class OperandDef(
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
+
 case class ResultDef(
     val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
+
 case class RegionDef(
     val id: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
+
 case class SuccessorDef(
     val id: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
+
 case class OpPropertyDef(
     val id: String,
     val const: IRDLConstraint = AnyAttr
 ) extends OpInput {}
+
 case class OpAttributeDef(
     val id: String,
     val const: IRDLConstraint = AnyAttr
@@ -103,6 +111,7 @@ case class OpAttributeDef(
 object DialectDef {
   def empty: DialectDef = DialectDef("empty")
 }
+
 case class DialectDef(
     val name: String,
     val operations: Seq[OperationDef] = Seq(),
@@ -110,6 +119,7 @@ case class DialectDef(
     val opHatches: Seq[OpEscapeHatch[_]] = Seq(),
     val attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
 ) {
+
   def print(indent: Int): String =
     s"""package scair.dialects.${name.toLowerCase}
 
@@ -130,6 +140,7 @@ val ${name}Dialect: Dialect = new Dialect(
           .mkString(", ")})
 )
   """
+
 }
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
@@ -227,10 +238,13 @@ case class OperationDef(
 
   def n_variadic_operands: Int =
     operands.filter(_.variadicity != Variadicity.Single).length
+
   def n_variadic_results: Int =
     results.filter(_.variadicity != Variadicity.Single).length
+
   def n_variadic_regions: Int =
     regions.filter(_.variadicity != Variadicity.Single).length
+
   def n_variadic_successors: Int =
     successors.filter(_.variadicity != Variadicity.Single).length
 
@@ -643,6 +657,7 @@ ${irdl_verification(indent + 1)}
 
 }
 """
+
 }
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
@@ -655,6 +670,7 @@ case class AttributeDef(
     val parameters: Seq[OperandDef] = Seq(),
     val typee: Int = 0
 ) {
+
   def print(indent: Int): String = s"""
 object $className extends AttributeObject {
   override def name = "$name"
@@ -668,6 +684,7 @@ case class $className(override val parameters: Seq[Attribute]) extends Parametri
     if (parameters.length != ${parameters.length}) then throw new Exception(s"Expected ${parameters.length} parameters, got $${parameters.length}")
 }
   """
+
 }
 
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
@@ -705,4 +722,5 @@ class ScaIRDLDialect(final val dialect_def: DialectDef) {
     writer.flush()
     writer.close()
   }
+
 }
