@@ -79,20 +79,145 @@ case class OperandDef(
     val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInput {
+  def single_accessors(index: String) =
+    s"  def ${id}: Value[Attribute] = operands($index)\n" +
+      s"  def ${id}_=(new_operand: Value[Attribute]): Unit = {operands($index) = new_operand}\n"
+
+  def segmented_single_accessors(index: String) =
+    single_accessors(
+      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)"
+    )
+
+  def variadic_accessors(from: String, to: String) =
+    s"""  def ${id}: Seq[Value[Attribute]] = {
+      val from = $from
+      val to = $to
+      operands.slice(from, to).toSeq
+  }
+  def ${id}_=(new_operands: Seq[Value[Attribute]]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_operands.length - (to - from)
+    for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
+      operands(from + i) = operand
+    if (diff < 0)
+      operands.trimEnd(-diff)
+  }\n\n"""
+
+  def segmented_variadic_accessors(index: String) =
+    variadic_accessors(
+      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)",
+      s"from + operandSegmentSizes($index)"
+    )
+}
+
 case class ResultDef(
     val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInput {
+  def single_accessors(index: String) =
+    s"  def ${id}: Value[Attribute] = results($index)\n" +
+      s"  def ${id}_=(new_result: Value[Attribute]): Unit = {results($index) = new_result}\n"
+
+  def segmented_single_accessors(index: String) =
+    single_accessors(
+      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)"
+    )
+
+  def variadic_accessors(from: String, to: String) =
+    s"""  def ${id}: Seq[Value[Attribute]] = {
+      val from = $from
+      val to = $to
+      results.slice(from, to).toSeq
+  }
+  def ${id}_=(new_results: Seq[Value[Attribute]]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_results.length - (to - from)
+    for (result, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+      results(from + i) = result
+    if (diff < 0)
+      results.trimEnd(-diff)
+  }\n\n"""
+
+  def segmented_variadic_accessors(index: String) =
+    variadic_accessors(
+      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)",
+      s"from + resultSegmentSizes($index)"
+    )
+}
 case class RegionDef(
     val id: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInput {
+  def single_accessors(index: String) =
+    s"  def ${id}: Region = regions($index)\n" +
+      s"  def ${id}_=(new_region: Region): Unit = {regions($index) = new_region}\n"
+
+  def segmented_single_accessors(index: String) =
+    single_accessors(
+      s"regionSegmentSizes.slice(0, $index).fold(0)(_ + _)"
+    )
+
+  def variadic_accessors(from: String, to: String) =
+    s"""  def ${id}: Seq[Region] = {
+      val from = $from
+      val to = $to
+      regions.slice(from, to).toSeq
+  }
+  def ${id}_=(new_regions: Seq[Region]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_regions.length - (to - from)
+    for (region, i) <- (new_regions ++ regions.slice(to, regions.length)).zipWithIndex do
+      regions(from + i) = region
+    if (diff < 0)
+      regions.trimEnd(-diff)
+  }\n\n"""
+
+  def segmented_variadic_accessors(index: String) =
+    variadic_accessors(
+      s"regionSegmentSizes.slice(0, $index).fold(0)(_ + _)",
+      s"from + regionSegmentSizes($index)"
+    )
+}
 case class SuccessorDef(
     val id: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInput {
+  def single_accessors(index: String) =
+    s"  def ${id}: Block = successors($index)\n" +
+      s"  def ${id}_=(new_successor: Block): Unit = {successors($index) = new_successor}\n"
+
+  def segmented_single_accessors(index: String) =
+    single_accessors(
+      s"successorSegmentSizes.slice(0, $index).fold(0)(_ + _)"
+    )
+
+  def variadic_accessors(from: String, to: String) =
+    s"""  def ${id}: Seq[Block] = {
+      val from = $from
+      val to = $to
+      successors.slice(from, to).toSeq
+  }
+  def ${id}_=(new_successors: Seq[Block]): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_successors.length - (to - from)
+    for (successor, i) <- (new_successors ++ successors.slice(to, successors.length)).zipWithIndex do
+      successors(from + i) = successor
+    if (diff < 0)
+      successors.trimEnd(-diff)
+  }\n\n"""
+
+  def segmented_variadic_accessors(index: String) =
+    variadic_accessors(
+      s"successorSegmentSizes.slice(0, $index).fold(0)(_ + _)",
+      s"from + successorSegmentSizes($index)"
+    )
+}
 case class OpPropertyDef(
     val id: String,
     val const: IRDLConstraint = AnyAttr
@@ -236,57 +361,24 @@ case class OperationDef(
   def n_variadic_successors: Int =
     successors.filter(_.variadicity != Variadicity.Single).length
 
-  def single_operand_accessor(name: String, index: String) =
-    s"  def ${name}: Value[Attribute] = operands($index)\n" +
-      s"  def ${name}_=(new_operand: Value[Attribute]): Unit = {operands($index) = new_operand}\n"
-
-  def segmented_single_operand_accessor(name: String, index: String) =
-    single_operand_accessor(
-      name,
-      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)"
-    )
-
-  def variadic_operand_accessor(name: String, from: String, to: String) =
-    s"""  def ${name}: Seq[Value[Attribute]] = {
-      val from = $from
-      val to = $to
-      operands.slice(from, to).toSeq
-  }
-  def ${name}_=(new_operands: Seq[Value[Attribute]]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_operands.length - (to - from)
-    for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
-      operands(from + i) = operand
-    if (diff < 0)
-      operands.trimEnd(-diff)
-  }\n\n"""
-
-  def segmented_variadic_operand_accessor(name: String, index: String) =
-    variadic_operand_accessor(
-      name,
-      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)",
-      s"from + operandSegmentSizes($index)"
-    )
-
   def operands_accessors(implicit indent: Int): Seq[String] = {
     n_variadic_operands match {
       case 0 =>
         for ((odef, i) <- operands.zipWithIndex)
-          yield single_operand_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
       case 1 => {
         val variadic_index =
           operands.indexWhere(_.variadicity != Variadicity.Single);
+        val variadic = operands(variadic_index)
         ((
           for (odef, i) <- operands.slice(0, variadic_index).zipWithIndex
-          yield single_operand_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
         )
           :+
-            (variadic_operand_accessor(
-              operands(variadic_index).id,
+            variadic.variadic_accessors(
               variadic_index.toString,
               s"operands.length - ${operands.length - variadic_index - 1}"
-            ))) ++
+            )) ++
           (for (
             (odef, i) <- operands.zipWithIndex
               .slice(
@@ -294,8 +386,7 @@ case class OperationDef(
                 operands.length
               )
           )
-            yield single_operand_accessor(
-              odef.id,
+            yield odef.single_accessors(
               s"operands.length - ${operands.length - i}"
             ))
 
@@ -304,68 +395,29 @@ case class OperationDef(
         for ((odef, i) <- operands.zipWithIndex)
           yield odef.variadicity match {
             case Variadicity.Single =>
-              segmented_single_operand_accessor(odef.id, i.toString)
+              odef.segmented_single_accessors(i.toString)
             case Variadicity.Variadic =>
-              segmented_variadic_operand_accessor(odef.id, i.toString)
+              odef.segmented_variadic_accessors(i.toString)
           }
       }
     }
   }
 
-  // TODO: We *probably* really don't want this setter or at least that way.
-  // That's more of a generic framework question though and is orthogonal to this codegen thing
-  // hence just a TODO for later.
-  def single_result_accessor(name: String, index: String) =
-    s"  def ${name}: Value[Attribute] = results($index)\n" +
-      s"  def ${name}_=(new_result: Value[Attribute]): Unit = {results($index) = new_result}\n"
-
-  def segmented_single_result_accessor(name: String, index: String) =
-    single_result_accessor(
-      name,
-      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)"
-    )
-
-  // TODO: We *probably* really don't want this setter or at least that way.
-  // That's more of a generic framework question though and is orthogonal to this codegen thing
-  // hence just a TODO for later.
-  def variadic_result_accessor(name: String, from: String, to: String) =
-    s"""  def ${name}: Seq[Value[Attribute]] = {
-      val from = $from
-      val to = $to
-      results.slice(from, to).toSeq
-  }
-  def ${name}_=(new_results: Seq[Value[Attribute]]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_results.length - (to - from)
-    for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-      results(from + i) = new_results
-    if (diff < 0)
-      results.trimEnd(-diff)
-  }\n\n"""
-
-  def segmented_variadic_result_accessor(name: String, index: String) =
-    variadic_result_accessor(
-      name,
-      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)",
-      s"from + resultSegmentSizes($index)"
-    )
-
   def results_accessors(implicit indent: Int): Seq[String] = {
     n_variadic_results match {
       case 0 =>
         for ((odef, i) <- results.zipWithIndex)
-          yield single_result_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
       case 1 => {
         val variadic_index =
-          results.indexWhere(_.variadicity != Variadicity.Single);
+          results.indexWhere(_.variadicity != Variadicity.Single)
+        val variadic = results(variadic_index)
         ((
           for (odef, i) <- results.slice(0, variadic_index).zipWithIndex
-          yield single_result_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
         )
           :+
-            (variadic_result_accessor(
-              results(variadic_index).id,
+            (variadic.variadic_accessors(
               variadic_index.toString,
               s"results.length - ${results.length - variadic_index - 1}"
             ))) ++
@@ -376,8 +428,7 @@ case class OperationDef(
                 results.length
               )
           )
-            yield single_result_accessor(
-              odef.id,
+            yield odef.single_accessors(
               s"results.length - ${results.length - i}"
             ))
 
@@ -386,49 +437,29 @@ case class OperationDef(
         for ((odef, i) <- results.zipWithIndex)
           yield odef.variadicity match {
             case Variadicity.Single =>
-              segmented_single_result_accessor(odef.id, i.toString)
+              odef.segmented_single_accessors(i.toString)
             case Variadicity.Variadic =>
-              segmented_variadic_result_accessor(odef.id, i.toString)
+              odef.segmented_variadic_accessors(i.toString)
           }
       }
     }
   }
 
-  def single_region_accessor(name: String, index: String) =
-    s"  def ${name}: Region = regions($index)\n" +
-      s"  def ${name}_=(new_region: Region): Unit = {regions($index) = new_region}\n"
-
-  def variadic_region_accessor(name: String, from: String, to: String) =
-    s"""  def ${name}: Seq[Region] = {
-      val from = $from
-      val to = $to
-      regions.slice(from, to).toSeq
-  }
-  def ${name}_=(new_regions: Seq[Region]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_regions.length - (to - from)
-    for (region, i) <- (new_regions ++ regions.slice(to, regions.length)).zipWithIndex do
-      regions(from + i) = region
-    if (diff < 0)
-      regions.trimEnd(-diff)
-  }\n\n"""
-
   def regions_accessors(implicit indent: Int): Seq[String] = {
     n_variadic_regions match {
       case 0 =>
         for ((odef, i) <- regions.zipWithIndex)
-          yield single_region_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
       case 1 => {
         val variadic_index =
-          regions.indexWhere(_.variadicity != Variadicity.Single);
+          regions.indexWhere(_.variadicity != Variadicity.Single)
+        val variadic = regions(variadic_index)
         ((
           for (odef, i) <- regions.slice(0, variadic_index).zipWithIndex
-          yield single_region_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
         )
           :+
-            (variadic_region_accessor(
-              regions(variadic_index).id,
+            (variadic.variadic_accessors(
               variadic_index.toString,
               s"regions.length - ${regions.length - variadic_index - 1}"
             ))) ++
@@ -439,8 +470,7 @@ case class OperationDef(
                 regions.length
               )
           )
-            yield single_region_accessor(
-              odef.id,
+            yield odef.single_accessors(
               s"regions.length - ${regions.length - i}"
             ))
 
@@ -456,41 +486,21 @@ case class OperationDef(
     }
   }
 
-  def single_successor_accessor(name: String, index: String) =
-    s"  def ${name}: Block = successors($index)\n" +
-      s"  def ${name}_=(new_successor: Block): Unit = {successors($index) = new_successor}\n"
-
-  def variadic_successor_accessor(name: String, from: String, to: String) =
-    s"""  def ${name}: Seq[Block] = {
-      val from = $from
-      val to = $to
-      successors.slice(from, to).toSeq
-  }
-  def ${name}_=(new_successors: Seq[Block]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_successors.length - (to - from)
-    for (successor, i) <- (new_successors ++ successors.slice(to, successors.length)).zipWithIndex do
-      successors(from + i) = successor
-    if (diff < 0)
-      successors.trimEnd(-diff)
-  }\n\n"""
-
   def successors_accessors(implicit indent: Int): Seq[String] = {
     n_variadic_successors match {
       case 0 =>
         for ((odef, i) <- successors.zipWithIndex)
-          yield single_successor_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
       case 1 => {
         val variadic_index =
-          successors.indexWhere(_.variadicity != Variadicity.Single);
+          successors.indexWhere(_.variadicity != Variadicity.Single)
+        val variadic = successors(variadic_index)
         ((
           for (odef, i) <- successors.slice(0, variadic_index).zipWithIndex
-          yield single_successor_accessor(odef.id, i.toString)
+          yield odef.single_accessors(i.toString)
         )
           :+
-            (variadic_successor_accessor(
-              successors(variadic_index).id,
+            (variadic.variadic_accessors(
               variadic_index.toString,
               s"successors.length - ${successors.length - variadic_index - 1}"
             ))) ++
@@ -501,8 +511,7 @@ case class OperationDef(
                 successors.length
               )
           )
-            yield single_successor_accessor(
-              odef.id,
+            yield odef.single_accessors(
               s"successors.length - ${successors.length - i}"
             ))
 

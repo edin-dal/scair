@@ -207,8 +207,8 @@ object Main {
 // CHECK-NEXT:      val from = 1
 // CHECK-NEXT:      val to = results.length - 1
 // CHECK-NEXT:      val diff = new_results.length - (to - from)
-// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = new_results
+// CHECK-NEXT:      for (result, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+// CHECK-NEXT:        results(from + i) = result
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
@@ -374,8 +374,8 @@ object Main {
 // CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 1).fold(0)(_ + _)
 // CHECK-NEXT:      val to = from + resultSegmentSizes(1)
 // CHECK-NEXT:      val diff = new_results.length - (to - from)
-// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = new_results
+// CHECK-NEXT:      for (result, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+// CHECK-NEXT:        results(from + i) = result
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
@@ -389,8 +389,8 @@ object Main {
 // CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 2).fold(0)(_ + _)
 // CHECK-NEXT:      val to = from + resultSegmentSizes(2)
 // CHECK-NEXT:      val diff = new_results.length - (to - from)
-// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = new_results
+// CHECK-NEXT:      for (result, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
+// CHECK-NEXT:        results(from + i) = result
 // CHECK-NEXT:      if (diff < 0)
 // CHECK-NEXT:        results.trimEnd(-diff)
 // CHECK-NEXT:    }
