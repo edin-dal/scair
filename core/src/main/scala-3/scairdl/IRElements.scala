@@ -66,7 +66,43 @@ case class RegularType(val dialect: String, override val id: String)
 ||  TYPES & CONTAINERS  ||
 \*≡==----===≡≡===----==≡*/
 
-abstract class OpInput {}
+abstract class OpInput(val id: String) {
+
+  def def_type: String
+  def def_name: String
+  def def_field: String
+
+  def single_accessors(index: String) =
+    s"  def ${id}: $def_type = $def_field($index)\n" +
+      s"  def ${id}_=(new_${def_name}: $def_type): Unit = {$def_field($index) = new_${def_name}}\n"
+
+  def segmented_single_accessors(index: String) =
+    single_accessors(
+      s"${def_name}SegmentSizes.slice(0, $index).fold(0)(_ + _)"
+    )
+
+  def variadic_accessors(from: String, to: String) =
+    s"""  def ${id}: $def_type = {
+      val from = $from
+      val to = $to
+      $def_field.slice(from, to).toSeq
+  }
+  def ${id}_=(new_${def_name}s: $def_type): Unit = {
+    val from = $from
+    val to = $to
+    val diff = new_${def_name}s.length - (to - from)
+    for (${def_name}, i) <- (new_${def_name}s ++ $def_field.slice(to, $def_field.length)).zipWithIndex do
+      $def_field(from + i) = ${def_name}
+    if (diff < 0)
+      $def_field.trimEnd(-diff)
+  }\n\n"""
+
+  def segmented_variadic_accessors(index: String) =
+    variadic_accessors(
+      s"${def_name}SegmentSizes.slice(0, $index).fold(0)(_ + _)",
+      s"from + ${def_name}SegmentSizes($index)"
+    )
+}
 
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
@@ -76,156 +112,68 @@ enum Variadicity {
 }
 
 case class OperandDef(
-    val id: String,
+    override val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {
-  def single_accessors(index: String) =
-    s"  def ${id}: Value[Attribute] = operands($index)\n" +
-      s"  def ${id}_=(new_operand: Value[Attribute]): Unit = {operands($index) = new_operand}\n"
-
-  def segmented_single_accessors(index: String) =
-    single_accessors(
-      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)"
-    )
-
-  def variadic_accessors(from: String, to: String) =
-    s"""  def ${id}: Seq[Value[Attribute]] = {
-      val from = $from
-      val to = $to
-      operands.slice(from, to).toSeq
+) extends OpInput(id) {
+  def def_type: String = variadicity match {
+    case Variadicity.Single   => s"Value[Attribute]"
+    case Variadicity.Variadic => s"Seq[Value[Attribute]]"
   }
-  def ${id}_=(new_operands: Seq[Value[Attribute]]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_operands.length - (to - from)
-    for (operand, i) <- (new_operands ++ operands.slice(to, operands.length)).zipWithIndex do
-      operands(from + i) = operand
-    if (diff < 0)
-      operands.trimEnd(-diff)
-  }\n\n"""
-
-  def segmented_variadic_accessors(index: String) =
-    variadic_accessors(
-      s"operandSegmentSizes.slice(0, $index).fold(0)(_ + _)",
-      s"from + operandSegmentSizes($index)"
-    )
+  def def_name: String = "operand"
+  def def_field: String = "operands"
 }
 
 case class ResultDef(
-    val id: String,
+    override val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {
-  def single_accessors(index: String) =
-    s"  def ${id}: Value[Attribute] = results($index)\n" +
-      s"  def ${id}_=(new_result: Value[Attribute]): Unit = {results($index) = new_result}\n"
-
-  def segmented_single_accessors(index: String) =
-    single_accessors(
-      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)"
-    )
-
-  def variadic_accessors(from: String, to: String) =
-    s"""  def ${id}: Seq[Value[Attribute]] = {
-      val from = $from
-      val to = $to
-      results.slice(from, to).toSeq
+) extends OpInput(id) {
+  def def_type: String = variadicity match {
+    case Variadicity.Single   => s"Value[Attribute]"
+    case Variadicity.Variadic => s"Seq[Value[Attribute]]"
   }
-  def ${id}_=(new_results: Seq[Value[Attribute]]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_results.length - (to - from)
-    for (result, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-      results(from + i) = result
-    if (diff < 0)
-      results.trimEnd(-diff)
-  }\n\n"""
-
-  def segmented_variadic_accessors(index: String) =
-    variadic_accessors(
-      s"resultSegmentSizes.slice(0, $index).fold(0)(_ + _)",
-      s"from + resultSegmentSizes($index)"
-    )
+  def def_name: String = "result"
+  def def_field: String = "results"
 }
 case class RegionDef(
-    val id: String,
+    override val id: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {
-  def single_accessors(index: String) =
-    s"  def ${id}: Region = regions($index)\n" +
-      s"  def ${id}_=(new_region: Region): Unit = {regions($index) = new_region}\n"
-
-  def segmented_single_accessors(index: String) =
-    single_accessors(
-      s"regionSegmentSizes.slice(0, $index).fold(0)(_ + _)"
-    )
-
-  def variadic_accessors(from: String, to: String) =
-    s"""  def ${id}: Seq[Region] = {
-      val from = $from
-      val to = $to
-      regions.slice(from, to).toSeq
+) extends OpInput(id) {
+  def def_type: String = variadicity match {
+    case Variadicity.Single   => s"Region"
+    case Variadicity.Variadic => s"Seq[Region]"
   }
-  def ${id}_=(new_regions: Seq[Region]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_regions.length - (to - from)
-    for (region, i) <- (new_regions ++ regions.slice(to, regions.length)).zipWithIndex do
-      regions(from + i) = region
-    if (diff < 0)
-      regions.trimEnd(-diff)
-  }\n\n"""
-
-  def segmented_variadic_accessors(index: String) =
-    variadic_accessors(
-      s"regionSegmentSizes.slice(0, $index).fold(0)(_ + _)",
-      s"from + regionSegmentSizes($index)"
-    )
+  def def_name: String = "region"
+  def def_field: String = "regions"
 }
 case class SuccessorDef(
-    val id: String,
+    override val id: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {
-  def single_accessors(index: String) =
-    s"  def ${id}: Block = successors($index)\n" +
-      s"  def ${id}_=(new_successor: Block): Unit = {successors($index) = new_successor}\n"
-
-  def segmented_single_accessors(index: String) =
-    single_accessors(
-      s"successorSegmentSizes.slice(0, $index).fold(0)(_ + _)"
-    )
-
-  def variadic_accessors(from: String, to: String) =
-    s"""  def ${id}: Seq[Block] = {
-      val from = $from
-      val to = $to
-      successors.slice(from, to).toSeq
+) extends OpInput(id) {
+  def def_type: String = variadicity match {
+    case Variadicity.Single   => s"Block"
+    case Variadicity.Variadic => s"Seq[Block]"
   }
-  def ${id}_=(new_successors: Seq[Block]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_successors.length - (to - from)
-    for (successor, i) <- (new_successors ++ successors.slice(to, successors.length)).zipWithIndex do
-      successors(from + i) = successor
-    if (diff < 0)
-      successors.trimEnd(-diff)
-  }\n\n"""
-
-  def segmented_variadic_accessors(index: String) =
-    variadic_accessors(
-      s"successorSegmentSizes.slice(0, $index).fold(0)(_ + _)",
-      s"from + successorSegmentSizes($index)"
-    )
+  def def_name: String = "successor"
+  def def_field: String = "successors"
 }
 case class OpPropertyDef(
-    val id: String,
+    override val id: String,
     val const: IRDLConstraint = AnyAttr
-) extends OpInput {}
+) extends OpInput(id) {
+  def def_field: String = "properties"
+  def def_name: String = "property"
+  def def_type: String = "Attribute"
+}
 case class OpAttributeDef(
-    val id: String,
+    override val id: String,
     val const: IRDLConstraint = AnyAttr
-) extends OpInput {}
+) extends OpInput(id) {
+  def def_field: String = "attributes"
+  def def_name: String = "attribute"
+  def def_type: String = "Attribute"
+}
 
 object DialectDef {
   def empty: DialectDef = DialectDef("empty")
