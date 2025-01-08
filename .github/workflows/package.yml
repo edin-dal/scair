@@ -10,6 +10,7 @@ jobs:
 
   snapshot:
     permissions:
+      contents: read
       packages: write
 
     name: "SNAPSHOT"
