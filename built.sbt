@@ -15,9 +15,9 @@ val githubOwner = "baymaks" // GitHub username or organization
 val repoName = "scair" // Your GitHub repository name
 val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
 
-publishTo := Some("GitHub Packages" at base)
+ThisBuild / publishTo := Some("GitHub Packages" at base)
 
-credentials += Credentials(
+ThisBuild / credentials += Credentials(
   "GitHub Package Registry",
   "maven.pkg.github.com",
   System.getenv("GITHUB_ACTOR"), // GitHub username from environment variable
