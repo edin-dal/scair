@@ -15,11 +15,7 @@ publishTo := {
   val githubOwner = "baymaks" // GitHub username or organization
   val repoName = "scair" // Your GitHub repository name
   val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
-  if (isSnapshot.value) {
-    Some("GitHub Packages" at base + "-snapshots") // For snapshots
-  } else {
-    Some("GitHub Packages" at base)
-  }
+  return Some("GitHub Packages" at base)
 }
 
 credentials += Credentials(
