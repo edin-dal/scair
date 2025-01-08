@@ -9,6 +9,9 @@ on:
 jobs:
 
   snapshot:
+    permissions:
+      packages: write
+
     name: "SNAPSHOT"
     runs-on: ubuntu-latest
 
