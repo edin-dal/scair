@@ -1,4 +1,4 @@
-name: Scala CI
+name: CI
 
 # Run on every push to main and every change on pull requests
 on:

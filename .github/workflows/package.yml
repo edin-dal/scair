@@ -1,4 +1,4 @@
-name: Docs
+name: Package
 
 # Run on every push to main and every change on pull requests
 on:
@@ -7,9 +7,9 @@ on:
   pull_request:
 
 jobs:
-    
-  scaladoc:
-    name: "Scaladoc"
+
+  snapshot:
+    name: "SNAPSHOT"
     runs-on: ubuntu-latest
 
     steps:
@@ -26,12 +26,12 @@ jobs:
         path: "scair/**/target"
         # Caches are immutable; we need to uniquely identify them to always push the recent ones
         # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
-        key: sbt-incremental-docs-${{ github.run_id }}-${{ github.run_attempt }}
+        key: sbt-incremental-snapshot-${{ github.run_id }}-${{ github.run_attempt }}
         # When restoring, we restore the most recent one pushed by such a job
         # Those are scoped by branch too; e.g., the most recent one from the main branch would
         # be fetched in a fresh PR, then the most recent one from this PR.
         restore-keys: |
-          sbt-incremental-docs-
+          sbt-incremental-snapshot-
 
     - name: Cache coursier packages
       uses: coursier/cache-action@v6
@@ -40,29 +40,8 @@ jobs:
       with:
         apps: scala:3.3.1 sbt
 
-    - name: Generate documentation
+    - name: Publish SNAPSHOT
+      if: github.ref == 'refs/heads/main'
       run: |
         cd scair
-        sbt unidoc
-    - name: Upload static files as artifact
-      id: deployment
-      uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
-      with:
-          path: scair/target/scala-3.3.4/unidoc/
-
-  deploy:
-      name: "Deploy to GitHub Pages"
-      environment:
-        name: github-pages
-        url: ${{ steps.deployment.outputs.page_url }}
-      # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-      permissions:
-        pages: write      # to deploy to Pages
-        id-token: write   # to verify the deployment originates from an appropriate source
-      runs-on: ubuntu-latest
-      needs: scaladoc
-      if: github.ref == 'refs/heads/main'
-      steps:
-        - name: Deploy to GitHub Pages
-          id: deployment
-          uses: actions/deploy-pages@v4
+        sbt publish

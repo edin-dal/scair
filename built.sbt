@@ -4,9 +4,30 @@ import scala.sys.process._
 import java.io.File
 
 ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / organization := "com.github.baymaks.scair"
+ThisBuild / version := "0.1-SNAPSHOT"
+
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
+
+publishTo := {
+  val githubOwner = "baymaks" // GitHub username or organization
+  val repoName = "scair" // Your GitHub repository name
+  val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
+  if (isSnapshot.value) {
+    Some("GitHub Packages" at base + "-snapshots") // For snapshots
+  } else {
+    Some("GitHub Packages" at base)
+  }
+}
+
+credentials += Credentials(
+  "GitHub Package Registry",
+  "maven.pkg.github.com",
+  System.getenv("GITHUB_ACTOR"), // GitHub username from environment variable
+  System.getenv("GITHUB_TOKEN") // GitHub token from environment variable
+)
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
