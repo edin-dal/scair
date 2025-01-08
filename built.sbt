@@ -11,12 +11,11 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-publishTo := {
-  val githubOwner = "baymaks" // GitHub username or organization
-  val repoName = "scair" // Your GitHub repository name
-  val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
-  return Some("GitHub Packages" at base)
-}
+val githubOwner = "baymaks" // GitHub username or organization
+val repoName = "scair" // Your GitHub repository name
+val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
+
+publishTo := Some("GitHub Packages" at base)
 
 credentials += Credentials(
   "GitHub Package Registry",
