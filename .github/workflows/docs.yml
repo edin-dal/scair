@@ -1,0 +1,67 @@
+name: Scala CI
+
+# Run on every push to main and every change on pull requests
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+    
+  scaladoc:
+    name: "Scaladoc"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Scair
+      uses: actions/checkout@v4
+      with:
+        path: scair
+
+    # Restore SBT's incremental build cache
+    - name: Restore Incremental Build Cache
+      uses: actions/cache@v4
+      with:
+        # All the target/ subdirectories are cached
+        path: "scair/**/target"
+        # Caches are immutable; we need to uniquely identify them to always push the recent ones
+        # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
+        key: sbt-incremental-docs-${{ github.run_id }}-${{ github.run_attempt }}
+        # When restoring, we restore the most recent one pushed by such a job
+        # Those are scoped by branch too; e.g., the most recent one from the main branch would
+        # be fetched in a fresh PR, then the most recent one from this PR.
+        restore-keys: |
+          sbt-incremental-docs-
+
+    - name: Cache coursier packages
+      uses: coursier/cache-action@v6
+    - name: Install coursier packages (Scala and SBT)
+      uses: coursier/setup-action@v1
+      with:
+        apps: scala:3.3.1 sbt
+
+    - name: Generate documentation
+      run: |
+        cd scair
+        sbt unidoc
+    - name: Upload static files as artifact
+      id: deployment
+      uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
+      with:
+          path: scair/target/scala-3.3.4/unidoc/
+
+  deploy:
+      environment:
+        name: github-pages
+        url: ${{ steps.deployment.outputs.page_url }}
+      # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+      permissions:
+        pages: write      # to deploy to Pages
+        id-token: write   # to verify the deployment originates from an appropriate source
+      runs-on: ubuntu-latest
+      needs: scaladoc
+      if: github.ref == 'refs/heads/main'
+      steps:
+        - name: Deploy to GitHub Pages
+          id: deployment
+          uses: actions/deploy-pages@v4

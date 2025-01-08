@@ -12,15 +12,17 @@ core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
-lazy val scair = (project in file(".")).aggregate(
-  core,
-  ScaIRDL,
-  clair,
-  native_dialects,
-  gen_dialects,
-  transformations,
-  tools
-)
+lazy val scair = (project in file("."))
+  .aggregate(
+    core,
+    ScaIRDL,
+    clair,
+    native_dialects,
+    gen_dialects,
+    transformations,
+    tools
+  )
+  .enablePlugins(ScalaUnidocPlugin)
 
 lazy val core = (project in file("core"))
 
