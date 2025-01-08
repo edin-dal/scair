@@ -41,7 +41,7 @@ jobs:
         apps: scala:3.3.1 sbt
 
     - name: Publish SNAPSHOT
-      if: github.ref == 'refs/heads/main'
+    #   if: github.ref == 'refs/heads/main'
       run: |
         cd scair
         sbt publish
