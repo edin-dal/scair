@@ -18,7 +18,7 @@ jobs:
         uses: SmartsquareGmbH/delete-old-packages@v0.8.1    
         with:
           names: |
-            scair-core_3
+             com.github.baymaks.scair.scair-core_3
           user: baymaks
           type: maven
           version-pattern: ".*-SNAPSHOT"
