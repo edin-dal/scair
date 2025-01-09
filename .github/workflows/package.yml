@@ -19,12 +19,21 @@ jobs:
         with:
           names: |
              com.github.baymaks.scair.scair-core_3
+             com.github.baymaks.scair.scair-native-dialects_3
+             com.github.baymaks.scair.scair-dialects_3
+             com.github.baymaks.scair.scair-transformations_3
+             com.github.baymaks.scair.scair-tools_3
+             com.github.baymaks.scair.scair-scairdl_3
+             com.github.baymaks.scair.scair-clair_3
+             com.github.baymaks.scair.scair_3
           user: baymaks
           type: maven
           version-pattern: ".*-SNAPSHOT"
           token: ${{ secrets.GITHUB_TOKEN }}
+          keep: 0
 
   snapshot:
+    needs: snapshot-clean
     permissions:
       contents: read
       packages: write
