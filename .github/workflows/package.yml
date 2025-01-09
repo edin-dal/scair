@@ -12,14 +12,10 @@ jobs:
     name: "SNAPSHOT cleanup"
     runs-on: ubuntu-latest
     steps:
-      - name: Cleanup existing SNAPSHOTs
-        uses: actions/delete-package-versions@v5
+      - name: Delete SNAPSHOT packages
+        uses: Savrov/github-action-version-cleaner@v1.0.0
         with:
           package-type: maven
-          package-name: scair-core_3
-          # Can be a single package version id, or a comma separated list of package version ids.
-          # Defaults to an empty string.
-          package-version-ids: 0.1-SNAPSHOT
 
   snapshot:
     permissions:
