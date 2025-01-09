@@ -34,28 +34,37 @@ lazy val scair = (project in file("."))
     ScaIRDL,
     clair,
     native_dialects,
-    gen_dialects,
+    dialects,
     transformations,
     tools
   )
   .enablePlugins(ScalaUnidocPlugin)
 
-lazy val core = (project in file("core"))
+lazy val core = (project in file("core")).settings(name := "scair-core")
 
-lazy val ScaIRDL = (project in file("ScaIRDL")).dependsOn(core)
-lazy val clair = (project in file("clair")).dependsOn(ScaIRDL)
+lazy val ScaIRDL = (project in file("ScaIRDL"))
+  .dependsOn(core)
+  .settings(
+    name := "scair-scairdl"
+  )
+lazy val clair =
+  (project in file("clair")).dependsOn(ScaIRDL).settings(name := "scair-clair")
 
 lazy val native_dialects: Project =
   (project in file("dialects"))
     .dependsOn(clair)
+    .settings(
+      name := "scair-native-dialects"
+    )
 
 lazy val dialect_source =
   settingKey[Seq[String]]("A list of classes that generate dialects")
 
-lazy val gen_dialects =
+lazy val dialects =
   (project in file("gen_dialects"))
     .dependsOn(native_dialects)
     .settings(
+      name := "scair-dialects",
       dialect_source := Seq(
         "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
@@ -69,12 +78,15 @@ lazy val gen_dialects =
     )
 
 lazy val transformations =
-  (project in file("transformations")).dependsOn(core, gen_dialects)
+  (project in file("transformations"))
+    .dependsOn(core, dialects)
+    .settings(name := "scair-transformations")
 lazy val tools =
   (project in file("tools"))
-    .dependsOn(gen_dialects, transformations)
+    .dependsOn(dialects, transformations)
     .enablePlugins(JavaAppPackaging)
     .settings(
+      name := "scair-tools",
       Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
     )
 
