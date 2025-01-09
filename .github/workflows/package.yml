@@ -9,13 +9,16 @@ on:
 jobs:
 
   snapshot-clean:
+    permissions:
+      packages: write
     name: "SNAPSHOT cleanup"
     runs-on: ubuntu-latest
     steps:
       - name: Delete SNAPSHOT packages
-        uses: Savrov/github-action-version-cleaner@v1.0.0
+        uses: Savrov/action-version-cleaner@v1.0.0
         with:
           package-type: maven
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   snapshot:
     permissions:
