@@ -29,8 +29,10 @@ ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % 
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
 // We want to keep the sources private for now.
-ThisBuild / Compile / packageSrc := false
-
+ThisBuild / Compile / packageSrc / publishArtifact := false
+// I'm just thinking we might as well not pay to publish the docs alongside as they are
+// now publicly hosted anyway.
+ThisBuild / Compile / packageDoc / publishArtifact := false
 lazy val scair = (project in file("."))
   .aggregate(
     core,
