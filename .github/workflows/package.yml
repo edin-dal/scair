@@ -19,6 +19,7 @@ jobs:
         with:
           names: |
             scair-core_3
+          user: baymaks
           type: maven
           version-pattern: ".*-SNAPSHOT"
           token: ${{ secrets.GITHUB_TOKEN }}
