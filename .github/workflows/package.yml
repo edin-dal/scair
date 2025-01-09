@@ -14,13 +14,14 @@ jobs:
     name: "SNAPSHOT cleanup"
     runs-on: ubuntu-latest
     steps:
-      - name: Delete SNAPSHOT packages
-        uses: Savrov/action-version-cleaner@v1.0.0
+      - name: Delete old packages
+        uses: SmartsquareGmbH/delete-old-packages@v0.8.1    
         with:
-          github-repository: ${{ github.repository }}
-          package-type: maven
-          version-tag: 0.1-SNAPSHOT
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          names: |
+            scair-core_3
+          type: maven
+          version-pattern: ".*-SNAPSHOT"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   snapshot:
     permissions:
