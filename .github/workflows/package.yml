@@ -6,34 +6,9 @@ on:
     branches: [ "main" ]
   pull_request:
 
-jobs:
-
-  snapshot-clean:
-    permissions:
-      packages: write
-    name: "SNAPSHOT cleanup"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete old packages
-        uses: SmartsquareGmbH/delete-old-packages@v0.8.1    
-        with:
-          names: |
-             com.github.baymaks.scair.scair-core_3
-             com.github.baymaks.scair.scair-native-dialects_3
-             com.github.baymaks.scair.scair-dialects_3
-             com.github.baymaks.scair.scair-transformations_3
-             com.github.baymaks.scair.scair-tools_3
-             com.github.baymaks.scair.scair-scairdl_3
-             com.github.baymaks.scair.scair-clair_3
-             com.github.baymaks.scair.scair_3
-          user: baymaks
-          type: maven
-          version-pattern: ".*-SNAPSHOT"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          keep: 0
+jobs:   
 
   snapshot:
-    needs: snapshot-clean
     permissions:
       contents: read
       packages: write
@@ -42,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    
     - name: Checkout Scair
       uses: actions/checkout@v4
       with:
@@ -68,9 +44,30 @@ jobs:
       uses: coursier/setup-action@v1
       with:
         apps: scala:3.3.1 sbt
+    
+    - name: Delete old packages
+      uses: SmartsquareGmbH/delete-old-packages@v0.8.1    
+      with:
+        names: |
+           com.github.baymaks.scair.scair-core_3
+           com.github.baymaks.scair.scair-native-dialects_3
+           com.github.baymaks.scair.scair-dialects_3
+           com.github.baymaks.scair.scair-transformations_3
+           com.github.baymaks.scair.scair-tools_3
+           com.github.baymaks.scair.scair-scairdl_3
+           com.github.baymaks.scair.scair-clair_3
+           com.github.baymaks.scair.scair_3
+        user: baymaks
+        type: maven
+        version-pattern: ".*-SNAPSHOT"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        keep: 0
 
     - name: Publish SNAPSHOT
     #   if: github.ref == 'refs/heads/main'
+      # If for some reason (e.g., there was no snapshot to delete...), the cleanup 
+      # failed, still try to publish the new snapshots.
+      if: success() || failure()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
