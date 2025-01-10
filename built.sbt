@@ -4,14 +4,14 @@ import scala.sys.process._
 import java.io.File
 
 ThisBuild / scalaVersion := "3.3.4"
-ThisBuild / organization := "com.github.baymaks.scair"
+ThisBuild / organization := "com.github.edin-dal.scair"
 ThisBuild / version := "0.1-SNAPSHOT"
 
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-val githubOwner = "baymaks" // GitHub username or organization
+val githubOwner = "edin-dal" // GitHub username or organization
 val repoName = "scair" // Your GitHub repository name
 val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
 
