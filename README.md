@@ -58,4 +58,10 @@ ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub wi
 sbt scalafmtAll
 ```
 
+Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. To check for unused imports run the following sbt command:
+```
+sbt "scalafixAll --check"
+```
+
+
 ---
