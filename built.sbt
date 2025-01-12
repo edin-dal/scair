@@ -28,7 +28,7 @@ core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
-lazy val scair = (project in file("."))
+lazy val root = (project in file("."))
   .aggregate(
     core,
     ScaIRDL,
@@ -39,6 +39,9 @@ lazy val scair = (project in file("."))
     tools
   )
   .enablePlugins(ScalaUnidocPlugin)
+  .settings(
+    publishArtifact := false
+  )
 
 lazy val core = (project in file("core")).settings(name := "scair-core")
 
@@ -86,7 +89,7 @@ lazy val tools =
     .dependsOn(dialects, transformations)
     .enablePlugins(JavaAppPackaging)
     .settings(
-      name := "scair-tools",
+      name := "scair",
       Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
     )
 
