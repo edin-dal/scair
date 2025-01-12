@@ -3,7 +3,7 @@ import scair.Printer
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.transformations.TransformContext
+import scair.TransformContext
 import scair.utils.allDialects
 import scair.utils.allPasses
 import scopt.OParser

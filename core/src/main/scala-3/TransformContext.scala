@@ -1,6 +1,6 @@
-package scair.transformations
+package scair
 
-import scair.*
+import scair.transformations.ModulePass
 
 import scala.collection.mutable
 
