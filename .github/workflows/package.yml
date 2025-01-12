@@ -53,7 +53,6 @@ jobs:
            com.github.edin-dal.scair.scair-native-dialects_3
            com.github.edin-dal.scair.scair-dialects_3
            com.github.edin-dal.scair.scair-transformations_3
-           com.github.edin-dal.scair.scair-tools_3
            com.github.edin-dal.scair.scair-scairdl_3
            com.github.edin-dal.scair.scair-clair_3
            com.github.edin-dal.scair.scair_3
