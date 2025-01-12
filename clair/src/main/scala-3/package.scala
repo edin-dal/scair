@@ -77,4 +77,12 @@ package scair
   * @see [[scair.dialects.cmathgen]]
   *
   */
-package object clair {}
+package object clair {
+  // Package-level definitions and utilities can go here
+}
+
+package clair {
+  /** This package contains the mirrored logic for the front-end of the Clair library.
+    */
+  package object mirrored {}
+}

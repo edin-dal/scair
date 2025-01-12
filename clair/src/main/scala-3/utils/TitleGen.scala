@@ -31,6 +31,11 @@ object SubTitleGen {
 
 object TitleGen {
 
+  /** Generate a title in ascii art.
+    *
+    * @param title
+    * @return ascii art title
+    */
   def generate(title: String): String = {
 
     val lower_title = title.toLowerCase().split("\\s+")
@@ -67,6 +72,15 @@ object TitleGen {
     final_string
   }
 
+  /** CLI hook for generating a title in ascii art.
+    * Takes in string arguments and generates a title.
+    * If no arguments are given, generates a default title.
+    * 
+    * To run this function, use the following command with sbt:
+    * `sbt "run/clair your string of your choice"`
+    * 
+    * @param args
+    */
   def main(args: Array[String]): Unit = {
     if (args.length == 0) {
       print(generate("title generator and whatnot"))
