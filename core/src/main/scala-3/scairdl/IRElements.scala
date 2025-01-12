@@ -56,12 +56,6 @@ case class RegularType(val dialect: String, override val id: String)
   override def get_import(): String = s"import scair.dialects.${dialect}._\n"
 }
 
-/*≡≡=---==≡≡≡==---=≡≡*\
-||    CONSTRAINTS    ||
-\*≡==----==≡==----==≡*/
-
-// RETIRED TO A HOLIDAY RESORT IN NORTHERN SCOTLAND, POSSIBLY PERMANENTLY :')
-
 /*≡≡=---===≡≡≡≡===---=≡≡*\
 ||  TYPES & CONTAINERS  ||
 \*≡==----===≡≡===----==≡*/

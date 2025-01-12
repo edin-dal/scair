@@ -161,7 +161,7 @@ object ScairOpt {
     extension (ctx: TransformContext)
       def register_all_passes(): Unit = {
         for (pass <- allPasses) {
-          ctx.passContext += pass.name -> pass
+          ctx.registerPass(pass)
         }
       }
   }

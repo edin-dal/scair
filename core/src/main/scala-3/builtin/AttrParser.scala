@@ -347,10 +347,6 @@ class AttrParser(val ctx: MLContext) {
   def AffineSetAttrP[$: P]: P[AffineSetAttr] =
     P("affine_set" ~ "<" ~ AffineSetP ~ ">").map(AffineSetAttr(_))
 
-  //////////////
-  // BUILT IN //
-  //////////////
-
   ///////////////////
   // FUNCTION TYPE //
   ///////////////////
@@ -393,22 +389,3 @@ class AttrParser(val ctx: MLContext) {
     println(parsed)
   }
 }
-
-/////////////////
-// MEMREF TYPE //
-/////////////////
-
-// memref type
-// memref-type ::= 'memref' ~ '<' ~ ( ranked-memref-type | unranked-memref-type ) ~ '>'
-
-// ranked-memref-type ::= shape type (`,` layout-specification)? (`,` memory-space)?
-
-// 'Unranked' memref type
-// unranked-memref-type ::= '*' ~ 'x'.? ~ type ~ (`,` memory-space)?
-
-// layout-specification ::= attribute-value
-// memory-space ::= attribute-value
-// shape ::= ranked-shape | unranked-shape
-// ranked-shape ::= (dimension `x`)* type
-// unranked-shape ::= `*`x type
-// dimension ::= `?` | decimal-literal

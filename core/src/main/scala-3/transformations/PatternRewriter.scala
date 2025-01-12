@@ -292,7 +292,3 @@ class PatternRewriteWalker(
     return rewriter_done_action
   }
 }
-
-// abstract class RewritePattern {
-//   def match_and_rewrite(op: Operation) = {}
-// }
