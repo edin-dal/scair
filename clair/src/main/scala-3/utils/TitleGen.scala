@@ -68,7 +68,11 @@ object TitleGen {
   }
 
   def main(args: Array[String]): Unit = {
-    print(generate("title generator and whatnot"))
+    if (args.length == 0) {
+      print(generate("title generator and whatnot"))
+    } else {
+      print(generate(args.mkString(" ")))
+    }
   }
 }
 

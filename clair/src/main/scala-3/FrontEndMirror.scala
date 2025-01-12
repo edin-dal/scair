@@ -12,6 +12,13 @@ import scala.compiletime.*
 import scala.deriving.*
 import scala.reflect.*
 
+// ███╗░░░███╗ ██╗ ██████╗░ ██████╗░ ░█████╗░ ██████╗░ ███████╗ ██████╗░
+// ████╗░████║ ██║ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔══██╗
+// ██╔████╔██║ ██║ ██████╔╝ ██████╔╝ ██║░░██║ ██████╔╝ █████╗░░ ██║░░██║
+// ██║╚██╔╝██║ ██║ ██╔══██╗ ██╔══██╗ ██║░░██║ ██╔══██╗ ██╔══╝░░ ██║░░██║
+// ██║░╚═╝░██║ ██║ ██║░░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ███████╗ ██████╔╝
+// ╚═╝░░░░░╚═╝ ╚═╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ╚══════╝ ╚═════╝░
+
 /*≡≡=---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   DIFFERENT CLASSES   ||
 \*≡==----=≡≡≡≡≡≡≡=----==≡*/
@@ -41,17 +48,6 @@ case class ConstraintRef(attr_name: String) extends IRDLConstraint {
   ): Unit = ()
 
   override def toString = s"BaseAttr[${attr_name}]()"
-}
-
-/*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
-||   ERROR HANDLING   ||
-\*≡==----=≡≡≡≡=----==≡*/
-
-object ErrorMessages {
-  val invalidOpInput =
-    "You can only pass in Operand, Result, Region, Successor, Property or Attr to the Operation definition"
-  val invalidVariadicOpInput =
-    "Variadicity is supported only for Operand, Result, Region or Successor."
 }
 
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
@@ -308,55 +304,4 @@ inline def summonDialect[Prods <: Tuple](
     opHatches,
     attrHatches
   )
-}
-
-/*≡≡=---=≡≡≡=---=≡≡*\
-||     TESTING     ||
-\*≡==----=≡=----==≡*/
-
-object FrontEnd {
-
-  // inline def regionindent[T]: String = {
-  //   constValue[T].asInstanceOf[Int].toString
-  // }
-  import scair.ir.{DataAttribute, AttributeObject}
-
-  object SampleData extends AttributeObject {
-    override def name: String = "sample"
-  }
-
-  case class SampleData(val d: String)
-      extends DataAttribute[String]("sample", d)
-
-  case class Complex(
-      e1: Operand[IntegerAttr]
-  ) extends AttributeFE
-
-  case class ComplexType(
-      e1: Operand[IntegerAttr]
-  ) extends TypeAttributeFE
-
-  case class Norm(
-      e1: Variadic[Operand[IntegerAttr]],
-      e2: Result[AnyAttribute],
-      e3: Region
-  ) extends OperationFE
-
-  case class Mul(
-      e1: Variadic[Operand[Complex]],
-      e2: Result[AnyAttribute]
-  ) extends OperationFE
-
-  object CMath {
-    val opHatches = Seq()
-    val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-    val generator =
-      summonDialect[(Complex, Norm, Mul)]("CMath", opHatches, attrHatches)
-  }
-
-  def main(args: Array[String]): Unit = {
-    println(CMath.generator.print(0))
-    println(new AttrEscapeHatch[SampleData].importt)
-  }
-
 }
