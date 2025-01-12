@@ -1,6 +1,5 @@
 package scair.clair.mirrored
 
-import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
 import scair.scairdl.irdef.*

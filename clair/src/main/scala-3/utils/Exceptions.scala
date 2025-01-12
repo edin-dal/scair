@@ -1,6 +1,7 @@
 package scair.clair
 
 import fastparse.Parsed
+
 import scala.io.AnsiColor.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░
