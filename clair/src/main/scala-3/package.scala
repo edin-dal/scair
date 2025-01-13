@@ -61,12 +61,14 @@ package scair
   * object Sample {
   *   val opHatches = Seq()
   *   val attrHatches = Seq(new AttrEscapeHatch[SampleData])
+  *
   *   val generator =
   *     summonDialect[(SampleAttribute, SampOp1, SampOp2)](
   *       "Sample",
   *       opHatches,
   *       attrHatches
   *     )
+  *
   * }
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\

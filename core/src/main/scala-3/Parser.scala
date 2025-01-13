@@ -527,6 +527,7 @@ object Parser {
   def PrettyDialectTypeOrAttReferenceName[$: P] = P(
     (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
   )
+
 }
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\

@@ -27,4 +27,5 @@ class TransformContext() {
   def registerPass(pass: ModulePass) = {
     passContext += pass.name -> pass
   }
+
 }
