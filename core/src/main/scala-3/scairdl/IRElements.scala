@@ -56,12 +56,6 @@ case class RegularType(val dialect: String, override val id: String)
   override def get_import(): String = s"import scair.dialects.${dialect}._\n"
 }
 
-/*≡≡=---==≡≡≡==---=≡≡*\
-||    CONSTRAINTS    ||
-\*≡==----==≡==----==≡*/
-
-// RETIRED TO A HOLIDAY RESORT IN NORTHERN SCOTLAND, POSSIBLY PERMANENTLY :')
-
 /*≡≡=---===≡≡≡≡===---=≡≡*\
 ||  TYPES & CONTAINERS  ||
 \*≡==----===≡≡===----==≡*/
@@ -102,6 +96,10 @@ case class OpAttributeDef(
     val const: IRDLConstraint = AnyAttr
 ) extends OpInput {}
 
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||    DIALECT DEF    ||
+\*≡==----=≡≡≡=----==≡*/
+
 object DialectDef {
   def empty: DialectDef = DialectDef("empty")
 }
@@ -134,9 +132,9 @@ val ${name}Dialect: Dialect = new Dialect(
   """
 }
 
-/*≡≡=---=≡≡≡=---=≡≡*\
-||   IR ELEMENTS   ||
-\*≡==----=≡=----==≡*/
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||   OPERATION DEF   ||
+\*≡==----=≡≡≡=----==≡*/
 
 case class OperationDef(
     val name: String,
@@ -647,6 +645,10 @@ ${irdl_verification(indent + 1)}
 """
 }
 
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||   ATTRIBUTE DEF   ||
+\*≡==----=≡≡≡=----==≡*/
+
 case class AttributeDef(
     val name: String,
     val className: String,
@@ -667,6 +669,10 @@ case class $className(override val parameters: Seq[Attribute]) extends Parametri
 }
   """
 }
+
+/*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+||    CODE GEN HOOK    ||
+\*≡==---==≡≡≡≡≡==---==≡*/
 
 /** A helper class that generates a dialect implementation from a given dialect
   * definition.

@@ -14,6 +14,13 @@ import scala.annotation.switch
 import scala.annotation.tailrec
 import scala.collection.mutable
 
+// ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
+// ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
+// ██████╔╝ ███████║ ██████╔╝ ╚█████╗░ █████╗░░ ██████╔╝
+// ██╔═══╝░ ██╔══██║ ██╔══██╗ ░╚═══██╗ ██╔══╝░░ ██╔══██╗
+// ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
+// ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
+
 object Parser {
 
   /** Whitespace syntax that supports // line-comments, *without* /* */
@@ -51,9 +58,9 @@ object Parser {
     rec(current = ctx.index, state = 0)
   }
 
-  //////////////////////
-  // COMMON FUNCTIONS //
-  //////////////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  || COMMON FUNCTIONS ||
+  \*≡==---==≡≡==---==≡*/
 
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
@@ -72,9 +79,9 @@ object Parser {
     case Some(x) => x
   }
 
-  ///////////
-  // SCOPE //
-  ///////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||      SCOPE      ||
+  \*≡==---==≡==---==≡*/
 
   object Scope {
 
@@ -312,9 +319,9 @@ object Parser {
     }
   }
 
-  ///////////////////
-  // COMMON SYNTAX //
-  ///////////////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||  COMMON SYNTAX  ||
+  \*≡==---==≡==---==≡*/
 
   // [x] digit     ::= [0-9]
   // [x] hex_digit ::= [0-9a-fA-F]
@@ -366,9 +373,9 @@ object Parser {
 
   def StringLiteral[$: P] = P("\"" ~~ notExcluded.rep.! ~~ "\"")
 
-  /////////////////
-  // IDENTIFIERS //
-  /////////////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||   IDENTIFIERS   ||
+  \*≡==---==≡==---==≡*/
 
   // [x] bare-id ::= (letter|[_]) (letter|digit|[_$.])*
   // [ ] bare-id-list ::= bare-id (`,` bare-id)*
@@ -409,9 +416,9 @@ object Parser {
   def ValueUseList[$: P] =
     P(ValueUse.rep(sep = ","))
 
-  ///////////
-  // TYPES //
-  ///////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||      TYPES      ||
+  \*≡==---==≡==---==≡*/
 
   // [x] type ::= type-alias | dialect-type | builtin-type
 
@@ -429,9 +436,9 @@ object Parser {
 
   def AttributeAlias[$: P] = P("#" ~ AliasName)
 
-  ////////////////
-  // OPERATIONS //
-  ////////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  ||    OPERATIONS    ||
+  \*≡==---==≡≡==---==≡*/
 
   // [x] op-result-list        ::= op-result (`,` op-result)* `=`
   // [x] op-result             ::= value-id (`:` integer-literal)?
@@ -461,9 +468,9 @@ object Parser {
     "loc" ~ "(" ~ "unknown" ~ ")"
   ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
 
-  ////////////
-  // BLOCKS //
-  ////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  ||      BLOCKS      ||
+  \*≡==---==≡≡==---==≡*/
 
   // [x] - block-id        ::= caret-id
   // [x] - caret-id        ::= `^` suffix-id
@@ -472,9 +479,9 @@ object Parser {
 
   def CaretId[$: P] = P("^" ~ SuffixId)
 
-  ///////////////////
-  // DIALECT TYPES //
-  ///////////////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||  DIALECT TYPES  ||
+  \*≡==---==≡==---==≡*/
 
   // [x] - dialect-namespace      ::= bare-id
 
@@ -518,64 +525,11 @@ object Parser {
   def PrettyDialectTypeOrAttReferenceName[$: P] = P(
     (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
   )
-
-  // def OpaqueDialectType[$: P] = P(DialectNamespace ~ DialectTypeBody)
-
-  // def DialectTypeBody[$: P] = P("<" ~ DialectTypeContents.rep(1) ~ ">")
-
-  // def DialectTypeContents[$: P]: P[Any] = P(
-  //   CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
-  //     ("<" ~ DialectTypeContents.rep(1) ~ ">") |
-  //     ("(" ~ DialectTypeContents.rep(1) ~ ")") |
-  //     ("[" ~ DialectTypeContents.rep(1) ~ "]") |
-  //     ("{" ~ DialectTypeContents.rep(1) ~ "}")
-  // )
-
-  //////////////////////////////
-  // DIALECT ATTRIBUTE VALUES //
-  //////////////////////////////
-
-  // [x] - dialect-namespace ::= bare-id
-
-  // [x] - dialect-attribute ::= `#` (opaque-dialect-attribute | pretty-dialect-attribute)
-  // [x] - opaque-dialect-attribute ::= dialect-namespace dialect-attribute-body
-  // [x] - pretty-dialect-attribute ::= dialect-namespace `.` pretty-dialect-attribute-lead-ident dialect-attribute-body?
-  // [x] - pretty-dialect-attribute-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
-
-  // [x] - dialect-attribute-body ::= `<` dialect-attribute-contents+ `>`
-  // [x] - dialect-attribute-contents ::= dialect-attribute-body
-  //                             | `(` dialect-attribute-contents+ `)`
-  //                             | `[` dialect-attribute-contents+ `]`
-  //                             | `{` dialect-attribute-contents+ `}`
-  //                             | [^\[<({\]>)}\0]+
-
-  // def DialectAttribute[$: P] = P(
-  //   "!" ~ (PrettyDialectAttribute | OpaqueDialectAttribute)
-  // )
-
-  // def PrettyDialectAttribute[$: P] = P(
-  //   DialectNamespace ~ "." ~ PrettyDialectAttributeLeadIdent
-  // )
-
-  // def PrettyDialectAttributeLeadIdent[$: P] = P(
-  //   (CharIn("a-zA-Z").! ~ CharIn("a-zA-Z0-9._").rep).!
-  // )
-
-  // def OpaqueDialectAttribute[$: P] = P(DialectNamespace ~ DialectAttributeBody)
-
-  // def DialectAttributeBody[$: P] = P(
-  //   "<" ~ DialectAttributeContents.rep(1) ~ ">"
-  // )
-
-  // def DialectAttributeContents[$: P]: P[Any] = P(
-  //   CharPred(char => !excludedCharactersDTC.contains(char)).rep.! |
-  //     ("<" ~ DialectAttributeContents.rep(1) ~ ">") |
-  //     ("(" ~ DialectAttributeContents.rep(1) ~ ")") |
-  //     ("[" ~ DialectAttributeContents.rep(1) ~ "]") |
-  //     ("{" ~ DialectAttributeContents.rep(1) ~ "}")
-  // )
-
 }
+
+/*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
+||     PARSER CLASS     ||
+\*≡==---==≡≡≡≡≡≡==---==≡*/
 
 class Parser(val context: MLContext, val args: Args = Args())
     extends AttrParser(context) {
@@ -610,9 +564,9 @@ class Parser(val context: MLContext, val args: Args = Args())
     Scope.defineValues(valueIdAndTypeList)
   }
 
-  //////////////////////////
-  // TOP LEVEL PRODUCTION //
-  //////////////////////////
+  /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  || TOP LEVEL PRODUCTION  ||
+  \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
   // shortened definition TODO: finish...
@@ -639,9 +593,9 @@ class Parser(val context: MLContext, val args: Args = Args())
     }
   )
 
-  ////////////////
-  // OPERATIONS //
-  ////////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  ||    OPERATIONS    ||
+  \*≡==---==≡≡==---==≡*/
 
   // [x] operation             ::= op-result-list? (generic-operation | custom-operation)
   //                         trailing-location?
@@ -932,9 +886,9 @@ class Parser(val context: MLContext, val args: Args = Args())
   def RegionList[$: P] =
     P("(" ~ Region.rep(sep = ",") ~ ")")
 
-  ////////////
-  // BLOCKS //
-  ////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  ||      BLOCKS      ||
+  \*≡==---==≡≡==---==≡*/
 
   // [x] - block           ::= block-label operation+
   // [x] - block-label     ::= block-id block-arg-list? `:`
@@ -960,9 +914,9 @@ class Parser(val context: MLContext, val args: Args = Args())
       .map(defineBlockValues) ~ ":"
   )
 
-  /////////////
-  // REGIONS //
-  /////////////
+  /*≡==--==≡≡≡≡≡==--=≡≡*\
+  ||      REGIONS      ||
+  \*≡==---==≡≡≡==---==≡*/
 
   // [x] - region        ::= `{` entry-block? block* `}`
   // [x] - entry-block   ::= operation+
@@ -1007,9 +961,9 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def TypeAlias[$: P] = P("!" ~~ AliasName)
 
-  ////////////////
-  // ATTRIBUTES //
-  ////////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  ||    ATTRIBUTES    ||
+  \*≡==---==≡≡==---==≡*/
 
   // // Attribute Value Aliases
   // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
@@ -1045,9 +999,9 @@ class Parser(val context: MLContext, val args: Args = Args())
     "{" ~ AttributeEntry.rep(sep = ",") ~ "}"
   )
 
-  ////////////////////
-  // PARSE FUNCTION //
-  ////////////////////
+  /*≡==--==≡≡≡≡==--=≡≡*\
+  ||  PARSE FUNCTION  ||
+  \*≡==---==≡≡==---==≡*/
 
   def parseThis[A, B](
       text: String,

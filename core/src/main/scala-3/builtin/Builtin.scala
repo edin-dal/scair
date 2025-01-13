@@ -31,9 +31,9 @@ def I1 = IntegerType(IntData(1), Signless)
 def I32 = IntegerType(IntData(32), Signless)
 def I64 = IntegerType(IntData(64), Signless)
 
-////////////////
-// SIGNEDNESS //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    SIGNEDNESS   ||
+\*≡==---==≡≡==---==≡*/
 
 sealed abstract class Signedness(override val name: String, val dat: String)
     extends DataAttribute[String](name, dat) {
@@ -43,9 +43,9 @@ case object Signed extends Signedness("signed", "si")
 case object Unsigned extends Signedness("unsigned", "ui")
 case object Signless extends Signedness("signless", "i")
 
-////////////////
-// FLOAT TYPE //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    FLOAT TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 abstract class FloatType(val namee: String) extends ParametrizedAttribute(namee)
 
@@ -65,18 +65,18 @@ case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
   override def custom_print = "f128"
 }
 
-//////////////
-// INT DATA //
-//////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||     INT DATA     ||
+\*≡==---==≡≡==---==≡*/
 
 case class IntData(val value: Long)
     extends DataAttribute[Long]("builtin.int_attr", value) {
   override def custom_print = value.toString
 }
 
-//////////////////
-// INTEGER TYPE //
-//////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  INTEGER TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 case class IntegerType(val width: IntData, val sign: Signedness)
     extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
@@ -88,9 +88,9 @@ case class IntegerType(val width: IntData, val sign: Signedness)
   }
 }
 
-///////////////////////
-// INTEGER ATTRIBUTE //
-///////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| INTEGER ATTRIBUTE ||
+\*≡==---==≡≡==---==≡*/
 
 case class IntegerAttr(
     val value: IntData,
@@ -107,18 +107,18 @@ case class IntegerAttr(
   }
 }
 
-////////////////
-// FLOAT DATA //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    FLOAT DATA    ||
+\*≡==---==≡≡==---==≡*/
 
 case class FloatData(val value: Double)
     extends DataAttribute[Double]("builtin.float_data", value) {
   override def custom_print = value.toString
 }
 
-/////////////////////
-// FLOAT ATTRIBUTE //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  FLOAT ATTRIBUTE ||
+\*≡==---==≡≡==---==≡*/
 
 case class FloatAttr(val value: FloatData, val typ: FloatType)
     extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
@@ -128,9 +128,9 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
   }
 }
 
-////////////////
-// INDEX TYPE //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   INDEX TYPE     ||
+\*≡==---==≡≡==---==≡*/
 
 case object IndexType
     extends ParametrizedAttribute("builtin.index")
@@ -138,9 +138,9 @@ case object IndexType
   override def custom_print = "index"
 }
 
-/////////////////////
-// ARRAY ATTRIBUTE //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| ARRAY ATTRIBUTE  ||
+\*≡==---==≡≡==---==≡*/
 
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
@@ -148,9 +148,9 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     "[" + attrValues.map(x => x.custom_print).mkString(", ") + "]"
 }
 
-//////////////////////
-// STRING ATTRIBUTE //
-//////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| STRING ATTRIBUTE ||
+\*≡==---==≡≡==---==≡*/
 
 // shortened definition, does not include type information
 case class StringData(val stringLiteral: String)
@@ -158,15 +158,15 @@ case class StringData(val stringLiteral: String)
   override def custom_print = "\"" + stringLiteral + "\""
 }
 
-/////////////////
-// SHAPED TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   SHAPED TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 trait ShapedType extends TypeAttribute
 
-/////////////////
-// TENSOR TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   TENSOR TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 abstract class TensorType(
     override val name: String,
@@ -213,9 +213,9 @@ case class UnrankedTensorType(override val elementType: Attribute)
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
-/////////////////
-// MEMREF TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   MEMREF TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 abstract class MemrefType(
     override val name: String,
@@ -254,9 +254,9 @@ case class UnrankedMemrefType(override val elementType: Attribute)
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
-/////////////////
-// VECTOR TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   VECTOR TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 case class VectorType(
     val shape: Seq[IntData],
@@ -280,9 +280,9 @@ case class VectorType(
   }
 }
 
-//////////////////////////
-// SYMBOL REF ATTRIBUTE //
-//////////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| SYMBOL REF ATTR  ||
+\*≡==---==≡≡==---==≡*/
 
 case class SymbolRefAttr(
     val rootRef: StringData,
@@ -295,9 +295,9 @@ case class SymbolRefAttr(
     (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
 }
 
-////////////////////
-// DenseArrayAttr //
-////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| DenseArrayAttr   ||
+\*≡==---==≡≡==---==≡*/
 
 case class DenseArrayAttr(
     val typ: Attribute,
@@ -342,9 +342,9 @@ case class DenseArrayAttr(
   def iterator: Iterator[Attribute] = data.iterator
 }
 
-//////////////////
-// FunctionType //
-//////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  FunctionType    ||
+\*≡==---==≡≡==---==≡*/
 
 case class FunctionType(
     val inputs: Seq[Attribute],
@@ -365,11 +365,9 @@ case class FunctionType(
   }
 }
 
-//////////////////////////////
-// DenseIntOrFPElementsAttr //
-//////////////////////////////
-//
-// TO-DO : it can also parse a vector type or a memref type
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| DenseIntOrFPAttr ||
+\*≡==---==≡≡==---==≡*/
 
 type TensorLiteralArray =
   ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
@@ -407,9 +405,9 @@ case class DenseIntOrFPElementsAttr(
   }
 }
 
-/////////////////////
-// AFFINE MAP ATTR //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  AFFINE MAP ATTR ||
+\*≡==---==≡≡==---==≡*/
 
 case class AffineMapAttr(val affine_map: AffineMap)
     extends DataAttribute[AffineMap]("builtin.affine_map", affine_map) {
@@ -417,9 +415,9 @@ case class AffineMapAttr(val affine_map: AffineMap)
   override def custom_print = s"affine_map<${affine_map}>"
 }
 
-/////////////////////
-// AFFINE SET ATTR //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  AFFINE SET ATTR ||
+\*≡==---==≡≡==---==≡*/
 // note: in mlir terms this is called an IntegerSetAttr
 
 case class AffineSetAttr(val affine_set: AffineSet)
@@ -428,9 +426,9 @@ case class AffineSetAttr(val affine_set: AffineSet)
   override def custom_print = s"affine_set<${affine_set}>"
 }
 
-////////////////
-// OPERATIONS //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   OPERATIONS    ||
+\*≡==---==≡≡==---==≡*/
 
 // ==------== //
 //  ModuleOp  //

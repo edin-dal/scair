@@ -1,9 +1,9 @@
 import scair.MLContext
 import scair.Printer
+import scair.TransformContext
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.transformations.TransformContext
 import scair.utils.allDialects
 import scair.utils.allPasses
 import scopt.OParser
@@ -161,7 +161,7 @@ object ScairOpt {
     extension (ctx: TransformContext)
       def register_all_passes(): Unit = {
         for (pass <- allPasses) {
-          ctx.passContext += pass.name -> pass
+          ctx.registerPass(pass)
         }
       }
   }
