@@ -1,6 +1,5 @@
 package scair
 
-import fastparse.*
 import scair.ir.*
 
 import scala.collection.mutable
@@ -14,9 +13,9 @@ import scala.collection.mutable
 
 class Printer(val strictly_generic: Boolean) {
 
-  ///////////
-  // TOOLS //
-  ///////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||      TOOLS      ||
+  \*≡==---==≡==---==≡*/
 
   var indent: String = "  "
 
@@ -49,25 +48,24 @@ class Printer(val strictly_generic: Boolean) {
         return name
     }
 
-  ///////////////
-  // ATTRIBUTE //
-  ///////////////
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||    ATTRIBUTE PRINTER    ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
   def printAttribute(attribute: Attribute): String = {
     return attribute.custom_print
   }
 
-  ///////////
-  // VALUE //
-  ///////////
+  /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+  ||    VALUE PRINTER    ||
+  \*≡==---==≡≡≡≡≡==---==≡*/
 
   def printValue(value: Value[_ <: Attribute]): String = {
     return s"%${assignValueName(value)}"
   }
-
-  ///////////
-  // BLOCK //
-  ///////////
+  /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+  ||    BLOCK PRINTER    ||
+  \*≡==---==≡≡≡≡≡==---==≡*/
 
   def printBlockArgument(value: Value[_ <: Attribute]): String = {
     return s"${printValue(value)}: ${printAttribute(value.typ)}"
@@ -90,9 +88,9 @@ class Printer(val strictly_generic: Boolean) {
     return blockHead + blockOperations
   }
 
-  ////////////
-  // REGION //
-  ////////////
+  /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||    REGION PRINTER    ||
+  \*≡==---==≡≡≡≡≡≡==---==≡*/
 
   def printRegion(region: Region, indentLevel: Int = 0): String = {
 
@@ -116,9 +114,9 @@ class Printer(val strictly_generic: Boolean) {
     return s"${open}${regionBlocks}${close}"
   }
 
-  ///////////////
-  // OPERATION //
-  ///////////////
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||    OPERATION PRINTER    ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
   def printCustomOperation(op: Operation, indentLevel: Int = 0): String = {
     indent * indentLevel + op.print(this)
