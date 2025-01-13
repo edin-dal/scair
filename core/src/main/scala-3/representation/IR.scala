@@ -9,9 +9,16 @@ import scair.Printer
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
 
-// ==---------== //
-// =---UTILS---= //
-// ==---------== //
+// ██╗ ██████╗░
+// ██║ ██╔══██╗
+// ██║ ██████╔╝
+// ██║ ██╔══██╗
+// ██║ ██║░░██║
+// ╚═╝ ╚═╝░░╚═╝
+
+/*≡==--==≡≡≡==--=≡≡*\
+||      UTILS      ||
+\*≡==---==≡==---==≡*/
 
 // TO-DO: export utils to a separate file
 
@@ -44,9 +51,9 @@ extension (lt: ListType[Value[Attribute]]) {
   }
 }
 
-// ==----------== //
-// =-ATTRIBUTES-= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    ATTRIBUTES    ||
+\*≡==---==≡≡==---==≡*/
 
 sealed trait Attribute {
   def name: String
@@ -103,9 +110,9 @@ abstract class DataAttribute[D](
   }
 }
 
-// ==----------== //
-// =---VALUES---= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      VALUES      ||
+\*≡==---==≡≡==---==≡*/
 
 // TO-DO: perhaps a linked list of a use to other uses within an operation
 //        for faster use retrieval and index update
@@ -162,9 +169,9 @@ extension (seq: Seq[Value[Attribute]]) def typ: Seq[Attribute] = seq.map(_.typ)
 type Operand[T <: Attribute] = Value[T]
 type OpResult[T <: Attribute] = Value[T]
 
-// ==----------== //
-// =---BLOCKS---= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      BLOCKS      ||
+\*≡==---==≡≡==---==≡*/
 
 case class Block(
     operations: ListType[Operation] = ListType(),
@@ -308,9 +315,9 @@ case class Block(
   }
 }
 
-// ==-----------== //
-// =---REGIONS---= //
-// ==-----------== //
+/*≡==--==≡≡≡==--=≡≡*\
+||     REGIONS     ||
+\*≡==---==≡==---==≡*/
 
 case class Region(
     blocks: Seq[Block]
@@ -340,9 +347,9 @@ abstract class OpTrait {
   def trait_verify(): Unit = ()
 }
 
-// ==----------== //
-// =-OPERATIONS-= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    OPERATIONS    ||
+\*≡==---==≡≡==---==≡*/
 
 sealed abstract class Operation(
     val name: String,
@@ -473,9 +480,9 @@ class RegisteredOperation(
       DictType.empty[String, Attribute]
 ) extends Operation(name = name)
 
-// ==----------== //
-// =--DIALECTS--= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||     DIALECTS     ||
+\*≡==---==≡≡==---==≡*/
 
 trait OperationObject {
   def name: String

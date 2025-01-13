@@ -8,7 +8,16 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-// USEFUL COMMANDS
+// ░█████╗░ ░█████╗░ ███╗░░██╗ ░██████╗ ████████╗ ██████╗░ ░█████╗░ ██╗ ███╗░░██╗ ████████╗ ░██████╗
+// ██╔══██╗ ██╔══██╗ ████╗░██║ ██╔════╝ ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝
+// ██║░░╚═╝ ██║░░██║ ██╔██╗██║ ╚█████╗░ ░░░██║░░░ ██████╔╝ ███████║ ██║ ██╔██╗██║ ░░░██║░░░ ╚█████╗░
+// ██║░░██╗ ██║░░██║ ██║╚████║ ░╚═══██╗ ░░░██║░░░ ██╔══██╗ ██╔══██║ ██║ ██║╚████║ ░░░██║░░░ ░╚═══██╗
+// ╚█████╔╝ ╚█████╔╝ ██║░╚███║ ██████╔╝ ░░░██║░░░ ██║░░██║ ██║░░██║ ██║ ██║░╚███║ ░░░██║░░░ ██████╔╝
+// ░╚════╝░ ░╚════╝░ ╚═╝░░╚══╝ ╚═════╝░ ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚═════╝░
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||     USEFUL COMMANDS     ||
+\*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
 def check_same_class[T <: Attribute: ClassTag](that_attr: Attribute): Boolean =
   that_attr match {
@@ -22,7 +31,9 @@ def check_equal[T <: Attribute: ClassTag](that_attr: Attribute): Boolean =
     case _    => false
   }
 
-// CONSTRAINTS
+/*≡==--==≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||   CONSTRAINT CONTEXT   ||
+\*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
 
 class ConstraintContext() {
   val var_constraints: DictType[String, Attribute] =
@@ -44,6 +55,10 @@ abstract class IRDLConstraint {
   def ||(that: IRDLConstraint): IRDLConstraint = AnyOf(Seq(this, that))
 }
 
+/*≡==--==≡≡≡≡==--=≡≡*\
+||     ANY ATTR     ||
+\*≡==---==≡≡==---==≡*/
+
 object AnyAttr extends IRDLConstraint {
 
   override def verify(
@@ -53,6 +68,10 @@ object AnyAttr extends IRDLConstraint {
 
   override def toString(): String = "AnyAttr"
 }
+
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    EQUAL ATTR    ||
+\*≡==---==≡≡==---==≡*/
 
 case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
 
@@ -76,6 +95,10 @@ given attr2constraint: Conversion[Attribute, IRDLConstraint] with {
   def apply(attr: Attribute): IRDLConstraint = EqualAttr(attr)
 }
 
+/*≡==--==≡≡≡==--=≡≡*\
+||    BASE ATTR    ||
+\*≡==---==≡==---==≡*/
+
 case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
 
   override def verify(
@@ -95,6 +118,10 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
   override def toString =
     s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]()"
 }
+
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      ANY OF      ||
+\*≡==---==≡≡==---==≡*/
 
 case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
 
@@ -129,6 +156,10 @@ case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
   override def toString = constraints.mkString(" || ")
 }
 
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      ALL OF      ||
+\*≡==---==≡≡==---==≡*/
+
 case class AllOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
 
   val constraints: Seq[IRDLConstraint] = constraints_in.flatMap(_ match {
@@ -144,6 +175,10 @@ case class AllOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
 
   override def toString = constraints.mkString(" && ")
 }
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||    PARAMETRIZED ATTR    ||
+\*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
 case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
     val constraints: Seq[IRDLConstraint]
@@ -183,6 +218,10 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
   override def toString =
     s"ParametrizedAttrConstraint[${implicitly[ClassTag[T]].runtimeClass.getName}](${constraints})"
 }
+
+/*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
+||    VAR CONSTRAINT    ||
+\*≡==---==≡≡≡≡≡≡==---==≡*/
 
 case class VarConstraint(val name: String, val constraint: IRDLConstraint)
     extends IRDLConstraint {
