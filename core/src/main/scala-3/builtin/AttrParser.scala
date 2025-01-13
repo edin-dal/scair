@@ -80,6 +80,7 @@ class AttrParser(val ctx: MLContext) {
   def Float64TypeP[$: P]: P[FloatType] = P("f64".!).map(_ => Float64Type)
   def Float80TypeP[$: P]: P[FloatType] = P("f80".!).map(_ => Float80Type)
   def Float128TypeP[$: P]: P[FloatType] = P("f128".!).map(_ => Float128Type)
+
   def FloatTypeP[$: P]: P[FloatType] = P(
     Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP
   )
@@ -399,4 +400,5 @@ class AttrParser(val ctx: MLContext) {
       DenseIntOrFPElementsAttrP |
       AffineMapAttrP | AffineSetAttrP
   )
+
 }

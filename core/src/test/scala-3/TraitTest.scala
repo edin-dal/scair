@@ -13,6 +13,7 @@ object FillerOp extends OperationObject {
   override def name: String = "filler"
   override def factory: FactoryType = FillerOp.apply
 }
+
 case class FillerOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
@@ -28,6 +29,7 @@ object TerminatorOp extends OperationObject {
   override def name: String = "terminator"
   override def factory: FactoryType = TerminatorOp.apply
 }
+
 case class TerminatorOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
@@ -44,6 +46,7 @@ object NoTerminatorOp extends OperationObject {
   override def name: String = "noterminator"
   override def factory: FactoryType = NoTerminatorOp.apply
 }
+
 case class NoTerminatorOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),

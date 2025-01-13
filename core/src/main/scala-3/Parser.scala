@@ -285,6 +285,7 @@ object Parser {
         }
       }
     }
+
   }
 
   class Scope(
@@ -317,6 +318,7 @@ object Parser {
       case None =>
         scope
     }
+
   }
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -525,6 +527,7 @@ object Parser {
   def PrettyDialectTypeOrAttReferenceName[$: P] = P(
     (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
   )
+
 }
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -1011,4 +1014,5 @@ class Parser(val context: MLContext, val args: Args = Args())
   ): fastparse.Parsed[B] = {
     return parse(text, pattern)
   }
+
 }

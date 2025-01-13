@@ -31,6 +31,7 @@ class ClairCustomException(name: String, message: String)
 }
 
 object ClairExceptionMethods {
+
   def throwParseError(input: String, failure: Parsed.Failure) = {
     val traced = failure.extra.traced
     val msg =
@@ -48,4 +49,5 @@ object ClairExceptionMethods {
       case _ => throw throwable
     }
   }
+
 }

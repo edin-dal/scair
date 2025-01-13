@@ -25,10 +25,13 @@ import scala.collection.mutable
 
 abstract class RelAlg_SortSpec_Case(override val symbol: String)
     extends I64EnumAttrCase(symbol)
+
 abstract class RelAlg_GroupJoinBehaviour_Case(override val symbol: String)
     extends I64EnumAttrCase(symbol)
+
 abstract class RelAlg_AggrFunc_Case(override val symbol: String)
     extends I64EnumAttrCase(symbol)
+
 abstract class RelAlg_SetSemantic_Case(override val symbol: String)
     extends I64EnumAttrCase(symbol)
 
@@ -43,6 +46,7 @@ object RelAlg_SortSpec
 
 object RelAlg_GroupJoinBehaviour_Inner
     extends RelAlg_GroupJoinBehaviour_Case("inner")
+
 object RelAlg_GroupJoinBehaviour_Outer
     extends RelAlg_GroupJoinBehaviour_Case("outer")
 
@@ -95,6 +99,7 @@ object RelAlg_SetSemantic
 
 object SortSpecificationAttr extends AttributeObject {
   override def name: String = "db.sortspec"
+
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P(
       "(" ~ ColumnRefAttr.parse(parser) ~ "," ~ RelAlg_SortSpec.caseParser ~ ")"
@@ -105,6 +110,7 @@ object SortSpecificationAttr extends AttributeObject {
           y.asInstanceOf[RelAlg_SortSpec_Case]
         )
       )
+
 }
 
 case class SortSpecificationAttr(
@@ -169,6 +175,7 @@ object BaseTableOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class BaseTableOp(
@@ -209,6 +216,7 @@ case class BaseTableOp(
           )
       }
   }
+
 }
 
 // ==-----------== //
@@ -246,6 +254,7 @@ object SelectionOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class SelectionOp(
@@ -279,6 +288,7 @@ case class SelectionOp(
           )
       }
   }
+
 }
 
 // ==-----== //
@@ -318,6 +328,7 @@ object MapOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class MapOp(
@@ -366,6 +377,7 @@ case class MapOp(
           )
       }
   }
+
 }
 
 // ==-------------== //
@@ -413,6 +425,7 @@ object AggregationOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class AggregationOp(
@@ -476,6 +489,7 @@ case class AggregationOp(
           )
       }
   }
+
 }
 
 // ==-----------== //
@@ -508,6 +522,7 @@ object CountRowsOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class CountRowsOp(
@@ -545,6 +560,7 @@ case class CountRowsOp(
         "CountRowsOp Operation must contain only 1 operand and 1 result."
       )
   }
+
 }
 
 // ==----------== //
@@ -582,6 +598,7 @@ object AggrFuncOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class AggrFuncOp(
@@ -641,6 +658,7 @@ case class AggrFuncOp(
         "AggrFuncOp Operation must contain only 1 operand and 1 result."
       )
   }
+
 }
 
 // ==------== //
@@ -679,6 +697,7 @@ object SortOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class SortOp(
@@ -730,6 +749,7 @@ case class SortOp(
         "SortOp Operation must contain only 1 operand and 1 result."
       )
   }
+
 }
 
 // ==-------------== //
@@ -774,6 +794,7 @@ object MaterializeOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class MaterializeOp(
@@ -841,6 +862,7 @@ case class MaterializeOp(
         "MaterializeOp Operation must contain only 1 operand and 1 result."
       )
   }
+
 }
 
 val RelAlgOps: Dialect =

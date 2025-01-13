@@ -125,4 +125,5 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
           ) =>
     }
   }
+
 }

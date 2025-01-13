@@ -36,6 +36,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
       throw new Exception("TupleStream Tuple must contain 2 elements only.")
     }
   }
+
 }
 
 // ==-----------== //
@@ -65,6 +66,7 @@ case class TupleStream(val tuples: Seq[Attribute])
       }
     }
   }
+
 }
 
 ////////////////
@@ -77,17 +79,21 @@ case class TupleStream(val tuples: Seq[Attribute])
 
 object ColumnDefAttr extends AttributeObject {
   override def name: String = "tuples.column_def"
+
   override def parse[$: P](parser: AttrParser): P[Attribute] = P(
     parser.SymbolRefAttrP ~ "(" ~ "{" ~ parser.AttributeEntry ~ "}" ~ ")"
   ).map((x, y) => ColumnDefAttr(x.asInstanceOf[SymbolRefAttr], y._2))
+
 }
 
 case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
     extends ParametrizedAttribute(
       name = "tuples.column_def"
     ) {
+
   override def custom_print =
     s"${refName.custom_print}({type = ${typ.custom_print}})"
+
 }
 
 // ==-------------== //
@@ -96,10 +102,12 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
 
 object ColumnRefAttr extends AttributeObject {
   override def name: String = "tuples.column_ref"
+
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P(parser.SymbolRefAttrP).map(x =>
       ColumnRefAttr(x.asInstanceOf[SymbolRefAttr])
     )
+
 }
 
 case class ColumnRefAttr(val refName: SymbolRefAttr)
@@ -128,6 +136,7 @@ object ReturnOp extends OperationObject {
     case Some((y, z)) => (y, z)
     case None         => (Seq(), Seq())
   }
+
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
@@ -147,6 +156,7 @@ object ReturnOp extends OperationObject {
     )
   )
   // ==----------------------== //
+
 }
 
 case class ReturnOp(
@@ -170,6 +180,7 @@ case class ReturnOp(
         "ReturnOp Operation must contain only results and an attribute dictionary."
       )
   }
+
 }
 
 // ==-----------== //
@@ -205,6 +216,7 @@ object GetColumnOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class GetColumnOp(
@@ -250,6 +262,7 @@ case class GetColumnOp(
         "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
       )
   }
+
 }
 
 /////////////

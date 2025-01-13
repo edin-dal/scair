@@ -356,4 +356,5 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           ) =>
     }
   }
+
 }

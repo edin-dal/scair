@@ -116,4 +116,5 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val result = printer.printOperation(program)
     result shouldEqual expected
   }
+
 }

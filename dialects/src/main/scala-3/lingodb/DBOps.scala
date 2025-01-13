@@ -106,6 +106,7 @@ case class DB_CharType(val typ: Seq[Attribute])
           throw new VerifyException("CharType type must be IntData")
       }
   }
+
 }
 
 // ==--------== //
@@ -114,9 +115,11 @@ case class DB_CharType(val typ: Seq[Attribute])
 
 object DB_DateType extends AttributeObject {
   override def name: String = "db.date"
+
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P("<" ~ DB_DateUnitAttr.caseParser ~ ">")
       .map((x: Attribute) => DB_DateType(x.asInstanceOf[DB_DateUnit_Case]))
+
 }
 
 case class DB_DateType(val unit: DB_DateUnit_Case)
@@ -132,8 +135,10 @@ case class DB_DateType(val unit: DB_DateUnit_Case)
 
 object DB_IntervalType extends AttributeObject {
   override def name: String = "db.interval"
+
   override def parse[$: P](parser: AttrParser): P[Attribute] =
     P("<" ~ DB_IntervalUnitAttr.caseParser ~ ">").map(DB_IntervalType(_))
+
 }
 
 case class DB_IntervalType(val unit: Attribute)
@@ -193,6 +198,7 @@ case class DB_DecimalType(val typ: Seq[Attribute])
       }
     }
   }
+
 }
 
 // ==-----------== //
@@ -223,6 +229,7 @@ case class DB_StringType(val typ: Seq[Attribute])
           throw new VerifyException("DB_DecimalType type must be StringData")
       }
   }
+
 }
 
 ////////////////
@@ -259,6 +266,7 @@ object DB_ConstantOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class DB_ConstantOp(
@@ -283,6 +291,7 @@ case class DB_ConstantOp(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
   }
+
 }
 
 // ==----------== //
@@ -320,6 +329,7 @@ object DB_CmpOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class DB_CmpOp(
@@ -351,6 +361,7 @@ case class DB_CmpOp(
         "DB_CmpOp Operation must contain only 2 operands."
       )
   }
+
 }
 
 // ==-----== //
@@ -444,6 +455,7 @@ object DB_MulOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class DB_MulOp(
@@ -475,6 +487,7 @@ case class DB_MulOp(
         "DB_MulOp Operation must contain only 2 operands."
       )
   }
+
 }
 
 // ==-----== //
@@ -571,6 +584,7 @@ object DB_DivOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class DB_DivOp(
@@ -602,6 +616,7 @@ case class DB_DivOp(
         "DB_DivOp Operation must contain only 2 operands."
       )
   }
+
 }
 
 // ==-----== //
@@ -638,6 +653,7 @@ object DB_AddOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class DB_AddOp(
@@ -669,6 +685,7 @@ case class DB_AddOp(
         "DB_AddOp Operation must contain only 2 operands."
       )
   }
+
 }
 
 // ==-----== //
@@ -705,6 +722,7 @@ object DB_SubOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class DB_SubOp(
@@ -736,6 +754,7 @@ case class DB_SubOp(
         "DB_SubOp Operation must contain only 2 operands."
       )
   }
+
 }
 
 // ==-----== //
@@ -771,6 +790,7 @@ object CastOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class CastOp(
@@ -795,6 +815,7 @@ case class CastOp(
         "CastOp Operation must contain only 1 operand and result."
       )
   }
+
 }
 
 val DBOps: Dialect =

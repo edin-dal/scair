@@ -18,11 +18,13 @@ case class Alloc(
 case class Dealloc(
     memref: Operand[MemrefType]
 ) extends OperationFE
+
 case class Load(
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
     result: Result[AnyAttribute]
 ) extends OperationFE
+
 case class Store(
     value: Operand[AnyAttribute],
     memref: Operand[MemrefType],

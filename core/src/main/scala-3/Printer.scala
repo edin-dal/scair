@@ -24,6 +24,7 @@ class Printer(val strictly_generic: Boolean) {
 
   var valueNameMap: mutable.Map[Value[_ <: Attribute], String] =
     mutable.Map.empty[Value[_ <: Attribute], String]
+
   var blockNameMap: mutable.Map[Block, String] =
     mutable.Map.empty[Block, String]
 
@@ -216,4 +217,5 @@ class Printer(val strictly_generic: Boolean) {
         }).mkString("\n")
     }
   }
+
 }

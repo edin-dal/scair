@@ -14,6 +14,7 @@ import scala.util.Success
 import scala.util.Try
 
 object ScairOpt {
+
   def main(args: Array[String]): Unit = {
 
     // Define CLI args
@@ -151,7 +152,9 @@ object ScairOpt {
   }
 
   object MyExtensions {
+
     extension (ctx: MLContext)
+
       def register_all_dialects(): Unit = {
         for (dialect <- allDialects) {
           ctx.registerDialect(dialect)
@@ -159,10 +162,13 @@ object ScairOpt {
       }
 
     extension (ctx: TransformContext)
+
       def register_all_passes(): Unit = {
         for (pass <- allPasses) {
           ctx.registerPass(pass)
         }
       }
+
   }
+
 }

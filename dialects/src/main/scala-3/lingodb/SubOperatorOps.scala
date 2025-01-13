@@ -23,6 +23,7 @@ import scala.collection.mutable
 
 object StateMembers extends AttributeObject {
   override def name: String = "subop.state_members"
+
   override def parse[$: P](parser: AttrParser) = P(
     "[" ~ (BareId.map(StringData(_)) ~ ":" ~ parser.Type)
       .rep(0, sep = ",") ~ "]"
@@ -30,6 +31,7 @@ object StateMembers extends AttributeObject {
     val (names, types) = x.unzip
     StateMembers(names, types)
   })
+
 }
 
 case class StateMembers(
@@ -39,8 +41,10 @@ case class StateMembers(
       name = "subop.state_members",
       parameters = names :++ types
     ) {
+
   override def custom_print =
     s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
+
 }
 
 ///////////
@@ -53,9 +57,11 @@ case class StateMembers(
 
 object ResultTable extends AttributeObject {
   override def name: String = "subop.result_table"
+
   override def parse[$: P](parser: AttrParser) = P(
     "<" ~ StateMembers.parse(parser) ~ ">"
   ).map(x => ResultTable(x.asInstanceOf[StateMembers]))
+
 }
 
 case class ResultTable(
@@ -101,6 +107,7 @@ object SetResultOp extends OperationObject {
       )
   )
   // ==----------------------== //
+
 }
 
 case class SetResultOp(
@@ -135,6 +142,7 @@ case class SetResultOp(
           )
       }
   }
+
 }
 
 val SubOperatorOps: Dialect =
