@@ -24,8 +24,8 @@ object ScairOpt {
     val argparser = {
       import argbuilder._
       OParser.sequence(
-        programName("scair-opt"),
-        head("scair-opt", "0"),
+        programName("scair"),
+        head("scair", "0"),
         // The input file - defaulting to stdin
         arg[String]("file")
           .optional()
