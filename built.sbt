@@ -3,7 +3,7 @@ import sbt.util.FileInfo.full
 import scala.sys.process._
 import java.io.{File}
 import java.nio.file.{Files, Path, StandardCopyOption}
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 
 ThisBuild / scalaVersion := "3.3.4"
@@ -128,7 +128,7 @@ def copyDir(source: Path, target: Path) : Unit = {
       Files.createDirectories(target);
   }
   val stream = Files.newDirectoryStream(source)
-  for (entry <- stream) {
+  for (entry <- stream.asScala) {
       val newTarget = target.resolve(source.relativize(entry));
       if (Files.isDirectory(entry)) {
           copyDir(entry, newTarget);
