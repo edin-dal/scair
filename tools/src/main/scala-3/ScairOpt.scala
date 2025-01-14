@@ -1,3 +1,5 @@
+package scair.tools
+
 import scair.MLContext
 import scair.Printer
 import scair.TransformContext

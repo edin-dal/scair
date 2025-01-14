@@ -1,7 +1,10 @@
 import java.io.PrintWriter
 import sbt.util.FileInfo.full
 import scala.sys.process._
-import java.io.File
+import java.io.{File}
+import java.nio.file.{Files, Path, StandardCopyOption}
+import scala.collection.JavaConversions._
+
 
 ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / semanticdbEnabled := true
@@ -59,7 +62,7 @@ lazy val tools =
     .dependsOn(gen_dialects, transformations)
     .enablePlugins(JavaAppPackaging)
     .settings(
-      Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
+      name := "scair"
     )
 
 ///////////////////////////
@@ -116,6 +119,38 @@ testAll := {
 addCommandAlias("formatCheckAll", "scalafixAll --check;scalafmtCheckAll;")
 
 addCommandAlias("formatAll", "scalafixAll;scalafmtAll;")
+
+// Just copy a source directory to a target repository...
+def copyDir(source: Path, target: Path) : Unit = {
+  if (!Files.exists(target)) {
+      Files.createDirectories(target);
+  }
+  val stream = Files.newDirectoryStream(source)
+  for (entry <- stream) {
+      val newTarget = target.resolve(source.relativize(entry));
+      if (Files.isDirectory(entry)) {
+          copyDir(entry, newTarget);
+      } else {
+          Files.copy(entry, newTarget, StandardCopyOption.REPLACE_EXISTING);
+      }
+  }
+}
+
+// A task to install Scair in the user's standard home directories
+// Linux-only a priori, as in $HOME/.local
+lazy val install = taskKey[Unit]("Install Scair")
+install := {
+  (tools / stage).value
+  val stage_dir = (tools / Universal  / stage).value.toString()
+  val home_dir = sys.env.get("HOME").getOrElse(sys.error("nope"))
+  val install_dir = s"$home_dir/.local"
+  // To log messages
+  val log = streams.value.log
+  log.info(f"installing from $stage_dir to $install_dir")
+  val target = new File(install_dir).toPath()
+  val source = new File(stage_dir).toPath()
+  copyDir(source, target)
+}
 
 ///////////////////////
 // Utility functions //
