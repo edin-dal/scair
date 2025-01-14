@@ -62,7 +62,9 @@ lazy val tools =
     .dependsOn(gen_dialects, transformations)
     .enablePlugins(JavaAppPackaging)
     .settings(
-      name := "scair"
+      name := "scair",
+      // Skip the docs when simply packaging CLI tools
+      Compile / packageDoc / mappings := Seq(), 
     )
 
 ///////////////////////////
@@ -94,7 +96,7 @@ lazy val filechecks = taskKey[Unit]("File checks")
 filechecks := {
   // It expects this task to populate a helper file
   (filechecks_classpath).value
-  // It depends on scair-opt, built by the "stage" task currently
+  // It depends on scair CLI, built by the "stage" task currently
   (tools / stage).value
   // And then it's about running lit
   val r = ("lit tests/filecheck -v" !)
