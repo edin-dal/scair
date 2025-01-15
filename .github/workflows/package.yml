@@ -44,23 +44,6 @@ jobs:
       uses: coursier/setup-action@v1
       with:
         apps: scala:3.3.1 sbt
-    
-    - name: Delete old packages
-      uses: SmartsquareGmbH/delete-old-packages@v0.8.1    
-      with:
-        names: |
-           com.github.edin-dal.scair.scair-core_3
-           com.github.edin-dal.scair.scair-native-dialects_3
-           com.github.edin-dal.scair.scair-dialects_3
-           com.github.edin-dal.scair.scair-transformations_3
-           com.github.edin-dal.scair.scair-scairdl_3
-           com.github.edin-dal.scair.scair-clair_3
-           com.github.edin-dal.scair.scair_3
-        user: edin-dal
-        type: maven
-        version-pattern: ".*-SNAPSHOT"
-        token: ${{ secrets.GITHUB_TOKEN }}
-        keep: 0
 
     - name: Publish SNAPSHOT
     #   if: github.ref == 'refs/heads/main'
@@ -68,7 +51,10 @@ jobs:
       # failed, still try to publish the new snapshots.
       if: success() || failure()
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
+        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       run: |
         cd scair
-        sbt publish
+        sbt publishSigned

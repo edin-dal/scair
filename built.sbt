@@ -3,25 +3,26 @@ import sbt.util.FileInfo.full
 import scala.sys.process._
 import java.io.File
 
+
+
 ThisBuild / scalaVersion := "3.3.4"
-ThisBuild / organization := "com.github.edin-dal.scair"
+ThisBuild / organization := "io.github.edin-dal"
 ThisBuild / version := "0.1-SNAPSHOT"
 
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-val githubOwner = "edin-dal" // GitHub username or organization
-val repoName = "scair" // Your GitHub repository name
-val base = s"https://maven.pkg.github.com/$githubOwner/$repoName"
+// import xerial.sbt.Sonatype._
 
-ThisBuild / publishTo := Some("GitHub Packages" at base)
+// publish to the sonatype repository
+ThisBuild / publishTo := sonatypePublishToBundle.value
 
 ThisBuild / credentials += Credentials(
-  "GitHub Package Registry",
-  "maven.pkg.github.com",
-  System.getenv("GITHUB_ACTOR"), // GitHub username from environment variable
-  System.getenv("GITHUB_TOKEN") // GitHub token from environment variable
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  System.getenv("SONATYPE_USERNAME"), // GitHub username from environment variable
+  System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
 )
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
