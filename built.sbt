@@ -3,17 +3,42 @@ import sbt.util.FileInfo.full
 import scala.sys.process._
 import java.io.File
 
-
-
 ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / versionScheme := Some("semver-spec")  
-ThisBuild / organization := "io.github.edin-dal"
-ThisBuild / version := "v0.1.0-SNAPSHOT"
-ThisBuild / name := "scair"
 
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
+
+// publishing
+
+import xerial.sbt.Sonatype._
+
+lazy val commonSettings = Seq(
+  organization := "io.github.edin-dal",
+  version := "v0.1.0-SNAPSHOT",
+  publishMavenStyle := true,
+  sonatypeProfileName := "io.github.edin-dal",
+  sonatypeCredentialHost := sonatypeCentralHost,
+  homepage := Some(url("https://github.com/edin-dal/scair/")),
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/edin-dal/scair/"),
+      "scm:git@github.com:edin-dal/scair.git"
+    )
+  ),
+  credentials += Credentials(
+    "Sonatype Nexus Repository Manager",
+    "central.sonatype.com",
+    System.getenv("SONATYPE_USERNAME"), // GitHub username from environment variable
+    System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
+  ),
+  developers := List(
+    Developer(id="baymaks", name="Maks Kret", email="maksymilian.kret@ed.ac.uk", url=url("https://github.com/baymaks"))
+  ),
+  licenses := Seq("APL2" -> url("https://github.com/edin-dal/scair/blob/main/LICENSE")),
+  publishTo := sonatypePublishToBundle.value,
+)
 
 // libraries
 
@@ -34,24 +59,24 @@ lazy val root = (project in file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .settings(
     publishArtifact := false
-  )
+  ).settings(commonSettings)
 
-lazy val core = (project in file("core")).settings(name := "scair-core")
+lazy val core = (project in file("core")).settings(name := "scair-core").settings(commonSettings)
 
 lazy val ScaIRDL = (project in file("ScaIRDL"))
   .dependsOn(core)
   .settings(
     name := "scair-scairdl"
-  )
+  ).settings(commonSettings)
 lazy val clair =
-  (project in file("clair")).dependsOn(ScaIRDL).settings(name := "scair-clair")
+  (project in file("clair")).dependsOn(ScaIRDL).settings(name := "scair-clair").settings(commonSettings)
 
 lazy val native_dialects: Project =
   (project in file("dialects"))
     .dependsOn(clair)
     .settings(
       name := "scair-native-dialects"
-    )
+    ).settings(commonSettings)
 
 lazy val dialect_source =
   settingKey[Seq[String]]("A list of classes that generate dialects")
@@ -68,7 +93,7 @@ lazy val dialects =
         "scair.dialects.funcgen.FuncGen",
         "scair.dialects.llvmgen.LLVMGen",
         "scair.dialects.memrefgen.MemrefGen"
-      ),
+      ).settings(commonSettings),
       // Add the generated sources to the source directories
       Compile / sourceGenerators += generate_all_dialects().taskValue
     )
@@ -76,7 +101,7 @@ lazy val dialects =
 lazy val transformations =
   (project in file("transformations"))
     .dependsOn(core, dialects)
-    .settings(name := "scair-transformations")
+    .settings(name := "scair-transformations").settings(commonSettings)
 lazy val tools =
   (project in file("tools"))
     .dependsOn(dialects, transformations)
@@ -84,7 +109,7 @@ lazy val tools =
     .settings(
       name := "scair",
       Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
-    )
+    ).settings(commonSettings)
 
 ///////////////////////////
 // Testing configuration //
