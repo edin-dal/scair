@@ -8,6 +8,8 @@ import java.io.File
 ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / versionScheme := Some("semver-spec")  
 ThisBuild / organization := "io.github.edin-dal"
+ThisBuild / version := "v0.1.0-SNAPSHOT"
+ThisBuild / name := "scair"
 
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
@@ -16,7 +18,7 @@ ThisBuild / scalacOptions += "-Wunused:imports"
 // sonatype stuff
 
 // To sync with Maven central, you need to supply the following information:
-// publishMavenStyle := true
+ThisBuild / publishMavenStyle := true
 ThisBuild / licenses := Seq("APL2" -> url("https://github.com/edin-dal/scair/blob/main/LICENSE"))
 
 import xerial.sbt.Sonatype._
@@ -41,7 +43,7 @@ ThisBuild / credentials += Credentials(
   System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
 )
 
-ThisBuild / publishTo := sonatypePublishToBundle.value
+publishTo in ThisBuild := sonatypePublishToBundle.value
 
 // libraries
 
