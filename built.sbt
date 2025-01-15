@@ -17,6 +17,8 @@ import xerial.sbt.Sonatype.sonatypeCentralHost
 
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
+ThisBuild / publishTo := sonatypePublishToBundle.value
+
 ThisBuild / credentials += Credentials(
   "Sonatype Nexus Repository Manager",
   "central.sonatype.com",
