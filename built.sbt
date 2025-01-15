@@ -38,8 +38,13 @@ lazy val commonSettings = Seq(
   ),
   licenses := Seq("APL2" -> url("https://github.com/edin-dal/scair/blob/main/LICENSE")),
   publishTo := {
-    val nexus = "https://central.sonatype.com/"
-    Some("snapshots" at nexus + "publishing/deployments")
+      val nexus = publishTo := {
+      val nexus = "https://s01.oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    }
   }
 )
 
