@@ -13,8 +13,9 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-ThisBuild / sonatypeCredentialHost := "central.sonatype.com"
-sonatypeRepository := "https://central.sonatype.com/service/local"
+import xerial.sbt.Sonatype.sonatypeCentralHost
+
+ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
