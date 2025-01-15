@@ -93,10 +93,10 @@ lazy val dialects =
         "scair.dialects.funcgen.FuncGen",
         "scair.dialects.llvmgen.LLVMGen",
         "scair.dialects.memrefgen.MemrefGen"
-      ).settings(commonSettings),
+      ),
       // Add the generated sources to the source directories
       Compile / sourceGenerators += generate_all_dialects().taskValue
-    )
+    ).settings(commonSettings)
 
 lazy val transformations =
   (project in file("transformations"))
