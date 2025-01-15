@@ -13,11 +13,9 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-// import xerial.sbt.Sonatype.sonatypeCentralHost
+import xerial.sbt.Sonatype.sonatypeCentralHost
 
-// ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
-
-ThisBuild / publishTo := sonatypePublishToBundle.value
+ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
 ThisBuild / credentials += Credentials(
   "Sonatype Nexus Repository Manager",
