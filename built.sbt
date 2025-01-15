@@ -6,24 +6,15 @@ import java.io.File
 
 
 ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / versionScheme := Some("semver-spec")  
 ThisBuild / organization := "io.github.edin-dal"
-ThisBuild / version := "0.1-SNAPSHOT"
 
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-// import xerial.sbt.Sonatype._
-
-// publish to the sonatype repository
-ThisBuild / publishTo := sonatypePublishToBundle.value
-
-ThisBuild / credentials += Credentials(
-  "Sonatype Nexus Repository Manager",
-  "oss.sonatype.org",
-  System.getenv("SONATYPE_USERNAME"), // GitHub username from environment variable
-  System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
-)
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
