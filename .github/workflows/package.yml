@@ -47,9 +47,6 @@ jobs:
 
     - name: Publish SNAPSHOT
     #   if: github.ref == 'refs/heads/main'
-      # If for some reason (e.g., there was no snapshot to delete...), the cleanup 
-      # failed, still try to publish the new snapshots.
-      if: success() || failure()
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -57,4 +54,4 @@ jobs:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       run: |
         cd scair
-        sbt publishSigned
+        sbt ci-release
