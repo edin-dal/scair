@@ -38,12 +38,12 @@ ThisBuild / developers := List(
 
 ThisBuild / credentials += Credentials(
   "Sonatype Nexus Repository Manager",
-  "oss.sonatype.org",
+  "central.sonatype.com",
   System.getenv("SONATYPE_USERNAME"), // GitHub username from environment variable
   System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
 )
 
-publishTo in ThisBuild := sonatypePublishToBundle.value
+publishTo := sonatypePublishToBundle.value
 
 // libraries
 
