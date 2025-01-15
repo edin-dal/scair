@@ -58,4 +58,4 @@ jobs:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       run: |
         cd scair
-        sbt ci-release
+        sbt publishSigned

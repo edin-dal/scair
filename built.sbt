@@ -17,6 +17,15 @@ import xerial.sbt.Sonatype.sonatypeCentralHost
 
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
+ThisBuild / publishTo := sonatypePublishToBundle.value
+
+ThisBuild / credentials += Credentials(
+  "Sonatype Nexus Repository Manager",
+  "central.sonatype.com",
+  System.getenv("SONATYPE_USERNAME"), // GitHub username from environment variable
+  System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
+)
+
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
