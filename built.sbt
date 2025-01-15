@@ -37,13 +37,7 @@ lazy val commonSettings = Seq(
     Developer(id="baymaks", name="Maks Kret", email="maksymilian.kret@ed.ac.uk", url=url("https://github.com/baymaks"))
   ),
   licenses := Seq("APL2" -> url("https://github.com/edin-dal/scair/blob/main/LICENSE")),
-  publishTo := {
-    val nexus = "https://s01.oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
-  }
+  publishTo := Some("snapshots" at "https://central.sonatype.com/"),
 )
 
 // libraries
@@ -67,22 +61,38 @@ lazy val root = (project in file("."))
     publishArtifact := false
   ).settings(commonSettings)
 
-lazy val core = (project in file("core")).settings(name := "scair-core").settings(commonSettings)
+lazy val core = (project in file("core"))
+  .settings(commonSettings)
+  .settings(
+    name := "scair-core",
+    sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}"
+  )
 
 lazy val ScaIRDL = (project in file("ScaIRDL"))
   .dependsOn(core)
+  .settings(commonSettings)
   .settings(
-    name := "scair-scairdl"
-  ).settings(commonSettings)
+    name := "scair-scairdl",
+    sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}"
+  )
+
 lazy val clair =
-  (project in file("clair")).dependsOn(ScaIRDL).settings(name := "scair-clair").settings(commonSettings)
+  (project in file("clair"))
+    .dependsOn(ScaIRDL)
+    .settings(commonSettings)
+    .settings(
+      name := "scair-clair",
+      sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}"
+    )
 
 lazy val native_dialects: Project =
   (project in file("dialects"))
     .dependsOn(clair)
+    .settings(commonSettings)
     .settings(
-      name := "scair-native-dialects"
-    ).settings(commonSettings)
+      name := "scair-native-dialects",
+      sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}"
+    )
 
 lazy val dialect_source =
   settingKey[Seq[String]]("A list of classes that generate dialects")
@@ -90,8 +100,10 @@ lazy val dialect_source =
 lazy val dialects =
   (project in file("gen_dialects"))
     .dependsOn(native_dialects)
+    .settings(commonSettings)
     .settings(
       name := "scair-dialects",
+      sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}",
       dialect_source := Seq(
         "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
@@ -102,20 +114,27 @@ lazy val dialects =
       ),
       // Add the generated sources to the source directories
       Compile / sourceGenerators += generate_all_dialects().taskValue
-    ).settings(commonSettings)
+    )
 
 lazy val transformations =
   (project in file("transformations"))
     .dependsOn(core, dialects)
-    .settings(name := "scair-transformations").settings(commonSettings)
+    .settings(commonSettings)
+    .settings(
+      name := "scair-transformations",
+      sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}"
+    )
+
 lazy val tools =
   (project in file("tools"))
     .dependsOn(dialects, transformations)
     .enablePlugins(JavaAppPackaging)
+    .settings(commonSettings)
     .settings(
       name := "scair",
+      sonatypeCentralDeploymentName := s"${organization.value}.${name.value}-${version.value}",
       Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
-    ).settings(commonSettings)
+    )
 
 ///////////////////////////
 // Testing configuration //
