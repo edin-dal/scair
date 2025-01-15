@@ -37,7 +37,7 @@ lazy val commonSettings = Seq(
     Developer(id="baymaks", name="Maks Kret", email="maksymilian.kret@ed.ac.uk", url=url("https://github.com/baymaks"))
   ),
   licenses := Seq("APL2" -> url("https://github.com/edin-dal/scair/blob/main/LICENSE")),
-  publishTo := Some("snapshots" at "https://central.sonatype.com/"),
+  publishTo := Some("snapshots" at "https://central.sonatype.com/artifact"),
 )
 
 // libraries
