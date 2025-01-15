@@ -13,18 +13,37 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
-import xerial.sbt.Sonatype.sonatypeCentralHost
+// sonatype stuff
 
+// To sync with Maven central, you need to supply the following information:
+// publishMavenStyle := true
+ThisBuild / licenses := Seq("APL2" -> url("https://github.com/edin-dal/scair/blob/main/LICENSE"))
+
+import xerial.sbt.Sonatype._
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
-ThisBuild / publishTo := sonatypePublishToBundle.value
+ThisBuild / homepage := Some(url("https://github.com/edin-dal/scair/"))
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/edin-dal/scair/"),
+    "scm:git@github.com:edin-dal/scair.git"
+  )
+)
+
+ThisBuild / developers := List(
+  Developer(id="baymaks", name="Maks Kret", email="maksymilian.kret@ed.ac.uk", url=url("https://github.com/baymaks"))
+)
 
 ThisBuild / credentials += Credentials(
   "Sonatype Nexus Repository Manager",
-  "central.sonatype.com",
+  "oss.sonatype.org",
   System.getenv("SONATYPE_USERNAME"), // GitHub username from environment variable
   System.getenv("SONATYPE_PASSWORD") // GitHub token from environment variable
 )
+
+ThisBuild / publishTo := sonatypePublishToBundle.value
+
+// libraries
 
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
