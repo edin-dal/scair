@@ -17,7 +17,7 @@ tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 // on every `sbt stage`; so it is nicety-only,
 // feel free to try removing if this ends up being an issue
 // anywhere else!
-ThisBuild / Compile / packageDoc / mappings := Seq() 
+mappings in (Compile, packageDoc) := Nil
 
 lazy val scair = (project in file("."))
   .aggregate(
