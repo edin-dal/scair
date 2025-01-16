@@ -12,6 +12,13 @@ core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
+// Do not package docs every single time
+// This is the way I found to stop recompiling docs
+// on every `sbt stage`; so it is nicety-only,
+// feel free to try removing if this ends up being an issue
+// anywhere else!
+ThisBuild / Compile / packageDoc / mappings := Seq() 
+
 lazy val scair = (project in file("."))
   .aggregate(
     core,
