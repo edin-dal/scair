@@ -3,7 +3,7 @@
 %f = "test.op"() : () -> (f32)
 %i = "test.op"() : () -> (i32)
 %0 = math.absf %f : f32
-%1 = math.fpowi %f, %i : f32, i32
+%1 = math.fpowi %0, %i : f32, i32
 
 // CHECK:      builtin.module {
 // CHECK-NEXT:   %0 = "test.op"() : () -> (f32)
