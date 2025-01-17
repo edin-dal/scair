@@ -1,16 +1,12 @@
 package scair.dialects.math
 
 import fastparse.*
-import scair.AttrParser
 import scair.Parser
-import scair.Parser.ValueId
-import scair.Parser.whitespace
-import scair.dialects.builtin.*
 import scair.ir.*
 
+import scala.NotImplementedError
 import scala.collection.immutable
 import scala.collection.mutable
-import scala.NotImplementedError
 
 ////////////////
 // OPERATIONS //
@@ -27,7 +23,7 @@ object AbsfOp extends OperationObject {
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] = 
+  ): P[Operation] =
     throw new NotImplementedError("This custom parse needs to be implemented!")
   // ==----------------------== //
 
@@ -69,7 +65,7 @@ object FPowIOp extends OperationObject {
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] = 
+  ): P[Operation] =
     throw new NotImplementedError("This custom parse needs to be implemented!")
   // ==----------------------== //
 
