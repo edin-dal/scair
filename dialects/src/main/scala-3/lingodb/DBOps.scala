@@ -14,6 +14,7 @@ import scair.ir.*
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.math.max
+import scair.Printer
 
 // ==---== //
 //  Enums
@@ -106,7 +107,10 @@ case class DB_CharType(val typ: Seq[Attribute])
           throw new VerifyException("CharType type must be IntData")
       }
   }
-
+  override def custom_print: String = {
+  if (typ.isEmpty) name
+  else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
+}
 }
 
 // ==--------== //
@@ -158,6 +162,12 @@ case class DB_IntervalType(val unit: Attribute)
   //         throw new VerifyException("CharType type must be IntData")
   //     }
   // }
+
+  override def custom_print: String = {
+  if (parameters.isEmpty) name
+  else s"!$name<${parameters.map(_.custom_print).mkString(", ")}>"
+}
+
 }
 
 // ==-----------== //
@@ -199,6 +209,11 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     }
   }
 
+  override def custom_print: String = {
+  if (typ.isEmpty) name
+  else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
+}
+
 }
 
 // ==-----------== //
@@ -229,6 +244,10 @@ case class DB_StringType(val typ: Seq[Attribute])
           throw new VerifyException("DB_DecimalType type must be StringData")
       }
   }
+  override def custom_print: String = {
+  if (typ.isEmpty) s"!$name"
+  else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
+}
 
 }
 
@@ -291,6 +310,12 @@ case class DB_ConstantOp(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
   }
+
+override def custom_print(printer: Printer): String = {
+  val value = dictionaryAttributes.get("value").map(_.custom_print).getOrElse("")
+  val resultType = results.head.typ
+  s"$name($value) : ${resultType.custom_print}"
+}
 
 }
 
@@ -362,7 +387,17 @@ case class DB_CmpOp(
       )
   }
 
+
+  override def custom_print(printer: Printer): String = {
+  val operandStrings = operands.map(printer.printValue).mkString(", ")       
+  val operandTypes = operands.map(_.typ.custom_print).mkString(", ")        
+  val resultTypes = results.map(_.typ.custom_print).mkString(", ") 
+  val predicate = dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+  s"\"$name\"($operandStrings) {predicate = $predicate} : ($operandTypes) -> ($resultTypes)"
 }
+
+}
+
 
 // ==-----== //
 //   MulOp   //
@@ -488,6 +523,14 @@ case class DB_MulOp(
       )
   }
 
+  //added code for custom printing
+  override def custom_print(printer: Printer): String = {
+    val operandStrings = operands.map(printer.printValue).mkString(", ") 
+    val operandTypes = operands.map(_.typ.custom_print).mkString(", ")  
+    val resultTypes = results.map(_.typ.custom_print).mkString(", ")   
+    s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)"
+}
+
 }
 
 // ==-----== //
@@ -582,7 +625,7 @@ object DB_DivOp extends OperationObject {
         resultTypes = inferRetType(leftType, rightType),
         dictAttrs = z
       )
-  )
+  )  
   // ==----------------------== //
 
 }
@@ -616,6 +659,17 @@ case class DB_DivOp(
         "DB_DivOp Operation must contain only 2 operands."
       )
   }
+
+//added print function
+  override def custom_print(printer: Printer): String = {
+  val operandStrings = operands.map(printer.printValue).mkString(", ")        
+  val operandTypes = operands.map(_.typ.custom_print).mkString(", ")         
+  val resultTypes = results.map(_.typ.custom_print).mkString(", ") 
+  val attributes = if (dictionaryAttributes.nonEmpty) {
+    " {" + dictionaryAttributes.map { case (key, value) => s"$key = ${value.custom_print}" }.mkString(", ") + "}"
+  } else ""
+  s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)$attributes"
+}
 
 }
 
@@ -686,6 +740,17 @@ case class DB_AddOp(
       )
   }
 
+//added code for custom printing
+
+override def custom_print(printer: Printer): String = {
+  val operandStrings = operands.map(printer.printValue).mkString(", ")        
+  val operandTypes = operands.map(_.typ.custom_print).mkString(", ")         
+  val resultTypes = results.map(_.typ.custom_print).mkString(", ")       
+  s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)"
+}
+
+
+
 }
 
 // ==-----== //
@@ -755,6 +820,15 @@ case class DB_SubOp(
       )
   }
 
+  //added code for custom printing(same as the one for Mul(maybe it's better to write them in a more cleaner way))
+
+override def custom_print(printer: Printer): String = {
+  val operandStrings = operands.map(printer.printValue).mkString(", ") // Operands
+  val operandTypes = operands.map(_.typ.custom_print).mkString(", ")  // Operand Types
+  val resultTypes = results.map(_.typ.custom_print).mkString(", ")    // Result Types
+  s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)"
+}
+
 }
 
 // ==-----== //
@@ -815,6 +889,15 @@ case class CastOp(
         "CastOp Operation must contain only 1 operand and result."
       )
   }
+
+//added print func
+
+  override def custom_print(printer: Printer): String = {
+  val operandString = printer.printValue(operands.head) 
+  val sourceType = operands.head.typ.custom_print       
+  val targetType = results.head.typ.custom_print        
+  s"\"$name\"($operandString) : ($sourceType) -> ($targetType)"
+}
 
 }
 

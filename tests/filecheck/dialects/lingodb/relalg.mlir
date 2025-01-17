@@ -68,14 +68,14 @@ tuples.return
 // CHECK-NEXT:    %0 = "relalg.basetable"() <{l_comment = @lineitem::@l_comment({type = !db.string}), l_commitdate = @lineitem::@l_commitdate({type = !db.date<day>}), l_discount = @lineitem::@l_discount({type = !db.decimal<12, 2>}), l_extendedprice = @lineitem::@l_extendedprice({type = !db.decimal<12, 2>}), l_linenumber = @lineitem::@l_linenumber({type = i32}), l_linestatus = @lineitem::@l_linestatus({type = !db.char<1>}), l_orderkey = @lineitem::@l_orderkey({type = i32}), l_partkey = @lineitem::@l_partkey({type = i32}), l_quantity = @lineitem::@l_quantity({type = !db.decimal<12, 2>}), l_receiptdate = @lineitem::@l_receiptdate({type = !db.date<day>}), l_returnflag = @lineitem::@l_returnflag({type = !db.char<1>}), l_shipdate = @lineitem::@l_shipdate({type = !db.date<day>}), l_shipinstruct = @lineitem::@l_shipinstruct({type = !db.string}), l_shipmode = @lineitem::@l_shipmode({type = !db.string}), l_suppkey = @lineitem::@l_suppkey({type = i32}), l_tax = @lineitem::@l_tax({type = !db.decimal<12, 2>}), primaryKeyHashValue = @lineitem::@primaryKeyHashValue({type = index})}> {rows = 4708201766515113984, table_identifier = "lineitem"} : () -> (!tuples.tuplestream)
 // CHECK-NEXT:    %1 = "relalg.selection"(%0) ({
 // CHECK-NEXT:    ^bb0(%2: !tuples.tuple):
-// CHECK-NEXT:      %3 = "db.constant"() {value = "1998-09-02"} : () -> (!db.date<day>)
+// CHECK-NEXT:      %3 = db.constant("1998-09-02") : !db.date<day>
 // CHECK-NEXT:      %4 = "tuples.getcol"(%2) {attr = @lineitem::@l_shipdate} : (!tuples.tuple) -> (!db.date<day>)
 // CHECK-NEXT:      %5 = "db.compare"(%4, %3) {predicate = lte} : (!db.date<day>, !db.date<day>) -> (i1)
 // CHECK-NEXT:      "tuples.return"(%5) : (i1) -> ()
 // CHECK-NEXT:    }) {cost = 5930888.5, evaluationCost = 2.0, rows = 5930888.5, selectivity = 0.98828125} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %6 = "relalg.map"(%1) ({
 // CHECK-NEXT:    ^bb1(%7: !tuples.tuple):
-// CHECK-NEXT:      %8 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %8 = db.constant(1 : i32) : !db.decimal<12, 2>
 // CHECK-NEXT:      %9 = "tuples.getcol"(%7) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %10 = "tuples.getcol"(%7) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %11 = "db.sub"(%8, %10) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
@@ -87,7 +87,7 @@ tuples.return
 // CHECK-NEXT:    }) {rows = 5930888.5, computed_cols = [@map0::@tmp_attr5({type = !db.decimal<36, 6>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %16 = "relalg.map"(%6) ({
 // CHECK-NEXT:    ^bb2(%17: !tuples.tuple):
-// CHECK-NEXT:      %18 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %18 = db.constant(1 : i32) : !db.decimal<12, 2>
 // CHECK-NEXT:      %19 = "tuples.getcol"(%17) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %20 = "tuples.getcol"(%17) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %21 = "db.sub"(%18, %20) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)

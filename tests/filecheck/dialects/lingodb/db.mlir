@@ -13,8 +13,8 @@
 
 // CHECK: builtin.module {
 // CHECK:     %0 = "test.op"() : () -> (i32)
-// CHECK:     %1 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
-// CHECK:     %2 = "db.constant"() {value = 1 : i32} : () -> (!db.decimal<12, 2>)
+// CHECK:     %1 = db.constant(1 : i32) : !db.decimal<12, 2>
+// CHECK:     %2 = db.constant(1 : i32) : !db.decimal<12, 2>
 // CHECK:     %3 = "db.sub"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
 // CHECK:     %4 = "db.mul"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<24, 4>)
 // CHECK:     %5 = "db.add"(%1, %2) : (!db.decimal<12, 2>, !db.decimal<12, 2>) -> (!db.decimal<12, 2>)
