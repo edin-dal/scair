@@ -194,28 +194,12 @@ class Printer(val strictly_generic: Boolean) {
     strictly_generic match {
       case true => printGenericOperation(op, indentLevel)
       case false =>
-        try {
-          printCustomOperation(op, indentLevel)
-        } catch {
-          case e: Exception =>
-            printGenericOperation(op, indentLevel)
-        }
+        indent * indentLevel + op.custom_print(this)
     }
   }
 
   def printOperations(ops: Seq[Operation], indentLevel: Int = 0): String = {
-    strictly_generic match {
-      case true =>
-        (for { op <- ops } yield printGenericOperation(op, indentLevel))
-          .mkString("\n")
-      case false =>
-        (for { op <- ops } yield try {
-          printCustomOperation(op, indentLevel)
-        } catch {
-          case e: Exception =>
-            printGenericOperation(op, indentLevel)
-        }).mkString("\n")
-    }
+        (for { op <- ops } yield printOperation(op, indentLevel)).mkString("\n")
   }
 
 }

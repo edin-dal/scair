@@ -439,9 +439,7 @@ sealed abstract class Operation(
   }
 
   def custom_print(p: Printer): String =
-    throw new Exception(
-      s"No custom Printer implemented for Operation '${name}'"
-    )
+    p.printGenericOperation(this)
 
   final def print(printer: Printer): String = {
     var results: Seq[String] = Seq()
