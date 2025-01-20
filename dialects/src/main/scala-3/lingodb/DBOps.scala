@@ -391,14 +391,14 @@ case class DB_CmpOp(
       )
   }
 
+
   override def custom_print(printer: Printer): String = {
-    val operandStrings = operands.map(printer.printValue).mkString(", ")
-    val operandTypes = operands.map(_.typ.custom_print).mkString(", ")
-    val resultTypes = results.map(_.typ.custom_print).mkString(", ")
-    val predicate =
-      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
-    s"\"$name\"($operandStrings) {predicate = $predicate} : ($operandTypes) -> ($resultTypes)"
-  }
+    val operand1 = s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 = s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    val predicate = dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+    s"$name $predicate $operand1, $operand2 : $resultType"
+} 
 
 }
 
@@ -527,12 +527,14 @@ case class DB_MulOp(
   }
 
   // added code for custom printing
+
   override def custom_print(printer: Printer): String = {
-    val operandStrings = operands.map(printer.printValue).mkString(", ")
-    val operandTypes = operands.map(_.typ.custom_print).mkString(", ")
-    val resultTypes = results.map(_.typ.custom_print).mkString(", ")
-    s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)"
-  }
+    val operand1 = s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 = s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    val predicate = dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+    s"$name $operand1, $operand2 : $resultType"
+} 
 
 }
 
@@ -662,19 +664,12 @@ case class DB_DivOp(
         "DB_DivOp Operation must contain only 2 operands."
       )
   }
-
-//added print function
-  override def custom_print(printer: Printer): String = {
-    val operandStrings = operands.map(printer.printValue).mkString(", ")
-    val operandTypes = operands.map(_.typ.custom_print).mkString(", ")
-    val resultTypes = results.map(_.typ.custom_print).mkString(", ")
-    val attributes = if (dictionaryAttributes.nonEmpty) {
-      " {" + dictionaryAttributes
-        .map { case (key, value) => s"$key = ${value.custom_print}" }
-        .mkString(", ") + "}"
-    } else ""
-    s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)$attributes"
-  }
+override def custom_print(printer: Printer): String = {
+    val operand1 = s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 = s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1, $operand2 : $resultType"
+}
 
 }
 
@@ -745,14 +740,15 @@ case class DB_AddOp(
       )
   }
 
+
 //added code for custom printing
 
-  override def custom_print(printer: Printer): String = {
-    val operandStrings = operands.map(printer.printValue).mkString(", ")
-    val operandTypes = operands.map(_.typ.custom_print).mkString(", ")
-    val resultTypes = results.map(_.typ.custom_print).mkString(", ")
-    s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)"
-  }
+override def custom_print(printer: Printer): String = {
+    val operand1 = s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 = s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1, $operand2 : $resultType"
+}
 
 }
 
@@ -823,17 +819,12 @@ case class DB_SubOp(
       )
   }
 
-  // added code for custom printing(same as the one for Mul(maybe it's better to write them in a more cleaner way))
-
   override def custom_print(printer: Printer): String = {
-    val operandStrings =
-      operands.map(printer.printValue).mkString(", ") // Operands
-    val operandTypes =
-      operands.map(_.typ.custom_print).mkString(", ") // Operand Types
-    val resultTypes =
-      results.map(_.typ.custom_print).mkString(", ") // Result Types
-    s"\"$name\"($operandStrings) : ($operandTypes) -> ($resultTypes)"
-  }
+    val operand1 = s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 = s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1, $operand2 : $resultType"
+}
 
 }
 
@@ -896,15 +887,11 @@ case class CastOp(
       )
   }
 
-//added print func
-
-  override def custom_print(printer: Printer): String = {
-    val operandString = printer.printValue(operands.head)
-    val sourceType = operands.head.typ.custom_print
-    val targetType = results.head.typ.custom_print
-    s"\"$name\"($operandString) : ($sourceType) -> ($targetType)"
-  }
-
+override def custom_print(printer: Printer): String = {
+    val operand1 = s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1 -> $resultType"
+}
 }
 
 val DBOps: Dialect =
