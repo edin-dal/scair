@@ -2,8 +2,9 @@ package scair.dialects.math
 
 import fastparse.*
 import scair.Parser
+import scair.Parser.ValueId
+import scair.Parser.whitespace
 import scair.ir.*
-
 import scala.NotImplementedError
 import scala.collection.immutable
 import scala.collection.mutable
@@ -18,15 +19,32 @@ import scala.collection.mutable
 
 object AbsfOp extends OperationObject {
   override def name: String = "math.absf"
-  override def factory = AbsfOp.apply
+  override def factory: FactoryType = AbsfOp.apply
 
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] =
-    throw new NotImplementedError("This custom parse needs to be implemented!")
-  // ==----------------------== //
+  ): P[Operation] = {
+    P(
+      "(" ~ Parser.ValueUse ~ ")" ~ ":" ~ "(" ~ parser.Type ~ ")" ~ "->" ~ parser.Type
+    ).map {
+      case (operandName, operandType, resultType) =>
+        if (resNames.length != 1) {
+          throw new Exception(
+            s"AbsfOp must produce exactly one result, but found ${resNames.length}."
+          )
+        }
 
+        parser.verifyCustomOp(
+          opGen = AbsfOp.apply,
+          opName = name,
+          operandNames = Seq(operandName),
+          operandTypes = Seq(operandType),
+          resultNames = resNames,
+          resultTypes = Seq(resultType)
+        )
+    }
+  }
 }
 
 case class AbsfOp(
@@ -48,7 +66,7 @@ case class AbsfOp(
     case (1, 1, 0, 0, 0) =>
     case _ =>
       throw new Exception(
-        "AbsfOp must have 1 result and 1 operands."
+        "AbsfOp must have 1 result and 1 operand."
       )
   }
 
@@ -57,7 +75,6 @@ case class AbsfOp(
 // ==--------== //
 //   FPowIOp   //
 // ==--------== //
-
 object FPowIOp extends OperationObject {
   override def name: String = "math.fpowi"
   override def factory = FPowIOp.apply
@@ -65,10 +82,28 @@ object FPowIOp extends OperationObject {
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] =
-    throw new NotImplementedError("This custom parse needs to be implemented!")
-  // ==----------------------== //
+  ): P[Operation] = {
+    P(
+      "(" ~ Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ")" ~ ":" ~ 
+      "(" ~ parser.Type ~ "," ~ parser.Type ~ ")" ~ "->" ~ parser.Type
+    ).map {
+      case (operand1Name, operand2Name, operand1Type, operand2Type, resultType) =>
+        if (resNames.length != 1) {
+          throw new Exception(
+            s"FPowIOp must produce exactly one result, but found ${resNames.length}."
+          )
+        }
 
+        parser.verifyCustomOp(
+          opGen = FPowIOp.apply,
+          opName = name,
+          operandNames = Seq(operand1Name, operand2Name),
+          operandTypes = Seq(operand1Type, operand2Type),
+          resultNames = resNames,
+          resultTypes = Seq(resultType)
+        )
+    }
+  }
 }
 
 case class FPowIOp(
@@ -87,7 +122,7 @@ case class FPowIOp(
     regions.length,
     dictionaryProperties.size
   ) match {
-    case (2, 1, 0, 0, 0) =>
+    case (2, 1, 0, 0, 0) => 
     case _ =>
       throw new Exception(
         "FPowIOp must have 1 result and 2 operands."
