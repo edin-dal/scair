@@ -7,6 +7,7 @@ import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
 import scair.Parser.ValueId
 import scair.Parser.whitespace
+import scair.Printer
 import scair.dialects.builtin.*
 import scair.exceptions.VerifyException
 import scair.ir.*
@@ -107,6 +108,11 @@ case class DB_CharType(val typ: Seq[Attribute])
       }
   }
 
+  override def custom_print: String = {
+    if (typ.isEmpty) name
+    else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
+  }
+
 }
 
 // ==--------== //
@@ -158,6 +164,12 @@ case class DB_IntervalType(val unit: Attribute)
   //         throw new VerifyException("CharType type must be IntData")
   //     }
   // }
+
+  override def custom_print: String = {
+    if (parameters.isEmpty) name
+    else s"!$name<${parameters.map(_.custom_print).mkString(", ")}>"
+  }
+
 }
 
 // ==-----------== //
@@ -199,6 +211,11 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     }
   }
 
+  override def custom_print: String = {
+    if (typ.isEmpty) name
+    else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
+  }
+
 }
 
 // ==-----------== //
@@ -228,6 +245,11 @@ case class DB_StringType(val typ: Seq[Attribute])
         case _ =>
           throw new VerifyException("DB_DecimalType type must be StringData")
       }
+  }
+
+  override def custom_print: String = {
+    if (typ.isEmpty) s"!$name"
+    else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
   }
 
 }
@@ -290,6 +312,13 @@ case class DB_ConstantOp(
       throw new VerifyException(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
+  }
+
+  override def custom_print(printer: Printer): String = {
+    val value =
+      dictionaryAttributes.get("value").map(_.custom_print).getOrElse("")
+    val resultType = results.head.typ
+    s"$name($value) : ${resultType.custom_print}"
   }
 
 }
@@ -360,6 +389,17 @@ case class DB_CmpOp(
       throw new VerifyException(
         "DB_CmpOp Operation must contain only 2 operands."
       )
+  }
+
+  override def custom_print(printer: Printer): String = {
+    val operand1 =
+      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 =
+      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    val predicate =
+      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+    s"$name $predicate $operand1, $operand2 : $resultType"
   }
 
 }
@@ -486,6 +526,19 @@ case class DB_MulOp(
       throw new VerifyException(
         "DB_MulOp Operation must contain only 2 operands."
       )
+  }
+
+  // added code for custom printing
+
+  override def custom_print(printer: Printer): String = {
+    val operand1 =
+      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 =
+      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    val predicate =
+      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+    s"$name $operand1, $operand2 : $resultType"
   }
 
 }
@@ -617,6 +670,15 @@ case class DB_DivOp(
       )
   }
 
+  override def custom_print(printer: Printer): String = {
+    val operand1 =
+      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 =
+      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1, $operand2 : $resultType"
+  }
+
 }
 
 // ==-----== //
@@ -684,6 +746,17 @@ case class DB_AddOp(
       throw new VerifyException(
         "DB_AddOp Operation must contain only 2 operands."
       )
+  }
+
+//added code for custom printing
+
+  override def custom_print(printer: Printer): String = {
+    val operand1 =
+      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 =
+      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1, $operand2 : $resultType"
   }
 
 }
@@ -755,6 +828,15 @@ case class DB_SubOp(
       )
   }
 
+  override def custom_print(printer: Printer): String = {
+    val operand1 =
+      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val operand2 =
+      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1, $operand2 : $resultType"
+  }
+
 }
 
 // ==-----== //
@@ -814,6 +896,13 @@ case class CastOp(
       throw new VerifyException(
         "CastOp Operation must contain only 1 operand and result."
       )
+  }
+
+  override def custom_print(printer: Printer): String = {
+    val operand1 =
+      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
+    val resultType = results.head.typ.custom_print
+    s"$name $operand1 -> $resultType"
   }
 
 }

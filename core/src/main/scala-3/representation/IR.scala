@@ -439,25 +439,10 @@ sealed abstract class Operation(
   }
 
   def custom_print(p: Printer): String =
-    throw new Exception(
-      s"No custom Printer implemented for Operation '${name}'"
-    )
+    p.printGenericOperation(this)
 
   final def print(printer: Printer): String = {
-    var results: Seq[String] = Seq()
-    var resultsTypes: Seq[String] = Seq()
-
-    for { res <- this.results } yield (
-      results = results :+ printer.printValue(res),
-      resultsTypes = resultsTypes :+ printer.printAttribute(res.typ)
-    )
-
-    val operationResults: String =
-      if (this.results.length > 0)
-        results.mkString(", ") + " = "
-      else ""
-
-    return operationResults + custom_print(printer)
+    printer.printOperation(this)
   }
 
   override def hashCode(): Int = {

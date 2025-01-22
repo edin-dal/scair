@@ -187,35 +187,21 @@ class Printer(val strictly_generic: Boolean) {
         ") -> (" +
         resultsTypes.mkString(", ") + ")"
 
-    return indent * indentLevel + s"$operationResults${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
+    return s"${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
   }
 
   def printOperation(op: Operation, indentLevel: Int = 0): String = {
-    strictly_generic match {
-      case true => printGenericOperation(op, indentLevel)
-      case false =>
-        try {
-          printCustomOperation(op, indentLevel)
-        } catch {
-          case e: Exception =>
-            printGenericOperation(op, indentLevel)
-        }
-    }
+    val results =
+      op.results.map(printValue(_)).mkString(", ") + (if op.results.nonEmpty
+                                                      then " = "
+                                                      else "")
+    indent * indentLevel + results + (if strictly_generic then
+                                        printGenericOperation(op, indentLevel)
+                                      else op.custom_print(this))
   }
 
   def printOperations(ops: Seq[Operation], indentLevel: Int = 0): String = {
-    strictly_generic match {
-      case true =>
-        (for { op <- ops } yield printGenericOperation(op, indentLevel))
-          .mkString("\n")
-      case false =>
-        (for { op <- ops } yield try {
-          printCustomOperation(op, indentLevel)
-        } catch {
-          case e: Exception =>
-            printGenericOperation(op, indentLevel)
-        }).mkString("\n")
-    }
+    (for { op <- ops } yield printOperation(op, indentLevel)).mkString("\n")
   }
 
 }
