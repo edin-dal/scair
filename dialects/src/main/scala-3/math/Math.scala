@@ -13,6 +13,59 @@ import scala.collection.mutable
 ////////////////
 
 // ==--------== //
+//   TestOp   //
+// ==--------== //
+object TestOp extends OperationObject {
+  override def name: String = "test.op"
+  override def factory: FactoryType = TestOp.apply
+
+  override def parse[$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = {
+    P("=" ~ name ~ ": -> " ~ parser.Type).map { resultType =>
+      if (resNames.length != 1) {
+        throw new Exception(
+          s"TestOp must produce exactly one result, but found ${resNames.length}."
+        )
+      }
+      parser.verifyCustomOp(
+        opGen = TestOp.apply,
+        opName = name,
+        resultNames = resNames,
+        resultTypes = Seq(resultType)
+      )
+    }
+  }
+
+}
+
+case class TestOp(
+    override val operands: ListType[Value[Attribute]],
+    override val successors: ListType[Block],
+    override val results: ListType[Value[Attribute]],
+    override val regions: ListType[Region],
+    override val dictionaryProperties: DictType[String, Attribute],
+    override val dictionaryAttributes: DictType[String, Attribute]
+) extends RegisteredOperation(name = "test.op") {
+
+  override def custom_verify(): Unit = (
+    operands.length,
+    results.length,
+    successors.length,
+    regions.length,
+    dictionaryProperties.size
+  ) match {
+    case (0, 1, 0, 0, 0) =>
+    case _ =>
+      throw new Exception(
+        "TestOp must have 1 result and no operands."
+      )
+  }
+
+}
+
+// ==--------== //
 //   AbsfOp   //
 // ==--------== //
 
@@ -25,8 +78,8 @@ object AbsfOp extends OperationObject {
       parser: Parser
   ): P[Operation] = {
     P(
-      "(" ~ Parser.ValueUse ~ ")" ~ ":" ~ "(" ~ parser.Type ~ ")" ~ "->" ~ parser.Type
-    ).map { case (operandName, operandType, resultType) =>
+      "" ~ Parser.ValueUse ~ ":" ~ parser.Type
+    ).map { case (operandName, type_) =>
       if (resNames.length != 1) {
         throw new Exception(
           s"AbsfOp must produce exactly one result, but found ${resNames.length}."
@@ -37,9 +90,9 @@ object AbsfOp extends OperationObject {
         opGen = AbsfOp.apply,
         opName = name,
         operandNames = Seq(operandName),
-        operandTypes = Seq(operandType),
+        operandTypes = Seq(type_),
         resultNames = resNames,
-        resultTypes = Seq(resultType)
+        resultTypes = Seq(type_)
       )
     }
   }
@@ -84,15 +137,13 @@ object FPowIOp extends OperationObject {
       parser: Parser
   ): P[Operation] = {
     P(
-      "(" ~ Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ")" ~ ":" ~
-        "(" ~ parser.Type ~ "," ~ parser.Type ~ ")" ~ "->" ~ parser.Type
+      Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
     ).map {
       case (
             operand1Name,
             operand2Name,
             operand1Type,
-            operand2Type,
-            resultType
+            operand2Type
           ) =>
         if (resNames.length != 1) {
           throw new Exception(
@@ -106,7 +157,7 @@ object FPowIOp extends OperationObject {
           operandNames = Seq(operand1Name, operand2Name),
           operandTypes = Seq(operand1Type, operand2Type),
           resultNames = resNames,
-          resultTypes = Seq(resultType)
+          resultTypes = Seq(operand1Type)
         )
     }
   }
@@ -143,6 +194,6 @@ case class FPowIOp(
 
 val MathDialect: Dialect =
   new Dialect(
-    operations = Seq(AbsfOp, FPowIOp),
+    operations = Seq(TestOp, AbsfOp, FPowIOp),
     attributes = Seq()
   )
