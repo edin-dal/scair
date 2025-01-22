@@ -2,9 +2,9 @@ package scair.dialects.math
 
 import fastparse.*
 import scair.Parser
+import scair.Parser.whitespace
 import scair.ir.*
 
-import scala.NotImplementedError
 import scala.collection.immutable
 import scala.collection.mutable
 
@@ -18,14 +18,31 @@ import scala.collection.mutable
 
 object AbsfOp extends OperationObject {
   override def name: String = "math.absf"
-  override def factory = AbsfOp.apply
+  override def factory: FactoryType = AbsfOp.apply
 
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] =
-    throw new NotImplementedError("This custom parse needs to be implemented!")
-  // ==----------------------== //
+  ): P[Operation] = {
+    P(
+      "" ~ Parser.ValueUse ~ ":" ~ parser.Type
+    ).map { case (operandName, type_) =>
+      if (resNames.length != 1) {
+        throw new Exception(
+          s"AbsfOp must produce exactly one result, but found ${resNames.length}."
+        )
+      }
+
+      parser.verifyCustomOp(
+        opGen = AbsfOp.apply,
+        opName = name,
+        operandNames = Seq(operandName),
+        operandTypes = Seq(type_),
+        resultNames = resNames,
+        resultTypes = Seq(type_)
+      )
+    }
+  }
 
 }
 
@@ -48,7 +65,7 @@ case class AbsfOp(
     case (1, 1, 0, 0, 0) =>
     case _ =>
       throw new Exception(
-        "AbsfOp must have 1 result and 1 operands."
+        "AbsfOp must have 1 result and 1 operand."
       )
   }
 
@@ -65,9 +82,32 @@ object FPowIOp extends OperationObject {
   override def parse[$: P](
       resNames: Seq[String],
       parser: Parser
-  ): P[Operation] =
-    throw new NotImplementedError("This custom parse needs to be implemented!")
-  // ==----------------------== //
+  ): P[Operation] = {
+    P(
+      Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
+    ).map {
+      case (
+            operand1Name,
+            operand2Name,
+            operand1Type,
+            operand2Type
+          ) =>
+        if (resNames.length != 1) {
+          throw new Exception(
+            s"FPowIOp must produce exactly one result, but found ${resNames.length}."
+          )
+        }
+
+        parser.verifyCustomOp(
+          opGen = FPowIOp.apply,
+          opName = name,
+          operandNames = Seq(operand1Name, operand2Name),
+          operandTypes = Seq(operand1Type, operand2Type),
+          resultNames = resNames,
+          resultTypes = Seq(operand1Type)
+        )
+    }
+  }
 
 }
 
