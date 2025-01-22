@@ -153,8 +153,18 @@ inline def getDefInput[Elem]: String => OpInput = {
           id = name,
           getConstraint[t]
         )
-    case _ =>
-      throw new Exception("aiowdjaowidjawoidjowij")
+    case format: String =>
+      (name: String) =>
+        name match {
+          case "assembly_format" => AssemblyFormatDef(format)
+          case _ =>
+            throw new Exception(
+              f"Only `assembly_format` can be a String!! D': This one is $name, you fool"
+            )
+        }
+    case shennanigan =>
+      (name: String) =>
+        throw new Exception(f"Unsupported shennaigans with field $name")
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -207,6 +217,7 @@ inline def getDef[T](dialect_name: String)(using
       val successors: ListType[SuccessorDef] = ListType()
       val opProperty: ListType[OpPropertyDef] = ListType()
       val opAttribute: ListType[OpAttributeDef] = ListType()
+      var assembly_format: Option[String] = None
 
       for ((name, input) <- paramLabels zip inputs) yield input(name) match {
         case a: OperandDef     => operands += a
@@ -215,6 +226,9 @@ inline def getDef[T](dialect_name: String)(using
         case d: SuccessorDef   => successors += d
         case e: OpPropertyDef  => opProperty += e
         case f: OpAttributeDef => opAttribute += f
+        case g: AssemblyFormatDef =>
+          assembly_format = Some(g.format)
+        case _ => throw new Exception("Internal error!")
       }
 
       OperationDef(
@@ -225,7 +239,8 @@ inline def getDef[T](dialect_name: String)(using
         regions.toSeq,
         successors.toSeq,
         opProperty.toSeq,
-        opAttribute.toSeq
+        opAttribute.toSeq,
+        assembly_format
       )
 
     case _: AttributeFE =>

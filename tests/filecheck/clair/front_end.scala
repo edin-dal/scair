@@ -48,7 +48,8 @@ object CMathGen
 // CHECK:       object Norm extends OperationObject {
 // CHECK-NEXT:    override def name = "cmath.norm"
 // CHECK-NEXT:    override def factory = Norm.apply
-// CHECK-NEXT:  }
+
+// CHECK:       }
 
 // CHECK:       case class Norm(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
@@ -89,7 +90,8 @@ object CMathGen
 // CHECK:       object Mul extends OperationObject {
 // CHECK-NEXT:    override def name = "cmath.mul"
 // CHECK-NEXT:    override def factory = Mul.apply
-// CHECK-NEXT:  }
+
+// CHECK:       }
 
 // CHECK:       case class Mul(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
@@ -138,3 +140,4 @@ object CMathGen
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
 // CHECK-NEXT:    attributes = Seq(Complex, SampleData)
 // CHECK-NEXT:  )
+  

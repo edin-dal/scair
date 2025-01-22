@@ -104,6 +104,10 @@ case class OpAttributeDef(
     val const: IRDLConstraint = AnyAttr
 ) extends OpInput {}
 
+case class AssemblyFormatDef(
+    val format: String
+) extends OpInput {}
+
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||    DIALECT DEF    ||
 \*≡==----=≡≡≡=----==≡*/
@@ -155,7 +159,8 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val OpProperty: Seq[OpPropertyDef] = Seq(),
-    val OpAttribute: Seq[OpAttributeDef] = Seq()
+    val OpAttribute: Seq[OpAttributeDef] = Seq(),
+    val assembly_format: Option[String] = None
 ) {
 
   def operand_segment_sizes_helper: String =
@@ -637,6 +642,7 @@ case class OperationDef(
 object $className extends OperationObject {
   override def name = "$name"
   override def factory = $className.apply
+  ${assembly_format.map(f => f"val replace_by_parse = \"$f\"").getOrElse("")}
 }
 
 case class $className(
@@ -649,6 +655,8 @@ case class $className(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name") {
+
+${assembly_format.map(f => f"val replace_by_print = \"$f\"").getOrElse("")}
 
 ${helpers(indent + 1)}
 ${accessors(indent + 1)}
