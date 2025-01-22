@@ -91,6 +91,7 @@ object Main {
     println(dialect.print(0))
   }
 }
+
 // CHECK:       package scair.dialects.test
 
 // CHECK:       import scair.ir._
@@ -101,7 +102,8 @@ object Main {
 // CHECK:       object NoVariadicsOp extends OperationObject {
 // CHECK-NEXT:    override def name = "test.no_variadics"
 // CHECK-NEXT:    override def factory = NoVariadicsOp.apply
-// CHECK-NEXT:  }
+
+// CHECK:       }
 
 // CHECK:       case class NoVariadicsOp(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
@@ -161,7 +163,8 @@ object Main {
 // CHECK:       object VariadicOperandOp extends OperationObject {
 // CHECK-NEXT:    override def name = "test.variadic_operand"
 // CHECK-NEXT:    override def factory = VariadicOperandOp.apply
-// CHECK-NEXT:  }
+
+// CHECK:       }
 
 // CHECK:       case class VariadicOperandOp(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
@@ -285,7 +288,8 @@ object Main {
 // CHECK:       object MultiVariadicOperandOp extends OperationObject {
 // CHECK-NEXT:    override def name = "test.multi_variadic_operand"
 // CHECK-NEXT:    override def factory = MultiVariadicOperandOp.apply
-// CHECK-NEXT:  }
+
+// CHECK:       }
 
 // CHECK:       case class MultiVariadicOperandOp(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
