@@ -30,7 +30,7 @@ sbt publishLocal
 Which should end with a line like:
 
 ```
-[info]  published ivy to /home/papychacal/.ivy2/local/io.github.edin-dal/scair_3/<version>/ivys/ivy.xml
+[info]  published ivy to <USER-PATH>/.ivy2/local/io.github.edin-dal/scair_3/<version>/ivys/ivy.xml
 ```
 
 To use this from your project, just add:
