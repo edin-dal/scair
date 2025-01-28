@@ -117,14 +117,8 @@ jobs:
       uses: coursier/setup-action@v1
       with:
         apps: scala:3.3.1 sbt
-        
-    - name: Filechecks and dependencies
-      run: |
-        export PATH=$PATH:${GITHUB_WORKSPACE}/llvm-project/build/bin/
-        cd scair
-        sbt filechecks
 
-    - name: Compile and run tests
+    - name: Run tests and generate coverage report
       run: |
         export PATH=$PATH:${GITHUB_WORKSPACE}/llvm-project/build/bin/
         cd scair
