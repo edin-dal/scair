@@ -12,6 +12,7 @@ permissions:
 jobs:
   # Formatting checks
   format:
+    name: "Checks"
     runs-on: ubuntu-latest
 
     # Checkout the code

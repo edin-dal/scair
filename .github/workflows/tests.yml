@@ -12,7 +12,9 @@ permissions:
 jobs:
 
   # Tests and coverage
-  filechecks:
+  tests:
+
+    name: "Tests"
 
     runs-on: ubuntu-latest
     env:
