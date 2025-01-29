@@ -166,7 +166,15 @@ case class ReturnOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "tuples.return", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "tuples.return",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -226,7 +234,15 @@ case class GetColumnOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "tuples.getcol", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "tuples.getcol",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,

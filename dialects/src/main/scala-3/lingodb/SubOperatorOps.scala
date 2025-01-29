@@ -117,7 +117,15 @@ case class SetResultOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "subop.set_result", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "subop.set_result",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,

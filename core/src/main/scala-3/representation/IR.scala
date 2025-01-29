@@ -463,17 +463,25 @@ sealed abstract class Operation(
 
 }
 
-class UnregisteredOperation(
-    name: String,
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[Block] = ListType(),
+case class UnregisteredOperation(
+    override val name: String,
+    override val operands: ListType[Value[Attribute]] = ListType(),
+    override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
+    override val regions: ListType[Region] = ListType(),
+    override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
+    override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation(name = name, operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
+) extends Operation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
 
 class RegisteredOperation(
     name: String,
@@ -485,7 +493,15 @@ class RegisteredOperation(
       DictType.empty[String, Attribute],
     dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation(name = name, operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
+) extends Operation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||     DIALECTS     ||

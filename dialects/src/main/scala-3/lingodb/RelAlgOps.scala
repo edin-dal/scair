@@ -137,20 +137,20 @@ case class SortSpecificationAttr(
 
 private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
-    ~ (parser.BlockArgList.?.map(optionlessSeq).map((x: Seq[(String, Attribute)]) => {
-      val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
-      Scope.defineValues(x.map(_._1) zip b.arguments)(parser.currentScope)
-      b
+    ~ (parser.BlockArgList.?.map(optionlessSeq).map(
+      (x: Seq[(String, Attribute)]) => {
+        val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
+        Scope.defineValues(x.map(_._1) zip b.arguments)(parser.currentScope)
+        b
+      }
+    )
+      ~ "{"
+      ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
+      b.operations ++= y
+      new Region(Seq(b))
     })
-    ~ "{"
-    ~ parser.Operations(1) ~ "}"
-).map((b: Block, y: ListType[Operation]) =>
-  {
-    b.operations ++= y
-    new Region(Seq(b))
-  }
-))
-    ~ E({ parser.enterParentRegion })
+)
+  ~ E({ parser.enterParentRegion })
 
 // ==-----------== //
 //   BaseTableOp   //
@@ -193,7 +193,15 @@ case class BaseTableOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.basetable", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.basetable",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -272,7 +280,15 @@ case class SelectionOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.selection", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.selection",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -346,7 +362,15 @@ case class MapOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.map", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.map",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -443,7 +467,15 @@ case class AggregationOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.aggregation", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.aggregation",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -540,7 +572,15 @@ case class CountRowsOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.count", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.count",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -616,7 +656,15 @@ case class AggrFuncOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.aggrfn", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.aggrfn",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -715,7 +763,15 @@ case class SortOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.sort", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.sort",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -812,7 +868,15 @@ case class MaterializeOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.materialize", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "relalg.materialize",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,

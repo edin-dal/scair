@@ -90,13 +90,14 @@ object Parser {
     )(implicit
         scope: Scope
     ): Unit = {
-        valueIdAndTypeList.map((name, value) => scope.valueMap.contains(name) match {
-        case true =>
-          throw new Exception(s"SSA Value cannot be defined twice %${name}")
-        case false =>
-          scope.valueMap(name) = value
+      valueIdAndTypeList.map((name, value) =>
+        scope.valueMap.contains(name) match {
+          case true =>
+            throw new Exception(s"SSA Value cannot be defined twice %${name}")
+          case false =>
+            scope.valueMap(name) = value
         }
-        )
+      )
     }
 
     def useValues(
@@ -646,7 +647,7 @@ class Parser(val context: MLContext, val args: Args = Args())
       throw new Exception(
         "Dictionary Properties names in Operation " + opName + " are cloned."
       )
-    } 
+    }
 
     val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
       Scope.useBlocks(successors)
@@ -825,7 +826,6 @@ class Parser(val context: MLContext, val args: Args = Args())
     }
 
     Scope.defineValues(results zip op.results)
-    
 
     // adding uses for known operands
     for (
@@ -897,7 +897,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
-      arguments_types = ListType.from(uncutBlock._2.map(_._2)),
+      arguments_types = ListType.from(uncutBlock._2.map(_._2))
     )
     for (op <- newBlock.operations) op.container_block = Some(newBlock)
     Scope.defineBlock(uncutBlock._1, newBlock)

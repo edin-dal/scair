@@ -170,6 +170,7 @@ object StringData {
   given Conversion[String, StringData] = StringData(_)
   given Conversion[StringData, String] = _.stringLiteral
 }
+
 case class StringData(val stringLiteral: String)
     extends DataAttribute("builtin.string", stringLiteral) {
   override def custom_print = "\"" + stringLiteral + "\""
@@ -480,13 +481,21 @@ object ModuleOp extends OperationObject {
 case class ModuleOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    results_types : ListType[Attribute] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "builtin.module", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(
+      name = "builtin.module",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_print(
       p: Printer

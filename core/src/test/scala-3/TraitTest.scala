@@ -23,7 +23,15 @@ case class FillerOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "filler", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {}
+) extends RegisteredOperation(
+      name = "filler",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {}
 
 object TerminatorOp extends OperationObject {
   override def name: String = "terminator"
@@ -39,7 +47,15 @@ case class TerminatorOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "terminator", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
+) extends RegisteredOperation(
+      name = "terminator",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
     with IsTerminator {}
 
 object NoTerminatorOp extends OperationObject {
@@ -56,7 +72,15 @@ case class NoTerminatorOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "noterminator", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
+) extends RegisteredOperation(
+      name = "noterminator",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
     with NoTerminator {}
 
 class TraitTest extends AnyFlatSpec with BeforeAndAfter {

@@ -131,61 +131,61 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   val valINDEX = Value[Attribute](INDEX)
 
   "printDataibutesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
-
+    val op = UnregisteredOperation(
+      "test.op",
+      results_types = ListType(
+        F32,
+        F64,
+        F80
+      )
+    )
     val block1 = Block(
       ListType(
+        op,
         UnregisteredOperation(
           "test.op",
-          results = ListType(
-            valF32,
-            valF64,
-            Value(F80)
-          )
-        ),
-        UnregisteredOperation(
-          "test.op",
-          operands = ListType(valF64, valF32)
+          operands = ListType(op.results(1), op.results(0))
         )
       ),
-      ListType(Value(F128))
+      ListType(F128)
     )
-
+    val op2 = UnregisteredOperation(
+      "test.op",
+      successors = ListType(block1),
+      results_types = ListType(
+        I1,
+        I16,
+        I32
+      )
+    )
     val block2 = Block(
       ListType(
-        UnregisteredOperation(
-          "test.op",
-          successors = ListType(block1),
-          results = ListType(
-            valI1,
-            valI16,
-            Value(I32)
-          )
-        ),
+        op2,
         UnregisteredOperation(
           "test.op",
           operands = ListType(
-            valI16,
-            valI1
+            op2.results(1),
+            op2.results(0)
           )
         )
       ),
-      ListType(Value(I32))
+      ListType(I32)
     )
-
+    val op3 = UnregisteredOperation(
+      "test.op",
+      results_types = ListType(
+        INDEX
+      )
+    )
     val block3 = Block(
       ListType(
+        op3,
         UnregisteredOperation(
           "test.op",
-          results = ListType(
-            valINDEX
-          )
-        ),
-        UnregisteredOperation(
-          "test.op",
-          operands = ListType(valINDEX)
+          operands = ListType(op3.results(0))
         )
       ),
-      ListType(Value(I64))
+      ListType(I64)
     )
 
     val program =
@@ -231,48 +231,52 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         ),
         UnregisteredOperation(
           "test.op",
-          results = ListType(valF64, valF32)
+          ListType(valF64, valF32)
         )
       ),
-      ListType(Value(F16))
+      ListType(F16)
+    )
+
+    val op4 = UnregisteredOperation(
+      "test.op",
+      successors = ListType(block1),
+      results_types = ListType(
+        I1,
+        I16,
+        I32
+      )
     )
 
     val block2 = new Block(
       ListType(
-        UnregisteredOperation(
-          "test.op",
-          successors = ListType(block1),
-          results = ListType(
-            valI1,
-            valI16,
-            Value(I32)
-          )
-        ),
+        op4,
         UnregisteredOperation(
           "test.op",
           operands = ListType(
-            valI16,
-            valI1
+            op4.results(1),
+            op4.results(0)
           )
         )
       ),
-      ListType(Value(F128))
+      ListType(F128)
+    )
+
+    val op5 = UnregisteredOperation(
+      "test.op",
+      results_types = ListType(
+        INDEX
+      )
     )
 
     val block3 = new Block(
       ListType(
+        op5,
         UnregisteredOperation(
           "test.op",
-          results = ListType(
-            valINDEX
-          )
-        ),
-        UnregisteredOperation(
-          "test.op",
-          operands = ListType(valINDEX)
+          operands = ListType(op5.results(0))
         )
       ),
-      ListType(Value(I64))
+      ListType(I64)
     )
 
     val program =
@@ -335,16 +339,16 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                           ListType(),
                           ListType(),
                           ListType(
-                            Value(IntegerType(IntData(32), Signless)),
-                            Value(IntegerType(IntData(64), Signed)),
-                            Value(IntegerType(IntData(80), Unsigned))
+                            IntegerType(IntData(32), Signless),
+                            IntegerType(IntData(64), Signed),
+                            IntegerType(IntData(80), Unsigned)
                           ),
                           ListType(),
                           _,
                           _
                         )
                       ),
-                      ListType(Value(F128))
+                      ListType(F128)
                     )
                   )
                 )

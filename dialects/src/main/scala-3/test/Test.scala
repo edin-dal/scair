@@ -11,7 +11,15 @@ case class TestOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "test.op", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
+) extends RegisteredOperation(
+      name = "test.op",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
 
 object TestOp extends OperationObject {
   override def name = "test.op"
