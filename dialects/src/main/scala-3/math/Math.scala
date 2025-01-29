@@ -49,11 +49,11 @@ object AbsfOp extends OperationObject {
 case class AbsfOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "math.absf") {
+) extends RegisteredOperation(name = "math.absf", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -114,11 +114,11 @@ object FPowIOp extends OperationObject {
 case class FPowIOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "math.fpowi") {
+) extends RegisteredOperation(name = "math.fpowi", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
   override def custom_verify(): Unit = (
     operands.length,

@@ -17,13 +17,13 @@ object FillerOp extends OperationObject {
 case class FillerOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "filler") {}
+) extends RegisteredOperation(name = "filler", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {}
 
 object TerminatorOp extends OperationObject {
   override def name: String = "terminator"
@@ -33,13 +33,13 @@ object TerminatorOp extends OperationObject {
 case class TerminatorOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "terminator")
+) extends RegisteredOperation(name = "terminator", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
     with IsTerminator {}
 
 object NoTerminatorOp extends OperationObject {
@@ -50,13 +50,13 @@ object NoTerminatorOp extends OperationObject {
 case class NoTerminatorOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "noterminator")
+) extends RegisteredOperation(name = "noterminator", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes)
     with NoTerminator {}
 
 class TraitTest extends AnyFlatSpec with BeforeAndAfter {
