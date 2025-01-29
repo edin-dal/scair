@@ -93,8 +93,6 @@ jobs:
     
     - name: Checkout Scair
       uses: actions/checkout@v4
-      with:
-        path: scair
 
     # Restore SBT's incremental build cache
     - name: Cache Incremental Build
@@ -127,5 +125,4 @@ jobs:
     - name: Upload coverage report to Codecov
       uses: codecov/codecov-action@v5
       with:
-        root_dir: scair
         token: ${{ secrets.CODECOV_TOKEN }}
