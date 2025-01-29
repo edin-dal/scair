@@ -31,66 +31,73 @@ def I1 = IntegerType(IntData(1), Signless)
 def I32 = IntegerType(IntData(32), Signless)
 def I64 = IntegerType(IntData(64), Signless)
 
-////////////////
-// SIGNEDNESS //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    SIGNEDNESS   ||
+\*≡==---==≡≡==---==≡*/
 
 sealed abstract class Signedness(override val name: String, val dat: String)
     extends DataAttribute[String](name, dat) {
   override def custom_print = dat
 }
+
 case object Signed extends Signedness("signed", "si")
 case object Unsigned extends Signedness("unsigned", "ui")
 case object Signless extends Signedness("signless", "i")
 
-////////////////
-// FLOAT TYPE //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    FLOAT TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 abstract class FloatType(val namee: String) extends ParametrizedAttribute(namee)
 
 case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
   override def custom_print = "f16"
 }
+
 case object Float32Type extends FloatType("builtin.f32") with TypeAttribute {
   override def custom_print = "f32"
 }
+
 case object Float64Type extends FloatType("builtin.f64") with TypeAttribute {
   override def custom_print = "f64"
 }
+
 case object Float80Type extends FloatType("builtin.f80") with TypeAttribute {
   override def custom_print = "f80"
 }
+
 case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
   override def custom_print = "f128"
 }
 
-//////////////
-// INT DATA //
-//////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||     INT DATA     ||
+\*≡==---==≡≡==---==≡*/
 
 case class IntData(val value: Long)
     extends DataAttribute[Long]("builtin.int_attr", value) {
   override def custom_print = value.toString
 }
 
-//////////////////
-// INTEGER TYPE //
-//////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  INTEGER TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 case class IntegerType(val width: IntData, val sign: Signedness)
     extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
     with TypeAttribute {
+
   override def custom_print = sign match {
     case Signless => s"${sign.custom_print}${width.custom_print}"
     case Signed   => s"${sign.custom_print}${width.custom_print}"
     case Unsigned => s"${sign.custom_print}${width.custom_print}"
   }
+
 }
 
-///////////////////////
-// INTEGER ATTRIBUTE //
-///////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| INTEGER ATTRIBUTE ||
+\*≡==---==≡≡==---==≡*/
 
 case class IntegerAttr(
     val value: IntData,
@@ -105,32 +112,35 @@ case class IntegerAttr(
     case (_, IntegerType(IntData(64), Signless)) => s"${value.custom_print}"
     case (_, _) => s"${value.custom_print} : ${typ.custom_print}"
   }
+
 }
 
-////////////////
-// FLOAT DATA //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    FLOAT DATA    ||
+\*≡==---==≡≡==---==≡*/
 
 case class FloatData(val value: Double)
     extends DataAttribute[Double]("builtin.float_data", value) {
   override def custom_print = value.toString
 }
 
-/////////////////////
-// FLOAT ATTRIBUTE //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  FLOAT ATTRIBUTE ||
+\*≡==---==≡≡==---==≡*/
 
 case class FloatAttr(val value: FloatData, val typ: FloatType)
     extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
+
   override def custom_print = (value, typ) match {
     case (_, Float64Type) => s"${value.custom_print}"
     case (_, _)           => s"${value.custom_print} : ${typ.custom_print}"
   }
+
 }
 
-////////////////
-// INDEX TYPE //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   INDEX TYPE     ||
+\*≡==---==≡≡==---==≡*/
 
 case object IndexType
     extends ParametrizedAttribute("builtin.index")
@@ -138,19 +148,21 @@ case object IndexType
   override def custom_print = "index"
 }
 
-/////////////////////
-// ARRAY ATTRIBUTE //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| ARRAY ATTRIBUTE  ||
+\*≡==---==≡≡==---==≡*/
 
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
+
   override def custom_print =
     "[" + attrValues.map(x => x.custom_print).mkString(", ") + "]"
+
 }
 
-//////////////////////
-// STRING ATTRIBUTE //
-//////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| STRING ATTRIBUTE ||
+\*≡==---==≡≡==---==≡*/
 
 // shortened definition, does not include type information
 case class StringData(val stringLiteral: String)
@@ -158,15 +170,15 @@ case class StringData(val stringLiteral: String)
   override def custom_print = "\"" + stringLiteral + "\""
 }
 
-/////////////////
-// SHAPED TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   SHAPED TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 trait ShapedType extends TypeAttribute
 
-/////////////////
-// TENSOR TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   TENSOR TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 abstract class TensorType(
     override val name: String,
@@ -202,6 +214,7 @@ case class RankedTensorType(
 
     return s"tensor<${shapeString}${encodingString}>"
   }
+
 }
 
 case class UnrankedTensorType(override val elementType: Attribute)
@@ -213,9 +226,9 @@ case class UnrankedTensorType(override val elementType: Attribute)
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
-/////////////////
-// MEMREF TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   MEMREF TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 abstract class MemrefType(
     override val name: String,
@@ -243,6 +256,7 @@ case class RankedMemrefType(
 
     return s"memref<${shapeString}>"
   }
+
 }
 
 case class UnrankedMemrefType(override val elementType: Attribute)
@@ -254,9 +268,9 @@ case class UnrankedMemrefType(override val elementType: Attribute)
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
-/////////////////
-// VECTOR TYPE //
-/////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   VECTOR TYPE    ||
+\*≡==---==≡≡==---==≡*/
 
 case class VectorType(
     val shape: Seq[IntData],
@@ -278,11 +292,12 @@ case class VectorType(
 
     return s"vector<${shapeString}>"
   }
+
 }
 
-//////////////////////////
-// SYMBOL REF ATTRIBUTE //
-//////////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| SYMBOL REF ATTR  ||
+\*≡==---==≡≡==---==≡*/
 
 case class SymbolRefAttr(
     val rootRef: StringData,
@@ -291,13 +306,15 @@ case class SymbolRefAttr(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)
     ) {
+
   override def custom_print =
     (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
+
 }
 
-////////////////////
-// DenseArrayAttr //
-////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| DenseArrayAttr   ||
+\*≡==---==≡≡==---==≡*/
 
 case class DenseArrayAttr(
     val typ: Attribute,
@@ -342,9 +359,9 @@ case class DenseArrayAttr(
   def iterator: Iterator[Attribute] = data.iterator
 }
 
-//////////////////
-// FunctionType //
-//////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  FunctionType    ||
+\*≡==---==≡≡==---==≡*/
 
 case class FunctionType(
     val inputs: Seq[Attribute],
@@ -363,13 +380,12 @@ case class FunctionType(
       case _ => s"(${inputsString}) -> (${outputsString})"
     }
   }
+
 }
 
-//////////////////////////////
-// DenseIntOrFPElementsAttr //
-//////////////////////////////
-//
-// TO-DO : it can also parse a vector type or a memref type
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| DenseIntOrFPAttr ||
+\*≡==---==≡≡==---==≡*/
 
 type TensorLiteralArray =
   ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
@@ -405,11 +421,12 @@ case class DenseIntOrFPElementsAttr(
         else { values.map(_.custom_print).mkString("[", ", ", "]") }
       }> : ${typ.custom_print}"
   }
+
 }
 
-/////////////////////
-// AFFINE MAP ATTR //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  AFFINE MAP ATTR ||
+\*≡==---==≡≡==---==≡*/
 
 case class AffineMapAttr(val affine_map: AffineMap)
     extends DataAttribute[AffineMap]("builtin.affine_map", affine_map) {
@@ -417,9 +434,9 @@ case class AffineMapAttr(val affine_map: AffineMap)
   override def custom_print = s"affine_map<${affine_map}>"
 }
 
-/////////////////////
-// AFFINE SET ATTR //
-/////////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  AFFINE SET ATTR ||
+\*≡==---==≡≡==---==≡*/
 // note: in mlir terms this is called an IntegerSetAttr
 
 case class AffineSetAttr(val affine_set: AffineSet)
@@ -428,9 +445,9 @@ case class AffineSetAttr(val affine_set: AffineSet)
   override def custom_print = s"affine_set<${affine_set}>"
 }
 
-////////////////
-// OPERATIONS //
-////////////////
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   OPERATIONS    ||
+\*≡==---==≡≡==---==≡*/
 
 // ==------== //
 //  ModuleOp  //
@@ -439,6 +456,7 @@ case class AffineSetAttr(val affine_set: AffineSet)
 object ModuleOp extends OperationObject {
   override def name = "builtin.module"
   override def factory = ModuleOp.apply
+
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       resNames: Seq[String],
@@ -451,6 +469,7 @@ object ModuleOp extends OperationObject {
         parser.Region
       ).map((x: Region) => ModuleOp(regions = ListType(x)))
   // ==----------------------== //
+
 }
 
 case class ModuleOp(
@@ -463,10 +482,12 @@ case class ModuleOp(
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "builtin.module") {
+
   override def custom_print(
       p: Printer
   ): String =
     s"builtin.module ${p.printRegion(regions(0))}"
+
 }
 
 val BuiltinDialect = Dialect(Seq(ModuleOp), Seq())

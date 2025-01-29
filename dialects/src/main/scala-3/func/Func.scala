@@ -10,6 +10,7 @@ case class Call(
     _operands: Variadic[Operand[Attribute]],
     _results: Variadic[Result[Attribute]]
 ) extends OperationFE
+
 case class Func(
     sym_name: Property[StringData],
     function_type: Property[FunctionType],
@@ -17,6 +18,7 @@ case class Func(
     // sym_visibility: Property[StringData],
     body: Region
 ) extends OperationFE
+
 case class Return(
     _operands: Variadic[Operand[Attribute]]
 ) extends OperationFE

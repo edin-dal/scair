@@ -8,36 +8,66 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
+ThisBuild / organization := "io.github.edin-dal"
+
 core / libraryDependencies += "com.lihaoyi" %% "fastparse" % "3.1.0"
 ThisBuild / libraryDependencies += "org.scalatest" % "scalatest_3" % "3.2.19" % Test
 tools / libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
-lazy val scair = (project in file(".")).aggregate(
-  core,
-  ScaIRDL,
-  clair,
-  native_dialects,
-  gen_dialects,
-  transformations,
-  tools
-)
+// Do not package docs every single time
+// This is the way I found to stop recompiling docs
+// on every `sbt stage`; so it is nicety-only,
+// feel free to try removing if this ends up being an issue
+// anywhere else!
+mappings in (Compile, packageDoc) := Nil
+
+lazy val root = (project in file("."))
+  .aggregate(
+    core,
+    ScaIRDL,
+    clair,
+    native_dialects,
+    dialects,
+    transformations,
+    tools
+  )
+  .enablePlugins(ScalaUnidocPlugin)
+  .settings(
+    publishArtifact := false
+  )
 
 lazy val core = (project in file("core"))
+  .settings(
+    name := "scair-core"
+  )
 
-lazy val ScaIRDL = (project in file("ScaIRDL")).dependsOn(core)
-lazy val clair = (project in file("clair")).dependsOn(ScaIRDL)
+lazy val ScaIRDL = (project in file("ScaIRDL"))
+  .dependsOn(core)
+  .settings(
+    name := "scair-scairdl"
+  )
+
+lazy val clair =
+  (project in file("clair"))
+    .dependsOn(ScaIRDL)
+    .settings(
+      name := "scair-clair"
+    )
 
 lazy val native_dialects: Project =
   (project in file("dialects"))
     .dependsOn(clair)
+    .settings(
+      name := "scair-native-dialects"
+    )
 
 lazy val dialect_source =
   settingKey[Seq[String]]("A list of classes that generate dialects")
 
-lazy val gen_dialects =
+lazy val dialects =
   (project in file("gen_dialects"))
     .dependsOn(native_dialects)
-    .settings(
+    .settings(      name := "scair-dialects",
       dialect_source := Seq(
         "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
@@ -51,12 +81,16 @@ lazy val gen_dialects =
     )
 
 lazy val transformations =
-  (project in file("transformations")).dependsOn(core, gen_dialects)
+  (project in file("transformations"))
+    .dependsOn(core, dialects)
+    .settings(
+      name := "scair-transformations"
+    )
 lazy val tools =
   (project in file("tools"))
-    .dependsOn(gen_dialects, transformations)
+    .dependsOn(dialects, transformations)
     .enablePlugins(JavaAppPackaging)
-    .settings(
+    .settings(      name := "scair",
       Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
     )
 

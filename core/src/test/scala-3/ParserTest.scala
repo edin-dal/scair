@@ -558,4 +558,5 @@ class ParserTest
       opToErase.container_block shouldEqual None
     }
   }
+
 }

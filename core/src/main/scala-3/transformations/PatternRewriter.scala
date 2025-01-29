@@ -5,9 +5,23 @@ import scair.ir.*
 
 import scala.collection.mutable.Stack
 
-// ==---------== //
-//  Utils realm  //
-// ==---------== //
+// ██████╗░ ░█████╗░ ████████╗ ████████╗ ███████╗ ██████╗░ ███╗░░██╗
+// ██╔══██╗ ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔════╝ ██╔══██╗ ████╗░██║
+// ██████╔╝ ███████║ ░░░██║░░░ ░░░██║░░░ █████╗░░ ██████╔╝ ██╔██╗██║
+// ██╔═══╝░ ██╔══██║ ░░░██║░░░ ░░░██║░░░ ██╔══╝░░ ██╔══██╗ ██║╚████║
+// ██║░░░░░ ██║░░██║ ░░░██║░░░ ░░░██║░░░ ███████╗ ██║░░██║ ██║░╚███║
+// ╚═╝░░░░░ ╚═╝░░╚═╝ ░░░╚═╝░░░ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝ ╚═╝░░╚══╝
+
+// ██████╗░ ███████╗ ██╗░░░░░░░██╗ ██████╗░ ██╗ ████████╗ ███████╗ ██████╗░
+// ██╔══██╗ ██╔════╝ ██║░░██╗░░██║ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
+// ██████╔╝ █████╗░░ ╚██╗████╗██╔╝ ██████╔╝ ██║ ░░░██║░░░ █████╗░░ ██████╔╝
+// ██╔══██╗ ██╔══╝░░ ░████╔═████║░ ██╔══██╗ ██║ ░░░██║░░░ ██╔══╝░░ ██╔══██╗
+// ██║░░██║ ███████╗ ░╚██╔╝░╚██╔╝░ ██║░░██║ ██║ ░░░██║░░░ ███████╗ ██║░░██║
+// ╚═╝░░╚═╝ ╚══════╝ ░░╚═╝░░░╚═╝░░ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
+
+/*≡==--==≡≡≡==--=≡≡*\
+||   Utils realm   ||
+\*≡==---==≡==---==≡*/
 
 object InsertPoint {
 
@@ -51,6 +65,7 @@ object InsertPoint {
   def at_end_of(block: Block): InsertPoint = {
     new InsertPoint(block)
   }
+
 }
 
 case class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
@@ -68,11 +83,12 @@ case class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
       )
     }
   }
+
 }
 
-// ==----------== //
-//  Static realm  //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||   Static realm   ||
+\*≡==---==≡≡==---==≡*/
 
 object RewriteMethods {
 
@@ -155,11 +171,12 @@ object RewriteMethods {
     block.insert_ops_after(op, ops)
     block.erase_op(op)
   }
+
 }
 
-// ==------------== //
-//  Abstract realm  //
-// ==------------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  Abstract realm  ||
+\*≡==---==≡≡==---==≡*/
 
 //             OPERATION REWRITER              //
 class PatternRewriter(
@@ -232,6 +249,7 @@ class PatternRewriter(
   ): Unit = {
     RewriteMethods.replace_op(op, new_ops, new_results)
   }
+
 }
 
 abstract class RewritePattern {
@@ -291,8 +309,5 @@ class PatternRewriteWalker(
     }
     return rewriter_done_action
   }
-}
 
-// abstract class RewritePattern {
-//   def match_and_rewrite(op: Operation) = {}
-// }
+}

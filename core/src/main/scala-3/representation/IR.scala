@@ -9,9 +9,16 @@ import scair.Printer
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
 
-// ==---------== //
-// =---UTILS---= //
-// ==---------== //
+// ██╗ ██████╗░
+// ██║ ██╔══██╗
+// ██║ ██████╔╝
+// ██║ ██╔══██╗
+// ██║ ██║░░██║
+// ╚═╝ ╚═╝░░╚═╝
+
+/*≡==--==≡≡≡==--=≡≡*\
+||      UTILS      ||
+\*≡==---==≡==---==≡*/
 
 // TO-DO: export utils to a separate file
 
@@ -22,6 +29,7 @@ val ListType = ListBuffer
 type ListType[A] = ListBuffer[A]
 
 extension (dt: DictType[String, Attribute]) {
+
   def checkandget(
       key: String,
       op_name: String,
@@ -35,18 +43,21 @@ extension (dt: DictType[String, Attribute]) {
         )
     }
   }
+
 }
 
 extension (lt: ListType[Value[Attribute]]) {
+
   def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
     newValue.uses += use
     lt.update(use.index, newValue)
   }
+
 }
 
-// ==----------== //
-// =-ATTRIBUTES-= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    ATTRIBUTES    ||
+\*≡==---==≡≡==---==≡*/
 
 sealed trait Attribute {
   def name: String
@@ -61,19 +72,23 @@ trait TypeAttribute extends Attribute {
 
 // TODO: Think about this; probably not the best design
 extension (x: Seq[Attribute] | Attribute)
+
   def custom_print: String = x match {
     case seq: Seq[Attribute] => seq.map(_.custom_print).mkString("[", ", ", "]")
     case attr: Attribute     => attr.custom_print
   }
+
 abstract class ParametrizedAttribute(
     override val name: String,
     val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 ) extends Attribute {
+
   override def custom_print =
     s"${prefix}${name}${
         if parameters.size > 0 then parameters.map(x => x.custom_print).mkString("<", ", ", ">")
         else ""
       }"
+
   override def equals(attr: Any): Boolean = {
     attr match {
       case x: ParametrizedAttribute =>
@@ -85,6 +100,7 @@ abstract class ParametrizedAttribute(
       case _ => false
     }
   }
+
 }
 
 abstract class DataAttribute[D](
@@ -92,6 +108,7 @@ abstract class DataAttribute[D](
     val data: D
 ) extends Attribute {
   override def custom_print = data.toString
+
   override def equals(attr: Any): Boolean = {
     attr match {
       case x: DataAttribute[D] =>
@@ -101,20 +118,23 @@ abstract class DataAttribute[D](
       case _ => false
     }
   }
+
 }
 
-// ==----------== //
-// =---VALUES---= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      VALUES      ||
+\*≡==---==≡≡==---==≡*/
 
 // TO-DO: perhaps a linked list of a use to other uses within an operation
 //        for faster use retrieval and index update
 case class Use(val operation: Operation, val index: Int) {
+
   override def equals(o: Any): Boolean = o match {
     case Use(op, idx) =>
       (operation eq op) && (index eq idx)
     case _ => super.equals(o)
   }
+
 }
 
 object Value {
@@ -155,6 +175,7 @@ class Value[T <: Attribute](
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
+
 }
 
 extension (seq: Seq[Value[Attribute]]) def typ: Seq[Attribute] = seq.map(_.typ)
@@ -162,9 +183,9 @@ extension (seq: Seq[Value[Attribute]]) def typ: Seq[Attribute] = seq.map(_.typ)
 type Operand[T <: Attribute] = Value[T]
 type OpResult[T <: Attribute] = Value[T]
 
-// ==----------== //
-// =---BLOCKS---= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      BLOCKS      ||
+\*≡==---==≡≡==---==≡*/
 
 case class Block(
     operations: ListType[Operation] = ListType(),
@@ -306,11 +327,12 @@ case class Block(
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
+
 }
 
-// ==-----------== //
-// =---REGIONS---= //
-// ==-----------== //
+/*≡==--==≡≡≡==--=≡≡*\
+||     REGIONS     ||
+\*≡==---==≡==---==≡*/
 
 case class Region(
     blocks: Seq[Block]
@@ -326,9 +348,11 @@ case class Region(
   def verify(): Unit = {
     for (block <- blocks) block.verify()
   }
+
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
+
 }
 
 /*≡==--=≡≡≡=--=≡≡*\
@@ -340,9 +364,9 @@ abstract class OpTrait {
   def trait_verify(): Unit = ()
 }
 
-// ==----------== //
-// =-OPERATIONS-= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    OPERATIONS    ||
+\*≡==---==≡≡==---==≡*/
 
 sealed abstract class Operation(
     val name: String,
@@ -415,25 +439,10 @@ sealed abstract class Operation(
   }
 
   def custom_print(p: Printer): String =
-    throw new Exception(
-      s"No custom Printer implemented for Operation '${name}'"
-    )
+    p.printGenericOperation(this)
 
   final def print(printer: Printer): String = {
-    var results: Seq[String] = Seq()
-    var resultsTypes: Seq[String] = Seq()
-
-    for { res <- this.results } yield (
-      results = results :+ printer.printValue(res),
-      resultsTypes = resultsTypes :+ printer.printAttribute(res.typ)
-    )
-
-    val operationResults: String =
-      if (this.results.length > 0)
-        results.mkString(", ") + " = "
-      else ""
-
-    return operationResults + custom_print(printer)
+    printer.printOperation(this)
   }
 
   override def hashCode(): Int = {
@@ -444,9 +453,11 @@ sealed abstract class Operation(
       this.dictionaryProperties.hashCode() +
       this.dictionaryAttributes.hashCode()
   }
+
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
+
 }
 
 final case class UnregisteredOperation(
@@ -473,16 +484,18 @@ class RegisteredOperation(
       DictType.empty[String, Attribute]
 ) extends Operation(name = name)
 
-// ==----------== //
-// =--DIALECTS--= //
-// ==----------== //
+/*≡==--==≡≡≡≡==--=≡≡*\
+||     DIALECTS     ||
+\*≡==---==≡≡==---==≡*/
 
 trait OperationObject {
   def name: String
+
   def parse[$: P](resNames: Seq[String], parser: Parser): P[Operation] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )
+
   type FactoryType = (
       ListType[Value[Attribute]] /* = operands */,
       ListType[Block] /* = successors */,
@@ -491,7 +504,9 @@ trait OperationObject {
       DictType[String, Attribute], /* = dictProps */
       DictType[String, Attribute] /* = dictAttrs */
   ) => Operation
+
   def factory: FactoryType
+
   final def constructOp(
       operands: ListType[Value[Attribute]] = ListType(),
       successors: ListType[Block] = ListType(),
@@ -509,54 +524,23 @@ trait OperationObject {
     dictionaryProperties,
     dictionaryAttributes
   )
+
 }
 
 trait AttributeObject {
   def name: String
   type FactoryType = (Seq[Attribute]) => Attribute
   def factory: FactoryType = ???
+
   def parser[$: P](p: AttrParser): P[Seq[Attribute]] =
     P(("<" ~ p.Type.rep(sep = ",") ~ ">").?).map(_.getOrElse(Seq()))
+
   def parse[$: P](p: AttrParser): P[Attribute] =
     parser(p).map(factory(_))
+
 }
 
 final case class Dialect(
     val operations: Seq[OperationObject],
     val attributes: Seq[AttributeObject]
 ) {}
-
-object IR {}
-
-/*
-
-import scala.quoted.*
-
-trait MyObject {
-  def name: String
-}
-
-trait MyTrait {
-  type ReturnType <: MyObject
-
-  inline def parseReturn(name: String):
-    ReturnType = ${ MyTrait.impl[ReturnType]('name) }
-}
-
-object MyTrait {
-  def impl[T <: MyObject: Type]
-  (name: Expr[String])(using Quotes): Expr[T] = {
-    import quotes.reflect.*
-
-    // Generate code to instantiate the ReturnType with String argument
-    val returnTypeSymbol = TypeRepr.of[T].typeSymbol
-    val instance = New(TypeIdent(returnTypeSymbol))
-      .select(returnTypeSymbol.primaryConstructor)
-      .appliedToArgs(name)
-      .asExprOf[T]
-
-    instance
-  }
-}
-
- */

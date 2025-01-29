@@ -37,6 +37,7 @@ enum FastMathFlag:
 //   case fast
 
 type FastMathFlags = HashSet[FastMathFlag]
+
 object FastMathFlags:
   inline def none: FastMathFlags = HashSet.empty
   inline def reassoc: FastMathFlags = HashSet(FastMathFlag.reassoc)
@@ -46,6 +47,7 @@ object FastMathFlags:
   inline def arcp: FastMathFlags = HashSet(FastMathFlag.arcp)
   inline def contract: FastMathFlags = HashSet(FastMathFlag.contract)
   inline def afn: FastMathFlags = HashSet(FastMathFlag.afn)
+
   inline def fast: FastMathFlags =
     reassoc | nnan | ninf | nsz | arcp | contract | afn
 
@@ -53,6 +55,7 @@ object FastMathFlags:
 
 object FastMathFlagsAttr extends AttributeObject {
   override def name: String = "arith.fastmath"
+
   override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] = {
 
     import scair.Parser.whitespace
@@ -81,10 +84,12 @@ object FastMathFlagsAttr extends AttributeObject {
     }
 
   }
+
 }
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
     extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags):
+
   override def custom_print: String =
     val p =
       if flags == FastMathFlags.fast then "fast"
@@ -125,74 +130,88 @@ case class Addf(
     res: Result[FloatType],
     fastmath: Property[FastMathFlagsAttr]
 ) extends OperationFE
+
 case class Mulf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
     fastmath: Property[FastMathFlagsAttr]
 ) extends OperationFE
+
 case class Divf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
     fastmath: Property[FastMathFlagsAttr]
 ) extends OperationFE
+
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class Addi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Subi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Muli(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Divui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Divsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Remui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Remsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]
 ) extends OperationFE
+
 case class Cmpi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[I1],
     predicate: Property[IntegerPredicate]
 ) extends OperationFE
+
 case class Andi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[I1]
 ) extends OperationFE
+
 case class Ori(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     res: Result[I1]
 ) extends OperationFE
+
 case class Sitofp(
     in: Operand[AnyIntegerType],
     res: Result[FloatType]
 ) extends OperationFE
+
 case class Index_Cast(
     in: Operand[AnyIntegerType],
     res: Result[AnyIntegerType]

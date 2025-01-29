@@ -70,9 +70,11 @@ case class AffineMap(
     val symbols: Seq[String],
     val affine_exprs: Seq[AffineExpr]
 ) {
+
   override def toString =
     s"(${dimensions.mkString(", ")})${symbols.mkString("[", ", ", "]")}" +
       s" -> (${affine_exprs.mkString(", ")})"
+
 }
 
 /*≡==---==≡≡≡≡==---=≡≡*\
@@ -99,7 +101,9 @@ case class AffineSet(
     val symbols: Seq[String],
     val affine_constraints: Seq[AffineConstraintExpr]
 ) {
+
   override def toString =
     s"(${dimensions.mkString(", ")})${symbols.mkString("[", ", ", "]")}" +
       s": (${affine_constraints.mkString(", ")})"
+
 }

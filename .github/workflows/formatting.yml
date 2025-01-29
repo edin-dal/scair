@@ -1,0 +1,52 @@
+name: Formatting
+
+# Run on every push to main and every change on pull requests
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # Formatting checks
+  format:
+    name: "Checks"
+    runs-on: ubuntu-latest
+
+    # Checkout the code
+    steps:
+    - name: Checkout Scair
+      uses: actions/checkout@v4
+      with:
+        path: scair
+
+    # Restore SBT's incremental build cache
+    - name: Cache Incremental Build
+      uses: actions/cache@v4
+      with:
+        # All the target/ subdirectories are cached
+        path: "scair/**/target"
+        # Caches are immutable; we need to uniquely identify them to always push the recent ones
+        # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
+        key: sbt-incremental-format-${{ github.run_id }}-${{ github.run_attempt }}
+        # When restoring, we restore the most recent one pushed by such a job
+        # Those are scoped by branch too; e.g., the most recent one from the main branch would
+        # be fetched in a fresh PR, then the most recent one from this PR.
+        restore-keys: |
+          sbt-incremental-format-
+    
+
+    - name: Cache coursier packages
+      uses: coursier/cache-action@v6
+    - name: Install coursier packages (Scala and SBT)
+      uses: coursier/setup-action@v1
+      with:
+        apps: scala:3.3.1 sbt
+
+    # Check if the code is formatted as expected
+    - name: Run format checks
+      run: |
+        cd scair
+        sbt formatCheckAll

@@ -1,15 +1,21 @@
 package scair
 
-import fastparse.*
 import scair.ir.*
 
 import scala.collection.mutable
 
+// ██████╗░ ██████╗░ ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░
+// ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
+// ██████╔╝ ██████╔╝ ██║ ██╔██╗██║ ░░░██║░░░ █████╗░░ ██████╔╝
+// ██╔═══╝░ ██╔══██╗ ██║ ██║╚████║ ░░░██║░░░ ██╔══╝░░ ██╔══██╗
+// ██║░░░░░ ██║░░██║ ██║ ██║░╚███║ ░░░██║░░░ ███████╗ ██║░░██║
+// ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
+
 class Printer(val strictly_generic: Boolean) {
 
-  ///////////
-  // TOOLS //
-  ///////////
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||      TOOLS      ||
+  \*≡==---==≡==---==≡*/
 
   var indent: String = "  "
 
@@ -18,6 +24,7 @@ class Printer(val strictly_generic: Boolean) {
 
   var valueNameMap: mutable.Map[Value[_ <: Attribute], String] =
     mutable.Map.empty[Value[_ <: Attribute], String]
+
   var blockNameMap: mutable.Map[Block, String] =
     mutable.Map.empty[Block, String]
 
@@ -42,25 +49,24 @@ class Printer(val strictly_generic: Boolean) {
         return name
     }
 
-  ///////////////
-  // ATTRIBUTE //
-  ///////////////
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||    ATTRIBUTE PRINTER    ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
   def printAttribute(attribute: Attribute): String = {
     return attribute.custom_print
   }
 
-  ///////////
-  // VALUE //
-  ///////////
+  /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+  ||    VALUE PRINTER    ||
+  \*≡==---==≡≡≡≡≡==---==≡*/
 
   def printValue(value: Value[_ <: Attribute]): String = {
     return s"%${assignValueName(value)}"
   }
-
-  ///////////
-  // BLOCK //
-  ///////////
+  /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+  ||    BLOCK PRINTER    ||
+  \*≡==---==≡≡≡≡≡==---==≡*/
 
   def printBlockArgument(value: Value[_ <: Attribute]): String = {
     return s"${printValue(value)}: ${printAttribute(value.typ)}"
@@ -83,9 +89,9 @@ class Printer(val strictly_generic: Boolean) {
     return blockHead + blockOperations
   }
 
-  ////////////
-  // REGION //
-  ////////////
+  /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||    REGION PRINTER    ||
+  \*≡==---==≡≡≡≡≡≡==---==≡*/
 
   def printRegion(region: Region, indentLevel: Int = 0): String = {
 
@@ -109,9 +115,9 @@ class Printer(val strictly_generic: Boolean) {
     return s"${open}${regionBlocks}${close}"
   }
 
-  ///////////////
-  // OPERATION //
-  ///////////////
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||    OPERATION PRINTER    ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
   def printCustomOperation(op: Operation, indentLevel: Int = 0): String = {
     indent * indentLevel + op.print(this)
@@ -181,76 +187,21 @@ class Printer(val strictly_generic: Boolean) {
         ") -> (" +
         resultsTypes.mkString(", ") + ")"
 
-    return indent * indentLevel + s"$operationResults${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
+    return s"${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
   }
 
   def printOperation(op: Operation, indentLevel: Int = 0): String = {
-    strictly_generic match {
-      case true => printGenericOperation(op, indentLevel)
-      case false =>
-        try {
-          printCustomOperation(op, indentLevel)
-        } catch {
-          case e: Exception =>
-            printGenericOperation(op, indentLevel)
-        }
-    }
+    val results =
+      op.results.map(printValue(_)).mkString(", ") + (if op.results.nonEmpty
+                                                      then " = "
+                                                      else "")
+    indent * indentLevel + results + (if strictly_generic then
+                                        printGenericOperation(op, indentLevel)
+                                      else op.custom_print(this))
   }
 
   def printOperations(ops: Seq[Operation], indentLevel: Int = 0): String = {
-    strictly_generic match {
-      case true =>
-        (for { op <- ops } yield printGenericOperation(op, indentLevel))
-          .mkString("\n")
-      case false =>
-        (for { op <- ops } yield try {
-          printCustomOperation(op, indentLevel)
-        } catch {
-          case e: Exception =>
-            printGenericOperation(op, indentLevel)
-        }).mkString("\n")
-    }
+    (for { op <- ops } yield printOperation(op, indentLevel)).mkString("\n")
   }
-}
 
-object Printer {
-
-  def main(args: Array[String]): Unit = {
-    // println("Printer")
-
-    val parser = new Parser(MLContext())
-    val printer = new Printer(true)
-
-    val input = """"test.op"({
-                  |  ^bb0(%0: f128):
-                  |    %1, %2, %3 = "test.op"() : () -> (f32, si64, ui80)
-                  |  }) : () -> ()""".stripMargin
-
-    val text = """"test.op"({
-                 |  ^bb3():
-                 |    "test.op"()[^bb4] : () -> ()
-                 |  ^bb4():
-                 |    "test.op"()[^bb3] : () -> ()
-                 |  }) : () -> ()""".stripMargin
-
-    val text2 = """"builtin.module"() ({
-                  |^bb0():
-                  |  %0 = "test.op"() {"quoted" = i3298} : () -> (i32)
-                  |  "test.op"() {hello = tensor<f32>} : () -> ()
-                  |  "test.op"() {hello = tensor<1xf32>} : () -> ()
-                  |  "test.op"() {hello = tensor<?xf32>} : () -> ()
-                  |  "test.op"() {hello = tensor<3x?x5xf32>} : () -> ()
-                  |  "test.op"() {hello = tensor<?x5x?xf32>} : () -> ()
-                  |  "test.op"(%0) : (i32) -> ()
-                  |}) : () -> ()""".stripMargin
-
-    val Parsed.Success(res, x) = parser.parseThis(
-      text = text2,
-      pattern = parser.OperationPat(_)
-    )
-
-    println(printer.printOperation(res))
-
-    // println(printOperation(result.asInstanceOf[Operation]))
-  }
 }

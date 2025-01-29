@@ -1,6 +1,5 @@
 package scair.clair.mirrored
 
-import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
 import scair.scairdl.irdef.*
@@ -11,6 +10,13 @@ import scair.scairdl.irdef.Variadicity.*
 import scala.compiletime.*
 import scala.deriving.*
 import scala.reflect.*
+
+// ███╗░░░███╗ ██╗ ██████╗░ ██████╗░ ░█████╗░ ██████╗░ ███████╗ ██████╗░
+// ████╗░████║ ██║ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔══██╗
+// ██╔████╔██║ ██║ ██████╔╝ ██████╔╝ ██║░░██║ ██████╔╝ █████╗░░ ██║░░██║
+// ██║╚██╔╝██║ ██║ ██╔══██╗ ██╔══██╗ ██║░░██║ ██╔══██╗ ██╔══╝░░ ██║░░██║
+// ██║░╚═╝░██║ ██║ ██║░░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ███████╗ ██████╔╝
+// ╚═╝░░░░░╚═╝ ╚═╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ╚══════╝ ╚═════╝░
 
 /*≡≡=---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   DIFFERENT CLASSES   ||
@@ -41,17 +47,6 @@ case class ConstraintRef(attr_name: String) extends IRDLConstraint {
   ): Unit = ()
 
   override def toString = s"BaseAttr[${attr_name}]()"
-}
-
-/*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
-||   ERROR HANDLING   ||
-\*≡==----=≡≡≡≡=----==≡*/
-
-object ErrorMessages {
-  val invalidOpInput =
-    "You can only pass in Operand, Result, Region, Successor, Property or Attr to the Operation definition"
-  val invalidVariadicOpInput =
-    "Variadicity is supported only for Operand, Result, Region or Successor."
 }
 
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
@@ -158,8 +153,18 @@ inline def getDefInput[Elem]: String => OpInput = {
           id = name,
           getConstraint[t]
         )
-    case _ =>
-      throw new Exception("aiowdjaowidjawoidjowij")
+    case format: String =>
+      (name: String) =>
+        name match {
+          case "assembly_format" => AssemblyFormatDef(format)
+          case _ =>
+            throw new Exception(
+              f"Only `assembly_format` can be a String!! D': This one is $name, you fool"
+            )
+        }
+    case shennanigan =>
+      (name: String) =>
+        throw new Exception(f"Unsupported shennaigans with field $name")
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -212,6 +217,7 @@ inline def getDef[T](dialect_name: String)(using
       val successors: ListType[SuccessorDef] = ListType()
       val opProperty: ListType[OpPropertyDef] = ListType()
       val opAttribute: ListType[OpAttributeDef] = ListType()
+      var assembly_format: Option[String] = None
 
       for ((name, input) <- paramLabels zip inputs) yield input(name) match {
         case a: OperandDef     => operands += a
@@ -220,6 +226,9 @@ inline def getDef[T](dialect_name: String)(using
         case d: SuccessorDef   => successors += d
         case e: OpPropertyDef  => opProperty += e
         case f: OpAttributeDef => opAttribute += f
+        case g: AssemblyFormatDef =>
+          assembly_format = Some(g.format)
+        case _ => throw new Exception("Internal error!")
       }
 
       OperationDef(
@@ -230,7 +239,8 @@ inline def getDef[T](dialect_name: String)(using
         regions.toSeq,
         successors.toSeq,
         opProperty.toSeq,
-        opAttribute.toSeq
+        opAttribute.toSeq,
+        assembly_format
       )
 
     case _: AttributeFE =>
@@ -308,55 +318,4 @@ inline def summonDialect[Prods <: Tuple](
     opHatches,
     attrHatches
   )
-}
-
-/*≡≡=---=≡≡≡=---=≡≡*\
-||     TESTING     ||
-\*≡==----=≡=----==≡*/
-
-object FrontEnd {
-
-  // inline def regionindent[T]: String = {
-  //   constValue[T].asInstanceOf[Int].toString
-  // }
-  import scair.ir.{DataAttribute, AttributeObject}
-
-  object SampleData extends AttributeObject {
-    override def name: String = "sample"
-  }
-
-  case class SampleData(val d: String)
-      extends DataAttribute[String]("sample", d)
-
-  case class Complex(
-      e1: Operand[IntegerAttr]
-  ) extends AttributeFE
-
-  case class ComplexType(
-      e1: Operand[IntegerAttr]
-  ) extends TypeAttributeFE
-
-  case class Norm(
-      e1: Variadic[Operand[IntegerAttr]],
-      e2: Result[AnyAttribute],
-      e3: Region
-  ) extends OperationFE
-
-  case class Mul(
-      e1: Variadic[Operand[Complex]],
-      e2: Result[AnyAttribute]
-  ) extends OperationFE
-
-  object CMath {
-    val opHatches = Seq()
-    val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-    val generator =
-      summonDialect[(Complex, Norm, Mul)]("CMath", opHatches, attrHatches)
-  }
-
-  def main(args: Array[String]): Unit = {
-    println(CMath.generator.print(0))
-    println(new AttrEscapeHatch[SampleData].importt)
-  }
-
 }

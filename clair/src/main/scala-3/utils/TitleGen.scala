@@ -17,6 +17,7 @@ import scair.scairdl.irdef.ListType
 // ░╚═════╝░ ╚══════╝ ╚═╝░░╚══╝ ╚══════╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ░╚════╝░ ╚═╝░░╚═╝
 
 object SubTitleGen {
+
   def generate_sub(subtitle: String): String = {
     val len = subtitle.length
     assert(len > 0)
@@ -27,10 +28,17 @@ object SubTitleGen {
 
     return top + mid + bot
   }
+
 }
 
 object TitleGen {
 
+  /** Generate a title in ascii art.
+    *
+    * @param title
+    * @return
+    *   ascii art title
+    */
   def generate(title: String): String = {
 
     val lower_title = title.toLowerCase().split("\\s+")
@@ -67,9 +75,23 @@ object TitleGen {
     final_string
   }
 
+  /** CLI hook for generating a title in ascii art. Takes in string arguments
+    * and generates a title. If no arguments are given, generates a default
+    * title.
+    *
+    * To run this function, use the following command with sbt: `sbt "run/clair
+    * your string of your choice"`
+    *
+    * @param args
+    */
   def main(args: Array[String]): Unit = {
-    print(generate("title generator and whatnot"))
+    if (args.length == 0) {
+      print(generate("title generator and whatnot"))
+    } else {
+      print(generate(args.mkString(" ")))
+    }
   }
+
 }
 
 object Letters {
@@ -78,16 +100,22 @@ object Letters {
 
   val letterA: Seq[String] =
     Seq("░█████╗░", "██╔══██╗", "███████║", "██╔══██║", "██║░░██║", "╚═╝░░╚═╝")
+
   val letterB: Seq[String] =
     Seq("██████╗░", "██╔══██╗", "██████╦╝", "██╔══██╗", "██████╦╝", "╚═════╝░")
+
   val letterC: Seq[String] =
     Seq("░█████╗░", "██╔══██╗", "██║░░╚═╝", "██║░░██╗", "╚█████╔╝", "░╚════╝░")
+
   val letterD: Seq[String] =
     Seq("██████╗░", "██╔══██╗", "██║░░██║", "██║░░██║", "██████╔╝", "╚═════╝░")
+
   val letterE: Seq[String] =
     Seq("███████╗", "██╔════╝", "█████╗░░", "██╔══╝░░", "███████╗", "╚══════╝")
+
   val letterF: Seq[String] =
     Seq("███████╗", "██╔════╝", "█████╗░░", "██╔══╝░░", "██║░░░░░", "╚═╝░░░░░")
+
   val letterG: Seq[String] =
     Seq(
       "░██████╗░",
@@ -97,16 +125,22 @@ object Letters {
       "╚██████╔╝",
       "░╚═════╝░"
     )
+
   val letterH: Seq[String] =
     Seq("██╗░░██╗", "██║░░██║", "███████║", "██╔══██║", "██║░░██║", "╚═╝░░╚═╝")
+
   val letterI: Seq[String] =
     Seq("██╗", "██║", "██║", "██║", "██║", "╚═╝")
+
   val letterJ: Seq[String] =
     Seq("░░░░░██╗", "░░░░░██║", "░░░░░██║", "██╗░░██║", "╚█████╔╝", "░╚════╝░")
+
   val letterK: Seq[String] =
     Seq("██╗░░██╗", "██║░██╔╝", "█████═╝░", "██╔═██╗░", "██║░╚██╗", "╚═╝░░╚═╝")
+
   val letterL: Seq[String] =
     Seq("██╗░░░░░", "██║░░░░░", "██║░░░░░", "██║░░░░░", "███████╗", "╚══════╝")
+
   val letterM: Seq[String] =
     Seq(
       "███╗░░░███╗",
@@ -116,6 +150,7 @@ object Letters {
       "██║░╚═╝░██║",
       "╚═╝░░░░░╚═╝"
     )
+
   val letterN: Seq[String] =
     Seq(
       "███╗░░██╗",
@@ -125,10 +160,13 @@ object Letters {
       "██║░╚███║",
       "╚═╝░░╚══╝"
     )
+
   val letterO: Seq[String] =
     Seq("░█████╗░", "██╔══██╗", "██║░░██║", "██║░░██║", "╚█████╔╝", "░╚════╝░")
+
   val letterP: Seq[String] =
     Seq("██████╗░", "██╔══██╗", "██████╔╝", "██╔═══╝░", "██║░░░░░", "╚═╝░░░░░")
+
   val letterQ: Seq[String] =
     Seq(
       "░██████╗░",
@@ -138,10 +176,13 @@ object Letters {
       "░╚═██╔═╝░",
       "░░░╚═╝░░░"
     )
+
   val letterR: Seq[String] =
     Seq("██████╗░", "██╔══██╗", "██████╔╝", "██╔══██╗", "██║░░██║", "╚═╝░░╚═╝")
+
   val letterS: Seq[String] =
     Seq("░██████╗", "██╔════╝", "╚█████╗░", "░╚═══██╗", "██████╔╝", "╚═════╝░")
+
   val letterT: Seq[String] =
     Seq(
       "████████╗",
@@ -151,6 +192,7 @@ object Letters {
       "░░░██║░░░",
       "░░░╚═╝░░░"
     )
+
   val letterU: Seq[String] =
     Seq(
       "██╗░░░██╗",
@@ -160,6 +202,7 @@ object Letters {
       "╚██████╔╝",
       "░╚═════╝░"
     )
+
   val letterV: Seq[String] =
     Seq(
       "██╗░░░██╗",
@@ -169,6 +212,7 @@ object Letters {
       "░░╚██╔╝░░",
       "░░░╚═╝░░░"
     )
+
   val letterW: Seq[String] =
     Seq(
       "██╗░░░░░░░██╗",
@@ -178,8 +222,10 @@ object Letters {
       "░╚██╔╝░╚██╔╝░",
       "░░╚═╝░░░╚═╝░░"
     )
+
   val letterX: Seq[String] =
     Seq("██╗░░██╗", "╚██╗██╔╝", "░╚███╔╝░", "░██╔██╗░", "██╔╝╚██╗", "╚═╝░░╚═╝")
+
   val letterY: Seq[String] =
     Seq(
       "██╗░░░██╗",
@@ -189,6 +235,7 @@ object Letters {
       "░░░██║░░░",
       "░░░╚═╝░░░"
     )
+
   val letterZ: Seq[String] =
     Seq("███████╗", "╚════██║", "░░███╔═╝", "██╔══╝░░", "███████╗", "╚══════╝")
 
@@ -220,4 +267,5 @@ object Letters {
     ('y' -> letterY),
     ('z' -> letterZ)
   )
+
 }

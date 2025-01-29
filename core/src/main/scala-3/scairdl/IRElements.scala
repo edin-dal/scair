@@ -1,4 +1,5 @@
 package scair.scairdl.irdef
+
 import scair.dialects.builtin.*
 import scair.ir.Attribute
 import scair.ir.Operation
@@ -34,8 +35,10 @@ val ListType = mutable.ListBuffer
 type ListType[A] = mutable.ListBuffer[A]
 
 abstract class EscapeHatch[T: ClassTag] {
+
   val importt: String =
     s"import ${implicitly[ClassTag[T]].runtimeClass.getName.replace("$", ".")}"
+
   val name: String = importt.split("\\.").last.split(" ").last
 }
 
@@ -55,12 +58,6 @@ case class RegularType(val dialect: String, override val id: String)
     extends Type(id) {
   override def get_import(): String = s"import scair.dialects.${dialect}._\n"
 }
-
-/*≡≡=---==≡≡≡==---=≡≡*\
-||    CONSTRAINTS    ||
-\*≡==----==≡==----==≡*/
-
-// RETIRED TO A HOLIDAY RESORT IN NORTHERN SCOTLAND, POSSIBLY PERMANENTLY :')
 
 /*≡≡=---===≡≡≡≡===---=≡≡*\
 ||  TYPES & CONTAINERS  ||
@@ -115,57 +112,29 @@ case class OperandDef(
     override val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput(id) {
-  def def_type: String = variadicity match {
-    case Variadicity.Single   => s"Value[Attribute]"
-    case Variadicity.Variadic => s"Seq[Value[Attribute]]"
-  }
-  def def_name: String = "operand"
-  def def_field: String = "operands"
-}
+) extends OpInput {}
 
 case class ResultDef(
     override val id: String,
     val const: IRDLConstraint = AnyAttr,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput(id) {
-  def def_type: String = variadicity match {
-    case Variadicity.Single   => s"Value[Attribute]"
-    case Variadicity.Variadic => s"Seq[Value[Attribute]]"
-  }
-  def def_name: String = "result"
-  def def_field: String = "results"
-}
+) extends OpInput {}
+
 case class RegionDef(
     override val id: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput(id) {
-  def def_type: String = variadicity match {
-    case Variadicity.Single   => s"Region"
-    case Variadicity.Variadic => s"Seq[Region]"
-  }
-  def def_name: String = "region"
-  def def_field: String = "regions"
-}
+) extends OpInput {}
+
 case class SuccessorDef(
     override val id: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput(id) {
-  def def_type: String = variadicity match {
-    case Variadicity.Single   => s"Block"
-    case Variadicity.Variadic => s"Seq[Block]"
-  }
-  def def_name: String = "successor"
-  def def_field: String = "successors"
-}
+) extends OpInput {}
+
 case class OpPropertyDef(
     override val id: String,
     val const: IRDLConstraint = AnyAttr
-) extends OpInput(id) {
-  def def_field: String = "properties"
-  def def_name: String = "property"
-  def def_type: String = "Attribute"
-}
+) extends OpInput {}
+
 case class OpAttributeDef(
     override val id: String,
     val const: IRDLConstraint = AnyAttr
@@ -175,9 +144,18 @@ case class OpAttributeDef(
   def def_type: String = "Attribute"
 }
 
+case class AssemblyFormatDef(
+    val format: String
+) extends OpInput {}
+
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||    DIALECT DEF    ||
+\*≡==----=≡≡≡=----==≡*/
+
 object DialectDef {
   def empty: DialectDef = DialectDef("empty")
 }
+
 case class DialectDef(
     val name: String,
     val operations: Seq[OperationDef] = Seq(),
@@ -185,6 +163,7 @@ case class DialectDef(
     val opHatches: Seq[OpEscapeHatch[_]] = Seq(),
     val attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
 ) {
+
   def print(indent: Int): String =
     s"""package scair.dialects.${name.toLowerCase}
 
@@ -205,11 +184,12 @@ val ${name}Dialect: Dialect = new Dialect(
           .mkString(", ")})
 )
   """
+
 }
 
-/*≡≡=---=≡≡≡=---=≡≡*\
-||   IR ELEMENTS   ||
-\*≡==----=≡=----==≡*/
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||   OPERATION DEF   ||
+\*≡==----=≡≡≡=----==≡*/
 
 case class OperationDef(
     val name: String,
@@ -219,7 +199,8 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val OpProperty: Seq[OpPropertyDef] = Seq(),
-    val OpAttribute: Seq[OpAttributeDef] = Seq()
+    val OpAttribute: Seq[OpAttributeDef] = Seq(),
+    val assembly_format: Option[String] = None
 ) {
 
   def operand_segment_sizes_helper: String =
@@ -302,10 +283,13 @@ case class OperationDef(
 
   def n_variadic_operands: Int =
     operands.filter(_.variadicity != Variadicity.Single).length
+
   def n_variadic_results: Int =
     results.filter(_.variadicity != Variadicity.Single).length
+
   def n_variadic_regions: Int =
     regions.filter(_.variadicity != Variadicity.Single).length
+
   def n_variadic_successors: Int =
     successors.filter(_.variadicity != Variadicity.Single).length
 
@@ -582,6 +566,7 @@ case class OperationDef(
 object $className extends OperationObject {
   override def name = "$name"
   override def factory = $className.apply
+  ${assembly_format.map(f => f"val replace_by_parse = \"$f\"").getOrElse("")}
 }
 
 case class $className(
@@ -595,6 +580,8 @@ case class $className(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name") {
 
+${assembly_format.map(f => f"val replace_by_print = \"$f\"").getOrElse("")}
+
 ${helpers(indent + 1)}
 ${accessors(indent + 1)}
 ${print_constr_defs(indent + 1)}
@@ -602,7 +589,12 @@ ${irdl_verification(indent + 1)}
 
 }
 """
+
 }
+
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||   ATTRIBUTE DEF   ||
+\*≡==----=≡≡≡=----==≡*/
 
 case class AttributeDef(
     val name: String,
@@ -610,6 +602,7 @@ case class AttributeDef(
     val parameters: Seq[OperandDef] = Seq(),
     val typee: Int = 0
 ) {
+
   def print(indent: Int): String = s"""
 object $className extends AttributeObject {
   override def name = "$name"
@@ -623,7 +616,12 @@ case class $className(override val parameters: Seq[Attribute]) extends Parametri
     if (parameters.length != ${parameters.length}) then throw new Exception(s"Expected ${parameters.length} parameters, got $${parameters.length}")
 }
   """
+
 }
+
+/*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+||    CODE GEN HOOK    ||
+\*≡==---==≡≡≡≡≡==---==≡*/
 
 /** A helper class that generates a dialect implementation from a given dialect
   * definition.
@@ -656,4 +654,5 @@ class ScaIRDLDialect(final val dialect_def: DialectDef) {
     writer.flush()
     writer.close()
   }
+
 }

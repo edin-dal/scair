@@ -51,4 +51,5 @@ class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
       }
     }
   }
+
 }

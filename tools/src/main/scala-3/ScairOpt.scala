@@ -1,9 +1,9 @@
 import scair.MLContext
 import scair.Printer
+import scair.TransformContext
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.transformations.TransformContext
 import scair.utils.allDialects
 import scair.utils.allPasses
 import scopt.OParser
@@ -14,6 +14,7 @@ import scala.util.Success
 import scala.util.Try
 
 object ScairOpt {
+
   def main(args: Array[String]): Unit = {
 
     // Define CLI args
@@ -151,7 +152,9 @@ object ScairOpt {
   }
 
   object MyExtensions {
+
     extension (ctx: MLContext)
+
       def register_all_dialects(): Unit = {
         for (dialect <- allDialects) {
           ctx.registerDialect(dialect)
@@ -159,10 +162,13 @@ object ScairOpt {
       }
 
     extension (ctx: TransformContext)
+
       def register_all_passes(): Unit = {
         for (pass <- allPasses) {
-          ctx.passContext += pass.name -> pass
+          ctx.registerPass(pass)
         }
       }
+
   }
+
 }
