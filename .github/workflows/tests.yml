@@ -119,7 +119,6 @@ jobs:
     - name: Run tests and generate coverage report
       run: |
         export PATH=$PATH:${GITHUB_WORKSPACE}/llvm-project/build/bin/
-        cd scair
         sbt coverage test filechecks coverageAggregate
 
     - name: Upload coverage report to Codecov
