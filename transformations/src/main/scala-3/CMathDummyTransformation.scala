@@ -61,9 +61,6 @@ object TestInsertingDummyOperation extends RewritePattern {
 
 object TestReplacingDummyOperation extends RewritePattern {
 
-  val val1 = Value[Attribute](StringData("replaced(i32)"))
-  val val2 = Value[Attribute](StringData("replaced(i64)"))
-
   val op1 =
     new UnregisteredOperation("dummy-op1")
 
@@ -71,7 +68,11 @@ object TestReplacingDummyOperation extends RewritePattern {
     new UnregisteredOperation("dummy-op2")
 
   val op3 =
-    new UnregisteredOperation("dummy-return", results = ListType(val1, val2))
+    new UnregisteredOperation(
+      "dummy-return",
+      results_types =
+        ListType(StringData("replaced(i32)"), StringData("replaced(i64)"))
+    )
 
   val opReplace = new UnregisteredOperation(
     "replacedOp",
