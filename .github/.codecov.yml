@@ -1,5 +1,5 @@
 coverage:
   status:
-    project:
+    patch:
       default:   # default is the status check's name, not default settings
         target: 0 # never fail - coverage is informational only so far.
