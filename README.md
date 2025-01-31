@@ -78,15 +78,15 @@ sbt testAll
 ```
 
 ### Code formatting
-ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub will fail if the code is not formatted properly. Once you are ready to submit a PR for merging, run the following sbt command to automatically format the entire code base:
-```
-sbt scalafmtAll
+ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub will fail if the code is not formatted properly. Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. Once you are ready to submit a PR for merging, run the following sbt command to automatically format the entire code base:
+
+```bash
+sbt formatAll
 ```
 
-Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. To check for unused imports run the following sbt command:
-```
-sbt "scalafixAll --check"
-```
+To verify that the code has indeed been formatted, run:
 
-
+```bash
+sbt formatCheckAll
+```
 ---
