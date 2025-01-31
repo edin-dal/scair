@@ -1,6 +1,4 @@
-package scair.ir.utils
-
-import scair.ir.{Attribute, Use, Value}
+package scair.ir
 
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer

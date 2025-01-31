@@ -2,7 +2,6 @@ package scair.transformations
 
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.ir.utils.ListType
 
 import scala.collection.mutable.Stack
 

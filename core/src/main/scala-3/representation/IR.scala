@@ -5,7 +5,6 @@ import scair.AttrParser
 import scair.Parser
 import scair.Parser.*
 import scair.Printer
-import scair.ir.utils.*
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗

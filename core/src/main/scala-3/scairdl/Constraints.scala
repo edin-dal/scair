@@ -2,7 +2,6 @@ package scair.scairdl.constraints
 
 import scair.exceptions.VerifyException
 import scair.ir.*
-import scair.ir.utils.DictType
 
 import scala.reflect.ClassTag
 import scala.util.Failure
