@@ -100,8 +100,8 @@ object Value {
   def unapply[T <: Attribute](value: Value[T]): Option[T] = Some(value.typ)
 }
 
-class Value[T <: Attribute](
-    var typ: T
+class Value[+T <: Attribute](
+    val typ: T
 ) {
 
   var uses: ListType[Use] = ListType()
