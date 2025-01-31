@@ -6,6 +6,7 @@ import fastparse.internal.Util
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
+import scair.ir.utils.{DictType, ListType}
 
 import java.lang.Float.parseFloat
 import java.lang.Long.parseLong

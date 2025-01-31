@@ -7,6 +7,7 @@ import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.exceptions.VerifyException
 import scair.ir.*
+import scair.ir.utils.{ListType, DictType}
 import scair.scairdl.constraints.BaseAttr
 import scair.scairdl.constraints.ConstraintContext
 
