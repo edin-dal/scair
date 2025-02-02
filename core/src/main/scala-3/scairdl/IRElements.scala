@@ -4,7 +4,7 @@ import scair.dialects.builtin.*
 import scair.ir.Attribute
 import scair.ir.Operation
 import scair.scairdl.constraints.*
-
+import scair.Printer
 import java.io.File
 import java.io.PrintStream
 import scala.collection.mutable
@@ -128,9 +128,14 @@ case class DialectDef(
     s"""package scair.dialects.${name.toLowerCase}
 
 import scair.ir._
+import scair.Parser
+import scair.Parser.whitespace
+
 import scair.dialects.builtin._
 import scair.scairdl.constraints._
-import scair.scairdl.constraints.attr2constraint"""
+import scair.scairdl.constraints.attr2constraint
+import fastparse.ScalaWhitespace.whitespace
+import fastparse.*"""
       + { for (hatch <- opHatches) yield hatch.importt }
         .mkString("\n", "\n", "\n") +
       { for (hatch <- attrHatches) yield hatch.importt }
@@ -147,9 +152,30 @@ val ${name}Dialect: Dialect = new Dialect(
 
 }
 
+case class Assemblyformat(
+    format: String,
+    operands: Seq[String], //  ["$lhs", "$rhs"]
+    types: Seq[String],    //  ["type($lhs)", "type($rhs)"]
+    results: Seq[String]   //  ["type($result)"]
+)
+
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||
 \*≡==----=≡≡≡=----==≡*/
+
+// class FormatDirective
+// // `literal`
+// class LiteralDirective extends FormatDirective
+
+// // $name if name is an operand of the Op
+// class OperandDirective(name : String)
+// // $name if name is a result of the Op
+// class ResultDirective(name: String)
+
+// // type($name)
+// class TypeDirective(dir : FormatDirective)
+
+// Seq[FormatDirective]
 
 case class OperationDef(
     val name: String,
@@ -162,6 +188,108 @@ case class OperationDef(
     val OpAttribute: Seq[OpAttributeDef] = Seq(),
     val assembly_format: Option[String] = None
 ) {
+  //considering fastmath later... what if operand 2 comes earlier... it's too much hardcoded 
+
+  def Parseassemblyformat(format: String): Assemblyformat = {
+    val Operandpattern = """\$(\w+)(?=(\s|`|,|$))""".r 
+    // val Operandpattern = """\$(\w+)(?!\))""".r
+    val Typepattern = """type\(\$(\w+)\)""".r //type($lhs), type($rhs)
+    // val flag = 
+    val Operands = Operandpattern.findAllMatchIn(format).map(_.group(1)).toSeq
+    val Types = Typepattern.findAllMatchIn(format).map(_.group(1)).toSeq //types = Seq("lhs", "rhs")
+    val result = if (format.contains("type($result)")) Seq("result") else Seq() //not sure
+    val ResultPattern = """type\(\$result\)""".r 
+    val results = ResultPattern.findAllMatchIn(format).flatMap { m =>
+  if (m.groupCount >= 1) Some(m.group(1)) else None
+}.toSeq
+    val filteredOperands = Operands.filterNot(_ == "result")
+    val filteredTypes = Types.filterNot(_ == "result")
+    Assemblyformat(format, filteredOperands, filteredTypes, result)
+}
+
+
+
+def Generateparsefunction(format: Assemblyformat): String = {
+  println(f"$name : $format")
+  val operandVars = format.operands.zipWithIndex.map { case (name, idx) => s"${name}_$idx" }
+  val typeVars = format.types.zipWithIndex.map { case (name, idx) => s"type_${name}_$idx" }
+  val resultVars = format.results.zipWithIndex.map { case (name, idx) => s"type_${name}_$idx" }
+
+  val patternVariables = (operandVars ++ typeVars ++ resultVars).mkString(", ")
+
+  val operandParsing = if (format.operands.nonEmpty) {
+    format.operands.map(_ => "Parser.ValueUse").mkString(" ~ ")
+  } else {
+    "\"\"" 
+  }
+
+  val typeParsing = if (format.types.nonEmpty) {
+    format.types.map(_ => "parser.Type").mkString(" ~ ")
+  } else {
+    "\"\"" 
+  }
+  val resultParsing = if (format.results.nonEmpty) {
+    format.results.map(_ => "parser.Type").mkString(" ~ ")
+  } else {
+    "\"\"" 
+  }
+
+  val combinedParsing = Seq(operandParsing, typeParsing, resultParsing)
+    .filterNot(_ == "\"\"") 
+    .mkString(" ~ ")
+
+  val finalParsing = if (combinedParsing.isEmpty) "\"\"" else combinedParsing
+
+  f"""
+  override def parse[$$: P](
+      resNames: Seq[String],
+      parser: Parser
+  ): P[Operation] = {
+      P(
+        $finalParsing
+      ).map {
+          ${if (patternVariables.nonEmpty) s"($patternVariables)" else "()"} =>
+          println("Parsing $name")
+          parser.verifyCustomOp(
+            opGen = $className.factory,
+            opName = name,
+            operandNames = Seq(${operandVars.mkString(", ")}),
+            operandTypes = Seq(${typeVars.mkString(", ")}),
+            resultNames = resNames,
+            resultTypes = Seq(${resultVars.mkString(", ")})
+          )
+      }
+  }
+  """
+}
+
+  def GeneratePrintFunction(printer: Printer): String = {
+  val operandPrinting = operands.zipWithIndex.map { case (name, idx) =>
+    s"""val operand_$idx = s"$${printer.printValue(operands($idx).asInstanceOf[Value[Attribute]])} : $${operands($idx).typ.custom_print}""""
+  }.mkString("\n    ")
+
+  val resultPrinting = if (results.nonEmpty) {
+    s"""val resultType = results.head.typ.custom_print"""
+  } else {
+    ""
+  }
+
+  val operandSequence = operands.indices.map(idx => s"operand_$idx").mkString(", ")
+
+  val finalPrintStatement =
+    if (results.nonEmpty) s"""s"$$name $$operandSequence : $$resultType" """
+    else s"""s"$$name $$operandSequence" """
+
+  f"""
+  override def custom_print(printer: Printer): String = {
+    $operandPrinting
+    $resultPrinting
+    $finalPrintStatement
+  }
+  """
+}
+
+
 
   def operand_segment_sizes_helper: String =
     s"""def operandSegmentSizes: Seq[Int] =
@@ -642,7 +770,7 @@ case class OperationDef(
 object $className extends OperationObject {
   override def name = "$name"
   override def factory = $className.apply
-  ${assembly_format.map(f => f"val replace_by_parse = \"$f\"").getOrElse("")}
+  ${assembly_format.map(f => Generateparsefunction(Parseassemblyformat(f))).getOrElse("")}
 }
 
 case class $className(
@@ -656,7 +784,7 @@ case class $className(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name") {
 
-${assembly_format.map(f => f"val replace_by_print = \"$f\"").getOrElse("")}
+// ${assembly_format.map(f => f"val replace_by_print = \"$f\"").getOrElse("")}
 
 ${helpers(indent + 1)}
 ${accessors(indent + 1)}
