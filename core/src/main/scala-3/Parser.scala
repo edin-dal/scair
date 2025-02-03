@@ -348,12 +348,12 @@ object Parser {
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ Digit.rep(1).!).map((sign: String, literal: String) =>
+    P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
       parseLong(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => parseLong(hex, 16))
+    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => parseLong(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -362,9 +362,9 @@ object Parser {
   }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (Digit.rep(1) ~~ "." ~~ Digit.rep(1)).!
+    CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).!
       ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ Digit.rep(1)).!).?.map(_.getOrElse("0"))
+        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).?.map(_.getOrElse("0"))
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
   def notExcluded[$: P] = P(
@@ -397,7 +397,7 @@ object Parser {
     }
 
   def BareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).rep
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).repX
   ).!
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
@@ -405,7 +405,7 @@ object Parser {
   def AliasName[$: P] = P(BareId)
 
   def SuffixId[$: P] = P(
-    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).rep
+    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
   ).!
 
   def SymbolRefId[$: P] = P("@" ~ (SuffixId | StringLiteral))
@@ -505,7 +505,7 @@ object Parser {
   )
 
   def DialectBareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).rep
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX
   ).!
 
   def DialectNamespace[$: P] = P(DialectBareId)
