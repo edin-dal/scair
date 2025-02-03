@@ -83,9 +83,7 @@ object Parser {
   ||      SCOPE      ||
   \*≡==---==≡==---==≡*/
 
-  object Scope {
-
-  }
+  object Scope {}
 
   class Scope(
       var parentScope: Option[Scope] = None,
@@ -592,165 +590,25 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [ ] custom-operation      ::= bare-id custom-operation-format
   // [x] region-list           ::= `(` region (`,` region)* `)`
 
-  def verifyCustomOp(
-      opGen: (
-          ListType[Value[Attribute]] /* = operands */,
-          ListType[Block] /* = successors */,
-          ListType[Attribute] /* = results types */,
-          ListType[Region] /* = regions */,
-          DictType[String, Attribute] /* = dictProps */,
-          DictType[String, Attribute] /* = dictAttrs */
-      ) => Operation,
-      opName: String,
-      operandNames: Seq[String] = Seq(),
-      operandTypes: Seq[Attribute] = Seq(),
-      successors: Seq[String] = Seq(),
-      resultNames: Seq[String] = Seq(),
-      resultTypes: Seq[Attribute] = Seq(),
-      regions: Seq[Region] = Seq(),
-      dictProps: Seq[(String, Attribute)] = Seq(),
-      dictAttrs: Seq[(String, Attribute)] = Seq(),
-      noForwardOperandRef: Int = 0
-  ): Operation = {
-
-    val regionss = regions.to(ListType)
-
-    if (resultNames.length != resultTypes.length) {
-      throw new Exception(
-        s"Number of results (${resultNames.length}) does not match the number of the corresponding result types (${resultTypes.length}) in \"${opName}\"."
-      )
-    }
-
-    val dictPropertiesMap: DictType[String, Attribute] =
-      DictType[String, Attribute](dictProps.map({ case (x, y) => x -> y }): _*)
-
-    if (dictProps.length != dictPropertiesMap.size) {
-      throw new Exception(
-        "Dictionary Properties names in Operation " + opName + " are cloned."
-      )
-    }
-
-    val dictAttributesMap: DictType[String, Attribute] =
-      DictType[String, Attribute](dictAttrs.map({ case (x, y) => x -> y }): _*)
-
-    if (dictAttrs.length != dictAttributesMap.size) {
-      throw new Exception(
-        "Dictionary Properties names in Operation " + opName + " are cloned."
-      )
-    }
-
-    val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
-      currentScope.useBlocks(successors)
-
-    // plaster solution for custom parsing
-    if (noForwardOperandRef == 1) {
-
-      val operandValues: ListType[Value[Attribute]] = (
-        try {
-          for { name <- operandNames } yield currentScope.valueMap(name)
-        } catch {
-          case e: Exception =>
-            throw new Exception(
-              s"Operands for Operation: \"${opName}\" must be pre-defined."
-            )
-        }
-      ).to(ListType)
-
-      val op: Operation = opGen(
-        operandValues,
-        useAndRefBlockSeqs._1,
-        ListType.from(resultTypes),
-        regionss,
-        dictPropertiesMap,
-        dictAttributesMap
-      )
-
-      currentScope.defineValues(resultNames zip op.results)
-
-      for ((operand, i) <- operandValues zip (0 to operandValues.length)) {
-        operand.uses += Use(op, i)
-      }
-
-      if (useAndRefBlockSeqs._2.length > 0) {
-        currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
-      }
-
-      return op
-
-    } else {
-
-      if (operandNames.length != operandTypes.length) {
-        throw new Exception(
-          s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
-        )
-      }
-
-      val useAndRefValueSeqs
-          : (ListType[Value[Attribute]], ListType[(String, Attribute)]) =
-        currentScope.useValues(operandNames zip operandTypes)
-
-      val op: Operation = opGen(
-        useAndRefValueSeqs._1,
-        useAndRefBlockSeqs._1,
-        ListType.from(resultTypes),
-        regionss,
-        dictPropertiesMap,
-        dictAttributesMap
-      )
-
-      currentScope.defineValues(resultNames zip op.results)
-
-      for (
-        (operand, i) <-
-          useAndRefValueSeqs._1 zip (0 to useAndRefValueSeqs._1.length)
-      ) {
-        operand.uses += Use(op, i)
-      }
-
-      if (useAndRefValueSeqs._2.length > 0) {
-        currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
-      }
-      if (useAndRefBlockSeqs._2.length > 0) {
-        currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
-      }
-
-      return op
-    }
-  }
-
   //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
   def generateOperation(
-      operation: (
-          Seq[String],
-          (
-              String,
-              Seq[String],
-              Seq[String],
-              Seq[(String, Attribute)],
-              Seq[Region],
-              Seq[(String, Attribute)],
-              (Seq[Attribute], Seq[Attribute])
-          )
-      )
+      opName: String,
+      resultsNames: Seq[String] = Seq(),
+      operandsNames: Seq[String] = Seq(),
+      successorsNames: Seq[String] = Seq(),
+      properties: Seq[(String, Attribute)] = Seq(),
+      regions: Seq[Region] = Seq(),
+      attributes: Seq[(String, Attribute)] = Seq(),
+      resultsTypes: Seq[Attribute] = Seq(),
+      operandsTypes: Seq[Attribute] = Seq()
   ): Operation = {
-
-    val results: Seq[String] = operation._1
-    val opName = operation._2._1
-    val operands: Seq[String] = operation._2._2
-    val successors: Seq[String] = operation._2._3
-    val dictProperties: Seq[(String, Attribute)] = operation._2._4
-    val regions: ListType[Region] = operation._2._5.to(ListType)
-    val dictAttributes: Seq[(String, Attribute)] = operation._2._6
-    val resultsTypes = operation._2._7._2
-    val operandsTypes = operation._2._7._1
-
-    if (results.length != resultsTypes.length) {
+    if (resultsNames.length != resultsTypes.length) {
       throw new Exception(
-        s"Number of results (${results.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
+        s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
     }
 
-    if (operands.length != operandsTypes.length) {
+    if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
         s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
       )
@@ -758,10 +616,10 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     val dictPropertiesMap: DictType[String, Attribute] =
       DictType[String, Attribute](
-        dictProperties.map({ case (x, y) => x -> y }): _*
+        properties.map({ case (x, y) => x -> y }): _*
       )
 
-    if (dictProperties.length != dictPropertiesMap.size) {
+    if (properties.length != dictPropertiesMap.size) {
       throw new Exception(
         "Dictionary Properties names in Operation " + opName + " are cloned."
       )
@@ -769,10 +627,10 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     val dictAttributesMap: DictType[String, Attribute] =
       DictType[String, Attribute](
-        dictAttributes.map({ case (x, y) => x -> y }): _*
+        attributes.map({ case (x, y) => x -> y }): _*
       )
 
-    if (dictAttributes.length != dictAttributesMap.size) {
+    if (attributes.length != dictAttributesMap.size) {
       throw new Exception(
         "Dictionary Properties names in Operation " + opName + " are cloned."
       )
@@ -780,10 +638,10 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     val useAndRefValueSeqs
         : (ListType[Value[Attribute]], ListType[(String, Attribute)]) =
-      currentScope.useValues(operands zip operandsTypes)
+      currentScope.useValues(operandsNames zip operandsTypes)
 
     val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
-      currentScope.useBlocks(successors)
+      currentScope.useBlocks(successorsNames)
 
     val opObject: Option[OperationObject] = ctx.getOperation(opName)
 
@@ -795,7 +653,7 @@ class Parser(val context: MLContext, val args: Args = Args())
           dictionaryProperties = dictPropertiesMap,
           results_types = ListType.from(resultsTypes),
           dictionaryAttributes = dictAttributesMap,
-          regions = regions
+          regions = ListType.from(regions)
         )
 
       case None =>
@@ -807,7 +665,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             dictionaryProperties = dictPropertiesMap,
             results_types = ListType.from(resultsTypes),
             dictionaryAttributes = dictAttributesMap,
-            regions = regions
+            regions = ListType.from(regions)
           )
         else
           throw new Exception(
@@ -815,7 +673,7 @@ class Parser(val context: MLContext, val args: Args = Args())
           )
     }
 
-    currentScope.defineValues(results zip op.results)
+    currentScope.defineValues(resultsNames zip op.results)
 
     // adding uses for known operands
     for (
@@ -856,7 +714,30 @@ class Parser(val context: MLContext, val args: Args = Args())
       ~/ DictionaryProperties.?.map(optionlessSeq)
       ~/ RegionList.?.map(optionlessSeq)
       ~/ DictionaryAttribute.?.map(optionlessSeq) ~/ ":" ~/ FunctionType
-  ).map(generateOperation(resNames, _))
+  ).map(
+    (
+        (
+            opName: String,
+            operandsNames: Seq[String],
+            successorsNames: Seq[String],
+            properties: Seq[(String, Attribute)],
+            regions: Seq[Region],
+            attributes: Seq[(String, Attribute)],
+            operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
+        ) =>
+          generateOperation(
+            opName,
+            resNames,
+            operandsNames,
+            successorsNames,
+            properties,
+            regions,
+            attributes,
+            operandsAndResultsTypes._2,
+            operandsAndResultsTypes._1
+          )
+    ).tupled
+  )
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
     PrettyDialectReferenceName.flatMap { (x: String, y: String) =>

@@ -279,12 +279,11 @@ object DB_ConstantOp extends OperationObject {
         y: Attribute,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = Seq(y),
-        dictAttrs = z :+ ("value", x)
+        resultsNames = resNames,
+        resultsTypes = Seq(y),
+        attributes = z :+ ("value", x)
       )
   )
   // ==----------------------== //
@@ -355,14 +354,13 @@ object DB_CmpOp extends OperationObject {
         rightType: Attribute,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = Seq(I1),
-        operandNames = Seq(left, right),
-        operandTypes = Seq(leftType, rightType),
-        dictAttrs = z :+ ("predicate", x)
+        resultsNames = resNames,
+        resultsTypes = Seq(I1),
+        operandsNames = Seq(left, right),
+        operandsTypes = Seq(leftType, rightType),
+        attributes = z :+ ("predicate", x)
       )
   )
   // ==----------------------== //
@@ -500,14 +498,13 @@ object DB_MulOp extends OperationObject {
         rightType: Attribute,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = inferRetType(leftType, rightType),
-        operandNames = Seq(left, right),
-        operandTypes = Seq(leftType, rightType),
-        dictAttrs = z
+        resultsNames = resNames,
+        resultsTypes = inferRetType(leftType, rightType),
+        operandsNames = Seq(left, right),
+        operandsTypes = Seq(leftType, rightType),
+        attributes = z
       )
   )
   // ==----------------------== //
@@ -650,14 +647,13 @@ object DB_DivOp extends OperationObject {
         rightType: Attribute,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(left, right),
-        operandTypes = Seq(leftType, rightType),
-        resultNames = resNames,
-        resultTypes = inferRetType(leftType, rightType),
-        dictAttrs = z
+        operandsNames = Seq(left, right),
+        operandsTypes = Seq(leftType, rightType),
+        resultsNames = resNames,
+        resultsTypes = inferRetType(leftType, rightType),
+        attributes = z
       )
   )
   // ==----------------------== //
@@ -736,14 +732,13 @@ object DB_AddOp extends OperationObject {
         rightType: Attribute,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = Seq(leftType),
-        operandNames = Seq(left, right),
-        operandTypes = Seq(leftType, rightType),
-        dictAttrs = z
+        resultsNames = resNames,
+        resultsTypes = Seq(leftType),
+        operandsNames = Seq(left, right),
+        operandsTypes = Seq(leftType, rightType),
+        attributes = z
       )
   )
   // ==----------------------== //
@@ -824,14 +819,13 @@ object DB_SubOp extends OperationObject {
         rightType: Attribute,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = Seq(leftType),
-        operandNames = Seq(left, right),
-        operandTypes = Seq(leftType, rightType),
-        dictAttrs = z
+        resultsNames = resNames,
+        resultsTypes = Seq(leftType),
+        operandsNames = Seq(left, right),
+        operandsTypes = Seq(leftType, rightType),
+        attributes = z
       )
   )
   // ==----------------------== //
@@ -909,14 +903,13 @@ object CastOp extends OperationObject {
         resTypes: Seq[Attribute],
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = resTypes,
-        operandNames = Seq(operand),
-        operandTypes = Seq(opType),
-        dictAttrs = z
+        resultsNames = resNames,
+        resultsTypes = resTypes,
+        operandsNames = Seq(operand),
+        operandsTypes = Seq(opType),
+        attributes = z
       )
   )
   // ==----------------------== //

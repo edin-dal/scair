@@ -7,7 +7,6 @@ import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.E
-import scair.Parser.Scope
 import scair.Parser.ValueId
 import scair.Parser.optionlessSeq
 import scair.Parser.whitespace
@@ -173,13 +172,12 @@ object BaseTableOp extends OperationObject {
         x: Seq[(String, Attribute)],
         y: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        resultNames = resNames,
-        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
-        dictAttrs = x,
-        dictProps = y
+        resultsNames = resNames,
+        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        attributes = x,
+        properties = y
       )
   )
   // ==----------------------== //
@@ -258,15 +256,15 @@ object SelectionOp extends OperationObject {
         y: Region,
         z: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(x),
-        resultNames = resNames,
-        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = z,
-        noForwardOperandRef = 1
+        attributes = z
       )
   )
   // ==----------------------== //
@@ -340,15 +338,15 @@ object MapOp extends OperationObject {
         y: Region,
         w: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(x),
-        resultNames = resNames,
-        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = w :+ ("computed_cols", z),
-        noForwardOperandRef = 1
+        attributes = w :+ ("computed_cols", z)
       )
   )
   // ==----------------------== //
@@ -445,15 +443,15 @@ object AggregationOp extends OperationObject {
         y: Region,
         w: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(x),
-        resultNames = resNames,
-        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
         regions = Seq(y),
-        dictAttrs = w :+ ("group_by_cols", reff) :+ ("computed_cols", deff),
-        noForwardOperandRef = 1
+        attributes = w :+ ("group_by_cols", reff) :+ ("computed_cols", deff)
       )
   )
   // ==----------------------== //
@@ -551,14 +549,14 @@ object CountRowsOp extends OperationObject {
         x: String,
         y: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(x),
-        resultNames = resNames,
-        resultTypes = Seq(I64),
-        dictAttrs = y,
-        noForwardOperandRef = 1
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = Seq(I64),
+        attributes = y
       )
   )
   // ==----------------------== //
@@ -635,14 +633,14 @@ object AggrFuncOp extends OperationObject {
         resTypes: Seq[Attribute],
         y: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(x),
-        resultNames = resNames,
-        resultTypes = resTypes,
-        dictAttrs = y :+ ("fn", aggrfunc) :+ ("attr", attr),
-        noForwardOperandRef = 1
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = resTypes,
+        attributes = y :+ ("fn", aggrfunc) :+ ("attr", attr)
       )
   )
   // ==----------------------== //
@@ -742,14 +740,14 @@ object SortOp extends OperationObject {
         attr: Attribute,
         y: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(x),
-        resultNames = resNames,
-        resultTypes = (for { name <- resNames } yield TupleStream(Seq())),
-        dictAttrs = y :+ ("sortspecs", attr),
-        noForwardOperandRef = 1
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        attributes = y :+ ("sortspecs", attr)
       )
   )
   // ==----------------------== //
@@ -847,14 +845,14 @@ object MaterializeOp extends OperationObject {
         resTypes: Seq[Attribute],
         y: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(operand).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(operand),
-        resultNames = resNames,
-        resultTypes = resTypes,
-        dictAttrs = y :+ ("cols", cols) :+ ("columns", columns),
-        noForwardOperandRef = 1
+        operandsNames = Seq(operand),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = resTypes,
+        attributes = y :+ ("cols", cols) :+ ("columns", columns)
       )
   )
   // ==----------------------== //
