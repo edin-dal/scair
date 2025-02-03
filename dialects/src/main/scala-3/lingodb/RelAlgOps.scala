@@ -140,7 +140,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
     ~ (parser.BlockArgList.?.map(optionlessSeq).map(
       (x: Seq[(String, Attribute)]) => {
         val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
-        Scope.defineValues(x.map(_._1) zip b.arguments)(parser.currentScope)
+        parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
       }
     )
