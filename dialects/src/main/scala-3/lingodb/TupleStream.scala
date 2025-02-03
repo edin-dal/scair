@@ -147,12 +147,11 @@ object ReturnOp extends OperationObject {
       ~ ":" ~
       parser.Type.rep(sep = ",")).?.map(makeResults)
   ).map((x: Seq[(String, Attribute)], y: (Seq[String], Seq[Attribute])) =>
-    parser.verifyCustomOp(
-      opGen = constructOp,
+    parser.generateOperation(
       opName = name,
-      operandNames = y._1,
-      operandTypes = y._2,
-      dictAttrs = x
+      operandsNames = y._1,
+      operandsTypes = y._2,
+      attributes = x
     )
   )
   // ==----------------------== //
@@ -204,23 +203,23 @@ object GetColumnOp extends OperationObject {
       resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
-    ValueId.rep(exactly = 1) ~ ColumnRefAttr.parse(parser) ~ ":" ~
+    ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
       parser.Type ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
   ).map(
     (
-        x: Seq[String],
+        x: String,
         y: Attribute,
         z: Attribute,
         w: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      val operand_type = parser.currentScope.valueMap(x).typ
+      parser.generateOperation(
         opName = name,
-        operandNames = x,
-        resultNames = resNames,
-        resultTypes = Seq(z),
-        dictAttrs = w :+ ("attr", y),
-        noForwardOperandRef = 1
+        operandsNames = Seq(x),
+        operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
+        resultsTypes = Seq(z),
+        attributes = w :+ ("attr", y)
       )
   )
   // ==----------------------== //
