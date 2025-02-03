@@ -7,6 +7,7 @@ import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.E
+import scair.Parser.Scope
 import scair.Parser.ValueId
 import scair.Parser.optionlessSeq
 import scair.Parser.whitespace
@@ -136,13 +137,20 @@ case class SortSpecificationAttr(
 
 private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
-    ~ parser.BlockArgList.?.map(optionlessSeq)
-      .map(parser.defineBlockValues) ~ "{"
-    ~ parser.Operations(1) ~ "}"
-    ~ E({ parser.enterParentRegion })
-).map((x: ListType[Value[Attribute]], y: ListType[Operation]) =>
-  new Region(Seq(new Block(y, x)))
+    ~ (parser.BlockArgList.?.map(optionlessSeq).map(
+      (x: Seq[(String, Attribute)]) => {
+        val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
+        Scope.defineValues(x.map(_._1) zip b.arguments)(parser.currentScope)
+        b
+      }
+    )
+      ~ "{"
+      ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
+      b.operations ++= y
+      new Region(Seq(b))
+    })
 )
+  ~ E({ parser.enterParentRegion })
 
 // ==-----------== //
 //   BaseTableOp   //
@@ -181,11 +189,19 @@ object BaseTableOp extends OperationObject {
 case class BaseTableOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.basetable") {
+) extends RegisteredOperation(
+      name = "relalg.basetable",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -260,11 +276,19 @@ object SelectionOp extends OperationObject {
 case class SelectionOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.selection") {
+) extends RegisteredOperation(
+      name = "relalg.selection",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -334,11 +358,19 @@ object MapOp extends OperationObject {
 case class MapOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.map") {
+) extends RegisteredOperation(
+      name = "relalg.map",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -431,11 +463,19 @@ object AggregationOp extends OperationObject {
 case class AggregationOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.aggregation") {
+) extends RegisteredOperation(
+      name = "relalg.aggregation",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -528,11 +568,19 @@ object CountRowsOp extends OperationObject {
 case class CountRowsOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.count") {
+) extends RegisteredOperation(
+      name = "relalg.count",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -604,11 +652,19 @@ object AggrFuncOp extends OperationObject {
 case class AggrFuncOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.aggrfn") {
+) extends RegisteredOperation(
+      name = "relalg.aggrfn",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -703,11 +759,19 @@ object SortOp extends OperationObject {
 case class SortOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.sort") {
+) extends RegisteredOperation(
+      name = "relalg.sort",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -800,11 +864,19 @@ object MaterializeOp extends OperationObject {
 case class MaterializeOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "relalg.materialize") {
+) extends RegisteredOperation(
+      name = "relalg.materialize",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,

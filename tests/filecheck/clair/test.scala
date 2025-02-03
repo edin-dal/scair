@@ -108,13 +108,13 @@ object Main {
 // CHECK:       case class NoVariadicsOp(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
 // CHECK-NEXT:      override val successors: ListType[Block] = ListType(),
-// CHECK-NEXT:      override val results: ListType[Value[Attribute]] = ListType(),
+// CHECK-NEXT:      results_types: ListType[Attribute] = ListType(),
 // CHECK-NEXT:      override val regions: ListType[Region] = ListType(),
 // CHECK-NEXT:      override val dictionaryProperties: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute],
 // CHECK-NEXT:      override val dictionaryAttributes: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute]
-// CHECK-NEXT:  ) extends RegisteredOperation(name = "test.no_variadics") {
+// CHECK-NEXT:  ) extends RegisteredOperation(name = "test.no_variadics", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
 // CHECK:         def sing_op1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
@@ -169,13 +169,13 @@ object Main {
 // CHECK:       case class VariadicOperandOp(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
 // CHECK-NEXT:      override val successors: ListType[Block] = ListType(),
-// CHECK-NEXT:      override val results: ListType[Value[Attribute]] = ListType(),
+// CHECK-NEXT:      results_types: ListType[Attribute] = ListType(),
 // CHECK-NEXT:      override val regions: ListType[Region] = ListType(),
 // CHECK-NEXT:      override val dictionaryProperties: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute],
 // CHECK-NEXT:      override val dictionaryAttributes: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute]
-// CHECK-NEXT:  ) extends RegisteredOperation(name = "test.variadic_operand") {
+// CHECK-NEXT:  ) extends RegisteredOperation(name = "test.variadic_operand", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
 // CHECK:         def sing_op1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def sing_op1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
@@ -294,13 +294,13 @@ object Main {
 // CHECK:       case class MultiVariadicOperandOp(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
 // CHECK-NEXT:      override val successors: ListType[Block] = ListType(),
-// CHECK-NEXT:      override val results: ListType[Value[Attribute]] = ListType(),
+// CHECK-NEXT:      results_types: ListType[Attribute] = ListType(),
 // CHECK-NEXT:      override val regions: ListType[Region] = ListType(),
 // CHECK-NEXT:      override val dictionaryProperties: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute],
 // CHECK-NEXT:      override val dictionaryAttributes: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute]
-// CHECK-NEXT:  ) extends RegisteredOperation(name = "test.multi_variadic_operand") {
+// CHECK-NEXT:  ) extends RegisteredOperation(name = "test.multi_variadic_operand", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
 // CHECK:         def operandSegmentSizes: Seq[Int] =
 // CHECK-NEXT:      if (!dictionaryProperties.contains("operandSegmentSizes")) then throw new Exception("Expected operandSegmentSizes property")

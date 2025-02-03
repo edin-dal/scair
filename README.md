@@ -1,6 +1,7 @@
 ScaIR: MLIR inspired Scala Compiler Framework 
 ===
 [![example branch parameter](https://github.com/edin-dal/scair/actions/workflows/tests.yml/badge.svg)](https://github.com/edin-dal/scair/actions/workflows/tests.yml/badge.svg?branch=main)
+[![codecov](https://codecov.io/github/edin-dal/scair/graph/badge.svg?token=H3TBWG1YNT)](https://codecov.io/github/edin-dal/scair)
 [![example branch parameter](https://img.shields.io/badge/license-Apache_2.0-blue)](https://github.com/edin-dal/scair/blob/main/LICENSE)
 
 ## Navigation
@@ -15,7 +16,31 @@ ScaIR: MLIR inspired Scala Compiler Framework
 ## Installation
 The project is implemented under the Scala version 3.3.4, however newer versions should work just as fine! Check out the official **[Getting started](https://docs.scala-lang.org/getting-started/install-scala.html#:~:text=Using%20the%20Scala%20Installer%20(recommended%20way)&text=Install%20it%20on%20your%20system%20with%20the%20following%20instructions.&text=%26%26%20.%2Fcs%20setup-,Run%20the%20following%20command%20in%20your,following%20the%20on%2Dscreen%20instructions.&text=Download%20and%20execute%20the%20Scala,follow%20the%20on%2Dscreen%20instructions.)** guide on how to install Scala and sbt.
 
-Additionally, our testing suite makes use of two Python3 packages: [**lit**](https://pypi.org/project/lit/) and [**filecheck**](https://pypi.org/project/filecheck/0.0.13/).
+### As a dependency
+
+We are still figuring out the Maven Central repository publication process.
+
+ScaIR is usable now through local publication though:
+
+1. Clone the repository and publish its packages locally by running:
+
+```bash
+sbt publishLocal
+```
+
+Which should end with a line like:
+
+```
+[info]  published ivy to <USER-PATH>/.ivy2/local/io.github.edin-dal/scair_3/<version>/ivys/ivy.xml
+```
+
+To use this from your project, just add:
+
+```scala
+libraryDependencies += "io.github.edin-dal" %% "scair" % "<version>"
+```
+
+to your build defintion (Typically `build.sbt`)
 
 ---
 
@@ -35,7 +60,7 @@ sbt run
 
 ### Testing
 
-Once your changes are ready to be merged ensure that both unit tests, as well as MLIR compatibility tests are passing. PRs will be blocked from merging otherwise.
+Once your changes are ready to be merged ensure that both unit tests, as well as MLIR compatibility tests are passing. PRs will be blocked from merging otherwise. Our testing suite makes use of two Python3 packages: [**lit**](https://pypi.org/project/lit/) and [**filecheck**](https://pypi.org/project/filecheck/).
 
 #### **Unit tests**
 ```
@@ -53,15 +78,15 @@ sbt testAll
 ```
 
 ### Code formatting
-ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub will fail if the code is not formatted properly. Once you are ready to submit a PR for merging, run the following sbt command to automatically format the entire code base:
-```
-sbt scalafmtAll
+ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub will fail if the code is not formatted properly. Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. Once you are ready to submit a PR for merging, run the following sbt command to automatically format the entire code base:
+
+```bash
+sbt formatAll
 ```
 
-Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. To check for unused imports run the following sbt command:
-```
-sbt "scalafixAll --check"
-```
+To verify that the code has indeed been formatted, run:
 
-
+```bash
+sbt formatCheckAll
+```
 ---

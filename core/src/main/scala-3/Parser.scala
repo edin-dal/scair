@@ -86,20 +86,18 @@ object Parser {
   object Scope {
 
     def defineValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
+        valueIdAndTypeList: Seq[(String, Value[Attribute])]
     )(implicit
         scope: Scope
-    ): ListType[Value[Attribute]] = {
-      (for {
-        (name, typ) <- valueIdAndTypeList
-      } yield scope.valueMap.contains(name) match {
-        case true =>
-          throw new Exception(s"SSA Value cannot be defined twice %${name}")
-        case false =>
-          val value = new Value(typ = typ)
-          scope.valueMap(name) = value
-          value
-      }).to(ListType)
+    ): Unit = {
+      valueIdAndTypeList.map((name, value) =>
+        scope.valueMap.contains(name) match {
+          case true =>
+            throw new Exception(s"SSA Value cannot be defined twice %${name}")
+          case false =>
+            scope.valueMap(name) = value
+        }
+      )
     }
 
     def useValues(
@@ -206,7 +204,7 @@ object Parser {
             val operandName = scope.valueWaitlist.head._2(0)._1
             val operandTyp = scope.valueWaitlist.head._2(0)._2
             throw new Exception(
-              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}' "
+              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}'\n${scope.valueMap}"
             )
         }
       }
@@ -350,12 +348,12 @@ object Parser {
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ Digit.rep(1).!).map((sign: String, literal: String) =>
+    P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
       parseLong(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.rep(1).!).map((hex: String) => parseLong(hex, 16))
+    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => parseLong(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -364,9 +362,9 @@ object Parser {
   }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (Digit.rep(1) ~~ "." ~~ Digit.rep(1)).!
+    CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).!
       ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ Digit.rep(1)).!).?.map(_.getOrElse("0"))
+        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).?.map(_.getOrElse("0"))
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
   def notExcluded[$: P] = P(
@@ -399,7 +397,7 @@ object Parser {
     }
 
   def BareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).rep
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).repX
   ).!
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
@@ -407,7 +405,7 @@ object Parser {
   def AliasName[$: P] = P(BareId)
 
   def SuffixId[$: P] = P(
-    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).rep
+    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
   ).!
 
   def SymbolRefId[$: P] = P("@" ~ (SuffixId | StringLiteral))
@@ -507,7 +505,7 @@ object Parser {
   )
 
   def DialectBareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).rep
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX
   ).!
 
   def DialectNamespace[$: P] = P(DialectBareId)
@@ -563,10 +561,6 @@ class Parser(val context: MLContext, val args: Args = Args())
     currentScope = currentScope.switchWithParent(currentScope)
   }
 
-  def defineBlockValues(valueIdAndTypeList: Seq[(String, Attribute)]) = {
-    Scope.defineValues(valueIdAndTypeList)
-  }
-
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
   || TOP LEVEL PRODUCTION  ||
   \*≡==---==≡≡≡≡≡≡≡==---==≡*/
@@ -612,7 +606,7 @@ class Parser(val context: MLContext, val args: Args = Args())
       opGen: (
           ListType[Value[Attribute]] /* = operands */,
           ListType[Block] /* = successors */,
-          ListType[Value[Attribute]] /* = results */,
+          ListType[Attribute] /* = results types */,
           ListType[Region] /* = regions */,
           DictType[String, Attribute] /* = dictProps */,
           DictType[String, Attribute] /* = dictAttrs */
@@ -655,9 +649,6 @@ class Parser(val context: MLContext, val args: Args = Args())
       )
     }
 
-    val resultss: ListType[Value[Attribute]] =
-      Scope.defineValues(resultNames zip resultTypes)
-
     val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
       Scope.useBlocks(successors)
 
@@ -678,11 +669,13 @@ class Parser(val context: MLContext, val args: Args = Args())
       val op: Operation = opGen(
         operandValues,
         useAndRefBlockSeqs._1,
-        resultss,
+        ListType.from(resultTypes),
         regionss,
         dictPropertiesMap,
         dictAttributesMap
       )
+
+      Scope.defineValues(resultNames zip op.results)
 
       for ((operand, i) <- operandValues zip (0 to operandValues.length)) {
         operand.uses += Use(op, i)
@@ -709,11 +702,13 @@ class Parser(val context: MLContext, val args: Args = Args())
       val op: Operation = opGen(
         useAndRefValueSeqs._1,
         useAndRefBlockSeqs._1,
-        resultss,
+        ListType.from(resultTypes),
         regionss,
         dictPropertiesMap,
         dictAttributesMap
       )
+
+      Scope.defineValues(resultNames zip op.results)
 
       for (
         (operand, i) <-
@@ -793,9 +788,6 @@ class Parser(val context: MLContext, val args: Args = Args())
       )
     }
 
-    val resultss: ListType[Value[Attribute]] =
-      Scope.defineValues(results zip resultsTypes)
-
     val useAndRefValueSeqs
         : (ListType[Value[Attribute]], ListType[(String, Attribute)]) =
       Scope.useValues(operands zip operandsTypes)
@@ -811,10 +803,11 @@ class Parser(val context: MLContext, val args: Args = Args())
           operands = useAndRefValueSeqs._1,
           successors = useAndRefBlockSeqs._1,
           dictionaryProperties = dictPropertiesMap,
-          results = resultss,
+          results_types = ListType.from(resultsTypes),
           dictionaryAttributes = dictAttributesMap,
           regions = regions
         )
+
       case None =>
         if args.allow_unregistered then
           new UnregisteredOperation(
@@ -822,7 +815,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             operands = useAndRefValueSeqs._1,
             successors = useAndRefBlockSeqs._1,
             dictionaryProperties = dictPropertiesMap,
-            results = resultss,
+            results_types = ListType.from(resultsTypes),
             dictionaryAttributes = dictAttributesMap,
             regions = regions
           )
@@ -831,6 +824,8 @@ class Parser(val context: MLContext, val args: Args = Args())
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
     }
+
+    Scope.defineValues(results zip op.results)
 
     // adding uses for known operands
     for (
@@ -881,7 +876,7 @@ class Parser(val context: MLContext, val args: Args = Args())
           y.parse(resNames, this)
         case None =>
           throw new Exception(
-            s"Operation ${x} is not defined in any supported Dialect."
+            s"Operation ${x}.${y} is not defined in any supported Dialect."
           )
       }
     }
@@ -898,15 +893,16 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - block-label     ::= block-id block-arg-list? `:`
 
   def createBlock(
-      //            name    argument     operations
-      uncutBlock: (String, ListType[Value[Attribute]], ListType[Operation])
+      //            name    arguments       operations
+      uncutBlock: (String, Seq[(String, Attribute)], ListType[Operation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
-      arguments = uncutBlock._2
+      arguments_types = ListType.from(uncutBlock._2.map(_._2))
     )
     for (op <- newBlock.operations) op.container_block = Some(newBlock)
     Scope.defineBlock(uncutBlock._1, newBlock)
+    Scope.defineValues(uncutBlock._2.map(_._1) zip newBlock.arguments)
     return newBlock
   }
 
@@ -914,8 +910,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(BlockLabel ~ Operations(0)).map(createBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~ BlockArgList.?.map(optionlessSeq)
-      .map(defineBlockValues) ~ ":"
+    BlockId ~ BlockArgList.?.map(optionlessSeq) ~ ":"
   )
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
@@ -937,7 +932,7 @@ class Parser(val context: MLContext, val args: Args = Args())
         region
       case _ =>
         val startblock =
-          new Block(operations = parseResult._1, arguments = ListType())
+          new Block(operations = parseResult._1, arguments_types = ListType())
         val region = new Region(blocks = startblock +: parseResult._2)
         for (block <- region.blocks) block.container_region = Some(region)
         region

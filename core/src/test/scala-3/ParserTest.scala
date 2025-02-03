@@ -214,9 +214,9 @@ class ParserTest
                     ListType(),
                     ListType(),
                     ListType(
-                      Value(I32),
-                      Value(I64),
-                      Value(I32)
+                      I32,
+                      I64,
+                      I32
                     ),
                     ListType(),
                     _,
@@ -232,7 +232,7 @@ class ParserTest
                     _
                   )
                 ),
-                ListType(Value(I32))
+                ListType(I32)
               ),
               100
             ) =>
@@ -260,9 +260,9 @@ class ParserTest
                         ListType(),
                         ListType(),
                         ListType(
-                          Value(I32),
-                          Value(I64),
-                          Value(I32)
+                          I32,
+                          I64,
+                          I32
                         ),
                         ListType(),
                         _,
@@ -278,7 +278,7 @@ class ParserTest
                         _
                       )
                     ),
-                    ListType(Value(I32))
+                    ListType(I32)
                   ),
                   Block(
                     ListType(
@@ -287,9 +287,9 @@ class ParserTest
                         ListType(),
                         ListType(),
                         ListType(
-                          Value(I32),
-                          Value(I64),
-                          Value(I32)
+                          I32,
+                          I64,
+                          I32
                         ),
                         ListType(),
                         _,
@@ -308,7 +308,7 @@ class ParserTest
                         _
                       )
                     ),
-                    ListType(Value(I32))
+                    ListType(I32)
                   )
                 )
               ),
@@ -404,9 +404,9 @@ class ParserTest
                             ListType(),
                             ListType(),
                             ListType(
-                              Value(I32),
-                              Value(I64),
-                              Value(I32)
+                              I32,
+                              I64,
+                              I32
                             ),
                             ListType(),
                             _,

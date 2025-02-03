@@ -113,11 +113,19 @@ object SetResultOp extends OperationObject {
 case class SetResultOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "subop.set_result") {
+) extends RegisteredOperation(
+      name = "subop.set_result",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,

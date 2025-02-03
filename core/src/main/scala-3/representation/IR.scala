@@ -6,54 +6,12 @@ import scair.Parser
 import scair.Parser.*
 import scair.Printer
 
-import scala.collection.mutable.LinkedHashMap
-import scala.collection.mutable.ListBuffer
-
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
 // ██║ ██╔══██╗
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
-
-/*≡==--==≡≡≡==--=≡≡*\
-||      UTILS      ||
-\*≡==---==≡==---==≡*/
-
-// TO-DO: export utils to a separate file
-
-val DictType = LinkedHashMap
-type DictType[A, B] = LinkedHashMap[A, B]
-
-val ListType = ListBuffer
-type ListType[A] = ListBuffer[A]
-
-extension (dt: DictType[String, Attribute]) {
-
-  def checkandget(
-      key: String,
-      op_name: String,
-      expected_type: String
-  ): Attribute = {
-    dt.get(key) match {
-      case Some(b) => b
-      case None =>
-        throw new Exception(
-          s"Operation '${op_name}' must include an attribute named '${key}' of type '${}'"
-        )
-    }
-  }
-
-}
-
-extension (lt: ListType[Value[Attribute]]) {
-
-  def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
-    newValue.uses += use
-    lt.update(use.index, newValue)
-  }
-
-}
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    ATTRIBUTES    ||
@@ -142,8 +100,8 @@ object Value {
   def unapply[T <: Attribute](value: Value[T]): Option[T] = Some(value.typ)
 }
 
-class Value[T <: Attribute](
-    var typ: T
+class Value[+T <: Attribute](
+    val typ: T
 ) {
 
   var uses: ListType[Use] = ListType()
@@ -180,19 +138,18 @@ class Value[T <: Attribute](
 
 extension (seq: Seq[Value[Attribute]]) def typ: Seq[Attribute] = seq.map(_.typ)
 
-type Operand[T <: Attribute] = Value[T]
-type OpResult[T <: Attribute] = Value[T]
-
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||      BLOCKS      ||
 \*≡==---==≡≡==---==≡*/
 
 case class Block(
-    operations: ListType[Operation] = ListType(),
-    arguments: ListType[Value[Attribute]] = ListType()
+    val operations: ListType[Operation] = ListType(),
+    arguments_types: ListType[Attribute] = ListType()
 ) {
 
   var container_region: Option[Region] = None
+
+  val arguments: ListType[Value[Attribute]] = arguments_types.map(Value(_))
 
   private def attach_op(op: Operation): Unit = {
     op.container_block match {
@@ -372,7 +329,7 @@ sealed abstract class Operation(
     val name: String,
     val operands: ListType[Value[Attribute]] = ListType(),
     val successors: ListType[Block] = ListType(),
-    val results: ListType[Value[Attribute]] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     val regions: ListType[Region] = ListType(),
     val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
@@ -380,6 +337,7 @@ sealed abstract class Operation(
       DictType.empty[String, Attribute]
 ) extends OpTrait {
 
+  val results: ListType[Value[Attribute]] = results_types.map(Value(_))
   def op: Operation = this
 
   var container_block: Option[Block] = None
@@ -460,29 +418,45 @@ sealed abstract class Operation(
 
 }
 
-final case class UnregisteredOperation(
+case class UnregisteredOperation(
     override val name: String,
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation(name = name)
+) extends Operation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
 
 class RegisteredOperation(
-    override val name: String,
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    name: String,
+    operands: ListType[Value[Attribute]] = ListType(),
+    successors: ListType[Block] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
+    regions: ListType[Region] = ListType(),
+    dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation(name = name)
+) extends Operation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||     DIALECTS     ||
@@ -499,7 +473,7 @@ trait OperationObject {
   type FactoryType = (
       ListType[Value[Attribute]] /* = operands */,
       ListType[Block] /* = successors */,
-      ListType[Value[Attribute]] /* = results */,
+      ListType[Attribute] /* = results */,
       ListType[Region] /* = regions */,
       DictType[String, Attribute], /* = dictProps */
       DictType[String, Attribute] /* = dictAttrs */
@@ -510,7 +484,7 @@ trait OperationObject {
   final def constructOp(
       operands: ListType[Value[Attribute]] = ListType(),
       successors: ListType[Block] = ListType(),
-      results: ListType[Value[Attribute]] = ListType(),
+      results_types: ListType[Attribute] = ListType(),
       regions: ListType[Region] = ListType(),
       dictionaryProperties: DictType[String, Attribute] =
         DictType.empty[String, Attribute],
@@ -519,7 +493,7 @@ trait OperationObject {
   ): Operation = factory(
     operands,
     successors,
-    results,
+    results_types,
     regions,
     dictionaryProperties,
     dictionaryAttributes

@@ -294,11 +294,19 @@ object DB_ConstantOp extends OperationObject {
 case class DB_ConstantOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.constant") {
+) extends RegisteredOperation(
+      name = "db.constant",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -364,11 +372,19 @@ object DB_CmpOp extends OperationObject {
 case class DB_CmpOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.compare") {
+) extends RegisteredOperation(
+      name = "db.compare",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -501,11 +517,19 @@ object DB_MulOp extends OperationObject {
 case class DB_MulOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.mul") {
+) extends RegisteredOperation(
+      name = "db.mul",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -643,11 +667,19 @@ object DB_DivOp extends OperationObject {
 case class DB_DivOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.div") {
+) extends RegisteredOperation(
+      name = "db.div",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -721,11 +753,19 @@ object DB_AddOp extends OperationObject {
 case class DB_AddOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.add") {
+) extends RegisteredOperation(
+      name = "db.add",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -801,11 +841,19 @@ object DB_SubOp extends OperationObject {
 case class DB_SubOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.sub") {
+) extends RegisteredOperation(
+      name = "db.sub",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,
@@ -878,11 +926,19 @@ object CastOp extends OperationObject {
 case class CastOp(
     override val operands: ListType[Value[Attribute]],
     override val successors: ListType[Block],
-    override val results: ListType[Value[Attribute]],
+    results_types: ListType[Attribute],
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(name = "db.cast") {
+) extends RegisteredOperation(
+      name = "db.cast",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_verify(): Unit = (
     operands.length,

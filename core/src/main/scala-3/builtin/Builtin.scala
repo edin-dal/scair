@@ -165,6 +165,12 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 \*≡==---==≡≡==---==≡*/
 
 // shortened definition, does not include type information
+
+object StringData {
+  given Conversion[String, StringData] = StringData(_)
+  given Conversion[StringData, String] = _.stringLiteral
+}
+
 case class StringData(val stringLiteral: String)
     extends DataAttribute("builtin.string", stringLiteral) {
   override def custom_print = "\"" + stringLiteral + "\""
@@ -301,7 +307,7 @@ case class VectorType(
 
 case class SymbolRefAttr(
     val rootRef: StringData,
-    val nestedRefs: Seq[StringData]
+    val nestedRefs: Seq[StringData] = Seq()
 ) extends ParametrizedAttribute(
       name = "builtin.symbol_ref",
       Seq(rootRef, nestedRefs)
@@ -475,13 +481,21 @@ object ModuleOp extends OperationObject {
 case class ModuleOp(
     override val operands: ListType[Value[Attribute]] = ListType(),
     override val successors: ListType[Block] = ListType(),
-    override val results: ListType[Value[Attribute]] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "builtin.module") {
+) extends RegisteredOperation(
+      name = "builtin.module",
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    ) {
 
   override def custom_print(
       p: Printer

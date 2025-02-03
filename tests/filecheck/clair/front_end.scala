@@ -54,13 +54,13 @@ object CMathGen
 // CHECK:       case class Norm(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
 // CHECK-NEXT:      override val successors: ListType[Block] = ListType(),
-// CHECK-NEXT:      override val results: ListType[Value[Attribute]] = ListType(),
+// CHECK-NEXT:      results_types: ListType[Attribute] = ListType(),
 // CHECK-NEXT:      override val regions: ListType[Region] = ListType(),
 // CHECK-NEXT:      override val dictionaryProperties: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute],
 // CHECK-NEXT:      override val dictionaryAttributes: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute]
-// CHECK-NEXT:  ) extends RegisteredOperation(name = "cmath.norm") {
+// CHECK-NEXT:  ) extends RegisteredOperation(name = "cmath.norm", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
 // CHECK:         def e1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def e1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
@@ -96,13 +96,13 @@ object CMathGen
 // CHECK:       case class Mul(
 // CHECK-NEXT:      override val operands: ListType[Value[Attribute]] = ListType(),
 // CHECK-NEXT:      override val successors: ListType[Block] = ListType(),
-// CHECK-NEXT:      override val results: ListType[Value[Attribute]] = ListType(),
+// CHECK-NEXT:      results_types: ListType[Attribute] = ListType(),
 // CHECK-NEXT:      override val regions: ListType[Region] = ListType(),
 // CHECK-NEXT:      override val dictionaryProperties: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute],
 // CHECK-NEXT:      override val dictionaryAttributes: DictType[String, Attribute] =
 // CHECK-NEXT:        DictType.empty[String, Attribute]
-// CHECK-NEXT:  ) extends RegisteredOperation(name = "cmath.mul") {
+// CHECK-NEXT:  ) extends RegisteredOperation(name = "cmath.mul", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
 // CHECK:         def e1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def e1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
