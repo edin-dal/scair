@@ -1,6 +1,6 @@
 package scair
 
-import fastparse.*
+import fastparse._
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.core.utils.Args
@@ -22,6 +22,239 @@ import scala.collection.mutable
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 
 object Parser {
+
+  /*≡==--==≡≡≡==--=≡≡*\
+  ||      SCOPE      ||
+  \*≡==---==≡==---==≡*/
+  
+  class Scope(
+    var parentScope: Option[Scope] = None,
+    var valueMap: mutable.Map[String, Value[Attribute]] =
+      mutable.Map.empty[String, Value[Attribute]],
+    var valueWaitlist: mutable.Map[Operation, ListType[
+      (String, Attribute)
+    ]] = mutable.Map.empty[Operation, ListType[(String, Attribute)]],
+    var blockMap: mutable.Map[String, Block] =
+      mutable.Map.empty[String, Block],
+    var blockWaitlist: mutable.Map[Operation, ListType[String]] =
+      mutable.Map.empty[Operation, ListType[String]]
+  ) {
+
+    // child starts off from the parents context
+    def createChild: Scope = {
+      return new Scope(
+        valueMap = valueMap.clone,
+        blockMap = blockMap.clone,
+        parentScope = Some(this)
+      )
+    }
+
+    def defineValues(
+        valueIdAndTypeList: Seq[(String, Value[Attribute])]
+    ): Unit = {
+      valueIdAndTypeList.map((name, value) =>
+        valueMap.contains(name) match {
+          case true =>
+            throw new Exception(s"SSA Value cannot be defined twice %${name}")
+          case false =>
+            valueMap(name) = value
+        }
+      )
+    }
+
+    def useValues(
+        valueIdAndTypeList: Seq[(String, Attribute)]
+    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
+      var forwardRefSeq: ListType[(String, Attribute)] =
+        ListType()
+      var useValSeq: ListType[Value[Attribute]] =
+        ListType()
+      for {
+        (name, typ) <- valueIdAndTypeList
+      } yield !valueMap.contains(name) match {
+        case true =>
+          val tuple = (name, typ)
+          forwardRefSeq += tuple
+        case false =>
+          valueMap(name).typ != typ match {
+            case true =>
+              throw new Exception(
+                s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
+              )
+            case false =>
+              useValSeq += valueMap(name)
+          }
+      }
+      return (useValSeq, forwardRefSeq)
+    }
+
+    def useValue(
+        name: String,
+        typ: Attribute
+    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
+      var forwardRefSeq: ListType[(String, Attribute)] =
+        ListType()
+      var useValSeq: ListType[Value[Attribute]] =
+        ListType()
+      !valueMap.contains(name) match {
+        case true =>
+          val tuple = (name, typ)
+          forwardRefSeq += tuple
+        case false =>
+          valueMap(name).typ != typ match {
+            case true =>
+              throw new Exception(
+                s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
+              )
+            case false =>
+              useValSeq += valueMap(name)
+          }
+      }
+      return (useValSeq, forwardRefSeq)
+    }
+    
+    def checkValueWaitlist(): Unit = {
+
+      for ((operation, operands) <- valueWaitlist) {
+
+        val foundOperands: ListType[(String, Attribute)] = ListType()
+        val operandList: ListType[Value[Attribute]] = ListType()
+
+        for {
+          (name, typ) <- operands
+        } yield valueMap
+          .contains(
+            name
+          ) match {
+          case true =>
+            val tuple = (name, typ)
+            val value = valueMap(name)
+            if (value.typ.name == typ.name) { // to be changed
+              foundOperands += tuple
+              operandList += value
+            }
+          case false =>
+        }
+
+        valueWaitlist(operation) --= foundOperands
+
+        if (valueWaitlist(operation).length == 0) {
+          valueWaitlist -= operation
+        }
+
+        // adding Uses to each found operand
+        val operandsLength = operation.operands.length
+
+        // TO-DO: create a new OpOperands class specifically to close the API
+        //        for operations operands
+        for ((operand, i) <- operandList zip (0 to operandList.length)) {
+          operand.uses += Use(operation, operandsLength + i)
+        }
+
+        operation.operands.appendAll(operandList)
+      }
+
+      if (valueWaitlist.size > 0) {
+        parentScope match {
+          case Some(x) => x.valueWaitlist ++= valueWaitlist
+          case None =>
+            val opName = valueWaitlist.head._1.name
+            val operandName = valueWaitlist.head._2(0)._1
+            val operandTyp = valueWaitlist.head._2(0)._2
+            throw new Exception(
+              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}'\n${valueMap}"
+            )
+        }
+      }
+    }
+
+    def defineBlock(
+        blockName: String,
+        block: Block
+    ): Unit = blockMap.contains(blockName) match {
+      case true =>
+        throw new Exception(
+          s"Block cannot be defined twice within the same scope - ^${blockName}"
+        )
+      case false =>
+        blockMap(blockName) = block
+    }
+
+    def useBlocks(
+        successorList: Seq[String]
+    ): (ListType[Block], ListType[String]) = {
+      var forwardRefSeq: ListType[String] =
+        ListType()
+      var successorBlockSeq: ListType[Block] =
+        ListType()
+      for {
+        name <- successorList
+      } yield !blockMap.contains(name) match {
+        case true =>
+          forwardRefSeq += name
+        case false =>
+          successorBlockSeq += blockMap(name)
+      }
+      return (successorBlockSeq, forwardRefSeq)
+    }
+
+    // check block waitlist once you exit the local scope of a region,
+    // as well as the global scope of the program at the end
+    def checkBlockWaitlist(): Unit = {
+
+      for ((operation, successors) <- blockWaitlist) {
+
+        val foundOperands: ListType[String] = ListType()
+        val successorList: ListType[Block] = ListType()
+
+        for {
+          name <- successors
+        } yield blockMap
+          .contains(
+            name
+          ) match {
+          case true =>
+            foundOperands += name
+            successorList += blockMap(name)
+          case false =>
+        }
+
+        blockWaitlist(operation) --= foundOperands
+
+        if (blockWaitlist(operation).length == 0) {
+          blockWaitlist -= operation
+        }
+        operation.successors.appendAll(successorList)
+      }
+
+      if (blockWaitlist.size > 0) {
+        parentScope match {
+          case Some(x) => x.blockWaitlist ++= blockWaitlist
+          case None =>
+            throw new Exception(
+              s"Successor ^${blockWaitlist.head._2.head} not defined within Scope"
+            )
+        }
+      }
+    }
+
+    def switchWithParent: Scope = parentScope match {
+      case Some(x) =>
+        checkValueWaitlist()
+        checkBlockWaitlist()
+        x
+      case None =>
+        this
+    }
+
+  }
+
+  type ScairParsingRun[+T] = ParsingRun[T]
+
+  type P[+T] = ScairParsingRun[T]
+
+  extension[T] (p : ScairParsingRun[T])
+    def scope : Scope = p.misc.getOrElse("scope", Scope()).asInstanceOf[Scope]
 
   /** Whitespace syntax that supports // line-comments, *without* /* */
     * comments, as is the case in the MLIR Language Spec.
@@ -77,246 +310,6 @@ object Parser {
   def optionlessSeq[A](option: Option[Seq[A]]): Seq[A] = option match {
     case None    => Seq[A]()
     case Some(x) => x
-  }
-
-  /*≡==--==≡≡≡==--=≡≡*\
-  ||      SCOPE      ||
-  \*≡==---==≡==---==≡*/
-
-  object Scope {
-
-    def defineValues(
-        valueIdAndTypeList: Seq[(String, Value[Attribute])]
-    )(implicit
-        scope: Scope
-    ): Unit = {
-      valueIdAndTypeList.map((name, value) =>
-        scope.valueMap.contains(name) match {
-          case true =>
-            throw new Exception(s"SSA Value cannot be defined twice %${name}")
-          case false =>
-            scope.valueMap(name) = value
-        }
-      )
-    }
-
-    def useValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    )(implicit
-        scope: Scope
-    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
-      for {
-        (name, typ) <- valueIdAndTypeList
-      } yield !scope.valueMap.contains(name) match {
-        case true =>
-          val tuple = (name, typ)
-          forwardRefSeq += tuple
-        case false =>
-          scope.valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
-              )
-            case false =>
-              useValSeq += scope.valueMap(name)
-          }
-      }
-      return (useValSeq, forwardRefSeq)
-    }
-
-    def useValue(
-        name: String,
-        typ: Attribute
-    )(implicit
-        scope: Scope
-    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
-      !scope.valueMap.contains(name) match {
-        case true =>
-          val tuple = (name, typ)
-          forwardRefSeq += tuple
-        case false =>
-          scope.valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${scope.valueMap(name).typ}"
-              )
-            case false =>
-              useValSeq += scope.valueMap(name)
-          }
-      }
-      return (useValSeq, forwardRefSeq)
-    }
-
-    def checkValueWaitlist()(implicit scope: Scope): Unit = {
-
-      for ((operation, operands) <- scope.valueWaitlist) {
-
-        val foundOperands: ListType[(String, Attribute)] = ListType()
-        val operandList: ListType[Value[Attribute]] = ListType()
-
-        for {
-          (name, typ) <- operands
-        } yield scope.valueMap
-          .contains(
-            name
-          ) match {
-          case true =>
-            val tuple = (name, typ)
-            val value = scope.valueMap(name)
-            if (value.typ.name == typ.name) { // to be changed
-              foundOperands += tuple
-              operandList += value
-            }
-          case false =>
-        }
-
-        scope.valueWaitlist(operation) --= foundOperands
-
-        if (scope.valueWaitlist(operation).length == 0) {
-          scope.valueWaitlist -= operation
-        }
-
-        // adding Uses to each found operand
-        val operandsLength = operation.operands.length
-
-        // TO-DO: create a new OpOperands class specifically to close the API
-        //        for operations operands
-        for ((operand, i) <- operandList zip (0 to operandList.length)) {
-          operand.uses += Use(operation, operandsLength + i)
-        }
-
-        operation.operands.appendAll(operandList)
-      }
-
-      if (scope.valueWaitlist.size > 0) {
-        scope.parentScope match {
-          case Some(x) => x.valueWaitlist ++= scope.valueWaitlist
-          case None =>
-            val opName = scope.valueWaitlist.head._1.name
-            val operandName = scope.valueWaitlist.head._2(0)._1
-            val operandTyp = scope.valueWaitlist.head._2(0)._2
-            throw new Exception(
-              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}'\n${scope.valueMap}"
-            )
-        }
-      }
-    }
-
-    def defineBlock(
-        blockName: String,
-        block: Block
-    )(implicit
-        scope: Scope
-    ): Unit = scope.blockMap.contains(blockName) match {
-      case true =>
-        throw new Exception(
-          s"Block cannot be defined twice within the same scope - ^${blockName}"
-        )
-      case false =>
-        scope.blockMap(blockName) = block
-    }
-
-    def useBlocks(
-        successorList: Seq[String]
-    )(implicit
-        scope: Scope
-    ): (ListType[Block], ListType[String]) = {
-      var forwardRefSeq: ListType[String] =
-        ListType()
-      var successorBlockSeq: ListType[Block] =
-        ListType()
-      for {
-        name <- successorList
-      } yield !scope.blockMap.contains(name) match {
-        case true =>
-          forwardRefSeq += name
-        case false =>
-          successorBlockSeq += scope.blockMap(name)
-      }
-      return (successorBlockSeq, forwardRefSeq)
-    }
-
-    // check block waitlist once you exit the local scope of a region,
-    // as well as the global scope of the program at the end
-    def checkBlockWaitlist()(implicit scope: Scope): Unit = {
-
-      for ((operation, successors) <- scope.blockWaitlist) {
-
-        val foundOperands: ListType[String] = ListType()
-        val successorList: ListType[Block] = ListType()
-
-        for {
-          name <- successors
-        } yield scope.blockMap
-          .contains(
-            name
-          ) match {
-          case true =>
-            foundOperands += name
-            successorList += scope.blockMap(name)
-          case false =>
-        }
-
-        scope.blockWaitlist(operation) --= foundOperands
-
-        if (scope.blockWaitlist(operation).length == 0) {
-          scope.blockWaitlist -= operation
-        }
-        operation.successors.appendAll(successorList)
-      }
-
-      if (scope.blockWaitlist.size > 0) {
-        scope.parentScope match {
-          case Some(x) => x.blockWaitlist ++= scope.blockWaitlist
-          case None =>
-            throw new Exception(
-              s"Successor ^${scope.blockWaitlist.head._2.head} not defined within Scope"
-            )
-        }
-      }
-    }
-
-  }
-
-  class Scope(
-      var parentScope: Option[Scope] = None,
-      var valueMap: mutable.Map[String, Value[Attribute]] =
-        mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[Operation, ListType[
-        (String, Attribute)
-      ]] = mutable.Map.empty[Operation, ListType[(String, Attribute)]],
-      var blockMap: mutable.Map[String, Block] =
-        mutable.Map.empty[String, Block],
-      var blockWaitlist: mutable.Map[Operation, ListType[String]] =
-        mutable.Map.empty[Operation, ListType[String]]
-  ) {
-
-    // child starts off from the parents context
-    def createChild(): Scope = {
-      return new Scope(
-        valueMap = valueMap.clone,
-        blockMap = blockMap.clone,
-        parentScope = Some(this)
-      )
-    }
-
-    def switchWithParent(scope: Scope): Scope = parentScope match {
-      case Some(x) =>
-        Scope.checkValueWaitlist()(scope)
-        Scope.checkBlockWaitlist()(scope)
-        x
-      case None =>
-        scope
-    }
-
   }
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -554,11 +547,11 @@ class Parser(val context: MLContext, val args: Args = Args())
   implicit var currentScope: Scope = new Scope()
 
   def enterLocalRegion = {
-    currentScope = currentScope.createChild()
+    currentScope = currentScope.createChild
   }
 
   def enterParentRegion = {
-    currentScope = currentScope.switchWithParent(currentScope)
+    currentScope = currentScope.switchWithParent
   }
 
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -570,9 +563,9 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def TopLevel[$: P]: P[Operation] = P(
     Start ~ (Operations(0)) ~ E({
-      Scope.checkValueWaitlist()
-      Scope.checkBlockWaitlist()
-    }) ~ End
+      $.scope().checkValueWaitlist()
+      $.scope().checkBlockWaitlist()
+    }).scope.checkValueWaitlist() ~ End
   ).map((toplevel: ListType[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
@@ -900,13 +893,16 @@ class Parser(val context: MLContext, val args: Args = Args())
       arguments_types = ListType.from(uncutBlock._2.map(_._2))
     )
     for (op <- newBlock.operations) op.container_block = Some(newBlock)
-    Scope.defineBlock(uncutBlock._1, newBlock)
-    Scope.defineValues(uncutBlock._2.map(_._1) zip newBlock.arguments)
+    scope.defineBlock(uncutBlock._1, newBlock)
+    scope.defineValues(uncutBlock._2.map(_._1) zip newBlock.arguments)
     return newBlock
   }
 
   def Block[$: P] =
-    P(BlockLabel ~ Operations(0)).map(createBlock)
+    P(BlockLabel ~ Operations(0)).map({
+      val b = createBlock
+      scope
+    })
 
   def BlockLabel[$: P] = P(
     BlockId ~ BlockArgList.?.map(optionlessSeq) ~ ":"
