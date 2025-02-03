@@ -877,7 +877,6 @@ class Parser(val context: MLContext, val args: Args = Args())
     PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
-          println(y)
           y.parse(resNames, this)
         case None =>
           throw new Exception(
