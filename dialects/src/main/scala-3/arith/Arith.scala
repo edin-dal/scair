@@ -129,7 +129,7 @@ case class Addf(
     rhs: Operand[FloatType],
     result: Result[FloatType],
     fastmath: Property[FastMathFlagsAttr],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Mulf(
@@ -137,16 +137,16 @@ case class Mulf(
     rhs: Operand[FloatType],
     result: Result[FloatType],
     fastmath: Property[FastMathFlagsAttr],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
+
 // I'm not sure about the flag here
 case class Divf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
     fastmath: Property[FastMathFlagsAttr],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
@@ -154,49 +154,49 @@ case class Addi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Subi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Muli(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],    
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    result: Result[AnyIntegerType],
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Divui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Divsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Remui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Remsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Cmpi(
@@ -204,36 +204,34 @@ case class Cmpi(
     rhs: Operand[AnyIntegerType],
     result: Result[I1],
     predicate: Property[IntegerPredicate],
-    assembly_format : "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Andi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
 
 case class Ori(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1],
-    assembly_format : "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends OperationFE
-
 
 case class Sitofp(
     in: Operand[AnyIntegerType],
     out: Result[FloatType],
-    assembly_format : "$in `:` type($in) `to` type($out)"
+    assembly_format: "$in `:` type($in) `to` type($out)"
 ) extends OperationFE
 
 case class Index_Cast(
     in: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    assembly_format : "$in `:` type($in) `to` type($out)"
+    assembly_format: "$in `:` type($in) `to` type($out)"
 ) extends OperationFE
-
 
 object ArithGen
     extends ScaIRDLDialect(
