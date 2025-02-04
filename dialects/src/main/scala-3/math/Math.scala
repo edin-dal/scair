@@ -33,13 +33,12 @@ object AbsfOp extends OperationObject {
         )
       }
 
-      parser.verifyCustomOp(
-        opGen = AbsfOp.apply,
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(operandName),
-        operandTypes = Seq(type_),
-        resultNames = resNames,
-        resultTypes = Seq(type_)
+        operandsNames = Seq(operandName),
+        operandsTypes = Seq(type_),
+        resultsNames = resNames,
+        resultsTypes = Seq(type_)
       )
     }
   }
@@ -106,13 +105,12 @@ object FPowIOp extends OperationObject {
           )
         }
 
-        parser.verifyCustomOp(
-          opGen = FPowIOp.apply,
+        parser.generateOperation(
           opName = name,
-          operandNames = Seq(operand1Name, operand2Name),
-          operandTypes = Seq(operand1Type, operand2Type),
-          resultNames = resNames,
-          resultTypes = Seq(operand1Type)
+          operandsNames = Seq(operand1Name, operand2Name),
+          operandsTypes = Seq(operand1Type, operand2Type),
+          resultsNames = resNames,
+          resultsTypes = Seq(operand1Type)
         )
     }
   }

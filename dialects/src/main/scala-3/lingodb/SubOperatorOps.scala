@@ -98,12 +98,11 @@ object SetResultOp extends OperationObject {
         z: Attribute,
         w: Seq[(String, Attribute)]
     ) =>
-      parser.verifyCustomOp(
-        opGen = factory,
+      parser.generateOperation(
         opName = name,
-        operandNames = Seq(y),
-        operandTypes = Seq(z),
-        dictAttrs = w :+ ("result_id", x)
+        operandsNames = Seq(y),
+        operandsTypes = Seq(z),
+        attributes = w :+ ("result_id", x)
       )
   )
   // ==----------------------== //
