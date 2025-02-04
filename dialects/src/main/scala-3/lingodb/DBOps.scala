@@ -271,17 +271,17 @@ object DB_ConstantOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         x: Attribute,
         y: Attribute,
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
         resultsTypes = Seq(y),
-        attributes = z :+ ("value", x)
+        attributes = z + ("value" -> x)
       )
   )
   // ==----------------------== //
@@ -341,7 +341,7 @@ object DB_CmpOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         x: Attribute,
@@ -349,14 +349,14 @@ object DB_CmpOp extends OperationObject {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
         resultsTypes = Seq(I1),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
-        attributes = z :+ ("predicate", x)
+        attributes = z + ("predicate" -> x)
       )
   )
   // ==----------------------== //
@@ -484,14 +484,14 @@ object DB_MulOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         left: String,
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -631,14 +631,14 @@ object DB_DivOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         left: String,
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -714,14 +714,14 @@ object DB_AddOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         left: String,
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -799,14 +799,14 @@ object DB_SubOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         left: String,
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -882,13 +882,13 @@ object CastOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         operand: String,
         opType: Attribute,
         resTypes: Seq[Attribute],
-        z: Seq[(String, Attribute)]
+        z: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
