@@ -723,7 +723,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             attributes: Seq[(String, Attribute)],
             operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
         ) =>
-          val op = generateOperation(
+          generateOperation(
             opName,
             operandsNames,
             successorsNames,
@@ -733,7 +733,6 @@ class Parser(val context: MLContext, val args: Args = Args())
             operandsAndResultsTypes._2,
             operandsAndResultsTypes._1
           )
-          op
     ).tupled
   )
 
