@@ -39,7 +39,10 @@ object CMathGen
 // CHECK:       package scair.dialects.cmath
 
 // CHECK:       import scair.ir._
-// CHECK-NEXT:  import scair.dialects.builtin._
+// CHECK-NEXT:  import scair.Parser
+// CHECK-NEXT:  import scair.Parser.whitespace
+
+// CHECK:       import scair.dialects.builtin._
 // CHECK-NEXT:  import scair.scairdl.constraints._
 // CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
 
