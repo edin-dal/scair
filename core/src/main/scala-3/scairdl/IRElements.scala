@@ -351,13 +351,12 @@ case class OperationDef(
         $finalParsing
       ).map {
           ${if (patternVariables.nonEmpty) s"($patternVariables)" else "()"} =>
-          parser.verifyCustomOp(
-            opGen = $className.factory,
+          parser.generateOperation(
             opName = name,
-            operandNames = Seq(${operandVars.mkString(", ")}),
-            operandTypes = Seq(${typeVars.mkString(", ")}),
-            resultNames = resNames,
-            resultTypes = Seq(${resultVars.mkString(", ")})
+            operandsNames = Seq(${operandVars.mkString(", ")}),
+            operandsTypes = Seq(${typeVars.mkString(", ")}),
+            resultsNames = resNames,
+            resultsTypes = Seq(${resultVars.mkString(", ")})
           )
       }
   }
