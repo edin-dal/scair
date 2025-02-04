@@ -41,8 +41,7 @@ case class For(
     lowerBoundMap: Property[AffineMapAttr],
     upperBoundMap: Property[AffineMapAttr],
     step: Property[IntegerAttr],
-    body: Region,
-    assembly_format: "daiowdjwiojd"
+    body: Region
 ) extends OperationFE
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
