@@ -344,7 +344,6 @@ case class OperationDef(
 
     f"""
   override def parse[$$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = {
       P(
@@ -355,7 +354,6 @@ case class OperationDef(
             opName = name,
             operandsNames = Seq(${operandVars.mkString(", ")}),
             operandsTypes = Seq(${typeVars.mkString(", ")}),
-            resultsNames = resNames,
             resultsTypes = Seq(${resultVars.mkString(", ")})
           )
       }

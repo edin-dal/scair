@@ -161,7 +161,6 @@ object BaseTableOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ) = P(
     parser.DictionaryAttribute.?.map(Parser.optionlessSeq) ~
@@ -174,8 +173,7 @@ object BaseTableOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
-        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        resultsTypes = Seq(TupleStream(Seq())),
         attributes = x,
         properties = y
       )
@@ -243,7 +241,6 @@ object SelectionOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ DialectRegion(parser)
@@ -261,8 +258,7 @@ object SelectionOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
-        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
         attributes = z
       )
@@ -323,7 +319,6 @@ object MapOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId
@@ -343,8 +338,7 @@ object MapOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
-        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
         attributes = w :+ ("computed_cols", z)
       )
@@ -420,7 +414,6 @@ object AggregationOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId
@@ -448,8 +441,7 @@ object AggregationOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
-        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
         attributes = w :+ ("group_by_cols", reff) :+ ("computed_cols", deff)
       )
@@ -540,7 +532,6 @@ object CountRowsOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
@@ -554,7 +545,6 @@ object CountRowsOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
         resultsTypes = Seq(I64),
         attributes = y
       )
@@ -619,7 +609,6 @@ object AggrFuncOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
@@ -638,7 +627,6 @@ object AggrFuncOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
         resultsTypes = resTypes,
         attributes = y :+ ("fn", aggrfunc) :+ ("attr", attr)
       )
@@ -725,7 +713,6 @@ object SortOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId
@@ -745,8 +732,7 @@ object SortOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
-        resultsTypes = (for { name <- resNames } yield TupleStream(Seq())),
+        resultsTypes = Seq(TupleStream(Seq())),
         attributes = y :+ ("sortspecs", attr)
       )
   )
@@ -824,7 +810,6 @@ object MaterializeOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId
@@ -850,7 +835,6 @@ object MaterializeOp extends OperationObject {
         opName = name,
         operandsNames = Seq(operand),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
         resultsTypes = resTypes,
         attributes = y :+ ("cols", cols) :+ ("columns", columns)
       )

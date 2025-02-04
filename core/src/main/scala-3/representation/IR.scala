@@ -465,7 +465,7 @@ class RegisteredOperation(
 trait OperationObject {
   def name: String
 
-  def parse[$: P](resNames: Seq[String], parser: Parser): P[Operation] =
+  def parse[$: P](parser: Parser): P[Operation] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )

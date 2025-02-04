@@ -465,15 +465,11 @@ object ModuleOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] =
-    if resNames != Nil then
-      throw new Exception("ModuleOp does not have results")
-    else
-      P(
-        parser.Region
-      ).map((x: Region) => ModuleOp(regions = ListType(x)))
+    P(
+      parser.Region
+    ).map((x: Region) => ModuleOp(regions = ListType(x)))
   // ==----------------------== //
 
 }

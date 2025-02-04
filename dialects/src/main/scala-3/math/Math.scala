@@ -5,7 +5,6 @@ import scair.Parser
 import scair.Parser.whitespace
 import scair.ir.*
 
-import scala.collection.immutable
 import scala.collection.mutable
 
 ////////////////
@@ -21,23 +20,15 @@ object AbsfOp extends OperationObject {
   override def factory: FactoryType = AbsfOp.apply
 
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = {
     P(
       "" ~ Parser.ValueUse ~ ":" ~ parser.Type
     ).map { case (operandName, type_) =>
-      if (resNames.length != 1) {
-        throw new Exception(
-          s"AbsfOp must produce exactly one result, but found ${resNames.length}."
-        )
-      }
-
       parser.generateOperation(
         opName = name,
         operandsNames = Seq(operandName),
         operandsTypes = Seq(type_),
-        resultsNames = resNames,
         resultsTypes = Seq(type_)
       )
     }
@@ -87,7 +78,6 @@ object FPowIOp extends OperationObject {
   override def factory = FPowIOp.apply
 
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = {
     P(
@@ -99,17 +89,10 @@ object FPowIOp extends OperationObject {
             operand1Type,
             operand2Type
           ) =>
-        if (resNames.length != 1) {
-          throw new Exception(
-            s"FPowIOp must produce exactly one result, but found ${resNames.length}."
-          )
-        }
-
         parser.generateOperation(
           opName = name,
           operandsNames = Seq(operand1Name, operand2Name),
           operandsTypes = Seq(operand1Type, operand2Type),
-          resultsNames = resNames,
           resultsTypes = Seq(operand1Type)
         )
     }
