@@ -593,7 +593,6 @@ class Parser(val context: MLContext, val args: Args = Args())
   //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
   def generateOperation(
       opName: String,
-      resultsNames: Seq[String] = Seq(),
       operandsNames: Seq[String] = Seq(),
       successorsNames: Seq[String] = Seq(),
       properties: Seq[(String, Attribute)] = Seq(),
@@ -602,11 +601,6 @@ class Parser(val context: MLContext, val args: Args = Args())
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
   ): Operation = {
-    if (resultsNames.length != resultsTypes.length) {
-      throw new Exception(
-        s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
-      )
-    }
 
     if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
@@ -673,8 +667,6 @@ class Parser(val context: MLContext, val args: Args = Args())
           )
     }
 
-    currentScope.defineValues(resultsNames zip op.results)
-
     // adding uses for known operands
     for (
       (operand, i) <-
@@ -701,9 +693,15 @@ class Parser(val context: MLContext, val args: Args = Args())
     ).flatMap(Op(_)) ~/ TrailingLocation.?
   )
 
-  def Op[$: P](resName: Seq[String]) = P(
-    GenericOperation(resName) | CustomOperation(resName)
+  def Op[$: P](resNames: Seq[String]) = P(
+    GenericOperation(resNames) | CustomOperation(resNames)
   ).map(op => {
+    if (resNames.length != op.results.length) {
+      throw new Exception(
+        s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${resNames.length}) in \"${op.name}\"."
+      )
+    }
+    currentScope.defineValues(resNames zip op.results)
     for (region <- op.regions) region.container_operation = Some(op)
     op
   })
@@ -725,9 +723,8 @@ class Parser(val context: MLContext, val args: Args = Args())
             attributes: Seq[(String, Attribute)],
             operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
         ) =>
-          generateOperation(
+          val op = generateOperation(
             opName,
-            resNames,
             operandsNames,
             successorsNames,
             properties,
@@ -736,6 +733,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             operandsAndResultsTypes._2,
             operandsAndResultsTypes._1
           )
+          op
     ).tupled
   )
 
@@ -743,7 +741,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
-          y.parse(resNames, this)
+          y.parse(this)
         case None =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."

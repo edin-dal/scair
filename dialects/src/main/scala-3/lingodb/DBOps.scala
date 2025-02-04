@@ -268,7 +268,6 @@ object DB_ConstantOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
@@ -281,7 +280,6 @@ object DB_ConstantOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
         resultsTypes = Seq(y),
         attributes = z :+ ("value", x)
       )
@@ -340,7 +338,6 @@ object DB_CmpOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
@@ -356,7 +353,6 @@ object DB_CmpOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
         resultsTypes = Seq(I1),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -485,7 +481,6 @@ object DB_MulOp extends OperationObject {
   }
 
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
@@ -500,7 +495,6 @@ object DB_MulOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
         resultsTypes = inferRetType(leftType, rightType),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -634,7 +628,6 @@ object DB_DivOp extends OperationObject {
   }
 
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
@@ -651,7 +644,6 @@ object DB_DivOp extends OperationObject {
         opName = name,
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
-        resultsNames = resNames,
         resultsTypes = inferRetType(leftType, rightType),
         attributes = z
       )
@@ -719,7 +711,6 @@ object DB_AddOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
@@ -734,7 +725,6 @@ object DB_AddOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
         resultsTypes = Seq(leftType),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -806,7 +796,6 @@ object DB_SubOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
@@ -821,7 +810,6 @@ object DB_SubOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
         resultsTypes = Seq(leftType),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -891,7 +879,6 @@ object CastOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
@@ -905,7 +892,6 @@ object CastOp extends OperationObject {
     ) =>
       parser.generateOperation(
         opName = name,
-        resultsNames = resNames,
         resultsTypes = resTypes,
         operandsNames = Seq(operand),
         operandsTypes = Seq(opType),

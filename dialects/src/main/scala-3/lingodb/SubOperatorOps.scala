@@ -86,7 +86,6 @@ object SetResultOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     parser.Type ~ ValueId ~ ":" ~ parser.Type

@@ -138,7 +138,6 @@ object ReturnOp extends OperationObject {
   }
 
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     parser.DictionaryAttribute.?.map(Parser.optionlessSeq) ~ (ValueId.rep(sep =
@@ -200,7 +199,6 @@ object GetColumnOp extends OperationObject {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      resNames: Seq[String],
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
@@ -217,7 +215,6 @@ object GetColumnOp extends OperationObject {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
-        resultsNames = resNames,
         resultsTypes = Seq(z),
         attributes = w :+ ("attr", y)
       )
