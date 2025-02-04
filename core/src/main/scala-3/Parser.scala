@@ -79,6 +79,28 @@ object Parser {
     case Some(x) => x
   }
 
+  /** Higher-order optional parser.
+    *
+    * Takes a parser p, and parses it optionally, defaulting the parsed value to
+    * the passed default.
+    *
+    * @todo:
+    *   Figure out dark implicit magic to figure out magically that the default
+    *   is "T()".
+    *
+    * @tparam T
+    *   The optionally parsed type.
+    * @param p
+    *   The parser to use optionally
+    * @param default
+    *   The default value to use if the parser fails.
+    * @return
+    *   A parser optionally parsing p, defaulting to default.
+    */
+  inline def Optional[$: P, T](p: => P[T], default: T): P[T] = P(
+    p.?.map(_.getOrElse(default))
+  )
+
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||
   \*≡==---==≡==---==≡*/
@@ -591,13 +613,38 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] region-list           ::= `(` region (`,` region)* `)`
 
   //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
+
+  /** Generates an operation based on the provided parameters.
+    *
+    * @param opName
+    *   The name of the operation to generate.
+    * @param operandsNames
+    *   A sequence of operand names. Defaults to an empty sequence.
+    * @param successorsNames
+    *   A sequence of successor names. Defaults to an empty sequence.
+    * @param properties
+    *   A dictionary of properties for the operation. Defaults to an empty
+    *   dictionary.
+    * @param regions
+    *   A sequence of regions for the operation. Defaults to an empty sequence.
+    * @param attributes
+    *   A dictionary of attributes for the operation. Defaults to an empty
+    *   dictionary.
+    * @param resultsTypes
+    *   A sequence of result types for the operation. Defaults to an empty
+    *   sequence.
+    * @param operandsTypes
+    *   A sequence of operand types. Defaults to an empty sequence.
+    * @return
+    *   The generated operation.
+    */
   def generateOperation(
       opName: String,
       operandsNames: Seq[String] = Seq(),
       successorsNames: Seq[String] = Seq(),
-      properties: Seq[(String, Attribute)] = Seq(),
+      properties: DictType[String, Attribute] = DictType(),
       regions: Seq[Region] = Seq(),
-      attributes: Seq[(String, Attribute)] = Seq(),
+      attributes: DictType[String, Attribute] = DictType(),
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
   ): Operation = {
@@ -605,28 +652,6 @@ class Parser(val context: MLContext, val args: Args = Args())
     if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
         s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
-      )
-    }
-
-    val dictPropertiesMap: DictType[String, Attribute] =
-      DictType[String, Attribute](
-        properties.map({ case (x, y) => x -> y }): _*
-      )
-
-    if (properties.length != dictPropertiesMap.size) {
-      throw new Exception(
-        "Dictionary Properties names in Operation " + opName + " are cloned."
-      )
-    }
-
-    val dictAttributesMap: DictType[String, Attribute] =
-      DictType[String, Attribute](
-        attributes.map({ case (x, y) => x -> y }): _*
-      )
-
-    if (attributes.length != dictAttributesMap.size) {
-      throw new Exception(
-        "Dictionary Properties names in Operation " + opName + " are cloned."
       )
     }
 
@@ -644,9 +669,9 @@ class Parser(val context: MLContext, val args: Args = Args())
         x.constructOp(
           operands = useAndRefValueSeqs._1,
           successors = useAndRefBlockSeqs._1,
-          dictionaryProperties = dictPropertiesMap,
+          dictionaryProperties = properties,
           results_types = ListType.from(resultsTypes),
-          dictionaryAttributes = dictAttributesMap,
+          dictionaryAttributes = attributes,
           regions = ListType.from(regions)
         )
 
@@ -656,9 +681,9 @@ class Parser(val context: MLContext, val args: Args = Args())
             name = opName,
             operands = useAndRefValueSeqs._1,
             successors = useAndRefBlockSeqs._1,
-            dictionaryProperties = dictPropertiesMap,
+            dictionaryProperties = properties,
             results_types = ListType.from(resultsTypes),
-            dictionaryAttributes = dictAttributesMap,
+            dictionaryAttributes = attributes,
             regions = ListType.from(regions)
           )
         else
@@ -709,18 +734,18 @@ class Parser(val context: MLContext, val args: Args = Args())
   def GenericOperation[$: P](resNames: Seq[String]) = P(
     StringLiteral ~/ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
       ~/ SuccessorList.?.map(optionlessSeq)
-      ~/ DictionaryProperties.?.map(optionlessSeq)
+      ~/ Optional(DictionaryProperties, DictType.empty)
       ~/ RegionList.?.map(optionlessSeq)
-      ~/ DictionaryAttribute.?.map(optionlessSeq) ~/ ":" ~/ FunctionType
+      ~/ Optional(DictionaryAttribute, DictType.empty) ~/ ":" ~/ FunctionType
   ).map(
     (
         (
             opName: String,
             operandsNames: Seq[String],
             successorsNames: Seq[String],
-            properties: Seq[(String, Attribute)],
+            properties: DictType[String, Attribute],
             regions: Seq[Region],
-            attributes: Seq[(String, Attribute)],
+            attributes: DictType[String, Attribute],
             operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
         ) =>
           generateOperation(
@@ -857,13 +882,53 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
 
+  /** Parses a properties dictionary, which synctatically simply is an attribute
+    * dictionary wrapped in angle brackets.
+    *
+    * @return
+    *   A properties dictionary parser.
+    */
   def DictionaryProperties[$: P] = P(
     "<" ~ DictionaryAttribute ~ ">"
   )
 
-  def DictionaryAttribute[$: P] = P(
-    "{" ~ AttributeEntry.rep(sep = ",") ~ "}"
+  /** Parses an attributes dictionary.
+    *
+    * @return
+    *   An attribute dictionary parser.
+    */
+  inline def DictionaryAttribute[$: P] = P(
+    "{" ~ AttributeEntry
+      .rep(sep = ",")
+      .map(DictType[String, Attribute](_*)) ~ "}"
   )
+
+  /** Parses an optional properties dictionary from the input.
+    *
+    * @return
+    *   An optional dictionary of properties - empty if no dictionary is
+    *   present.
+    */
+  inline def OptionalProperties[$: P]() =
+    Optional(DictionaryProperties, DictType.empty)
+
+  /** Parses an optional attributes dictionary from the input.
+    *
+    * @return
+    *   An optional dictionary of attributes - empty if no dictionary is
+    *   present.
+    */
+  inline def OptionalAttributes[$: P] =
+    Optional(DictionaryAttribute, DictType.empty)
+
+  /** Parses an optional attributes dictionary from the input, preceded by the
+    * `attributes` keyword.
+    *
+    * @return
+    *   An optional dictionary of attributes - empty if no keyword is present.
+    */
+  inline def OptionalKeywordAttributes[$: P] =
+    Optional("attributes" ~ DictionaryAttribute, DictType.empty)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||  PARSE FUNCTION  ||
