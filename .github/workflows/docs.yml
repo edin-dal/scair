@@ -15,15 +15,13 @@ jobs:
     steps:
     - name: Checkout Scair
       uses: actions/checkout@v4
-      with:
-        path: scair
 
     # Restore SBT's incremental build cache
     - name: Restore Incremental Build Cache
       uses: actions/cache@v4
       with:
         # All the target/ subdirectories are cached
-        path: "scair/**/target"
+        path: "**/target"
         # Caches are immutable; we need to uniquely identify them to always push the recent ones
         # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
         key: sbt-incremental-docs-${{ github.run_id }}-${{ github.run_attempt }}
@@ -41,14 +39,13 @@ jobs:
         apps: scala:3.3.1 sbt
 
     - name: Generate documentation
-      run: |
-        cd scair
-        sbt unidoc
+      run: sbt unidoc
+      
     - name: Upload static files as artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
       with:
-          path: scair/target/scala-3.3.4/unidoc/
+          path: target/scala-3.3.4/unidoc/
 
   deploy:
     name: "Deploy to GitHub Pages"
