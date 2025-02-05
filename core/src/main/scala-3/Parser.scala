@@ -74,8 +74,6 @@ object Parser {
     a
   }
 
-
-
   extension [T](inline p: P[T])
 
     /** Make the parser optional, parsing defaults if otherwise failing.
@@ -92,7 +90,6 @@ object Parser {
     inline def orElse[$: P](default: T): P[T] = P(
       p.?.map(_.getOrElse(default))
     )
-
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||

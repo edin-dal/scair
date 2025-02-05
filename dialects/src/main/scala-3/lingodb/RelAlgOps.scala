@@ -136,13 +136,13 @@ case class SortSpecificationAttr(
 
 private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
-    ~ (parser.BlockArgList.orElse(Seq()).map(
-      (x: Seq[(String, Attribute)]) => {
+    ~ (parser.BlockArgList
+      .orElse(Seq())
+      .map((x: Seq[(String, Attribute)]) => {
         val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
         parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
-      }
-    )
+      })
       ~ "{"
       ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
       b.operations ++= y

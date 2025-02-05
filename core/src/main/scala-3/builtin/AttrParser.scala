@@ -188,8 +188,9 @@ class AttrParser(val ctx: MLContext) {
       Seq()
     )).map((typ: IntegerType, x: Seq[IntData]) =>
       DenseArrayAttr(typ, x.map(IntegerAttr(_, typ)))
-    ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).orElse(Seq())).map((typ: FloatType, x: Seq[FloatData]) =>
-      DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
+    ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).orElse(Seq())).map(
+      (typ: FloatType, x: Seq[FloatData]) =>
+        DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
     )) ~ ">"
   )
 
