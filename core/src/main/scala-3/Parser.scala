@@ -91,6 +91,12 @@ object Parser {
       p.?.map(_.getOrElse(default))
     )
 
+    inline def ensure[$: P](check: T => Boolean, msg: T => String): P[T] = P(
+      p.flatMapX(parsed =>
+        if (check(parsed)) Pass(parsed) else Fail(msg(parsed))
+      )
+    )
+
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||
   \*≡==---==≡==---==≡*/
@@ -511,7 +517,9 @@ object Parser {
   def DialectNamespace[$: P] = P(DialectBareId)
 
   def PrettyDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
+    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName).map(
+      (dialect, op) => f"$dialect.$op"
+    )
   )
 
   def OpaqueDialectReferenceName[$: P] = P(
@@ -750,16 +758,9 @@ class Parser(val context: MLContext, val args: Args = Args())
   )
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
-    PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
-      ctx.getOperation(s"${x}.${y}") match {
-        case Some(y) =>
-          y.parse(this)
-        case None =>
-          throw new Exception(
-            s"Operation ${x}.${y} is not defined in any supported Dialect."
-          )
-      }
-    }
+    PrettyDialectReferenceName./.map(name => (name, ctx.getOperation(name)))
+      .ensure(_._2 != None, (name, _) => f"Unregistered op ${name}")
+      .flatMap(_._2.get.parse(this))
   )
 
   def RegionList[$: P] =
