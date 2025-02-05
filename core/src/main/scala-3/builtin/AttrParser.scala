@@ -28,29 +28,29 @@ import java.lang.Float.intBitsToFloat
 class AttrParser(val ctx: MLContext) {
 
   def DialectAttribute[$: P]: P[Attribute] = P(
-    "#" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
-      ctx.getAttribute(s"${x}.${y}") match {
+    "#" ~ PrettyDialectReferenceName.flatMap { (name: String) =>
+      ctx.getAttribute(name) match {
         case Some(y) =>
           y.parse(this)
         case None =>
           throw new Exception(
-            s"Type ${x} is not defined in any supported Dialect."
+            s"Type $name is not defined in any supported Dialect."
           )
       }
     }
   )
 
   def DialectType[$: P]: P[Attribute] = P(
-    "!" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
-      ctx.getAttribute(s"${x}.${y}") match {
+    "!" ~ PrettyDialectReferenceName.flatMap { (name: String) =>
+      ctx.getAttribute(name) match {
         case Some(y) =>
           y.parse(this)
         case None =>
           println(
-            s"Type ${x} is not defined in any supported Dialect."
+            s"Type $name is not defined in any supported Dialect."
           )
           throw new Exception(
-            s"Type ${x} is not defined in any supported Dialect."
+            s"Type $name is not defined in any supported Dialect."
           )
       }
     }
