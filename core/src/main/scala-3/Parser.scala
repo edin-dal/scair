@@ -74,32 +74,22 @@ object Parser {
     a
   }
 
-  def optionlessSeq[A](option: Option[Seq[A]]): Seq[A] = option match {
-    case None    => Seq[A]()
-    case Some(x) => x
-  }
+  extension [T](inline p: P[T])
 
-  /** Higher-order optional parser.
-    *
-    * Takes a parser p, and parses it optionally, defaulting the parsed value to
-    * the passed default.
-    *
-    * @todo:
-    *   Figure out dark implicit magic to figure out magically that the default
-    *   is "T()".
-    *
-    * @tparam T
-    *   The optionally parsed type.
-    * @param p
-    *   The parser to use optionally
-    * @param default
-    *   The default value to use if the parser fails.
-    * @return
-    *   A parser optionally parsing p, defaulting to default.
-    */
-  inline def Optional[$: P, T](p: => P[T], default: T): P[T] = P(
-    p.?.map(_.getOrElse(default))
-  )
+    /** Make the parser optional, parsing defaults if otherwise failing.
+      *
+      * @todo:
+      *   Figure out dark implicit magic to figure out magically that the
+      *   default default is "T()".
+      *
+      * @param default
+      *   The default value to use if the parser fails.
+      * @return
+      *   An optional parser, defaulting to default.
+      */
+    inline def orElse[$: P](default: T): P[T] = P(
+      p.?.map(_.getOrElse(default))
+    )
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||
@@ -374,7 +364,7 @@ object Parser {
   def FloatLiteral[$: P] = P(
     CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).!
       ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).?.map(_.getOrElse("0"))
+        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
   def notExcluded[$: P] = P(
@@ -713,9 +703,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(OperationPat.rep(at_least_this_many).map(_.to(ListType)))
 
   def OperationPat[$: P]: P[Operation] = P(
-    OpResultList.?./.map(
-      optionlessSeq
-    ).flatMap(Op(_)) ~/ TrailingLocation.?
+    OpResultList.orElse(Seq()).flatMap(Op(_)) ~/ TrailingLocation.?
   )
 
   def Op[$: P](resNames: Seq[String]) = P(
@@ -732,11 +720,11 @@ class Parser(val context: MLContext, val args: Args = Args())
   })
 
   def GenericOperation[$: P](resNames: Seq[String]) = P(
-    StringLiteral ~/ "(" ~ ValueUseList.?.map(optionlessSeq) ~ ")"
-      ~/ SuccessorList.?.map(optionlessSeq)
-      ~/ Optional(DictionaryProperties, DictType.empty)
-      ~/ RegionList.?.map(optionlessSeq)
-      ~/ Optional(DictionaryAttribute, DictType.empty) ~/ ":" ~/ FunctionType
+    StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
+      ~/ SuccessorList.orElse(Seq())
+      ~/ DictionaryProperties.orElse(DictType.empty)
+      ~/ RegionList.orElse(Seq())
+      ~/ (DictionaryAttribute).orElse(DictType.empty) ~/ ":" ~/ FunctionType
   ).map(
     (
         (
@@ -802,7 +790,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(BlockLabel ~ Operations(0)).map(createBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~ BlockArgList.?.map(optionlessSeq) ~ ":"
+    BlockId ~ BlockArgList.orElse(Seq()) ~ ":"
   )
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
@@ -874,10 +862,10 @@ class Parser(val context: MLContext, val args: Args = Args())
   def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
 
   def ValueIdAndTypeList[$: P] =
-    P(ValueIdAndType.rep(sep = ","))
+    P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
   def BlockArgList[$: P] =
-    P("(" ~ ValueIdAndTypeList.? ~ ")").map(optionlessSeq)
+    P("(" ~ ValueIdAndTypeList ~ ")")
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
@@ -910,7 +898,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   present.
     */
   inline def OptionalProperties[$: P]() =
-    Optional(DictionaryProperties, DictType.empty)
+    (DictionaryProperties).orElse(DictType.empty)
 
   /** Parses an optional attributes dictionary from the input.
     *
@@ -919,7 +907,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   present.
     */
   inline def OptionalAttributes[$: P] =
-    Optional(DictionaryAttribute, DictType.empty)
+    (DictionaryAttribute).orElse(DictType.empty)
 
   /** Parses an optional attributes dictionary from the input, preceded by the
     * `attributes` keyword.
@@ -928,7 +916,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An optional dictionary of attributes - empty if no keyword is present.
     */
   inline def OptionalKeywordAttributes[$: P] =
-    Optional("attributes" ~ DictionaryAttribute, DictType.empty)
+    ("attributes" ~ DictionaryAttribute).orElse(DictType.empty)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||  PARSE FUNCTION  ||

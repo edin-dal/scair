@@ -4,6 +4,7 @@ import fastparse.*
 import scair.AttrParser
 import scair.Parser
 import scair.Parser.ValueId
+import scair.Parser.orElse
 import scair.Parser.whitespace
 import scair.dialects.builtin.*
 import scair.ir.*
@@ -142,7 +143,7 @@ object ReturnOp extends OperationObject {
   ): P[Operation] = P(
     parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
-      parser.Type.rep(sep = ",")).?.map(makeResults)
+      parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
   ).map((x: DictType[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
     parser.generateOperation(
       opName = name,

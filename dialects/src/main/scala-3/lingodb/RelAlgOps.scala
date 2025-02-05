@@ -8,7 +8,7 @@ import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.E
 import scair.Parser.ValueId
-import scair.Parser.optionlessSeq
+import scair.Parser.orElse
 import scair.Parser.whitespace
 import scair.dialects.LingoDB.SubOperatorOps.*
 import scair.dialects.LingoDB.TupleStream.*
@@ -136,13 +136,13 @@ case class SortSpecificationAttr(
 
 private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
-    ~ (parser.BlockArgList.?.map(optionlessSeq).map(
-      (x: Seq[(String, Attribute)]) => {
+    ~ (parser.BlockArgList
+      .orElse(Seq())
+      .map((x: Seq[(String, Attribute)]) => {
         val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
         parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
-      }
-    )
+      })
       ~ "{"
       ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
       b.operations ++= y
@@ -244,8 +244,8 @@ object SelectionOp extends OperationObject {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    ValueId ~ DialectRegion(parser)
-      ~ "attributes" ~ parser.OptionalAttributes
+    ValueId ~ DialectRegion(parser) ~
+      parser.OptionalKeywordAttributes
   )
     .map(
       (
@@ -325,10 +325,7 @@ object MapOp extends OperationObject {
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
-      ~ Parser.Optional(
-        "attributes" ~ parser.DictionaryAttribute,
-        DictType.empty
-      )
+      ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
@@ -430,10 +427,7 @@ object AggregationOp extends OperationObject {
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
-      ~ Parser.Optional(
-        "attributes" ~ parser.DictionaryAttribute,
-        DictType.empty
-      )
+      ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
