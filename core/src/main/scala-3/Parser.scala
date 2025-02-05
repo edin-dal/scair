@@ -862,10 +862,10 @@ class Parser(val context: MLContext, val args: Args = Args())
   def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
 
   def ValueIdAndTypeList[$: P] =
-    P(ValueIdAndType.rep(sep = ","))
+    P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
   def BlockArgList[$: P] =
-    P("(" ~ ValueIdAndTypeList.orElse(Seq()) ~ ")")
+    P("(" ~ ValueIdAndTypeList ~ ")")
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`

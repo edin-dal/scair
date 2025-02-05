@@ -244,8 +244,8 @@ object SelectionOp extends OperationObject {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    ValueId ~ DialectRegion(parser)
-      ~ "attributes" ~ parser.OptionalAttributes
+    ValueId ~ DialectRegion(parser) ~
+      parser.OptionalKeywordAttributes
   )
     .map(
       (
@@ -325,9 +325,7 @@ object MapOp extends OperationObject {
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
-      ~ ("attributes" ~ parser.DictionaryAttribute).orElse(
-        DictType.empty
-      )
+      ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
@@ -429,7 +427,7 @@ object AggregationOp extends OperationObject {
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
-      ~ ("attributes" ~ parser.DictionaryAttribute).orElse(DictType.empty)
+      ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
