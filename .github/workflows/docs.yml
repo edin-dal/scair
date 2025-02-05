@@ -39,14 +39,13 @@ jobs:
         apps: scala:3.3.1 sbt
 
     - name: Generate documentation
-      run: |
-        cd scair
-        sbt unidoc
+      run: sbt unidoc
+      
     - name: Upload static files as artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
       with:
-          path: scair/target/scala-3.3.4/unidoc/
+          path: target/scala-3.3.4/unidoc/
 
   deploy:
     name: "Deploy to GitHub Pages"

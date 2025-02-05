@@ -45,6 +45,4 @@ jobs:
 
     # Check if the code is formatted as expected
     - name: Run format checks
-      run: |
-        cd scair
-        sbt formatCheckAll
+      run: sbt formatCheckAll
