@@ -1,6 +1,7 @@
 package scair
 
 import fastparse.*
+import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.core.utils.Args
@@ -87,8 +88,42 @@ object Parser {
       * @return
       *   An optional parser, defaulting to default.
       */
-    inline def orElse[$: P](default: T): P[T] = P(
+    inline def orElse[$: P](inline default: T): P[T] = P(
       p.?.map(_.getOrElse(default))
+    )
+
+    inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
+      p.flatMapX(parsed =>
+        try {
+          f(parsed)
+        } catch {
+          case e: Exception =>
+            Fail(e.getMessage())
+        }
+      )
+    )
+
+    inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
+      p.flatMapX(parsed =>
+        try {
+          Pass(f(parsed))
+        } catch {
+          case e: Exception =>
+            Fail(e.getMessage())
+        }
+      )
+    )
+
+    inline def doTry[$: P](inline f: T => Any): P[T] = P(
+      p.flatMapX(parsed =>
+        try {
+          f(parsed)
+          Pass(parsed)
+        } catch {
+          case e: Exception =>
+            Fail(e.getMessage())
+        }
+      )
     )
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -408,10 +443,10 @@ object Parser {
     DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
   ).!
 
-  def SymbolRefId[$: P] = P("@" ~ (SuffixId | StringLiteral))
+  def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
   def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~ DecimalLiteral).?).map(simplifyValueName)
+    P(ValueId ~ ("#" ~~ DecimalLiteral).?).map(simplifyValueName)
 
   def ValueUseList[$: P] =
     P(ValueUse.rep(sep = ","))
@@ -434,7 +469,7 @@ object Parser {
 
   // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
-  def AttributeAlias[$: P] = P("#" ~ AliasName)
+  def AttributeAlias[$: P] = P("#" ~~ AliasName)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    OPERATIONS    ||
@@ -540,10 +575,32 @@ class Parser(val context: MLContext, val args: Args = Args())
   implicit val whitespace: Whitespace = Parser.whitespace
 
   def error(failure: Failure) =
-    val traced = failure.extra.traced
+    // .trace() below reparses from the start with more bookkeeping to provide helpful
+    // context for the error message.
+    // We do this very non-functional bookkeeping in currentScope ourselves, which
+    // is disfunctional with this behaviour; it then reparses everything with the state
+    // it already had at the time of the catched error!
+    // This is a workaround to get the error message with the correct state.
+    // TODO: More functional and fastparse-compatible state handling!
+    currentScope = new Scope()
+
+    // Reparse for more context on error.
+    val traced = failure.trace()
+    // Get the line and column of the error.
+    val prettyIndex =
+      traced.input.prettyIndex(traced.index).split(":").map(_.toInt)
+    val (line, col) = (prettyIndex(0), prettyIndex(1))
+
+    // Get the error's line's content
+    val length = traced.input.length
+    val input_line = traced.input.slice(0, length).split("\n")(line - 1)
+
+    // Build a visual indicator of where the error is.
+    val indicator = " " * (col - 1) + "^"
+
+    // Build the error message.
     val msg =
-      s"Parse error at ${args.input.getOrElse("-")}:${failure.extra.input
-          .prettyIndex(failure.index)}:\n\n${failure.extra.trace().aggregateMsg}"
+      s"Parse error at ${args.input.getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced.label}"
 
     if args.parsing_diagnostics then msg
     else {
@@ -703,12 +760,12 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(OperationPat.rep(at_least_this_many).map(_.to(ListType)))
 
   def OperationPat[$: P]: P[Operation] = P(
-    OpResultList.orElse(Seq()).flatMap(Op(_)) ~/ TrailingLocation.?
+    OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?
   )
 
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
-  ).map(op => {
+  ).mapTry(op => {
     if (resNames.length != op.results.length) {
       throw new Exception(
         s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${resNames.length}) in \"${op.name}\"."
@@ -720,40 +777,42 @@ class Parser(val context: MLContext, val args: Args = Args())
   })
 
   def GenericOperation[$: P](resNames: Seq[String]) = P(
-    StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
+    (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
       ~/ SuccessorList.orElse(Seq())
       ~/ DictionaryProperties.orElse(DictType.empty)
       ~/ RegionList.orElse(Seq())
-      ~/ (DictionaryAttribute).orElse(DictType.empty) ~/ ":" ~/ FunctionType
-  ).map(
-    (
+      ~/ (DictionaryAttribute).orElse(DictType.empty) ~/ ":" ~/ FunctionType)
+      .mapTry(
         (
-            opName: String,
-            operandsNames: Seq[String],
-            successorsNames: Seq[String],
-            properties: DictType[String, Attribute],
-            regions: Seq[Region],
-            attributes: DictType[String, Attribute],
-            operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
-        ) =>
-          generateOperation(
-            opName,
-            operandsNames,
-            successorsNames,
-            properties,
-            regions,
-            attributes,
-            operandsAndResultsTypes._2,
-            operandsAndResultsTypes._1
-          )
-    ).tupled
+            (
+                opName: String,
+                operandsNames: Seq[String],
+                successorsNames: Seq[String],
+                properties: DictType[String, Attribute],
+                regions: Seq[Region],
+                attributes: DictType[String, Attribute],
+                operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
+            ) =>
+              generateOperation(
+                opName,
+                operandsNames,
+                successorsNames,
+                properties,
+                regions,
+                attributes,
+                operandsAndResultsTypes._2,
+                operandsAndResultsTypes._1
+              )
+        ).tupled
+      )
+      ./
   )
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
-    PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+    PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
-          y.parse(this)
+          Pass ~ y.parse(this)
         case None =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
@@ -787,10 +846,10 @@ class Parser(val context: MLContext, val args: Args = Args())
   }
 
   def Block[$: P] =
-    P(BlockLabel ~ Operations(0)).map(createBlock)
+    P(BlockLabel ~/ Operations(0)).mapTry(createBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~ BlockArgList.orElse(Seq()) ~ ":"
+    BlockId ~/ BlockArgList.orElse(Seq()) ~ ":"
   )
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
@@ -849,7 +908,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - attribute-alias ::= `#` alias-name
 
   def AttributeAliasDef[$: P] = P(
-    "#" ~ AliasName ~ "=" ~ AttributeValue
+    "#" ~~ AliasName ~ "=" ~ AttributeValue
   )
 
   // [x] - value-id-and-type ::= value-id `:` type
@@ -865,7 +924,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
   def BlockArgList[$: P] =
-    P("(" ~ ValueIdAndTypeList ~ ")")
+    P("(" ~/ ValueIdAndTypeList ~/ ")")
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
@@ -916,7 +975,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An optional dictionary of attributes - empty if no keyword is present.
     */
   inline def OptionalKeywordAttributes[$: P] =
-    ("attributes" ~ DictionaryAttribute).orElse(DictType.empty)
+    ("attributes" ~/ DictionaryAttribute).orElse(DictType.empty)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||  PARSE FUNCTION  ||

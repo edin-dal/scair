@@ -8,6 +8,7 @@ import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.E
 import scair.Parser.ValueId
+import scair.Parser.mapTry
 import scair.Parser.orElse
 import scair.Parser.whitespace
 import scair.dialects.LingoDB.SubOperatorOps.*
@@ -138,7 +139,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
     ~ (parser.BlockArgList
       .orElse(Seq())
-      .map((x: Seq[(String, Attribute)]) => {
+      .mapTry((x: Seq[(String, Attribute)]) => {
         val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
         parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
