@@ -1,5 +1,6 @@
 package scair.scairdl.irdef
 
+import fastparse.*
 import fastparse.ScalaWhitespace.*
 import scair.dialects.builtin.*
 import scair.ir.Attribute
@@ -10,6 +11,7 @@ import java.io.File
 import java.io.PrintStream
 import scala.collection.mutable
 import scala.reflect.*
+// import NewParser._
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -178,29 +180,83 @@ case class Assemblyformat(
 
 // Seq[FormatDirective]
 
-// trait FormatDirective {
-//   def parse(parser: Parser): P[Any]
-// }
+trait FormatDirective {
+  def parse[$: P]: P[Any]
+}
 
-// case class LiteralDirective(literal: String) extends FormatDirective {
-//   override def parse(parser: Parser): P[Unit] = P(literal)
-// }
+object NewParser {
 
-// case class OperandDirective(name: String) extends FormatDirective {
-//   override def parse(parser: Parser): P[String] = P(Parser.ValueUse)
-// }
+  def resultTypeDirective[$: P]: P[ResultTypeDirective] =
+    P("type($result)").map(_ => ResultTypeDirective())
 
-// case class TypeDirective(inner: OperandDirective) extends FormatDirective {
-//   override def parse(parser: Parser): P[String] = P(parser.Type)
-// }
+  def operandDirective[$: P]: P[OperandDirective] =
+    P("$" ~ CharsWhileIn("a-zA-Z0-9_").!)
+      .filter(_ != "result")
+      .map(OperandDirective)
 
-// //not sure
-// case class AssemblyFormat(directives: Seq[FormatDirective]) {
+  def typeDirective[$: P]: P[TypeDirective] =
+    P("type(" ~ (operandDirective) ~ ")").map(TypeDirective)
 
-// def parse(parser: Parser): P[Seq[Any]] =
-//     P(directives.map(_.parse(parser)).reduceOption(_ ~ _).getOrElse(("")))
+  def literalDirective[$: P]: P[LiteralDirective] =
+    P(CharIn("`,:`").!).map(LiteralDirective)
 
-// }
+  def formatDirective[$: P]: P[FormatDirective] =
+    P(typeDirective | operandDirective | literalDirective | resultTypeDirective)
+
+  def assemblyFormat[$: P]: P[AssemblyFormat] =
+    P(formatDirective.rep(1)).map(directives => AssemblyFormat(directives))
+
+  def parseFormat(input: String): Parsed[AssemblyFormat] =
+    parse(input, assemblyFormat(_))
+
+}
+
+case class LiteralDirective(literal: String) extends FormatDirective {
+  override def parse[$: P]: P[Unit] = P(literal)
+}
+
+case class ResultTypeDirective(name: String = "result")
+    extends FormatDirective {
+
+  override def parse[$: P]: P[String] =
+    P("type($result)").map(_ => "result_type")
+
+}
+
+case class OperandDirective(name: String) extends FormatDirective {
+
+  override def parse[$: P]: P[String] =
+    P("$" ~ CharsWhileIn("a-zA-Z0-9_").!).filter(_ != "result")
+
+}
+
+object OperandDirective {
+
+  def parse[$: P]: P[OperandDirective] =
+    P("$" ~ CharsWhileIn("a-zA-Z0-9_").!)
+      .filter(_ != "result")
+      .map(OperandDirective(_))
+
+}
+
+case class TypeDirective(inner: OperandDirective) extends FormatDirective {
+
+  override def parse[$: P]: P[String] =
+    P("type(" ~ OperandDirective.parse.filter(_.name != "result") ~ ")")
+      .map(_ => inner.toString)
+
+}
+
+case class AssemblyFormat(directives: Seq[FormatDirective]) {
+
+  def parse[$: P]: P[Seq[Any]] =
+    P(directives.map(_.parse).reduce(_ ~ _)).map {
+      case tuple: Product => tuple.productIterator.toSeq
+      case singleValue    => Seq(singleValue)
+    }
+
+}
+
 case class OperationDef(
     val name: String,
     val className: String,
@@ -212,75 +268,104 @@ case class OperationDef(
     val OpAttribute: Seq[OpAttributeDef] = Seq(),
     val assembly_format: Option[String] = None
 ) {
-  // considering fastmath later... what if operand 2 comes earlier... it's too much hardcoded
 
-  def Parseassemblyformat(format: String): Assemblyformat = {
-    val Operandpattern = """\$(\w+)(?=(\s|`|,|$))""".r
-    // val Operandpattern = """\$(\w+)(?!\))""".r
-    val Typepattern = """type\(\$(\w+)\)""".r // type($lhs), type($rhs)
-    // val flag =
-    val Operands = Operandpattern.findAllMatchIn(format).map(_.group(1)).toSeq
-    val Types =
-      Typepattern
-        .findAllMatchIn(format)
-        .map(_.group(1))
-        .toSeq // types = Seq("lhs", "rhs")
-    val result =
-      if (format.contains("type($result)")) Seq("result") else Seq() // not sure
-    val ResultPattern = """type\(\$result\)""".r
-    val results = ResultPattern
-      .findAllMatchIn(format)
-      .flatMap { m =>
-        if (m.groupCount >= 1) Some(m.group(1)) else None
-      }
-      .toSeq
-    val filteredOperands = Operands.filterNot(_ == "result")
-    val filteredTypes = Types.filterNot(_ == "result")
-    Assemblyformat(format, filteredOperands, filteredTypes, result)
+  def Parseassemblyformat(format: String): AssemblyFormat = {
+    NewParser.parseFormat(format) match {
+      case Parsed.Success(parsedFormat, _) => parsedFormat
+      case Parsed.Failure(_, index, extra) =>
+        throw new Exception(
+          s"Parsing failed at index $index: ${extra.trace().longAggregateMsg}"
+        )
+    }
   }
 
-// def Parseassemblyformat(format: String): AssemblyFormat = {
-//   val operandPattern = """\$(\w+)""".r// has to be tested
-//   val typePattern = """type\(\$(\w+)\)""".r
-//   val literalPattern = """[`:,]+""".r
+  def Generateparsefunction(format: AssemblyFormat): String = {
+    val operandVars = format.directives.collect { case OperandDirective(name) =>
+      name
+    }
+    val typeVars = format.directives.collect {
+      case TypeDirective(OperandDirective(name)) => name
+    }
 
-//   val directives = scala.collection.mutable.ListBuffer[FormatDirective]()
+    val resultVars = format.directives.collect {
+      case ResultTypeDirective(name) => name
+    }
 
-//   var index = 0
-//   while (index < format.length) {
-//     format.substring(index) match {
-//       case operandPattern(name) =>
-//         directives += OperandDirective(name)
-//         index += name.length + 1
+    val operandPatternVars = operandVars.zipWithIndex.map { case (n, i) =>
+      s"${n}_$i"
+    }
+    val typePatternVars = typeVars.zipWithIndex.map { case (n, i) =>
+      s"type_${n}_$i"
+    }
+    val resultPatternVars = resultVars.zipWithIndex.map { case (n, i) =>
+      s"type_${n}_$i"
+    }
 
-//       case typePattern(name) =>
-//         directives += TypeDirective(OperandDirective(name))
-//         index += name.length + 7
+    val patternVariables =
+      (operandPatternVars ++ typePatternVars ++ resultPatternVars).mkString(
+        ", "
+      )
 
-//       case literalPattern(literal) =>
-//         directives += LiteralDirective(literal)
-//         index += literal.length
+    val operandParsing = operandVars.map(_ => "Parser.ValueUse").mkString(" ~ ")
+    val typeParsing = typeVars.map(_ => "parser.Type").mkString(" ~ ")
+    val resultParsing = resultVars.map(_ => "parser.Type").mkString(" ~ ")
 
-//       // case _ =>
-//       //   index += 1
-//     }
+    val combinedParsing = Seq(operandParsing, typeParsing, resultParsing)
+      .filter(_.nonEmpty)
+      .mkString(" ~ ")
+
+    s"""
+  override def parse[$$:P](
+      parser: Parser
+  ): P[Operation] = {
+      P(
+        $combinedParsing
+      ).map {
+          case ($patternVariables) =>
+          parser.generateOperation(
+            opName = name,
+            operandsNames = Seq(${operandPatternVars
+        .map(_.toString)
+        .mkString(", ")}),
+            resultsTypes = Seq(${resultPatternVars
+        .map(_.toString)
+        .mkString(", ")}),
+            operandsTypes = Seq(${typePatternVars.mkString(", ")})
+          )
+      }
+  }
+  """
+  }
+
+// def Generateparsefunction(format: Assemblyformat): String = {
+//   val operandVars = format.operands.zipWithIndex.map { case (name, idx) => s"${name}_$idx" }
+//   val typeVars = format.types.zipWithIndex.map { case (name, idx) => s"type_${name}_$idx" }
+//   val resultVars = format.results.zipWithIndex.map { case (name, idx) => s"type_${name}_$idx" }
+
+//   val patternVariables = (operandVars ++ typeVars ++ resultVars).mkString(", ")
+
+//   val operandParsing = if (format.operands.nonEmpty) {
+//     format.operands.map(_ => "Parser.ValueUse").mkString(" ~ ")
+//   } else {
+//     "\"\""
 //   }
 
-//   AssemblyFormat(directives.toSeq)
-// }
+//   val typeParsing = if (format.types.nonEmpty) {
+//     format.types.map(_ => "parser.Type").mkString(" ~ ")
+//   } else {
+//     "\"\""
+//   }
+//   val resultParsing = if (format.results.nonEmpty) {
+//     format.results.map(_ => "parser.Type").mkString(" ~ ")
+//   } else {
+//     "\"\""
+//   }
 
-// def Generateparsefunction(format: AssemblyFormat): String = {
-//   val operandVars = format.directives.collect { case OperandDirective(name) => name }
-//   val typeVars = format.directives.collect { case TypeDirective(OperandDirective(name)) => name }
+//   val combinedParsing = Seq(operandParsing, typeParsing, resultParsing)
+//     .filterNot(_ == "\"\"")
+//     .mkString(" ~ ")
 
-//   val operandPatternVars = operandVars.zipWithIndex.map { case (n, i) => s"${n}_$i" }
-//   val typePatternVars = typeVars.zipWithIndex.map { case (n, i) => s"type_${n}_$i" }
-
-//   val patternVariables = (operandPatternVars ++ typePatternVars).mkString(", ")
-
-//   val operandParsing = operandVars.map(_ => "Parser.ValueUse").mkString(" ~ ")
-//   val typeParsing = typeVars.map(_ => "parser.Type").mkString(" ~ ")
-//   val combinedParsing = Seq(operandParsing, typeParsing).filter(_.nonEmpty).mkString(" ~ ")
+//   val finalParsing = if (combinedParsing.isEmpty) "\"\"" else combinedParsing
 
 //   f"""
 //   override def parse[$$: P](
@@ -288,78 +373,21 @@ case class OperationDef(
 //       parser: Parser
 //   ): P[Operation] = {
 //       P(
-//         $combinedParsing
+//         $finalParsing
 //       ).map {
-//           case ($patternVariables) =>
-//           println("Parsing $name")
+//           ${if (patternVariables.nonEmpty) s"($patternVariables)" else "()"} =>
 //           parser.verifyCustomOp(
 //             opGen = $className.factory,
 //             opName = name,
-//             operandNames = Seq(${operandPatternVars.mkString(", ")}),
-//             operandTypes = Seq(${typePatternVars.mkString(", ")}),
+//             operandNames = Seq(${operandVars.mkString(", ")}),
+//             operandTypes = Seq(${typeVars.mkString(", ")}),
 //             resultNames = resNames,
-//             resultTypes = Seq(${typePatternVars.mkString(", ")})
+//             resultTypes = Seq(${resultVars.mkString(", ")})
 //           )
 //       }
 //   }
 //   """
 // }
-
-  def Generateparsefunction(format: Assemblyformat): String = {
-    val operandVars = format.operands.zipWithIndex.map { case (name, idx) =>
-      s"${name}_$idx"
-    }
-    val typeVars = format.types.zipWithIndex.map { case (name, idx) =>
-      s"type_${name}_$idx"
-    }
-    val resultVars = format.results.zipWithIndex.map { case (name, idx) =>
-      s"type_${name}_$idx"
-    }
-
-    val patternVariables =
-      (operandVars ++ typeVars ++ resultVars).mkString(", ")
-
-    val operandParsing = if (format.operands.nonEmpty) {
-      format.operands.map(_ => "Parser.ValueUse").mkString(" ~ ")
-    } else {
-      "\"\""
-    }
-
-    val typeParsing = if (format.types.nonEmpty) {
-      format.types.map(_ => "parser.Type").mkString(" ~ ")
-    } else {
-      "\"\""
-    }
-    val resultParsing = if (format.results.nonEmpty) {
-      format.results.map(_ => "parser.Type").mkString(" ~ ")
-    } else {
-      "\"\""
-    }
-
-    val combinedParsing = Seq(operandParsing, typeParsing, resultParsing)
-      .filterNot(_ == "\"\"")
-      .mkString(" ~ ")
-
-    val finalParsing = if (combinedParsing.isEmpty) "\"\"" else combinedParsing
-
-    f"""
-  override def parse[$$: P](
-      parser: Parser
-  ): P[Operation] = {
-      P(
-        $finalParsing
-      ).map {
-          ${if (patternVariables.nonEmpty) s"($patternVariables)" else "()"} =>
-          parser.generateOperation(
-            opName = name,
-            operandsNames = Seq(${operandVars.mkString(", ")}),
-            operandsTypes = Seq(${typeVars.mkString(", ")}),
-            resultsTypes = Seq(${resultVars.mkString(", ")})
-          )
-      }
-  }
-  """
-  }
 
 //   def GeneratePrintFunction(printer: Printer): String = {
 //   val operandPrinting = operands.zipWithIndex.map { case (name, idx) =>
