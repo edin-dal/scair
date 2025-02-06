@@ -92,15 +92,17 @@ object Parser {
       p.?.map(_.getOrElse(default))
     )
 
-    /** Like fastparse's flatMapX but capturing exceptions as standard parse errors.
+    /** Like fastparse's flatMapX but capturing exceptions as standard parse
+      * errors.
       *
-      * @note flatMapX because it often yields more nat ural error positions.
-      * 
+      * @note
+      *   flatMapX because it often yields more nat ural error positions.
+      *
       * @param f
       *   The function to apply to the parsed value.
       * @return
-      *   A parser that applies f to the parsed value, catching exceptions
-      *   and turning them into parse errors.
+      *   A parser that applies f to the parsed value, catching exceptions and
+      *   turning them into parse errors.
       */
     inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
       p.flatMapX(parsed =>
@@ -115,13 +117,14 @@ object Parser {
 
     /** Like fastparse's mapX but capturing exceptions as standard parse errors.
       *
-      * @note flatMapX because it often yields more nat ural error positions.
-      * 
+      * @note
+      *   flatMapX because it often yields more nat ural error positions.
+      *
       * @param f
       *   The function to apply to the parsed value.
       * @return
-      *   A parser that applies f to the parsed value, catching exceptions
-      *   and turning them into parse errors.
+      *   A parser that applies f to the parsed value, catching exceptions and
+      *   turning them into parse errors.
       */
     inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
       p.flatMapX(parsed =>
@@ -993,9 +996,10 @@ class Parser(val context: MLContext, val args: Args = Args())
       text: String,
       pattern: fastparse.P[_] => fastparse.P[B] = { (x: fastparse.P[_]) =>
         TopLevel(x)
-      }
+      },
+      verboseFailures: Boolean = false
   ): fastparse.Parsed[B] = {
-    return parse(text, pattern)
+    return parse(text, pattern, verboseFailures = verboseFailures)
   }
 
 }

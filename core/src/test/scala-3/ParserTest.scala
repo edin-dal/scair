@@ -321,15 +321,20 @@ class ParserTest
   "Region2 - Unit Tests" should "parse correctly" in {
 
     withClue("Test 2: ") {
-      val exception = intercept[Exception](
-        parser.parseThis(
-          text =
-            "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-              "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-          pattern = parser.Region(_)
-        )
-      ).getMessage shouldBe "Block cannot be defined twice within the same scope - ^bb0"
+      parser.parseThis(
+        text =
+          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
+        pattern = parser.Region(_),
+        verboseFailures = true
+      ) should matchPattern {
+        case Parsed.Failure(
+              "Block cannot be defined twice within the same scope - ^bb0",
+              _,
+              _
+            ) =>
+      }
     }
   }
 
