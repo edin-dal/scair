@@ -779,7 +779,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   ).mapTry(op => {
     if (resNames.length != op.results.length) {
       throw new Exception(
-        s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${resNames.length}) in \"${op.name}\"."
+        s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${op.results.length}) in \"${op.name}\"."
       )
     }
     currentScope.defineValues(resNames zip op.results)
