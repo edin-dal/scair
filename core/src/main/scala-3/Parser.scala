@@ -92,6 +92,16 @@ object Parser {
       p.?.map(_.getOrElse(default))
     )
 
+    /** Like fastparse's flatMapX but capturing exceptions as standard parse errors.
+      *
+      * @note flatMapX because it often yields more nat ural error positions.
+      * 
+      * @param f
+      *   The function to apply to the parsed value.
+      * @return
+      *   A parser that applies f to the parsed value, catching exceptions
+      *   and turning them into parse errors.
+      */
     inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
       p.flatMapX(parsed =>
         try {
@@ -103,22 +113,20 @@ object Parser {
       )
     )
 
+    /** Like fastparse's mapX but capturing exceptions as standard parse errors.
+      *
+      * @note flatMapX because it often yields more nat ural error positions.
+      * 
+      * @param f
+      *   The function to apply to the parsed value.
+      * @return
+      *   A parser that applies f to the parsed value, catching exceptions
+      *   and turning them into parse errors.
+      */
     inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
       p.flatMapX(parsed =>
         try {
           Pass(f(parsed))
-        } catch {
-          case e: Exception =>
-            Fail(e.getMessage())
-        }
-      )
-    )
-
-    inline def doTry[$: P](inline f: T => Any): P[T] = P(
-      p.flatMapX(parsed =>
-        try {
-          f(parsed)
-          Pass(parsed)
         } catch {
           case e: Exception =>
             Fail(e.getMessage())
