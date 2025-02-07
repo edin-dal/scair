@@ -26,9 +26,8 @@
   "test.op"()[^bb1] : () -> ()
 }) : () -> ()
 
-// CHECK-NEXT:   "test.op"() ({
+// CHECK:      "test.op"() ({
 // CHECK-NEXT: ^bb0():
-
 // CHECK:      ^bb1():
 // CHECK-NEXT:   "test.op"() : () -> ()
 // CHECK-NEXT: ^bb2():
