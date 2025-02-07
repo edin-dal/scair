@@ -46,14 +46,15 @@
 // CHECK-NEXT:      "func.return"(%1) : (index) -> ()
 // CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:    "func.func"() <{sym_name = "arg_rec_block", function_type = (index) -> index}> ({
-// CHECK-NEXT:    ^bb1(%2: index):
-// CHECK-NEXT:      %3 = "func.call"(%2) <{callee = @arg_rec_block}> : (index) -> (index)
-// CHECK-NEXT:      "func.return"(%3) : (index) -> ()
+// CHECK-NEXT:    ^bb0(%0: index):
+// CHECK-NEXT:      %1 = "func.call"(%0) <{callee = @arg_rec_block}> : (index) -> (index)
+// CHECK-NEXT:      "func.return"(%1) : (index) -> ()
 // CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:    "func.func"() <{sym_name = "external_fn", function_type = (i32) -> (i32, i32), sym_visibility = "private"}> ({
+
 // CHECK:         }) : () -> ()
 // CHECK-NEXT:    "func.func"() <{sym_name = "multi_return_body", function_type = (i32) -> (i32, i32)}> ({
-// CHECK-NEXT:    ^bb2(%4: i32):
-// CHECK-NEXT:      "func.return"(%4, %4) : (i32, i32) -> ()
+// CHECK-NEXT:    ^bb0(%0: i32):
+// CHECK-NEXT:      "func.return"(%0, %0) : (i32, i32) -> ()
 // CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:  }
