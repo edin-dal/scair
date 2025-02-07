@@ -147,7 +147,7 @@ class RegisteredOperation(
       dictionaryProperties,
       dictionaryAttributes
     )
-    
+
 trait OperationObject {
   def name: String
 

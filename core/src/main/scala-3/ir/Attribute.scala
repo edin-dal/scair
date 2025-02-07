@@ -1,9 +1,8 @@
 package scair.ir
 
-import fastparse._
-
+import fastparse.*
 import scair.AttrParser
-import scair.Parser._
+import scair.Parser.*
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -76,17 +75,17 @@ abstract class DataAttribute[D](
     }
   }
 
-    }
+}
 
-    trait AttributeObject {
-    def name: String
-    type FactoryType = (Seq[Attribute]) => Attribute
-    def factory: FactoryType = ???
+trait AttributeObject {
+  def name: String
+  type FactoryType = (Seq[Attribute]) => Attribute
+  def factory: FactoryType = ???
 
-    def parser[$: P](p: AttrParser): P[Seq[Attribute]] =
-        P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
+  def parser[$: P](p: AttrParser): P[Seq[Attribute]] =
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
 
-    def parse[$: P](p: AttrParser): P[Attribute] =
-        parser(p).map(factory(_))
+  def parse[$: P](p: AttrParser): P[Attribute] =
+    parser(p).map(factory(_))
 
 }
