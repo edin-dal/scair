@@ -11,22 +11,20 @@ import scala.collection.mutable
 // ██║░░░░░ ██║░░██║ ██║ ██║░╚███║ ░░░██║░░░ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
 
-class Printer(val strictly_generic: Boolean) {
+case class Printer(
+    val strictly_generic: Boolean = false,
+    val indent: String = "  ",
+    var valueNextID: Int = 0,
+    var blockNextID: Int = 0,
+    val valueNameMap: mutable.Map[Value[_ <: Attribute], String] =
+      mutable.Map.empty[Value[_ <: Attribute], String],
+    val blockNameMap: mutable.Map[Block, String] =
+      mutable.Map.empty[Block, String]
+) {
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||
   \*≡==---==≡==---==≡*/
-
-  var indent: String = "  "
-
-  var valueNextID: Int = 0
-  var blockNextID: Int = 0
-
-  var valueNameMap: mutable.Map[Value[_ <: Attribute], String] =
-    mutable.Map.empty[Value[_ <: Attribute], String]
-
-  var blockNameMap: mutable.Map[Block, String] =
-    mutable.Map.empty[Block, String]
 
   def assignValueName(value: Value[_ <: Attribute]): String =
     valueNameMap.contains(value) match {
@@ -93,7 +91,10 @@ class Printer(val strictly_generic: Boolean) {
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-  def printRegion(region: Region, indentLevel: Int = 0): String = {
+  def printRegion(region: Region, indentLevel: Int = 0): String =
+    this.copy()._printRegion(region, indentLevel)
+
+  private def _printRegion(region: Region, indentLevel: Int = 0): String = {
 
     val open: String = "{\n"
     val close: String = "\n" + indent * indentLevel + "}"

@@ -4,6 +4,7 @@ import fastparse.*
 import scair.AttrParser
 import scair.Parser
 import scair.Parser.ValueId
+import scair.Parser.orElse
 import scair.Parser.whitespace
 import scair.dialects.builtin.*
 import scair.ir.*
@@ -140,12 +141,10 @@ object ReturnOp extends OperationObject {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    parser.DictionaryAttribute.?.map(Parser.optionlessSeq) ~ (ValueId.rep(sep =
-      ","
-    )
+    parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
-      parser.Type.rep(sep = ",")).?.map(makeResults)
-  ).map((x: Seq[(String, Attribute)], y: (Seq[String], Seq[Attribute])) =>
+      parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
+  ).map((x: DictType[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
     parser.generateOperation(
       opName = name,
       operandsNames = y._1,
@@ -202,13 +201,13 @@ object GetColumnOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
-      parser.Type ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      parser.Type ~ parser.OptionalAttributes
   ).map(
     (
         x: String,
         y: Attribute,
         z: Attribute,
-        w: Seq[(String, Attribute)]
+        w: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -216,7 +215,7 @@ object GetColumnOp extends OperationObject {
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
         resultsTypes = Seq(z),
-        attributes = w :+ ("attr", y)
+        attributes = w + ("attr" -> y)
       )
   )
   // ==----------------------== //

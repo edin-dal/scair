@@ -8,7 +8,8 @@ import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.E
 import scair.Parser.ValueId
-import scair.Parser.optionlessSeq
+import scair.Parser.mapTry
+import scair.Parser.orElse
 import scair.Parser.whitespace
 import scair.dialects.LingoDB.SubOperatorOps.*
 import scair.dialects.LingoDB.TupleStream.*
@@ -136,13 +137,13 @@ case class SortSpecificationAttr(
 
 private def DialectRegion[$: P](parser: Parser) = P(
   E({ parser.enterLocalRegion })
-    ~ (parser.BlockArgList.?.map(optionlessSeq).map(
-      (x: Seq[(String, Attribute)]) => {
+    ~ (parser.BlockArgList
+      .orElse(Seq())
+      .mapTry((x: Seq[(String, Attribute)]) => {
         val b = new Block(ListType.empty, ListType.from(x.map(_._2)))
         parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
-      }
-    )
+      })
       ~ "{"
       ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
       b.operations ++= y
@@ -163,13 +164,14 @@ object BaseTableOp extends OperationObject {
   override def parse[$: P](
       parser: Parser
   ) = P(
-    parser.DictionaryAttribute.?.map(Parser.optionlessSeq) ~
+    parser.OptionalAttributes ~
       "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse(parser))
-        .rep(0, sep = ",") ~ "}"
+        .rep(0, sep = ",")
+        .map(DictType(_*)) ~ "}"
   ).map(
     (
-        x: Seq[(String, Attribute)],
-        y: Seq[(String, Attribute)]
+        x: DictType[String, Attribute],
+        y: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -243,26 +245,25 @@ object SelectionOp extends OperationObject {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    ValueId ~ DialectRegion(parser)
-      ~ ("attributes" ~ parser.DictionaryAttribute).?.map(
-        optionlessSeq
-      )
-  ).map(
-    (
-        x: String,
-        y: Region,
-        z: Seq[(String, Attribute)]
-    ) =>
-      val operand_type = parser.currentScope.valueMap(x).typ
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(x),
-        operandsTypes = Seq(operand_type),
-        resultsTypes = Seq(TupleStream(Seq())),
-        regions = Seq(y),
-        attributes = z
-      )
+    ValueId ~ DialectRegion(parser) ~
+      parser.OptionalKeywordAttributes
   )
+    .map(
+      (
+          x: String,
+          y: Region,
+          z: DictType[String, Attribute]
+      ) =>
+        val operand_type = parser.currentScope.valueMap(x).typ
+        parser.generateOperation(
+          opName = name,
+          operandsNames = Seq(x),
+          operandsTypes = Seq(operand_type),
+          resultsTypes = Seq(TupleStream(Seq())),
+          regions = Seq(y),
+          attributes = z
+        )
+    )
   // ==----------------------== //
 
 }
@@ -325,13 +326,13 @@ object MapOp extends OperationObject {
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
-      ~ ("attributes" ~ parser.DictionaryAttribute).?.map(optionlessSeq)
+      ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
         z: Attribute,
         y: Region,
-        w: Seq[(String, Attribute)]
+        w: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -340,7 +341,7 @@ object MapOp extends OperationObject {
         operandsTypes = Seq(operand_type),
         resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
-        attributes = w :+ ("computed_cols", z)
+        attributes = w + ("computed_cols" -> z)
       )
   )
   // ==----------------------== //
@@ -427,14 +428,14 @@ object AggregationOp extends OperationObject {
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
-      ~ ("attributes" ~ parser.DictionaryAttribute).?.map(optionlessSeq)
+      ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
         reff: Attribute,
         deff: Attribute,
         y: Region,
-        w: Seq[(String, Attribute)]
+        w: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -443,7 +444,7 @@ object AggregationOp extends OperationObject {
         operandsTypes = Seq(operand_type),
         resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
-        attributes = w :+ ("group_by_cols", reff) :+ ("computed_cols", deff)
+        attributes = w + ("group_by_cols" -> reff, "computed_cols" -> deff)
       )
   )
   // ==----------------------== //
@@ -534,11 +535,11 @@ object CountRowsOp extends OperationObject {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    ValueId ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+    ValueId ~ parser.OptionalAttributes
   ).map(
     (
         x: String,
-        y: Seq[(String, Attribute)]
+        y: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -613,14 +614,14 @@ object AggrFuncOp extends OperationObject {
   ): P[Operation] = P(
     RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
       ~ ValueId ~ ":" ~ parser.Type.rep(1)
-      ~ parser.DictionaryAttribute.?.map(optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         aggrfunc: Attribute,
         attr: Attribute,
         x: String,
         resTypes: Seq[Attribute],
-        y: Seq[(String, Attribute)]
+        y: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -628,7 +629,7 @@ object AggrFuncOp extends OperationObject {
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
         resultsTypes = resTypes,
-        attributes = y :+ ("fn", aggrfunc) :+ ("attr", attr)
+        attributes = y + ("fn" -> aggrfunc, "attr" -> attr)
       )
   )
   // ==----------------------== //
@@ -720,12 +721,12 @@ object SortOp extends OperationObject {
         .parse(parser))
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
-      ~ parser.DictionaryAttribute.?.map(optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         x: String,
         attr: Attribute,
-        y: Seq[(String, Attribute)]
+        y: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -733,7 +734,7 @@ object SortOp extends OperationObject {
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
         resultsTypes = Seq(TupleStream(Seq())),
-        attributes = y :+ ("sortspecs", attr)
+        attributes = y + ("sortspecs" -> attr)
       )
   )
   // ==----------------------== //
@@ -821,14 +822,14 @@ object MaterializeOp extends OperationObject {
       ~ parser.ArrayAttributeP
       ~ ":"
       ~ parser.Type.rep
-      ~ parser.DictionaryAttribute.?.map(optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         operand: String,
         cols: Attribute,
         columns: Attribute,
         resTypes: Seq[Attribute],
-        y: Seq[(String, Attribute)]
+        y: DictType[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(operand).typ
       parser.generateOperation(
@@ -836,7 +837,7 @@ object MaterializeOp extends OperationObject {
         operandsNames = Seq(operand),
         operandsTypes = Seq(operand_type),
         resultsTypes = resTypes,
-        attributes = y :+ ("cols", cols) :+ ("columns", columns)
+        attributes = y + ("cols" -> cols, "columns" -> columns)
       )
   )
   // ==----------------------== //

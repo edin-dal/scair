@@ -28,7 +28,7 @@ import java.lang.Float.intBitsToFloat
 class AttrParser(val ctx: MLContext) {
 
   def DialectAttribute[$: P]: P[Attribute] = P(
-    "#" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+    "#" ~~ PrettyDialectReferenceName.flatMapTry { (x: String, y: String) =>
       ctx.getAttribute(s"${x}.${y}") match {
         case Some(y) =>
           y.parse(this)
@@ -41,7 +41,7 @@ class AttrParser(val ctx: MLContext) {
   )
 
   def DialectType[$: P]: P[Attribute] = P(
-    "!" ~ PrettyDialectReferenceName.flatMap { (x: String, y: String) =>
+    "!" ~~ PrettyDialectReferenceName.flatMapTry { (x: String, y: String) =>
       ctx.getAttribute(s"${x}.${y}") match {
         case Some(y) =>
           y.parse(this)
@@ -75,11 +75,11 @@ class AttrParser(val ctx: MLContext) {
   ||    FLOAT TYPE    ||
   \*≡==---==≡≡==---==≡*/
 
-  def Float16TypeP[$: P]: P[FloatType] = P("f16".!).map(_ => Float16Type)
-  def Float32TypeP[$: P]: P[FloatType] = P("f32".!).map(_ => Float32Type)
-  def Float64TypeP[$: P]: P[FloatType] = P("f64".!).map(_ => Float64Type)
-  def Float80TypeP[$: P]: P[FloatType] = P("f80".!).map(_ => Float80Type)
-  def Float128TypeP[$: P]: P[FloatType] = P("f128".!).map(_ => Float128Type)
+  def Float16TypeP[$: P]: P[FloatType] = P("f16").map(_ => Float16Type)
+  def Float32TypeP[$: P]: P[FloatType] = P("f32").map(_ => Float32Type)
+  def Float64TypeP[$: P]: P[FloatType] = P("f64").map(_ => Float64Type)
+  def Float80TypeP[$: P]: P[FloatType] = P("f80").map(_ => Float80Type)
+  def Float128TypeP[$: P]: P[FloatType] = P("f128").map(_ => Float128Type)
 
   def FloatTypeP[$: P]: P[FloatType] = P(
     Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP
@@ -163,7 +163,7 @@ class AttrParser(val ctx: MLContext) {
   ||    INDEX TYPE    ||
   \*≡==---==≡≡==---==≡*/
 
-  def IndexTypeP[$: P]: P[IndexType.type] = P("index".!).map(_ => IndexType)
+  def IndexTypeP[$: P]: P[IndexType.type] = P("index").map(_ => IndexType)
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||  ARRAY ATTRIBUTE  ||
@@ -184,14 +184,13 @@ class AttrParser(val ctx: MLContext) {
   // dense-array-attribute  ::=  `array` `<` (integer-type | float-type) (`:` tensor-literal)? `>`
 
   def DenseArrayAttributeP[$: P]: P[DenseArrayAttr] = P(
-    "array<" ~ (((IntegerTypeP) ~ (":" ~ IntDataP.rep(sep = ",")).?.map(
-      _.getOrElse(Seq())
+    "array<" ~ (((IntegerTypeP) ~ (":" ~ IntDataP.rep(sep = ",")).orElse(
+      Seq()
     )).map((typ: IntegerType, x: Seq[IntData]) =>
       DenseArrayAttr(typ, x.map(IntegerAttr(_, typ)))
-    ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).?.map(
-      _.getOrElse(Seq())
-    )).map((typ: FloatType, x: Seq[FloatData]) =>
-      DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
+    ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).orElse(Seq())).map(
+      (typ: FloatType, x: Seq[FloatData]) =>
+        DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
     )) ~ ">"
   )
 
@@ -239,7 +238,7 @@ class AttrParser(val ctx: MLContext) {
     P((Dimension ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
 
   def Dimension[$: P]: P[IntData] =
-    P("?".!.map(_ => -1: Long) | DecimalLiteral).map(x => IntData(x))
+    P("?".map(_ => -1: Long) | DecimalLiteral).map(x => IntData(x))
 
   def Encoding[$: P] = P(AttributeValue)
 
@@ -374,7 +373,7 @@ class AttrParser(val ctx: MLContext) {
   )
 
   def FunctionType[$: P] = P(
-    ParenTypeList ~ "->" ~ (ParenTypeList | Type.rep(exactly = 1))
+    ParenTypeList ~ "->" ~/ (ParenTypeList | Type.map(Seq(_)))
   )
 
   def FunctionTypeP[$: P]: P[FunctionType] = P(

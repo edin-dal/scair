@@ -89,19 +89,19 @@ object SetResultOp extends OperationObject {
       parser: Parser
   ): P[Operation] = P(
     parser.Type ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.DictionaryAttribute.?.map(Parser.optionlessSeq)
+      ~ parser.OptionalAttributes
   ).map(
     (
         x: Attribute,
         y: String,
         z: Attribute,
-        w: Seq[(String, Attribute)]
+        w: DictType[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
         operandsNames = Seq(y),
         operandsTypes = Seq(z),
-        attributes = w :+ ("result_id", x)
+        attributes = w + ("result_id" -> x)
       )
   )
   // ==----------------------== //
