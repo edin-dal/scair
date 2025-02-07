@@ -166,8 +166,7 @@ case class Assemblyformat(
 ||   OPERATION DEF   ||
 \*≡==----=≡≡≡=----==≡*/
 
-
-trait FormatDirective 
+trait FormatDirective
 
 object NewParser {
 
@@ -225,10 +224,12 @@ case class OperationDef(
 
   def Generateparsefunction(format: Seq[FormatDirective]): String = {
     val operandVars = format.collect { case OperandDirective(name) => name }
-  
-    val typeVars = format.collect {case TypeDirective(OperandDirective(name)) => name }
 
-    val resultVars = format.collect {case ResultTypeDirective(name) => name }
+    val typeVars = format.collect {
+      case TypeDirective(OperandDirective(name)) => name
+    }
+
+    val resultVars = format.collect { case ResultTypeDirective(name) => name }
 
     val operandPatternVars = operandVars.zipWithIndex.map { case (n, i) =>
       s"${n}_$i"
@@ -275,7 +276,6 @@ case class OperationDef(
   }
   """
   }
-
 
   def operand_segment_sizes_helper: String =
     s"""def operandSegmentSizes: Seq[Int] =
