@@ -26,12 +26,13 @@
   "test.op"()[^bb1] : () -> ()
 }) : () -> ()
 
-// CHECK:      "test.op"() ({
-// CHECK-NEXT: ^bb3():
-// CHECK:      ^bb4():
+// CHECK-NEXT:   "test.op"() ({
+// CHECK-NEXT: ^bb0():
+
+// CHECK:      ^bb1():
 // CHECK-NEXT:   "test.op"() : () -> ()
-// CHECK-NEXT: ^bb5():
-// CHECK-NEXT:   "test.op"()[^bb4] : () -> ()
+// CHECK-NEXT: ^bb2():
+// CHECK-NEXT:   "test.op"()[^bb1] : () -> ()
 // CHECK-NEXT: }) : () -> ()
 
 // CHECK-NEXT: }
