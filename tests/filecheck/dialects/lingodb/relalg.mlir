@@ -70,69 +70,69 @@ tuples.return
 // CHECK-NEXT:    ^bb0(%2: !tuples.tuple):
 // CHECK-NEXT:      %3 = db.constant("1998-09-02") : !db.date<day>
 // CHECK-NEXT:      %4 = "tuples.getcol"(%2) {attr = @lineitem::@l_shipdate} : (!tuples.tuple) -> (!db.date<day>)
-// CHECK-NEXT:      %5 = db.compare lte %4 : !db.date<day>, %3 : !db.date<day>
+// CHECK-NEXT:      %5 = db.compare lte %4 : !db.date<day>, %3 : !db.date<day> : i1
 // CHECK-NEXT:      "tuples.return"(%5) : (i1) -> ()
 // CHECK-NEXT:    }) {cost = 5930888.5, evaluationCost = 2.0, rows = 5930888.5, selectivity = 0.98828125} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %6 = "relalg.map"(%1) ({
-// CHECK-NEXT:    ^bb1(%7: !tuples.tuple):
-// CHECK-NEXT:      %8 = db.constant(1 : i32) : !db.decimal<12, 2>
-// CHECK-NEXT:      %9 = "tuples.getcol"(%7) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %10 = "tuples.getcol"(%7) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %11 = db.sub %8 : !db.decimal<12, 2>, %10 : !db.decimal<12, 2> : !db.decimal<12, 2>
-// CHECK-NEXT:      %12 = db.mul %9 : !db.decimal<12, 2>, %11 : !db.decimal<12, 2> : !db.decimal<24, 4>
-// CHECK-NEXT:      %13 = "tuples.getcol"(%7) {attr = @lineitem::@l_tax} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %14 = db.add %8 : !db.decimal<12, 2>, %13 : !db.decimal<12, 2> : !db.decimal<12, 2>
-// CHECK-NEXT:      %15 = db.mul %12 : !db.decimal<24, 4>, %14 : !db.decimal<12, 2> : !db.decimal<36, 6>
-// CHECK-NEXT:      "tuples.return"(%15) : (!db.decimal<36, 6>) -> ()
+// CHECK-NEXT:    %2 = "relalg.map"(%1) ({
+// CHECK-NEXT:    ^bb0(%3: !tuples.tuple):
+// CHECK-NEXT:      %4 = db.constant(1 : i32) : !db.decimal<12, 2>
+// CHECK-NEXT:      %5 = "tuples.getcol"(%3) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %6 = "tuples.getcol"(%3) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %7 = db.sub %4 : !db.decimal<12, 2>, %6 : !db.decimal<12, 2> : !db.decimal<12, 2>
+// CHECK-NEXT:      %8 = db.mul %5 : !db.decimal<12, 2>, %7 : !db.decimal<12, 2> : !db.decimal<24, 4>
+// CHECK-NEXT:      %9 = "tuples.getcol"(%3) {attr = @lineitem::@l_tax} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %10 = db.add %4 : !db.decimal<12, 2>, %9 : !db.decimal<12, 2> : !db.decimal<12, 2>
+// CHECK-NEXT:      %11 = db.mul %8 : !db.decimal<24, 4>, %10 : !db.decimal<12, 2> : !db.decimal<36, 6>
+// CHECK-NEXT:      "tuples.return"(%11) : (!db.decimal<36, 6>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5, computed_cols = [@map0::@tmp_attr5({type = !db.decimal<36, 6>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %16 = "relalg.map"(%6) ({
-// CHECK-NEXT:    ^bb2(%17: !tuples.tuple):
-// CHECK-NEXT:      %18 = db.constant(1 : i32) : !db.decimal<12, 2>
-// CHECK-NEXT:      %19 = "tuples.getcol"(%17) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %20 = "tuples.getcol"(%17) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %21 = db.sub %18 :  !db.decimal<12, 2>, %20 : !db.decimal<12, 2> : !db.decimal<12, 2>
-// CHECK-NEXT:      %22 = db.mul %19 : !db.decimal<12, 2>, %21 : !db.decimal<12, 2> : !db.decimal<24, 4>
-// CHECK-NEXT:      "tuples.return"(%22) : (!db.decimal<24, 4>) -> ()
+// CHECK-NEXT:    %3 = "relalg.map"(%2) ({
+// CHECK-NEXT:    ^bb0(%4: !tuples.tuple):
+// CHECK-NEXT:      %5 = db.constant(1 : i32) : !db.decimal<12, 2>
+// CHECK-NEXT:      %6 = "tuples.getcol"(%4) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %7 = "tuples.getcol"(%4) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %8 = db.sub %5 : !db.decimal<12, 2>, %7 : !db.decimal<12, 2> : !db.decimal<12, 2>
+// CHECK-NEXT:      %9 = db.mul %6 : !db.decimal<12, 2>, %8 : !db.decimal<12, 2> : !db.decimal<24, 4>
+// CHECK-NEXT:      "tuples.return"(%9) : (!db.decimal<24, 4>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5, computed_cols = [@map0::@tmp_attr3({type = !db.decimal<24, 4>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %23 = "relalg.aggregation"(%16) ({
-// CHECK-NEXT:    ^bb3(%24: !tuples.tuplestream, %25: !tuples.tuple):
-// CHECK-NEXT:      %26 = "relalg.count"(%24) : (!tuples.tuplestream) -> (i64)
-// CHECK-NEXT:      %27 = "relalg.aggrfn"(%24) {fn = sum, attr = @lineitem::@l_discount} : (!tuples.tuplestream) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %28 = "relalg.aggrfn"(%24) {fn = count, attr = @lineitem::@l_discount} : (!tuples.tuplestream) -> (i64)
-// CHECK-NEXT:      %29 = "relalg.aggrfn"(%24) {fn = sum, attr = @lineitem::@l_quantity} : (!tuples.tuplestream) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %30 = "relalg.aggrfn"(%24) {fn = count, attr = @lineitem::@l_quantity} : (!tuples.tuplestream) -> (i64)
-// CHECK-NEXT:      %31 = "relalg.aggrfn"(%24) {fn = sum, attr = @map0::@tmp_attr5} : (!tuples.tuplestream) -> (!db.decimal<36, 6>)
-// CHECK-NEXT:      %32 = "relalg.aggrfn"(%24) {fn = sum, attr = @map0::@tmp_attr3} : (!tuples.tuplestream) -> (!db.decimal<24, 4>)
-// CHECK-NEXT:      %33 = "relalg.aggrfn"(%24) {fn = sum, attr = @lineitem::@l_extendedprice} : (!tuples.tuplestream) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %34 = "relalg.aggrfn"(%24) {fn = count, attr = @lineitem::@l_extendedprice} : (!tuples.tuplestream) -> (i64)
-// CHECK-NEXT:      "tuples.return"(%26, %31, %32, %33, %29, %27, %28, %29, %30, %33, %34) : (i64, !db.decimal<36, 6>, !db.decimal<24, 4>, !db.decimal<12, 2>, !db.decimal<12, 2>, !db.decimal<12, 2>, i64, !db.decimal<12, 2>, i64, !db.decimal<12, 2>, i64) -> ()
+// CHECK-NEXT:    %4 = "relalg.aggregation"(%3) ({
+// CHECK-NEXT:    ^bb0(%5: !tuples.tuplestream, %6: !tuples.tuple):
+// CHECK-NEXT:      %7 = "relalg.count"(%5) : (!tuples.tuplestream) -> (i64)
+// CHECK-NEXT:      %8 = "relalg.aggrfn"(%5) {fn = sum, attr = @lineitem::@l_discount} : (!tuples.tuplestream) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %9 = "relalg.aggrfn"(%5) {fn = count, attr = @lineitem::@l_discount} : (!tuples.tuplestream) -> (i64)
+// CHECK-NEXT:      %10 = "relalg.aggrfn"(%5) {fn = sum, attr = @lineitem::@l_quantity} : (!tuples.tuplestream) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %11 = "relalg.aggrfn"(%5) {fn = count, attr = @lineitem::@l_quantity} : (!tuples.tuplestream) -> (i64)
+// CHECK-NEXT:      %12 = "relalg.aggrfn"(%5) {fn = sum, attr = @map0::@tmp_attr5} : (!tuples.tuplestream) -> (!db.decimal<36, 6>)
+// CHECK-NEXT:      %13 = "relalg.aggrfn"(%5) {fn = sum, attr = @map0::@tmp_attr3} : (!tuples.tuplestream) -> (!db.decimal<24, 4>)
+// CHECK-NEXT:      %14 = "relalg.aggrfn"(%5) {fn = sum, attr = @lineitem::@l_extendedprice} : (!tuples.tuplestream) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %15 = "relalg.aggrfn"(%5) {fn = count, attr = @lineitem::@l_extendedprice} : (!tuples.tuplestream) -> (i64)
+// CHECK-NEXT:      "tuples.return"(%7, %12, %13, %14, %10, %8, %9, %10, %11, %14, %15) : (i64, !db.decimal<36, 6>, !db.decimal<24, 4>, !db.decimal<12, 2>, !db.decimal<12, 2>, !db.decimal<12, 2>, i64, !db.decimal<12, 2>, i64, !db.decimal<12, 2>, i64) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5, group_by_cols = [@lineitem::@l_returnflag, @lineitem::@l_linestatus], computed_cols = [@aggr0::@tmp_attr9({type = i64}), @aggr0::@tmp_attr4({type = !db.decimal<36, 6>}), @aggr0::@tmp_attr2({type = !db.decimal<24, 4>}), @aggr0::@tmp_attr1({type = !db.decimal<12, 2>}), @aggr0::@tmp_attr0({type = !db.decimal<12, 2>}), @aggr_rw::@rw0({type = !db.decimal<12, 2>}), @aggr_rw::@rw1({type = i64}), @aggr_rw::@rw2({type = !db.decimal<12, 2>}), @aggr_rw::@rw3({type = i64}), @aggr_rw::@rw4({type = !db.decimal<12, 2>}), @aggr_rw::@rw5({type = i64})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %35 = "relalg.map"(%23) ({
-// CHECK-NEXT:    ^bb4(%36: !tuples.tuple):
-// CHECK-NEXT:      %37 = "tuples.getcol"(%36) {attr = @aggr_rw::@rw0} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %38 = "tuples.getcol"(%36) {attr = @aggr_rw::@rw1} : (!tuples.tuple) -> (i64)
-// CHECK-NEXT:      %39 = db.cast %38 : i64 -> !db.decimal<19, 0>
-// CHECK-NEXT:      %40 = db.div %37 : !db.decimal<12, 2>, %39 : !db.decimal<19, 0> : !db.decimal<31, 21>
-// CHECK-NEXT:      "tuples.return"(%40) : (!db.decimal<31, 21>) -> ()
+// CHECK-NEXT:    %5 = "relalg.map"(%4) ({
+// CHECK-NEXT:    ^bb0(%6: !tuples.tuple):
+// CHECK-NEXT:      %7 = "tuples.getcol"(%6) {attr = @aggr_rw::@rw0} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %8 = "tuples.getcol"(%6) {attr = @aggr_rw::@rw1} : (!tuples.tuple) -> (i64)
+// CHECK-NEXT:      %9 = db.cast %8 : i64 -> !db.decimal<19, 0>
+// CHECK-NEXT:      %10 = db.div %7 : !db.decimal<12, 2>, %9 : !db.decimal<19, 0> : !db.decimal<31, 21>
+// CHECK-NEXT:      "tuples.return"(%10) : (!db.decimal<31, 21>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5, computed_cols = [@aggr0::@tmp_attr8({type = !db.decimal<31, 21>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %41 = "relalg.map"(%35) ({
-// CHECK-NEXT:    ^bb5(%42: !tuples.tuple):
-// CHECK-NEXT:      %43 = "tuples.getcol"(%42) {attr = @aggr_rw::@rw2} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %44 = "tuples.getcol"(%42) {attr = @aggr_rw::@rw3} : (!tuples.tuple) -> (i64)
-// CHECK-NEXT:      %45 = db.cast %44 : i64 -> !db.decimal<19, 0>
-// CHECK-NEXT:      %46 = db.div %43 : !db.decimal<12, 2>, %45 : !db.decimal<19, 0> : !db.decimal<31, 21>
-// CHECK-NEXT:      "tuples.return"(%46) : (!db.decimal<31, 21>) -> ()
+// CHECK-NEXT:    %6 = "relalg.map"(%5) ({
+// CHECK-NEXT:    ^bb0(%7: !tuples.tuple):
+// CHECK-NEXT:      %8 = "tuples.getcol"(%7) {attr = @aggr_rw::@rw2} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %9 = "tuples.getcol"(%7) {attr = @aggr_rw::@rw3} : (!tuples.tuple) -> (i64)
+// CHECK-NEXT:      %10 = db.cast %9 : i64 -> !db.decimal<19, 0>
+// CHECK-NEXT:      %11 = db.div %8 : !db.decimal<12, 2>, %10 : !db.decimal<19, 0> : !db.decimal<31, 21>
+// CHECK-NEXT:      "tuples.return"(%11) : (!db.decimal<31, 21>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5, computed_cols = [@aggr0::@tmp_attr6({type = !db.decimal<31, 21>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %47 = "relalg.map"(%41) ({
-// CHECK-NEXT:    ^bb6(%48: !tuples.tuple):
-// CHECK-NEXT:      %49 = "tuples.getcol"(%48) {attr = @aggr_rw::@rw4} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %50 = "tuples.getcol"(%48) {attr = @aggr_rw::@rw5} : (!tuples.tuple) -> (i64)
-// CHECK-NEXT:      %51 = db.cast %50 : i64 -> !db.decimal<19, 0>
-// CHECK-NEXT:      %52 = db.div %49 : !db.decimal<12, 2>, %51 : !db.decimal<19, 0> : !db.decimal<31, 21>
-// CHECK-NEXT:      "tuples.return"(%52) : (!db.decimal<31, 21>) -> ()
+// CHECK-NEXT:    %7 = "relalg.map"(%6) ({
+// CHECK-NEXT:    ^bb0(%8: !tuples.tuple):
+// CHECK-NEXT:      %9 = "tuples.getcol"(%8) {attr = @aggr_rw::@rw4} : (!tuples.tuple) -> (!db.decimal<12, 2>)
+// CHECK-NEXT:      %10 = "tuples.getcol"(%8) {attr = @aggr_rw::@rw5} : (!tuples.tuple) -> (i64)
+// CHECK-NEXT:      %11 = db.cast %10 : i64 -> !db.decimal<19, 0>
+// CHECK-NEXT:      %12 = db.div %9 : !db.decimal<12, 2>, %11 : !db.decimal<19, 0> : !db.decimal<31, 21>
+// CHECK-NEXT:      "tuples.return"(%12) : (!db.decimal<31, 21>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5, computed_cols = [@aggr0::@tmp_attr7({type = !db.decimal<31, 21>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %53 = "relalg.sort"(%47) {rows = 5930888.5, sortspecs = [(@lineitem::@l_returnflag,asc), (@lineitem::@l_linestatus,asc)]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
-// CHECK-NEXT:    %54 = "relalg.materialize"(%53) {cols = [@lineitem::@l_returnflag, @lineitem::@l_linestatus, @aggr0::@tmp_attr0, @aggr0::@tmp_attr1, @aggr0::@tmp_attr2, @aggr0::@tmp_attr4, @aggr0::@tmp_attr6, @aggr0::@tmp_attr7, @aggr0::@tmp_attr8, @aggr0::@tmp_attr9], columns = ["l_returnflag", "l_linestatus", "sum_qty", "sum_base_price", "sum_disc_price", "sum_charge", "avg_qty", "avg_price", "avg_disc", "count_order"]} : (!tuples.tuplestream) -> (!subop.result_table<[l_returnflag$0 : !db.char<1>, l_linestatus$0 : !db.char<1>, sum_qty$0 : !db.decimal<12, 2>, sum_base_price$0 : !db.decimal<12, 2>, sum_disc_price$0 : !db.decimal<24, 4>, sum_charge$0 : !db.decimal<36, 6>, avg_qty$0 : !db.decimal<31, 21>, avg_price$0 : !db.decimal<31, 21>, avg_disc$0 : !db.decimal<31, 21>, count_order$0 : i64]>)
-// CHECK-NEXT:    "subop.set_result"(%54) {result_id = 0} : (!subop.result_table<[l_returnflag$0 : !db.char<1>, l_linestatus$0 : !db.char<1>, sum_qty$0 : !db.decimal<12, 2>, sum_base_price$0 : !db.decimal<12, 2>, sum_disc_price$0 : !db.decimal<24, 4>, sum_charge$0 : !db.decimal<36, 6>, avg_qty$0 : !db.decimal<31, 21>, avg_price$0 : !db.decimal<31, 21>, avg_disc$0 : !db.decimal<31, 21>, count_order$0 : i64]>) -> ()
+// CHECK-NEXT:    %8 = "relalg.sort"(%7) {rows = 5930888.5, sortspecs = [(@lineitem::@l_returnflag,asc), (@lineitem::@l_linestatus,asc)]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
+// CHECK-NEXT:    %9 = "relalg.materialize"(%8) {cols = [@lineitem::@l_returnflag, @lineitem::@l_linestatus, @aggr0::@tmp_attr0, @aggr0::@tmp_attr1, @aggr0::@tmp_attr2, @aggr0::@tmp_attr4, @aggr0::@tmp_attr6, @aggr0::@tmp_attr7, @aggr0::@tmp_attr8, @aggr0::@tmp_attr9], columns = ["l_returnflag", "l_linestatus", "sum_qty", "sum_base_price", "sum_disc_price", "sum_charge", "avg_qty", "avg_price", "avg_disc", "count_order"]} : (!tuples.tuplestream) -> (!subop.result_table<[l_returnflag$0 : !db.char<1>, l_linestatus$0 : !db.char<1>, sum_qty$0 : !db.decimal<12, 2>, sum_base_price$0 : !db.decimal<12, 2>, sum_disc_price$0 : !db.decimal<24, 4>, sum_charge$0 : !db.decimal<36, 6>, avg_qty$0 : !db.decimal<31, 21>, avg_price$0 : !db.decimal<31, 21>, avg_disc$0 : !db.decimal<31, 21>, count_order$0 : i64]>)
+// CHECK-NEXT:    "subop.set_result"(%9) {result_id = 0} : (!subop.result_table<[l_returnflag$0 : !db.char<1>, l_linestatus$0 : !db.char<1>, sum_qty$0 : !db.decimal<12, 2>, sum_base_price$0 : !db.decimal<12, 2>, sum_disc_price$0 : !db.decimal<24, 4>, sum_charge$0 : !db.decimal<36, 6>, avg_qty$0 : !db.decimal<31, 21>, avg_price$0 : !db.decimal<31, 21>, avg_disc$0 : !db.decimal<31, 21>, count_order$0 : i64]>) -> ()
 // CHECK-NEXT:    "tuples.return"() : () -> ()
 // CHECK-NEXT:  }
