@@ -37,6 +37,11 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
     Table(
       ("block", "ir"),
       (
+        Block(),
+        """^bb0():
+"""
+      ),
+      (
         Block(Seq()),
         """^bb0():
 """
@@ -52,10 +57,24 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
   "test.op"() : () -> ()"""
       ),
       (
+        Block(TestOp()),
+        """^bb0():
+  "test.op"() : () -> ()"""
+      ),
+      (
         Block(
           Seq(I32),
           (args: Iterable[Value[Attribute]]) =>
             Seq(TestOp(operands = ListType.from(args)))
+        ),
+        """^bb0(%0: i32):
+  "test.op"(%0) : (i32) -> ()"""
+      ),
+      (
+        Block(
+          I32,
+          (arg: Value[Attribute]) =>
+            Seq(TestOp(operands = ListType.from(Seq(arg))))
         ),
         """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()"""

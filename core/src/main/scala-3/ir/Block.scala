@@ -14,15 +14,23 @@ package scair.ir
 object Block {
 
   def apply(
-      arguments_types: Iterable[Attribute] = Seq(),
-      operations: Iterable[Operation] = Seq()
+      arguments_types: Iterable[Attribute] | Attribute = Seq(),
+      operations: Iterable[Operation] | Operation = Seq()
   ): Block = new Block(arguments_types, operations)
 
-  def apply(operations: Iterable[Operation]): Block = new Block(operations)
+  def apply(operations: Iterable[Operation] | Operation): Block = new Block(
+    operations
+  )
 
   def apply(
       arguments_types: Iterable[Attribute],
       operations_expr: Iterable[Value[Attribute]] => Iterable[Operation]
+  ): Block =
+    new Block(arguments_types, operations_expr)
+
+  def apply(
+      arguments_types: Attribute,
+      operations_expr: Value[Attribute] => Iterable[Operation]
   ): Block =
     new Block(arguments_types, operations_expr)
 
@@ -33,30 +41,59 @@ case class Block private (
     val operations: ListType[Operation]
 ) {
 
-  //private tupled for other helpers
-  private def this(args: (Iterable[Value[Attribute]], Iterable[Operation])) =
-    this(ListType.from(args._1), ListType.from(args._2))
-
   def this(
-      arguments_types: Iterable[Attribute] = Seq(),
-      operations: Iterable[Operation] = Seq()
+      arguments_types: Iterable[Attribute] | Attribute = Seq(),
+      operations: Iterable[Operation] | Operation = Seq()
   ) =
     this(
-      ListType.from(arguments_types.map(Value(_))),
-      ListType.from(operations)
+      ListType.from((arguments_types match {
+        case single: Attribute             => Seq(single)
+        case multiple: Iterable[Attribute] => multiple
+      }).map(Value(_))),
+      ListType.from((operations match {
+        case single: Operation             => Seq(single)
+        case multiple: Iterable[Operation] => multiple
+      }))
     )
 
-  def this(operations: Iterable[Operation]) =
-    this(Seq(), operations)
+  // private tupled for other helpers
+  private def this(
+      args: (
+          Iterable[Value[Attribute]] | Value[Attribute],
+          Iterable[Operation] | Operation
+      )
+  ) =
+    this(
+      ListType.from(args._1 match {
+        case single: Value[Attribute]             => Seq(single)
+        case multiple: Iterable[Value[Attribute]] => multiple
+      }),
+      ListType.from(args._2 match {
+        case single: Operation             => Seq(single)
+        case multiple: Iterable[Operation] => multiple
+      })
+    )
 
+  def this(operations: Iterable[Operation] | Operation) =
+    this(Seq(), operations)
 
   def this(
       argument_types: Iterable[Attribute],
-      operations_expr: Iterable[Value[Attribute]] => Iterable[Operation]
+      operations_expr: Iterable[Value[Attribute]] => Iterable[Operation] |
+        Operation
   ) =
     this({
       val args = argument_types.map(Value(_))
       (args, operations_expr(args))
+    })
+
+  def this(
+      argument_type: Attribute,
+      operations_expr: Value[Attribute] => Iterable[Operation] | Operation
+  ) =
+    this({
+      val arg = Value(argument_type)
+      (arg, operations_expr(arg))
     })
 
   var container_region: Option[Region] = None
