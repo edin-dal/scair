@@ -33,6 +33,10 @@ case class Block private (
     val operations: ListType[Operation]
 ) {
 
+  //private tupled for other helpers
+  private def this(args: (Iterable[Value[Attribute]], Iterable[Operation])) =
+    this(ListType.from(args._1), ListType.from(args._2))
+
   def this(
       arguments_types: Iterable[Attribute] = Seq(),
       operations: Iterable[Operation] = Seq()
@@ -43,18 +47,16 @@ case class Block private (
     )
 
   def this(operations: Iterable[Operation]) =
-    this(ListType.empty[Value[Attribute]], ListType.from(operations))
+    this(Seq(), operations)
 
-  private def this(args: (ListType[Value[Attribute]], ListType[Operation])) =
-    this(args._1, args._2)
 
   def this(
       argument_types: Iterable[Attribute],
       operations_expr: Iterable[Value[Attribute]] => Iterable[Operation]
   ) =
     this({
-      val args = ListType.from(argument_types.map(Value(_)))
-      (args, ListType.from(operations_expr(args)))
+      val args = argument_types.map(Value(_))
+      (args, operations_expr(args))
     })
 
   var container_region: Option[Region] = None
