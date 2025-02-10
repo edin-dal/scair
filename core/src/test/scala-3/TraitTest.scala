@@ -5,7 +5,6 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.Parser.*
 import scair.ir.*
-import scair.traits.*
 
 import scala.collection.mutable
 
