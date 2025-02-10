@@ -11,6 +11,9 @@ package scair.ir
 ||      BLOCKS      ||
 \*≡==---==≡≡==---==≡*/
 
+/** Companion object for the Block class, providing simple `apply`s just
+  * forwarding to constructors.
+  */
 object Block {
 
   def apply(
@@ -36,11 +39,27 @@ object Block {
 
 }
 
+/** A basic block.
+  *
+  * @param arguments
+  *   The list of owned block arguments.
+  * @param operations
+  *   The list of contained operations.
+  */
 case class Block private (
     val arguments: ListType[Value[Attribute]],
     val operations: ListType[Operation]
 ) {
 
+  /** Constructs a Block instance with the given argument types and operations.
+    *
+    * @param arguments_types
+    *   The types of the arguments, either as a single Attribute or an Iterable
+    *   of Attributes.
+    * @param operations
+    *   The operations, either as a single Operation or an Iterable of
+    *   Operations.
+    */
   def this(
       arguments_types: Iterable[Attribute] | Attribute = Seq(),
       operations: Iterable[Operation] | Operation = Seq()
@@ -56,7 +75,13 @@ case class Block private (
       }))
     )
 
-  // private tupled for other helpers
+  /** Private tupled constructor mirroring the private primary constructor. Only
+    * here for readability of other auxiliary constructors and strange
+    * constraints on their syntax.
+    *
+    * @param args
+    *   A tuple containing the argument values and operations.
+    */
   private def this(
       args: (
           Iterable[Value[Attribute]] | Value[Attribute],
@@ -74,19 +99,43 @@ case class Block private (
       })
     )
 
+  /** Constructs a Block instance with the given operations and no block
+    * arguments.
+    *
+    * @param operations
+    *   The operations, either as a single Operation or an Iterable of
+    *   Operations.
+    */
   def this(operations: Iterable[Operation] | Operation) =
     this(Seq(), operations)
 
+  /** Constructs a Block instance with the given argument type and a function to
+    * generate operations given the created block argument.
+    *
+    * @param argument_type
+    *   The type of the argument.
+    * @param operations_expr
+    *   A function creating the contained operation(s) given the block argument.
+    */
   def this(
-      argument_types: Iterable[Attribute],
+      argument_type: Iterable[Attribute],
       operations_expr: Iterable[Value[Attribute]] => Iterable[Operation] |
         Operation
   ) =
     this({
-      val args = argument_types.map(Value(_))
+      val args = argument_type.map(Value(_))
       (args, operations_expr(args))
     })
 
+  /** Constructs a Block instance with the given arguments type and a function
+    * to generate operations given the created block arguments.
+    *
+    * @param argument_type
+    *   The types of the arguments as an Iterable of Attributes.
+    * @param operations_expr
+    *   A function creating the contained operation(s) given the block
+    *   arguments.
+    */
   def this(
       argument_type: Attribute,
       operations_expr: Value[Attribute] => Iterable[Operation] | Operation
