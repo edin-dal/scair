@@ -208,6 +208,7 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               Block(
+                ListType(Value(I32)),
                 ListType(
                   UnregisteredOperation(
                     "test.op",
@@ -231,8 +232,7 @@ class ParserTest
                     _,
                     _
                   )
-                ),
-                ListType(I32)
+                )
               ),
               100
             ) =>
@@ -254,6 +254,7 @@ class ParserTest
               Region(
                 Seq(
                   Block(
+                    ListType(Value(I32)),
                     ListType(
                       UnregisteredOperation(
                         "test.op",
@@ -277,10 +278,10 @@ class ParserTest
                         _,
                         _
                       )
-                    ),
-                    ListType(I32)
+                    )
                   ),
                   Block(
+                    ListType(Value(I32)),
                     ListType(
                       UnregisteredOperation(
                         "test.op",
@@ -307,8 +308,7 @@ class ParserTest
                         _,
                         _
                       )
-                    ),
-                    ListType(I32)
+                    )
                   )
                 )
               ),
@@ -403,6 +403,7 @@ class ParserTest
                   Region(
                     Seq(
                       Block(
+                        ListType(),
                         ListType(
                           UnregisteredOperation(
                             "test.op",
@@ -417,8 +418,7 @@ class ParserTest
                             _,
                             _
                           )
-                        ),
-                        ListType()
+                        )
                       )
                     )
                   )

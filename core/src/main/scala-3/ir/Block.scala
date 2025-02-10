@@ -11,14 +11,53 @@ package scair.ir
 ||      BLOCKS      ||
 \*≡==---==≡≡==---==≡*/
 
-case class Block(
-    val operations: ListType[Operation] = ListType(),
-    arguments_types: ListType[Attribute] = ListType()
+object Block {
+
+  def apply(
+      arguments_types: Iterable[Attribute] = Seq(),
+      operations: Iterable[Operation] = Seq()
+  ): Block = new Block(arguments_types, operations)
+
+  def apply(operations: Iterable[Operation]): Block = new Block(operations)
+
+  def apply(
+      arguments_types: Iterable[Attribute],
+      operations_expr: Iterable[Value[Attribute]] => Iterable[Operation]
+  ): Block =
+    new Block(arguments_types, operations_expr)
+
+}
+
+case class Block private (
+    val arguments: ListType[Value[Attribute]],
+    val operations: ListType[Operation]
 ) {
 
-  var container_region: Option[Region] = None
+  def this(
+      arguments_types: Iterable[Attribute] = Seq(),
+      operations: Iterable[Operation] = Seq()
+  ) =
+    this(
+      ListType.from(arguments_types.map(Value(_))),
+      ListType.from(operations)
+    )
 
-  val arguments: ListType[Value[Attribute]] = arguments_types.map(Value(_))
+  def this(operations: Iterable[Operation]) =
+    this(ListType.empty[Value[Attribute]], ListType.from(operations))
+
+  private def this(args: (ListType[Value[Attribute]], ListType[Operation])) =
+    this(args._1, args._2)
+
+  def this(
+      argument_types: Iterable[Attribute],
+      operations_expr: Iterable[Value[Attribute]] => Iterable[Operation]
+  ) =
+    this({
+      val args = ListType.from(argument_types.map(Value(_)))
+      (args, ListType.from(operations_expr(args)))
+    })
+
+  var container_region: Option[Region] = None
 
   private def attach_op(op: Operation): Unit = {
     op.container_block match {

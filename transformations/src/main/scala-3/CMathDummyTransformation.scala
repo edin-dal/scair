@@ -77,7 +77,7 @@ object TestReplacingDummyOperation extends RewritePattern {
   val opReplace = new UnregisteredOperation(
     "replacedOp",
     regions = ListType(
-      Region(Seq(Block(operations = ListType(op1, op2, op3))))
+      Region(Seq(Block(operations = Seq(op1, op2, op3))))
     )
   )
 
