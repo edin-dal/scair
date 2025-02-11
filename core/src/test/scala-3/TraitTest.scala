@@ -8,7 +8,7 @@ import scair.ir.*
 
 import scala.collection.mutable
 
-object FillerOp extends OperationObject {
+object FillerOp extends MLIROperationObject {
   override def name: String = "filler"
   override def factory: FactoryType = FillerOp.apply
 }
@@ -32,7 +32,7 @@ case class FillerOp(
       dictionaryAttributes
     ) {}
 
-object TerminatorOp extends OperationObject {
+object TerminatorOp extends MLIROperationObject {
   override def name: String = "terminator"
   override def factory: FactoryType = TerminatorOp.apply
 }
@@ -57,7 +57,7 @@ case class TerminatorOp(
     )
     with IsTerminator {}
 
-object NoTerminatorOp extends OperationObject {
+object NoTerminatorOp extends MLIROperationObject {
   override def name: String = "noterminator"
   override def factory: FactoryType = NoTerminatorOp.apply
 }

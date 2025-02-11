@@ -21,7 +21,7 @@ case class TestOp(
       dictionaryAttributes
     )
 
-object TestOp extends OperationObject {
+object TestOp extends MLIROperationObject {
   override def name = "test.op"
   override def factory = TestOp.apply
 }

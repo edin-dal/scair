@@ -15,7 +15,7 @@ case class Region(
     blocks: Seq[Block]
 ) {
 
-  var container_operation: Option[Operation] = None
+  var container_operation: Option[MLIROperation] = None
 
   def drop_all_references: Unit = {
     container_operation = None

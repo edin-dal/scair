@@ -459,14 +459,14 @@ case class AffineSetAttr(val affine_set: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-object ModuleOp extends OperationObject {
+object ModuleOp extends MLIROperationObject {
   override def name = "builtin.module"
   override def factory = ModuleOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] =
+  ): P[MLIROperation] =
     P(
       parser.Region
     ).map((x: Region) => ModuleOp(regions = ListType(x)))

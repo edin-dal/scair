@@ -145,10 +145,12 @@ private def DialectRegion[$: P](parser: Parser) = P(
         b
       })
       ~ "{"
-      ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
-      b.operations ++= y
-      new Region(Seq(b))
-    })
+      ~ parser.Operations(1) ~ "}").map(
+      (b: Block, y: ListType[MLIROperation]) => {
+        b.operations ++= y
+        new Region(Seq(b))
+      }
+    )
 )
   ~ E({ parser.enterParentRegion })
 
@@ -156,7 +158,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
 //   BaseTableOp   //
 // ==-----------== //
 
-object BaseTableOp extends OperationObject {
+object BaseTableOp extends MLIROperationObject {
   override def name: String = "relalg.basetable"
   override def factory = BaseTableOp.apply
 
@@ -237,14 +239,14 @@ case class BaseTableOp(
 //   SelectionOp   //
 // ==-----------== //
 
-object SelectionOp extends OperationObject {
+object SelectionOp extends MLIROperationObject {
   override def name: String = "relalg.selection"
   override def factory = SelectionOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ DialectRegion(parser) ~
       parser.OptionalKeywordAttributes
   )
@@ -314,14 +316,14 @@ case class SelectionOp(
 //   MapOp   //
 // ==-----== //
 
-object MapOp extends OperationObject {
+object MapOp extends MLIROperationObject {
   override def name: String = "relalg.map"
   override def factory = MapOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
@@ -409,14 +411,14 @@ case class MapOp(
 //   AggregationOp   //
 // ==-------------== //
 
-object AggregationOp extends OperationObject {
+object AggregationOp extends MLIROperationObject {
   override def name: String = "relalg.aggregation"
   override def factory = AggregationOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
         .parse(parser)
@@ -527,14 +529,14 @@ case class AggregationOp(
 //   CountRowsOp   //
 // ==-----------== //
 
-object CountRowsOp extends OperationObject {
+object CountRowsOp extends MLIROperationObject {
   override def name: String = "relalg.count"
   override def factory = CountRowsOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ parser.OptionalAttributes
   ).map(
     (
@@ -604,14 +606,14 @@ case class CountRowsOp(
 //   AggrFuncOp   //
 // ==----------== //
 
-object AggrFuncOp extends OperationObject {
+object AggrFuncOp extends MLIROperationObject {
   override def name: String = "relalg.aggrfn"
   override def factory = AggrFuncOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
       ~ ValueId ~ ":" ~ parser.Type.rep(1)
       ~ parser.OptionalAttributes
@@ -708,14 +710,14 @@ case class AggrFuncOp(
 //   SortOp   //
 // ==------== //
 
-object SortOp extends OperationObject {
+object SortOp extends MLIROperationObject {
   override def name: String = "relalg.sort"
   override def factory = SortOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId
       ~ "[" ~ (SortSpecificationAttr
         .parse(parser))
@@ -805,14 +807,14 @@ case class SortOp(
 //   MaterializeOp   //
 // ==-------------== //
 
-object MaterializeOp extends OperationObject {
+object MaterializeOp extends MLIROperationObject {
   override def name: String = "relalg.materialize"
   override def factory = MaterializeOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
         .parse(parser)
