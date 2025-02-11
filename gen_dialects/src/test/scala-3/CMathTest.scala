@@ -69,6 +69,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                 Region(
                   Seq(
                     Block(
+                      ListType(),
                       ListType(
                         UnregisteredOperation(
                           "op1",
@@ -79,6 +80,11 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                             Region(
                               Seq(
                                 Block(
+                                  ListType(
+                                    Value(Float32Type),
+                                    Value(Float32Type),
+                                    Value(Float32Type)
+                                  ),
                                   ListType(
                                     Norm(
                                       ListType(Value(Float32Type)),
@@ -99,11 +105,6 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                                       _,
                                       _
                                     )
-                                  ),
-                                  ListType(
-                                    Float32Type,
-                                    Float32Type,
-                                    Float32Type
                                   )
                                 )
                               )
@@ -112,8 +113,7 @@ class CMathTest extends AnyFlatSpec with BeforeAndAfter {
                           _,
                           _
                         )
-                      ),
-                      ListType()
+                      )
                     )
                   )
                 )
