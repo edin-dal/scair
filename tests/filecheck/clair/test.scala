@@ -6,6 +6,7 @@ import scair.scairdl.constraints._
 import scair.scairdl.constraints.attr2constraint
 
 object Main {
+
   def main(args: Array[String]) = {
     val dialect = DialectDef(
       "test",
@@ -90,6 +91,7 @@ object Main {
 
     println(dialect.print(0))
   }
+
 }
 
 // CHECK:       package scair.dialects.test

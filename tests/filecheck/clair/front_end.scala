@@ -143,4 +143,3 @@ object CMathGen
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
 // CHECK-NEXT:    attributes = Seq(Complex, SampleData)
 // CHECK-NEXT:  )
-  
