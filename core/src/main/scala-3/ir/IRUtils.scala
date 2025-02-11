@@ -17,6 +17,22 @@ import scala.collection.mutable.ListBuffer
 // ╚██████╔╝ ░░░██║░░░ ██║ ███████╗ ██████╔╝
 // ░╚═════╝░ ░░░╚═╝░░░ ╚═╝ ╚══════╝ ╚═════╝░
 
+/*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+||      OP INPUTS      ||
+\*≡==---==≡≡≡≡≡==---==≡*/
+// for ClairV2
+
+type Operand[+T <: Attribute] = Value[T]
+case class Result[+T <: Attribute](val value: Value[T])
+
+case class Property[+T <: Attribute](
+    val typ: T
+)
+
+case class Attr[+T <: Attribute](
+    val typ: T
+)
+
 /*≡==--==≡≡≡==--=≡≡*\
 ||      UTILS      ||
 \*≡==---==≡==---==≡*/

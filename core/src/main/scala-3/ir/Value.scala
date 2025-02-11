@@ -13,7 +13,7 @@ package scair.ir
 
 // TO-DO: perhaps a linked list of a use to other uses within an operation
 //        for faster use retrieval and index update
-case class Use(val operation: Operation, val index: Int) {
+case class Use(val operation: MLIROperation, val index: Int) {
 
   override def equals(o: Any): Boolean = o match {
     case Use(op, idx) =>
