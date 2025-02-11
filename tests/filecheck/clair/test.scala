@@ -6,6 +6,7 @@ import scair.scairdl.constraints._
 import scair.scairdl.constraints.attr2constraint
 
 object Main {
+
   def main(args: Array[String]) = {
     val dialect = DialectDef(
       "test",
@@ -90,6 +91,7 @@ object Main {
 
     println(dialect.print(0))
   }
+
 }
 
 // CHECK:       package scair.dialects.test
@@ -102,7 +104,7 @@ object Main {
 // CHECK-NEXT:  import scair.scairdl.constraints._
 // CHECK-NEXT:  import scair.scairdl.constraints.attr2constraint
 
-// CHECK:       object NoVariadicsOp extends OperationObject {
+// CHECK:       object NoVariadicsOp extends MLIROperationObject {
 // CHECK-NEXT:    override def name = "test.no_variadics"
 // CHECK-NEXT:    override def factory = NoVariadicsOp.apply
 
@@ -163,7 +165,7 @@ object Main {
 
 // CHECK:       }
 
-// CHECK:       object VariadicOperandOp extends OperationObject {
+// CHECK:       object VariadicOperandOp extends MLIROperationObject {
 // CHECK-NEXT:    override def name = "test.variadic_operand"
 // CHECK-NEXT:    override def factory = VariadicOperandOp.apply
 
@@ -288,7 +290,7 @@ object Main {
 
 // CHECK:       }
 
-// CHECK:       object MultiVariadicOperandOp extends OperationObject {
+// CHECK:       object MultiVariadicOperandOp extends MLIROperationObject {
 // CHECK-NEXT:    override def name = "test.multi_variadic_operand"
 // CHECK-NEXT:    override def factory = MultiVariadicOperandOp.apply
 
