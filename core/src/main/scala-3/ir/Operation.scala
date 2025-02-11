@@ -4,6 +4,8 @@ import fastparse.P
 import scair.Parser
 import scair.Printer
 
+// import scala.reflect.ClassTag
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -11,9 +13,35 @@ import scair.Printer
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
 
+sealed abstract class Operation()
+
+/*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+||    ADT OPERATION    ||
+\*≡==---==≡≡≡≡≡==---==≡*/
+
+trait ADTCompanion {
+  val getMLIRRealm: MLIRRealm[_]
+}
+
+class ADTOperation() extends Operation
+
 /*≡==--==≡≡≡≡==--=≡≡*\
-||    OPERATIONS    ||
+||    MLIR REALM    ||
 \*≡==---==≡≡==---==≡*/
+
+object MLIRRealm {}
+
+trait MLIRRealm[T <: ADTOperation]() {
+
+  def unverify(op: T): RegisteredOperation
+
+  def verify(op: RegisteredOperation): T
+
+}
+
+/*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||    MLIR OPERATIONS    ||
+\*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 sealed abstract class MLIROperation(
     val name: String,
@@ -25,7 +53,8 @@ sealed abstract class MLIROperation(
       DictType.empty[String, Attribute],
     val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends OpTrait {
+) extends Operation,
+      OpTrait {
 
   val results: ListType[Value[Attribute]] = results_types.map(Value(_))
   def op: MLIROperation = this
@@ -128,6 +157,7 @@ case class UnregisteredOperation(
       dictionaryAttributes
     )
 
+// TODO: add a class tag as a parameter
 class RegisteredOperation(
     name: String,
     operands: ListType[Value[Attribute]] = ListType(),

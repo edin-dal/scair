@@ -11,7 +11,7 @@ package scair.ir
 ||    OPTRAIT    ||
 \*≡==---=≡=---==≡*/
 
-abstract class OpTrait {
+trait OpTrait {
   def op: MLIROperation
   def trait_verify(): Unit = ()
 }
