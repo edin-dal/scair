@@ -33,6 +33,20 @@ case class Attr[+T <: Attribute](
     val typ: T
 )
 
+/*≡==--==≡≡≡≡≡==--=≡≡*\
+||    CONVERSIONS    ||
+\*≡==---==≡≡≡==---==≡*/
+
+object ValueConversions {
+
+  given resToVal[T <: Attribute]: Conversion[Result[T], Value[T]] with
+    def apply(op: Result[T]): Value[T] = op.value
+
+  given valToRes[T <: Attribute]: Conversion[Value[T], Result[T]] with
+    def apply(value: Value[T]): Result[T] = Result(value)
+
+}
+
 /*≡==--==≡≡≡==--=≡≡*\
 ||      UTILS      ||
 \*≡==---==≡==---==≡*/
