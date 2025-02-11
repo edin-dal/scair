@@ -25,6 +25,7 @@ lazy val root = (project in file("."))
   .aggregate(
     core,
     ScaIRDL,
+    clairv2,
     clair,
     native_dialects,
     dialects,
@@ -67,7 +68,8 @@ lazy val dialect_source =
 lazy val dialects =
   (project in file("gen_dialects"))
     .dependsOn(native_dialects)
-    .settings(      name := "scair-dialects",
+    .settings(
+      name := "scair-dialects",
       dialect_source := Seq(
         "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
@@ -80,17 +82,26 @@ lazy val dialects =
       Compile / sourceGenerators += generate_all_dialects().taskValue
     )
 
+lazy val clairv2: Project =
+  (project in file("clairv2"))
+    .dependsOn(core)
+    .settings(
+      name := "clairv2"
+    )
+
 lazy val transformations =
   (project in file("transformations"))
     .dependsOn(core, dialects)
     .settings(
       name := "scair-transformations"
     )
+
 lazy val tools =
   (project in file("tools"))
     .dependsOn(dialects, transformations)
     .enablePlugins(JavaAppPackaging)
-    .settings(      name := "scair",
+    .settings(
+      name := "scair",
       Universal / packageName := "scair-opt" // Override the script name to "scair-opt"
     )
 
@@ -108,6 +119,7 @@ watchSources += new WatchSource(
 
 // Populate a file with the full classpath to compile some scala sources
 lazy val filechecks_classpath = taskKey[Unit]("File checks classpath")
+
 filechecks_classpath := {
   val full_cp = (tools / Compile / fullClasspath).value
   val file = new PrintWriter("full-classpath")
@@ -120,6 +132,7 @@ filechecks_classpath := {
 
 //Define a filecheck SBT task
 lazy val filechecks = taskKey[Unit]("File checks")
+
 filechecks := {
   // It expects this task to populate a helper file
   (filechecks_classpath).value
@@ -131,12 +144,14 @@ filechecks := {
     sys.error("Filechecks failed")
   }
 }
+
 // Add a file dependency for automatic filecheck retriggering when any filecheck case changes.
 filechecks / fileInputs += (baseDirectory.value / "tests" / "filecheck").toGlob / ** / "*.{mlir,scala}"
 
 // Define a testAll to run all tests types of Scair
 // Nicety to have sbt ~testAll running when develloping features or content!
 lazy val testAll = taskKey[Unit]("Run all tests")
+
 testAll := {
   // Incremental unit tests
   (Test / testQuick).toTask("").value

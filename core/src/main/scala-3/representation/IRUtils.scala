@@ -53,3 +53,37 @@ extension (lt: ListType[Value[Attribute]]) {
   }
 
 }
+
+/*≡==--==≡≡≡≡≡≡==--=≡≡*\
+||      OP INPUT      ||
+\*≡==---==≡≡≡≡==---==≡*/
+
+// type Operand[+T <: Attribute] = Value[T]
+// type Result[+T <: Attribute] = Value[T]
+
+// case class Property[+T <: Attribute]() {
+//   var value: T = ???
+// }
+
+// case class Attr[+T <: Attribute]() {
+//   var value: T = ???
+// }
+
+// sealed abstract class Operation(
+//     val name: String,
+//     val operands: ListType[Value[Attribute]] = ListType(),
+//     val successors: ListType[Block] = ListType(),
+//     results_types: ListType[Attribute] = ListType(),
+//     val regions: ListType[Region] = ListType(),
+//     val dictionaryProperties: DictType[String, Attribute] =
+//       DictType.empty[String, Attribute],
+//     val dictionaryAttributes: DictType[String, Attribute] =
+//       DictType.empty[String, Attribute]
+// ) extends OpTrait {
+
+// case class Operand[T <: Attribute | AttributeFE]() extends Input[T]
+// case class Result[T <: Attribute | AttributeFE]() extends Input[T]
+// case class Region() extends Input[Nothing]
+// case class Successor() extends Input[Nothing]
+// case class Property[T <: Attribute | AttributeFE]() extends Input[T]
+// case class Attr[T <: Attribute | AttributeFE]() extends Input[T]
