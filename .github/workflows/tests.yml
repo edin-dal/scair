@@ -92,32 +92,19 @@ jobs:
         pip install --upgrade pip
         pip install lit filecheck
 
-    # Restore SBT's incremental build cache
+    # Restore Mill's incremental build cache
     - name: Cache Incremental Build
       uses: actions/cache@v4
       with:
-        # All the target/ subdirectories are cached
-        path: "**/target"
-        # Caches are immutable; we need to uniquely identify them to always push the recent ones
-        # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
-        key: sbt-incremental-tests-${{ github.run_id }}-${{ github.run_attempt }}
-        # When restoring, we restore the most recent one pushed by such a job
-        # Those are scoped by branch too; e.g., the most recent one from the main branch would
-        # be fetched in a fresh PR, then the most recent one from this PR.
+        path: ./out
+        key: mill-incremental-tests-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          sbt-incremental-tests-
-
-    - name: Cache coursier packages
-      uses: coursier/cache-action@v6
-    - name: Install coursier packages (Scala and SBT)
-      uses: coursier/setup-action@v1
-      with:
-        apps: scala:3.3.1 sbt
+          mill-incremental-tests-
 
     - name: Run tests and generate coverage report
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
-        sbt coverage test filechecks coverageAggregate
+        mill scair.tools.test
 
     - name: Upload coverage report to Codecov
       uses: codecov/codecov-action@v5

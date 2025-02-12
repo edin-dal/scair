@@ -16,36 +16,29 @@ jobs:
     - name: Checkout Scair
       uses: actions/checkout@v4
 
-    # Restore SBT's incremental build cache
+    # Restore Mill's incremental build cache
     - name: Restore Incremental Build Cache
       uses: actions/cache@v4
       with:
-        # All the target/ subdirectories are cached
-        path: "**/target"
+        # All the out/ subdirectories are cached
+        path: "**/out"
         # Caches are immutable; we need to uniquely identify them to always push the recent ones
         # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
-        key: sbt-incremental-docs-${{ github.run_id }}-${{ github.run_attempt }}
+        key: mill-incremental-docs-${{ github.run_id }}-${{ github.run_attempt }}
         # When restoring, we restore the most recent one pushed by such a job
         # Those are scoped by branch too; e.g., the most recent one from the main branch would
         # be fetched in a fresh PR, then the most recent one from this PR.
         restore-keys: |
-          sbt-incremental-docs-
-
-    - name: Cache coursier packages
-      uses: coursier/cache-action@v6
-    - name: Install coursier packages (Scala and SBT)
-      uses: coursier/setup-action@v1
-      with:
-        apps: scala:3.3.1 sbt
+          mill-incremental-docs-
 
     - name: Generate documentation
-      run: sbt unidoc
+      run: mill mill.scaladoc.ScalaDocModule/doc
       
     - name: Upload static files as artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
       with:
-          path: target/scala-3.3.4/unidoc/
+          path: out/scair/unidoc/
 
   deploy:
     name: "Deploy to GitHub Pages"

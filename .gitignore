@@ -34,3 +34,7 @@ metals.sbt
 
 # Scair Shennanigans
 full-classpath
+
+# Mill specific
+.mill/
+out/
