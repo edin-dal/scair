@@ -1,9 +1,9 @@
 package scair.dialects.cmathv2
 
-import scair.ir.*
-import scair.dialects.builtin.*
-import scair.clairV2.mirrored.*
 import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.dialects.builtin.*
+import scair.ir.*
 
 case class MulV2(
     lhs: Operand[IntegerAttr],
