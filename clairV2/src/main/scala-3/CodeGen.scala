@@ -175,6 +175,65 @@ case class OperationDef(
   ||  UTILS FOR VERIFIED STATE CODEGEN  ||
   \*≡==-----====≡≡≡≡≡≡≡≡≡≡≡≡====-----==≡*/
 
+  // length verification
+
+  def lenVerHelper(name: String, list: Seq[OpInput]): String = {
+    if (!list.isEmpty)
+      s"if (op.$name.size != ${list.length}) then throw new Exception(s\"Expected ${list.length} $name, got $${op.$name.size}\")\n      "
+    else ""
+  }
+
+  def lengthVerification: String = {
+    lenVerHelper("operands", operands) ++
+      lenVerHelper("results", results) ++
+      lenVerHelper("regions", regions) ++
+      lenVerHelper("successors", successors) ++
+      lenVerHelper("dictionaryProperties", properties) ++
+      lenVerHelper("dictionaryAttributes", attributes)
+  }
+
+  // have to verify that the specific properties and attributes exist
+  def propAndAttrExist: String = {
+
+    val ver =
+      (properties
+        .map(x => s"op.dictionaryProperties.contains(\"${x.id}\")") ++
+        attributes.map(x => s"op.dictionaryAttributes.contains(\"${x.id}\")"))
+
+    if !(ver.isEmpty) then s"""
+      if !(${ver.mkString(" &&\n      ")}) 
+      then throw new Exception("Expected specific properties and attributes")  
+""" else ""
+  }
+
+  // base attribute verification / type verification
+
+  def baseAttrVerOperands: Seq[String] = {
+    operands.zipWithIndex
+      .map((x, y) =>
+        s"BaseAttr[${x.typeString}]().verify(op.operands($y).typ, new ConstraintContext())"
+      )
+  }
+
+  def baseAttrVerResults: Seq[String] = {
+    results.zipWithIndex
+      .map((x, y) =>
+        s"BaseAttr[${x.typeString}]().verify(op.results($y).typ, new ConstraintContext())"
+      )
+  }
+
+  def baseAttrVerProperties: Seq[String] = {
+    properties.zipWithIndex
+      .map((x, y) =>
+        s"BaseAttr[${x.typeString}]().verify(op.dictionaryProperties(\"${x.id}\"), new ConstraintContext())"
+      )
+  }
+
+  def baseAttrVerification: String = {
+    (baseAttrVerOperands ++ baseAttrVerResults ++ baseAttrVerProperties)
+      .mkString("\n      ")
+  }
+
   def getREGOpOperands: Seq[String] =
     (operands zip (0 to operands.length).toList)
       .map((x, y) =>
@@ -218,6 +277,10 @@ case class OperationDef(
 
   def verifyGen: String = s"""
     def verify(op: RegisteredOperation): $className = {
+
+      $lengthVerification
+      $propAndAttrExist
+      $baseAttrVerification
 
       $className(
         $getVerifiedConstructor
