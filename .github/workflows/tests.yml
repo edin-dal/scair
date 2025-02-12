@@ -101,10 +101,17 @@ jobs:
         restore-keys: |
           mill-incremental-tests-
 
+    - name: Cache coursier packages
+      uses: coursier/cache-action@v6
+    - name: Install coursier packages (Scala and Mill)
+      uses: coursier/setup-action@v1
+      with:
+        apps: scala:3.3.1 mill
+
     - name: Run tests and generate coverage report
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
-        mill scair.tools.test
+        mill tools.test
 
     - name: Upload coverage report to Codecov
       uses: codecov/codecov-action@v5

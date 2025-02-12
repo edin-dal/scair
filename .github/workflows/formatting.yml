@@ -20,12 +20,11 @@ jobs:
     - name: Checkout Scair
       uses: actions/checkout@v4
 
-    # Restore SBT's incremental build cache
+    # Restore Mill's incremental build cache
     - name: Cache Incremental Build
       uses: actions/cache@v4
       with:
-        # All the target/ subdirectories are cached
-        path: "**/out"
+        path: "./out"
         # Caches are immutable; we need to uniquely identify them to always push the recent ones
         # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
         key: mill-incremental-format-${{ github.run_id }}-${{ github.run_attempt }}
@@ -34,6 +33,13 @@ jobs:
         # be fetched in a fresh PR, then the most recent one from this PR.
         restore-keys: |
           mill-incremental-format-
+
+    - name: Cache coursier packages
+      uses: coursier/cache-action@v6
+    - name: Install coursier packages (Scala and Mill)
+      uses: coursier/setup-action@v1
+      with:
+        apps: scala:3.3.1 mill
 
     # Check if the code is formatted as expected
     - name: Run format checks
