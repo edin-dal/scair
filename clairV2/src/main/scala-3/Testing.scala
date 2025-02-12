@@ -1,9 +1,10 @@
 package scair.clairV2.testing
 
-import scair.ir.*
-import scair.dialects.builtin.*
 import scair.clairV2.mirrored.*
-import scair.scairdl.constraints.{BaseAttr, ConstraintContext}
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.scairdl.constraints.BaseAttr
+import scair.scairdl.constraints.ConstraintContext
 
 // object ExampleWithGenedCode {
 

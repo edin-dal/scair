@@ -1,12 +1,7 @@
 package scair.clairV2.codegen
 
-import scair.ir.Attribute
-import scair.ir.MLIROperation
-import scair.clairV2.mirrored.*
-
 import java.io.File
 import java.io.PrintStream
-import scala.collection.mutable
 import scala.reflect.*
 
 // ██╗ ██████╗░

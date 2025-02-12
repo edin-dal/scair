@@ -1,14 +1,11 @@
 package scair.clairV2.mirrored
 
-import scair.ir.*
 import scair.clairV2.codegen.*
 import scair.clairV2.macros.*
-import scair.dialects.builtin.IntegerAttr
+import scair.ir.*
 
-import scala.reflect.ClassTag
 import scala.compiletime.*
 import scala.deriving.*
-import scala.reflect.*
 
 // ███╗░░░███╗ ██╗ ██████╗░ ██████╗░ ░█████╗░ ██████╗░ ███████╗ ██████╗░
 // ████╗░████║ ██║ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔══██╗
