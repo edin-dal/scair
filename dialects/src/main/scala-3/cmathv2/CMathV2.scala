@@ -1,4 +1,4 @@
-package scair.dialects.cmathv2gen
+package scair.dialects.cmathv2
 
 import scair.ir.*
 import scair.dialects.builtin.*
