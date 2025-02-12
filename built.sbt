@@ -84,7 +84,7 @@ lazy val dialects =
         "scair.dialects.funcgen.FuncGen",
         "scair.dialects.llvmgen.LLVMGen",
         "scair.dialects.memrefgen.MemrefGen",
-        "scair.dialects.cmathv2gen.CMathV2Gen"
+        "scair.dialects.cmathv2.CMathV2Gen"
       ),
       // Add the generated sources to the source directories
       Compile / sourceGenerators += generate_all_dialects().taskValue

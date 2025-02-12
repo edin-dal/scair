@@ -80,8 +80,11 @@ case class MLIROpDef(
     opDefs.map(x => x.getImports).flatten.distinct.mkString("\n")
   }
 
-  def print: String = s"""
-import scair.ir.Value
+  def print: String = s"""package ${opDefs(0).packageName}
+
+import scair.ir.*
+import scair.ir.ValueConversions.{resToVal, valToRes}
+import scair.scairdl.constraints.{BaseAttr, ConstraintContext}
 $getImports
 ${opDefs.map(_.print).mkString}
 """
@@ -95,6 +98,7 @@ ${opDefs.map(_.print).mkString}
 case class OperationDef(
     val name: String,
     val className: String,
+    val packageName: String,
     val operands: Seq[OperandDef] = Seq(),
     val results: Seq[ResultDef] = Seq(),
     val regions: Seq[RegionDef] = Seq(),
@@ -152,7 +156,7 @@ case class OperationDef(
       if (attributes.nonEmpty)
         s"dictionaryAttributes = DictType(${getADTOpAttributes})"
       else ""
-    ).filter(_ != "").mkString(",\n      ")
+    ).filter(_ != "").mkString(",\n        ")
   }
 
   def getResultReassign: String = {
@@ -161,60 +165,20 @@ case class OperationDef(
   }
 
   def unverifyGen: String = s"""
-  def unverify(op: $className): RegisteredOp[$className] = {
-    val op1 = RegisteredOp[$className](
-      $getUnverifiedConstructor
-    )
+    def unverify(op: $className): RegisteredOperation = {
+      val op1 = RegisteredOperation(
+        $getUnverifiedConstructor
+      )
 
-    op1.results.clear()
-    op1.results.addAll(${getResultReassign})
-    op1
-  }
-  """
+      op1.results.clear()
+      op1.results.addAll(${getResultReassign})
+      op1
+    }
+"""
 
   /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   ||  UTILS FOR VERIFIED STATE CODEGEN  ||
   \*≡==-----====≡≡≡≡≡≡≡≡≡≡≡≡====-----==≡*/
-
-  def lenVerHelper(name: String, list: Seq[OpInput]): String = {
-    if (!list.isEmpty)
-      s"if (op.$name.length != ${list.length}) then throw new Exception(s\"Expected ${list.length} $name, got $${op.$name.length}\")\n    "
-    else ""
-  }
-
-  def lengthVerification: String = {
-    lenVerHelper("operands", operands) ++
-      lenVerHelper("results", results) ++
-      lenVerHelper("regions", regions) ++
-      lenVerHelper("successors", successors) ++
-      lenVerHelper("properties", properties)
-  }
-
-  def baseAttrVerOperands: Seq[String] = {
-    operands.zipWithIndex
-      .map((x, y) =>
-        s"BaseAttr[${x.typeString}].verify(op.operands($y).typ, new ConstraintContext())"
-      )
-  }
-
-  def baseAttrVerResults: Seq[String] = {
-    results.zipWithIndex
-      .map((x, y) =>
-        s"BaseAttr[${x.typeString}].verify(op.results($y).typ, new ConstraintContext())"
-      )
-  }
-
-  def baseAttrVerProperties: Seq[String] = {
-    properties.zipWithIndex
-      .map((x, y) =>
-        s"BaseAttr[${x.typeString}].verify(op.properties(\"${x.id}\"), new ConstraintContext())"
-      )
-  }
-
-  def baseAttrVerification: String = {
-    (baseAttrVerOperands ++ baseAttrVerResults ++ baseAttrVerProperties)
-      .mkString("\n    ")
-  }
 
   def getREGOpOperands: Seq[String] =
     (operands zip (0 to operands.length).toList)
@@ -239,13 +203,13 @@ case class OperationDef(
   def getREGOpProperties: Seq[String] =
     properties
       .map(x =>
-        s"${x.id} = Property(op.properties(\"${x.id}\").asInstanceOf[Value[${x.typeString}]])"
+        s"${x.id} = Property(op.dictionaryProperties(\"${x.id}\").asInstanceOf[${x.typeString}])"
       )
 
   def getREGOpAttributes: Seq[String] =
     attributes
       .map(x =>
-        s"${x.id} = Attr(op.attributes(\"${x.id}\").asInstanceOf[Value[${x.typeString}]])"
+        s"${x.id} = Attr(op.dictionaryAttributes(\"${x.id}\").asInstanceOf[${x.typeString}])"
       )
 
   def getVerifiedConstructor: String = {
@@ -254,25 +218,25 @@ case class OperationDef(
       getREGOpRegions ++
       getREGOpSuccessors ++
       getREGOpProperties ++
-      getREGOpAttributes).mkString(",\n      ")
+      getREGOpAttributes).mkString(",\n        ")
   }
 
   def verifyGen: String = s"""
-  def verify(op: RegisteredOp[_]): $className = {
-    $lengthVerification
-    $baseAttrVerification
+    def verify(op: RegisteredOperation): $className = {
 
-    $className(
-      $getVerifiedConstructor
-    )
-  }
-  """
+      $className(
+        $getVerifiedConstructor
+      )
+    }
+"""
 
   def print: String = s"""
 
-val mlirOp$className = new MLIRRealm[$className] {
-  $unverifyGen
-  $verifyGen
+object ${className}Helper extends ADTCompanion {
+  val getMLIRRealm: MLIRRealm[$className] = new MLIRRealm[$className] {
+    $unverifyGen
+    $verifyGen
+  }
 }
     
 """

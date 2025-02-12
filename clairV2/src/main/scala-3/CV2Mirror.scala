@@ -2,7 +2,7 @@ package scair.clairV2.mirrored
 
 import scair.ir.*
 import scair.clairV2.codegen.*
-import scair.clairV2.macros.typeToString
+import scair.clairV2.macros.*
 import scair.dialects.builtin.IntegerAttr
 
 import scala.reflect.ClassTag
@@ -112,7 +112,7 @@ inline def stringifyLabels[Elems <: Tuple]: List[String] = {
   */
 inline def getDef[T](using
     m: Mirror.ProductOf[T]
-): OperationDef = {
+): String => OperationDef = {
 
   val defname = constValue[m.MirroredLabel]
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
@@ -139,17 +139,19 @@ inline def getDef[T](using
         case _                 => throw new Exception("Internal error!")
       }
 
-      OperationDef(
-        defname.toLowerCase,
-        defname,
-        operands.toSeq,
-        results.toSeq,
-        regions.toSeq,
-        successors.toSeq,
-        opProperty.toSeq,
-        opAttribute.toSeq,
-        assembly_format
-      )
+      (packageName: String) =>
+        OperationDef(
+          defname.toLowerCase,
+          defname,
+          packageName,
+          operands.toSeq,
+          results.toSeq,
+          regions.toSeq,
+          successors.toSeq,
+          opProperty.toSeq,
+          opAttribute.toSeq,
+          assembly_format
+        )
 
     case _ =>
       throw new Exception("ADTOperation definition expected.")
@@ -162,7 +164,14 @@ inline def getDef[T](using
   *   Lambda that produces an OperadtionDef given a string of dialect name.
   */
 inline def summonDef[Elem]: OperationDef = {
-  getDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
+  val opDef = getDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
+
+  val packageName = getClassPath[Elem]
+  val withoutLastSegment =
+    packageName.substring(0, packageName.lastIndexOf('.'))
+  val finalPkgName = withoutLastSegment.replace("$", "")
+
+  opDef(finalPkgName)
 }
 
 /** Generates a list of OperationDef given enum cases.
@@ -184,8 +193,8 @@ inline def summonOperationDefs[Prods <: Tuple]: Seq[OperationDef] = {
   *   \- Sum Mirror of a given dialect
   */
 inline def summonMLIROps[Prods <: Tuple]: MLIROpDef = {
-  val defs =
-    summonOperationDefs[Prods]
+
+  val defs = summonOperationDefs[Prods]
 
   MLIROpDef(
     defs
