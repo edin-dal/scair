@@ -229,8 +229,15 @@ case class OperationDef(
       )
   }
 
+  def baseAttrVerAttributes: Seq[String] = {
+    attributes.zipWithIndex
+      .map((x, y) =>
+        s"BaseAttr[${x.typeString}]().verify(op.dictionaryAttributes(\"${x.id}\"), new ConstraintContext())"
+      )
+  }
+
   def baseAttrVerification: String = {
-    (baseAttrVerOperands ++ baseAttrVerResults ++ baseAttrVerProperties)
+    (baseAttrVerOperands ++ baseAttrVerResults ++ baseAttrVerProperties ++ baseAttrVerAttributes)
       .mkString("\n      ")
   }
 
