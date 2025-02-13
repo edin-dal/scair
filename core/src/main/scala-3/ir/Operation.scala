@@ -25,6 +25,26 @@ trait ADTCompanion {
 
 class ADTOperation() extends Operation
 
+class UnverifiedOp[T <: ADTOperation](
+    name: String,
+    operands: ListType[Value[Attribute]] = ListType(),
+    successors: ListType[Block] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
+    regions: ListType[Region] = ListType(),
+    dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends MLIROperation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
+
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR REALM    ||
 \*≡==---==≡≡==---==≡*/
@@ -33,9 +53,9 @@ object MLIRRealm {}
 
 trait MLIRRealm[T <: ADTOperation]() {
 
-  def unverify(op: T): RegisteredOperation
+  def unverify(op: T): UnverifiedOp[T]
 
-  def verify(op: RegisteredOperation): T
+  def verify(op: UnverifiedOp[T]): T
 
 }
 
@@ -157,7 +177,6 @@ case class UnregisteredOperation(
       dictionaryAttributes
     )
 
-// TODO: add a class tag as a parameter
 class RegisteredOperation(
     name: String,
     operands: ListType[Value[Attribute]] = ListType(),

@@ -160,8 +160,8 @@ case class OperationDef(
   }
 
   def unverifyGen: String = s"""
-    def unverify(op: $className): RegisteredOperation = {
-      val op1 = RegisteredOperation(
+    def unverify(op: $className): UnverifiedOp[$className] = {
+      val op1 = UnverifiedOp[$className](
         $getUnverifiedConstructor
       )
 
@@ -283,7 +283,7 @@ case class OperationDef(
   }
 
   def verifyGen: String = s"""
-    def verify(op: RegisteredOperation): $className = {
+    def verify(op: UnverifiedOp[$className]): $className = {
 
       $lengthVerification
       $propAndAttrExist
@@ -295,10 +295,38 @@ case class OperationDef(
     }
 """
 
+  /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
+  ||    CONSTRUCTOR FOR UNVERIFIED OP    ||
+  \*≡==-----====≡≡≡≡≡≡≡≡≡≡≡≡≡====-----==≡*/
+
+  def unverifiedConstructorGen: String = s"""
+
+    def constructUnverifiedOp(
+        name: String,
+        operands: ListType[Value[Attribute]] = ListType(),
+        successors: ListType[Block] = ListType(),
+        results_types: ListType[Attribute] = ListType(),
+        regions: ListType[Region] = ListType(),
+        dictionaryProperties: DictType[String, Attribute] = DictType.empty[String, Attribute],
+        dictionaryAttributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
+    ): UnverifiedOp[$className] = {
+      UnverifiedOp[$className](
+        name = name,
+        operands = operands,
+        successors = successors,
+        results_types = results_types,
+        regions = regions,
+        dictionaryProperties = dictionaryProperties,
+        dictionaryAttributes = dictionaryAttributes
+      )
+    }
+"""
+
   def print: String = s"""
 
 object ${className}Helper extends ADTCompanion {
   val getMLIRRealm: MLIRRealm[$className] = new MLIRRealm[$className] {
+    $unverifiedConstructorGen
     $unverifyGen
     $verifyGen
   }
