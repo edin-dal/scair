@@ -302,7 +302,6 @@ case class OperationDef(
   def unverifiedConstructorGen: String = s"""
 
     def constructUnverifiedOp(
-        name: String,
         operands: ListType[Value[Attribute]] = ListType(),
         successors: ListType[Block] = ListType(),
         results_types: ListType[Attribute] = ListType(),
@@ -311,7 +310,7 @@ case class OperationDef(
         dictionaryAttributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
     ): UnverifiedOp[$className] = {
       UnverifiedOp[$className](
-        name = name,
+        name = "$name",
         operands = operands,
         successors = successors,
         results_types = results_types,
