@@ -53,6 +53,17 @@ object MLIRRealm {}
 
 trait MLIRRealm[T <: ADTOperation]() {
 
+  def constructUnverifiedOp(
+      operands: ListType[Value[Attribute]] = ListType(),
+      successors: ListType[Block] = ListType(),
+      results_types: ListType[Attribute] = ListType(),
+      regions: ListType[Region] = ListType(),
+      dictionaryProperties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      dictionaryAttributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
+
   def unverify(op: T): UnverifiedOp[T]
 
   def verify(op: UnverifiedOp[T]): T
