@@ -21,6 +21,8 @@ jobs:
       MLIR-Version: 98e674c9f16d677d95c67bc130e267fae331e43c
 
     steps:
+    - name: Checkout Scair
+      uses: actions/checkout@v4
 
     ##############
     # MLIR SETUP #
@@ -90,10 +92,6 @@ jobs:
         pip install --upgrade pip
         pip install lit filecheck
 
-    
-    - name: Checkout Scair
-      uses: actions/checkout@v4
-
     # Restore SBT's incremental build cache
     - name: Cache Incremental Build
       uses: actions/cache@v4
@@ -118,7 +116,7 @@ jobs:
 
     - name: Run tests and generate coverage report
       run: |
-        export PATH=$PATH:${GITHUB_WORKSPACE}/llvm-project/build/bin/
+        export PATH=$PATH:$(pwd)/llvm-project/build/bin/
         sbt coverage test filechecks coverageAggregate
 
     - name: Upload coverage report to Codecov
