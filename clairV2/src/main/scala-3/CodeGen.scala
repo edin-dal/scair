@@ -68,7 +68,7 @@ case class OpAttributeDef(
 \*≡==----=≡≡≡≡≡≡=----==≡*/
 
 case class MLIROpDef(
-    val dialectName: String, 
+    val dialectName: String,
     val opDefs: Seq[OperationDef]
 ) {
 
@@ -82,8 +82,7 @@ val ${dialectName}Dialect: DialectV2 =
   new DialectV2(
     operations = List(
       ${opDefs.map(x => s"${x.className}Helper").mkString(",\n      ")}
-    ),
-    attributes = List()
+    )
   )
 """
 
@@ -104,7 +103,7 @@ $createDialect
 \*≡==----=≡≡≡=----==≡*/
 
 case class OperationDef(
-    val dialect: String, 
+    val dialect: String,
     val name: String,
     val className: String,
     val packageName: String,
@@ -152,7 +151,7 @@ case class OperationDef(
 
   def getUnverifiedConstructor: String = {
     Seq(
-      s"name = \"$name\"",
+      s"name = \"${dialect.toLowerCase()}.$name\"",
       if (operands.nonEmpty) s"operands = ListType(${getADTOpOperands})"
       else "",
       if (successors.nonEmpty) s"successors = ListType(${getADTOpSuccessors})"
@@ -324,7 +323,7 @@ case class OperationDef(
         dictionaryAttributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
     ): UnverifiedOp[$className] = {
       UnverifiedOp[$className](
-        name = "$name",
+        name = "${dialect.toLowerCase()}.$name",
         operands = operands,
         successors = successors,
         results_types = results_types,

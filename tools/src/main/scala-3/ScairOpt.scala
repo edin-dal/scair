@@ -4,7 +4,7 @@ import scair.TransformContext
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.utils.allDialects
+import scair.utils.{allDialects, allClairV2Dialects}
 import scair.utils.allPasses
 import scopt.OParser
 
@@ -62,13 +62,7 @@ object ScairOpt {
           .text(
             "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
           )
-          .action((_, c) => c.copy(verify_diagnostics = true)),
-        opt[Unit]("use_clairV2")
-          .optional()
-          .text(
-            "Use experimental ClairV2 for IR objects."
-          )
-          .action((_, c) => c.copy(use_clairV2 = true))
+          .action((_, c) => c.copy(verify_diagnostics = true))
       )
     }
 
@@ -91,8 +85,6 @@ object ScairOpt {
         val input_chunks =
           if (args.split_input_file) input.mkString.split("\n// -----\n")
           else Array(input.mkString)
-
-        val use_clairV2 = args.use_clairV2
 
         val output_chunks = for (chunk <- input_chunks) yield {
 
@@ -166,6 +158,9 @@ object ScairOpt {
       def register_all_dialects(): Unit = {
         for (dialect <- allDialects) {
           ctx.registerDialect(dialect)
+        }
+        for (dialect <- allClairV2Dialects) {
+          ctx.registerDialectV2(dialect)
         }
       }
 
