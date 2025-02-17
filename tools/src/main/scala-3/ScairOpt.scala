@@ -4,7 +4,8 @@ import scair.TransformContext
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.utils.{allDialects, allClairV2Dialects}
+import scair.utils.allClairV2Dialects
+import scair.utils.allDialects
 import scair.utils.allPasses
 import scopt.OParser
 
