@@ -17,4 +17,4 @@ case class NormV2(
     result: Result[IntegerAttr]
 ) extends ADTOperation
 
-object CMathV2Gen extends MLIRRealmize(summonMLIROps[(MulV2, NormV2)])
+object CMathV2Gen extends MLIRRealmize(summonMLIROps[(MulV2, NormV2)]("CMathV2"))

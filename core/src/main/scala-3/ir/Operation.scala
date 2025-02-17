@@ -20,6 +20,7 @@ sealed abstract class Operation()
 \*≡==---==≡≡≡≡≡==---==≡*/
 
 trait ADTCompanion {
+  val getName: String
   val getMLIRRealm: MLIRRealm[_]
 }
 

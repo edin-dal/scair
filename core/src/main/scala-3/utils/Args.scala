@@ -8,5 +8,6 @@ case class Args(
     val parsing_diagnostics: Boolean = false,
     val print_generic: Boolean = false,
     val passes: Seq[String] = Seq(),
-    val verify_diagnostics: Boolean = false
+    val verify_diagnostics: Boolean = false,
+    val use_clairV2: Boolean = false    
 )

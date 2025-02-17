@@ -62,7 +62,13 @@ object ScairOpt {
           .text(
             "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
           )
-          .action((_, c) => c.copy(verify_diagnostics = true))
+          .action((_, c) => c.copy(verify_diagnostics = true)),
+        opt[Unit]("use_clairV2")
+          .optional()
+          .text(
+            "Use experimental ClairV2 for IR objects."
+          )
+          .action((_, c) => c.copy(use_clairV2 = true))
       )
     }
 
@@ -85,6 +91,8 @@ object ScairOpt {
         val input_chunks =
           if (args.split_input_file) input.mkString.split("\n// -----\n")
           else Array(input.mkString)
+
+        val use_clairV2 = args.use_clairV2
 
         val output_chunks = for (chunk <- input_chunks) yield {
 

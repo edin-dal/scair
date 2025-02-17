@@ -15,3 +15,8 @@ final case class Dialect(
     val operations: Seq[MLIROperationObject],
     val attributes: Seq[AttributeObject]
 ) {}
+
+final case class DialectV2(
+    val operations: Seq[ADTCompanion],
+    val attributes: Seq[AttributeObject]
+) {}
