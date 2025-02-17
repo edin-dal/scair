@@ -68,12 +68,24 @@ case class OpAttributeDef(
 \*≡==----=≡≡≡≡≡≡=----==≡*/
 
 case class MLIROpDef(
+    val dialectName: String, 
     val opDefs: Seq[OperationDef]
 ) {
 
   def getImports: String = {
     opDefs.map(x => x.getImports).flatten.distinct.mkString("\n")
   }
+
+  def createDialect: String = s"""
+
+val ${dialectName}Dialect: DialectV2 = 
+  new DialectV2(
+    operations = List(
+      ${opDefs.map(x => s"${x.className}Helper").mkString(",\n      ")}
+    ),
+    attributes = List()
+  )
+"""
 
   def print: String = s"""package ${opDefs(0).packageName}
 
@@ -82,6 +94,7 @@ import scair.ir.ValueConversions.{resToVal, valToRes}
 import scair.scairdl.constraints.{BaseAttr, ConstraintContext}
 $getImports
 ${opDefs.map(_.print).mkString}
+$createDialect
 """
 
 }
@@ -91,6 +104,7 @@ ${opDefs.map(_.print).mkString}
 \*≡==----=≡≡≡=----==≡*/
 
 case class OperationDef(
+    val dialect: String, 
     val name: String,
     val className: String,
     val packageName: String,
@@ -324,6 +338,8 @@ case class OperationDef(
   def print: String = s"""
 
 object ${className}Helper extends ADTCompanion {
+  val getName: String = "${dialect.toLowerCase()}.$name"
+
   val getMLIRRealm: MLIRRealm[$className] = new MLIRRealm[$className] {
     $unverifiedConstructorGen
     $unverifyGen

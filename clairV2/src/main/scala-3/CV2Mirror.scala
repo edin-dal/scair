@@ -114,7 +114,7 @@ inline def stringifyLabels[Elems <: Tuple]: List[String] = {
   * @return
   *   Lambda that produces an Operadtion Def given a dialect name.
   */
-inline def getDef[T](using
+inline def getDef[T](dialectName: String)(using
     m: Mirror.ProductOf[T]
 ): String => OperationDef = {
 
@@ -145,6 +145,7 @@ inline def getDef[T](using
 
       (packageName: String) =>
         OperationDef(
+          dialectName,
           defname.toLowerCase,
           defname,
           packageName,
@@ -167,8 +168,8 @@ inline def getDef[T](using
   * @return
   *   Lambda that produces an OperadtionDef given a string of dialect name.
   */
-inline def summonDef[Elem]: OperationDef = {
-  val opDef = getDef[Elem](using summonInline[Mirror.ProductOf[Elem]])
+inline def summonDef[Elem](dialectName: String): OperationDef = {
+  val opDef = getDef[Elem](dialectName)(using summonInline[Mirror.ProductOf[Elem]])
 
   val packageName = getClassPath[Elem]
   val withoutLastSegment =
@@ -182,11 +183,11 @@ inline def summonDef[Elem]: OperationDef = {
   *
   * @param dialect_name
   */
-inline def summonOperationDefs[Prods <: Tuple]: Seq[OperationDef] = {
+inline def summonOperationDefs[Prods <: Tuple](dialectName: String): Seq[OperationDef] = {
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
-      summonDef[prod] +: summonOperationDefs[prods]
+      summonDef[prod](dialectName) +: summonOperationDefs[prods](dialectName)
 
     case _: EmptyTuple => Seq.empty
 }
@@ -196,11 +197,12 @@ inline def summonOperationDefs[Prods <: Tuple]: Seq[OperationDef] = {
   * @param m
   *   \- Sum Mirror of a given dialect
   */
-inline def summonMLIROps[Prods <: Tuple]: MLIROpDef = {
+inline def summonMLIROps[Prods <: Tuple](dialectName: String): MLIROpDef = {
 
-  val defs = summonOperationDefs[Prods]
+  val defs = summonOperationDefs[Prods](dialectName)
 
   MLIROpDef(
+    dialectName,
     defs
   )
 }
