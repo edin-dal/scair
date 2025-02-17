@@ -28,12 +28,14 @@ object Main {
   ) extends ADTOperation
 
   def main(args: Array[String]): Unit = {
-    val mlirOpDef = summonMLIROps[(Mul, Norm)]
+    val mlirOpDef = summonMLIROps[(Mul, Norm)]("CMath")
 
     println(mlirOpDef.print)
   }
 
 }
+
+// CHECK:       package Main
 
 // CHECK:       import scair.ir.*
 // CHECK-NEXT:  import scair.ir.ValueConversions.{resToVal, valToRes}
@@ -42,7 +44,9 @@ object Main {
 // CHECK-NEXT:  import scair.dialects.builtin.StringData
 
 // CHECK:       object MulHelper extends ADTCompanion {
-// CHECK-NEXT:    val getMLIRRealm: MLIRRealm[Mul] = new MLIRRealm[Mul] {
+// CHECK-NEXT:    val getName: String = "cmath.mul"
+
+// CHECK:         val getMLIRRealm: MLIRRealm[Mul] = new MLIRRealm[Mul] {
 
 // CHECK:           def constructUnverifiedOp(
 // CHECK-NEXT:          operands: ListType[Value[Attribute]] = ListType(),
@@ -53,7 +57,7 @@ object Main {
 // CHECK-NEXT:          dictionaryAttributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
 // CHECK-NEXT:      ): UnverifiedOp[Mul] = {
 // CHECK-NEXT:        UnverifiedOp[Mul](
-// CHECK-NEXT:          name = "mul",
+// CHECK-NEXT:          name = "cmath.mul",
 // CHECK-NEXT:          operands = operands,
 // CHECK-NEXT:          successors = successors,
 // CHECK-NEXT:          results_types = results_types,
@@ -65,7 +69,7 @@ object Main {
 
 // CHECK:           def unverify(op: Mul): UnverifiedOp[Mul] = {
 // CHECK-NEXT:        val op1 = UnverifiedOp[Mul](
-// CHECK-NEXT:          name = "mul",
+// CHECK-NEXT:          name = "cmath.mul",
 // CHECK-NEXT:          operands = ListType(op.operand1, op.operand2),
 // CHECK-NEXT:          successors = ListType(op.succ1, op.succ2),
 // CHECK-NEXT:          regions = ListType(op.reg1, op.reg2),
@@ -122,7 +126,9 @@ object Main {
 // CHECK-NEXT:  }
 
 // CHECK:       object NormHelper extends ADTCompanion {
-// CHECK-NEXT:    val getMLIRRealm: MLIRRealm[Norm] = new MLIRRealm[Norm] {
+// CHECK-NEXT:    val getName: String = "cmath.norm"
+
+// CHECK:         val getMLIRRealm: MLIRRealm[Norm] = new MLIRRealm[Norm] {
 
 // CHECK:           def constructUnverifiedOp(
 // CHECK-NEXT:          operands: ListType[Value[Attribute]] = ListType(),
@@ -133,7 +139,7 @@ object Main {
 // CHECK-NEXT:          dictionaryAttributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
 // CHECK-NEXT:      ): UnverifiedOp[Norm] = {
 // CHECK-NEXT:        UnverifiedOp[Norm](
-// CHECK-NEXT:          name = "norm",
+// CHECK-NEXT:          name = "cmath.norm",
 // CHECK-NEXT:          operands = operands,
 // CHECK-NEXT:          successors = successors,
 // CHECK-NEXT:          results_types = results_types,
@@ -145,7 +151,7 @@ object Main {
 
 // CHECK:           def unverify(op: Norm): UnverifiedOp[Norm] = {
 // CHECK-NEXT:        val op1 = UnverifiedOp[Norm](
-// CHECK-NEXT:          name = "norm",
+// CHECK-NEXT:          name = "cmath.norm",
 // CHECK-NEXT:          operands = ListType(op.norm)
 // CHECK-NEXT:        )
 
@@ -170,3 +176,11 @@ object Main {
 
 // CHECK:         }
 // CHECK-NEXT:  }
+
+// CHECK:       val CMathDialect: DialectV2 =
+// CHECK-NEXT:    new DialectV2(
+// CHECK-NEXT:      operations = List(
+// CHECK-NEXT:        MulHelper,
+// CHECK-NEXT:        NormHelper
+// CHECK-NEXT:      )
+// CHECK-NEXT:    )
