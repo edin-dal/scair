@@ -169,7 +169,8 @@ inline def getDef[T](dialectName: String)(using
   *   Lambda that produces an OperadtionDef given a string of dialect name.
   */
 inline def summonDef[Elem](dialectName: String): OperationDef = {
-  val opDef = getDef[Elem](dialectName)(using summonInline[Mirror.ProductOf[Elem]])
+  val opDef =
+    getDef[Elem](dialectName)(using summonInline[Mirror.ProductOf[Elem]])
 
   val packageName = getClassPath[Elem]
   val withoutLastSegment =
@@ -183,7 +184,9 @@ inline def summonDef[Elem](dialectName: String): OperationDef = {
   *
   * @param dialect_name
   */
-inline def summonOperationDefs[Prods <: Tuple](dialectName: String): Seq[OperationDef] = {
+inline def summonOperationDefs[Prods <: Tuple](
+    dialectName: String
+): Seq[OperationDef] = {
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
