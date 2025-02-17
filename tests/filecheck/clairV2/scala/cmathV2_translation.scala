@@ -8,11 +8,11 @@ import scair.Printer
 object Main {
 
   val x = ListType[Value[Attribute]](
-    Value(IntegerAttr(IntData(5), IntegerType(IntData(3), Unsigned)))
+    Value(IntegerType(IntData(3), Unsigned))
   )
 
   val y = ListType[Attribute](
-    IntegerAttr(IntData(5), IntegerType(IntData(3), Unsigned))
+    IntegerType(IntData(3), Unsigned)
   )
 
   def main(args: Array[String]): Unit = {
@@ -35,4 +35,4 @@ object Main {
 
 }
 
-// CHECK: %0 = "normv2"(%1) : (5 : ui3) -> (5 : ui3)
+// CHECK: %0 = "cmathv2.normv2"(%1) : (ui3) -> (ui3)
