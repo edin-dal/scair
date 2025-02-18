@@ -3,8 +3,7 @@ package scair.scairdl.irdef
 import fastparse.*
 import fastparse.ScalaWhitespace.*
 import scair.dialects.builtin.*
-import scair.ir.Attribute
-import scair.ir.Operation
+import scair.ir.*
 import scair.scairdl.constraints.*
 
 import java.io.File
@@ -182,7 +181,7 @@ object NewParser {
     P("type(" ~ (operandDirective) ~ ")").map(TypeDirective)
 
   def literalDirective[$: P]: P[LiteralDirective] =
-    P(CharIn("`,:`").!).map(LiteralDirective)
+    P(CharIn("`,:").!).map(LiteralDirective)
 
   def formatDirective[$: P]: P[FormatDirective] =
     P(typeDirective | operandDirective | literalDirective | resultTypeDirective)
@@ -223,58 +222,59 @@ case class OperationDef(
   }
 
   def Generateparsefunction(format: Seq[FormatDirective]): String = {
-    val operandVars = format.collect { case OperandDirective(name) => name }
+    val patternMappings = format.zipWithIndex.map {
+      case (OperandDirective(name), i) =>
+        (s"${name}", "Parser.ValueUse", "operand")
 
-    val typeVars = format.collect {
-      case TypeDirective(OperandDirective(name)) => name
+      case (TypeDirective(OperandDirective(name)), i) =>
+        (s"type_${name}", "parser.Type", "operandType")
+
+      case (ResultTypeDirective(name), i) =>
+        (s"type_${name}", "parser.Type", "resultType")
+
+      case (LiteralDirective(lit), i) =>
+        (s"lit_$i", s""""$lit"""", "literal")
     }
 
-    val resultVars = format.collect { case ResultTypeDirective(name) => name }
+    val patternVariables = patternMappings
+      .collect {
+        case (variable, _, directiveType) if directiveType != "literal" =>
+          variable
+      }
+      .mkString(", ")
 
-    val operandPatternVars = operandVars.zipWithIndex.map { case (n, i) =>
-      s"${n}_$i"
+    val combinedParsing =
+      patternMappings.map(_._2).filterNot(_ == "\"`\"").mkString(" ~ ")
+
+    val (operands, operandTypes, resultTypes) = patternMappings.foldLeft(
+      (List[String](), List[String](), List[String]())
+    ) {
+      case ((ops, optypes, resTypes), (v, _, "operand")) =>
+        (ops :+ v, optypes, resTypes)
+      case ((ops, optypes, resTypes), (v, _, "operandType")) =>
+        (ops, optypes :+ v, resTypes)
+      case ((ops, optypes, resTypes), (v, _, "resultType")) =>
+        (ops, optypes, resTypes :+ v)
+      case (acc, _) => acc // Ignore literals
     }
-    val typePatternVars = typeVars.zipWithIndex.map { case (n, i) =>
-      s"type_${n}_$i"
-    }
-    val resultPatternVars = resultVars.zipWithIndex.map { case (n, i) =>
-      s"type_${n}_$i"
-    }
-
-    val patternVariables =
-      (operandPatternVars ++ typePatternVars ++ resultPatternVars).mkString(
-        ", "
-      )
-
-    val operandParsing = operandVars.map(_ => "Parser.ValueUse").mkString(" ~ ")
-    val typeParsing = typeVars.map(_ => "parser.Type").mkString(" ~ ")
-    val resultParsing = resultVars.map(_ => "parser.Type").mkString(" ~ ")
-
-    val combinedParsing = Seq(operandParsing, typeParsing, resultParsing)
-      .filter(_.nonEmpty)
-      .mkString(" ~ ")
 
     s"""
-  override def parse[$$:P](
-      parser: Parser
-  ): P[Operation] = {
-      P(
-        $combinedParsing
-      ).map {
-          case ($patternVariables) =>
-          parser.generateOperation(
-            opName = name,
-            operandsNames = Seq(${operandPatternVars
-        .map(_.toString)
-        .mkString(", ")}),
-            resultsTypes = Seq(${resultPatternVars
-        .map(_.toString)
-        .mkString(", ")}),
-            operandsTypes = Seq(${typePatternVars.mkString(", ")})
-          )
-      }
-  }
-  """
+    override def parse[$$:P](
+        parser: Parser
+    ): P[Operation] = {
+        P(
+            $combinedParsing
+        ).map {
+            case ($patternVariables) =>
+            parser.generateOperation(
+                opName = name,
+                operandsNames = Seq(${operands.mkString(", ")}),
+                operandsTypes = Seq(${operandTypes.mkString(", ")}),
+                resultsTypes = Seq(${resultTypes.mkString(", ")})
+            )
+        }
+    }
+    """
   }
 
   def operand_segment_sizes_helper: String =
@@ -772,7 +772,6 @@ case class $className(
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
 
-// ${assembly_format.map(f => f"val replace_by_print = \"$f\"").getOrElse("")}
 
 ${helpers(indent + 1)}
 ${accessors(indent + 1)}
