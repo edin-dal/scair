@@ -180,8 +180,6 @@ object NewParser {
   def typeDirective[$: P]: P[TypeDirective] =
     P("type(" ~ (operandDirective) ~ ")").map(TypeDirective)
 
-  // def literalDirective[$: P]: P[LiteralDirective] =
-  //   P(CharIn("',:'").!).map(LiteralDirective)
   def literalDirective[$: P]: P[LiteralDirective] =
     P(CharIn("`,:").!).map(LiteralDirective)
 
@@ -244,7 +242,7 @@ case class OperationDef(
           variable
       }
       .mkString(", ")
-    // this part is messy. I'll improve it
+
     val combinedParsing =
       patternMappings.map(_._2).filterNot(_ == "\"`\"").mkString(" ~ ")
 
@@ -278,31 +276,6 @@ case class OperationDef(
     }
     """
   }
-// //I wanna dieeeeeeee if it doesn't work until night
-//   def Generateprintfunction(format: Seq[FormatDirective],printer:Printer): String = {
-//   val patternMappings = format.zipWithIndex.collect {
-//     case (OperandDirective(name), i) =>
-//       (s"${name}_$i", s""""${"$"}{printer.printValue(operands(${i}))}"""", "operand")
-
-//     case (TypeDirective(OperandDirective(name)), i) =>
-//       (s"type_${name}_$i", s""""${"$"}{operands(${i}).typ.custom_print}"""", "operandType")
-
-//     case (ResultTypeDirective(name), i) =>
-//       (s"type_${name}_$i", s""""${"$"}{results.headOption.map(_.getType.toString).getOrElse("UNKNOWN_TYPE")}"""", "resultType")
-
-//     case (LiteralDirective(lit), i) =>
-//       (s"lit_$i", s""""$lit"""", "literal")
-//   }
-
-//   // Maintain the original printing sequence
-//   val formattedParts = patternMappings.map(_._2).mkString(" + \" \" + ")
-
-//   s"""
-//   override def custom_print(printer: Printer): String = {
-//       s"$$name " + $formattedParts
-//   }
-//   """
-// }
 
   def operand_segment_sizes_helper: String =
     s"""def operandSegmentSizes: Seq[Int] =
