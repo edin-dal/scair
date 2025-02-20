@@ -12,6 +12,10 @@ package scair.ir
 \*≡==---==≡≡==---==≡*/
 
 final case class Dialect(
-    val operations: Seq[OperationObject],
+    val operations: Seq[MLIROperationObject],
     val attributes: Seq[AttributeObject]
+) {}
+
+final case class DialectV2(
+    val operations: Seq[ADTCompanion]
 ) {}

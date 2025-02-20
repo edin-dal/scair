@@ -147,13 +147,13 @@ object Parser {
       var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[Operation, ListType[
+      var valueWaitlist: mutable.Map[MLIROperation, ListType[
         (String, Attribute)
-      ]] = mutable.Map.empty[Operation, ListType[(String, Attribute)]],
+      ]] = mutable.Map.empty[MLIROperation, ListType[(String, Attribute)]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var blockWaitlist: mutable.Map[Operation, ListType[String]] =
-        mutable.Map.empty[Operation, ListType[String]]
+      var blockWaitlist: mutable.Map[MLIROperation, ListType[String]] =
+        mutable.Map.empty[MLIROperation, ListType[String]]
   ) {
 
     def defineValues(
@@ -636,12 +636,12 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
   // shortened definition TODO: finish...
 
-  def TopLevel[$: P]: P[Operation] = P(
+  def TopLevel[$: P]: P[MLIROperation] = P(
     Start ~ (Operations(0)) ~ E({
       currentScope.checkValueWaitlist()
       currentScope.checkBlockWaitlist()
     }) ~ End
-  ).map((toplevel: ListType[Operation]) =>
+  ).map((toplevel: ListType[MLIROperation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
       case _ =>
@@ -705,7 +705,7 @@ class Parser(val context: MLContext, val args: Args = Args())
       attributes: DictType[String, Attribute] = DictType(),
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
-  ): Operation = {
+  ): MLIROperation = {
 
     if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
@@ -720,9 +720,9 @@ class Parser(val context: MLContext, val args: Args = Args())
     val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
       currentScope.useBlocks(successorsNames)
 
-    val opObject: Option[OperationObject] = ctx.getOperation(opName)
+    val opObject: Option[MLIROperationObject] = ctx.getOperation(opName)
 
-    val op = opObject match {
+    val op: MLIROperation = opObject match {
       case Some(x) =>
         x.constructOp(
           operands = useAndRefValueSeqs._1,
@@ -734,20 +734,35 @@ class Parser(val context: MLContext, val args: Args = Args())
         )
 
       case None =>
-        if args.allow_unregistered then
-          new UnregisteredOperation(
-            name = opName,
-            operands = useAndRefValueSeqs._1,
-            successors = useAndRefBlockSeqs._1,
-            dictionaryProperties = properties,
-            results_types = ListType.from(resultsTypes),
-            dictionaryAttributes = attributes,
-            regions = ListType.from(regions)
-          )
-        else
-          throw new Exception(
-            s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
-          )
+        val opV2Object: Option[ADTCompanion] = ctx.getOperationV2(opName)
+
+        opV2Object match {
+          case Some(x) =>
+            x.getMLIRRealm.constructUnverifiedOp(
+              operands = useAndRefValueSeqs._1,
+              successors = useAndRefBlockSeqs._1,
+              dictionaryProperties = properties,
+              results_types = ListType.from(resultsTypes),
+              dictionaryAttributes = attributes,
+              regions = ListType.from(regions)
+            )
+
+          case None =>
+            if args.allow_unregistered then
+              new UnregisteredOperation(
+                name = opName,
+                operands = useAndRefValueSeqs._1,
+                successors = useAndRefBlockSeqs._1,
+                dictionaryProperties = properties,
+                results_types = ListType.from(resultsTypes),
+                dictionaryAttributes = attributes,
+                regions = ListType.from(regions)
+              )
+            else
+              throw new Exception(
+                s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+              )
+        }
     }
 
     // adding uses for known operands
@@ -767,10 +782,12 @@ class Parser(val context: MLContext, val args: Args = Args())
     return op
   }
 
-  def Operations[$: P](at_least_this_many: Int = 0): P[ListType[Operation]] =
+  def Operations[$: P](
+      at_least_this_many: Int = 0
+  ): P[ListType[MLIROperation]] =
     P(OperationPat.rep(at_least_this_many).map(_.to(ListType)))
 
-  def OperationPat[$: P]: P[Operation] = P(
+  def OperationPat[$: P]: P[MLIROperation] = P(
     OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?
   )
 
@@ -844,7 +861,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def createBlock(
       //            name    arguments       operations
-      uncutBlock: (String, Seq[(String, Attribute)], ListType[Operation])
+      uncutBlock: (String, Seq[(String, Attribute)], ListType[MLIROperation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
@@ -874,7 +891,9 @@ class Parser(val context: MLContext, val args: Args = Args())
   //                   \/
   // [x] - region        ::= `{` operation* block* `}`
 
-  def defineRegion(parseResult: (ListType[Operation], Seq[Block])): Region = {
+  def defineRegion(
+      parseResult: (ListType[MLIROperation], Seq[Block])
+  ): Region = {
     return parseResult._1.length match {
       case 0 =>
         val region = new Region(blocks = parseResult._2)

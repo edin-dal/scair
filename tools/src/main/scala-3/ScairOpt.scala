@@ -4,6 +4,7 @@ import scair.TransformContext
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
+import scair.utils.allClairV2Dialects
 import scair.utils.allDialects
 import scair.utils.allPasses
 import scopt.OParser
@@ -158,6 +159,9 @@ object ScairOpt {
       def register_all_dialects(): Unit = {
         for (dialect <- allDialects) {
           ctx.registerDialect(dialect)
+        }
+        for (dialect <- allClairV2Dialects) {
+          ctx.registerDialectV2(dialect)
         }
       }
 

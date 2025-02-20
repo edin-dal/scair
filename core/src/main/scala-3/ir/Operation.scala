@@ -4,6 +4,8 @@ import fastparse.P
 import scair.Parser
 import scair.Printer
 
+// import scala.reflect.ClassTag
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -11,11 +13,69 @@ import scair.Printer
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
 
+sealed abstract class Operation()
+
+/*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+||    ADT OPERATION    ||
+\*≡==---==≡≡≡≡≡==---==≡*/
+
+trait ADTCompanion {
+  val getName: String
+  val getMLIRRealm: MLIRRealm[_]
+}
+
+class ADTOperation() extends Operation
+
+class UnverifiedOp[T <: ADTOperation](
+    name: String,
+    operands: ListType[Value[Attribute]] = ListType(),
+    successors: ListType[Block] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
+    regions: ListType[Region] = ListType(),
+    dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends MLIROperation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
+
 /*≡==--==≡≡≡≡==--=≡≡*\
-||    OPERATIONS    ||
+||    MLIR REALM    ||
 \*≡==---==≡≡==---==≡*/
 
-sealed abstract class Operation(
+object MLIRRealm {}
+
+trait MLIRRealm[T <: ADTOperation]() {
+
+  def constructUnverifiedOp(
+      operands: ListType[Value[Attribute]] = ListType(),
+      successors: ListType[Block] = ListType(),
+      results_types: ListType[Attribute] = ListType(),
+      regions: ListType[Region] = ListType(),
+      dictionaryProperties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      dictionaryAttributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
+
+  def unverify(op: T): UnverifiedOp[T]
+
+  def verify(op: UnverifiedOp[T]): T
+
+}
+
+/*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||    MLIR OPERATIONS    ||
+\*≡==---==≡≡≡≡≡≡≡==---==≡*/
+
+sealed abstract class MLIROperation(
     val name: String,
     val operands: ListType[Value[Attribute]] = ListType(),
     val successors: ListType[Block] = ListType(),
@@ -25,10 +85,11 @@ sealed abstract class Operation(
       DictType.empty[String, Attribute],
     val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends OpTrait {
+) extends Operation,
+      OpTrait {
 
   val results: ListType[Value[Attribute]] = results_types.map(Value(_))
-  def op: Operation = this
+  def op: MLIROperation = this
 
   var container_block: Option[Block] = None
 
@@ -87,7 +148,7 @@ sealed abstract class Operation(
   }
 
   def custom_print(p: Printer): String =
-    p.printGenericOperation(this)
+    p.printGenericMLIROperation(this)
 
   final def print(printer: Printer): String = {
     printer.printOperation(this)
@@ -118,7 +179,7 @@ case class UnregisteredOperation(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation(
+) extends MLIROperation(
       name = name,
       operands,
       successors,
@@ -138,7 +199,7 @@ class RegisteredOperation(
       DictType.empty[String, Attribute],
     dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation(
+) extends MLIROperation(
       name = name,
       operands,
       successors,
@@ -148,10 +209,10 @@ class RegisteredOperation(
       dictionaryAttributes
     )
 
-trait OperationObject {
+trait MLIROperationObject {
   def name: String
 
-  def parse[$: P](parser: Parser): P[Operation] =
+  def parse[$: P](parser: Parser): P[MLIROperation] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )
@@ -163,7 +224,7 @@ trait OperationObject {
       ListType[Region] /* = regions */,
       DictType[String, Attribute], /* = dictProps */
       DictType[String, Attribute] /* = dictAttrs */
-  ) => Operation
+  ) => MLIROperation
 
   def factory: FactoryType
 
@@ -176,7 +237,7 @@ trait OperationObject {
         DictType.empty[String, Attribute],
       dictionaryAttributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): Operation = factory(
+  ): MLIROperation = factory(
     operands,
     successors,
     results_types,

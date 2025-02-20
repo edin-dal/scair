@@ -120,11 +120,14 @@ case class Printer(
   ||    OPERATION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def printCustomOperation(op: Operation, indentLevel: Int = 0): String = {
+  def printCustomOperation(op: MLIROperation, indentLevel: Int = 0): String = {
     indent * indentLevel + op.print(this)
   }
 
-  def printGenericOperation(op: Operation, indentLevel: Int = 0): String = {
+  def printGenericMLIROperation(
+      op: MLIROperation,
+      indentLevel: Int = 0
+  ): String = {
     var results: Seq[String] = Seq()
     var resultsTypes: Seq[String] = Seq()
     var operands: Seq[String] = Seq()
@@ -191,17 +194,23 @@ case class Printer(
     return s"${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
   }
 
-  def printOperation(op: Operation, indentLevel: Int = 0): String = {
+  def printOperation(op: MLIROperation, indentLevel: Int = 0): String = {
     val results =
       op.results.map(printValue(_)).mkString(", ") + (if op.results.nonEmpty
                                                       then " = "
                                                       else "")
     indent * indentLevel + results + (if strictly_generic then
-                                        printGenericOperation(op, indentLevel)
+                                        printGenericMLIROperation(
+                                          op,
+                                          indentLevel
+                                        )
                                       else op.custom_print(this))
   }
 
-  def printOperations(ops: Seq[Operation], indentLevel: Int = 0): String = {
+  def printOperations(
+      ops: Seq[MLIROperation],
+      indentLevel: Int = 0
+  ): String = {
     (for { op <- ops } yield printOperation(op, indentLevel)).mkString("\n")
   }
 

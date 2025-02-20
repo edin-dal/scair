@@ -48,7 +48,7 @@ object CMathGen
 
 // CHECK:       import SampleData
 
-// CHECK:       object Norm extends OperationObject {
+// CHECK:       object Norm extends MLIROperationObject {
 // CHECK-NEXT:    override def name = "cmath.norm"
 // CHECK-NEXT:    override def factory = Norm.apply
 
@@ -90,7 +90,7 @@ object CMathGen
 
 // CHECK:       }
 
-// CHECK:       object Mul extends OperationObject {
+// CHECK:       object Mul extends MLIROperationObject {
 // CHECK-NEXT:    override def name = "cmath.mul"
 // CHECK-NEXT:    override def factory = Mul.apply
 
@@ -143,4 +143,3 @@ object CMathGen
 // CHECK-NEXT:    operations = Seq(Norm, Mul),
 // CHECK-NEXT:    attributes = Seq(Complex, SampleData)
 // CHECK-NEXT:  )
-  

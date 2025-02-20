@@ -46,7 +46,7 @@ object TitleGen {
     val letter_size = Letters.tuple_length
     val lines =
       title_size * letter_size + 2 // + title_size + 1 to create horizontal \n lines in between words
-    val letter_map = Letters.letter_map
+    val charMap = Letters.charMap
 
     val generated_title = ListType.fill(lines) { new StringBuilder("") }
     var index = 0
@@ -55,7 +55,7 @@ object TitleGen {
 
     for (word <- lower_title) {
       for (letter <- word) {
-        val letter_tup = letter_map(letter)
+        val letter_tup = charMap(letter)
         for (i <- 0 to letter_size - 1) {
           generated_title(i + (index * letter_size) + 1) ++= letter_tup(i) + " "
         }
@@ -239,7 +239,34 @@ object Letters {
   val letterZ: Seq[String] =
     Seq("███████╗", "╚════██║", "░░███╔═╝", "██╔══╝░░", "███████╗", "╚══════╝")
 
-  val letter_map: Map[Char, Seq[String]] = Map(
+  val number1: Seq[String] =
+    Seq("░░███╗░░", "░████║░░", "██╔██║░░", "╚═╝██║░░", "███████╗", "╚══════╝")
+
+  val number2: Seq[String] =
+    Seq("██████╗░", "╚════██╗", "░░███╔═╝", "██╔══╝░░", "███████╗", "╚══════╝")
+
+  val number3: Seq[String] =
+    Seq("██████╗░", "╚════██╗", "░█████╔╝", "░╚═══██╗", "██████╔╝", "╚═════╝░")
+
+  val number4: Seq[String] =
+    Seq("░░██╗██╗", "░██╔╝██║", "██╔╝░██║", "███████║", "╚════██║", "░░░░░╚═╝")
+
+  val number5: Seq[String] =
+    Seq("███████╗", "██╔════╝", "██████╗░", "╚════██╗", "██████╔╝", "╚═════╝░")
+
+  val number6: Seq[String] =
+    Seq("░█████╗░", "██╔═══╝░", "██████╗░", "██╔══██╗", "╚█████╔╝", "░╚════╝░")
+
+  val number7: Seq[String] =
+    Seq("███████╗", "╚════██║", "░░░░██╔╝", "░░░██╔╝░", "░░██╔╝░░", "░░╚═╝░░░")
+
+  val number8: Seq[String] =
+    Seq("░█████╗░", "██╔══██╗", "╚█████╔╝", "██╔══██╗", "╚█████╔╝", "░╚════╝░")
+
+  val number9: Seq[String] =
+    Seq("░██████╗", "██╔══██╗", "╚██████║", "░╚═══██║", "░█████╔╝", "░╚════╝░")
+
+  val charMap: Map[Char, Seq[String]] = Map(
     ('a' -> letterA),
     ('b' -> letterB),
     ('c' -> letterC),
@@ -265,7 +292,16 @@ object Letters {
     ('w' -> letterW),
     ('x' -> letterX),
     ('y' -> letterY),
-    ('z' -> letterZ)
+    ('z' -> letterZ),
+    ('1' -> number1),
+    ('2' -> number2),
+    ('3' -> number3),
+    ('4' -> number4),
+    ('5' -> number5),
+    ('6' -> number6),
+    ('7' -> number7),
+    ('8' -> number8),
+    ('9' -> number9)
   )
 
 }

@@ -262,14 +262,14 @@ case class DB_StringType(val typ: Seq[Attribute])
 //   ConstantOp   //
 // ==----------== //
 
-object DB_ConstantOp extends OperationObject {
+object DB_ConstantOp extends MLIROperationObject {
   override def name: String = "db.constant"
   override def factory = DB_ConstantOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -332,14 +332,14 @@ case class DB_ConstantOp(
 //   CompareOp   //
 // ==----------== //
 
-object DB_CmpOp extends OperationObject {
+object DB_CmpOp extends MLIROperationObject {
   override def name: String = "db.compare"
   override def factory = DB_CmpOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -418,7 +418,7 @@ case class DB_CmpOp(
 //   MulOp   //
 // ==-----== //
 
-object DB_MulOp extends OperationObject {
+object DB_MulOp extends MLIROperationObject {
   override def name: String = "db.mul"
   override def factory = DB_MulOp.apply
 
@@ -482,7 +482,7 @@ object DB_MulOp extends OperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -562,7 +562,7 @@ case class DB_MulOp(
 //   DivOp   //
 // ==-----== //
 
-object DB_DivOp extends OperationObject {
+object DB_DivOp extends MLIROperationObject {
   override def name: String = "db.div"
   override def factory = DB_DivOp.apply
 
@@ -629,7 +629,7 @@ object DB_DivOp extends OperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -705,14 +705,14 @@ case class DB_DivOp(
 //   AddOp   //
 // ==-----== //
 
-object DB_AddOp extends OperationObject {
+object DB_AddOp extends MLIROperationObject {
   override def name: String = "db.add"
   override def factory = DB_AddOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -790,14 +790,14 @@ case class DB_AddOp(
 //   SubOp   //
 // ==-----== //
 
-object DB_SubOp extends OperationObject {
+object DB_SubOp extends MLIROperationObject {
   override def name: String = "db.sub"
   override def factory = DB_SubOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -873,14 +873,14 @@ case class DB_SubOp(
 //   CastOp   //
 // ==-----== //
 
-object CastOp extends OperationObject {
+object CastOp extends MLIROperationObject {
   override def name: String = "db.cast"
   override def factory = CastOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
       ~ parser.OptionalAttributes
   ).map(

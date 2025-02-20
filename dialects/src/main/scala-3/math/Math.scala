@@ -15,13 +15,13 @@ import scala.collection.mutable
 //   AbsfOp   //
 // ==--------== //
 
-object AbsfOp extends OperationObject {
+object AbsfOp extends MLIROperationObject {
   override def name: String = "math.absf"
   override def factory: FactoryType = AbsfOp.apply
 
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = {
+  ): P[MLIROperation] = {
     P(
       "" ~ Parser.ValueUse ~ ":" ~ parser.Type
     ).map { case (operandName, type_) =>
@@ -73,13 +73,13 @@ case class AbsfOp(
 //   FPowIOp   //
 // ==--------== //
 
-object FPowIOp extends OperationObject {
+object FPowIOp extends MLIROperationObject {
   override def name: String = "math.fpowi"
   override def factory = FPowIOp.apply
 
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = {
+  ): P[MLIROperation] = {
     P(
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
     ).map {

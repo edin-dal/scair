@@ -126,7 +126,7 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
 //   ReturnOp   //
 // ==--------== //
 
-object ReturnOp extends OperationObject {
+object ReturnOp extends MLIROperationObject {
   override def name: String = "tuples.return"
   override def factory = ReturnOp.apply
 
@@ -140,7 +140,7 @@ object ReturnOp extends OperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
       parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
@@ -192,14 +192,14 @@ case class ReturnOp(
 //   GetColumnOp   //
 // ==-----------== //
 
-object GetColumnOp extends OperationObject {
+object GetColumnOp extends MLIROperationObject {
   override def name: String = "tuples.getcol"
   override def factory = GetColumnOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
       parser.Type ~ parser.OptionalAttributes
   ).map(

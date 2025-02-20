@@ -80,14 +80,14 @@ case class ResultTable(
 //   SetResultOp   //
 // ==-----------== //
 
-object SetResultOp extends OperationObject {
+object SetResultOp extends MLIROperationObject {
   override def name: String = "subop.set_result"
   override def factory = SetResultOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[Operation] = P(
+  ): P[MLIROperation] = P(
     parser.Type ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(

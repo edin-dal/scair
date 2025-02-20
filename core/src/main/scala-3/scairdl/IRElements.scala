@@ -3,7 +3,8 @@ package scair.scairdl.irdef
 import fastparse.*
 import fastparse.ScalaWhitespace.*
 import scair.dialects.builtin.*
-import scair.ir.*
+import scair.ir.Attribute
+import scair.ir.MLIROperation
 import scair.scairdl.constraints.*
 
 import java.io.File
@@ -46,7 +47,7 @@ abstract class EscapeHatch[T: ClassTag] {
 
 class AttrEscapeHatch[T <: Attribute: ClassTag]() extends EscapeHatch[T]
 
-class OpEscapeHatch[T <: Operation: ClassTag]() extends EscapeHatch[T]
+class OpEscapeHatch[T <: MLIROperation: ClassTag]() extends EscapeHatch[T]
 
 /*≡≡=--=≡≡≡=--=≡≡*\
 ||     TYPES     ||
@@ -259,22 +260,26 @@ case class OperationDef(
     }
 
     s"""
-    override def parse[$$:P](
-        parser: Parser
-    ): P[Operation] = {
-        P(
-            $combinedParsing
-        ).map {
-            case ($patternVariables) =>
-            parser.generateOperation(
-                opName = name,
-                operandsNames = Seq(${operands.mkString(", ")}),
-                operandsTypes = Seq(${operandTypes.mkString(", ")}),
-                resultsTypes = Seq(${resultTypes.mkString(", ")})
-            )
-        }
-    }
-    """
+  override def parse[$$:P](
+      parser: Parser
+  ): P[MLIROperation] = {
+      P(
+        $combinedParsing
+      ).map {
+          case ($patternVariables) =>
+          parser.generateOperation(
+            opName = name,
+            operandsNames = Seq(${operands
+        .map(_.toString)
+        .mkString(", ")}),
+            resultsTypes = Seq(${resultTypes
+        .map(_.toString)
+        .mkString(", ")}),
+            operandsTypes = Seq(${operandTypes.mkString(", ")})
+          )
+      }
+  }
+  """
   }
 
   def operand_segment_sizes_helper: String =
@@ -753,7 +758,7 @@ case class OperationDef(
 """
 
   def print(implicit indent: Int): String = s"""
-object $className extends OperationObject {
+object $className extends MLIROperationObject {
   override def name = "$name"
   override def factory = $className.apply
   ${assembly_format

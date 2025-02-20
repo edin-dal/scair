@@ -18,22 +18,23 @@ object Block {
 
   def apply(
       arguments_types: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq()
+      operations: Iterable[MLIROperation] | MLIROperation = Seq()
   ): Block = new Block(arguments_types, operations)
 
-  def apply(operations: Iterable[Operation] | Operation): Block = new Block(
-    operations
-  )
+  def apply(operations: Iterable[MLIROperation] | MLIROperation): Block =
+    new Block(
+      operations
+    )
 
   def apply(
       arguments_types: Iterable[Attribute],
-      operations_expr: Iterable[Value[Attribute]] => Iterable[Operation]
+      operations_expr: Iterable[Value[Attribute]] => Iterable[MLIROperation]
   ): Block =
     new Block(arguments_types, operations_expr)
 
   def apply(
       arguments_types: Attribute,
-      operations_expr: Value[Attribute] => Iterable[Operation]
+      operations_expr: Value[Attribute] => Iterable[MLIROperation]
   ): Block =
     new Block(arguments_types, operations_expr)
 
@@ -48,7 +49,7 @@ object Block {
   */
 case class Block private (
     val arguments: ListType[Value[Attribute]],
-    val operations: ListType[Operation]
+    val operations: ListType[MLIROperation]
 ) {
 
   /** Constructs a Block instance with the given argument types and operations.
@@ -57,12 +58,12 @@ case class Block private (
     *   The types of the arguments, either as a single Attribute or an Iterable
     *   of Attributes.
     * @param operations
-    *   The operations, either as a single Operation or an Iterable of
-    *   Operations.
+    *   The operations, either as a single MLIROperation or an Iterable of
+    *   MLIROperations.
     */
   def this(
       arguments_types: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq()
+      operations: Iterable[MLIROperation] | MLIROperation = Seq()
   ) =
     this(
       ListType.from((arguments_types match {
@@ -70,8 +71,8 @@ case class Block private (
         case multiple: Iterable[Attribute] => multiple
       }).map(Value(_))),
       ListType.from((operations match {
-        case single: Operation             => Seq(single)
-        case multiple: Iterable[Operation] => multiple
+        case single: MLIROperation             => Seq(single)
+        case multiple: Iterable[MLIROperation] => multiple
       }))
     )
 
@@ -85,7 +86,7 @@ case class Block private (
   private def this(
       args: (
           Iterable[Value[Attribute]] | Value[Attribute],
-          Iterable[Operation] | Operation
+          Iterable[MLIROperation] | MLIROperation
       )
   ) =
     this(
@@ -94,8 +95,8 @@ case class Block private (
         case multiple: Iterable[Value[Attribute]] => multiple
       }),
       ListType.from(args._2 match {
-        case single: Operation             => Seq(single)
-        case multiple: Iterable[Operation] => multiple
+        case single: MLIROperation             => Seq(single)
+        case multiple: Iterable[MLIROperation] => multiple
       })
     )
 
@@ -103,10 +104,10 @@ case class Block private (
     * arguments.
     *
     * @param operations
-    *   The operations, either as a single Operation or an Iterable of
-    *   Operations.
+    *   The operations, either as a single MLIROperation or an Iterable of
+    *   MLIROperations.
     */
-  def this(operations: Iterable[Operation] | Operation) =
+  def this(operations: Iterable[MLIROperation] | MLIROperation) =
     this(Seq(), operations)
 
   /** Constructs a Block instance with the given argument type and a function to
@@ -119,8 +120,8 @@ case class Block private (
     */
   def this(
       argument_type: Iterable[Attribute],
-      operations_expr: Iterable[Value[Attribute]] => Iterable[Operation] |
-        Operation
+      operations_expr: Iterable[Value[Attribute]] => Iterable[MLIROperation] |
+        MLIROperation
   ) =
     this({
       val args = argument_type.map(Value(_))
@@ -138,7 +139,8 @@ case class Block private (
     */
   def this(
       argument_type: Attribute,
-      operations_expr: Value[Attribute] => Iterable[Operation] | Operation
+      operations_expr: Value[Attribute] => Iterable[MLIROperation] |
+        MLIROperation
   ) =
     this({
       val arg = Value(argument_type)
@@ -147,7 +149,7 @@ case class Block private (
 
   var container_region: Option[Region] = None
 
-  private def attach_op(op: Operation): Unit = {
+  private def attach_op(op: MLIROperation): Unit = {
     op.container_block match {
       case Some(x) =>
         throw new Exception(
@@ -165,13 +167,13 @@ case class Block private (
     }
   }
 
-  def add_op(new_op: Operation): Unit = {
+  def add_op(new_op: MLIROperation): Unit = {
     val oplen = operations.length
     attach_op(new_op)
     operations.insertAll(oplen, ListType(new_op))
   }
 
-  def add_ops(new_ops: Seq[Operation]): Unit = {
+  def add_ops(new_ops: Seq[MLIROperation]): Unit = {
     val oplen = operations.length
     for (op <- new_ops) {
       attach_op(op)
@@ -179,7 +181,10 @@ case class Block private (
     operations.insertAll(oplen, ListType(new_ops: _*))
   }
 
-  def insert_op_before(existing_op: Operation, new_op: Operation): Unit = {
+  def insert_op_before(
+      existing_op: MLIROperation,
+      new_op: MLIROperation
+  ): Unit = {
     (existing_op.container_block equals Some(this)) match {
       case true =>
         attach_op(new_op)
@@ -193,8 +198,8 @@ case class Block private (
   }
 
   def insert_ops_before(
-      existing_op: Operation,
-      new_ops: Seq[Operation]
+      existing_op: MLIROperation,
+      new_ops: Seq[MLIROperation]
   ): Unit = {
     (existing_op.container_block equals Some(this)) match {
       case true =>
@@ -210,7 +215,10 @@ case class Block private (
     }
   }
 
-  def insert_op_after(existing_op: Operation, new_op: Operation): Unit = {
+  def insert_op_after(
+      existing_op: MLIROperation,
+      new_op: MLIROperation
+  ): Unit = {
     (existing_op.container_block equals Some(this)) match {
       case true =>
         attach_op(new_op)
@@ -224,8 +232,8 @@ case class Block private (
   }
 
   def insert_ops_after(
-      existing_op: Operation,
-      new_ops: Seq[Operation]
+      existing_op: MLIROperation,
+      new_ops: Seq[MLIROperation]
   ): Unit = {
     (existing_op.container_block equals Some(this)) match {
       case true =>
@@ -246,7 +254,7 @@ case class Block private (
     for (op <- operations) op.drop_all_references
   }
 
-  def detach_op(op: Operation): Operation = {
+  def detach_op(op: MLIROperation): MLIROperation = {
     (op.container_block equals Some(this)) match {
       case true =>
         op.container_block = None
@@ -254,19 +262,19 @@ case class Block private (
         return op
       case false =>
         throw new Exception(
-          "Operation can only be detached from a block in which it is contained."
+          "MLIROperation can only be detached from a block in which it is contained."
         )
     }
   }
 
-  def erase_op(op: Operation) = {
+  def erase_op(op: MLIROperation) = {
     detach_op(op)
     op.erase()
   }
 
-  def getIndexOf(op: Operation): Int = {
+  def getIndexOf(op: MLIROperation): Int = {
     operations.lastIndexOf(op) match {
-      case -1 => throw new Exception("Operation not present in the block.")
+      case -1 => throw new Exception("MLIROperation not present in the block.")
       case x  => x
     }
 
