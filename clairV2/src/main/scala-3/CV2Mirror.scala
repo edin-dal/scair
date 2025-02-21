@@ -38,16 +38,16 @@ inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
   */
 inline def getDefInput[Elem]: String => OpInput = {
   inline erasedValue[Elem] match
-    case _: Operand[t] =>
+    case _: Result[t] =>
       (name: String) =>
-        OperandDef(
+        ResultDef(
           id = name,
           typeString = typeToString[t],
           inputVariadicity[Elem]
         )
-    case _: Result[t] =>
+    case _: Operand[t] =>
       (name: String) =>
-        ResultDef(
+        OperandDef(
           id = name,
           typeString = typeToString[t],
           inputVariadicity[Elem]
