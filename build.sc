@@ -46,9 +46,12 @@ object `package` extends RootModule with ScairModule {
   object clair extends ScairModule {
     def moduleDeps = Seq(ScaIRDL)
   }
+  object clairV2 extends ScairModule {
+    def moduleDeps = Seq(core)
+  }
 
   object dialects extends ScairModule {
-    def moduleDeps = Seq(clair)
+    def moduleDeps = Seq(clair, clairV2)
   }
 
   object gen_dialects extends ScairModule {
@@ -73,7 +76,8 @@ object `package` extends RootModule with ScairModule {
         "scair.dialects.cmathgen.CMathGen",
         "scair.dialects.funcgen.FuncGen",
         "scair.dialects.llvmgen.LLVMGen",
-        "scair.dialects.memrefgen.MemrefGen"
+        "scair.dialects.memrefgen.MemrefGen",
+        "scair.dialects.cmathv2.CMathV2Gen"
       ) 
 
       T.traverse(dialectSource)(oneDialect)
@@ -106,13 +110,14 @@ object `package` extends RootModule with ScairModule {
 
   def testAll() = T.command {
     runAllUnitTests()
-    filechecks.run()
+    filechecks.run()()
   }
 
 
-  object filechecks extends TaskModule with ScairSettings {
-    def classpath() = Task.Anon {
-      val full_cp = tools.compileClasspath()
+  object filechecks extends TaskModule {
+    def classpath = Task.Anon {
+      println("Storing full classpath for lit access")
+      val full_cp = tools.transitiveCompileClasspath()
       
       val file = new PrintWriter((rootModule().millModuleBasePath.value / "full-classpath").toString())
       file.print(
@@ -124,13 +129,11 @@ object `package` extends RootModule with ScairModule {
 
     override def defaultCommandName(): String = "run"
 
-    def run = Task.Anon {
+    def run() = Task.Command {
         tools.launcher()
         filechecks.classpath()
 
         val rootPath = rootModule().millModuleBasePath.value
-        val sysPath = sys.env("PATH")
-        println(sysPath)
         val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit)
         if (litStatus.exitCode != 0) {
           sys.error(f"Filechecks failed")
