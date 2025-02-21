@@ -127,11 +127,9 @@ object Main {
 // CHECK:         def sing_op2: Value[Attribute] = operands(1)
 // CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(1) = new_operand}
 
-// CHECK:         def sing_res1: Value[Attribute] = results(0)
-// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
+// CHECK:         def sing_res1: Result[Attribute] = results(0)
 
-// CHECK:         def sing_res2: Value[Attribute] = results(1)
-// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(1) = new_result}
+// CHECK:         def sing_res2: Result[Attribute] = results(1)
 
 // CHECK:         def region1: Region = regions(0)
 // CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}
@@ -203,26 +201,15 @@ object Main {
 // CHECK:         def sing_op2: Value[Attribute] = operands(operands.length - 1)
 // CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(operands.length - 1) = new_operand}
 
-// CHECK:         def sing_res1: Value[Attribute] = results(0)
-// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
+// CHECK:         def sing_res1: Result[Attribute] = results(0)
 
-// CHECK:         def var_res1: Seq[Value[Attribute]] = {
+// CHECK:         def var_res1: Seq[Result[Attribute]] = {
 // CHECK-NEXT:        val from = 1
 // CHECK-NEXT:        val to = results.length - 1
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_res1_=(new_results: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = 1
-// CHECK-NEXT:      val to = results.length - 1
-// CHECK-NEXT:      val diff = new_results.length - (to - from)
-// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = new_results
-// CHECK-NEXT:      if (diff < 0)
-// CHECK-NEXT:        results.trimEnd(-diff)
-// CHECK-NEXT:    }
 
-// CHECK:         def sing_res2: Value[Attribute] = results(results.length - 1)
-// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(results.length - 1) = new_result}
+// CHECK:         def sing_res2: Result[Attribute] = results(results.length - 1)
 
 // CHECK:         def region1: Region = regions(0)
 // CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}
@@ -371,41 +358,21 @@ object Main {
 // CHECK:         def sing_op2: Value[Attribute] = operands(operandSegmentSizes.slice(0, 3).fold(0)(_ + _))
 // CHECK-NEXT:    def sing_op2_=(new_operand: Value[Attribute]): Unit = {operands(operandSegmentSizes.slice(0, 3).fold(0)(_ + _)) = new_operand}
 
-// CHECK:         def sing_res1: Value[Attribute] = results(resultSegmentSizes.slice(0, 0).fold(0)(_ + _))
-// CHECK-NEXT:    def sing_res1_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 0).fold(0)(_ + _)) = new_result}
+// CHECK:         def sing_res1: Result[Attribute] = results(resultSegmentSizes.slice(0, 0).fold(0)(_ + _))
 
-// CHECK:         def var_res1: Seq[Value[Attribute]] = {
+// CHECK:         def var_res1: Seq[Result[Attribute]] = {
 // CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 1).fold(0)(_ + _)
 // CHECK-NEXT:        val to = from + resultSegmentSizes(1)
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_res1_=(new_results: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 1).fold(0)(_ + _)
-// CHECK-NEXT:      val to = from + resultSegmentSizes(1)
-// CHECK-NEXT:      val diff = new_results.length - (to - from)
-// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = new_results
-// CHECK-NEXT:      if (diff < 0)
-// CHECK-NEXT:        results.trimEnd(-diff)
-// CHECK-NEXT:    }
 
-// CHECK:         def var_res2: Seq[Value[Attribute]] = {
+// CHECK:         def var_res2: Seq[Result[Attribute]] = {
 // CHECK-NEXT:        val from = resultSegmentSizes.slice(0, 2).fold(0)(_ + _)
 // CHECK-NEXT:        val to = from + resultSegmentSizes(2)
 // CHECK-NEXT:        results.slice(from, to).toSeq
 // CHECK-NEXT:    }
-// CHECK-NEXT:    def var_res2_=(new_results: Seq[Value[Attribute]]): Unit = {
-// CHECK-NEXT:      val from = resultSegmentSizes.slice(0, 2).fold(0)(_ + _)
-// CHECK-NEXT:      val to = from + resultSegmentSizes(2)
-// CHECK-NEXT:      val diff = new_results.length - (to - from)
-// CHECK-NEXT:      for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-// CHECK-NEXT:        results(from + i) = new_results
-// CHECK-NEXT:      if (diff < 0)
-// CHECK-NEXT:        results.trimEnd(-diff)
-// CHECK-NEXT:    }
 
-// CHECK:         def sing_res2: Value[Attribute] = results(resultSegmentSizes.slice(0, 3).fold(0)(_ + _))
-// CHECK-NEXT:    def sing_res2_=(new_result: Value[Attribute]): Unit = {results(resultSegmentSizes.slice(0, 3).fold(0)(_ + _)) = new_result}
+// CHECK:         def sing_res2: Result[Attribute] = results(resultSegmentSizes.slice(0, 3).fold(0)(_ + _))
 
 // CHECK:         def region1: Region = regions(0)
 // CHECK-NEXT:    def region1_=(new_region: Region): Unit = {regions(0) = new_region}

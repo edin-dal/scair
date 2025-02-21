@@ -68,8 +68,7 @@ object CMathGen
 // CHECK:         def e1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def e1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
 
-// CHECK:         def e2: Value[Attribute] = results(0)
-// CHECK-NEXT:    def e2_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
+// CHECK:         def e2: Result[Attribute] = results(0)
 
 // CHECK:         def e3: Region = regions(0)
 // CHECK-NEXT:    def e3_=(new_region: Region): Unit = {regions(0) = new_region}
@@ -110,8 +109,7 @@ object CMathGen
 // CHECK:         def e1: Value[Attribute] = operands(0)
 // CHECK-NEXT:    def e1_=(new_operand: Value[Attribute]): Unit = {operands(0) = new_operand}
 
-// CHECK:         def e2: Value[Attribute] = results(0)
-// CHECK-NEXT:    def e2_=(new_result: Value[Attribute]): Unit = {results(0) = new_result}
+// CHECK:         def e2: Result[Attribute] = results(0)
 
 // CHECK:         val e1_constr = BaseAttr[scair.dialects.builtin.IntegerAttr]()
 // CHECK-NEXT:    val e2_constr = AnyAttr

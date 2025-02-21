@@ -452,8 +452,7 @@ case class OperationDef(
   // That's more of a generic framework question though and is orthogonal to this codegen thing
   // hence just a TODO for later.
   def single_result_accessor(name: String, index: String) =
-    s"  def ${name}: Value[Attribute] = results($index)\n" +
-      s"  def ${name}_=(new_result: Value[Attribute]): Unit = {results($index) = new_result}\n"
+    s"  def ${name}: Result[Attribute] = results($index)\n"
 
   def segmented_single_result_accessor(name: String, index: String) =
     single_result_accessor(
@@ -465,19 +464,10 @@ case class OperationDef(
   // That's more of a generic framework question though and is orthogonal to this codegen thing
   // hence just a TODO for later.
   def variadic_result_accessor(name: String, from: String, to: String) =
-    s"""  def ${name}: Seq[Value[Attribute]] = {
+    s"""  def ${name}: Seq[Result[Attribute]] = {
       val from = $from
       val to = $to
       results.slice(from, to).toSeq
-  }
-  def ${name}_=(new_results: Seq[Value[Attribute]]): Unit = {
-    val from = $from
-    val to = $to
-    val diff = new_results.length - (to - from)
-    for (new_results, i) <- (new_results ++ results.slice(to, results.length)).zipWithIndex do
-      results(from + i) = new_results
-    if (diff < 0)
-      results.trimEnd(-diff)
   }\n\n"""
 
   def segmented_variadic_result_accessor(name: String, index: String) =
