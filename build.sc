@@ -71,19 +71,21 @@ object `package` extends RootModule with ScairModule {
     def moduleDeps = Seq(dialects)
 
     override def generatedSources = T.sources {
-      super.generatedSources() ++ generateDialects()
+      super.generatedSources() :+ generateDialects()
     }
 
     def oneDialect(src:String) = Task.Anon {
-        dialects.runner().run(args = (os.Path(f"""${os.pwd}/out/${src.replace(".", "/")}_gen.scala""")).toString(), mainClass=src)
+        dialects.runner().run(args = (os.Path(f"""${Task.dest}/${src.replace(".", "/")}_gen.scala""")).toString(), mainClass=src)
         print("Generated ")
-        println(os.Path(f"""${os.pwd}/out/${src.replace(".", "/")}_gen.scala"""))
-        PathRef(os.Path(f"""${os.pwd}/out/${src.replace(".", "/")}_gen.scala"""))
+        println(os.Path(f"""${Task.dest}/${src.replace(".", "/")}_gen.scala"""))
     }
         
-    def generateDialects = {
+    def generateDialects = 
+      
+      Task.Anon{
           
-      def dialectSource = Seq(
+
+      T.traverse(Seq(
         "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
         "scair.dialects.cmathgen.CMathGen",
@@ -91,9 +93,8 @@ object `package` extends RootModule with ScairModule {
         "scair.dialects.llvmgen.LLVMGen",
         "scair.dialects.memrefgen.MemrefGen",
         "scair.dialects.cmathv2.CMathV2Gen"
-      ) 
-
-      T.traverse(dialectSource)(oneDialect)
+      ) )(oneDialect)()
+      PathRef(Task.dest)
     }
   }
 
