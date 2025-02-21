@@ -88,7 +88,7 @@ sealed abstract class MLIROperation(
 ) extends Operation,
       OpTrait {
 
-  val results: ListType[Value[Attribute]] = results_types.map(Value(_))
+  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
   def op: MLIROperation = this
 
   var container_block: Option[Block] = None

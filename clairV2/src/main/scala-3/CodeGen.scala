@@ -89,7 +89,6 @@ val ${dialectName}Dialect: DialectV2 =
   def print: String = s"""package ${opDefs(0).packageName}
 
 import scair.ir.*
-import scair.ir.ValueConversions.{resToVal, valToRes}
 import scair.scairdl.constraints.{BaseAttr, ConstraintContext}
 $getImports
 ${opDefs.map(_.print).mkString}
@@ -263,7 +262,7 @@ case class OperationDef(
   def getREGOpResults: Seq[String] =
     (results zip (0 to results.length).toList)
       .map((x, y) =>
-        s"${x.id} = op.results($y).asInstanceOf[Value[${x.typeString}]]"
+        s"${x.id} = op.results($y).asInstanceOf[Result[${x.typeString}]]"
       )
 
   def getREGOpRegions: Seq[String] =

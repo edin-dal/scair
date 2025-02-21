@@ -38,7 +38,6 @@ object Main {
 // CHECK:       package Main
 
 // CHECK:       import scair.ir.*
-// CHECK-NEXT:  import scair.ir.ValueConversions.{resToVal, valToRes}
 // CHECK-NEXT:  import scair.scairdl.constraints.{BaseAttr, ConstraintContext}
 // CHECK-NEXT:  import scair.dialects.builtin.IntegerAttr
 // CHECK-NEXT:  import scair.dialects.builtin.StringData
@@ -109,8 +108,8 @@ object Main {
 // CHECK:             Mul(
 // CHECK-NEXT:          operand1 = op.operands(0).asInstanceOf[Value[scair.dialects.builtin.IntegerAttr]],
 // CHECK-NEXT:          operand2 = op.operands(1).asInstanceOf[Value[scair.dialects.builtin.IntegerAttr]],
-// CHECK-NEXT:          result1 = op.results(0).asInstanceOf[Value[scair.dialects.builtin.IntegerAttr]],
-// CHECK-NEXT:          result2 = op.results(1).asInstanceOf[Value[scair.dialects.builtin.IntegerAttr]],
+// CHECK-NEXT:          result1 = op.results(0).asInstanceOf[Result[scair.dialects.builtin.IntegerAttr]],
+// CHECK-NEXT:          result2 = op.results(1).asInstanceOf[Result[scair.dialects.builtin.IntegerAttr]],
 // CHECK-NEXT:          reg1 = op.regions(0),
 // CHECK-NEXT:          reg2 = op.regions(1),
 // CHECK-NEXT:          succ1 = op.successors(0),
@@ -170,7 +169,7 @@ object Main {
 
 // CHECK:             Norm(
 // CHECK-NEXT:          norm = op.operands(0).asInstanceOf[Value[scair.dialects.builtin.IntegerAttr]],
-// CHECK-NEXT:          result = op.results(0).asInstanceOf[Value[scair.dialects.builtin.IntegerAttr]]
+// CHECK-NEXT:          result = op.results(0).asInstanceOf[Result[scair.dialects.builtin.IntegerAttr]]
 // CHECK-NEXT:        )
 // CHECK-NEXT:      }
 
