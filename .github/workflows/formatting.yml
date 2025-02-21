@@ -39,8 +39,8 @@ jobs:
     - name: Install coursier packages (Scala and Mill)
       uses: coursier/setup-action@v1
       with:
-        apps: scala:3.3.1 mill
+        apps: scala:3.3.4
 
     # Check if the code is formatted as expected
     - name: Run format checks
-      run: mill mill.scalafmt.ScalafmtModule/reformatCheck
+      run: ./mill checkFormatAll

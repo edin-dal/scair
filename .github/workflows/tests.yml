@@ -106,18 +106,12 @@ jobs:
     - name: Install coursier packages (Scala and Mill)
       uses: coursier/setup-action@v1
       with:
-        apps: scala:3.3.1 mill
+        apps: scala:3.3.4
 
     - name: Run tests and generate coverage report
       run: |
-<<<<<<< HEAD
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
-        mill tools.test
-=======
-        export PATH=$PATH:${GITHUB_WORKSPACE}/llvm-project/build/bin/
-        mill __.test
->>>>>>> 41f3ef7 (Refactor and bring back all tests.)
-
+        ./mill testAll
     - name: Upload coverage report to Codecov
       uses: codecov/codecov-action@v5
       with:

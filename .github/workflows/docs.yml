@@ -35,10 +35,10 @@ jobs:
     - name: Install coursier packages (Scala and Mill)
       uses: coursier/setup-action@v1
       with:
-        apps: scala:3.3.1 mill
+        apps: scala:3.3.4
 
     - name: Generate documentation
-      run: mill mill.scaladoc.ScalaDocModule/doc
+      run: ./mill mill.scaladoc.ScalaDocModule/doc
       
     - name: Upload static files as artifact
       id: deployment

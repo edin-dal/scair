@@ -5,7 +5,6 @@ import java.io.File
 
 ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / semanticdbEnabled := true
-ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalacOptions += "-Wunused:imports"
 
 ThisBuild / organization := "io.github.edin-dal"
