@@ -38,13 +38,13 @@ jobs:
         apps: scala:3.3.4
 
     - name: Generate documentation
-      run: ./mill mill.scaladoc.ScalaDocModule/doc
+      run: ./mill unidocSite
       
     - name: Upload static files as artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
       with:
-          path: out/scair/unidoc/
+          path: out/unidocSite.dest/
 
   deploy:
     name: "Deploy to GitHub Pages"

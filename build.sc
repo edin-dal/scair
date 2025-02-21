@@ -3,7 +3,7 @@ import com.goyeau.mill.scalafix.ScalafixModule
 
 // import mill._, scalalib._
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt}
+import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
 import mill.define.{NamedTask, Command, ModuleRef}
@@ -14,12 +14,23 @@ import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
 
-trait ScairSettings extends ScalaModule {
+trait ScairSettings extends ScalaModule{
   def scalaVersion = "3.3.4"
   def scalacOptions = Seq("-Wunused:imports")
 }
 
-trait ScairModule extends ScairSettings with ScalafixModule {
+trait ScairModule extends ScairSettings with ScalafixModule with UnidocModule {
+
+  override def unidocVersion: T[Option[String]] = Some("0.5.0")
+  override def scalaDocOptions = Seq("-Xsource:3")
+
+  override def unidocSourceFiles = Task {
+      (Seq(compile().classes) ++ T.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
+        .filter(pr => os.exists(pr.path))
+        .flatMap(pr => os.walk(pr.path))
+        .filter(_.ext == "tasty")
+        .map(PathRef(_))
+    }
   object test extends ScalaTests {
 
       def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
@@ -28,6 +39,8 @@ trait ScairModule extends ScairSettings with ScalafixModule {
 }
 
 object `package` extends RootModule with ScairModule {
+
+  override def moduleDeps = Seq(tools)
 
   def rootModule = ModuleRef(this)
 
