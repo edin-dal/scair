@@ -117,7 +117,7 @@ object `package` extends RootModule with ScairModule {
   object filechecks extends TaskModule {
     def classpath = Task.Anon {
       println("Storing full classpath for lit access")
-      val full_cp = tools.transitiveCompileClasspath()
+      val full_cp = tools.compileClasspath()
       
       val file = new PrintWriter((rootModule().millModuleBasePath.value / "full-classpath").toString())
       file.print(
