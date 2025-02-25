@@ -25,22 +25,31 @@ ScaIR is usable now through local publication though:
 1. Clone the repository and publish its packages locally by running:
 
 ```bash
-sbt publishLocal
+./mill _.publishLocal
 ```
 
 Which should end with a line like:
 
 ```
-[info]  published ivy to <USER-PATH>/.ivy2/local/io.github.edin-dal/scair_3/<version>/ivys/ivy.xml
+[625] Publishing Artifact(io.github.edin-dal,gen_dialects_3,<version>) to ivy repo <USER-PATH>/.ivy2/local
 ```
 
 To use this from your project, just add:
 
+- SBT:
 ```scala
 libraryDependencies += "io.github.edin-dal" %% "scair" % "<version>"
 ```
+- Mill:
+```scala
+    def ivyDeps = Agg(
+      ...,
+      "io.github.edin-dal::tools:<version>",
+      ...
+    )
+```
 
-to your build defintion (Typically `build.sbt`)
+to your build defintion (Typically `build.sbt` or `build.mill`)
 
 ---
 

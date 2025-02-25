@@ -1,15 +1,19 @@
+// Scalafix plugin
 import $ivy.`com.goyeau::mill-scalafix_mill0.11:0.5.0`
 import com.goyeau.mill.scalafix.ScalafixModule
 
-// import mill._, scalalib._
+// VSC version plugin
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
+import de.tobiasroeser.mill.vcs.version.VcsVersion
+
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule}
+import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule}
+import mill.scalalib.publish.{PomSettings, License, VersionControl}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
 import mill.define.{NamedTask, Command, ModuleRef}
 import mill.main.Tasks
-// import mill.eval.Evaluator
-// import mill.util.Jvm
+
 import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
@@ -19,10 +23,22 @@ trait ScairSettings extends ScalaModule{
   def scalacOptions = Seq("-Wunused:imports")
 }
 
-trait ScairModule extends ScairSettings with ScalafixModule with UnidocModule {
+trait ScairModule extends ScairSettings with ScalafixModule with UnidocModule with PublishModule {
 
   override def unidocVersion: T[Option[String]] = Some("0.5.0")
   override def scalaDocOptions = Seq("-Xsource:3")
+
+  override def pomSettings = PomSettings(
+    description = artifactName(),
+    organization = "io.github.edin-dal",
+    url = "https://github.com/edin-dal/scair",
+    licenses = Seq(License.`Apache-2.0`),
+    versionControl = VersionControl.github(owner = "edin-dal", repo = "scair"),
+    // TODO ?
+    developers = Seq()
+  )
+
+  override def publishVersion: T[String] = VcsVersion.vcsState().format()
 
   override def unidocSourceFiles = Task {
       (Seq(compile().classes) ++ T.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
