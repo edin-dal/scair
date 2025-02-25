@@ -108,7 +108,7 @@ jobs:
       with:
         apps: scala:3.3.4
 
-    - name: Run tests and generate coverage report
+    - name: Run all tests
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
         ./mill testAll

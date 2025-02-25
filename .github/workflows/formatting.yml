@@ -24,7 +24,7 @@ jobs:
     - name: Cache Incremental Build
       uses: actions/cache@v4
       with:
-        path: "./out"
+        path: ./out
         # Caches are immutable; we need to uniquely identify them to always push the recent ones
         # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
         key: mill-incremental-format-${{ github.run_id }}-${{ github.run_attempt }}
