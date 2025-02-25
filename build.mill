@@ -124,16 +124,18 @@ object `package` extends RootModule with ScairModule {
     def mainClass = Some("ScairOpt")
   }
 
+  // Top-level commands and helpers
+
   def allScalaSources = Tasks(Resolve.Tasks.resolve(this, Seq("__.sources"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[Seq[PathRef]]]).map(_.asInstanceOf[NamedTask[Seq[PathRef]]])))
   def runAllUnitTests = T{T.sequence(Resolve.Tasks.resolve(this, Seq("__.test"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[(String, Seq[TestResult])]]).map(_.asInstanceOf[NamedTask[(String, Seq[TestResult])]])))()}
-
-  // def fixAll = 
    
+  // Run all formatting on all sources in the framework
   def formatAll() = T.command {
     fix()
     scalafmt.ScalafmtModule.reformatAll(allScalaSources)
   }
 
+  // Run all formatting *checks* on all sources in the framework
   def checkFormatAll() = T.command {
     fix("--check")
     scalafmt.ScalafmtModule.checkFormatAll(allScalaSources)

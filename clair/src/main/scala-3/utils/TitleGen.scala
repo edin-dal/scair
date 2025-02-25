@@ -79,8 +79,8 @@ object TitleGen {
     * and generates a title. If no arguments are given, generates a default
     * title.
     *
-    * To run this function, use the following command with mill: `./mill clair.run
-    * your string of your choice`
+    * To run this function, use the following command with mill: `./mill
+    * clair.run your string of your choice`
     *
     * @param args
     */
