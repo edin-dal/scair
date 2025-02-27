@@ -137,7 +137,6 @@ import scair.Parser.whitespace
 import scair.dialects.builtin._
 import scair.scairdl.constraints._
 import scair.scairdl.constraints.attr2constraint
-import fastparse.ScalaWhitespace.whitespace
 import fastparse.*"""
       + { for (hatch <- opHatches) yield hatch.importt }
         .mkString("\n", "\n", "\n") +

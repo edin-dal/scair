@@ -32,5 +32,12 @@ project/plugins/project/
 .scala-build/
 metals.sbt
 
+tests/filecheck/**/Output/
+tests/filecheck/**/.scala-build/
+
 # Scair Shennanigans
 full-classpath
+
+# Mill specific
+.mill/
+out/

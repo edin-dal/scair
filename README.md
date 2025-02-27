@@ -7,16 +7,13 @@ ScaIR: MLIR inspired Scala Compiler Framework
 ## Navigation
 - [Installation](#installation)
 - [Contributing to the Project](#contributing-to-the-project)
-    - [Running](#running-sbt)
+    - [Running](#running)
     - [Testing](#testing)  
     - [Code Formatting](#code-formatting) 
 
 ---
 
-## Installation
-The project is implemented under the Scala version 3.3.4, however newer versions should work just as fine! Check out the official **[Getting started](https://docs.scala-lang.org/getting-started/install-scala.html#:~:text=Using%20the%20Scala%20Installer%20(recommended%20way)&text=Install%20it%20on%20your%20system%20with%20the%20following%20instructions.&text=%26%26%20.%2Fcs%20setup-,Run%20the%20following%20command%20in%20your,following%20the%20on%2Dscreen%20instructions.&text=Download%20and%20execute%20the%20Scala,follow%20the%20on%2Dscreen%20instructions.)** guide on how to install Scala and sbt.
-
-### As a dependency
+## Installation as a dependency
 
 We are still figuring out the Maven Central repository publication process.
 
@@ -25,22 +22,31 @@ ScaIR is usable now through local publication though:
 1. Clone the repository and publish its packages locally by running:
 
 ```bash
-sbt publishLocal
+./mill _.publishLocal
 ```
 
 Which should end with a line like:
 
 ```
-[info]  published ivy to <USER-PATH>/.ivy2/local/io.github.edin-dal/scair_3/<version>/ivys/ivy.xml
+[625] Publishing Artifact(io.github.edin-dal,gen_dialects_3,<version>) to ivy repo <USER-PATH>/.ivy2/local
 ```
 
 To use this from your project, just add:
 
+- SBT:
 ```scala
 libraryDependencies += "io.github.edin-dal" %% "scair" % "<version>"
 ```
+- Mill:
+```scala
+    def ivyDeps = Agg(
+      ...,
+      "io.github.edin-dal::tools:<version>",
+      ...
+    )
+```
 
-to your build defintion (Typically `build.sbt`)
+to your build defintion (Typically `build.sbt` or `build.mill`)
 
 ---
 
@@ -48,14 +54,19 @@ to your build defintion (Typically `build.sbt`)
 
 You can contribute to the project by submitting a PR. We are currently setting up a Zulip channel to allow for a more direct communcation with us.
 
-### Running sbt
+### Running
 
-The **'sbt run'** command allows you to run your main classes in the project. This can be helpful in ad-hoc exploration of the compiler framework, or some localised testing as you are implementing new features (although we do recommend a proper testing suite once the the feature is ready for use).
+The **'./mill run'** command allows you to run your main classes in the project. This can be helpful in ad-hoc exploration of the compiler framework, or some localised testing as you are implementing new features (although we do recommend a proper testing suite once the the feature is ready for use).
 
 To use the command you would need to have defined a new main class somewhere in the project. By default, we have no main classes, and as such the command will result in an error.
 
 ```
-sbt run
+# No main class specified or found!
+./mill run
+# To run the main CLI:
+./mill tools.run
+# To run the titlegen:
+./mill clair.run
 ```
 
 ### Testing
@@ -64,29 +75,29 @@ Once your changes are ready to be merged ensure that both unit tests, as well as
 
 #### **Unit tests**
 ```
-sbt test
+./mill test
 ```
 
 #### **MLIR compatibility tests**
 ```
-sbt filechecks
+./mill filechecks
 ```
 
 #### **Running the entire testing pipeline**
 ```
-sbt testAll
+./mill testAll
 ```
 
 ### Code formatting
-ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub will fail if the code is not formatted properly. Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. Once you are ready to submit a PR for merging, run the following sbt command to automatically format the entire code base:
+ScaIR project makes use of an auto-formatter, and some CI/CD checks on GitHub will fail if the code is not formatted properly. Additionally, we enforce that all unused imports be removed, automatic CI/CD checks will fail otherwise. Once you are ready to submit a PR for merging, run the following ./mill command to automatically format the entire code base:
 
 ```bash
-sbt formatAll
+./mill formatAll
 ```
 
 To verify that the code has indeed been formatted, run:
 
 ```bash
-sbt formatCheckAll
+./mill checkFormatAll
 ```
 ---
