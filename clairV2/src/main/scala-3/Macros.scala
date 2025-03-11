@@ -329,6 +329,60 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   val params = typeSymbol.primaryConstructor.paramSymss.flatten
 
   /*_____________*\
+  \*-- HELPERS --*/
+
+  // extract generic type T from Operand[T], Result[T] etc.
+  def extractGenericType(applied: AppliedType): TypeRepr =
+    applied match
+      case AppliedType(_, List(targ)) => targ
+      case _ => report.errorAndAbort(s"Could not extract generic type from ${applied.show}")
+
+  // type checking and casting an operand
+  def generateCheckedOperandArgument[A <: Attribute: Type](list: Expr[Seq[Operand[Attribute]]], index: Int, typeName: String): Expr[Operand[A]] =
+    '{
+      val item = $list(${ Expr(index) })
+      val value = item.typ
+      
+      if (!value.isInstanceOf[A]) {
+        throw new IllegalArgumentException(
+          s"Type mismatch for operand at index ${${ Expr(index) }}: " +
+          s"expected ${${ Expr(typeName) }}, " +
+          s"but found ${value.getClass.getSimpleName}"
+        )
+      }
+      item.asInstanceOf[Operand[A]]
+    }
+
+  def generateCheckedResultArgument[A <: Attribute: Type](list: Expr[Seq[Result[Attribute]]], index: Int, typeName: String): Expr[Result[A]] =
+    '{
+      val item = $list(${ Expr(index) })
+      val value = item.typ
+      
+      if (!value.isInstanceOf[A]) {
+        throw new IllegalArgumentException(
+          s"Type mismatch for operand at index ${${ Expr(index) }}: " +
+          s"expected ${${ Expr(typeName) }}, " +
+          s"but found ${value.getClass.getSimpleName}"
+        )
+      }
+      item.asInstanceOf[Result[A]]
+    }
+
+  def generateCheckedPropertyArgument[A <: Attribute: Type](list: Expr[DictType[String, Attribute]], propName: String, typeName: String): Expr[Property[A]] =
+    '{
+      val value = $list(${ Expr(propName) })
+      
+      if (!value.isInstanceOf[A]) {
+        throw new IllegalArgumentException(
+          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+          s"expected ${${ Expr(typeName) }}, " +
+          s"but found ${value.getClass.getSimpleName}"
+        )
+      }
+      Property[A](value.asInstanceOf[A])
+    }
+
+  /*_____________*\
   \*-- OPERAND --*/
 
   // grouping parameters by their type 
@@ -338,41 +392,42 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
       case _ => false
   }
 
+  // get the expected types for all input parameters
+  val operandExpectedTypes = operandParams.map { sym =>
+    sym.termRef.widenTermRefByName match
+      case applied: AppliedType => extractGenericType(applied)
+      case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
+  }
+
+  // extracting and validating each input, the re-creating the Input instance
+  val operandArgs = operandExpectedTypes.zipWithIndex.map { case (expectedType, idx) =>
+    val typeName = expectedType.typeSymbol.name
+    
+    expectedType.asType match 
+      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
+        generateCheckedOperandArgument[t & Attribute]('{ $genExpr.operands.toSeq }, idx, typeName)
+  }
+
+  /*________________*\
+  \*-- SUCCESSORS --*/
+
   val (successorParams, restParams1) = restParams0.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[scair.ir.Block]
       case x => report.errorAndAbort(x.show)
   }
 
+  val successorArgs = successorParams.zipWithIndex.map { (param, idx) => 
+    '{ $genExpr.successors(${ Expr(idx) }) }
+  }
+
+  /*_____________*\
+  \*-- RESULTS --*/
+
   val (resultParams, restParams2) = restParams1.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Result]
       case x => report.errorAndAbort(x.show)
-  }
-
-  val (regionParams, restParams3) = restParams2.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Region]
-      case x => report.errorAndAbort(x.show)
-  }
-
-  val (propertyParams, _) = restParams3.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
-      case x => report.errorAndAbort(x.show)
-  }
-
-  // extract generic type T from Input[T] or Output[T]
-  def extractGenericType(applied: AppliedType): TypeRepr =
-    applied match
-      case AppliedType(_, List(targ)) => targ
-      case _ => report.errorAndAbort(s"Could not extract generic type from ${applied.show}")
-
-  // get the expected types for all input parameters
-  val operandExpectedTypes = operandParams.map { sym =>
-    sym.termRef.widenTermRefByName match
-      case applied: AppliedType => extractGenericType(applied)
-      case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
   }
 
   val resultExpectedTypes = resultParams.map { sym =>
@@ -381,12 +436,55 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
       case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
   }
 
+  // extracting and validating each input, the re-creating the Input instance
+  val resultArgs = resultExpectedTypes.zipWithIndex.map { case (expectedType, idx) =>
+    val typeName = expectedType.typeSymbol.name
+    
+    expectedType.asType match 
+      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
+        generateCheckedResultArgument[t & Attribute]('{ $genExpr.results.toSeq }, idx, typeName)
+  }
+
+  /*_____________*\
+  \*-- REGIONS --*/
+
+  val (regionParams, restParams3) = restParams2.partition { sym =>
+    sym.termRef.widenTermRefByName match
+      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Region]
+      case x => report.errorAndAbort(x.show)
+  }
+
+  val regionsArgs = regionParams.zipWithIndex.map { (param, idx) => 
+    '{ $genExpr.regions(${ Expr(idx) }) }
+  }
+
+  /*________________*\
+  \*-- PROPERTIES --*/
+
+  val (propertyParams, _) = restParams3.partition { sym =>
+    sym.termRef.widenTermRefByName match
+      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
+      case x => report.errorAndAbort(x.show)
+  }
+
   val propertyExpectedTypes = propertyParams.map { sym =>
     sym.termRef.widenTermRefByName match
       case applied: AppliedType => 
         (sym.name, extractGenericType(applied))
       case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
   }
+
+  // extracting and validating each input, the re-creating the Input instance
+  val propertyArgs = propertyExpectedTypes.map { case (propName, expectedType) =>
+    val typeName = expectedType.typeSymbol.name
+    
+    expectedType.asType match 
+      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
+        generateCheckedPropertyArgument[t & Attribute]('{ $genExpr.dictionaryProperties }, propName, typeName)
+  }
+
+  /*__________________*\
+  \*-- LENGTH CHECK --*/
 
   // checking that lengths of inputs in generalized machine and case class are the same
   val lengthCheck = '{
@@ -428,87 +526,6 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
     }
   }
 
-  // type checking
-
-  def generateCheckedOperandArgument[A <: Attribute: Type](list: Expr[Seq[Operand[Attribute]]], index: Int, typeName: String): Expr[Operand[A]] =
-    '{
-      val item = $list(${ Expr(index) })
-      val value = item.typ
-      
-      if (!value.isInstanceOf[A]) {
-        throw new IllegalArgumentException(
-          s"Type mismatch for operand at index ${${ Expr(index) }}: " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
-        )
-      }
-      item.asInstanceOf[Operand[A]]
-    }
-
-  // extracting and validating each input, the re-creating the Input instance
-  val operandArgs = operandExpectedTypes.zipWithIndex.map { case (expectedType, idx) =>
-    val typeName = expectedType.typeSymbol.name
-    
-    expectedType.asType match 
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
-        generateCheckedOperandArgument[t & Attribute]('{ $genExpr.operands.toSeq }, idx, typeName)
-  }
-
-  def generateCheckedResultArgument[A <: Attribute: Type](list: Expr[Seq[Result[Attribute]]], index: Int, typeName: String): Expr[Result[A]] =
-    '{
-      val item = $list(${ Expr(index) })
-      val value = item.typ
-      
-      if (!value.isInstanceOf[A]) {
-        throw new IllegalArgumentException(
-          s"Type mismatch for operand at index ${${ Expr(index) }}: " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
-        )
-      }
-      item.asInstanceOf[Result[A]]
-    }
-
-  // extracting and validating each input, the re-creating the Input instance
-  val resultArgs = resultExpectedTypes.zipWithIndex.map { case (expectedType, idx) =>
-    val typeName = expectedType.typeSymbol.name
-    
-    expectedType.asType match 
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
-        generateCheckedResultArgument[t & Attribute]('{ $genExpr.results.toSeq }, idx, typeName)
-  }
-
-  def generateCheckedPropertyArgument[A <: Attribute: Type](list: Expr[DictType[String, Attribute]], propName: String, typeName: String): Expr[Property[A]] =
-    '{
-      val value = $list(${ Expr(propName) })
-      
-      if (!value.isInstanceOf[A]) {
-        throw new IllegalArgumentException(
-          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
-        )
-      }
-      Property[A](value.asInstanceOf[A])
-    }
-
-  // extracting and validating each input, the re-creating the Input instance
-  val propertyArgs = propertyExpectedTypes.map { case (propName, expectedType) =>
-    val typeName = expectedType.typeSymbol.name
-    
-    expectedType.asType match 
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
-        generateCheckedPropertyArgument[t & Attribute]('{ $genExpr.dictionaryProperties }, propName, typeName)
-  }
-
-  val successorArgs = successorParams.zipWithIndex.map { (param, idx) => 
-    '{ $genExpr.successors(${ Expr(idx) }) }
-  }
-
-  val regionsArgs = regionParams.zipWithIndex.map { (param, idx) => 
-    '{ $genExpr.regions(${ Expr(idx) }) }
-  }
-
   // Combine all parameters in the correct order
   val allArgs = params.map { param =>
     val paramType = param.termRef.widenTermRefByName
@@ -530,7 +547,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
         report.errorAndAbort(s"This is most likely successor or region - Unexpected parameter type: ${paramType.show}")
   }
 
-  // Create the final expression that performs the checks and creates the instance
+  // creates a new instance of the ADT op
   val args = allArgs.map(_.asTerm)
   val constructorExpr = Select(New(TypeTree.of[T]), typeSymbol.primaryConstructor)
     .appliedToArgs(args)
