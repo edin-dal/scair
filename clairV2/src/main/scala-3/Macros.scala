@@ -33,18 +33,6 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
   Expr(classPath)
 }
 
-// TODO:
-  // [x] wrap around Value
-  // [x] verify the lengths are correct, and verify the types are correct
-  // [x] verify the types are correct dynamically
-  // [x] tag a generalized machine with the type of the specific machine
-  // [x] generate a function to generalize a specific machine
-  // [x] transfer to Operation
-  // [x] generate a function for a constructor for a GeneralizedMachine 
-  // [] fix blocks and regions in the constructor :)
-  // [x] actually ensure that ADTOp and UnverifiedOp contain the exact same values
-
-
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR TRAIT    ||
 \*≡==---==≡≡==---==≡*/
@@ -77,9 +65,9 @@ object MLIRTrait {
               dictionaryAttributes
             )
 
-          def generalizeADTOp(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
+          def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
 
-          def specializeUnverifiedOp(unverOp: UnverifiedOp[T]): T = fromUnverifiedOperation[T](unverOp)
+          def verify(unverOp: UnverifiedOp[T]): T = fromUnverifiedOperation[T](unverOp)
       }
 }
 
@@ -96,9 +84,9 @@ trait MLIRTrait[T <: ADTOperation] {
       DictType.empty[String, Attribute]
   ): UnverifiedOp[T] 
 
-  def generalizeADTOp(machine: T): UnverifiedOp[T] 
+  def unverify(adtOp: T): UnverifiedOp[T] 
 
-  def specializeUnverifiedOp(machine: UnverifiedOp[T]): T 
+  def verify(unverOp: UnverifiedOp[T]): T 
 
 }
 
@@ -136,7 +124,7 @@ def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
     import quotes.reflect.*
 
     val typeRepr = TypeRepr.of[T]
-    val name = Expr(typeRepr.typeSymbol.name)
+    val name = Expr(typeRepr.typeSymbol.name.toLowerCase())
 
     '{
       UnverifiedOp[T](
@@ -199,8 +187,7 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   // partitioning ADT parameters by Successor
   val (successorParams, restParams1) = restParams0.partition { sym =>
     sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[scair.ir.Block]
-      case x => report.errorAndAbort(x.show)
+      case tycon => tycon =:= TypeRepr.of[scair.ir.Block]
   }
 
   // extracting successor instances from the ADT
@@ -224,7 +211,7 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   val (resultParams, restParams2) = restParams1.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Result]
-      case x => report.errorAndAbort(x.show)
+      case x => false
   }
 
   // extracting result instances from the ADT
@@ -247,8 +234,7 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   // partitioning ADT parameters by Regions
   val (regionParams, restParams3) = restParams2.partition { sym =>
     sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Region]
-      case x => report.errorAndAbort(x.show)
+      case tycon => tycon =:= TypeRepr.of[Region]
   }
 
   // extracting region instances from the ADT
@@ -272,7 +258,7 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   val (propertyParams, _) = restParams3.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
-      case x => report.errorAndAbort(x.show)
+      case x => false
   }
 
   // extracting property instances from the ADT
@@ -297,7 +283,7 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   val opName = Expr(typeSymbol.name.toLowerCase())
 
   '{
-    UnverifiedOp[T](
+    val x = UnverifiedOp[T](
       name = $opName,
       operands = $operandSeqExpr,
       successors = $successorSeqExpr,
@@ -306,6 +292,8 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
       dictionaryProperties = $propertySeqExpr,
       dictionaryAttributes = DictType.empty[String, Attribute]
     )
+    x.results.addAll($resultSeqExpr)
+    x
   }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -413,8 +401,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
 
   val (successorParams, restParams1) = restParams0.partition { sym =>
     sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[scair.ir.Block]
-      case x => report.errorAndAbort(x.show)
+      case tycon => tycon =:= TypeRepr.of[scair.ir.Block]
   }
 
   val successorArgs = successorParams.zipWithIndex.map { (param, idx) => 
@@ -427,7 +414,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   val (resultParams, restParams2) = restParams1.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Result]
-      case x => report.errorAndAbort(x.show)
+      case x => false
   }
 
   val resultExpectedTypes = resultParams.map { sym =>
@@ -450,8 +437,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
 
   val (regionParams, restParams3) = restParams2.partition { sym =>
     sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Region]
-      case x => report.errorAndAbort(x.show)
+      case tycon => tycon =:= TypeRepr.of[Region]
   }
 
   val regionsArgs = regionParams.zipWithIndex.map { (param, idx) => 
@@ -464,7 +450,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   val (propertyParams, _) = restParams3.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
-      case x => report.errorAndAbort(x.show)
+      case x => false
   }
 
   val propertyExpectedTypes = propertyParams.map { sym =>
@@ -543,8 +529,16 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
         } else {
           report.errorAndAbort(s"Unexpected type constructor: ${tycon.show}")
         }
-      case _ =>
-        report.errorAndAbort(s"This is most likely successor or region - Unexpected parameter type: ${paramType.show}")
+      case tycon =>
+        if (tycon =:= TypeRepr.of[scair.ir.Block]) {
+          val idx = successorParams.indexOf(param)
+          successorArgs(idx)
+        } else if (tycon =:= TypeRepr.of[Region]) {
+          val idx = regionParams.indexOf(param)
+          regionsArgs(idx)
+        } else {
+          report.errorAndAbort(s"Unexpected parameter type: ${tycon.show}")
+        }
   }
 
   // creates a new instance of the ADT op
