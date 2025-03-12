@@ -1,6 +1,6 @@
 package scair.clairV2.macros
 
-import scala.quoted.*  
+import scala.quoted.*
 import scair.ir.*
 import scala.collection.mutable
 
@@ -40,13 +40,15 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
 object MLIRTrait {
   inline def derived[T <: ADTOperation]: MLIRTrait[T] = ${ deriveADTOpTrait[T] }
 
-  def deriveADTOpTrait[T <: ADTOperation: Type](using q: Quotes): Expr[MLIRTrait[T]] =
+  def deriveADTOpTrait[T <: ADTOperation: Type](using
+      q: Quotes
+  ): Expr[MLIRTrait[T]] =
     import quotes.reflect.*
 
-      '{ 
-        new MLIRTrait[T]:
-          
-          def constructUnverifiedOp(
+    '{
+      new MLIRTrait[T]:
+
+        def constructUnverifiedOp(
             operands: ListType[Value[Attribute]] = ListType(),
             successors: ListType[scair.ir.Block] = ListType(),
             results_types: ListType[Attribute] = ListType(),
@@ -55,38 +57,40 @@ object MLIRTrait {
               DictType.empty[String, Attribute],
             dictionaryAttributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
-          ): UnverifiedOp[T] = 
-            constructUnverifiedOpHook(
-              operands,
-              successors,
-              results_types,
-              regions,
-              dictionaryProperties,
-              dictionaryAttributes
-            )
+        ): UnverifiedOp[T] =
+          constructUnverifiedOpHook(
+            operands,
+            successors,
+            results_types,
+            regions,
+            dictionaryProperties,
+            dictionaryAttributes
+          )
 
-          def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
+        def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
 
-          def verify(unverOp: UnverifiedOp[T]): T = fromUnverifiedOperation[T](unverOp)
-      }
+        def verify(unverOp: UnverifiedOp[T]): T =
+          fromUnverifiedOperation[T](unverOp)
+    }
+
 }
 
 trait MLIRTrait[T <: ADTOperation] {
 
   def constructUnverifiedOp(
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[scair.ir.Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-  ): UnverifiedOp[T] 
+      operands: ListType[Value[Attribute]] = ListType(),
+      successors: ListType[scair.ir.Block] = ListType(),
+      results_types: ListType[Attribute] = ListType(),
+      regions: ListType[Region] = ListType(),
+      dictionaryProperties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      dictionaryAttributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
 
-  def unverify(adtOp: T): UnverifiedOp[T] 
+  def unverify(adtOp: T): UnverifiedOp[T]
 
-  def verify(unverOp: UnverifiedOp[T]): T 
+  def verify(unverOp: UnverifiedOp[T]): T
 
 }
 
@@ -101,8 +105,8 @@ inline def constructUnverifiedOpHook[T <: ADTOperation](
     regions: ListType[Region],
     dictionaryProperties: DictType[String, Attribute],
     dictionaryAttributes: DictType[String, Attribute]
-  ): UnverifiedOp[T] =
-  ${ 
+): UnverifiedOp[T] =
+  ${
     constructUnverifiedOpHookMacro[T](
       'operands,
       'successors,
@@ -110,7 +114,7 @@ inline def constructUnverifiedOpHook[T <: ADTOperation](
       'regions,
       'dictionaryProperties,
       'dictionaryAttributes
-    ) 
+    )
   }
 
 def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
@@ -120,24 +124,24 @@ def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
     regions: Expr[ListType[Region]],
     dictionaryProperties: Expr[DictType[String, Attribute]],
     dictionaryAttributes: Expr[DictType[String, Attribute]]
-  )(using Quotes): Expr[UnverifiedOp[T]] = {
-    import quotes.reflect.*
+)(using Quotes): Expr[UnverifiedOp[T]] = {
+  import quotes.reflect.*
 
-    val typeRepr = TypeRepr.of[T]
-    val name = Expr(typeRepr.typeSymbol.name.toLowerCase())
+  val typeRepr = TypeRepr.of[T]
+  val name = Expr(typeRepr.typeSymbol.name.toLowerCase())
 
-    '{
-      UnverifiedOp[T](
-        name = $name,
-        operands = $operands,
-        successors = $successors,
-        results_types = $results_types,
-        regions = $regions,
-        dictionaryProperties = $dictionaryProperties,
-        dictionaryAttributes = $dictionaryAttributes
-      )
-    }
+  '{
+    UnverifiedOp[T](
+      name = $name,
+      operands = $operands,
+      successors = $successors,
+      results_types = $results_types,
+      regions = $regions,
+      dictionaryProperties = $dictionaryProperties,
+      dictionaryAttributes = $dictionaryAttributes
+    )
   }
+}
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ADT to Unverified conversion Macro  ||
@@ -146,7 +150,9 @@ def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
 inline def fromADTOperation[T <: ADTOperation](gen: T): UnverifiedOp[T] =
   ${ fromADTOperationMacro[T]('gen) }
 
-def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quotes): Expr[UnverifiedOp[T]] =
+def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using
+    Quotes
+): Expr[UnverifiedOp[T]] =
   import quotes.reflect.*
 
   val typeRepr = TypeRepr.of[T]
@@ -159,27 +165,29 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
 
   /*______________*\
   \*-- OPERANDS --*/
-  
+
   // partitioning ADT parameters by Operand
   val (operandParams, restParams0) = params.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Operand]
-      case _ => false
+      case _                     => false
   }
 
   // extracting operand instances from the ADT
   val operandExprs = operandParams.map { param =>
     val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    '{${select}.asInstanceOf[Operand[Attribute]]} 
+    '{ ${ select }.asInstanceOf[Operand[Attribute]] }
   }.toSeq
 
   // constructing a sequence of operands to construct the UnverifiedOp with
-  val operandSeqExpr = 
+  val operandSeqExpr =
     if (operandExprs.isEmpty) '{
       ListType.empty[Operand[Attribute]]
-    } else '{
-      ListType[Operand[Attribute]](${Varargs(operandExprs)}: _*)
     }
+    else
+      '{
+        ListType[Operand[Attribute]](${ Varargs(operandExprs) }: _*)
+      }
 
   /*________________*\
   \*-- SUCCESSORS --*/
@@ -193,16 +201,18 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   // extracting successor instances from the ADT
   val successorExprs = successorParams.map { param =>
     val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    '{${select}.asInstanceOf[scair.ir.Block]} 
+    '{ ${ select }.asInstanceOf[scair.ir.Block] }
   }.toSeq
 
   // constructing a sequence of successors to construct the UnverifiedOp with
-  val successorSeqExpr = 
+  val successorSeqExpr =
     if (successorExprs.isEmpty) '{
       ListType.empty[scair.ir.Block]
-    } else '{
-      ListType[scair.ir.Block](${Varargs(successorExprs)}: _*)
     }
+    else
+      '{
+        ListType[scair.ir.Block](${ Varargs(successorExprs) }: _*)
+      }
 
   /*_____________*\
   \*-- RESULTS --*/
@@ -211,26 +221,28 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   val (resultParams, restParams2) = restParams1.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Result]
-      case x => false
+      case x                     => false
   }
 
   // extracting result instances from the ADT
   val resultExprs = resultParams.map { param =>
     val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    '{${select}.asInstanceOf[Result[Attribute]]} 
-  }.toSeq 
+    '{ ${ select }.asInstanceOf[Result[Attribute]] }
+  }.toSeq
 
   // constructing a sequence of results to construct the UnverifiedOp with
   val resultSeqExpr =
     if (resultExprs.isEmpty) '{
       ListType.empty[Result[Attribute]]
-    } else '{
-      ListType[Result[Attribute]](${Varargs(resultExprs)}: _*)
     }
+    else
+      '{
+        ListType[Result[Attribute]](${ Varargs(resultExprs) }: _*)
+      }
 
   /*_____________*\
   \*-- REGIONS --*/
-  
+
   // partitioning ADT parameters by Regions
   val (regionParams, restParams3) = restParams2.partition { sym =>
     sym.termRef.widenTermRefByName match
@@ -240,16 +252,18 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   // extracting region instances from the ADT
   val regionExprs = regionParams.map { param =>
     val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    '{${select}.asInstanceOf[Region]} 
+    '{ ${ select }.asInstanceOf[Region] }
   }.toSeq
 
   // constructing a sequence of regions to construct the UnverifiedOp with
   val regionSeqExpr =
     if (regionExprs.isEmpty) '{
       ListType.empty[Region]
-    } else '{
-      ListType[Region](${Varargs(regionExprs)}: _*)
     }
+    else
+      '{
+        ListType[Region](${ Varargs(regionExprs) }: _*)
+      }
 
   /*________________*\
   \*-- PROPERTIES --*/
@@ -258,24 +272,26 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
   val (propertyParams, _) = restParams3.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
-      case x => false
+      case x                     => false
   }
 
   // extracting property instances from the ADT
   val propertyExprs = propertyParams.map { param =>
     val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    val name = Expr(param.name) 
-    val y = '{ ${select}.asInstanceOf[Property[Attribute]] }
-    '{ (${name}, ${y}.typ) }
+    val name = Expr(param.name)
+    val y = '{ ${ select }.asInstanceOf[Property[Attribute]] }
+    '{ (${ name }, ${ y }.typ) }
   }.toSeq
 
   // constructing a sequence of properties to construct the UnverifiedOp with
   val propertySeqExpr =
     if (propertyExprs.isEmpty) '{
       DictType.empty[String, Attribute]
-    } else '{
-      DictType(${Varargs(propertyExprs)}: _*)
     }
+    else
+      '{
+        DictType(${ Varargs(propertyExprs) }: _*)
+      }
 
   /*_________________*\
   \*-- CONSTRUCTOR --*/
@@ -303,7 +319,9 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using Quo
 inline def fromUnverifiedOperation[T <: ADTOperation](gen: UnverifiedOp[T]): T =
   ${ fromUnverifiedOperationMacro[T]('gen) }
 
-def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[UnverifiedOp[T]])(using Quotes): Expr[T] =
+def fromUnverifiedOperationMacro[T <: ADTOperation: Type](
+    genExpr: Expr[UnverifiedOp[T]]
+)(using Quotes): Expr[T] =
   import quotes.reflect.*
 
   val typeRepr = TypeRepr.of[T]
@@ -323,48 +341,63 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   def extractGenericType(applied: AppliedType): TypeRepr =
     applied match
       case AppliedType(_, List(targ)) => targ
-      case _ => report.errorAndAbort(s"Could not extract generic type from ${applied.show}")
+      case _ =>
+        report.errorAndAbort(
+          s"Could not extract generic type from ${applied.show}"
+        )
 
   // type checking and casting an operand
-  def generateCheckedOperandArgument[A <: Attribute: Type](list: Expr[Seq[Operand[Attribute]]], index: Int, typeName: String): Expr[Operand[A]] =
+  def generateCheckedOperandArgument[A <: Attribute: Type](
+      list: Expr[Seq[Operand[Attribute]]],
+      index: Int,
+      typeName: String
+  ): Expr[Operand[A]] =
     '{
       val item = $list(${ Expr(index) })
       val value = item.typ
-      
+
       if (!value.isInstanceOf[A]) {
         throw new IllegalArgumentException(
           s"Type mismatch for operand at index ${${ Expr(index) }}: " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
+            s"expected ${${ Expr(typeName) }}, " +
+            s"but found ${value.getClass.getSimpleName}"
         )
       }
       item.asInstanceOf[Operand[A]]
     }
 
-  def generateCheckedResultArgument[A <: Attribute: Type](list: Expr[Seq[Result[Attribute]]], index: Int, typeName: String): Expr[Result[A]] =
+  def generateCheckedResultArgument[A <: Attribute: Type](
+      list: Expr[Seq[Result[Attribute]]],
+      index: Int,
+      typeName: String
+  ): Expr[Result[A]] =
     '{
       val item = $list(${ Expr(index) })
       val value = item.typ
-      
+
       if (!value.isInstanceOf[A]) {
         throw new IllegalArgumentException(
           s"Type mismatch for operand at index ${${ Expr(index) }}: " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
+            s"expected ${${ Expr(typeName) }}, " +
+            s"but found ${value.getClass.getSimpleName}"
         )
       }
       item.asInstanceOf[Result[A]]
     }
 
-  def generateCheckedPropertyArgument[A <: Attribute: Type](list: Expr[DictType[String, Attribute]], propName: String, typeName: String): Expr[Property[A]] =
+  def generateCheckedPropertyArgument[A <: Attribute: Type](
+      list: Expr[DictType[String, Attribute]],
+      propName: String,
+      typeName: String
+  ): Expr[Property[A]] =
     '{
       val value = $list(${ Expr(propName) })
-      
+
       if (!value.isInstanceOf[A]) {
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
+            s"expected ${${ Expr(typeName) }}, " +
+            s"but found ${value.getClass.getSimpleName}"
         )
       }
       Property[A](value.asInstanceOf[A])
@@ -373,27 +406,35 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   /*_____________*\
   \*-- OPERAND --*/
 
-  // grouping parameters by their type 
+  // grouping parameters by their type
   val (operandParams, restParams0) = params.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Operand]
-      case _ => false
+      case _                     => false
   }
 
   // get the expected types for all input parameters
   val operandExpectedTypes = operandParams.map { sym =>
     sym.termRef.widenTermRefByName match
       case applied: AppliedType => extractGenericType(applied)
-      case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
+      case _ =>
+        report.errorAndAbort(
+          s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}"
+        )
   }
 
   // extracting and validating each input, the re-creating the Input instance
-  val operandArgs = operandExpectedTypes.zipWithIndex.map { case (expectedType, idx) =>
-    val typeName = expectedType.typeSymbol.name
-    
-    expectedType.asType match 
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
-        generateCheckedOperandArgument[t & Attribute]('{ $genExpr.operands.toSeq }, idx, typeName)
+  val operandArgs = operandExpectedTypes.zipWithIndex.map {
+    case (expectedType, idx) =>
+      val typeName = expectedType.typeSymbol.name
+
+      expectedType.asType match
+        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+          generateCheckedOperandArgument[t & Attribute](
+            '{ $genExpr.operands.toSeq },
+            idx,
+            typeName
+          )
   }
 
   /*________________*\
@@ -404,7 +445,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
       case tycon => tycon =:= TypeRepr.of[scair.ir.Block]
   }
 
-  val successorArgs = successorParams.zipWithIndex.map { (param, idx) => 
+  val successorArgs = successorParams.zipWithIndex.map { (param, idx) =>
     '{ $genExpr.successors(${ Expr(idx) }) }
   }
 
@@ -414,22 +455,30 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   val (resultParams, restParams2) = restParams1.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Result]
-      case x => false
+      case x                     => false
   }
 
   val resultExpectedTypes = resultParams.map { sym =>
     sym.termRef.widenTermRefByName match
       case applied: AppliedType => extractGenericType(applied)
-      case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
+      case _ =>
+        report.errorAndAbort(
+          s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}"
+        )
   }
 
   // extracting and validating each input, the re-creating the Input instance
-  val resultArgs = resultExpectedTypes.zipWithIndex.map { case (expectedType, idx) =>
-    val typeName = expectedType.typeSymbol.name
-    
-    expectedType.asType match 
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
-        generateCheckedResultArgument[t & Attribute]('{ $genExpr.results.toSeq }, idx, typeName)
+  val resultArgs = resultExpectedTypes.zipWithIndex.map {
+    case (expectedType, idx) =>
+      val typeName = expectedType.typeSymbol.name
+
+      expectedType.asType match
+        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+          generateCheckedResultArgument[t & Attribute](
+            '{ $genExpr.results.toSeq },
+            idx,
+            typeName
+          )
   }
 
   /*_____________*\
@@ -440,7 +489,7 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
       case tycon => tycon =:= TypeRepr.of[Region]
   }
 
-  val regionsArgs = regionParams.zipWithIndex.map { (param, idx) => 
+  val regionsArgs = regionParams.zipWithIndex.map { (param, idx) =>
     '{ $genExpr.regions(${ Expr(idx) }) }
   }
 
@@ -450,23 +499,31 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
   val (propertyParams, _) = restParams3.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
-      case x => false
+      case x                     => false
   }
 
   val propertyExpectedTypes = propertyParams.map { sym =>
     sym.termRef.widenTermRefByName match
-      case applied: AppliedType => 
+      case applied: AppliedType =>
         (sym.name, extractGenericType(applied))
-      case _ => report.errorAndAbort(s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}")
+      case _ =>
+        report.errorAndAbort(
+          s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}"
+        )
   }
 
   // extracting and validating each input, the re-creating the Input instance
-  val propertyArgs = propertyExpectedTypes.map { case (propName, expectedType) =>
-    val typeName = expectedType.typeSymbol.name
-    
-    expectedType.asType match 
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] => 
-        generateCheckedPropertyArgument[t & Attribute]('{ $genExpr.dictionaryProperties }, propName, typeName)
+  val propertyArgs = propertyExpectedTypes.map {
+    case (propName, expectedType) =>
+      val typeName = expectedType.typeSymbol.name
+
+      expectedType.asType match
+        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+          generateCheckedPropertyArgument[t & Attribute](
+            '{ $genExpr.dictionaryProperties },
+            propName,
+            typeName
+          )
   }
 
   /*__________________*\
@@ -481,33 +538,33 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
     val regions = $genExpr.regions
     val properties = $genExpr.dictionaryProperties
 
-    if (operands.length != ${Expr(operandParams.length)}) {
+    if (operands.length != ${ Expr(operandParams.length) }) {
       throw new IllegalArgumentException(
-        s"Expected ${${Expr(operandParams.length)}} operands, but got ${operands.length}"
+        s"Expected ${${ Expr(operandParams.length) }} operands, but got ${operands.length}"
       )
     }
 
-    if (successors.length != ${Expr(successorParams.length)}) {
+    if (successors.length != ${ Expr(successorParams.length) }) {
       throw new IllegalArgumentException(
-        s"Expected ${${Expr(successorParams.length)}} successors, but got ${successors.length}"
+        s"Expected ${${ Expr(successorParams.length) }} successors, but got ${successors.length}"
       )
     }
 
-    if (results.length != ${Expr(resultParams.length)}) {
+    if (results.length != ${ Expr(resultParams.length) }) {
       throw new IllegalArgumentException(
-        s"Expected ${${Expr(resultParams.length)}} results, but got ${results.length}"
+        s"Expected ${${ Expr(resultParams.length) }} results, but got ${results.length}"
       )
     }
 
-    if (regions.length != ${Expr(regionParams.length)}) {
+    if (regions.length != ${ Expr(regionParams.length) }) {
       throw new IllegalArgumentException(
-        s"Expected ${${Expr(regionParams.length)}} regions, but got ${regions.length}"
+        s"Expected ${${ Expr(regionParams.length) }} regions, but got ${regions.length}"
       )
     }
 
-    if (properties.size != ${Expr(propertyParams.length)}) {
+    if (properties.size != ${ Expr(propertyParams.length) }) {
       throw new IllegalArgumentException(
-        s"Expected ${${Expr(propertyParams.length)}} properties, but got ${properties.size}"
+        s"Expected ${${ Expr(propertyParams.length) }} properties, but got ${properties.size}"
       )
     }
   }
@@ -543,9 +600,10 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](genExpr: Expr[Unverifi
 
   // creates a new instance of the ADT op
   val args = allArgs.map(_.asTerm)
-  val constructorExpr = Select(New(TypeTree.of[T]), typeSymbol.primaryConstructor)
-    .appliedToArgs(args)
-    .asExprOf[T]
+  val constructorExpr =
+    Select(New(TypeTree.of[T]), typeSymbol.primaryConstructor)
+      .appliedToArgs(args)
+      .asExprOf[T]
 
   '{
     $lengthCheck
