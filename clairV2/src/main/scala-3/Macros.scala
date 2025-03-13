@@ -33,67 +33,6 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
   Expr(classPath)
 }
 
-/*≡==--==≡≡≡≡==--=≡≡*\
-||    MLIR TRAIT    ||
-\*≡==---==≡≡==---==≡*/
-
-object MLIRTrait {
-  inline def derived[T <: ADTOperation]: MLIRTrait[T] = ${ deriveADTOpTrait[T] }
-
-  def deriveADTOpTrait[T <: ADTOperation: Type](using
-      q: Quotes
-  ): Expr[MLIRTrait[T]] =
-    import quotes.reflect.*
-
-    '{
-      new MLIRTrait[T]:
-
-        def constructUnverifiedOp(
-            operands: ListType[Value[Attribute]] = ListType(),
-            successors: ListType[scair.ir.Block] = ListType(),
-            results_types: ListType[Attribute] = ListType(),
-            regions: ListType[Region] = ListType(),
-            dictionaryProperties: DictType[String, Attribute] =
-              DictType.empty[String, Attribute],
-            dictionaryAttributes: DictType[String, Attribute] =
-              DictType.empty[String, Attribute]
-        ): UnverifiedOp[T] =
-          constructUnverifiedOpHook(
-            operands,
-            successors,
-            results_types,
-            regions,
-            dictionaryProperties,
-            dictionaryAttributes
-          )
-
-        def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
-
-        def verify(unverOp: UnverifiedOp[T]): T =
-          fromUnverifiedOperation[T](unverOp)
-    }
-
-}
-
-trait MLIRTrait[T <: ADTOperation] {
-
-  def constructUnverifiedOp(
-      operands: ListType[Value[Attribute]] = ListType(),
-      successors: ListType[scair.ir.Block] = ListType(),
-      results_types: ListType[Attribute] = ListType(),
-      regions: ListType[Region] = ListType(),
-      dictionaryProperties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
-      dictionaryAttributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
-  ): UnverifiedOp[T]
-
-  def unverify(adtOp: T): UnverifiedOp[T]
-
-  def verify(unverOp: UnverifiedOp[T]): T
-
-}
-
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  Hook for UnverifiedOp Constructor  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -609,3 +548,64 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](
     $lengthCheck
     $constructorExpr
   }
+
+  /*≡==--==≡≡≡≡==--=≡≡*\
+||    MLIR TRAIT    ||
+\*≡==---==≡≡==---==≡*/
+
+object MLIRTrait {
+  inline def derived[T <: ADTOperation]: MLIRTrait[T] = ${ deriveADTOpTrait[T] }
+
+  def deriveADTOpTrait[T <: ADTOperation: Type](using
+      q: Quotes
+  ): Expr[MLIRTrait[T]] =
+    import quotes.reflect.*
+
+    '{
+      new MLIRTrait[T]:
+
+        def constructUnverifiedOp(
+            operands: ListType[Value[Attribute]] = ListType(),
+            successors: ListType[scair.ir.Block] = ListType(),
+            results_types: ListType[Attribute] = ListType(),
+            regions: ListType[Region] = ListType(),
+            dictionaryProperties: DictType[String, Attribute] =
+              DictType.empty[String, Attribute],
+            dictionaryAttributes: DictType[String, Attribute] =
+              DictType.empty[String, Attribute]
+        ): UnverifiedOp[T] =
+          constructUnverifiedOpHook(
+            operands,
+            successors,
+            results_types,
+            regions,
+            dictionaryProperties,
+            dictionaryAttributes
+          )
+
+        def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
+
+        def verify(unverOp: UnverifiedOp[T]): T =
+          fromUnverifiedOperation[T](unverOp)
+    }
+
+}
+
+trait MLIRTrait[T <: ADTOperation] {
+
+  def constructUnverifiedOp(
+      operands: ListType[Value[Attribute]] = ListType(),
+      successors: ListType[scair.ir.Block] = ListType(),
+      results_types: ListType[Attribute] = ListType(),
+      regions: ListType[Region] = ListType(),
+      dictionaryProperties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      dictionaryAttributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
+
+  def unverify(adtOp: T): UnverifiedOp[T]
+
+  def verify(unverOp: UnverifiedOp[T]): T
+
+}
