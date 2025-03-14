@@ -7,6 +7,9 @@ import scair.ir.*
 import scala.compiletime._
 import scala.deriving._
 
+import scala.Tuple.Zip
+import scala.collection.View.Empty
+
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
 // ██║░░╚═╝ ██║░░░░░ ███████║ ██║ ██████╔╝ ╚██╗░██╔╝ ░░███╔═╝
@@ -36,49 +39,46 @@ inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
-inline def getDefInput[Elem]: String => OpInput = {
+inline def getDefInput[Label, Elem]: OpInput = {
+
+  val name = inline erasedValue[Label] match
+    case _: String => constValue[Label].asInstanceOf[String]
+    case _         => throw new Exception("Internal error!")
   inline erasedValue[Elem] match
     case _: Result[t] =>
-      (name: String) =>
-        ResultDef(
-          id = name,
-          typeString = typeToString[t],
-          inputVariadicity[Elem]
-        )
+      ResultDef(
+        id = name,
+        typeString = typeToString[t],
+        inputVariadicity[Elem]
+      )
     case _: Operand[t] =>
-      (name: String) =>
-        OperandDef(
-          id = name,
-          typeString = typeToString[t],
-          inputVariadicity[Elem]
-        )
+      OperandDef(
+        id = name,
+        typeString = typeToString[t],
+        inputVariadicity[Elem]
+      )
     case _: Region =>
-      (name: String) =>
-        RegionDef(
-          id = name,
-          inputVariadicity[Elem]
-        )
+      RegionDef(
+        id = name,
+        inputVariadicity[Elem]
+      )
     case _: Successor =>
-      (name: String) =>
-        SuccessorDef(
-          id = name,
-          inputVariadicity[Elem]
-        )
+      SuccessorDef(
+        id = name,
+        inputVariadicity[Elem]
+      )
     case _: Property[t] =>
-      (name: String) =>
-        OpPropertyDef(
-          id = name,
-          typeString = typeToString[t]
-        )
+      OpPropertyDef(
+        id = name,
+        typeString = typeToString[t]
+      )
     case _: Attr[t] =>
-      (name: String) =>
-        OpAttributeDef(
-          id = name,
-          typeString = typeToString[t]
-        )
+      OpAttributeDef(
+        id = name,
+        typeString = typeToString[t]
+      )
     case shennanigan =>
-      (name: String) =>
-        throw new Exception(f"Unsupported shennaigans with field $name")
+      throw new Exception(f"Unsupported shennaigans with field $name")
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -87,11 +87,12 @@ inline def getDefInput[Elem]: String => OpInput = {
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-inline def summonInput[Elems <: Tuple]: List[String => OpInput] = {
+inline def summonInput[Labels <: Tuple, Elems <: Tuple]: List[OpInput] = {
 
-  inline erasedValue[Elems] match
-    case _: (elem *: elems) => getDefInput[elem] :: summonInput[elems]
-    case _: EmptyTuple      => Nil
+  inline erasedValue[(Labels, Elems)] match
+    case _: ((label *: labels, elem *: elems)) =>
+      getDefInput[label, elem] :: summonInput[labels, elems]
+    case _: (EmptyTuple, EmptyTuple) => Nil
 }
 
 /** Translates a Tuple of string types into a list of strings.
@@ -123,7 +124,7 @@ inline def getDef[T](dialectName: String)(using
 
   inline erasedValue[T] match
     case _: ADTOperation =>
-      val inputs = summonInput[m.MirroredElemTypes]
+      val inputs = summonInput[m.MirroredElemLabels, m.MirroredElemTypes]
 
       val operands: ListType[OperandDef] = ListType()
       val results: ListType[ResultDef] = ListType()
@@ -133,7 +134,7 @@ inline def getDef[T](dialectName: String)(using
       val opAttribute: ListType[OpAttributeDef] = ListType()
       var assembly_format: Option[String] = None
 
-      for ((name, input) <- paramLabels zip inputs) yield input(name) match {
+      for (input <- inputs) yield input match {
         case a: OperandDef     => operands += a
         case b: ResultDef      => results += b
         case c: RegionDef      => regions += c
