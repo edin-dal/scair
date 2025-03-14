@@ -122,45 +122,40 @@ inline def getDef[T](dialectName: String)(using
   val defname = constValue[m.MirroredLabel]
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
 
-  inline erasedValue[T] match
-    case _: ADTOperation =>
-      val inputs = summonInput[m.MirroredElemLabels, m.MirroredElemTypes]
+  val inputs = summonInput[m.MirroredElemLabels, m.MirroredElemTypes]
 
-      val operands: ListType[OperandDef] = ListType()
-      val results: ListType[ResultDef] = ListType()
-      val regions: ListType[RegionDef] = ListType()
-      val successors: ListType[SuccessorDef] = ListType()
-      val opProperty: ListType[OpPropertyDef] = ListType()
-      val opAttribute: ListType[OpAttributeDef] = ListType()
-      var assembly_format: Option[String] = None
+  val operands: ListType[OperandDef] = ListType()
+  val results: ListType[ResultDef] = ListType()
+  val regions: ListType[RegionDef] = ListType()
+  val successors: ListType[SuccessorDef] = ListType()
+  val opProperty: ListType[OpPropertyDef] = ListType()
+  val opAttribute: ListType[OpAttributeDef] = ListType()
+  var assembly_format: Option[String] = None
 
-      for (input <- inputs) yield input match {
-        case a: OperandDef     => operands += a
-        case b: ResultDef      => results += b
-        case c: RegionDef      => regions += c
-        case d: SuccessorDef   => successors += d
-        case e: OpPropertyDef  => opProperty += e
-        case f: OpAttributeDef => opAttribute += f
-        case _                 => throw new Exception("Internal error!")
-      }
+  for (input <- inputs) yield input match {
+    case a: OperandDef     => operands += a
+    case b: ResultDef      => results += b
+    case c: RegionDef      => regions += c
+    case d: SuccessorDef   => successors += d
+    case e: OpPropertyDef  => opProperty += e
+    case f: OpAttributeDef => opAttribute += f
+    case _                 => throw new Exception("Internal error!")
+  }
 
-      (packageName: String) =>
-        OperationDef(
-          dialectName,
-          defname.toLowerCase,
-          defname,
-          packageName,
-          operands.toSeq,
-          results.toSeq,
-          regions.toSeq,
-          successors.toSeq,
-          opProperty.toSeq,
-          opAttribute.toSeq,
-          assembly_format
-        )
-
-    case _ =>
-      throw new Exception("ADTOperation definition expected.")
+  (packageName: String) =>
+    OperationDef(
+      dialectName,
+      defname.toLowerCase,
+      defname,
+      packageName,
+      operands.toSeq,
+      results.toSeq,
+      regions.toSeq,
+      successors.toSeq,
+      opProperty.toSeq,
+      opAttribute.toSeq,
+      assembly_format
+    )
 
 }
 
@@ -194,19 +189,4 @@ inline def summonOperationDefs[Prods <: Tuple](
       summonDef[prod](dialectName) +: summonOperationDefs[prods](dialectName)
 
     case _: EmptyTuple => Seq.empty
-}
-
-/** Generates the DialectDef object from the enum definition.
-  *
-  * @param m
-  *   \- Sum Mirror of a given dialect
-  */
-inline def summonMLIROps[Prods <: Tuple](dialectName: String): MLIROpDef = {
-
-  val defs = summonOperationDefs[Prods](dialectName)
-
-  MLIROpDef(
-    dialectName,
-    defs
-  )
 }

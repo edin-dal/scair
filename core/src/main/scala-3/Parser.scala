@@ -734,11 +734,11 @@ class Parser(val context: MLContext, val args: Args = Args())
         )
 
       case None =>
-        val opV2Object: Option[ADTCompanion] = ctx.getOperationV2(opName)
+        val opV2Object: Option[MLIRTraitI[_]] = ctx.getOperationV2(opName)
 
         opV2Object match {
           case Some(x) =>
-            x.getMLIRRealm.constructUnverifiedOp(
+            x.constructUnverifiedOp(
               operands = useAndRefValueSeqs._1,
               successors = useAndRefBlockSeqs._1,
               dictionaryProperties = properties,

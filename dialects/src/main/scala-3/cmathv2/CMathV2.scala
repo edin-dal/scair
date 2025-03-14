@@ -4,18 +4,18 @@ import scair.clairV2.codegen.*
 import scair.clairV2.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.clairV2.macros._
 
 case class MulV2(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: Property[StringData]
-) extends ADTOperation
+) derives MLIRTrait
 
 case class NormV2(
     norm: Operand[IntegerType],
     result: Result[IntegerType]
-) extends ADTOperation
+) derives MLIRTrait
 
-object CMathV2Gen
-    extends MLIRRealmize(summonMLIROps[(MulV2, NormV2)]("CMathV2"))
+val CMathV2Dialect = summonDialect[(MulV2, NormV2)]
