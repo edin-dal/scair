@@ -117,7 +117,7 @@ inline def stringifyLabels[Elems <: Tuple]: List[String] = {
   */
 inline def getDef[T](dialectName: String)(using
     m: Mirror.ProductOf[T]
-): String => OperationDef = {
+): OperationDef = {
 
   val defname = constValue[m.MirroredLabel]
   val paramLabels = stringifyLabels[m.MirroredElemLabels]
@@ -142,38 +142,19 @@ inline def getDef[T](dialectName: String)(using
     case _                 => throw new Exception("Internal error!")
   }
 
-  (packageName: String) =>
-    OperationDef(
-      dialectName,
-      defname.toLowerCase,
-      defname,
-      packageName,
-      operands.toSeq,
-      results.toSeq,
-      regions.toSeq,
-      successors.toSeq,
-      opProperty.toSeq,
-      opAttribute.toSeq,
-      assembly_format
-    )
+  OperationDef(
+    dialectName,
+    defname.toLowerCase,
+    defname,
+    operands.toSeq,
+    results.toSeq,
+    regions.toSeq,
+    successors.toSeq,
+    opProperty.toSeq,
+    opAttribute.toSeq,
+    assembly_format
+  )
 
-}
-
-/** Instantiates a Mirror Product for the given element.
-  *
-  * @return
-  *   Lambda that produces an OperadtionDef given a string of dialect name.
-  */
-inline def summonDef[Elem](dialectName: String): OperationDef = {
-  val opDef =
-    getDef[Elem](dialectName)(using summonInline[Mirror.ProductOf[Elem]])
-
-  val packageName = getClassPath[Elem]
-  val withoutLastSegment =
-    packageName.substring(0, packageName.lastIndexOf('.'))
-  val finalPkgName = withoutLastSegment.replace("$", "")
-
-  opDef(finalPkgName)
 }
 
 /** Generates a list of OperationDef given enum cases.
@@ -186,7 +167,9 @@ inline def summonOperationDefs[Prods <: Tuple](
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
-      summonDef[prod](dialectName) +: summonOperationDefs[prods](dialectName)
+      getDef[prod](dialectName)(using
+        summonInline[Mirror.ProductOf[prod]]
+      ) +: summonOperationDefs[prods](dialectName)
 
     case _: EmptyTuple => Seq.empty
 }
