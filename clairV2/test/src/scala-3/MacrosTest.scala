@@ -133,7 +133,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "ADTOp test for correctly passing around the same instances" should "test all fields of a ADTOp" in {
-    val opT = summon[MLIRTrait[MulFull]]
+    val opT = MLIRTrait.derived[MulFull]
 
     val op = TestCases.adtOpAllFields
 
