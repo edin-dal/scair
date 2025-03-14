@@ -108,8 +108,7 @@ object `package` extends RootModule with ScairModule {
         "scair.dialects.cmathgen.CMathGen",
         "scair.dialects.funcgen.FuncGen",
         "scair.dialects.llvmgen.LLVMGen",
-        "scair.dialects.memrefgen.MemrefGen",
-        "scair.dialects.cmathv2.CMathV2Gen"
+        "scair.dialects.memrefgen.MemrefGen"
       ) )(oneDialect)()
       PathRef(Task.dest)
     }

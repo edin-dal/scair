@@ -13,8 +13,7 @@ case class MulV2(
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: Property[StringData]
-) extends ADTOperation
-    derives MLIRTrait
+) derives MLIRTrait
 
 case class MulFull(
     operand1: Operand[IntegerType],
@@ -27,8 +26,7 @@ case class MulFull(
     reg2: Region,
     succ1: Successor,
     succ2: Successor
-) extends ADTOperation
-    derives MLIRTrait
+) derives MLIRTrait
 
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 

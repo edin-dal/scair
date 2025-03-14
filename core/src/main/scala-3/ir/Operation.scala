@@ -15,18 +15,7 @@ import scair.Printer
 
 sealed abstract class Operation()
 
-/*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
-||    ADT OPERATION    ||
-\*≡==---==≡≡≡≡≡==---==≡*/
-
-trait ADTCompanion {
-  val getName: String
-  val getMLIRRealm: MLIRRealm[_]
-}
-
-class ADTOperation() extends Operation
-
-class UnverifiedOp[T <: ADTOperation](
+class UnverifiedOp[T](
     name: String,
     operands: ListType[Value[Attribute]] = ListType(),
     successors: ListType[Block] = ListType(),
@@ -52,7 +41,7 @@ class UnverifiedOp[T <: ADTOperation](
 
 object MLIRRealm {}
 
-trait MLIRRealm[T <: ADTOperation]() {
+trait MLIRRealm[T]() {
 
   def constructUnverifiedOp(
       operands: ListType[Value[Attribute]] = ListType(),
@@ -245,5 +234,28 @@ trait MLIROperationObject {
     dictionaryProperties,
     dictionaryAttributes
   )
+
+}
+
+trait MLIRTraitI[T] {
+
+  def getName: String
+
+  def constructUnverifiedOp(
+      operands: ListType[Value[Attribute]] = ListType(),
+      successors: ListType[scair.ir.Block] = ListType(),
+      results_types: ListType[Attribute] = ListType(),
+      regions: ListType[Region] = ListType(),
+      dictionaryProperties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      dictionaryAttributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
+
+  extension (adtOp: T) def MLIRTrait = this
+
+  def unverify(adtOp: T): UnverifiedOp[T]
+
+  def verify(unverOp: UnverifiedOp[T]): T
 
 }

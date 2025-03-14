@@ -4,6 +4,8 @@ import scala.quoted.*
 import scair.ir.*
 import scala.collection.mutable
 
+import scala.compiletime._
+
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
 // ██║░░╚═╝ ██║░░░░░ ███████║ ██║ ██████╔╝ ╚██╗░██╔╝ ░░███╔═╝
@@ -37,7 +39,7 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
 ||  Hook for UnverifiedOp Constructor  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def constructUnverifiedOpHook[T <: ADTOperation](
+inline def constructUnverifiedOpHook[T](
     operands: ListType[Value[Attribute]],
     successors: ListType[scair.ir.Block],
     results_types: ListType[Attribute],
@@ -56,7 +58,15 @@ inline def constructUnverifiedOpHook[T <: ADTOperation](
     )
   }
 
-def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
+def getNameLowerImpl[T: Type](using Quotes): Expr[String] = {
+  import quotes.reflect.*
+  val typeRepr = TypeRepr.of[T]
+  Expr(typeRepr.typeSymbol.name.toLowerCase())
+}
+
+inline def getNameLower[T]: String = ${ getNameLowerImpl[T] }
+
+def constructUnverifiedOpHookMacro[T: Type](
     operands: Expr[ListType[Value[Attribute]]],
     successors: Expr[ListType[scair.ir.Block]],
     results_types: Expr[ListType[Attribute]],
@@ -67,7 +77,7 @@ def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
   import quotes.reflect.*
 
   val typeRepr = TypeRepr.of[T]
-  val name = Expr(typeRepr.typeSymbol.name.toLowerCase())
+  val name = getNameLowerImpl[T]
 
   '{
     UnverifiedOp[T](
@@ -86,10 +96,10 @@ def constructUnverifiedOpHookMacro[T <: ADTOperation: Type](
 ||  ADT to Unverified conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def fromADTOperation[T <: ADTOperation](gen: T): UnverifiedOp[T] =
+inline def fromADTOperation[T](gen: T): UnverifiedOp[T] =
   ${ fromADTOperationMacro[T]('gen) }
 
-def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using
+def fromADTOperationMacro[T: Type](adtOpExpr: Expr[T])(using
     Quotes
 ): Expr[UnverifiedOp[T]] =
   import quotes.reflect.*
@@ -255,10 +265,10 @@ def fromADTOperationMacro[T <: ADTOperation: Type](adtOpExpr: Expr[T])(using
 ||  Unverified to ADT conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def fromUnverifiedOperation[T <: ADTOperation](gen: UnverifiedOp[T]): T =
+inline def fromUnverifiedOperation[T](gen: UnverifiedOp[T]): T =
   ${ fromUnverifiedOperationMacro[T]('gen) }
 
-def fromUnverifiedOperationMacro[T <: ADTOperation: Type](
+def fromUnverifiedOperationMacro[T: Type](
     genExpr: Expr[UnverifiedOp[T]]
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
@@ -555,8 +565,10 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](
 
 object MLIRTrait {
 
-  inline def derived[T <: ADTOperation]: MLIRTrait[T] =
+  inline def derived[T]: MLIRTrait[T] =
     new MLIRTrait[T]:
+
+      def getName: String = getNameLower[T]
 
       def constructUnverifiedOp(
           operands: ListType[Value[Attribute]] = ListType(),
@@ -584,21 +596,15 @@ object MLIRTrait {
 
 }
 
-trait MLIRTrait[T <: ADTOperation] {
-
-  def constructUnverifiedOp(
-      operands: ListType[Value[Attribute]] = ListType(),
-      successors: ListType[scair.ir.Block] = ListType(),
-      results_types: ListType[Attribute] = ListType(),
-      regions: ListType[Region] = ListType(),
-      dictionaryProperties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
-      dictionaryAttributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
-  ): UnverifiedOp[T]
-
-  def unverify(adtOp: T): UnverifiedOp[T]
-
-  def verify(unverOp: UnverifiedOp[T]): T
-
+trait MLIRTrait[T] extends MLIRTraitI[T] {
+  extension (op: T) override def MLIRTrait = this
 }
+
+inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
+  inline erasedValue[T] match
+    case _: (t *: ts) =>
+      MLIRTrait.derived[t] +: summonMLIRTraits[ts]
+    case _: EmptyTuple => Seq()
+
+inline def summonDialect[T <: Tuple]: DialectV2 =
+  new DialectV2(summonMLIRTraits[T])
