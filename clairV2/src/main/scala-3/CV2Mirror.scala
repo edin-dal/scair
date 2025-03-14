@@ -4,8 +4,8 @@ import scair.clairV2.codegen.*
 import scair.clairV2.macros.*
 import scair.ir.*
 
-import scala.compiletime.*
-import scala.deriving.*
+import scala.compiletime._
+import scala.deriving._
 
 import scala.Tuple.Zip
 import scala.collection.View.Empty
