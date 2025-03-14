@@ -554,15 +554,8 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](
 \*≡==---==≡≡==---==≡*/
 
 object MLIRTrait {
-  inline def derived[T <: ADTOperation]: MLIRTrait[T] = ${ deriveADTOpTrait[T] }
-
-  def deriveADTOpTrait[T <: ADTOperation: Type](using
-      q: Quotes
-  ): Expr[MLIRTrait[T]] =
-    import quotes.reflect.*
-
-    '{
-      new MLIRTrait[T]:
+  inline def derived[T <: ADTOperation]: MLIRTrait[T] = 
+    new MLIRTrait[T] :
 
         def constructUnverifiedOp(
             operands: ListType[Value[Attribute]] = ListType(),
@@ -588,8 +581,9 @@ object MLIRTrait {
         def verify(unverOp: UnverifiedOp[T]): T =
           fromUnverifiedOperation[T](unverOp)
     }
+    
 
-}
+
 
 trait MLIRTrait[T <: ADTOperation] {
 
