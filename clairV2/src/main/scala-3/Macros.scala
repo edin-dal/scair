@@ -554,36 +554,35 @@ def fromUnverifiedOperationMacro[T <: ADTOperation: Type](
 \*≡==---==≡≡==---==≡*/
 
 object MLIRTrait {
-  inline def derived[T <: ADTOperation]: MLIRTrait[T] = 
-    new MLIRTrait[T] :
 
-        def constructUnverifiedOp(
-            operands: ListType[Value[Attribute]] = ListType(),
-            successors: ListType[scair.ir.Block] = ListType(),
-            results_types: ListType[Attribute] = ListType(),
-            regions: ListType[Region] = ListType(),
-            dictionaryProperties: DictType[String, Attribute] =
-              DictType.empty[String, Attribute],
-            dictionaryAttributes: DictType[String, Attribute] =
-              DictType.empty[String, Attribute]
-        ): UnverifiedOp[T] =
-          constructUnverifiedOpHook(
-            operands,
-            successors,
-            results_types,
-            regions,
-            dictionaryProperties,
-            dictionaryAttributes
-          )
+  inline def derived[T <: ADTOperation]: MLIRTrait[T] =
+    new MLIRTrait[T]:
 
-        def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
+      def constructUnverifiedOp(
+          operands: ListType[Value[Attribute]] = ListType(),
+          successors: ListType[scair.ir.Block] = ListType(),
+          results_types: ListType[Attribute] = ListType(),
+          regions: ListType[Region] = ListType(),
+          dictionaryProperties: DictType[String, Attribute] =
+            DictType.empty[String, Attribute],
+          dictionaryAttributes: DictType[String, Attribute] =
+            DictType.empty[String, Attribute]
+      ): UnverifiedOp[T] =
+        constructUnverifiedOpHook(
+          operands,
+          successors,
+          results_types,
+          regions,
+          dictionaryProperties,
+          dictionaryAttributes
+        )
 
-        def verify(unverOp: UnverifiedOp[T]): T =
-          fromUnverifiedOperation[T](unverOp)
-    }
-    
+      def unverify(adtOp: T): UnverifiedOp[T] = fromADTOperation[T](adtOp)
 
+      def verify(unverOp: UnverifiedOp[T]): T =
+        fromUnverifiedOperation[T](unverOp)
 
+}
 
 trait MLIRTrait[T <: ADTOperation] {
 
