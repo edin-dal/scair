@@ -13,6 +13,13 @@ case class MulV2(
     randProp: Property[StringData]
 ) derives MLIRTrait
 
+case class MulSingleVariadic(
+    lhs: Operand[IntegerType],
+    rhs: Variadic[Operand[IntegerType]],
+    result: Variadic[Result[IntegerType]],
+    randProp: Property[StringData]
+) derives MLIRTrait
+
 case class NormV2(
     norm: Operand[IntegerType],
     result: Result[IntegerType]

@@ -8,10 +8,17 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scala.collection.mutable.LinkedHashMap
 
-case class MulV2(
+case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
+    randProp: Property[StringData]
+) derives MLIRTrait
+
+case class MulSingleVariadic(
+    lhs: Operand[IntegerType],
+    rhs: Variadic[Operand[IntegerType]],
+    result: Variadic[Result[IntegerType]],
     randProp: Property[StringData]
 ) derives MLIRTrait
 
@@ -32,7 +39,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   object TestCases {
 
-    val unverOp = UnverifiedOp[MulV2](
+    val unverMulOp = UnverifiedOp[Mul](
       name = "mulv2",
       operands = ListType(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
@@ -42,14 +49,14 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       dictionaryProperties = DictType(("randProp" -> StringData("what")))
     )
 
-    val adtOp = MulV2(
+    val adtMulOp = Mul(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Value(IntegerType(IntData(5), Unsigned)),
       result = Result(IntegerType(IntData(25), Unsigned)),
       randProp = Property(StringData("what"))
     )
 
-    val adtOpAllFields = MulFull(
+    val adtMulOpAllFields = MulFull(
       operand1 = Value(IntegerType(IntData(5), Unsigned)),
       operand2 = Value(IntegerType(IntData(5), Unsigned)),
       result1 = Result(IntegerType(IntData(25), Unsigned)),
@@ -62,12 +69,39 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       succ2 = scair.ir.Block()
     )
 
+    val unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
+      name = "mulsinglevariadic",
+      operands = ListType(
+        Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+      ),
+      results_types = ListType[Attribute](
+        IntegerType(IntData(25), Unsigned),
+        IntegerType(IntData(25), Unsigned)
+      ),
+      dictionaryProperties = DictType(("randProp" -> StringData("what")))
+    )
+
+    val adtMulSinVarOp = MulSingleVariadic(
+      lhs = Value(IntegerType(IntData(5), Unsigned)),
+      rhs = Variadic(
+        Value(IntegerType(IntData(5), Unsigned)),
+        Value(IntegerType(IntData(5), Unsigned))
+      ),
+      result = Variadic(
+        Result(IntegerType(IntData(25), Unsigned)),
+        Result(IntegerType(IntData(25), Unsigned))
+      ),
+      randProp = Property(StringData("what"))
+    )
+
   }
 
   "Unverified instantiation" should "Correctly instantiates the UniverifiedOp" in {
-    val opT = summon[MLIRTrait[MulV2]]
+    val opT = summon[MLIRTrait[Mul]]
 
-    val unverOp = opT.constructUnverifiedOp(
+    val unverMulOp = opT.constructUnverifiedOp(
       operands = ListType(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
@@ -76,82 +110,134 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       dictionaryProperties = DictType(("randProp" -> StringData("what")))
     )
 
-    unverOp.name should be("mulv2")
-    unverOp.operands should matchPattern {
+    unverMulOp.name should be("mul")
+    unverMulOp.operands should matchPattern {
       case ListType(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverOp.results should matchPattern {
+    unverMulOp.results should matchPattern {
       case ListType(Result(IntegerType(IntData(25), Unsigned))) =>
     }
-    unverOp.dictionaryProperties("randProp") should matchPattern {
+    unverMulOp.dictionaryProperties("randProp") should matchPattern {
       case StringData("what") =>
     }
   }
 
   "Conversion to Unverified" should "Correctly translate from ADT operation to Univerified Operation" in {
-    val opT = summon[MLIRTrait[MulV2]]
+    val opT = summon[MLIRTrait[Mul]]
 
-    val op = TestCases.adtOp
-    val unverOp = opT.unverify(op)
+    val op = TestCases.adtMulOp
+    val unverMulOp = opT.unverify(op)
 
-    unverOp.name should be("mulv2")
-    unverOp.operands should matchPattern {
+    unverMulOp.name should be("mul")
+    unverMulOp.operands should matchPattern {
       case ListType(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverOp.results should matchPattern {
+    unverMulOp.results should matchPattern {
       case ListType(Result(IntegerType(IntData(25), Unsigned))) =>
     }
-    unverOp.dictionaryProperties("randProp") should matchPattern {
+    unverMulOp.dictionaryProperties("randProp") should matchPattern {
       case StringData("what") =>
     }
   }
 
   "Conversion to ADTOp" should "Correctly translate from Unverified operation to ADT Operation" in {
-    val opT = summon[MLIRTrait[MulV2]]
+    val opT = summon[MLIRTrait[Mul]]
 
-    val op = TestCases.unverOp
-    val adtOp = opT.verify(op)
+    val op = TestCases.unverMulOp
+    val adtMulOp = opT.verify(op)
 
-    adtOp.lhs should matchPattern {
+    adtMulOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
     }
-    adtOp.rhs should matchPattern {
+    adtMulOp.rhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
     }
-    adtOp.result should matchPattern {
+    adtMulOp.result should matchPattern {
       case Value(IntegerType(IntData(25), Unsigned)) =>
     }
-    adtOp.randProp should matchPattern { case Property(StringData("what")) => }
+    adtMulOp.randProp should matchPattern { case Property(StringData("what")) =>
+    }
   }
 
   "ADTOp test for correctly passing around the same instances" should "test all fields of a ADTOp" in {
     val opT = MLIRTrait.derived[MulFull]
 
-    val op = TestCases.adtOpAllFields
+    val op = TestCases.adtMulOpAllFields
 
-    val unverOp = opT.unverify(op)
-    val adtOp = opT.verify(unverOp)
+    val unverMulOp = opT.unverify(op)
+    val adtMulOp = opT.verify(unverMulOp)
 
-    adtOp.operand1 equals unverOp.operands(0) should be(true)
-    adtOp.operand2 equals unverOp.operands(1) should be(true)
-    adtOp.result1 equals unverOp.results(0) should be(true)
-    adtOp.result2 equals unverOp.results(1) should be(true)
-    adtOp.randProp1.typ equals unverOp.dictionaryProperties(
+    adtMulOp.operand1 equals unverMulOp.operands(0) should be(true)
+    adtMulOp.operand2 equals unverMulOp.operands(1) should be(true)
+    adtMulOp.result1 equals unverMulOp.results(0) should be(true)
+    adtMulOp.result2 equals unverMulOp.results(1) should be(true)
+    adtMulOp.randProp1.typ equals unverMulOp.dictionaryProperties(
       "randProp1"
     ) should be(true)
-    adtOp.randProp2.typ equals unverOp.dictionaryProperties(
+    adtMulOp.randProp2.typ equals unverMulOp.dictionaryProperties(
       "randProp2"
     ) should be(true)
-    adtOp.reg1 equals unverOp.regions(0) should be(true)
-    adtOp.reg2 equals unverOp.regions(1) should be(true)
-    adtOp.succ1 equals unverOp.successors(0) should be(true)
-    adtOp.succ2 equals unverOp.successors(1) should be(true)
+    adtMulOp.reg1 equals unverMulOp.regions(0) should be(true)
+    adtMulOp.reg2 equals unverMulOp.regions(1) should be(true)
+    adtMulOp.succ1 equals unverMulOp.successors(0) should be(true)
+    adtMulOp.succ2 equals unverMulOp.successors(1) should be(true)
+  }
+
+  "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {
+    val opT = summon[MLIRTrait[MulSingleVariadic]]
+
+    val op = TestCases.unverMulSinVarOp
+    val adtMulSinVarOp = opT.verify(op)
+
+    adtMulSinVarOp.lhs should matchPattern {
+      case Value(IntegerType(IntData(5), Unsigned)) =>
+    }
+    adtMulSinVarOp.rhs should matchPattern {
+      case List(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    adtMulSinVarOp.result should matchPattern {
+      case List(
+            Result(IntegerType(IntData(25), Unsigned)),
+            Result(IntegerType(IntData(25), Unsigned))
+          ) =>
+    }
+    adtMulSinVarOp.randProp should matchPattern {
+      case Property(StringData("what")) =>
+    }
+  }
+
+  "Single Variadic Conversion to Unverified" should "Correctly translate from Single Variadic ADT operation to Univerified Operation" in {
+    val opT = summon[MLIRTrait[MulSingleVariadic]]
+
+    val op = TestCases.adtMulSinVarOp
+    val unverMulSinVarOp = opT.unverify(op)
+
+    unverMulSinVarOp.name should be("mulsinglevariadic")
+    unverMulSinVarOp.operands should matchPattern {
+      case ListType(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    unverMulSinVarOp.results should matchPattern {
+      case ListType(
+            Result(IntegerType(IntData(25), Unsigned)),
+            Result(IntegerType(IntData(25), Unsigned))
+          ) =>
+    }
+    unverMulSinVarOp.dictionaryProperties("randProp") should matchPattern {
+      case StringData("what") =>
+    }
   }
 
 }
