@@ -11,11 +11,13 @@ case class MulV2(
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: Property[StringData]
-) derives MLIRTrait
+) extends MLIRName["cmathv2.mulv2"]
+    derives MLIRTrait
 
 case class NormV2(
     norm: Operand[IntegerType],
     result: Result[IntegerType]
-) derives MLIRTrait
+) extends MLIRName["cmathv2.normv2"]
+    derives MLIRTrait
 
 val CMathV2Dialect = summonDialect[(MulV2, NormV2)]
