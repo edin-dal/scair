@@ -45,7 +45,7 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
 ||  Hook for UnverifiedOp Constructor  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def constructUnverifiedOpHook[T](opDef: OperationDef)(
+inline def constructUnverifiedOpHook[T]( opDef: OperationDef)(
     operands: ListType[Value[Attribute]],
     successors: ListType[scair.ir.Block],
     results_types: ListType[Attribute],
@@ -55,7 +55,7 @@ inline def constructUnverifiedOpHook[T](opDef: OperationDef)(
 ): UnverifiedOp[T] =
   ${
     constructUnverifiedOpHookMacro[T](
-      '{ opDef.name },
+      'opDef,
       'operands,
       'successors,
       'results_types,
@@ -74,7 +74,7 @@ def getNameLowerImpl[T: Type](using Quotes): Expr[String] = {
 inline def getNameLower[T]: String = ${ getNameLowerImpl[T] }
 
 def constructUnverifiedOpHookMacro[T: Type](
-    name: Expr[String],
+    opDef: Expr[OperationDef],
     operands: Expr[ListType[Value[Attribute]]],
     successors: Expr[ListType[scair.ir.Block]],
     results_types: Expr[ListType[Attribute]],
@@ -83,10 +83,9 @@ def constructUnverifiedOpHookMacro[T: Type](
     dictionaryAttributes: Expr[DictType[String, Attribute]]
 )(using Quotes): Expr[UnverifiedOp[T]] = {
   import quotes.reflect.*
-
   '{
     UnverifiedOp[T](
-      name = $name,
+      name = ${opDef}.name,
       operands = $operands,
       successors = $successors,
       results_types = $results_types,
@@ -102,9 +101,9 @@ def constructUnverifiedOpHookMacro[T: Type](
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 inline def fromADTOperation[T](opDef: OperationDef)(gen: T): UnverifiedOp[T] =
-  ${ fromADTOperationMacro[T]('{ opDef.name }, 'gen) }
+  ${ fromADTOperationMacro[T]('opDef, 'gen) }
 
-def fromADTOperationMacro[T: Type](name: Expr[String], adtOpExpr: Expr[T])(using
+def fromADTOperationMacro[T: Type](opDef: Expr[OperationDef], adtOpExpr: Expr[T])(using
     Quotes
 ): Expr[UnverifiedOp[T]] =
   import quotes.reflect.*
@@ -304,7 +303,7 @@ def fromADTOperationMacro[T: Type](name: Expr[String], adtOpExpr: Expr[T])(using
 
   '{
     val x = UnverifiedOp[T](
-      name = $name,
+      name = ${opDef}.name,
       operands = $operandSeqExpr,
       successors = $successorSeqExpr,
       results_types = ListType.empty[Attribute],
