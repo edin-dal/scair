@@ -32,34 +32,34 @@ enum Variadicity {
 }
 
 case class OperandDef(
-    val id: String,
+    val name: String,
     val typeString: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 
 case class ResultDef(
-    val id: String,
+    val name: String,
     val typeString: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 
 case class RegionDef(
-    val id: String,
+    val name: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 
 case class SuccessorDef(
-    val id: String,
+    val name: String,
     val variadicity: Variadicity = Variadicity.Single
 ) extends OpInput {}
 
 case class OpPropertyDef(
-    val id: String,
+    val name: String,
     val typeString: String
 ) extends OpInput {}
 
 case class OpAttributeDef(
-    val id: String,
+    val name: String,
     val typeString: String
 ) extends OpInput {}
 

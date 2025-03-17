@@ -53,46 +53,46 @@ inline def getDefInput[Label, Elem]: OpInput = {
   inline erasedValue[Elem] match
     case _: Variadic[Operand[t]] =>
       OperandDef(
-        id = name,
+        name = name,
         typeString = typeToString[t],
         Variadicity.Variadic
       )
     case _: Variadic[Result[t]] =>
       OperandDef(
-        id = name,
+        name = name,
         typeString = typeToString[t],
         Variadicity.Variadic
       )
     case _: Result[t] =>
       ResultDef(
-        id = name,
+        name = name,
         typeString = typeToString[t],
         Variadicity.Single
       )
     case _: Operand[t] =>
       OperandDef(
-        id = name,
+        name = name,
         typeString = typeToString[t],
         Variadicity.Single
       )
     case _: Region =>
       RegionDef(
-        id = name,
+        name = name,
         Variadicity.Single
       )
     case _: Successor =>
       SuccessorDef(
-        id = name,
+        name = name,
         Variadicity.Single
       )
     case _: Property[t] =>
       OpPropertyDef(
-        id = name,
+        name = name,
         typeString = typeToString[t]
       )
     case _: Attr[t] =>
       OpAttributeDef(
-        id = name,
+        name = name,
         typeString = typeToString[t]
       )
     case _ =>

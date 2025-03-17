@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 import scala.compiletime._
 import scair.clairV2.mirrored.getDef
 import scala.deriving.Mirror
-import scair.clairV2.codegen.OperationDef
+import scair.clairV2.codegen._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -45,7 +45,7 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
 ||  Hook for UnverifiedOp Constructor  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def constructUnverifiedOpHook[T]( opDef: OperationDef)(
+inline def constructUnverifiedOpHook[T](opDef: OperationDef)(
     operands: ListType[Value[Attribute]],
     successors: ListType[scair.ir.Block],
     results_types: ListType[Attribute],
@@ -85,7 +85,7 @@ def constructUnverifiedOpHookMacro[T: Type](
   import quotes.reflect.*
   '{
     UnverifiedOp[T](
-      name = ${opDef}.name,
+      name = ${ opDef }.name,
       operands = $operands,
       successors = $successors,
       results_types = $results_types,
@@ -100,10 +100,44 @@ def constructUnverifiedOpHookMacro[T: Type](
 ||  ADT to Unverified conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def fromADTOperation[T](opDef: OperationDef)(gen: T): UnverifiedOp[T] =
-  ${ fromADTOperationMacro[T]('opDef, 'gen) }
+inline def ADTFlatOperands[T](opDef: OperationDef)(gen: T) =
+  ${ ADTFlatOperandsMacro[T]('{ opDef.operands }, 'gen) }
 
-def fromADTOperationMacro[T: Type](opDef: Expr[OperationDef], adtOpExpr: Expr[T])(using
+def ADTFlatOperandsMacro[T: Type](
+    operandDefs: Expr[Iterable[OperandDef]],
+    adtOpExpr: Expr[T]
+)(using
+    Quotes
+) =
+  import quotes.reflect.*
+
+  val operands_exprs = '{
+    ListType.from(
+      ${ operandDefs }.map((o: OperandDef) =>
+        ${
+          Select(
+            adtOpExpr.asTerm,
+            adtOpExpr.asTerm.tpe.typeSymbol.fieldMember(o.name)
+          ).asExprOf[Operand[Attribute]]
+        }
+      )
+    )
+  }
+
+  operands_exprs
+
+  // extracting operand instances from the ADT
+  // '{ ListType.from($operandDefs.map {${ (o : OperandDef) =>
+  //    Select.unique(adtOpExpr.asTerm, o.name).asExpr .asInstanceOf[Operand[Attribute]] }) }
+
+inline def fromADTOperation[T](opDef: OperationDef)(gen: T): UnverifiedOp[T] =
+  ${ fromADTOperationMacro[T]('opDef, '{ ADTFlatOperands(opDef)(gen) }, 'gen) }
+
+def fromADTOperationMacro[T: Type](
+    opDef: Expr[OperationDef],
+    flatOperands: Expr[ListType[Value[Attribute]]],
+    adtOpExpr: Expr[T]
+)(using
     Quotes
 ): Expr[UnverifiedOp[T]] =
   import quotes.reflect.*
@@ -174,7 +208,7 @@ def fromADTOperationMacro[T: Type](opDef: Expr[OperationDef], adtOpExpr: Expr[T]
   \*-- SUCCESSORS --*/
 
   // partitioning ADT parameters by Successor
-  val (successorParams, restParams1) = restParams0.partition { sym =>
+  val (successorParams, restParams1) = params.partition { sym =>
     sym.termRef.widenTermRefByName match
       case tycon => tycon =:= TypeRepr.of[scair.ir.Block]
   }
@@ -303,8 +337,8 @@ def fromADTOperationMacro[T: Type](opDef: Expr[OperationDef], adtOpExpr: Expr[T]
 
   '{
     val x = UnverifiedOp[T](
-      name = ${opDef}.name,
-      operands = $operandSeqExpr,
+      name = ${ opDef }.name,
+      operands = $flatOperands,
       successors = $successorSeqExpr,
       results_types = ListType.empty[Attribute],
       regions = $regionSeqExpr,
