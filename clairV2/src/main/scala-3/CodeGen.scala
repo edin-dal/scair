@@ -68,7 +68,6 @@ case class OpAttributeDef(
 \*≡==----=≡≡≡=----==≡*/
 
 case class OperationDef(
-    val dialect: String,
     val name: String,
     val className: String,
     val operands: Seq[OperandDef] = Seq(),

@@ -13,6 +13,8 @@ import scair.Printer
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
 
+class MLIRName[name <: String]
+
 sealed abstract class Operation()
 
 class UnverifiedOp[T](
