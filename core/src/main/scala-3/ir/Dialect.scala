@@ -17,5 +17,6 @@ final case class Dialect(
 ) {}
 
 final case class DialectV2(
-    val operations: Seq[MLIRTraitI[_]]
+    val operations: Seq[MLIRTraitI[_]],
+    val attributes: Seq[AttributeObject]
 ) {}

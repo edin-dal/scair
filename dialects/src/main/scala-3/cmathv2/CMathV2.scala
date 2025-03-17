@@ -25,4 +25,6 @@ case class NormV2(
     result: Result[IntegerType]
 ) derives MLIRTrait
 
-val CMathV2Dialect = summonDialect[(MulV2, NormV2)]
+val CMathV2Dialect = summonDialect[
+  (MulV2, NormV2)
+](Seq())

@@ -1007,5 +1007,7 @@ inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
       MLIRTrait.derived[t] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
-inline def summonDialect[T <: Tuple]: DialectV2 =
-  new DialectV2(summonMLIRTraits[T])
+inline def summonDialect[T <: Tuple](
+    attributes: Seq[AttributeObject]
+): DialectV2 =
+  new DialectV2(summonMLIRTraits[T], attributes)
