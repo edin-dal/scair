@@ -23,7 +23,8 @@ case class MulSingleVariadic(
     rhs: Variadic[Operand[IntegerType]],
     result: Variadic[Result[IntegerType]],
     randProp: Property[StringData]
-) derives MLIRTrait
+) extends MLIRName["cmath.mulsinglevariadic"]
+    derives MLIRTrait
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
@@ -34,7 +35,8 @@ case class MulMultiVariadic(
     result3: Variadic[Result[IntegerType]],
     operandSegmentSizes: Property[DenseArrayAttr],
     resultSegmentSizes: Property[DenseArrayAttr]
-) derives MLIRTrait
+) extends MLIRName["cmath.mulmultivariadic"]
+    derives MLIRTrait
 
 case class MulFull(
     operand1: Operand[IntegerType],
@@ -85,7 +87,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
-      name = "mulsinglevariadic",
+      name = "cmath.mulsinglevariadic",
       operands = ListType(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
@@ -112,7 +114,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     )
 
     val unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
-      name = "mulmultivariadic",
+      name = "cmath.mulmultivariadic",
       operands = ListType(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
@@ -195,7 +197,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Unverified instantiation" should "Correctly instantiates the UniverifiedOp" in {
-    val opT = summon[MLIRTrait[Mul]]
+    val opT = MLIRTrait.derived[Mul]
 
     val unverMulOp = opT.constructUnverifiedOp(
       operands = ListType(
@@ -317,7 +319,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val op = TestCases.adtMulSinVarOp
     val unverMulSinVarOp = opT.unverify(op)
 
-    unverMulSinVarOp.name should be("mulsinglevariadic")
+    unverMulSinVarOp.name should be("cmath.mulsinglevariadic")
     unverMulSinVarOp.operands should matchPattern {
       case ListType(
             Value(IntegerType(IntData(5), Unsigned)),
@@ -382,7 +384,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val op = TestCases.adtMulMulVarOp
     val unverMulSinVarOp = opT.unverify(op)
 
-    unverMulSinVarOp.name should be("mulmultivariadic")
+    unverMulSinVarOp.name should be("cmath.mulmultivariadic")
     unverMulSinVarOp.operands should matchPattern {
       case ListType(
             Value(IntegerType(IntData(5), Unsigned)),

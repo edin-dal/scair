@@ -33,6 +33,61 @@ inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
   case _: Variadic[t] => Variadicity.Variadic
   case _              => Variadicity.Single
 
+// for some reason match types do not work here, as an inline erasedValue[unwrappedInput[Elem]]
+// tries to match on that type exactly (ie. unwrappedType[Value[IntegerType]] for example) rather than the matched type...
+// very weird things going on
+
+type unwrappedInput[Elem] = Elem match
+  case Variadic[t] => t
+  case _           => Elem
+
+// workaround for unwrappedType to make sure that variadics work, it is ugly, but it is :'(
+inline def getVariadicDefInput[Label, Elem]: OpInput = {
+
+  val name = inline erasedValue[Label] match
+    case _: String => constValue[Label].asInstanceOf[String]
+    case _ =>
+      throw new Exception("Internal error!")
+
+  inline erasedValue[Elem] match
+    case _: Result[t] =>
+      ResultDef(
+        id = name,
+        typeString = typeToString[t],
+        Variadicity.Variadic
+      )
+    case _: Operand[t] =>
+      OperandDef(
+        id = name,
+        typeString = typeToString[t],
+        Variadicity.Variadic
+      )
+    case _: Region =>
+      RegionDef(
+        id = name,
+        Variadicity.Variadic
+      )
+    case _: Successor =>
+      SuccessorDef(
+        id = name,
+        Variadicity.Variadic
+      )
+    case _: Property[t] =>
+      OpPropertyDef(
+        id = name,
+        typeString = typeToString[t]
+      )
+    case _: Attr[t] =>
+      OpAttributeDef(
+        id = name,
+        typeString = typeToString[t]
+      )
+    case _ =>
+      throw new Exception(
+        s"Unsupported shennaigans with variadic field $name of type ${typeToString[Elem]}"
+      )
+}
+
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
@@ -43,8 +98,13 @@ inline def getDefInput[Label, Elem]: OpInput = {
 
   val name = inline erasedValue[Label] match
     case _: String => constValue[Label].asInstanceOf[String]
-    case _         => throw new Exception("Internal error!")
+    case _ =>
+      throw new Exception("Internal error!")
+
   inline erasedValue[Elem] match
+    case _: Variadic[t] =>
+      getVariadicDefInput[Label, t]
+
     case _: Result[t] =>
       ResultDef(
         id = name,
@@ -77,8 +137,10 @@ inline def getDefInput[Label, Elem]: OpInput = {
         id = name,
         typeString = typeToString[t]
       )
-    case shennanigan =>
-      throw new Exception(f"Unsupported shennaigans with field $name")
+    case _ =>
+      throw new Exception(
+        s"Unsupported shennaigans with field $name of type ${typeToString[Elem]}"
+      )
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to

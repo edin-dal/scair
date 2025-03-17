@@ -6,6 +6,19 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.clairV2.macros._
 
+object ComplexV2 extends AttributeObject {
+  override def name: String = "cmathv2.complex"
+  override def factory = ComplexV2.apply
+}
+
+case class ComplexV2(
+    val typ: Seq[Attribute]
+) extends ParametrizedAttribute(
+      name = "cmathV2.complex",
+      parameters = Seq(typ)
+    )
+    with TypeAttribute
+
 case class MulV2(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
@@ -14,19 +27,12 @@ case class MulV2(
 ) extends MLIRName["cmathv2.mulv2"]
     derives MLIRTrait
 
-case class MulSingleVariadic(
-    lhs: Operand[IntegerType],
-    rhs: Variadic[Operand[IntegerType]],
-    result: Variadic[Result[IntegerType]],
-    randProp: Property[StringData]
-) derives MLIRTrait
-
 case class NormV2(
-    norm: Operand[IntegerType],
+    norm: Operand[ComplexV2],
     result: Result[IntegerType]
 ) extends MLIRName["cmathv2.normv2"]
     derives MLIRTrait
 
 val CMathV2Dialect = summonDialect[
   (MulV2, NormV2)
-](Seq())
+](Seq(ComplexV2))
