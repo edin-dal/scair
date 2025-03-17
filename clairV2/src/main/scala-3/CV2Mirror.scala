@@ -108,6 +108,13 @@ inline def stringifyLabels[Elems <: Tuple]: List[String] = {
     case _: EmptyTuple => Nil
 }
 
+inline def getMLIRName[T] = inline erasedValue[T] match
+  case _: MLIRName[name] => constValue[name]
+  case _ =>
+    throw new Exception(
+      "Expected this type to extend MLIRName with a constant type-parameter."
+    )
+
 /** Generates a OperationDef given param m.
   *
   * @param m
@@ -115,7 +122,7 @@ inline def stringifyLabels[Elems <: Tuple]: List[String] = {
   * @return
   *   Lambda that produces an Operadtion Def given a dialect name.
   */
-inline def getDef[T](dialectName: String)(using
+inline def getDef[T](using
     m: Mirror.ProductOf[T]
 ): OperationDef = {
 
@@ -142,9 +149,10 @@ inline def getDef[T](dialectName: String)(using
     case _                 => throw new Exception("Internal error!")
   }
 
+  val name = getMLIRName[T]
+
   OperationDef(
-    dialectName,
-    defname.toLowerCase,
+    name,
     defname,
     operands.toSeq,
     results.toSeq,
@@ -161,15 +169,13 @@ inline def getDef[T](dialectName: String)(using
   *
   * @param dialect_name
   */
-inline def summonOperationDefs[Prods <: Tuple](
-    dialectName: String
-): Seq[OperationDef] = {
+inline def summonOperationDefs[Prods <: Tuple]: Seq[OperationDef] = {
 
   inline erasedValue[Prods] match
     case _: (prod *: prods) =>
-      getDef[prod](dialectName)(using
+      getDef[prod](using
         summonInline[Mirror.ProductOf[prod]]
-      ) +: summonOperationDefs[prods](dialectName)
+      ) +: summonOperationDefs[prods]
 
     case _: EmptyTuple => Seq.empty
 }
