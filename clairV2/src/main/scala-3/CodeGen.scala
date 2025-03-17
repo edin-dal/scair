@@ -71,7 +71,6 @@ case class OperationDef(
     val dialect: String,
     val name: String,
     val className: String,
-    val packageName: String,
     val operands: Seq[OperandDef] = Seq(),
     val results: Seq[ResultDef] = Seq(),
     val regions: Seq[RegionDef] = Seq(),
