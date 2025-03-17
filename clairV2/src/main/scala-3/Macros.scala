@@ -450,11 +450,13 @@ def fromUnverifiedOperationMacro[T: Type](
     val (preceeding, following) = x.splitAt(x.indexOf("Var"))
     (preceeding.length, fullLength - following.length)
 
-  def operandSegmentSizes(variadicsNumber: Int): Expr[Seq[Int]] =
+  def operandSegmentSizes(
+      variadicsNumber: Int,
+      noOfOperands: Int
+  ): Expr[Seq[Int]] =
     if (variadicsNumber > 1)
       '{
         val dictAttributes = $genExpr.dictionaryProperties
-        val operands_length = $genExpr.operands.length
 
         if (!dictAttributes.contains("operandSegmentSizes"))
         then throw new Exception("Expected operandSegmentSizes property")
@@ -485,9 +487,9 @@ def fromUnverifiedOperationMacro[T: Type](
           )
         ).verify(operandSegmentSizes_attr, ConstraintContext())
 
-        if (operandSegmentSizes_attr.length != operands_length) then
+        if (operandSegmentSizes_attr.length != ${ Expr(noOfOperands) }) then
           throw new Exception(
-            s"Expected operandSegmentSizes to have ${operands_length} elements, got $${operandSegmentSizes_attr.length}"
+            s"Expected operandSegmentSizes to have ${${ Expr(noOfOperands) }} elements, got ${operandSegmentSizes_attr.length}"
           )
 
         for (s <- operandSegmentSizes_attr) yield s match {
@@ -500,11 +502,13 @@ def fromUnverifiedOperationMacro[T: Type](
       }
     else '{ Seq() }
 
-  def resultSegmentSizes(variadicsNumber: Int): Expr[Seq[Int]] =
+  def resultSegmentSizes(
+      variadicsNumber: Int,
+      noOfResults: Int
+  ): Expr[Seq[Int]] =
     if (variadicsNumber > 1)
       '{
         val dictAttributes = $genExpr.dictionaryProperties
-        val results_length = $genExpr.results.length
 
         if (!dictAttributes.contains("resultSegmentSizes"))
         then throw new Exception("Expected resultSegmentSizes property")
@@ -536,9 +540,9 @@ def fromUnverifiedOperationMacro[T: Type](
           )
         ).verify(resultSegmentSizes_attr, ConstraintContext())
 
-        if (resultSegmentSizes_attr.length != results_length) then
+        if (resultSegmentSizes_attr.length != ${ Expr(noOfResults) }) then
           throw new Exception(
-            s"Expected resultSegmentSizes to have ${results_length} elements, got $${resultSegmentSizes_attr.length}"
+            s"Expected resultSegmentSizes to have ${${ Expr(noOfResults) }} elements, got $${resultSegmentSizes_attr.length}"
           )
 
         for (s <- resultSegmentSizes_attr) yield s match {
@@ -607,13 +611,21 @@ def fromUnverifiedOperationMacro[T: Type](
             expectedType.asType match
               case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
                 val from = '{
-                  ${ operandSegmentSizes(variadicOperandParams.length) }
+                  ${
+                    operandSegmentSizes(
+                      variadicOperandParams.length,
+                      operandParams.length
+                    )
+                  }
                     .slice(0, $idxExpr)
                     .fold(0)(_ + _)
                 }
                 val to = '{
                   $from + ${
-                    operandSegmentSizes(variadicOperandParams.length)
+                    operandSegmentSizes(
+                      variadicOperandParams.length,
+                      operandParams.length
+                    )
                   }(
                     $idxExpr
                   )
@@ -714,12 +726,22 @@ def fromUnverifiedOperationMacro[T: Type](
             expectedType.asType match
               case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
                 val from = '{
-                  ${ resultSegmentSizes(variadicResultParams.length) }
+                  ${
+                    resultSegmentSizes(
+                      variadicResultParams.length,
+                      resultParams.length
+                    )
+                  }
                     .slice(0, $idxExpr)
                     .fold(0)(_ + _)
                 }
                 val to = '{
-                  $from + ${ resultSegmentSizes(variadicResultParams.length) }(
+                  $from + ${
+                    resultSegmentSizes(
+                      variadicResultParams.length,
+                      resultParams.length
+                    )
+                  }(
                     $idxExpr
                   )
                 }
@@ -830,7 +852,10 @@ def fromUnverifiedOperationMacro[T: Type](
           }
         case _ =>
           val operandSegmentSizesSum = ${
-            operandSegmentSizes(variadicOperandParams.length)
+            operandSegmentSizes(
+              variadicOperandParams.length,
+              operandParams.length
+            )
           }.fold(0)(_ + _)
           if (operandSegmentSizesSum != operands.length) then
             throw new Exception(
@@ -859,7 +884,10 @@ def fromUnverifiedOperationMacro[T: Type](
           }
         case _ =>
           val resultSegmentSizesSum = ${
-            resultSegmentSizes(variadicOperandParams.length)
+            resultSegmentSizes(
+              variadicOperandParams.length,
+              resultParams.length
+            )
           }.fold(0)(_ + _)
           if (resultSegmentSizesSum != results.length) then
             throw new Exception(

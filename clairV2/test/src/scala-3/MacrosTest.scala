@@ -8,6 +8,8 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scala.collection.mutable.LinkedHashMap
 
+// TODO: create a better constructor for DenseArrayAttr with just integers
+
 case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
@@ -20,6 +22,17 @@ case class MulSingleVariadic(
     rhs: Variadic[Operand[IntegerType]],
     result: Variadic[Result[IntegerType]],
     randProp: Property[StringData]
+) derives MLIRTrait
+
+case class MulMultiVariadic(
+    lhs: Operand[IntegerType],
+    rhs: Variadic[Operand[IntegerType]],
+    mhs: Variadic[Operand[IntegerType]],
+    result: Variadic[Result[IntegerType]],
+    result2: Result[IntegerType],
+    result3: Variadic[Result[IntegerType]],
+    operandSegmentSizes: Property[DenseArrayAttr],
+    resultSegmentSizes: Property[DenseArrayAttr]
 ) derives MLIRTrait
 
 case class MulFull(
@@ -94,6 +107,87 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Result(IntegerType(IntData(25), Unsigned))
       ),
       randProp = Property(StringData("what"))
+    )
+
+    val unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
+      name = "mulmultivariadic",
+      operands = ListType(
+        Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+      ),
+      results_types = ListType[Attribute](
+        IntegerType(IntData(25), Unsigned),
+        IntegerType(IntData(25), Unsigned),
+        IntegerType(IntData(25), Unsigned),
+        IntegerType(IntData(25), Unsigned),
+        IntegerType(IntData(25), Unsigned),
+        IntegerType(IntData(25), Unsigned)
+      ),
+      dictionaryProperties = DictType(
+        ("operandSegmentSizes" -> DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          Seq[IntegerAttr](
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
+          )
+        )),
+        ("resultSegmentSizes" -> DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          Seq[IntegerAttr](
+            IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
+          )
+        ))
+      )
+    )
+
+    val adtMulMulVarOp = MulMultiVariadic(
+      lhs = Value(IntegerType(IntData(5), Unsigned)),
+      rhs = Variadic(
+        Value(IntegerType(IntData(5), Unsigned)),
+        Value(IntegerType(IntData(5), Unsigned)),
+        Value(IntegerType(IntData(5), Unsigned))
+      ),
+      mhs = Variadic(
+        Value(IntegerType(IntData(5), Unsigned)),
+        Value(IntegerType(IntData(5), Unsigned))
+      ),
+      result = Variadic(
+        Result(IntegerType(IntData(5), Unsigned)),
+        Result(IntegerType(IntData(5), Unsigned)),
+        Result(IntegerType(IntData(5), Unsigned))
+      ),
+      result2 = Result(IntegerType(IntData(5), Unsigned)),
+      result3 = Variadic(
+        Result(IntegerType(IntData(5), Unsigned)),
+        Result(IntegerType(IntData(5), Unsigned))
+      ),
+      operandSegmentSizes = Property(
+        DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          Seq[IntegerAttr](
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
+          )
+        )
+      ),
+      resultSegmentSizes = Property(
+        DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          Seq[IntegerAttr](
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
+          )
+        )
+      )
     )
 
   }
@@ -237,6 +331,75 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
     unverMulSinVarOp.dictionaryProperties("randProp") should matchPattern {
       case StringData("what") =>
+    }
+  }
+
+  "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unverified operation to ADT Operation" in {
+    val opT = summon[MLIRTrait[MulMultiVariadic]]
+
+    val op = TestCases.unverMulMulVarOp
+    val adtMulMulVarOp = opT.verify(op)
+
+    adtMulMulVarOp.lhs should matchPattern {
+      case Value(IntegerType(IntData(5), Unsigned)) =>
+    }
+    adtMulMulVarOp.rhs should matchPattern {
+      case List(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    adtMulMulVarOp.mhs should matchPattern {
+      case List(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    adtMulMulVarOp.result should matchPattern {
+      case List(
+            Result(IntegerType(IntData(25), Unsigned)),
+            Result(IntegerType(IntData(25), Unsigned)),
+            Result(IntegerType(IntData(25), Unsigned))
+          ) =>
+    }
+    adtMulMulVarOp.result2 should matchPattern {
+      case Result(IntegerType(IntData(25), Unsigned)) =>
+    }
+    adtMulMulVarOp.result3 should matchPattern {
+      case List(
+            Result(IntegerType(IntData(25), Unsigned)),
+            Result(IntegerType(IntData(25), Unsigned))
+          ) =>
+    }
+  }
+
+  "Multi Variadic Conversion to Unverified" should "Correctly translate from Multi Variadic ADT operation to Univerified Operation" in {
+    val opT = summon[MLIRTrait[MulMultiVariadic]]
+
+    val op = TestCases.adtMulMulVarOp
+    val unverMulSinVarOp = opT.unverify(op)
+
+    unverMulSinVarOp.name should be("mulmultivariadic")
+    unverMulSinVarOp.operands should matchPattern {
+      case ListType(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    unverMulSinVarOp.results should matchPattern {
+      case ListType(
+            Result(IntegerType(IntData(5), Unsigned)),
+            Result(IntegerType(IntData(5), Unsigned)),
+            Result(IntegerType(IntData(5), Unsigned)),
+            Result(IntegerType(IntData(5), Unsigned)),
+            Result(IntegerType(IntData(5), Unsigned)),
+            Result(IntegerType(IntData(5), Unsigned))
+          ) =>
     }
   }
 
