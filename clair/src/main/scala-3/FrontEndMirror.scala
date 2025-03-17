@@ -100,8 +100,8 @@ inline def getConstraint[T <: Attribute | AttributeFE]: IRDLConstraint = {
 }
 
 inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
-  case _: Variadic[t] => Variadic
-  case _              => Single
+  case _: Variadic[t] => Variadicity.Variadic
+  case _              => Variadicity.Single
 
 type unwrappedInput[Elem] = Elem match
   case Variadic[t] => t
