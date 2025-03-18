@@ -37,57 +37,6 @@ inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
 // tries to match on that type exactly (ie. unwrappedType[Value[IntegerType]] for example) rather than the matched type...
 // very weird things going on
 
-type unwrappedInput[Elem] = Elem match
-  case Variadic[t] => t
-  case _           => Elem
-
-// workaround for unwrappedType to make sure that variadics work, it is ugly, but it is :'(
-inline def getVariadicDefInput[Label, Elem]: OpInput = {
-
-  val name = inline erasedValue[Label] match
-    case _: String => constValue[Label].asInstanceOf[String]
-    case _ =>
-      throw new Exception("Internal error!")
-
-  inline erasedValue[Elem] match
-    case _: Result[t] =>
-      ResultDef(
-        id = name,
-        typeString = typeToString[t],
-        Variadicity.Variadic
-      )
-    case _: Operand[t] =>
-      OperandDef(
-        id = name,
-        typeString = typeToString[t],
-        Variadicity.Variadic
-      )
-    case _: Region =>
-      RegionDef(
-        id = name,
-        Variadicity.Variadic
-      )
-    case _: Successor =>
-      SuccessorDef(
-        id = name,
-        Variadicity.Variadic
-      )
-    case _: Property[t] =>
-      OpPropertyDef(
-        id = name,
-        typeString = typeToString[t]
-      )
-    case _: Attr[t] =>
-      OpAttributeDef(
-        id = name,
-        typeString = typeToString[t]
-      )
-    case _ =>
-      throw new Exception(
-        s"Unsupported shennaigans with variadic field $name of type ${typeToString[Elem]}"
-      )
-}
-
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
@@ -102,30 +51,39 @@ inline def getDefInput[Label, Elem]: OpInput = {
       throw new Exception("Internal error!")
 
   inline erasedValue[Elem] match
-    case _: Variadic[t] =>
-      getVariadicDefInput[Label, t]
-
+    case _: Variadic[Operand[t]] =>
+      OperandDef(
+        id = name,
+        typeString = typeToString[t],
+        Variadicity.Variadic
+      )
+    case _: Variadic[Result[t]] =>
+      OperandDef(
+        id = name,
+        typeString = typeToString[t],
+        Variadicity.Variadic
+      )
     case _: Result[t] =>
       ResultDef(
         id = name,
         typeString = typeToString[t],
-        inputVariadicity[Elem]
+        Variadicity.Single
       )
     case _: Operand[t] =>
       OperandDef(
         id = name,
         typeString = typeToString[t],
-        inputVariadicity[Elem]
+        Variadicity.Single
       )
     case _: Region =>
       RegionDef(
         id = name,
-        inputVariadicity[Elem]
+        Variadicity.Single
       )
     case _: Successor =>
       SuccessorDef(
         id = name,
-        inputVariadicity[Elem]
+        Variadicity.Single
       )
     case _: Property[t] =>
       OpPropertyDef(
@@ -139,7 +97,7 @@ inline def getDefInput[Label, Elem]: OpInput = {
       )
     case _ =>
       throw new Exception(
-        s"Unsupported shennaigans with field $name of type ${typeToString[Elem]}"
+        s"Unsupported shennaigans here with field $name of type ${typeToString[Elem]}"
       )
 }
 
