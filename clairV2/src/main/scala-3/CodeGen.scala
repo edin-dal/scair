@@ -3,6 +3,7 @@ package scair.clairV2.codegen
 import java.io.File
 import java.io.PrintStream
 import scala.reflect.*
+import scair.ir._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -22,7 +23,7 @@ import scala.reflect.*
 ||  CONTAINERS  ||
 \*≡=--==≡≡==--=≡*/
 
-abstract class OpInput {}
+sealed trait OpInputDef(val name:String) {}
 
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
@@ -31,37 +32,46 @@ enum Variadicity {
   case Single, Variadic
 }
 
+type DefinedInput[T <: OpInputDef] = T match {
+    case OperandDef => Operand[Attribute]
+    case ResultDef => Result[Attribute]
+    case RegionDef => Region
+    case SuccessorDef => Successor
+    case OpPropertyDef => Property[Attribute]
+    case OpAttributeDef => Attribute
+}
+
 case class OperandDef(
-    val name: String,
+    override val name: String,
     val typeString: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInputDef(name) {}
 
 case class ResultDef(
-    val name: String,
+    override val name: String,
     val typeString: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInputDef(name) {}
 
 case class RegionDef(
-    val name: String,
+    override val name: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInputDef(name) {}
 
 case class SuccessorDef(
-    val name: String,
+    override val name: String,
     val variadicity: Variadicity = Variadicity.Single
-) extends OpInput {}
+) extends OpInputDef(name) {}
 
 case class OpPropertyDef(
-    val name: String,
+    override val name: String,
     val typeString: String
-) extends OpInput {}
+) extends OpInputDef(name) {}
 
 case class OpAttributeDef(
-    val name: String,
+    override val name: String,
     val typeString: String
-) extends OpInput {}
+) extends OpInputDef(name) {}
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||

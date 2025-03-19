@@ -100,38 +100,38 @@ def constructUnverifiedOpHookMacro[T: Type](
 ||  ADT to Unverified conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def ADTFlatOperands[T](opDef: OperationDef)(gen: T) =
-  ${ ADTFlatOperandsMacro[T]('{ opDef.operands }, 'gen) }
+import scala.quoted.*
 
-def ADTFlatOperandsMacro[T: Type](
-    operandDefs: Expr[Iterable[OperandDef]],
-    adtOpExpr: Expr[T]
-)(using
-    Quotes
-) =
+inline def symbolicField[T](inline obj: T, inline fieldName: String): Any =
+    ${ symbolicFieldImpl('obj, 'fieldName) }
+
+def symbolicFieldImpl[T: Type](obj: Expr[T], fieldName: Expr[String])(using Quotes): Expr[Any] = {
   import quotes.reflect.*
 
-  val operands_exprs = '{
-    ListType.from(
-      ${ operandDefs }.map((o: OperandDef) =>
-        ${
-          Select(
-            adtOpExpr.asTerm,
-            adtOpExpr.asTerm.tpe.typeSymbol.fieldMember(o.name)
-          ).asExprOf[Operand[Attribute]]
-        }
-      )
-    )
+  fieldName.value match {
+    case Some(name) =>
+      val symbol = obj.asTerm.tpe.typeSymbol.fieldMember(name)
+      Select(obj.asTerm, symbol).asExpr
+    case None =>
+      report.errorAndAbort(s"Field name ${fieldName.show} must be a known string at compile-time")
   }
+}
 
-  operands_exprs
+inline def ADTFlatInput[Def <: OpInputDef, T](
+    inline opInputDefs: Seq[Def], inline gen: T): ListType[DefinedInput[Def]] =
+  ${ ADTFlatInputMacro('opInputDefs, 'gen) }
 
-  // extracting operand instances from the ADT
-  // '{ ListType.from($operandDefs.map {${ (o : OperandDef) =>
-  //    Select.unique(adtOpExpr.asTerm, o.name).asExpr .asInstanceOf[Operand[Attribute]] }) }
+def ADTFlatInputMacro[Def <: OpInputDef, T: Type](
+    opInputDefs: Expr[Seq[Def]],
+    adtOpExpr: Expr[T]
+)(using Quotes)(using Type[Def]): Expr[ListType[DefinedInput[Def]]] = {
+  import quotes.reflect.*
+  val inputs = '{${opInputDefs}.map((d : Def) => symbolicField(${adtOpExpr}, d.name)).asInstanceOf[Seq[DefinedInput[Def]]]}
+  '{ListType(${inputs}: _*)}
+}
 
-inline def fromADTOperation[T](opDef: OperationDef)(gen: T): UnverifiedOp[T] =
-  ${ fromADTOperationMacro[T]('opDef, '{ ADTFlatOperands(opDef)(gen) }, 'gen) }
+inline def fromADTOperation[T](inline opDef: OperationDef)(inline gen: T): UnverifiedOp[T] =
+  ${ fromADTOperationMacro[T]('opDef, '{ ADTFlatInput(opDef.operands, gen) }, 'gen) }
 
 def fromADTOperationMacro[T: Type](
     opDef: Expr[OperationDef],
@@ -1006,11 +1006,10 @@ trait MLIRTrait[T] extends MLIRTraitI[T] {
 object MLIRTrait {
 
   inline def derived[T](using m: Mirror.ProductOf[T]): MLIRTrait[T] =
-    val opDef = getDef[T]
 
     new MLIRTrait[T]:
 
-      def getName: String = opDef.name
+      def getName: String = getDef[T].name
 
       def constructUnverifiedOp(
           operands: ListType[Value[Attribute]] = ListType(),
@@ -1022,7 +1021,7 @@ object MLIRTrait {
           dictionaryAttributes: DictType[String, Attribute] =
             DictType.empty[String, Attribute]
       ): UnverifiedOp[T] =
-        constructUnverifiedOpHook(opDef)(
+        constructUnverifiedOpHook(getDef[T])(
           operands,
           successors,
           results_types,
@@ -1032,7 +1031,7 @@ object MLIRTrait {
         )
 
       def unverify(adtOp: T): UnverifiedOp[T] =
-        fromADTOperation[T](opDef)(adtOp)
+        fromADTOperation[T](getDef[T])(adtOp)
 
       def verify(unverOp: UnverifiedOp[T]): T =
         fromUnverifiedOperation[T](unverOp)

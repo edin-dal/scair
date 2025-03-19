@@ -43,7 +43,7 @@ inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
-inline def getDefInput[Label, Elem]: OpInput = {
+inline def getDefInput[Label, Elem]: OpInputDef = {
 
   val name = inline erasedValue[Label] match
     case _: String => constValue[Label].asInstanceOf[String]
@@ -107,7 +107,7 @@ inline def getDefInput[Label, Elem]: OpInput = {
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-inline def summonInput[Labels <: Tuple, Elems <: Tuple]: List[OpInput] = {
+inline def summonInput[Labels <: Tuple, Elems <: Tuple]: List[OpInputDef] = {
 
   inline erasedValue[(Labels, Elems)] match
     case _: ((label *: labels, elem *: elems)) =>
