@@ -28,31 +28,40 @@ import java.lang.Float.intBitsToFloat
 class AttrParser(val ctx: MLContext) {
 
   def DialectAttribute[$: P]: P[Attribute] = P(
-    "#" ~~ PrettyDialectReferenceName.flatMapTry { (x: String, y: String) =>
-      ctx.getAttribute(s"${x}.${y}") match {
-        case Some(y) =>
-          y.parse(this)
-        case None =>
-          throw new Exception(
-            s"Type ${x} is not defined in any supported Dialect."
-          )
-      }
+    "#" ~~ PrettyDialectReferenceName.flatMapTry {
+      (dialect: String, attrName: String) =>
+        ctx.getAttribute(s"${dialect}.${attrName}") match {
+          case Some(attr) =>
+            attr.parse(this)
+          case None =>
+            ctx.getAttributeV2(s"${dialect}.${attrName}") match {
+              case Some(attr) =>
+                attr.parse(this)
+              case None =>
+                throw new Exception(
+                  s"Attribute $dialect.$attrName is not defined in any supported Dialect."
+                )
+            }
+        }
     }
   )
 
   def DialectType[$: P]: P[Attribute] = P(
-    "!" ~~ PrettyDialectReferenceName.flatMapTry { (x: String, y: String) =>
-      ctx.getAttribute(s"${x}.${y}") match {
-        case Some(y) =>
-          y.parse(this)
-        case None =>
-          println(
-            s"Type ${x} is not defined in any supported Dialect."
-          )
-          throw new Exception(
-            s"Type ${x} is not defined in any supported Dialect."
-          )
-      }
+    "!" ~~ PrettyDialectReferenceName.flatMapTry {
+      (dialect: String, attrName: String) =>
+        ctx.getAttribute(s"${dialect}.${attrName}") match {
+          case Some(attr) =>
+            attr.parse(this)
+          case None =>
+            ctx.getAttributeV2(s"${dialect}.${attrName}") match {
+              case Some(attr) =>
+                attr.parse(this)
+              case None =>
+                throw new Exception(
+                  s"Type $dialect.$attrName is not defined in any supported Dialect."
+                )
+            }
+        }
     }
   )
 
