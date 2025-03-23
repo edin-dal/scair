@@ -29,15 +29,6 @@ import scala.quoted._
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
 
-// currently not supported, but will soon be :)
-inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
-  case _: Variadic[t] => Variadicity.Variadic
-  case _              => Variadicity.Single
-
-// for some reason match types do not work here, as an inline erasedValue[unwrappedInput[Elem]]
-// tries to match on that type exactly (ie. unwrappedType[Value[IntegerType]] for example) rather than the matched type...
-// very weird things going on
-
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
@@ -132,16 +123,6 @@ inline def getMLIRName[T] = inline erasedValue[T] match
     throw new Exception(
       "Expected this type to extend MLIRName with a constant type-parameter."
     )
-
-/** Generates a OperationDef given param m.
-  *
-  * @param m
-  *   \- Mirror Product of an dialect enum case.
-  * @return
-  *   Lambda that produces an Operadtion Def given a dialect name.
-  */
-// inline def getDef[T](using
-// m: Mirror.ProductOf[T]) : OperationDef = ${ getDefImpl[T] }
 
 def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
