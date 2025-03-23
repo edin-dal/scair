@@ -114,108 +114,23 @@ def fromADTOperationMacro[T: Type](
   /*________________*\
   \*-- SUCCESSORS --*/
 
-  // partitioning ADT parameters by Successor
-  val (successorParams, restParams1) = params.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case tycon => tycon =:= TypeRepr.of[scair.ir.Block]
-  }
-
-  // extracting successor instances from the ADT
-  val successorExprs = successorParams.map { param =>
-    val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    '{ ${ select }.asInstanceOf[scair.ir.Block] }
-  }.toSeq
-
-  // constructing a sequence of successors to construct the UnverifiedOp with
-  val successorSeqExpr =
-    if (successorExprs.isEmpty) '{
-      ListType.empty[scair.ir.Block]
-    }
-    else
-      '{
-        ListType[scair.ir.Block](${ Varargs(successorExprs) }: _*)
-      }
+  val flatSuccessors = ADTFlatInputMacro(opDef.successors, adtOpExpr)
 
   /*_____________*\
   \*-- RESULTS --*/
 
-  // partitioning ADT parameters by Result
-  val (resultParams, restParams2) = restParams1.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case AppliedType(_, List(AppliedType(tycon, _))) =>
-        tycon =:= TypeRepr.of[Result]
-      case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Result]
-      case x                     => false
-  }
-
-  val resultExprs =
-    Expr.ofList(
-      resultParams
-        .map { param =>
-          param.termRef.widenTermRefByName match {
-            case AppliedType(_, List(AppliedType(tycon, _))) =>
-              val select = Select
-                .unique(adtOpExpr.asTerm, param.name)
-                .asExprOf[Seq[Result[Attribute]]]
-              select
-            case AppliedType(tycon, _) =>
-              val select = Select
-                .unique(adtOpExpr.asTerm, param.name)
-                .asExprOf[Result[Attribute]]
-              select
-            case _ => report.errorAndAbort("this really should not happen")
-          }
-        }
-    )
-
-  val resultSeqExpr = '{
-    val ress = $resultExprs
-    val what = ress
-      .map { x =>
-        x match {
-          case a: Result[Attribute]      => Seq(a)
-          case x: Seq[Result[Attribute]] => x
-        }
-      }
-      .flatten
-      .toSeq
-
-    if (ress.isEmpty)
-      ListType.empty[Result[Attribute]]
-    else
-      ListType[Result[Attribute]](what: _*)
-  }
+  val flatResults = ADTFlatInputMacro(opDef.results, adtOpExpr)
 
   /*_____________*\
   \*-- REGIONS --*/
 
-  // partitioning ADT parameters by Regions
-  val (regionParams, restParams3) = restParams2.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case tycon => tycon =:= TypeRepr.of[Region]
-  }
-
-  // extracting region instances from the ADT
-  val regionExprs = regionParams.map { param =>
-    val select = Select.unique(adtOpExpr.asTerm, param.name).asExpr
-    '{ ${ select }.asInstanceOf[Region] }
-  }.toSeq
-
-  // constructing a sequence of regions to construct the UnverifiedOp with
-  val regionSeqExpr =
-    if (regionExprs.isEmpty) '{
-      ListType.empty[Region]
-    }
-    else
-      '{
-        ListType[Region](${ Varargs(regionExprs) }: _*)
-      }
+  val flatRegions = ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
   /*________________*\
   \*-- PROPERTIES --*/
 
   // partitioning ADT parameters by Properties
-  val (propertyParams, _) = restParams3.partition { sym =>
+  val (propertyParams, _) = params.partition { sym =>
     sym.termRef.widenTermRefByName match
       case AppliedType(tycon, _) => tycon =:= TypeRepr.of[Property]
       case x                     => false
@@ -246,13 +161,13 @@ def fromADTOperationMacro[T: Type](
     val x = UnverifiedOp[T](
       name = ${ Expr(opDef.name) },
       operands = $flatOperands,
-      successors = $successorSeqExpr,
+      successors = $flatSuccessors,
       results_types = ListType.empty[Attribute],
-      regions = $regionSeqExpr,
+      regions = $flatRegions,
       dictionaryProperties = $propertySeqExpr,
       dictionaryAttributes = DictType.empty[String, Attribute]
     )
-    x.results.addAll($resultSeqExpr)
+    x.results.addAll($flatResults)
     x
   }
 
