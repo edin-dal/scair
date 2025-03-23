@@ -44,25 +44,25 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[Variadic[Result[t]]] =>
       ResultDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Variadic
       )
     case '[Variadic[Operand[t]]] =>
       OperandDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Variadic
       )
     case '[Result[t]] =>
       ResultDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Single
       )
     case '[Operand[t]] =>
       OperandDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Single
       )
     case '[Region] =>
