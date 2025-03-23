@@ -44,7 +44,7 @@ inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
-def getDefInput[Label : Type, Elem : Type](using Quotes): OpInputDef = {
+def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   val name = Type.of[Label] match
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
@@ -102,7 +102,7 @@ def getDefInput[Label : Type, Elem : Type](using Quotes): OpInputDef = {
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-def summonInput[Labels : Type, Elems : Type](using Quotes): List[OpInputDef] = {
+def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] = {
 
   Type.of[(Labels, Elems)] match
     case '[(label *: labels, elem *: elems)] =>
@@ -115,11 +115,14 @@ def summonInput[Labels : Type, Elems : Type](using Quotes): List[OpInputDef] = {
   * @return
   *   Tuple of String types
   */
-def stringifyLabels[Elems : Type](using Quotes): List[String] = {
+def stringifyLabels[Elems: Type](using Quotes): List[String] = {
 
   Type.of[Elems] match
     case '[elem *: elems] =>
-      Type.valueOfConstant[elem].get.asInstanceOf[String] :: stringifyLabels[elems]
+      Type
+        .valueOfConstant[elem]
+        .get
+        .asInstanceOf[String] :: stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 }
 
@@ -138,38 +141,41 @@ inline def getMLIRName[T] = inline erasedValue[T] match
   *   Lambda that produces an Operadtion Def given a dialect name.
   */
 // inline def getDef[T](using
-    // m: Mirror.ProductOf[T]) : OperationDef = ${ getDefImpl[T] }
+// m: Mirror.ProductOf[T]) : OperationDef = ${ getDefImpl[T] }
 
-def getDefImpl[T : Type](using quotes : Quotes): OperationDef = 
-  
+def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
+
   val m = Expr.summon[Mirror.ProductOf[T]].get
   m match
-    case '{$m : Mirror.ProductOf[T]{ type MirroredLabel = label; type MirroredElemLabels = elemLabels; type MirroredElemTypes = elemTypes}} => 
-      // val defname = constValue[m.MirroredLabel]
+    case '{
+          $m: Mirror.ProductOf[T] {
+            type MirroredLabel = label; type MirroredElemLabels = elemLabels;
+            type MirroredElemTypes = elemTypes
+          }
+        } =>
       val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
-      
+
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
-        case '[MLIRName[name]] => Type.valueOfConstant[name].get.asInstanceOf[String]
-      
+        case '[MLIRName[name]] =>
+          Type.valueOfConstant[name].get.asInstanceOf[String]
 
-      // val inputs = summonInput[m.MirroredElemLabels, m.MirroredElemTypes]
       val inputs = Type.of[(elemLabels, elemTypes)] match
-        case _: Type[(Tuple, Tuple)] =>  summonInput[elemLabels, elemTypes]
+        case _: Type[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
       val e = OperationDef(
-            name = name,
-            className = defname,
-            operands = inputs.collect { case a: OperandDef => a },
-            results = inputs.collect { case a: ResultDef => a },
-            regions = inputs.collect { case a: RegionDef => a },
-            successors = inputs.collect { case a: SuccessorDef => a },
-            properties = inputs.collect { case a: OpPropertyDef => a },
-            attributes = inputs.collect { case a: OpAttributeDef => a },
-            assembly_format = None
-          )
+        name = name,
+        className = defname,
+        operands = inputs.collect { case a: OperandDef => a },
+        results = inputs.collect { case a: ResultDef => a },
+        regions = inputs.collect { case a: RegionDef => a },
+        successors = inputs.collect { case a: SuccessorDef => a },
+        properties = inputs.collect { case a: OpPropertyDef => a },
+        attributes = inputs.collect { case a: OpAttributeDef => a },
+        assembly_format = None
+      )
       e
 
-inline def getNameDefBlaBla[T] = ${getNameDefBlaBlaImpl[T]}
+inline def getNameDefBlaBla[T] = ${ getNameDefBlaBlaImpl[T] }
 
-def getNameDefBlaBlaImpl[T : Type](using quotes : Quotes): Expr[String] =
+def getNameDefBlaBlaImpl[T: Type](using quotes: Quotes): Expr[String] =
   Expr(getDefImpl[T].name)

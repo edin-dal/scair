@@ -23,9 +23,10 @@ import scair.ir._
 ||  CONTAINERS  ||
 \*≡=--==≡≡==--=≡*/
 
-sealed trait OpInputDef(val name:String) {}
+sealed trait OpInputDef(val name: String) {}
 
-sealed trait MayVariadicOpInputDef(val variadicity : Variadicity) extends OpInputDef
+sealed trait MayVariadicOpInputDef(val variadicity: Variadicity)
+    extends OpInputDef
 
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
@@ -35,35 +36,39 @@ enum Variadicity {
 }
 
 type DefinedInput[T <: OpInputDef] = T match {
-    case OperandDef => Operand[Attribute]
-    case ResultDef => Result[Attribute]
-    case RegionDef => Region
-    case SuccessorDef => Successor
-    case OpPropertyDef => Property[Attribute]
-    case OpAttributeDef => Attribute
+  case OperandDef     => Operand[Attribute]
+  case ResultDef      => Result[Attribute]
+  case RegionDef      => Region
+  case SuccessorDef   => Successor
+  case OpPropertyDef  => Property[Attribute]
+  case OpAttributeDef => Attribute
 }
 
 case class OperandDef(
     override val name: String,
     val typeString: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef(name)
+    with MayVariadicOpInputDef(variadicity) {}
 
 case class ResultDef(
     override val name: String,
     val typeString: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef(name)
+    with MayVariadicOpInputDef(variadicity) {}
 
 case class RegionDef(
     override val name: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef(name)
+    with MayVariadicOpInputDef(variadicity) {}
 
 case class SuccessorDef(
     override val name: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef(name)
+    with MayVariadicOpInputDef(variadicity) {}
 
 case class OpPropertyDef(
     override val name: String,
