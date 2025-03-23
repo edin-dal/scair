@@ -25,6 +25,8 @@ import scair.ir._
 
 sealed trait OpInputDef(val name:String) {}
 
+sealed trait MayVariadicOpInputDef(val variadicity : Variadicity) extends OpInputDef
+
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
 // (An Optional structurally is just a Variadic capped at one.)
@@ -44,24 +46,24 @@ type DefinedInput[T <: OpInputDef] = T match {
 case class OperandDef(
     override val name: String,
     val typeString: String,
-    val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) {}
+    override val variadicity: Variadicity = Variadicity.Single
+) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
 
 case class ResultDef(
     override val name: String,
     val typeString: String,
-    val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) {}
+    override val variadicity: Variadicity = Variadicity.Single
+) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
 
 case class RegionDef(
     override val name: String,
-    val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) {}
+    override val variadicity: Variadicity = Variadicity.Single
+) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
 
 case class SuccessorDef(
     override val name: String,
-    val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name) {}
+    override val variadicity: Variadicity = Variadicity.Single
+) extends OpInputDef(name) with MayVariadicOpInputDef(variadicity) {}
 
 case class OpPropertyDef(
     override val name: String,

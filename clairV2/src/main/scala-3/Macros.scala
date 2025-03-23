@@ -8,7 +8,7 @@ import scair.dialects.builtin.*
 import scala.collection.mutable.ListBuffer
 
 import scala.compiletime._
-import scair.clairV2.mirrored.getDef
+import scair.clairV2.mirrored.getDefImpl
 import scala.deriving.Mirror
 import scair.clairV2.codegen._
 
@@ -41,60 +41,6 @@ def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
   Expr(classPath)
 }
 
-/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||  Hook for UnverifiedOp Constructor  ||
-\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
-
-inline def constructUnverifiedOpHook[T](opDef: OperationDef)(
-    operands: ListType[Value[Attribute]],
-    successors: ListType[scair.ir.Block],
-    results_types: ListType[Attribute],
-    regions: ListType[Region],
-    dictionaryProperties: DictType[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute]
-): UnverifiedOp[T] =
-  ${
-    constructUnverifiedOpHookMacro[T](
-      'opDef,
-      'operands,
-      'successors,
-      'results_types,
-      'regions,
-      'dictionaryProperties,
-      'dictionaryAttributes
-    )
-  }
-
-def getNameLowerImpl[T: Type](using Quotes): Expr[String] = {
-  import quotes.reflect.*
-  val typeRepr = TypeRepr.of[T]
-  Expr(typeRepr.typeSymbol.name.toLowerCase())
-}
-
-inline def getNameLower[T]: String = ${ getNameLowerImpl[T] }
-
-def constructUnverifiedOpHookMacro[T: Type](
-    opDef: Expr[OperationDef],
-    operands: Expr[ListType[Value[Attribute]]],
-    successors: Expr[ListType[scair.ir.Block]],
-    results_types: Expr[ListType[Attribute]],
-    regions: Expr[ListType[Region]],
-    dictionaryProperties: Expr[DictType[String, Attribute]],
-    dictionaryAttributes: Expr[DictType[String, Attribute]]
-)(using Quotes): Expr[UnverifiedOp[T]] = {
-  import quotes.reflect.*
-  '{
-    UnverifiedOp[T](
-      name = ${ opDef }.name,
-      operands = $operands,
-      successors = $successors,
-      results_types = $results_types,
-      regions = $regions,
-      dictionaryProperties = $dictionaryProperties,
-      dictionaryAttributes = $dictionaryAttributes
-    )
-  }
-}
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ADT to Unverified conversion Macro  ||
@@ -117,25 +63,21 @@ def symbolicFieldImpl[T: Type](obj: Expr[T], fieldName: Expr[String])(using Quot
   }
 }
 
-inline def ADTFlatInput[Def <: OpInputDef, T](
-    inline opInputDefs: Seq[Def], inline gen: T): ListType[DefinedInput[Def]] =
-  ${ ADTFlatInputMacro('opInputDefs, 'gen) }
-
-def ADTFlatInputMacro[Def <: OpInputDef, T: Type](
-    opInputDefs: Expr[Seq[Def]],
+def ADTFlatInputMacro[Def <: OpInputDef : Type, T: Type](
+    opInputDefs: Seq[Def],
     adtOpExpr: Expr[T]
-)(using Quotes)(using Type[Def]): Expr[ListType[DefinedInput[Def]]] = {
+)(using Quotes): Expr[ListType[DefinedInput[Def]]] = {
   import quotes.reflect.*
-  val inputs = '{${opInputDefs}.map((d : Def) => symbolicField(${adtOpExpr}, d.name)).asInstanceOf[Seq[DefinedInput[Def]]]}
-  '{ListType(${inputs}: _*)}
+  val stuff = Expr.ofList(opInputDefs.map((d : Def ) => (d match 
+    case d: MayVariadicOpInputDef if (d.variadicity == Variadicity.Variadic) => 
+      symbolicFieldImpl(adtOpExpr, Expr(d.name))
+    case _ => '{Seq(${symbolicFieldImpl(adtOpExpr, Expr(d.name)).asExprOf[DefinedInput[Def]]})}
+  ).asExprOf[Seq[DefinedInput[Def]]]))
+  '{ListType.from(${stuff}.flatten)}
 }
 
-inline def fromADTOperation[T](inline opDef: OperationDef)(inline gen: T): UnverifiedOp[T] =
-  ${ fromADTOperationMacro[T]('opDef, '{ ADTFlatInput(opDef.operands, gen) }, 'gen) }
-
 def fromADTOperationMacro[T: Type](
-    opDef: Expr[OperationDef],
-    flatOperands: Expr[ListType[Value[Attribute]]],
+    opDef: OperationDef,
     adtOpExpr: Expr[T]
 )(using
     Quotes
@@ -153,56 +95,7 @@ def fromADTOperationMacro[T: Type](
   /*______________*\
   \*-- OPERANDS --*/
 
-  // partitioning ADT parameters by Operand
-  val (operandParams, restParams0) = params.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case AppliedType(_, List(AppliedType(tycon, _))) =>
-        tycon =:= TypeRepr.of[Operand]
-      case AppliedType(tycon, _) =>
-        tycon =:= TypeRepr.of[Operand]
-      case _ => false
-  }
-
-  // extracting operand instances from the ADT
-  val operandExprs =
-    Expr.ofList(
-      operandParams
-        .map { param =>
-          param.termRef.widenTermRefByName match {
-            case AppliedType(_, List(AppliedType(tycon, _))) =>
-              val select = Select
-                .unique(adtOpExpr.asTerm, param.name)
-                .asExprOf[Seq[Operand[Attribute]]]
-              select
-            case AppliedType(tycon, _) =>
-              val select = Select
-                .unique(adtOpExpr.asTerm, param.name)
-                .asExprOf[Operand[Attribute]]
-              select
-            case _ => report.errorAndAbort("this really should not happen")
-          }
-        }
-    )
-
-  // TODO: refactor this, becuase what is this
-  // constructing a sequence of operands to construct the UnverifiedOp with
-  val operandSeqExpr = '{
-    val opers = $operandExprs
-    val what = opers
-      .map { x =>
-        x match {
-          case a: Operand[Attribute]      => Seq(a)
-          case x: Seq[Operand[Attribute]] => x
-        }
-      }
-      .flatten
-      .toSeq
-
-    if (opers.isEmpty)
-      ListType.empty[Operand[Attribute]]
-    else
-      ListType[Operand[Attribute]](what: _*)
-  }
+  val flatOperands = ADTFlatInputMacro(opDef.operands, adtOpExpr)
 
   /*________________*\
   \*-- SUCCESSORS --*/
@@ -337,7 +230,7 @@ def fromADTOperationMacro[T: Type](
 
   '{
     val x = UnverifiedOp[T](
-      name = ${ opDef }.name,
+      name = ${Expr(opDef.name)},
       operands = $flatOperands,
       successors = $successorSeqExpr,
       results_types = ListType.empty[Attribute],
@@ -1005,11 +898,15 @@ trait MLIRTrait[T] extends MLIRTraitI[T] {
 
 object MLIRTrait {
 
-  inline def derived[T](using m: Mirror.ProductOf[T]): MLIRTrait[T] =
+  inline def derived[T]: MLIRTrait[T] = ${ derivedImpl[T] }
+
+  def derivedImpl[T: Type](using Quotes): Expr[MLIRTrait[T]] = 
+    val opDef = getDefImpl[T]
+    '{
 
     new MLIRTrait[T]:
 
-      def getName: String = getDef[T].name
+      def getName: String = ${Expr(opDef.name)}
 
       def constructUnverifiedOp(
           operands: ListType[Value[Attribute]] = ListType(),
@@ -1020,32 +917,29 @@ object MLIRTrait {
             DictType.empty[String, Attribute],
           dictionaryAttributes: DictType[String, Attribute] =
             DictType.empty[String, Attribute]
-      ): UnverifiedOp[T] =
-        constructUnverifiedOpHook(getDef[T])(
-          operands,
-          successors,
-          results_types,
-          regions,
-          dictionaryProperties,
-          dictionaryAttributes
-        )
+      ): UnverifiedOp[T] = UnverifiedOp[T](
+      name = ${Expr(opDef.name)},
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      dictionaryProperties = dictionaryProperties,
+      dictionaryAttributes = dictionaryAttributes)
 
       def unverify(adtOp: T): UnverifiedOp[T] =
-        fromADTOperation[T](getDef[T])(adtOp)
+        ${fromADTOperationMacro[T](opDef, '{adtOp})}
 
       def verify(unverOp: UnverifiedOp[T]): T =
         fromUnverifiedOperation[T](unverOp)
 
       extension (op: T) override def MLIRTrait: MLIRTrait[T] = this
 
-}
+}}
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      MLIRTrait.derived[t](using
-        summonInline[Mirror.ProductOf[t]]
-      ) +: summonMLIRTraits[ts]
+      MLIRTrait.derived[t] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonDialect[T <: Tuple](
