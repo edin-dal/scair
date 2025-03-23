@@ -41,13 +41,13 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
       Type.valueOfConstant[Label].get.asInstanceOf[String]
 
   Type.of[Elem] match
-    case '[Variadic[Operand[t]]] =>
-      OperandDef(
+    case '[Variadic[Result[t]]] =>
+      ResultDef(
         name = name,
         typeString = typeToString[t],
         Variadicity.Variadic
       )
-    case '[Variadic[Result[t]]] =>
+    case '[Variadic[Operand[t]]] =>
       OperandDef(
         name = name,
         typeString = typeToString[t],
