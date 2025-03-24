@@ -133,7 +133,6 @@ def fromADTOperationMacro[T: Type](
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 def verifyOperand[CSTR <: Attribute : Type](operand : Expr[Operand[Attribute]])(using Quotes) =
-
   '{ $operand match
     case y : Operand[CSTR] => y
     case _ => throw new Exception(s"Expected ${}")
@@ -178,23 +177,23 @@ def fromUnverifiedOperationMacro[T: Type](
       Property[A](value.asInstanceOf[A])
     }
 
-  def operandSegmentSizes(
-      variadicsNumber: Int,
-      noOfOperands: Int
+  def segmentSizes(
+      ofConstruct: String,
+      no: Int
   ): Expr[Seq[Int]] =
-    if (variadicsNumber > 1)
+     val segmentSizesName = s"${ofConstruct}SegmentSizes"
       '{
         val dictAttributes = $genExpr.dictionaryProperties
 
-        if (!dictAttributes.contains("operandSegmentSizes"))
-        then throw new Exception("Expected operandSegmentSizes property")
+        if (!dictAttributes.contains(s"${${Expr(segmentSizesName)}}SegmentSizes"))
+        then throw new Exception(s"Expected ${${Expr(segmentSizesName)}}SegmentSizes property")
 
-        val operandSegmentSizes_attr =
-          dictAttributes("operandSegmentSizes") match {
+        val segmentSizes =
+          dictAttributes(s"${${Expr(segmentSizesName)}}SegmentSizes") match {
             case right: DenseArrayAttr => right
             case _ =>
               throw new Exception(
-                "Expected operandSegmentSizes to be a DenseArrayAttr"
+                s"Expected ${${Expr(segmentSizesName)}}SegmentSizes to be a DenseArrayAttr"
               )
           }
 
@@ -213,14 +212,14 @@ def fromUnverifiedOperationMacro[T: Type](
               )
             )
           )
-        ).verify(operandSegmentSizes_attr, ConstraintContext())
+        ).verify(segmentSizes, ConstraintContext())
 
-        if (operandSegmentSizes_attr.length != ${ Expr(noOfOperands) }) then
+        if (segmentSizes.length != ${ Expr(no) }) then
           throw new Exception(
-            s"Expected operandSegmentSizes to have ${${ Expr(noOfOperands) }} elements, got ${operandSegmentSizes_attr.length}"
+            s"Expected ${${Expr(segmentSizesName)}}SegmentSizes to have ${${ Expr(no) }} elements, got ${segmentSizes.length}"
           )
 
-        for (s <- operandSegmentSizes_attr) yield s match {
+        for (s <- segmentSizes) yield s match {
           case right: IntegerAttr => right.value.data.toInt
           case _ =>
             throw new Exception(
@@ -228,60 +227,15 @@ def fromUnverifiedOperationMacro[T: Type](
             )
         }
       }
-    else '{ Seq() }
+  def operandSegmentSizes(
+      noOfOperands: Int
+  ): Expr[Seq[Int]] =
+    segmentSizes("operand", noOfOperands)
 
   def resultSegmentSizes(
-      variadicsNumber: Int,
       noOfResults: Int
   ): Expr[Seq[Int]] =
-    if (variadicsNumber > 1)
-      '{
-        val dictAttributes = $genExpr.dictionaryProperties
-
-        if (!dictAttributes.contains("resultSegmentSizes"))
-        then throw new Exception("Expected resultSegmentSizes property")
-
-        val resultSegmentSizes_attr = dictAttributes(
-          "resultSegmentSizes"
-        ) match {
-          case right: DenseArrayAttr => right
-          case _ =>
-            throw new Exception(
-              "Expected resultSegmentSizes to be a DenseArrayAttr"
-            )
-        }
-
-        ParametrizedAttrConstraint[DenseArrayAttr](
-          Seq(
-            EqualAttr(IntegerType(IntData(32), Signless)),
-            AllOf(
-              Seq(
-                BaseAttr[IntegerAttr](),
-                ParametrizedAttrConstraint[IntegerAttr](
-                  Seq(
-                    BaseAttr[IntData](),
-                    EqualAttr(IntegerType(IntData(32), Signless))
-                  )
-                )
-              )
-            )
-          )
-        ).verify(resultSegmentSizes_attr, ConstraintContext())
-
-        if (resultSegmentSizes_attr.length != ${ Expr(noOfResults) }) then
-          throw new Exception(
-            s"Expected resultSegmentSizes to have ${${ Expr(noOfResults) }} elements, got $${resultSegmentSizes_attr.length}"
-          )
-
-        for (s <- resultSegmentSizes_attr) yield s match {
-          case right: IntegerAttr => right.value.data.toInt
-          case _ =>
-            throw new Exception(
-              "Unreachable exception as per above constraint check."
-            )
-        }
-      }
-    else '{ Seq() }
+    segmentSizes("results", noOfResults)
 
   /*_____________*\
   \*-- OPERAND --*/
@@ -303,7 +257,6 @@ def fromUnverifiedOperationMacro[T: Type](
                 val from = '{
                   ${
                     operandSegmentSizes(
-                      variadicOperands,
                       operands.length
                     )
                   }
@@ -313,7 +266,6 @@ def fromUnverifiedOperationMacro[T: Type](
                 val to = '{
                   $from + ${
                     operandSegmentSizes(
-                      variadicOperands,
                       operands.length
                     )
                   }(
@@ -376,7 +328,6 @@ def fromUnverifiedOperationMacro[T: Type](
                 val from = '{
                   ${
                     resultSegmentSizes(
-                      variadicResults,
                       results.length
                     )
                   }
@@ -386,7 +337,6 @@ def fromUnverifiedOperationMacro[T: Type](
                 val to = '{
                   $from + ${
                     resultSegmentSizes(
-                      variadicResults,
                       results.length
                     )
                   }(
@@ -482,7 +432,6 @@ def fromUnverifiedOperationMacro[T: Type](
         case _ =>
           val operandSegmentSizesSum = ${
             operandSegmentSizes(
-              variadicOperands,
               OperLen
             )
           }.fold(0)(_ + _)
@@ -515,7 +464,6 @@ def fromUnverifiedOperationMacro[T: Type](
         case _ =>
           val resultSegmentSizesSum = ${
             resultSegmentSizes(
-              variadicOperands,
               ResLen
             )
           }.fold(0)(_ + _)
