@@ -9,6 +9,7 @@ import scala.deriving._
 
 import scala.Tuple.Zip
 import scala.collection.View.Empty
+import scala.quoted._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -28,76 +29,61 @@ import scala.collection.View.Empty
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
 
-// currently not supported, but will soon be :)
-inline def inputVariadicity[Elem] = inline erasedValue[Elem] match
-  case _: Variadic[t] => Variadicity.Variadic
-  case _              => Variadicity.Single
-
-// for some reason match types do not work here, as an inline erasedValue[unwrappedInput[Elem]]
-// tries to match on that type exactly (ie. unwrappedType[Value[IntegerType]] for example) rather than the matched type...
-// very weird things going on
-
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef, OpAttributeDef
   */
-inline def getDefInput[Label, Elem]: OpInput = {
+def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
+  val name = Type.of[Label] match
+    case '[String] =>
+      Type.valueOfConstant[Label].get.asInstanceOf[String]
 
-  val name = inline erasedValue[Label] match
-    case _: String => constValue[Label].asInstanceOf[String]
-    case _ =>
-      throw new Exception("Internal error!")
-
-  inline erasedValue[Elem] match
-    case _: Variadic[Operand[t]] =>
-      OperandDef(
-        id = name,
-        typeString = typeToString[t],
-        Variadicity.Variadic
-      )
-    case _: Variadic[Result[t]] =>
-      OperandDef(
-        id = name,
-        typeString = typeToString[t],
-        Variadicity.Variadic
-      )
-    case _: Result[t] =>
+  Type.of[Elem] match
+    case '[Variadic[Result[t]]] =>
       ResultDef(
-        id = name,
+        name = name,
         typeString = typeToString[t],
-        Variadicity.Single
+        Variadicity.Variadic
       )
-    case _: Operand[t] =>
+    case '[Variadic[Operand[t]]] =>
       OperandDef(
-        id = name,
+        name = name,
+        typeString = typeToString[t],
+        Variadicity.Variadic
+      )
+    case '[Result[t]] =>
+      ResultDef(
+        name = name,
         typeString = typeToString[t],
         Variadicity.Single
       )
-    case _: Region =>
+    case '[Operand[t]] =>
+      OperandDef(
+        name = name,
+        typeString = typeToString[t],
+        Variadicity.Single
+      )
+    case '[Region] =>
       RegionDef(
-        id = name,
+        name = name,
         Variadicity.Single
       )
-    case _: Successor =>
+    case '[Successor] =>
       SuccessorDef(
-        id = name,
+        name = name,
         Variadicity.Single
       )
-    case _: Property[t] =>
+    case '[Property[t]] =>
       OpPropertyDef(
-        id = name,
+        name = name,
         typeString = typeToString[t]
       )
-    case _: Attr[t] =>
+    case '[Attr[t]] =>
       OpAttributeDef(
-        id = name,
+        name = name,
         typeString = typeToString[t]
-      )
-    case _ =>
-      throw new Exception(
-        s"Unsupported shennaigans here with field $name of type ${typeToString[Elem]}"
       )
 }
 
@@ -107,12 +93,12 @@ inline def getDefInput[Label, Elem]: OpInput = {
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-inline def summonInput[Labels <: Tuple, Elems <: Tuple]: List[OpInput] = {
+def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] = {
 
-  inline erasedValue[(Labels, Elems)] match
-    case _: ((label *: labels, elem *: elems)) =>
+  Type.of[(Labels, Elems)] match
+    case '[(label *: labels, elem *: elems)] =>
       getDefInput[label, elem] :: summonInput[labels, elems]
-    case _: (EmptyTuple, EmptyTuple) => Nil
+    case '[(EmptyTuple, EmptyTuple)] => Nil
 }
 
 /** Translates a Tuple of string types into a list of strings.
@@ -120,12 +106,15 @@ inline def summonInput[Labels <: Tuple, Elems <: Tuple]: List[OpInput] = {
   * @return
   *   Tuple of String types
   */
-inline def stringifyLabels[Elems <: Tuple]: List[String] = {
+def stringifyLabels[Elems: Type](using Quotes): List[String] = {
 
-  inline erasedValue[Elems] match
-    case _: (elem *: elems) =>
-      constValue[elem].asInstanceOf[String] :: stringifyLabels[elems]
-    case _: EmptyTuple => Nil
+  Type.of[Elems] match
+    case '[elem *: elems] =>
+      Type
+        .valueOfConstant[elem]
+        .get
+        .asInstanceOf[String] :: stringifyLabels[elems]
+    case '[EmptyTuple] => Nil
 }
 
 inline def getMLIRName[T] = inline erasedValue[T] match
@@ -135,67 +124,39 @@ inline def getMLIRName[T] = inline erasedValue[T] match
       "Expected this type to extend MLIRName with a constant type-parameter."
     )
 
-/** Generates a OperationDef given param m.
-  *
-  * @param m
-  *   \- Mirror Product of an dialect enum case.
-  * @return
-  *   Lambda that produces an Operadtion Def given a dialect name.
-  */
-inline def getDef[T](using
-    m: Mirror.ProductOf[T]
-): OperationDef = {
+def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
-  val defname = constValue[m.MirroredLabel]
-  val paramLabels = stringifyLabels[m.MirroredElemLabels]
+  val m = Expr.summon[Mirror.ProductOf[T]].get
+  m match
+    case '{
+          $m: Mirror.ProductOf[T] {
+            type MirroredLabel = label; type MirroredElemLabels = elemLabels;
+            type MirroredElemTypes = elemTypes
+          }
+        } =>
+      val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
 
-  val inputs = summonInput[m.MirroredElemLabels, m.MirroredElemTypes]
+      val paramLabels = stringifyLabels[elemLabels]
+      val name = Type.of[T] match
+        case '[MLIRName[name]] =>
+          Type.valueOfConstant[name].get.asInstanceOf[String]
 
-  val operands: ListType[OperandDef] = ListType()
-  val results: ListType[ResultDef] = ListType()
-  val regions: ListType[RegionDef] = ListType()
-  val successors: ListType[SuccessorDef] = ListType()
-  val opProperty: ListType[OpPropertyDef] = ListType()
-  val opAttribute: ListType[OpAttributeDef] = ListType()
-  var assembly_format: Option[String] = None
+      val inputs = Type.of[(elemLabels, elemTypes)] match
+        case _: Type[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
+      val e = OperationDef(
+        name = name,
+        className = defname,
+        operands = inputs.collect { case a: OperandDef => a },
+        results = inputs.collect { case a: ResultDef => a },
+        regions = inputs.collect { case a: RegionDef => a },
+        successors = inputs.collect { case a: SuccessorDef => a },
+        properties = inputs.collect { case a: OpPropertyDef => a },
+        attributes = inputs.collect { case a: OpAttributeDef => a },
+        assembly_format = None
+      )
+      e
 
-  for (input <- inputs) yield input match {
-    case a: OperandDef     => operands += a
-    case b: ResultDef      => results += b
-    case c: RegionDef      => regions += c
-    case d: SuccessorDef   => successors += d
-    case e: OpPropertyDef  => opProperty += e
-    case f: OpAttributeDef => opAttribute += f
-    case _                 => throw new Exception("Internal error!")
-  }
+inline def getNameDefBlaBla[T] = ${ getNameDefBlaBlaImpl[T] }
 
-  val name = getMLIRName[T]
-
-  OperationDef(
-    name,
-    defname,
-    operands.toSeq,
-    results.toSeq,
-    regions.toSeq,
-    successors.toSeq,
-    opProperty.toSeq,
-    opAttribute.toSeq,
-    assembly_format
-  )
-
-}
-
-/** Generates a list of OperationDef given enum cases.
-  *
-  * @param dialect_name
-  */
-inline def summonOperationDefs[Prods <: Tuple]: Seq[OperationDef] = {
-
-  inline erasedValue[Prods] match
-    case _: (prod *: prods) =>
-      getDef[prod](using
-        summonInline[Mirror.ProductOf[prod]]
-      ) +: summonOperationDefs[prods]
-
-    case _: EmptyTuple => Seq.empty
-}
+def getNameDefBlaBlaImpl[T: Type](using quotes: Quotes): Expr[String] =
+  Expr(getDefImpl[T].name)
