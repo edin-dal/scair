@@ -95,4 +95,9 @@ case class OperationDef(
     val properties: Seq[OpPropertyDef] = Seq(),
     val attributes: Seq[OpAttributeDef] = Seq(),
     val assembly_format: Option[String] = None
-)
+) {
+
+  def allDefsWithIndex =
+    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
+
+}
