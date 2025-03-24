@@ -175,10 +175,8 @@ def fromADTOperationMacro[T: Type](
 ||  Unverified to ADT conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-inline def fromUnverifiedOperation[T](gen: UnverifiedOp[T]): T =
-  ${ fromUnverifiedOperationMacro[T]('gen) }
-
 def fromUnverifiedOperationMacro[T: Type](
+    opDef: OperationDef,
     genExpr: Expr[UnverifiedOp[T]]
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
@@ -208,9 +206,9 @@ def fromUnverifiedOperationMacro[T: Type](
   // type checking and casting an operand
   def generateCheckedOperandArgument[A <: Attribute: Type](
       item: Expr[Operand[Attribute]],
-      index: Int,
-      typeName: String
+      index: Int
   ): Expr[Operand[A]] =
+    val typeName = Type.of[A].toString()
     '{
       val value = $item.typ
 
@@ -226,9 +224,9 @@ def fromUnverifiedOperationMacro[T: Type](
 
   def generateCheckedOperandArgumentOfVariadic[A <: Attribute: Type](
       list: Expr[ListBuffer[Operand[Attribute]]],
-      index: Int,
-      typeName: String
+      index: Int
   ): Expr[Seq[Operand[A]]] =
+    val typeName = Type.of[A].toString()
     '{
       (for (item <- $list) yield {
         val value = item.typ
@@ -445,26 +443,22 @@ def fromUnverifiedOperationMacro[T: Type](
   }
 
   // extracting and validating each input, the casting the Operand instance
-  val operandArgs = operandExpectedTypes.map {
-    case (variadicity, expectedType, idx) =>
-      val typeName = expectedType.typeSymbol.name
-      val idxExpr = Expr(idx)
-
-      variadicity match {
-        case "Sin" =>
-          expectedType.asType match
-            case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+  val multivariadicOperands =
+    opDef.operands.count(_.variadicity != Variadicity.Single) > 1
+  val operandArgs = opDef.operands.zipWithIndex.map {
+    case (OperandDef(name, tpe, variadicity), idx) =>
+      val operand = symbolicFieldImpl(genExpr, Expr(name))
+        .asExprOf[Operand[Attribute] | Seq[Attribute]]
+      tpe match
+        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+          variadicity match
+            case Variadicity.Single =>
               generateCheckedOperandArgument[t & Attribute](
-                '{ $genExpr.operands($idxExpr) },
-                idx,
-                typeName
+                '{ $genExpr.operands(${ Expr(idx) }) },
+                idx
               )
-
-        case "Var" =>
-          // multivariadic operands
-          if (variadicOperandParams.length > 1) {
-            expectedType.asType match
-              case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+            case Variadicity.Variadic =>
+              if multivariadicOperands then
                 val from = '{
                   ${
                     operandSegmentSizes(
@@ -472,7 +466,7 @@ def fromUnverifiedOperationMacro[T: Type](
                       operandParams.length
                     )
                   }
-                    .slice(0, $idxExpr)
+                    .slice(0, ${ Expr(idx) })
                     .fold(0)(_ + _)
                 }
                 val to = '{
@@ -482,7 +476,7 @@ def fromUnverifiedOperationMacro[T: Type](
                       operandParams.length
                     )
                   }(
-                    $idxExpr
+                    ${ Expr(idx) }
                   )
                 }
                 generateCheckedOperandArgumentOfVariadic[t & Attribute](
@@ -490,34 +484,32 @@ def fromUnverifiedOperationMacro[T: Type](
                     $genExpr.operands
                       .slice($from, $to)
                   },
-                  idx,
-                  typeName
+                  idx
                 )
-            // single variadic operands
-          } else {
-            val x = Expr(operandExpectedTypes.map(_._1))
-            expectedType.asType match
-              case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+              else
                 generateCheckedOperandArgumentOfVariadic[t & Attribute](
-                  '{
-                    val fullOperandsLength = $genExpr.operands.length
+                  {
                     val (preceeding, following) =
-                      $x.splitAt($x.indexOf("Var"))
-                    val (from, to) =
-                      (
-                        preceeding.length,
-                        fullOperandsLength - (following.length - 1) // spliceAt Index keeps the element at that index
-                      )
-                    $genExpr.operands
-                      .slice(from, to)
+                      opDef.operands
+                        .map(_.variadicity)
+                        .splitAt(opDef.operands.indexOf(Variadicity.Variadic))
+                    '{
+                      val (from, to) =
+                        (
+                          ${ Expr(preceeding.length) },
+                          fullOperandsLength - ${
+                            Expr(following.length - 1)
+                          } // spliceAt Index keeps the element at that index
+                        )
+                      val fullOperandsLength = $genExpr.operands.length
+                      $genExpr.operands
+                        .slice(from, to)
+                    }
                   },
-                  idx,
-                  typeName
+                  idx
                 )
-          }
-      }
-  }
 
+  }
   /*________________*\
   \*-- SUCCESSORS --*/
 
@@ -860,7 +852,7 @@ object MLIRTrait {
           ${ fromADTOperationMacro[T](opDef, '{ adtOp }) }
 
         def verify(unverOp: UnverifiedOp[T]): T =
-          fromUnverifiedOperation[T](unverOp)
+          ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
 
         extension (op: T) override def MLIRTrait: MLIRTrait[T] = this
 

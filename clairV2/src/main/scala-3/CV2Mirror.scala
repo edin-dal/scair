@@ -78,7 +78,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[Property[t]] =>
       OpPropertyDef(
         name = name,
-        typeString = typeToString[t]
+        tpe = Type.of[t]
       )
     case '[Attr[t]] =>
       OpAttributeDef(

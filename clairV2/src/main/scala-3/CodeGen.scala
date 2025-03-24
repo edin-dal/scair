@@ -4,7 +4,7 @@ import java.io.File
 import java.io.PrintStream
 import scala.reflect.*
 import scair.ir._
-import scala.quoted.Type
+import scala.quoted._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -47,14 +47,14 @@ type DefinedInput[T <: OpInputDef] = T match {
 
 case class OperandDef(
     override val name: String,
-    val tpe: Type[_ <: Attribute],
+    val tpe: Type[_],
     override val variadicity: Variadicity = Variadicity.Single
 ) extends OpInputDef(name)
     with MayVariadicOpInputDef(variadicity) {}
 
 case class ResultDef(
     override val name: String,
-    val tpe: Type[_ <: Attribute],
+    val tpe: Type[_],
     override val variadicity: Variadicity = Variadicity.Single
 ) extends OpInputDef(name)
     with MayVariadicOpInputDef(variadicity) {}
@@ -73,7 +73,7 @@ case class SuccessorDef(
 
 case class OpPropertyDef(
     override val name: String,
-    val typeString: String
+    val tpe: Type[_]
 ) extends OpInputDef(name) {}
 
 case class OpAttributeDef(
