@@ -37,11 +37,11 @@ enum Variadicity {
 }
 
 type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
-  case OperandDef     => Operand[A]
-  case ResultDef      => Result[A]
-  case RegionDef      => Region
-  case SuccessorDef   => Successor
-  case OpPropertyDef  => Property[A]
+  case OperandDef    => Operand[A]
+  case ResultDef     => Result[A]
+  case RegionDef     => Region
+  case SuccessorDef  => Successor
+  case OpPropertyDef => Property[A]
 }
 
 type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]

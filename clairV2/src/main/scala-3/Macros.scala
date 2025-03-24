@@ -25,10 +25,11 @@ import scair.clairV2.codegen._
 // ██║╚██╔╝██║ ██╔══██║ ██║░░██╗ ██╔══██╗ ██║░░██║ ░╚═══██╗
 // ██║░╚═╝░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ╚█████╔╝ ██████╔╝
 // ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
-extension[A: Type, B: Type](es: Expr[Iterable[A]])
+extension [A: Type, B: Type](es: Expr[Iterable[A]])
+
   def map(f: Expr[A] => Expr[B])(using Quotes): Expr[Iterable[B]] = {
     '{
-          $es.map(a => ${ f('a) })
+      $es.map(a => ${ f('a) })
     }
   }
 
@@ -132,22 +133,32 @@ def fromADTOperationMacro[T: Type](
 ||  Unverified to ADT conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-def verifyOperand[CSTR <: Attribute : Type](operand : Expr[Operand[Attribute]])(using Quotes) =
-  '{ $operand match
-    case y : Operand[CSTR] => y
-    case _ => throw new Exception(s"Expected ${}")
+def verifyOperand[CSTR <: Attribute: Type](
+    operand: Expr[Operand[Attribute]]
+)(using Quotes) =
+  '{
+    $operand match
+      case y: Operand[CSTR] => y
+      case _                => throw new Exception(s"Expected ${}")
   }
 
-def verifyOperands[CSTR <: Attribute : Type](operands : Expr[Iterable[Operand[Attribute]]])(using Quotes) = 
+def verifyOperands[CSTR <: Attribute: Type](
+    operands: Expr[Iterable[Operand[Attribute]]]
+)(using Quotes) =
   operands.map(verifyOperand)
 
-def verifyResult[CSTR <: Attribute : Type](result : Expr[Result[Attribute]])(using Quotes) =
-  '{ $result match
-    case y : Result[CSTR] => y
-    case _ => throw new Exception(s"Expected ${}")
+def verifyResult[CSTR <: Attribute: Type](
+    result: Expr[Result[Attribute]]
+)(using Quotes) =
+  '{
+    $result match
+      case y: Result[CSTR] => y
+      case _               => throw new Exception(s"Expected ${}")
   }
 
-def verifyResults[CSTR <: Attribute : Type](results : Expr[Iterable[Result[Attribute]]])(using Quotes) =
+def verifyResults[CSTR <: Attribute: Type](
+    results: Expr[Iterable[Result[Attribute]]]
+)(using Quotes) =
   results.map(verifyResult)
 
 def fromUnverifiedOperationMacro[T: Type](
@@ -181,52 +192,57 @@ def fromUnverifiedOperationMacro[T: Type](
       ofConstruct: String,
       no: Int
   ): Expr[Seq[Int]] =
-     val segmentSizesName = s"${ofConstruct}SegmentSizes"
-      '{
-        val dictAttributes = $genExpr.dictionaryProperties
+    val segmentSizesName = s"${ofConstruct}SegmentSizes"
+    '{
+      val dictAttributes = $genExpr.dictionaryProperties
 
-        if (!dictAttributes.contains(s"${${Expr(segmentSizesName)}}SegmentSizes"))
-        then throw new Exception(s"Expected ${${Expr(segmentSizesName)}}SegmentSizes property")
+      if (
+        !dictAttributes.contains(s"${${ Expr(segmentSizesName) }}SegmentSizes")
+      )
+      then
+        throw new Exception(
+          s"Expected ${${ Expr(segmentSizesName) }}SegmentSizes property"
+        )
 
-        val segmentSizes =
-          dictAttributes(s"${${Expr(segmentSizesName)}}SegmentSizes") match {
-            case right: DenseArrayAttr => right
-            case _ =>
-              throw new Exception(
-                s"Expected ${${Expr(segmentSizesName)}}SegmentSizes to be a DenseArrayAttr"
-              )
-          }
+      val segmentSizes =
+        dictAttributes(s"${${ Expr(segmentSizesName) }}SegmentSizes") match {
+          case right: DenseArrayAttr => right
+          case _ =>
+            throw new Exception(
+              s"Expected ${${ Expr(segmentSizesName) }}SegmentSizes to be a DenseArrayAttr"
+            )
+        }
 
-        ParametrizedAttrConstraint[DenseArrayAttr](
-          Seq(
-            EqualAttr(IntegerType(IntData(32), Signless)),
-            AllOf(
-              Seq(
-                BaseAttr[IntegerAttr](),
-                ParametrizedAttrConstraint[IntegerAttr](
-                  Seq(
-                    BaseAttr[IntData](),
-                    EqualAttr(IntegerType(IntData(32), Signless))
-                  )
+      ParametrizedAttrConstraint[DenseArrayAttr](
+        Seq(
+          EqualAttr(IntegerType(IntData(32), Signless)),
+          AllOf(
+            Seq(
+              BaseAttr[IntegerAttr](),
+              ParametrizedAttrConstraint[IntegerAttr](
+                Seq(
+                  BaseAttr[IntData](),
+                  EqualAttr(IntegerType(IntData(32), Signless))
                 )
               )
             )
           )
-        ).verify(segmentSizes, ConstraintContext())
+        )
+      ).verify(segmentSizes, ConstraintContext())
 
-        if (segmentSizes.length != ${ Expr(no) }) then
+      if (segmentSizes.length != ${ Expr(no) }) then
+        throw new Exception(
+          s"Expected ${${ Expr(segmentSizesName) }}SegmentSizes to have ${${ Expr(no) }} elements, got ${segmentSizes.length}"
+        )
+
+      for (s <- segmentSizes) yield s match {
+        case right: IntegerAttr => right.value.data.toInt
+        case _ =>
           throw new Exception(
-            s"Expected ${${Expr(segmentSizesName)}}SegmentSizes to have ${${ Expr(no) }} elements, got ${segmentSizes.length}"
+            "Unreachable exception as per above constraint check."
           )
-
-        for (s <- segmentSizes) yield s match {
-          case right: IntegerAttr => right.value.data.toInt
-          case _ =>
-            throw new Exception(
-              "Unreachable exception as per above constraint check."
-            )
-        }
       }
+    }
   def operandSegmentSizes(
       noOfOperands: Int
   ): Expr[Seq[Int]] =
