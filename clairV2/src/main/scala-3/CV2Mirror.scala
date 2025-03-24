@@ -80,11 +80,6 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         name = name,
         tpe = Type.of[t]
       )
-    case '[Attr[t]] =>
-      OpAttributeDef(
-        name = name,
-        typeString = typeToString[t]
-      )
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -151,7 +146,6 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        attributes = inputs.collect { case a: OpAttributeDef => a },
         assembly_format = None
       )
       e

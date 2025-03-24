@@ -36,14 +36,15 @@ enum Variadicity {
   case Single, Variadic
 }
 
-type DefinedInput[T <: OpInputDef] = T match {
-  case OperandDef     => Operand[Attribute]
-  case ResultDef      => Result[Attribute]
+type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
+  case OperandDef     => Operand[A]
+  case ResultDef      => Result[A]
   case RegionDef      => Region
   case SuccessorDef   => Successor
-  case OpPropertyDef  => Property[Attribute]
-  case OpAttributeDef => Attribute
+  case OpPropertyDef  => Property[A]
 }
+
+type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
 
 case class OperandDef(
     override val name: String,
@@ -76,11 +77,6 @@ case class OpPropertyDef(
     val tpe: Type[_]
 ) extends OpInputDef(name) {}
 
-case class OpAttributeDef(
-    override val name: String,
-    val typeString: String
-) extends OpInputDef(name) {}
-
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||
 \*≡==----=≡≡≡=----==≡*/
@@ -93,7 +89,6 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val attributes: Seq[OpAttributeDef] = Seq(),
     val assembly_format: Option[String] = None
 ) {
 

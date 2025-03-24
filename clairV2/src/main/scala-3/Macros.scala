@@ -25,21 +25,12 @@ import scair.clairV2.codegen._
 // ██║╚██╔╝██║ ██╔══██║ ██║░░██╗ ██╔══██╗ ██║░░██║ ░╚═══██╗
 // ██║░╚═╝░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ╚█████╔╝ ██████╔╝
 // ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
-
-inline def typeToString[T]: String = ${ typeToStringImpl[T] }
-
-def typeToStringImpl[T: Type](using Quotes): Expr[String] = {
-  Expr(Type.show[T])
-}
-
-inline def getClassPath[T]: String = ${ getClassPathImpl[T] }
-
-def getClassPathImpl[T: Type](using Quotes): Expr[String] = {
-  import quotes.reflect.*
-  val classSymbol = TypeRepr.of[T].typeSymbol
-  val classPath = classSymbol.fullName
-  Expr(classPath)
-}
+extension[A: Type, B: Type](es: Expr[Iterable[A]])
+  def map(f: Expr[A] => Expr[B])(using Quotes): Expr[Iterable[B]] = {
+    '{
+          $es.map(a => ${ f('a) })
+    }
+  }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ADT to Unverified conversion Macro  ||
@@ -152,6 +143,25 @@ def fromADTOperationMacro[T: Type](
 ||  Unverified to ADT conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
+def verifyOperand[CSTR <: Attribute : Type](operand : Expr[Operand[Attribute]])(using Quotes) =
+
+  '{ $operand match
+    case y : Operand[CSTR] => y
+    case _ => throw new Exception(s"Expected ${}")
+  }
+
+def verifyOperands[CSTR <: Attribute : Type](operands : Expr[Iterable[Operand[Attribute]]])(using Quotes) = 
+  operands.map(verifyOperand)
+
+def verifyResult[CSTR <: Attribute : Type](result : Expr[Result[Attribute]])(using Quotes) =
+  '{ $result match
+    case y : Result[CSTR] => y
+    case _ => throw new Exception(s"Expected ${}")
+  }
+
+def verifyResults[CSTR <: Attribute : Type](results : Expr[Iterable[Result[Attribute]]])(using Quotes) =
+  results.map(verifyResult)
+
 def fromUnverifiedOperationMacro[T: Type](
     opDef: OperationDef,
     genExpr: Expr[UnverifiedOp[T]]
@@ -160,92 +170,6 @@ def fromUnverifiedOperationMacro[T: Type](
 
   /*_____________*\
   \*-- HELPERS --*/
-
-  // extract generic type T from Operand[T], Result[T] etc.
-  def extractGenericType(applied: AppliedType): TypeRepr =
-    applied match
-      case AppliedType(_, List(targ)) => targ
-      case _ =>
-        report.errorAndAbort(
-          s"Could not extract generic type from ${applied.show}"
-        )
-
-  // type checking and casting an operand
-  def generateCheckedOperandArgument[A <: Attribute: Type](
-      item: Expr[Operand[Attribute]],
-      index: Int
-  ): Expr[Operand[A]] =
-    val typeName = Type.of[A].toString()
-    '{
-      val value = $item.typ
-
-      if (!value.isInstanceOf[A]) {
-        throw new IllegalArgumentException(
-          s"Type mismatch for operand at index ${${ Expr(index) }}: " +
-            s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass.getSimpleName}"
-        )
-      }
-      $item.asInstanceOf[Operand[A]]
-    }
-
-  def generateCheckedOperandArgumentOfVariadic[A <: Attribute: Type](
-      list: Expr[ListBuffer[Operand[Attribute]]],
-      index: Int
-  ): Expr[Seq[Operand[A]]] =
-    val typeName = Type.of[A].toString()
-    '{
-      (for (item <- $list) yield {
-        val value = item.typ
-
-        if (!value.isInstanceOf[A]) {
-          throw new IllegalArgumentException(
-            s"Type mismatch for operand at index ${${ Expr(index) }}: " +
-              s"expected ${${ Expr(typeName) }}, " +
-              s"but found ${value.getClass.getSimpleName}"
-          )
-        }
-        item.asInstanceOf[Operand[A]]
-      }).toSeq
-    }
-
-  def generateCheckedResultArgument[A <: Attribute: Type](
-      item: Expr[Result[Attribute]],
-      index: Int
-  ): Expr[Result[A]] =
-    val typeName = Type.of[A].toString()
-    '{
-      val value = $item.typ
-
-      if (!value.isInstanceOf[A]) {
-        throw new IllegalArgumentException(
-          s"Type mismatch for result at index ${${ Expr(index) }}: " +
-            s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass.getSimpleName}"
-        )
-      }
-      $item.asInstanceOf[Result[A]]
-    }
-
-  def generateCheckedResultArgumentOfVariadic[A <: Attribute: Type](
-      list: Expr[ListBuffer[Result[Attribute]]],
-      index: Int
-  ): Expr[Seq[Operand[A]]] =
-    val typeName = Type.of[A].toString()
-    '{
-      (for (item <- $list) yield {
-        val value = item.typ
-
-        if (!value.isInstanceOf[A]) {
-          throw new IllegalArgumentException(
-            s"Type mismatch for variadic result at index ${${ Expr(index) }}: " +
-              s"expected ${${ Expr(typeName) }}, " +
-              s"but found ${value.getClass.getSimpleName}"
-          )
-        }
-        item.asInstanceOf[Result[A]]
-      }).toSeq
-    }
 
   def generateCheckedPropertyArgument[A <: Attribute: Type](
       list: Expr[DictType[String, Attribute]],
@@ -264,11 +188,6 @@ def fromUnverifiedOperationMacro[T: Type](
       }
       Property[A](value.asInstanceOf[A])
     }
-
-  // used to get (from, to) indices for single variadic cases, do not use with multivariadics
-  def getPartitions(x: Seq[String], fullLength: Int): (Int, Int) =
-    val (preceeding, following) = x.splitAt(x.indexOf("Var"))
-    (preceeding.length, fullLength - following.length)
 
   def operandSegmentSizes(
       variadicsNumber: Int,
@@ -387,9 +306,8 @@ def fromUnverifiedOperationMacro[T: Type](
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           variadicity match
             case Variadicity.Single =>
-              generateCheckedOperandArgument[t & Attribute](
-                '{ $genExpr.operands(${ Expr(idx) }) },
-                idx
+              verifyOperand[t & Attribute](
+                '{ $genExpr.operands(${ Expr(idx) }) }
               )
             case Variadicity.Variadic =>
               if variadicOperands > 1 then
@@ -413,15 +331,14 @@ def fromUnverifiedOperationMacro[T: Type](
                     ${ Expr(idx) }
                   )
                 }
-                generateCheckedOperandArgumentOfVariadic[t & Attribute](
+                verifyOperands[t & Attribute](
                   '{
                     $genExpr.operands
                       .slice($from, $to)
-                  },
-                  idx
+                  }
                 )
               else
-                generateCheckedOperandArgumentOfVariadic[t & Attribute](
+                verifyOperands[t & Attribute](
                   {
                     val (preceeding, following) =
                       operands
@@ -439,10 +356,8 @@ def fromUnverifiedOperationMacro[T: Type](
                       $genExpr.operands
                         .slice(from, to)
                     }
-                  },
-                  idx
+                  }
                 )
-
   }
   /*________________*\
   \*-- SUCCESSORS --*/
@@ -464,9 +379,8 @@ def fromUnverifiedOperationMacro[T: Type](
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           variadicity match
             case Variadicity.Single =>
-              generateCheckedResultArgument[t & Attribute](
-                '{ $genExpr.results(${ Expr(idx) }) },
-                idx
+              verifyResult[t & Attribute](
+                '{ $genExpr.results(${ Expr(idx) }) }
               )
             case Variadicity.Variadic =>
               if variadicResults > 1 then
@@ -490,15 +404,14 @@ def fromUnverifiedOperationMacro[T: Type](
                     ${ Expr(idx) }
                   )
                 }
-                generateCheckedResultArgumentOfVariadic[t & Attribute](
+                verifyResults[t & Attribute](
                   '{
                     $genExpr.results
                       .slice($from, $to)
-                  },
-                  idx
+                  }
                 )
               else
-                generateCheckedResultArgumentOfVariadic[t & Attribute](
+                verifyResults[t & Attribute](
                   {
                     val (preceeding, following) =
                       results
@@ -516,8 +429,7 @@ def fromUnverifiedOperationMacro[T: Type](
                       $genExpr.results
                         .slice(from, to)
                     }
-                  },
-                  idx
+                  }
                 )
   }
 
