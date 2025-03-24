@@ -411,44 +411,11 @@ def fromUnverifiedOperationMacro[T: Type](
   /*_____________*\
   \*-- OPERAND --*/
 
-  // grouping parameters by their type
-  val (operandParams, restParams0) = params.partition { sym =>
-    sym.termRef.widenTermRefByName match
-      case AppliedType(_, List(AppliedType(tycon, _))) =>
-        tycon =:= TypeRepr.of[Operand]
-      case AppliedType(tycon, _) =>
-        tycon =:= TypeRepr.of[Operand]
-      case _ => false
-  }
-
-  val variadicOperandParams = operandParams.filter { sym =>
-    sym.termRef.widenTermRefByName match
-      case AppliedType(tycon, _) =>
-        tycon =:= TypeRepr.of[Variadic]
-      case _ => false
-  }
-
-  // get the expected types for all input parameters
-  val operandExpectedTypes = operandParams.zipWithIndex.map { (sym, idx) =>
-    sym.termRef.widenTermRefByName match
-      // for Variadic[Operand[targ]]
-      case AppliedType(tycon, List(AppliedType(_, List(targ)))) =>
-        ("Var", targ, idx)
-      // for Operand[targ]
-      case AppliedType(tycon, List(targ)) => ("Sin", targ, idx)
-      case _ =>
-        report.errorAndAbort(
-          s"Unexpected non-applied type: ${sym.termRef.widenTermRefByName.show}"
-        )
-  }
-
   // extracting and validating each input, the casting the Operand instance
-  val multivariadicOperands =
-    opDef.operands.count(_.variadicity != Variadicity.Single) > 1
-  val operandArgs = opDef.operands.zipWithIndex.map {
+  val operands = opDef.operands
+  val variadicOperands = operands.count(_.variadicity != Variadicity.Single)
+  val operandArgs = operands.zipWithIndex.map {
     case (OperandDef(name, tpe, variadicity), idx) =>
-      val operand = symbolicFieldImpl(genExpr, Expr(name))
-        .asExprOf[Operand[Attribute] | Seq[Attribute]]
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           variadicity match
@@ -458,12 +425,12 @@ def fromUnverifiedOperationMacro[T: Type](
                 idx
               )
             case Variadicity.Variadic =>
-              if multivariadicOperands then
+              if variadicOperands > 1 then
                 val from = '{
                   ${
                     operandSegmentSizes(
-                      variadicOperandParams.length,
-                      operandParams.length
+                      variadicOperands,
+                      operands.length
                     )
                   }
                     .slice(0, ${ Expr(idx) })
@@ -472,8 +439,8 @@ def fromUnverifiedOperationMacro[T: Type](
                 val to = '{
                   $from + ${
                     operandSegmentSizes(
-                      variadicOperandParams.length,
-                      operandParams.length
+                      variadicOperands,
+                      operands.length
                     )
                   }(
                     ${ Expr(idx) }
@@ -490,7 +457,7 @@ def fromUnverifiedOperationMacro[T: Type](
                 generateCheckedOperandArgumentOfVariadic[t & Attribute](
                   {
                     val (preceeding, following) =
-                      opDef.operands
+                      operands
                         .map(_.variadicity)
                         .splitAt(opDef.operands.indexOf(Variadicity.Variadic))
                     '{
@@ -513,7 +480,7 @@ def fromUnverifiedOperationMacro[T: Type](
   /*________________*\
   \*-- SUCCESSORS --*/
 
-  val (successorParams, restParams1) = restParams0.partition { sym =>
+  val (successorParams, restParams1) = params.partition { sym =>
     sym.termRef.widenTermRefByName match
       case tycon => tycon =:= TypeRepr.of[scair.ir.Block]
   }
@@ -674,7 +641,8 @@ def fromUnverifiedOperationMacro[T: Type](
 
   // checking that lengths of inputs in generalized machine and case class are the same
   val lengthCheck = {
-    val varOperLen = Expr(variadicOperandParams.length)
+    val nOperands = opDef.operands.length
+    val varOperLen = Expr(variadicOperands)
     val varResLen = Expr(variadicResultParams.length)
 
     '{
@@ -686,22 +654,22 @@ def fromUnverifiedOperationMacro[T: Type](
 
       $varOperLen match {
         case 0 =>
-          if (operands.length != ${ Expr(operandParams.length) }) {
+          if (operands.length != ${ Expr(variadicOperands) }) {
             throw new IllegalArgumentException(
-              s"Expected ${${ Expr(operandParams.length) }} operands, but got ${operands.length}"
+              s"Expected ${${ Expr(variadicOperands) }} operands, but got ${operands.length}"
             )
           }
         case 1 =>
-          if (${ Expr(operandParams.length) } < operands.length - 1) {
+          if (${ Expr(variadicOperands) } < operands.length - 1) {
             throw new IllegalArgumentException(
-              s"Expected ${${ Expr(operandParams.length) }} operands, but got ${operands.length}"
+              s"Expected ${${ Expr(variadicOperands) }} operands, but got ${operands.length}"
             )
           }
         case _ =>
           val operandSegmentSizesSum = ${
             operandSegmentSizes(
-              variadicOperandParams.length,
-              operandParams.length
+              variadicOperands,
+              nOperands
             )
           }.fold(0)(_ + _)
           if (operandSegmentSizesSum != operands.length) then
@@ -732,7 +700,7 @@ def fromUnverifiedOperationMacro[T: Type](
         case _ =>
           val resultSegmentSizesSum = ${
             resultSegmentSizes(
-              variadicOperandParams.length,
+              variadicOperands,
               resultParams.length
             )
           }.fold(0)(_ + _)
@@ -762,7 +730,7 @@ def fromUnverifiedOperationMacro[T: Type](
     paramType match
       case AppliedType(tycon, List(AppliedType(tycon2, _))) =>
         if (tycon2 =:= TypeRepr.of[Operand]) {
-          val idx = operandParams.indexOf(param)
+          val idx = operands.indexWhere(_.name == param.name)
           operandArgs(idx)
         } else if (tycon2 =:= TypeRepr.of[Result]) {
           val idx = resultParams.indexOf(param)
@@ -774,7 +742,7 @@ def fromUnverifiedOperationMacro[T: Type](
         }
       case AppliedType(tycon, List(targ)) =>
         if (tycon =:= TypeRepr.of[Operand]) {
-          val idx = operandParams.indexOf(param)
+          val idx = operands.indexWhere(_.name == param.name)
           operandArgs(idx)
         } else if (tycon =:= TypeRepr.of[Result]) {
           val idx = resultParams.indexOf(param)
