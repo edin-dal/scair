@@ -38,23 +38,12 @@ extension[A: Type, B: Type](es: Expr[Iterable[A]])
 
 import scala.quoted.*
 
-inline def symbolicField[T](inline obj: T, inline fieldName: String): Any =
-  ${ symbolicFieldImpl('obj, 'fieldName) }
-
-def symbolicFieldImpl[T: Type](obj: Expr[T], fieldName: Expr[String])(using
+def selectMember[T: Type](obj: Expr[T], name: String)(using
     Quotes
 ): Expr[Any] = {
   import quotes.reflect.*
 
-  fieldName.value match {
-    case Some(name) =>
-      val symbol = obj.asTerm.tpe.typeSymbol.fieldMember(name)
-      Select(obj.asTerm, symbol).asExpr
-    case None =>
-      report.errorAndAbort(
-        s"Field name ${fieldName.show} must be a known string at compile-time"
-      )
-  }
+  Select.unique(obj.asTerm, name).asExpr
 }
 
 def ADTFlatInputMacro[Def <: OpInputDef: Type, T: Type](
@@ -67,11 +56,11 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type, T: Type](
       (d match
         case d: MayVariadicOpInputDef
             if (d.variadicity == Variadicity.Variadic) =>
-          symbolicFieldImpl(adtOpExpr, Expr(d.name))
+          selectMember(adtOpExpr, d.name)
         case _ =>
           '{
             Seq(${
-              symbolicFieldImpl(adtOpExpr, Expr(d.name))
+              selectMember(adtOpExpr, d.name)
                 .asExprOf[DefinedInput[Def]]
             })
           }
