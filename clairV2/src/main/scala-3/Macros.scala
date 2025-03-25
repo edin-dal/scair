@@ -133,33 +133,213 @@ def fromADTOperationMacro[T: Type](
 ||  Unverified to ADT conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-def verifyOperand[CSTR <: Attribute: Type](
-    operand: Expr[Operand[Attribute]]
-)(using Quotes) =
+/*_____________*\
+\*-- HELPERS --*/
+
+def generateCheckedPropertyArgument[A <: Attribute: Type](
+    list: Expr[DictType[String, Attribute]],
+    propName: String
+)(using Quotes): Expr[Property[A]] =
+  val typeName = Type.of[A].toString()
   '{
-    $operand match
-      case y: Operand[CSTR] => y
-      case _                => throw new Exception(s"Expected ${}")
+    val value = $list(${ Expr(propName) })
+
+    if (!value.isInstanceOf[A]) {
+      throw new IllegalArgumentException(
+        s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+          s"expected ${${ Expr(typeName) }}, " +
+          s"but found ${value.getClass.getSimpleName}"
+      )
+    }
+    Property[A](value.asInstanceOf[A])
   }
 
-def verifyOperands[CSTR <: Attribute: Type](
-    operands: Expr[Iterable[Operand[Attribute]]]
+def getConstructSeq[Def <: MayVariadicOpInputDef: Type](
+    op: Expr[UnverifiedOp[_]]
 )(using Quotes) =
-  operands.map(verifyOperand)
+  Type.of[DefinedInput[Def]] match
+    case '[Result[_]]  => '{ ${ op }.results }
+    case '[Operand[_]] => '{ ${ op }.operands }
+    case '[Region]     => '{ ${ op }.regions }
+    case '[Successor]  => '{ ${ op }.successors }
 
-def verifyResult[CSTR <: Attribute: Type](
-    result: Expr[Result[Attribute]]
+def getConstructName[Def <: MayVariadicOpInputDef: Type](using Quotes) =
+  Type.of[DefinedInput[Def]] match
+    case '[Result[_]]  => "result"
+    case '[Operand[_]] => "operand"
+    case '[Region]     => "region"
+    case '[Successor]  => "successor"
+
+def expectSegmentSizes[Def <: MayVariadicOpInputDef: Type](
+    op: Expr[UnverifiedOp[_]]
 )(using Quotes) =
+  val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
-    $result match
-      case y: Result[CSTR] => y
-      case _               => throw new Exception(s"Expected ${}")
+    val dense =
+      ${ op }.dictionaryProperties.get(s"${${ Expr(segmentSizesName) }}") match
+        case Some(segmentSizes) =>
+          segmentSizes match
+            case dense: DenseArrayAttr => dense
+            case _ =>
+              throw new Exception(
+                s"Expected ${${ Expr(segmentSizesName) }} to be a DenseArrayAttr"
+              )
+
+        case None =>
+          throw new Exception(
+            s"Expected ${${ Expr(segmentSizesName) }} property"
+          )
+
+    ParametrizedAttrConstraint[DenseArrayAttr](
+      Seq(
+        EqualAttr(IntegerType(IntData(32), Signless)),
+        AllOf(
+          Seq(
+            BaseAttr[IntegerAttr](),
+            ParametrizedAttrConstraint[IntegerAttr](
+              Seq(
+                BaseAttr[IntData](),
+                EqualAttr(IntegerType(IntData(32), Signless))
+              )
+            )
+          )
+        )
+      )
+    ).verify(dense, ConstraintContext())
+
+    for (s <- dense) yield s match {
+      case right: IntegerAttr => right.value.data.toInt
+      case _ =>
+        throw new Exception(
+          "Unreachable exception as per above constraint check."
+        )
+    }
   }
 
-def verifyResults[CSTR <: Attribute: Type](
-    results: Expr[Iterable[Result[Attribute]]]
+def partitionConstruct[Def <: MayVariadicOpInputDef: Type](
+    defs: Seq[Def],
+    op: Expr[UnverifiedOp[_]]
 )(using Quotes) =
-  results.map(verifyResult)
+  val flat = getConstructSeq[Def](op)
+  defs.count(_.variadicity != Variadicity.Single) match
+    case 0 => defs.zipWithIndex.map((d, i) => '{ ${ flat }(${ Expr(i) }) })
+
+    case 1 =>
+      val preceeding = defs.indexWhere(_.variadicity == Variadicity.Variadic)
+      val following = defs.length - preceeding - 1
+      val preceeding_exprs = defs
+        .slice(0, preceeding)
+        .zipWithIndex
+        .map((d, i) => '{ ${ flat }.apply(${ Expr(i) }) })
+      println(preceeding_exprs.map(_.show).mkString("\n"))
+      val variadic_expr = '{
+        ${ flat }
+          .slice(${ Expr(preceeding) }, ${ flat }.length - ${ Expr(following) })
+      }
+      println(variadic_expr.show)
+      val following_exprs = defs
+        .slice(preceeding + 1, defs.length)
+        .zipWithIndex
+        .map((d, i) =>
+          '{
+            ${ flat }.apply(${ flat }.length - ${ Expr(following) } + ${
+              Expr(i)
+            })
+          }
+        )
+      println(following_exprs.map(_.show).mkString("\n"))
+      (preceeding_exprs :+ variadic_expr) ++ following_exprs
+    case _ =>
+      val segmentSizes = '{
+        val sizes = ${ expectSegmentSizes[Def](op) }
+        val segments = sizes.length
+        val total = sizes.sum
+        if (segments != ${ Expr(defs.length) }) then
+          throw new Exception(
+            s"Expected ${${ Expr(defs.length) }} entries in ${${
+                Expr(getConstructName[Def])
+              }}SegmentSizes, got ${segments}."
+          )
+        if (total != ${ flat }.length) then
+          throw new Exception(
+            s"${${ Expr(getConstructName[Def]) }}'s sum does not match the op's ${${
+                flat
+              }.length} ${${ Expr(getConstructName[Def]) }}s."
+          )
+        sizes
+      }
+      defs.zipWithIndex.map { case (d, i) =>
+        d.variadicity match
+          case Variadicity.Single => '{ ${ flat }(${ Expr(i) }) }
+          case Variadicity.Variadic =>
+            val e = '{
+              val sizes = $segmentSizes
+              val start = sizes.slice(0, ${ Expr(i) }).sum
+              val end = start + sizes(${ Expr(i) })
+              ${ flat }.slice(start, end)
+            }
+            println(e.show)
+            e
+      }
+
+def verifyConstructs[Def <: MayVariadicOpInputDef: Type](
+    defs: Seq[Def],
+    op: Expr[UnverifiedOp[_]]
+)(using Quotes) = {
+  (partitionConstruct[Def](defs, op) zip defs).map { (c, d) =>
+    val tpe = d match
+      case OperandDef(name, tpe, variadicity) => tpe
+      case ResultDef(name, tpe, variadicity)  => tpe
+      case RegionDef(name, variadicity)       => Type.of[Attribute]
+      case SuccessorDef(name, variadicity)    => Type.of[Attribute]
+    tpe match
+      case '[t] =>
+        d.variadicity match
+          case Variadicity.Single =>
+            '{
+              if (!${ c }.isInstanceOf[DefinedInputOf[Def, t & Attribute]]) then
+                throw new Exception(
+                  s"Expected ${${ Expr(d.name) }} to be of type ${${
+                      Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+                    }}, got ${${ c }}"
+                )
+              ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
+            }
+          case Variadicity.Variadic =>
+            '{
+              if (
+                !${ c }
+                  .isInstanceOf[ListType[DefinedInputOf[Def, t & Attribute]]]
+              ) then
+                throw new Exception(
+                  s"Expected ${${ Expr(d.name) }} to be of type ${${
+                      Expr(Type.show[ListType[DefinedInputOf[Def, t & Attribute]]])
+                    }}, got ${${ c }}"
+                )
+              ${ c }
+                .asInstanceOf[ListType[DefinedInputOf[Def, t & Attribute]]]
+                .toSeq
+            }
+  }
+}
+
+def constructorArgs[Def <: MayVariadicOpInputDef: Type](
+    opDef: OperationDef,
+    op: Expr[UnverifiedOp[_]]
+)(using Quotes) =
+  import quotes.reflect._
+  (verifyConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
+    NamedArg(d.name, e.asTerm)
+  ) ++
+    (verifyConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
+      NamedArg(d.name, e.asTerm)
+    ) ++
+    (verifyConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
+      NamedArg(d.name, e.asTerm)
+    ) ++
+    (verifyConstructs(opDef.successors, op) zip opDef.successors).map((e, d) =>
+      NamedArg(d.name, e.asTerm)
+    )
 
 def fromUnverifiedOperationMacro[T: Type](
     opDef: OperationDef,
@@ -167,235 +347,7 @@ def fromUnverifiedOperationMacro[T: Type](
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
 
-  /*_____________*\
-  \*-- HELPERS --*/
-
-  def generateCheckedPropertyArgument[A <: Attribute: Type](
-      list: Expr[DictType[String, Attribute]],
-      propName: String
-  ): Expr[Property[A]] =
-    val typeName = Type.of[A].toString()
-    '{
-      val value = $list(${ Expr(propName) })
-
-      if (!value.isInstanceOf[A]) {
-        throw new IllegalArgumentException(
-          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-            s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass.getSimpleName}"
-        )
-      }
-      Property[A](value.asInstanceOf[A])
-    }
-
-  def segmentSizes(
-      ofConstruct: String,
-      no: Int
-  ): Expr[Seq[Int]] =
-    val segmentSizesName = s"${ofConstruct}SegmentSizes"
-    '{
-      val dictAttributes = $genExpr.dictionaryProperties
-
-      if (
-        !dictAttributes.contains(s"${${ Expr(segmentSizesName) }}SegmentSizes")
-      )
-      then
-        throw new Exception(
-          s"Expected ${${ Expr(segmentSizesName) }}SegmentSizes property"
-        )
-
-      val segmentSizes =
-        dictAttributes(s"${${ Expr(segmentSizesName) }}SegmentSizes") match {
-          case right: DenseArrayAttr => right
-          case _ =>
-            throw new Exception(
-              s"Expected ${${ Expr(segmentSizesName) }}SegmentSizes to be a DenseArrayAttr"
-            )
-        }
-
-      ParametrizedAttrConstraint[DenseArrayAttr](
-        Seq(
-          EqualAttr(IntegerType(IntData(32), Signless)),
-          AllOf(
-            Seq(
-              BaseAttr[IntegerAttr](),
-              ParametrizedAttrConstraint[IntegerAttr](
-                Seq(
-                  BaseAttr[IntData](),
-                  EqualAttr(IntegerType(IntData(32), Signless))
-                )
-              )
-            )
-          )
-        )
-      ).verify(segmentSizes, ConstraintContext())
-
-      if (segmentSizes.length != ${ Expr(no) }) then
-        throw new Exception(
-          s"Expected ${${ Expr(segmentSizesName) }}SegmentSizes to have ${${ Expr(no) }} elements, got ${segmentSizes.length}"
-        )
-
-      for (s <- segmentSizes) yield s match {
-        case right: IntegerAttr => right.value.data.toInt
-        case _ =>
-          throw new Exception(
-            "Unreachable exception as per above constraint check."
-          )
-      }
-    }
-  def operandSegmentSizes(
-      noOfOperands: Int
-  ): Expr[Seq[Int]] =
-    segmentSizes("operand", noOfOperands)
-
-  def resultSegmentSizes(
-      noOfResults: Int
-  ): Expr[Seq[Int]] =
-    segmentSizes("results", noOfResults)
-
-  /*_____________*\
-  \*-- OPERAND --*/
-
-  // extracting and validating each input, the casting the Operand instance
-  val operands = opDef.operands
-  val variadicOperands = operands.count(_.variadicity != Variadicity.Single)
-  val operandArgs = operands.zipWithIndex.map {
-    case (OperandDef(name, tpe, variadicity), idx) =>
-      tpe match
-        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
-          variadicity match
-            case Variadicity.Single =>
-              verifyOperand[t & Attribute](
-                '{ $genExpr.operands(${ Expr(idx) }) }
-              )
-            case Variadicity.Variadic =>
-              if variadicOperands > 1 then
-                val from = '{
-                  ${
-                    operandSegmentSizes(
-                      operands.length
-                    )
-                  }
-                    .slice(0, ${ Expr(idx) })
-                    .fold(0)(_ + _)
-                }
-                val to = '{
-                  $from + ${
-                    operandSegmentSizes(
-                      operands.length
-                    )
-                  }(
-                    ${ Expr(idx) }
-                  )
-                }
-                verifyOperands[t & Attribute](
-                  '{
-                    $genExpr.operands
-                      .slice($from, $to)
-                  }
-                )
-              else
-                verifyOperands[t & Attribute](
-                  {
-                    val (preceeding, following) =
-                      operands
-                        .map(_.variadicity)
-                        .splitAt(opDef.operands.indexOf(Variadicity.Variadic))
-                    '{
-                      val (from, to) =
-                        (
-                          ${ Expr(preceeding.length) },
-                          fullOperandsLength - ${
-                            Expr(following.length - 1)
-                          } // spliceAt Index keeps the element at that index
-                        )
-                      val fullOperandsLength = $genExpr.operands.length
-                      $genExpr.operands
-                        .slice(from, to)
-                    }
-                  }
-                )
-  }
-  /*________________*\
-  \*-- SUCCESSORS --*/
-
-  val successors = opDef.successors
-
-  val successorArgs = successors.zipWithIndex.map { (param, idx) =>
-    '{ $genExpr.successors(${ Expr(idx) }) }
-  }
-
-  /*_____________*\
-  \*-- RESULTS --*/
-
-  val results = opDef.results
-  val variadicResults = results.count(_.variadicity != Variadicity.Single)
-  val resultArgs = results.zipWithIndex.map {
-    case (ResultDef(name, tpe, variadicity), idx) =>
-      tpe match
-        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
-          variadicity match
-            case Variadicity.Single =>
-              verifyResult[t & Attribute](
-                '{ $genExpr.results(${ Expr(idx) }) }
-              )
-            case Variadicity.Variadic =>
-              if variadicResults > 1 then
-                val from = '{
-                  ${
-                    resultSegmentSizes(
-                      results.length
-                    )
-                  }
-                    .slice(0, ${ Expr(idx) })
-                    .fold(0)(_ + _)
-                }
-                val to = '{
-                  $from + ${
-                    resultSegmentSizes(
-                      results.length
-                    )
-                  }(
-                    ${ Expr(idx) }
-                  )
-                }
-                verifyResults[t & Attribute](
-                  '{
-                    $genExpr.results
-                      .slice($from, $to)
-                  }
-                )
-              else
-                verifyResults[t & Attribute](
-                  {
-                    val (preceeding, following) =
-                      results
-                        .map(_.variadicity)
-                        .splitAt(opDef.results.indexOf(Variadicity.Variadic))
-                    '{
-                      val (from, to) =
-                        (
-                          ${ Expr(preceeding.length) },
-                          fullResultsLength - ${
-                            Expr(following.length - 1)
-                          } // spliceAt Index keeps the element at that index
-                        )
-                      val fullResultsLength = $genExpr.results.length
-                      $genExpr.results
-                        .slice(from, to)
-                    }
-                  }
-                )
-  }
-
-  /*_____________*\
-  \*-- REGIONS --*/
-
-  val regions = opDef.regions
-
-  val regionsArgs = regions.zipWithIndex.map { (param, idx) =>
-    '{ $genExpr.regions(${ Expr(idx) }) }
-  }
+  val args = constructorArgs(opDef, genExpr)
 
   /*________________*\
   \*-- PROPERTIES --*/
@@ -406,130 +358,21 @@ def fromUnverifiedOperationMacro[T: Type](
   val propertyArgs = properties.map { case OpPropertyDef(name, tpe) =>
     tpe match
       case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
-        generateCheckedPropertyArgument[t & Attribute](
+        val property = generateCheckedPropertyArgument[t & Attribute](
           '{ $genExpr.dictionaryProperties },
           name
         )
+        NamedArg(name, property.asTerm)
   }
 
-  /*__________________*\
-  \*-- LENGTH CHECK --*/
-
-  // checking that lengths of inputs in generalized machine and case class are the same
-  val lengthCheck = {
-    val OperLen = operands.length
-    val varOperLen = Expr(variadicOperands)
-    val ResLen = results.length
-    val varResLen = Expr(variadicResults)
-    val SuccLen = successors.length
-    val RegLen = regions.length
-    val PropLen = properties.length
-
-    '{
-      val operands = $genExpr.operands
-      val successors = $genExpr.successors
-      val results = $genExpr.results
-      val regions = $genExpr.regions
-      val properties = $genExpr.dictionaryProperties
-
-      $varOperLen match {
-        case 0 =>
-          if (operands.length != ${ Expr(variadicOperands) }) {
-            throw new IllegalArgumentException(
-              s"Expected ${${ Expr(variadicOperands) }} operands, but got ${operands.length}"
-            )
-          }
-        case 1 =>
-          if (${ Expr(variadicOperands) } < operands.length - 1) {
-            throw new IllegalArgumentException(
-              s"Expected ${${ Expr(variadicOperands) }} operands, but got ${operands.length}"
-            )
-          }
-        case _ =>
-          val operandSegmentSizesSum = ${
-            operandSegmentSizes(
-              OperLen
-            )
-          }.fold(0)(_ + _)
-          val SuccLen = successors.length
-          if (operandSegmentSizesSum != operands.length) then
-            throw new Exception(
-              s"Expected ${operandSegmentSizesSum} operands, got ${operands.length}"
-            )
-      }
-
-      if (successors.length != ${ Expr(SuccLen) }) {
-        throw new IllegalArgumentException(
-          s"Expected ${${ Expr(SuccLen) }} successors, but got ${successors.length}"
-        )
-      }
-
-      $varResLen match {
-        case 0 =>
-          if (results.length != ${ Expr(ResLen) }) {
-            throw new IllegalArgumentException(
-              s"Expected ${${ Expr(ResLen) }} results, but got ${results.length} a"
-            )
-          }
-        case 1 =>
-          if (${ Expr(ResLen) } < results.length - 1) {
-            throw new IllegalArgumentException(
-              s"Expected ${${ Expr(ResLen) }} results, but got ${results.length} b"
-            )
-          }
-        case _ =>
-          val resultSegmentSizesSum = ${
-            resultSegmentSizes(
-              ResLen
-            )
-          }.fold(0)(_ + _)
-          if (resultSegmentSizesSum != results.length) then
-            throw new Exception(
-              s"Expected ${resultSegmentSizesSum} results, got ${results.length} c"
-            )
-      }
-
-      if (regions.length != ${ Expr(RegLen) }) {
-        throw new IllegalArgumentException(
-          s"Expected ${${ Expr(RegLen) }} regions, but got ${regions.length}"
-        )
-      }
-
-      if (properties.size != ${ Expr(PropLen) }) {
-        throw new IllegalArgumentException(
-          s"Expected ${${ Expr(PropLen) }} properties, but got ${properties.size}"
-        )
-      }
-    }
-  }
-
-  // Combine all parameters in the correct order
-  val args = opDef.allDefsWithIndex.map { (d: OpInputDef, index: Int) =>
-    d match
-      case OperandDef(name, tpe, variadicity) =>
-        NamedArg(name, operandArgs(index).asTerm)
-      case ResultDef(name, tpe, variadicity) =>
-        NamedArg(name, resultArgs(index).asTerm)
-      case RegionDef(name, variadicity) =>
-        NamedArg(name, regionsArgs(index).asTerm)
-      case SuccessorDef(name, variadicity) =>
-        NamedArg(name, successorArgs(index).asTerm)
-      case OpPropertyDef(name, tpe) =>
-        NamedArg(name, propertyArgs(index).asTerm)
-  }
+  // println((args ++ propertyArgs).map(_.asExpr.show).mkString("\n"))
 
   // creates a new instance of the ADT op
-  val constructorExpr =
-    Apply(
-      Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-      List.from(args)
-    )
-      .asExprOf[T]
-
-  '{
-    $lengthCheck
-    $constructorExpr
-  }
+  Apply(
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
+    List.from(args ++ propertyArgs)
+  )
+    .asExprOf[T]
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR TRAIT    ||
