@@ -231,12 +231,12 @@ def partitionConstruct[Def <: MayVariadicOpInputDef: Type](
         .slice(0, preceeding)
         .zipWithIndex
         .map((d, i) => '{ ${ flat }.apply(${ Expr(i) }) })
-      println(preceeding_exprs.map(_.show).mkString("\n"))
+
       val variadic_expr = '{
         ${ flat }
           .slice(${ Expr(preceeding) }, ${ flat }.length - ${ Expr(following) })
       }
-      println(variadic_expr.show)
+
       val following_exprs = defs
         .slice(preceeding + 1, defs.length)
         .zipWithIndex
@@ -247,7 +247,7 @@ def partitionConstruct[Def <: MayVariadicOpInputDef: Type](
             })
           }
         )
-      println(following_exprs.map(_.show).mkString("\n"))
+
       (preceeding_exprs :+ variadic_expr) ++ following_exprs
     case _ =>
       val segmentSizes = '{
