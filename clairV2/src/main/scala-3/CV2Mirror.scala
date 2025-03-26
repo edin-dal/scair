@@ -44,25 +44,25 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[Variadic[Result[t]]] =>
       ResultDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Variadic
       )
     case '[Variadic[Operand[t]]] =>
       OperandDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Variadic
       )
     case '[Result[t]] =>
       ResultDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Single
       )
     case '[Operand[t]] =>
       OperandDef(
         name = name,
-        typeString = typeToString[t],
+        tpe = Type.of[t],
         Variadicity.Single
       )
     case '[Region] =>
@@ -78,12 +78,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[Property[t]] =>
       OpPropertyDef(
         name = name,
-        typeString = typeToString[t]
-      )
-    case '[Attr[t]] =>
-      OpAttributeDef(
-        name = name,
-        typeString = typeToString[t]
+        tpe = Type.of[t]
       )
 }
 
@@ -151,7 +146,6 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        attributes = inputs.collect { case a: OpAttributeDef => a },
         assembly_format = None
       )
       e

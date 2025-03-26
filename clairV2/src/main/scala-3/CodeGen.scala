@@ -4,6 +4,7 @@ import java.io.File
 import java.io.PrintStream
 import scala.reflect.*
 import scair.ir._
+import scala.quoted._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -35,25 +36,26 @@ enum Variadicity {
   case Single, Variadic
 }
 
-type DefinedInput[T <: OpInputDef] = T match {
-  case OperandDef     => Operand[Attribute]
-  case ResultDef      => Result[Attribute]
-  case RegionDef      => Region
-  case SuccessorDef   => Successor
-  case OpPropertyDef  => Property[Attribute]
-  case OpAttributeDef => Attribute
+type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
+  case OperandDef    => Operand[A]
+  case ResultDef     => Result[A]
+  case RegionDef     => Region
+  case SuccessorDef  => Successor
+  case OpPropertyDef => Property[A]
 }
+
+type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
 
 case class OperandDef(
     override val name: String,
-    val typeString: String,
+    val tpe: Type[_],
     override val variadicity: Variadicity = Variadicity.Single
 ) extends OpInputDef(name)
     with MayVariadicOpInputDef(variadicity) {}
 
 case class ResultDef(
     override val name: String,
-    val typeString: String,
+    val tpe: Type[_],
     override val variadicity: Variadicity = Variadicity.Single
 ) extends OpInputDef(name)
     with MayVariadicOpInputDef(variadicity) {}
@@ -72,12 +74,7 @@ case class SuccessorDef(
 
 case class OpPropertyDef(
     override val name: String,
-    val typeString: String
-) extends OpInputDef(name) {}
-
-case class OpAttributeDef(
-    override val name: String,
-    val typeString: String
+    val tpe: Type[_]
 ) extends OpInputDef(name) {}
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
@@ -92,6 +89,10 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val attributes: Seq[OpAttributeDef] = Seq(),
     val assembly_format: Option[String] = None
-)
+) {
+
+  def allDefsWithIndex =
+    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
+
+}
