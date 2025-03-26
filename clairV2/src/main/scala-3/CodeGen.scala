@@ -5,6 +5,8 @@ import java.io.PrintStream
 import scala.reflect.*
 import scair.ir._
 import scala.quoted._
+import fastparse._
+import fastparse.ScalaWhitespace.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -67,6 +69,57 @@ case class OpPropertyDef(
     val tpe: Type[_]
 ) extends OpInputDef(name) {}
 
+case class Assemblyformat(
+    format: String,
+    operands: Seq[String], //  ["$lhs", "$rhs"]
+    types: Seq[String], //  ["type($lhs)", "type($rhs)"]
+    results: Seq[String] //  ["type($result)"]
+)
+
+trait FormatDirective
+
+case class LiteralDirective(literal: String) extends FormatDirective
+case class ResultTypeDirective(name: String = "result") extends FormatDirective
+case class OperandDirective(name: String) extends FormatDirective
+case class TypeDirective(inner: OperandDirective) extends FormatDirective
+
+object NewParser {
+
+  def resultTypeDirective[$: P]: P[ResultTypeDirective] =
+    P("type($result)").map(_ => ResultTypeDirective())
+
+  def operandDirective[$: P]: P[OperandDirective] =
+    P("$" ~ CharsWhileIn("a-zA-Z0-9_").!)
+      .filter(_ != "result")
+      .map(OperandDirective)
+
+  def typeDirective[$: P]: P[TypeDirective] =
+    P("type(" ~ (operandDirective) ~ ")").map(TypeDirective)
+
+  def literalDirective[$: P]: P[LiteralDirective] =
+    P(CharIn("`,:").!).map(LiteralDirective)
+
+  def formatDirective[$: P]: P[FormatDirective] =
+    P(typeDirective | operandDirective | literalDirective | resultTypeDirective)
+
+  def assemblyFormat[$: P]: P[Seq[FormatDirective]] =
+    P(formatDirective.rep(1))
+
+  def parseFormat(input: String): Parsed[Seq[FormatDirective]] =
+    parse(input, assemblyFormat(_))
+
+}
+
+def Parseassemblyformat(format: String): Seq[FormatDirective] = {
+  NewParser.parseFormat(format) match {
+    case Parsed.Success(parsedFormat, _) => parsedFormat
+    case Parsed.Failure(_, index, extra) =>
+      throw new Exception(
+        s"Parsing failed at index $index}"
+      )
+  }
+}
+
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||
 \*≡==----=≡≡≡=----==≡*/
@@ -79,7 +132,7 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val assembly_format: Option[String] = None
+    val assembly_format: Option[Seq[FormatDirective]] = None
 ) {
 
   def allDefsWithIndex =
