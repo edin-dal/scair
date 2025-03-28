@@ -13,7 +13,9 @@ import scair.Printer
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
 
-class MLIRName[name <: String]
+trait MLIRName[name <: String]
+
+trait MLIRFormat[format <: String]
 
 sealed abstract class Operation()
 
@@ -237,5 +239,7 @@ trait MLIRTraitI[T] extends MLIROperationObject {
   def unverify(adtOp: T): UnverifiedOp[T]
 
   def verify(unverOp: UnverifiedOp[T]): T
+
+  def parse[$ : P](parser: Parser): P[T]
 
 }

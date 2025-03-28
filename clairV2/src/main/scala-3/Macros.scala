@@ -7,6 +7,10 @@ import scair.scairdl.constraints.*
 import scair.dialects.builtin.*
 import scala.collection.mutable.ListBuffer
 
+import scair.Parser
+import fastparse._
+import fastparse.ScalaWhitespace._
+
 import scala.compiletime._
 import scair.clairV2.mirrored.getDefImpl
 import scala.deriving.Mirror
@@ -38,6 +42,9 @@ extension [A: Type, B: Type](es: Expr[Iterable[A]])
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 import scala.quoted.*
+import fastparse.Implicits.Sequencer
+import scala.runtime.ObjectRef
+import scala.collection.immutable.LazyList.cons
 
 /** Small helper to select a member of an expression.
   * @param obj
@@ -496,6 +503,175 @@ def fromUnverifiedOperationMacro[T: Type](
   )
     .asExprOf[T]
 
+
+transparent inline def parsingRun[$ : Type](format : Seq[FormatDirective], ctx : Expr[P[_]])(using parser : Expr[Parser])(using Quotes) : Expr[P[$]] =
+{
+  format match {
+    case rhead :+ rtail => 
+      rtail match {
+      case OperandDirective(name) => '{
+        ${parsingRun(rhead, ctx)}.~(Parser.ValueUse(using $ctx))
+      }
+      
+      case TypeDirective(OperandDirective(name)) => '{
+        ${parsingRun(rhead, ctx)} ~ $parser.Type(using $ctx)
+      }
+      case ResultTypeDirective(name) => '{
+        $parser.Type(using $ctx)
+      }
+      case LiteralDirective(literal) => '{
+        LiteralStr(${Expr(literal)})(using $ctx)
+      }
+    }
+  }
+}
+
+
+def parsingRuns(format : Seq[FormatDirective], ctx : Expr[P[_]])(using parser : Expr[Parser])(using Quotes) =
+{
+  format.collect{
+    case OperandDirective(name) => '{
+      Parser.ValueUse(using $ctx)
+    }
+    case TypeDirective(OperandDirective(name)) => '{
+      $parser.Type(using $ctx)
+    }
+    case ResultTypeDirective(name) => '{
+      $parser.Type(using $ctx)
+    }
+    case LiteralDirective(literal) => '{
+      LiteralStr(${Expr(literal)})(using $ctx)
+    }
+  }
+}
+
+
+
+def parseFunctionMacro[T : Type](opDef : OperationDef, format: Seq[FormatDirective], parser:Expr[Parser])(using ctx : Expr[P[_]])(using Quotes): Expr[P[T]] = {
+  import quotes.reflect._
+  import fastparse.internal._
+
+  val runs = parsingRuns(format, ctx)(using parser)
+  if (runs.isEmpty) { 
+    report.error("No valid FormatDirective found in the assembly_format; ensure you have at least one valid directive.")
+}
+  println(s"runs: ${runs.map(_.show)}")
+  val names = format.collect {
+    case OperandDirective(name) => name
+    case TypeDirective(OperandDirective(name)) => s"${name}$$$$type"
+    case ResultTypeDirective(name) => s"${name}$$$$type"
+  }
+
+  val (types, run) = runs.tail.foldLeft((runs.head match
+    case '{ $_ :  P[t] } => Seq(Type.of[t])
+  ), runs.head.asInstanceOf[Expr[P[Any]]]){case ((types, run), dir) =>
+    (dir match
+      case '{ $_ : P[t] } => 
+        (Type.of[t] match
+          case '[Unit] => types
+          case _ => types :+ Type.of[t], '{
+        given P[_] = $ctx
+        $run ~ $dir
+      })
+    )}
+
+  println(s"ParsingRun: ${run.show}")
+
+  val tupleParams = (names zip types).map{
+    case (name, tpe) =>
+      println(s"$name: ${Type.show(using tpe)}")
+      Symbol.newBind(Symbol.spliceOwner, name, Flags.EmptyFlags, TypeRepr.of(using tpe))
+  }.toList
+  val args = opDef.operands.map{
+    case OperandDef(name, tpe, _) =>
+      tpe match
+        case '[t] =>
+          val parsed = Ref(tupleParams.find(_.name == name).get).asExprOf[String]
+          val parsed_type = Ref(tupleParams.find(_.name == s"$name$$$$type").get).asExprOf[Attribute]
+          NamedArg(name, '{
+            if (!$parsed_type.isInstanceOf[t]) {
+              throw new Exception(
+                s"Expected ${${Expr(name)}} to be of type ${${Expr(Type.show[t])}}"
+              )
+            }
+            $parser.currentScope.useValue($parsed, $parsed_type)._1(0).asInstanceOf[Value[t & Attribute]]
+          }.asTerm)
+  } ++ opDef.results.map{
+    case ResultDef(name, tpe, _) =>
+      tpe match
+        case '[t] =>
+          val parsed_type = Ref(tupleParams.find(_.name == s"$name$$$$type").get).asExprOf[Attribute]
+          NamedArg(name, '{
+            if (!$parsed_type.isInstanceOf[t]) {
+              throw new Exception(
+                s"Expected ${${Expr(name)}} to be of type ${${Expr(Type.show[t])}}"
+              )
+            }
+            Result($parsed_type.asInstanceOf[t & Attribute])
+          }.asTerm)
+  }
+  // val args = tupleParams.collect{
+  //   x =>
+  //     val name = x.name
+  //     // val
+  //     Ref(x)
+  // }.toList
+  // val constructor = Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor)
+  // val call = Apply(constructor, args).asExprOf[T]
+
+  // Wrap in lambda
+  val constructor = Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor)
+  // val lambda = Lambda(Symbol.spliceOwner, MethodType(tupleParams.map(_.name))(
+  //   _ => tupleParams.map(_.termRef), 
+  //   _ => TypeRepr.of[T]), {
+  //   case (methSym, args) =>
+  //     Apply(constructor, args.map(a => NamedArg(a.symbol.name, Ref(a.symbol))))})
+
+  // println(s"lambda: ${lambda.show}")
+
+  val companion = Ref(tupleTypeTree(tupleParams.map(_.typeRef)).tpe.typeSymbol.companionModule)
+  println(s"companion: ${companion.show}")
+  val unapply = TypeApply(Select.unique(companion, "unapply"), tupleParams.tail.map(p => TypeTree.of(using p.typeRef.asType)))
+
+
+  val partial = CaseDef(
+    Unapply(unapply,
+      Nil,
+      tupleParams.map(p => 
+        Bind(p, Typed(Wildcard(), TypeTree.of(using p.typeRef.asType))))),
+      None,
+      Apply(constructor, args.toList))
+      
+  val lambda = Lambda(Symbol.spliceOwner, MethodType(List("parsed"))(
+    _ => List(TypeRepr.of[Any]), 
+    _ => TypeRepr.of[T]), {
+    case (methSym, args) =>
+      Match(
+        Ref(args(0).symbol),
+        partial :: Nil
+     )
+    })
+
+  println(s"lambda: ${lambda.show}")
+
+
+  // Return a call to the primary constructor of the ADT.
+ 
+  println("Constructor call built")
+  '{
+    given P[_] = $ctx
+    MacroInlineImpls.mapInline(${run})(${lambda.asExprOf[Any => T]})
+  }
+}
+
+def tupleTypeTree(using Quotes)(types: List[quotes.reflect.TypeRepr]): quotes.reflect.TypeTree = {
+  import quotes.reflect.*
+  types match {
+    case Nil       => TypeTree.of[EmptyTuple]  // Base case: ()
+    case t :: rest => TypeTree.of(using AppliedType(TypeRepr.of[*:], List(t, tupleTypeTree(rest).tpe)).asType)
+  }
+}
+
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR TRAIT    ||
 \*≡==---==≡≡==---==≡*/
@@ -540,6 +716,24 @@ object MLIRTrait {
 
         def verify(unverOp: UnverifiedOp[T]): T =
           ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
+
+        def parse[$](parser: Parser)(using ctx : P[$]): P[T] =
+          ${
+            println(s"${opDef.name}'s assemblyFormat: ${opDef.assembly_format}")
+            opDef.assembly_format match
+              case Some(directives) =>
+                val f = parseFunctionMacro(opDef, directives, '{parser})(using '{ctx})
+                println(s"Generated parse function for ${opDef.name}: ${f.show}")
+                f
+              case None =>
+                '{
+                  throw new Exception(
+                    s"No custom Parser implemented for Operation '${${
+                        Expr(opDef.name)
+                      }}'"
+                  )
+                }
+          }
 
         extension (op: T) override def MLIRTrait: MLIRTrait[T] = this
 

@@ -135,6 +135,12 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
       val name = Type.of[T] match
         case '[MLIRName[name]] =>
           Type.valueOfConstant[name].get.asInstanceOf[String]
+      val assemblyFormat = Type.of[T] match
+        case '[MLIRFormat[format]] =>
+          val assemblyFormatString =
+            Type.valueOfConstant[format].get.asInstanceOf[String]
+          Some(Parseassemblyformat(assemblyFormatString))
+        case _ => None
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
         case _: Type[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
@@ -146,11 +152,6 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        assembly_format = None
+        assembly_format = assemblyFormat
       )
       e
-
-inline def getNameDefBlaBla[T] = ${ getNameDefBlaBlaImpl[T] }
-
-def getNameDefBlaBlaImpl[T: Type](using quotes: Quotes): Expr[String] =
-  Expr(getDefImpl[T].name)
