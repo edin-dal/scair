@@ -264,7 +264,6 @@ case class DB_StringType(val typ: Seq[Attribute])
 
 object DB_ConstantOp extends MLIROperationObject {
   override def name: String = "db.constant"
-  override def factory = DB_ConstantOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -334,7 +333,6 @@ case class DB_ConstantOp(
 
 object DB_CmpOp extends MLIROperationObject {
   override def name: String = "db.compare"
-  override def factory = DB_CmpOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -420,7 +418,6 @@ case class DB_CmpOp(
 
 object DB_MulOp extends MLIROperationObject {
   override def name: String = "db.mul"
-  override def factory = DB_MulOp.apply
 
   // ==--- Custom Parsing ---== //
   private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
@@ -564,7 +561,6 @@ case class DB_MulOp(
 
 object DB_DivOp extends MLIROperationObject {
   override def name: String = "db.div"
-  override def factory = DB_DivOp.apply
 
   // ==--- Custom Parsing ---== //
   private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
@@ -707,7 +703,6 @@ case class DB_DivOp(
 
 object DB_AddOp extends MLIROperationObject {
   override def name: String = "db.add"
-  override def factory = DB_AddOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -792,7 +787,6 @@ case class DB_AddOp(
 
 object DB_SubOp extends MLIROperationObject {
   override def name: String = "db.sub"
-  override def factory = DB_SubOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -875,7 +869,6 @@ case class DB_SubOp(
 
 object CastOp extends MLIROperationObject {
   override def name: String = "db.cast"
-  override def factory = CastOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](

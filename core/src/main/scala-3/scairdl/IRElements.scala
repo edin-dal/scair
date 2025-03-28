@@ -749,7 +749,6 @@ case class OperationDef(
   def print(implicit indent: Int): String = s"""
 object $className extends MLIROperationObject {
   override def name = "$name"
-  override def factory = $className.apply
   ${assembly_format
       .map(f => Generateparsefunction(Parseassemblyformat(f)))
       .getOrElse("")}

@@ -217,9 +217,7 @@ trait MLIROperationObject {
       DictType[String, Attribute] /* = dictAttrs */
   ) => MLIROperation
 
-  def factory: FactoryType
-
-  final def constructOp(
+  def apply(
       operands: ListType[Value[Attribute]] = ListType(),
       successors: ListType[Block] = ListType(),
       results_types: ListType[Attribute] = ListType(),
@@ -228,31 +226,11 @@ trait MLIROperationObject {
         DictType.empty[String, Attribute],
       dictionaryAttributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): MLIROperation = factory(
-    operands,
-    successors,
-    results_types,
-    regions,
-    dictionaryProperties,
-    dictionaryAttributes
-  )
+  ): MLIROperation
 
 }
 
-trait MLIRTraitI[T] {
-
-  def getName: String
-
-  def constructUnverifiedOp(
-      operands: ListType[Value[Attribute]] = ListType(),
-      successors: ListType[scair.ir.Block] = ListType(),
-      results_types: ListType[Attribute] = ListType(),
-      regions: ListType[Region] = ListType(),
-      dictionaryProperties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
-      dictionaryAttributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
-  ): UnverifiedOp[T]
+trait MLIRTraitI[T] extends MLIROperationObject {
 
   extension (adtOp: T) def MLIRTrait = this
 

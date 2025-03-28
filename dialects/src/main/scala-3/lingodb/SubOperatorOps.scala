@@ -82,7 +82,6 @@ case class ResultTable(
 
 object SetResultOp extends MLIROperationObject {
   override def name: String = "subop.set_result"
-  override def factory = SetResultOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
