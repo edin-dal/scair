@@ -22,7 +22,7 @@ class TransformationsTest
 //       case "Failure" => Parsed.Failure(_, _, _)
 //     }
   val ctx = new MLContext()
-  ctx.registerDialect(CMathDialect)
+  ctx.registerDialectV2(CMathDialect)
 
   val args = scair.core.utils.Args(allow_unregistered = true)
   var parser: Parser = new Parser(ctx, args)

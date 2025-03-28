@@ -18,10 +18,6 @@ object AddDummyAttributeToDict extends RewritePattern {
     op match {
       case x: UnregisteredOperation =>
         x.dictionaryAttributes += ("dummy" -> StringData("UnregDumDum"))
-      case y: Mul =>
-        y.dictionaryAttributes += ("dummy" -> StringData("MulDumDum"))
-      case z: Norm =>
-        z.dictionaryAttributes += ("dummy" -> StringData("NormDumDum"))
       case d =>
         d.dictionaryAttributes += ("dummy" -> StringData("dumdum"))
     }
