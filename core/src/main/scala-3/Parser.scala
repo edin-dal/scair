@@ -734,35 +734,20 @@ class Parser(val context: MLContext, val args: Args = Args())
         )
 
       case None =>
-        val opV2Object: Option[MLIRTraitI[_]] = ctx.getOperationV2(opName)
-
-        opV2Object match {
-          case Some(x) =>
-            x(
-              operands = useAndRefValueSeqs._1,
-              successors = useAndRefBlockSeqs._1,
-              dictionaryProperties = properties,
-              results_types = ListType.from(resultsTypes),
-              dictionaryAttributes = attributes,
-              regions = ListType.from(regions)
-            )
-
-          case None =>
-            if args.allow_unregistered then
-              new UnregisteredOperation(
-                name = opName,
-                operands = useAndRefValueSeqs._1,
-                successors = useAndRefBlockSeqs._1,
-                dictionaryProperties = properties,
-                results_types = ListType.from(resultsTypes),
-                dictionaryAttributes = attributes,
-                regions = ListType.from(regions)
-              )
-            else
-              throw new Exception(
-                s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
-              )
-        }
+        if args.allow_unregistered then
+          new UnregisteredOperation(
+            name = opName,
+            operands = useAndRefValueSeqs._1,
+            successors = useAndRefBlockSeqs._1,
+            dictionaryProperties = properties,
+            results_types = ListType.from(resultsTypes),
+            dictionaryAttributes = attributes,
+            regions = ListType.from(regions)
+          )
+        else
+          throw new Exception(
+            s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+          )
     }
 
     // adding uses for known operands
