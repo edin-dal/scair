@@ -97,7 +97,7 @@ object NewParser {
     P("type(" ~ (operandDirective) ~ ")").map(TypeDirective)
 
   def literalDirective[$: P]: P[LiteralDirective] =
-    P(CharIn("`,:").!).map(LiteralDirective)
+    P("`" ~ CharsWhile(_ != '`').! ~ "`").map(LiteralDirective)
 
   def formatDirective[$: P]: P[FormatDirective] =
     P(typeDirective | operandDirective | literalDirective | resultTypeDirective)

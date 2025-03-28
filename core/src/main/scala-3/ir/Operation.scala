@@ -262,4 +262,6 @@ trait MLIRTraitI[T] {
 
   def verify(unverOp: UnverifiedOp[T]): T
 
+  def parse[$ : P](parser: Parser): P[T]
+
 }

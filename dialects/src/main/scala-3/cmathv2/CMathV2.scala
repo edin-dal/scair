@@ -30,7 +30,7 @@ case class MulV2(
 case class NormV2(
     norm: Operand[ComplexV2],
     result: Result[IntegerType]
-) extends MLIRName["cmathv2.normv2"]
+) extends MLIRName["cmathv2.normv2"] with MLIRFormat["$norm `:` type($norm) `->` type($result)"]
     derives MLIRTrait
 
 val CMathV2Dialect = summonDialect[
