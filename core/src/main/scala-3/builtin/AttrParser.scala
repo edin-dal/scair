@@ -34,14 +34,9 @@ class AttrParser(val ctx: MLContext) {
           case Some(attr) =>
             attr.parse(this)
           case None =>
-            ctx.getAttributeV2(s"${dialect}.${attrName}") match {
-              case Some(attr) =>
-                attr.parse(this)
-              case None =>
-                throw new Exception(
-                  s"Attribute $dialect.$attrName is not defined in any supported Dialect."
-                )
-            }
+            throw new Exception(
+              s"Attribute $dialect.$attrName is not defined in any supported Dialect."
+            )
         }
     }
   )
@@ -53,14 +48,9 @@ class AttrParser(val ctx: MLContext) {
           case Some(attr) =>
             attr.parse(this)
           case None =>
-            ctx.getAttributeV2(s"${dialect}.${attrName}") match {
-              case Some(attr) =>
-                attr.parse(this)
-              case None =>
-                throw new Exception(
-                  s"Type $dialect.$attrName is not defined in any supported Dialect."
-                )
-            }
+            throw new Exception(
+              s"Type $dialect.$attrName is not defined in any supported Dialect."
+            )
         }
     }
   )

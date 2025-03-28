@@ -1,37 +1,41 @@
-package scair.dialects.memrefgen
+package scair.dialects.memref
 
-import scair.clair.mirrored.*
 import scair.dialects.builtin.IndexType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.MemrefType
-import scair.ir.Attribute
-import scair.scairdl.constraints.*
-import scair.scairdl.irdef.*
+import scair.ir.*
+import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.clairV2.macros._
 
 case class Alloc(
     dynamicSizes: Variadic[Operand[IndexType.type]],
     symbolOperands: Variadic[Operand[IndexType.type]],
     memref: Result[MemrefType],
     alignment: Property[IntegerAttr]
-) extends OperationFE
+) extends MLIRName["memref.alloc"]
+    derives MLIRTrait
 
 case class Dealloc(
     memref: Operand[MemrefType]
-) extends OperationFE
+) extends MLIRName["memref.dealloc"]
+    derives MLIRTrait
 
 case class Load(
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
-    result: Result[AnyAttribute]
-) extends OperationFE
+    result: Result[Attribute]
+) extends MLIRName["memref.load"]
+    derives MLIRTrait
 
 case class Store(
-    value: Operand[AnyAttribute],
+    value: Operand[Attribute],
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]]
-) extends OperationFE
+) extends MLIRName["memref.store"]
+    derives MLIRTrait
 
-object MemrefGen
-    extends ScaIRDLDialect(
-      summonDialect[(Alloc, Dealloc, Load, Store)]("Memref")
-    )
+val MemrefDialect =
+  summonDialect[(Alloc, Dealloc, Load, Store)](Seq())

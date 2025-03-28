@@ -8,7 +8,6 @@ import scair.dialects.affine.AffineDialect
 import scair.dialects.arith.ArithDialect
 import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.cmath.CMathDialect
-import scair.dialects.cmathv2.CMathV2Dialect
 import scair.dialects.func.FuncDialect
 import scair.dialects.llvm.LLVMDialect
 import scair.dialects.math.MathDialect
@@ -22,20 +21,22 @@ import scair.transformations.cdt.TestReplacementPass
 
 val allDialects: Seq[Dialect] =
   Seq(
-    ArithDialect,
     BuiltinDialect,
-    CMathDialect,
-    CMathV2Dialect,
-    FuncDialect,
     MathDialect,
-    MemrefDialect,
     TupleStreamDialect,
     DBOps,
     SubOperatorOps,
     RelAlgOps,
+    Test,
+    // Clair
+    ArithDialect,
+    MemrefDialect,
+    CMathDialect,
     AffineDialect,
+    FuncDialect,
     LLVMDialect,
-    Test
+    AffineDialect,
+    LLVMDialect
   )
 
 val allPasses: Seq[ModulePass] =

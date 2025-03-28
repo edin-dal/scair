@@ -83,42 +83,12 @@ object `package` extends RootModule with ScairModule {
     def moduleDeps = Seq(clair, clairV2)
   }
 
-  // Dialect codegen shennanigans, to be gone at some point through ClairV2
-  object gen_dialects extends ScairModule {
-    def moduleDeps = Seq(dialects)
-
-    override def generatedSources = T.sources {
-      super.generatedSources() :+ generateDialects()
-    }
-
-    def oneDialect(src:String) = Task.Anon {
-        dialects.runner().run(args = (os.Path(f"""${Task.dest}/${src.replace(".", "/")}_gen.scala""")).toString(), mainClass=src)
-        print("Generated ")
-        println(os.Path(f"""${Task.dest}/${src.replace(".", "/")}_gen.scala"""))
-    }
-        
-    def generateDialects = 
-      
-      Task.Anon{
-          
-
-      T.traverse(Seq(
-        "scair.dialects.affinegen.AffineGen",
-        "scair.dialects.arithgen.ArithGen",
-        "scair.dialects.cmathgen.CMathGen",
-        "scair.dialects.funcgen.FuncGen",
-        "scair.dialects.memrefgen.MemrefGen"
-      ) )(oneDialect)()
-      PathRef(Task.dest)
-    }
-  }
-
   object transformations extends ScairModule {
-    def moduleDeps = Seq(gen_dialects)
+    def moduleDeps = Seq(dialects)
   }
 
   object tools extends ScairModule  {
-    def moduleDeps = Seq(gen_dialects, transformations)
+    def moduleDeps = Seq(dialects, transformations)
     def mainClass = Some("ScairOpt")
   }
 

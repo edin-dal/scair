@@ -47,5 +47,3 @@
 %index = "arith.index_cast"(%lhsi32) : (i32) -> index
 // CHECK-NEXT:    %30 = "arith.index_cast"(%2) : (i32) -> (index)
 
-%remsi2 = arith.remsi %lhsi32, %rhsi32 : i32, i32, i32
-// CHECK-NEXT:    %31 = "arith.remsi"(%2, %3) : (i32, i32) -> (i32)

@@ -25,13 +25,6 @@ import scair.clairV2.codegen._
 // ██║╚██╔╝██║ ██╔══██║ ██║░░██╗ ██╔══██╗ ██║░░██║ ░╚═══██╗
 // ██║░╚═╝░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ╚█████╔╝ ██████╔╝
 // ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
-extension [A: Type, B: Type](es: Expr[Iterable[A]])
-
-  def map(f: Expr[A] => Expr[B])(using Quotes): Expr[Iterable[B]] = {
-    '{
-      $es.map(a => ${ f('a) })
-    }
-  }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ADT to Unverified conversion Macro  ||

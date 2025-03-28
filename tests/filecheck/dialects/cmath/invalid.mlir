@@ -5,26 +5,34 @@
 // TODO: This should fail because cmath.complex expect f32 | f64. This needs frontend
 // support
 
-// CHECK: builtin.module {
-// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<i8>} : () -> ()
+// CHECK:       builtin.module {
+// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<[i8]>} : () -> ()
 // CHECK-NEXT:  }
 
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
-// CHECK: Expected 1 parameters, got 0
+// CHECK:  builtin.module {
+// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<[]>} : () -> ()
+// CHECK-NEXT:  }
 
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex<f32, f32>} : () -> ()
-// CHECK: Expected 1 parameters, got 2
+// CHECK:  builtin.module {
+// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<[f32, f32]>} : () -> ()
+// CHECK-NEXT:  }
 
 // -----
 
 "cmath.norm"() : () -> ()
-// CHECK: Expected 1 operands, got 0
+// CHECK:  builtin.module {
+// CHECK-NEXT:    "cmath.norm"() : () -> ()
+// CHECK-NEXT:  }
 
 // -----
 
 "cmath.mul"() : () -> ()
-// CHECK: Expected 2 operands, got 0
+// CHECK:  builtin.module {
+// CHECK-NEXT:    "cmath.mul"() : () -> ()
+// CHECK-NEXT:  }

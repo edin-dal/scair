@@ -1,24 +1,35 @@
-package scair.dialects.cmathgen
+package scair.dialects.cmath
 
-import scair.clair.mirrored.*
-import scair.dialects.builtin.FloatType
-import scair.scairdl.constraints.*
-import scair.scairdl.irdef.*
+import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.clairV2.macros._
+import scair.dialects.builtin.*
+import scair.ir.*
+
+object Complex extends AttributeObject {
+  override def name: String = "cmath.complex"
+  override def factory = Complex.apply
+}
 
 case class Complex(
-    e1: Operand[FloatType]
-) extends TypeAttributeFE
+    val typ: Seq[Attribute]
+) extends ParametrizedAttribute(
+      name = "cmath.complex",
+      parameters = Seq(typ)
+    )
+    with TypeAttribute
 
 case class Norm(
     in: Operand[Complex],
     res: Result[FloatType]
-) extends OperationFE
+) extends MLIRName["cmath.norm"]
+    derives MLIRTrait
 
 case class Mul(
     lhs: Operand[Complex],
     rhs: Operand[Complex],
     res: Result[Complex]
-) extends OperationFE
+) extends MLIRName["cmath.mul"]
+    derives MLIRTrait
 
-object CMathGen
-    extends ScaIRDLDialect(summonDialect[(Complex, Norm, Mul)]("CMath"))
+val CMathDialect = summonDialect[(Norm, Mul)](Seq(Complex))
