@@ -724,7 +724,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     val op: MLIROperation = opObject match {
       case Some(x) =>
-        x.constructOp(
+        x(
           operands = useAndRefValueSeqs._1,
           successors = useAndRefBlockSeqs._1,
           dictionaryProperties = properties,
@@ -738,7 +738,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
         opV2Object match {
           case Some(x) =>
-            x.constructUnverifiedOp(
+            x(
               operands = useAndRefValueSeqs._1,
               successors = useAndRefBlockSeqs._1,
               dictionaryProperties = properties,

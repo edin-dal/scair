@@ -17,7 +17,6 @@ import scala.collection.mutable
 
 object AbsfOp extends MLIROperationObject {
   override def name: String = "math.absf"
-  override def factory: FactoryType = AbsfOp.apply
 
   override def parse[$: P](
       parser: Parser
@@ -75,7 +74,6 @@ case class AbsfOp(
 
 object FPowIOp extends MLIROperationObject {
   override def name: String = "math.fpowi"
-  override def factory = FPowIOp.apply
 
   override def parse[$: P](
       parser: Parser

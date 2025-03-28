@@ -8,7 +8,6 @@ import scair.clairV2.macros._
 
 object ComplexV2 extends AttributeObject {
   override def name: String = "cmathv2.complex"
-  override def factory = ComplexV2.apply
 }
 
 case class ComplexV2(

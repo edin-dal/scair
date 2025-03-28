@@ -40,18 +40,4 @@ class MLContext() {
     }
   }
 
-  def registerDialectV2(dialect: DialectV2) = {
-    dialectV2OpContext ++= {
-      for { dialectOp <- dialect.operations } yield {
-        dialectOp.getName -> dialectOp
-      }
-    }
-
-    dialectV2AttrContext ++= {
-      for { dialectAttr <- dialect.attributes } yield {
-        dialectAttr.name -> dialectAttr
-      }
-    }
-  }
-
 }

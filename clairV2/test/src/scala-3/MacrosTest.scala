@@ -199,7 +199,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   "Unverified instantiation" should "Correctly instantiates the UniverifiedOp" in {
     val opT = MLIRTrait.derived[Mul]
 
-    val unverMulOp = opT.constructUnverifiedOp(
+    val unverMulOp = opT(
       operands = ListType(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))

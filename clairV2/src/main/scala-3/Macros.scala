@@ -514,9 +514,9 @@ object MLIRTrait {
 
       new MLIRTrait[T]:
 
-        def getName: String = ${ Expr(opDef.name) }
+        def name: String = ${ Expr(opDef.name) }
 
-        def constructUnverifiedOp(
+        def apply(
             operands: ListType[Value[Attribute]] = ListType(),
             successors: ListType[scair.ir.Block] = ListType(),
             results_types: ListType[Attribute] = ListType(),
@@ -555,5 +555,5 @@ inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
 
 inline def summonDialect[T <: Tuple](
     attributes: Seq[AttributeObject]
-): DialectV2 =
-  new DialectV2(summonMLIRTraits[T], attributes)
+): Dialect =
+  new Dialect(summonMLIRTraits[T], attributes)

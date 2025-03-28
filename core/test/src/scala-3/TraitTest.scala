@@ -10,7 +10,6 @@ import scala.collection.mutable
 
 object FillerOp extends MLIROperationObject {
   override def name: String = "filler"
-  override def factory: FactoryType = FillerOp.apply
 }
 
 case class FillerOp(
@@ -34,7 +33,6 @@ case class FillerOp(
 
 object TerminatorOp extends MLIROperationObject {
   override def name: String = "terminator"
-  override def factory: FactoryType = TerminatorOp.apply
 }
 
 case class TerminatorOp(
@@ -59,7 +57,6 @@ case class TerminatorOp(
 
 object NoTerminatorOp extends MLIROperationObject {
   override def name: String = "noterminator"
-  override def factory: FactoryType = NoTerminatorOp.apply
 }
 
 case class NoTerminatorOp(
