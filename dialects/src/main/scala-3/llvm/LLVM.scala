@@ -2,7 +2,6 @@ package scair.dialects.llvm
 
 import scair.dialects.builtin.DenseArrayAttr
 import scair.dialects.builtin.IntegerType
-import scair.ir.*
 import scair.clairV2.codegen.*
 import scair.clairV2.mirrored.*
 import scair.dialects.builtin.*

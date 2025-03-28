@@ -23,7 +23,6 @@ import scair.transformations.cdt.TestReplacementPass
 
 val allDialects: Seq[Dialect] =
   Seq(
-    ArithDialect,
     BuiltinDialect,
     CMathDialect,
     MathDialect,
@@ -36,6 +35,7 @@ val allDialects: Seq[Dialect] =
 
 val allClairV2Dialects: Seq[DialectV2] =
   Seq(
+    ArithDialect,
     MemrefDialect,
     AffineDialect,
     FuncDialect,

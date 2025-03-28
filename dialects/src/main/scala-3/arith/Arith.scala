@@ -1,24 +1,15 @@
-package scair.dialects.arithgen
+package scair.dialects.arith
 
 import fastparse.*
-import fastparse.ParsingRun
 import scair.AttrParser
-import scair.clair.mirrored.AnyAttribute
-import scair.clair.mirrored.DialectFE
-import scair.clair.mirrored.Operand
-import scair.clair.mirrored.OperationFE
-import scair.clair.mirrored.Property
-import scair.clair.mirrored.Result
-import scair.clair.mirrored.summonDialect
 import scair.dialects.builtin.FloatType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
-import scair.ir.Attribute
-import scair.ir.AttributeObject
-import scair.scairdl.irdef.AttrEscapeHatch
-import scair.scairdl.irdef.ScaIRDLDialect
-
 import scala.collection.immutable.*
+import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.ir.*
+import scair.clairV2.macros._
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
@@ -34,7 +25,7 @@ enum FastMathFlag:
   case arcp
   case contract
   case afn
-//   case fast
+  // case fast
 
 type FastMathFlags = HashSet[FastMathFlag]
 
@@ -110,7 +101,7 @@ case class FastMathFlagsAttr(val flags: FastMathFlags)
 
 // TODO: This should be smth like IntegerType | IndexType, but is not yet supported
 // in the frontend.
-type AnyIntegerType = AnyAttribute
+type AnyIntegerType = Attribute
 // TODO: This should constrain to specifically i1, MLIR's take at a boolean type.
 // Not yet supported in the frontend.
 type I1 = IntegerType
@@ -128,134 +119,145 @@ case class Addf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    fastmath: Property[FastMathFlagsAttr]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.addf"]
+    derives MLIRTrait
 
 case class Mulf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    fastmath: Property[FastMathFlagsAttr]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.mulf"]
+    derives MLIRTrait
 
 // I'm not sure about the flag here
 case class Divf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    fastmath: Property[FastMathFlagsAttr]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.divf"]
+    derives MLIRTrait
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class Addi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.addi"]
+    derives MLIRTrait
 
 case class Subi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.subi"]
+    derives MLIRTrait
 
 case class Muli(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.muli"]
+    derives MLIRTrait
 
 case class Divui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.divui"]
+    derives MLIRTrait
 
 case class Divsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.divsi"]
+    derives MLIRTrait
 
 case class Remui(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.remui"]
+    derives MLIRTrait
 
 case class Remsi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.remsi"]
+    derives MLIRTrait
 
 case class Cmpi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1],
-    predicate: Property[IntegerPredicate],
-    assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    predicate: Property[IntegerPredicate]
+    // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.cmpi"]
+    derives MLIRTrait
 
 case class Andi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[I1],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[I1]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.andi"]
+    derives MLIRTrait
 
 case class Ori(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
-    result: Result[I1],
-    assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends OperationFE
+    result: Result[I1]
+    // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
+) extends MLIRName["arith.ori"]
+    derives MLIRTrait
 
 case class Sitofp(
     in: Operand[AnyIntegerType],
-    out: Result[FloatType],
-    assembly_format: "$in `:` type($in) `to` type($out)"
-) extends OperationFE
+    out: Result[FloatType]
+    // assembly_format: "$in `:` type($in) `to` type($out)"
+) extends MLIRName["arith.sitofp"]
+    derives MLIRTrait
 
 case class Index_Cast(
     in: Operand[AnyIntegerType],
-    result: Result[AnyIntegerType],
-    assembly_format: "$in `:` type($in) `to` type($out)"
-) extends OperationFE
+    result: Result[AnyIntegerType]
+    // assembly_format: "$in `:` type($in) `to` type($out)"
+) extends MLIRName["arith.index_cast"]
+    derives MLIRTrait
 
-object ArithGen
-    extends ScaIRDLDialect(
-      summonDialect[
-        (
-            Addf,
-            Mulf,
-            Divf,
-            Addi,
-            Subi,
-            Muli,
-            Divui,
-            Divsi,
-            Remui,
-            Remsi,
-            Cmpi,
-            Andi,
-            Ori,
-            Sitofp,
-            Index_Cast
-        )
-      ](
-        "Arith",
-        Seq(),
-        Seq(new AttrEscapeHatch[FastMathFlagsAttr])
-      )
+val ArithDialect =
+  summonDialect[
+    (
+        Addf,
+        Mulf,
+        Divf,
+        Addi,
+        Subi,
+        Muli,
+        Divui,
+        Divsi,
+        Remui,
+        Remsi,
+        Cmpi,
+        Andi,
+        Ori,
+        Sitofp,
+        Index_Cast
     )
+  ](
+    Seq(FastMathFlagsAttr)
+  )
