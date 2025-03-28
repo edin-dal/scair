@@ -14,7 +14,6 @@ import scair.dialects.math.MathDialect
 import scair.dialects.memref.MemrefDialect
 import scair.dialects.test.Test
 import scair.ir.Dialect
-import scair.ir.DialectV2
 import scair.transformations.ModulePass
 import scair.transformations.cdt.DummyPass
 import scair.transformations.cdt.TestInsertionPass
@@ -28,16 +27,15 @@ val allDialects: Seq[Dialect] =
     DBOps,
     SubOperatorOps,
     RelAlgOps,
-    Test
-  )
-
-val allClairV2Dialects: Seq[DialectV2] =
-  Seq(
+    Test,
+    // Clair
     ArithDialect,
     MemrefDialect,
     CMathDialect,
     AffineDialect,
     FuncDialect,
+    LLVMDialect,
+    AffineDialect,
     LLVMDialect
   )
 

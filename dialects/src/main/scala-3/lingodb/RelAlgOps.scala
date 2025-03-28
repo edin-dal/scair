@@ -160,7 +160,6 @@ private def DialectRegion[$: P](parser: Parser) = P(
 
 object BaseTableOp extends MLIROperationObject {
   override def name: String = "relalg.basetable"
-  override def factory = BaseTableOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -241,7 +240,6 @@ case class BaseTableOp(
 
 object SelectionOp extends MLIROperationObject {
   override def name: String = "relalg.selection"
-  override def factory = SelectionOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -318,7 +316,6 @@ case class SelectionOp(
 
 object MapOp extends MLIROperationObject {
   override def name: String = "relalg.map"
-  override def factory = MapOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -413,7 +410,6 @@ case class MapOp(
 
 object AggregationOp extends MLIROperationObject {
   override def name: String = "relalg.aggregation"
-  override def factory = AggregationOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -531,7 +527,6 @@ case class AggregationOp(
 
 object CountRowsOp extends MLIROperationObject {
   override def name: String = "relalg.count"
-  override def factory = CountRowsOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -608,7 +603,6 @@ case class CountRowsOp(
 
 object AggrFuncOp extends MLIROperationObject {
   override def name: String = "relalg.aggrfn"
-  override def factory = AggrFuncOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -712,7 +706,6 @@ case class AggrFuncOp(
 
 object SortOp extends MLIROperationObject {
   override def name: String = "relalg.sort"
-  override def factory = SortOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
@@ -809,7 +802,6 @@ case class SortOp(
 
 object MaterializeOp extends MLIROperationObject {
   override def name: String = "relalg.materialize"
-  override def factory = MaterializeOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](

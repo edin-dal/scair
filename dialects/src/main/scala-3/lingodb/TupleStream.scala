@@ -128,7 +128,6 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
 
 object ReturnOp extends MLIROperationObject {
   override def name: String = "tuples.return"
-  override def factory = ReturnOp.apply
 
   // ==--- Custom Parsing ---== //
   private def makeResults(
@@ -194,7 +193,6 @@ case class ReturnOp(
 
 object GetColumnOp extends MLIROperationObject {
   override def name: String = "tuples.getcol"
-  override def factory = GetColumnOp.apply
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](

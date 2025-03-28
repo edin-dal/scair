@@ -23,7 +23,6 @@ case class TestOp(
 
 object TestOp extends MLIROperationObject {
   override def name = "test.op"
-  override def factory = TestOp.apply
 }
 
 val Test: Dialect =
