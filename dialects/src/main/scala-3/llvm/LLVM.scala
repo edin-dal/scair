@@ -1,20 +1,32 @@
-package scair.dialects.llvmgen
+package scair.dialects.llvm
 
-import scair.clair.mirrored.*
 import scair.dialects.builtin.DenseArrayAttr
 import scair.dialects.builtin.IntegerType
-import scair.ir.Attribute
-import scair.scairdl.constraints.*
-import scair.scairdl.irdef.*
+import scair.ir.*
+import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.clairV2.macros._
+
+object Ptr extends AttributeObject {
+  override def name: String = "llvm.ptr"
+  override def factory = Ptr.apply
+}
 
 case class Ptr(
-) extends AttributeFE
-    with TypeAttributeFE
+    val typ: Seq[Attribute]
+) extends ParametrizedAttribute(
+      name = "llvm.ptr",
+      parameters = Seq(typ)
+    )
+    with TypeAttribute
 
 case class Load(
     ptr: Operand[Ptr],
     result: Result[Attribute]
-) extends OperationFE
+) extends MLIRName["llvm.load"]
+    derives MLIRTrait
 
 case class GetElementPtr(
     base: Operand[Ptr],
@@ -22,9 +34,7 @@ case class GetElementPtr(
     res: Result[Ptr],
     rawConstantIndices: Property[DenseArrayAttr],
     elem_type: Property[Attribute]
-) extends OperationFE
+) extends MLIRName["llvm.getelementptr"]
+    derives MLIRTrait
 
-object LLVMGen
-    extends ScaIRDLDialect(
-      summonDialect[(GetElementPtr, Ptr, Load)]("LLVM")
-    )
+val LLVMDialect = summonDialect[(Load, GetElementPtr)](Seq(Ptr))
