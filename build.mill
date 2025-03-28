@@ -102,7 +102,6 @@ object `package` extends RootModule with ScairModule {
       Task.Anon{
           
       T.traverse(Seq(
-        "scair.dialects.affinegen.AffineGen",
         "scair.dialects.arithgen.ArithGen",
         "scair.dialects.cmathgen.CMathGen",
       ) )(oneDialect)()

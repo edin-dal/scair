@@ -1,9 +1,12 @@
-package scair.dialects.affinegen
+package scair.dialects.affine
 
-import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.Attribute
-import scair.scairdl.irdef.ScaIRDLDialect
+import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.clairV2.macros._
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝
@@ -27,7 +30,8 @@ case class Apply(
     mapOperands: Variadic[Operand[IndexType.type]],
     res: Result[IndexType.type],
     map: Property[AffineMapAttr]
-) extends OperationFE
+) extends MLIRName["affine.apply"]
+    derives MLIRTrait
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||      FOR OP      ||
@@ -42,7 +46,8 @@ case class For(
     upperBoundMap: Property[AffineMapAttr],
     step: Property[IntegerAttr],
     body: Region
-) extends OperationFE
+) extends MLIRName["affine.for"]
+    derives MLIRTrait
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -52,14 +57,15 @@ case class Parallel(
     map_operands: Variadic[Operand[IndexType.type]],
     // TODO: Should be ArrayAttribute[StringData]
     // Not supported yet
-    reductions: Property[AnyAttribute],
+    reductions: Property[Attribute],
     lowerBoundsMap: Property[AffineMapAttr],
     lowerBoundsGroups: Property[DenseIntOrFPElementsAttr],
     upperBoundsMap: Property[AffineMapAttr],
     upperBoundsGroups: Property[DenseIntOrFPElementsAttr],
     res: Variadic[Result[Attribute]],
     body: Region
-) extends OperationFE
+) extends MLIRName["affine.parallel"]
+    derives MLIRTrait
 
 /*≡==--=≡≡≡=--=≡≡*\
 ||     IF OP     ||
@@ -68,10 +74,11 @@ case class Parallel(
 case class If(
     args: Variadic[Operand[Attribute]],
     res: Variadic[Result[Attribute]],
-    condition: Attr[AffineSetAttr],
+    condition: Property[AffineSetAttr],
     then_region: Region,
     else_region: Region
-) extends OperationFE
+) extends MLIRName["affine.if"]
+    derives MLIRTrait
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -82,7 +89,8 @@ case class Store(
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
     map: Property[AffineMapAttr]
-) extends OperationFE
+) extends MLIRName["affine.store"]
+    derives MLIRTrait
 
 /*≡==---=≡≡≡=---=≡≡*\
 ||     LOAD OP     ||
@@ -93,7 +101,8 @@ case class Load(
     indices: Variadic[Operand[IndexType.type]],
     result: Result[Attribute],
     map: Property[AffineMapAttr]
-) extends OperationFE
+) extends MLIRName["affine.load"]
+    derives MLIRTrait
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||     MIN OP     ||
@@ -103,7 +112,8 @@ case class Min(
     arguments: Variadic[Operand[IndexType.type]],
     result: Result[IndexType.type],
     map: Property[AffineMapAttr]
-) extends OperationFE
+) extends MLIRName["affine.min"]
+    derives MLIRTrait
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||
@@ -111,11 +121,9 @@ case class Min(
 
 case class Yield(
     arguments: Variadic[Operand[Attribute]]
-) extends OperationFE
+) extends MLIRName["affine.yield"]
+    derives MLIRTrait
 
-object AffineGen
-    extends ScaIRDLDialect(
-      summonDialect[
-        (Apply, For, Parallel, If, Store, Load, Min, Yield)
-      ]("Affine")
-    )
+val AffineDialect = summonDialect[
+  (Apply, For, Parallel, If, Store, Load, Min, Yield)
+](Seq())

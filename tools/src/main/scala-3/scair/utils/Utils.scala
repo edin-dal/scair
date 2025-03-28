@@ -31,13 +31,13 @@ val allDialects: Seq[Dialect] =
     DBOps,
     SubOperatorOps,
     RelAlgOps,
-    AffineDialect,
     Test
   )
 
 val allClairV2Dialects: Seq[DialectV2] =
   Seq(
     MemrefDialect,
+    AffineDialect,
     FuncDialect,
     LLVMDialect,
     CMathV2Dialect
