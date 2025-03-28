@@ -26,7 +26,6 @@ val allDialects: Seq[Dialect] =
     ArithDialect,
     BuiltinDialect,
     CMathDialect,
-    FuncDialect,
     MathDialect,
     TupleStreamDialect,
     DBOps,
@@ -39,6 +38,7 @@ val allDialects: Seq[Dialect] =
 val allClairV2Dialects: Seq[DialectV2] =
   Seq(
     MemrefDialect,
+    FuncDialect,
     LLVMDialect,
     CMathV2Dialect
   )

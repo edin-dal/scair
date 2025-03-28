@@ -1,15 +1,20 @@
-package scair.dialects.funcgen
+package scair.dialects.func
 
-import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.Attribute
-import scair.scairdl.irdef.ScaIRDLDialect
+import scair.ir.*
+import scair.clairV2.codegen.*
+import scair.clairV2.mirrored.*
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.clairV2.macros._
 
 case class Call(
     callee: Property[SymbolRefAttr],
     _operands: Variadic[Operand[Attribute]],
     _results: Variadic[Result[Attribute]]
-) extends OperationFE
+) extends MLIRName["func.call"]
+    derives MLIRTrait
 
 case class Func(
     sym_name: Property[StringData],
@@ -17,23 +22,12 @@ case class Func(
     // TODO: This needs optional
     // sym_visibility: Property[StringData],
     body: Region
-) extends OperationFE
+) extends MLIRName["func.func"]
+    derives MLIRTrait
 
 case class Return(
     _operands: Variadic[Operand[Attribute]]
-) extends OperationFE
+) extends MLIRName["func.return"]
+    derives MLIRTrait
 
-object FuncGen
-    extends ScaIRDLDialect(
-      summonDialect[
-        (
-            Call,
-            Func,
-            Return
-        )
-      ](
-        "Func",
-        Seq(),
-        Seq()
-      )
-    )
+val FuncDialect = summonDialect[(Call, Func, Return)](Seq())
