@@ -122,7 +122,7 @@ def fromADTOperationMacro[T: Type](
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
   val propertiesDict = '{
-    DictType.from(${ propertyNames } zip ${ propertyExprs }.map(_.typ))
+    DictType.from(${ propertyNames } zip ${ propertyExprs })
   }
 
   /*_________________*\
@@ -153,7 +153,7 @@ def fromADTOperationMacro[T: Type](
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[DictType[String, Attribute]],
     propName: String
-)(using Quotes): Expr[Property[A]] =
+)(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
   '{
     val value = $list(${ Expr(propName) })
@@ -165,7 +165,7 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
           s"but found ${value.getClass.getSimpleName}"
       )
     }
-    Property[A](value.asInstanceOf[A])
+    value.asInstanceOf[A]
   }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -175,7 +175,7 @@ type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
   case ResultDef     => Result[A]
   case RegionDef     => Region
   case SuccessorDef  => Successor
-  case OpPropertyDef => Property[A]
+  case OpPropertyDef => A
 }
 
 /** Type helper to get the defined input type of a construct definition.

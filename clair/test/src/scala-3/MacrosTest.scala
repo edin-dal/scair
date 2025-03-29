@@ -14,27 +14,27 @@ case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
-    randProp: Property[StringData]
+    randProp: StringData
 ) extends MLIRName["cmath.mul"]
     derives MLIRTrait
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
-    rhs: Variadic[Operand[IntegerType]],
-    result: Variadic[Result[IntegerType]],
-    randProp: Property[StringData]
+    rhs: Seq[Operand[IntegerType]],
+    result: Seq[Result[IntegerType]],
+    randProp: StringData
 ) extends MLIRName["cmath.mulsinglevariadic"]
     derives MLIRTrait
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
-    rhs: Variadic[Operand[IntegerType]],
-    mhs: Variadic[Operand[IntegerType]],
-    result: Variadic[Result[IntegerType]],
+    rhs: Seq[Operand[IntegerType]],
+    mhs: Seq[Operand[IntegerType]],
+    result: Seq[Result[IntegerType]],
     result2: Result[IntegerType],
-    result3: Variadic[Result[IntegerType]],
-    operandSegmentSizes: Property[DenseArrayAttr],
-    resultSegmentSizes: Property[DenseArrayAttr]
+    result3: Seq[Result[IntegerType]],
+    operandSegmentSizes: DenseArrayAttr,
+    resultSegmentSizes: DenseArrayAttr
 ) extends MLIRName["cmath.mulmultivariadic"]
     derives MLIRTrait
 
@@ -43,8 +43,8 @@ case class MulFull(
     operand2: Operand[IntegerType],
     result1: Result[IntegerType],
     result2: Result[IntegerType],
-    randProp1: Property[StringData],
-    randProp2: Property[StringData],
+    randProp1: StringData,
+    randProp2: StringData,
     reg1: Region,
     reg2: Region,
     succ1: Successor,
@@ -70,7 +70,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Value(IntegerType(IntData(5), Unsigned)),
       result = Result(IntegerType(IntData(25), Unsigned)),
-      randProp = Property(StringData("what"))
+      randProp = StringData("what")
     )
 
     val adtMulOpAllFields = MulFull(
@@ -78,8 +78,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       operand2 = Value(IntegerType(IntData(5), Unsigned)),
       result1 = Result(IntegerType(IntData(25), Unsigned)),
       result2 = Result(IntegerType(IntData(25), Unsigned)),
-      randProp1 = Property(StringData("what1")),
-      randProp2 = Property(StringData("what2")),
+      randProp1 = StringData("what1"),
+      randProp2 = StringData("what2"),
       reg1 = Region(Seq()),
       reg2 = Region(Seq()),
       succ1 = scair.ir.Block(),
@@ -102,15 +102,15 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val adtMulSinVarOp = MulSingleVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
-      rhs = Variadic(
+      rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned))
       ),
-      result = Variadic(
+      result = Seq(
         Result(IntegerType(IntData(25), Unsigned)),
         Result(IntegerType(IntData(25), Unsigned))
       ),
-      randProp = Property(StringData("what"))
+      randProp = StringData("what")
     )
 
     val unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
@@ -153,43 +153,39 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val adtMulMulVarOp = MulMultiVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
-      rhs = Variadic(
+      rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned))
       ),
-      mhs = Variadic(
+      mhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned))
       ),
-      result = Variadic(
+      result = Seq(
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned))
       ),
       result2 = Result(IntegerType(IntData(5), Unsigned)),
-      result3 = Variadic(
+      result3 = Seq(
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned))
       ),
-      operandSegmentSizes = Property(
-        DenseArrayAttr(
-          IntegerType(IntData(32), Signless),
-          Seq[IntegerAttr](
-            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
-          )
+      operandSegmentSizes = DenseArrayAttr(
+        IntegerType(IntData(32), Signless),
+        Seq[IntegerAttr](
+          IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+          IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
+          IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
         )
       ),
-      resultSegmentSizes = Property(
-        DenseArrayAttr(
-          IntegerType(IntData(32), Signless),
-          Seq[IntegerAttr](
-            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
-          )
+      resultSegmentSizes = DenseArrayAttr(
+        IntegerType(IntData(32), Signless),
+        Seq[IntegerAttr](
+          IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+          IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
+          IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
         )
       )
     )
@@ -259,7 +255,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     adtMulOp.result should matchPattern {
       case Value(IntegerType(IntData(25), Unsigned)) =>
     }
-    adtMulOp.randProp should matchPattern { case Property(StringData("what")) =>
+    adtMulOp.randProp should matchPattern { case StringData("what") =>
     }
   }
 
@@ -275,10 +271,10 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     adtMulOp.operand2 equals unverMulOp.operands(1) should be(true)
     adtMulOp.result1 equals unverMulOp.results(0) should be(true)
     adtMulOp.result2 equals unverMulOp.results(1) should be(true)
-    adtMulOp.randProp1.typ equals unverMulOp.dictionaryProperties(
+    adtMulOp.randProp1 equals unverMulOp.dictionaryProperties(
       "randProp1"
     ) should be(true)
-    adtMulOp.randProp2.typ equals unverMulOp.dictionaryProperties(
+    adtMulOp.randProp2 equals unverMulOp.dictionaryProperties(
       "randProp2"
     ) should be(true)
     adtMulOp.reg1 equals unverMulOp.regions(0) should be(true)
@@ -308,8 +304,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
             Result(IntegerType(IntData(25), Unsigned))
           ) =>
     }
-    adtMulSinVarOp.randProp should matchPattern {
-      case Property(StringData("what")) =>
+    adtMulSinVarOp.randProp should matchPattern { case StringData("what") =>
     }
   }
 
