@@ -10,23 +10,23 @@ import scair.ir.*
 import scair.clair.macros._
 
 case class Call(
-    callee: Property[SymbolRefAttr],
-    _operands: Variadic[Operand[Attribute]],
-    _results: Variadic[Result[Attribute]]
+    callee: SymbolRefAttr,
+    _operands: Seq[Operand[Attribute]],
+    _results: Seq[Result[Attribute]]
 ) extends MLIRName["func.call"]
     derives MLIRTrait
 
 case class Func(
-    sym_name: Property[StringData],
-    function_type: Property[FunctionType],
+    sym_name: StringData,
+    function_type: FunctionType,
     // TODO: This needs optional
-    // sym_visibility: Property[StringData],
+    // sym_visibility: StringData,
     body: Region
 ) extends MLIRName["func.func"]
     derives MLIRTrait
 
 case class Return(
-    _operands: Variadic[Operand[Attribute]]
+    _operands: Seq[Operand[Attribute]]
 ) extends MLIRName["func.return"]
     derives MLIRTrait
 

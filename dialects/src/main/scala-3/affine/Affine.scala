@@ -27,9 +27,9 @@ import scair.clair.macros._
 \*≡==----==≡≡==----==≡*/
 
 case class Apply(
-    mapOperands: Variadic[Operand[IndexType.type]],
+    mapOperands: Seq[Operand[IndexType.type]],
     res: Result[IndexType.type],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.apply"]
     derives MLIRTrait
 
@@ -38,13 +38,13 @@ case class Apply(
 \*≡==----=≡≡=----==≡*/
 
 case class For(
-    lowerBoundOperands: Variadic[Operand[IndexType.type]],
-    upperBoundOperands: Variadic[Operand[IndexType.type]],
-    inits: Variadic[Operand[Attribute]],
-    res: Variadic[Result[Attribute]],
-    lowerBoundMap: Property[AffineMapAttr],
-    upperBoundMap: Property[AffineMapAttr],
-    step: Property[IntegerAttr],
+    lowerBoundOperands: Seq[Operand[IndexType.type]],
+    upperBoundOperands: Seq[Operand[IndexType.type]],
+    inits: Seq[Operand[Attribute]],
+    res: Seq[Result[Attribute]],
+    lowerBoundMap: AffineMapAttr,
+    upperBoundMap: AffineMapAttr,
+    step: IntegerAttr,
     body: Region
 ) extends MLIRName["affine.for"]
     derives MLIRTrait
@@ -54,15 +54,15 @@ case class For(
 \*≡==----==≡≡≡==----==≡*/
 
 case class Parallel(
-    map_operands: Variadic[Operand[IndexType.type]],
+    map_operands: Seq[Operand[IndexType.type]],
     // TODO: Should be ArrayAttribute[StringData]
     // Not supported yet
-    reductions: Property[Attribute],
-    lowerBoundsMap: Property[AffineMapAttr],
-    lowerBoundsGroups: Property[DenseIntOrFPElementsAttr],
-    upperBoundsMap: Property[AffineMapAttr],
-    upperBoundsGroups: Property[DenseIntOrFPElementsAttr],
-    res: Variadic[Result[Attribute]],
+    reductions: Attribute,
+    lowerBoundsMap: AffineMapAttr,
+    lowerBoundsGroups: DenseIntOrFPElementsAttr,
+    upperBoundsMap: AffineMapAttr,
+    upperBoundsGroups: DenseIntOrFPElementsAttr,
+    res: Seq[Result[Attribute]],
     body: Region
 ) extends MLIRName["affine.parallel"]
     derives MLIRTrait
@@ -72,9 +72,9 @@ case class Parallel(
 \*≡==---=≡=---==≡*/
 
 case class If(
-    args: Variadic[Operand[Attribute]],
-    res: Variadic[Result[Attribute]],
-    condition: Property[AffineSetAttr],
+    args: Seq[Operand[Attribute]],
+    res: Seq[Result[Attribute]],
+    condition: AffineSetAttr,
     then_region: Region,
     else_region: Region
 ) extends MLIRName["affine.if"]
@@ -87,8 +87,8 @@ case class If(
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
-    indices: Variadic[Operand[IndexType.type]],
-    map: Property[AffineMapAttr]
+    indices: Seq[Operand[IndexType.type]],
+    map: AffineMapAttr
 ) extends MLIRName["affine.store"]
     derives MLIRTrait
 
@@ -98,9 +98,9 @@ case class Store(
 
 case class Load(
     memref: Operand[MemrefType],
-    indices: Variadic[Operand[IndexType.type]],
+    indices: Seq[Operand[IndexType.type]],
     result: Result[Attribute],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.load"]
     derives MLIRTrait
 
@@ -109,9 +109,9 @@ case class Load(
 \*≡==---=≡≡=---==≡*/
 
 case class Min(
-    arguments: Variadic[Operand[IndexType.type]],
+    arguments: Seq[Operand[IndexType.type]],
     result: Result[IndexType.type],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.min"]
     derives MLIRTrait
 
@@ -120,7 +120,7 @@ case class Min(
 \*≡==---=≡≡=---==≡*/
 
 case class Yield(
-    arguments: Variadic[Operand[Attribute]]
+    arguments: Seq[Operand[Attribute]]
 ) extends MLIRName["affine.yield"]
     derives MLIRTrait
 

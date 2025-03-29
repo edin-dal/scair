@@ -44,13 +44,13 @@ package scair
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
   * case class SampOp1(
-  *     e1: Variadic[Operand[IntegerAttr]],
+  *     e1: Seq[Operand[IntegerAttr]],
   *     e2: Result[AnyAttribute],
   *     e3: Region
   * ) extends OperationFE
   *
   * case class SampOp2(
-  *     e1: Variadic[Operand[Complex]],
+  *     e1: Seq[Operand[Complex]],
   *     e2: Result[AnyAttribute]
   * ) extends OperationFE
   *

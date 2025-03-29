@@ -119,7 +119,7 @@ case class Addf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr]
+    fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.addf"]
     derives MLIRTrait
@@ -128,7 +128,7 @@ case class Mulf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr]
+    fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.mulf"]
     derives MLIRTrait
@@ -138,7 +138,7 @@ case class Divf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr]
+    fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.divf"]
     derives MLIRTrait
@@ -204,7 +204,7 @@ case class Cmpi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1],
-    predicate: Property[IntegerPredicate]
+    predicate: IntegerPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.cmpi"]
     derives MLIRTrait
