@@ -12,6 +12,7 @@ import scair.scairdl.constraints.ConstraintContext
 
 import scala.collection.immutable
 import scala.collection.mutable
+import scair.core.macros._
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -75,7 +76,8 @@ case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
 \*≡==---==≡≡==---==≡*/
 
 case class IntData(val value: Long)
-    extends DataAttribute[Long]("builtin.int_attr", value) {
+    extends DataAttribute[Long]("builtin.int_attr", value)
+    derives TransparentData {
   override def custom_print = value.toString
 }
 
@@ -120,7 +122,8 @@ case class IntegerAttr(
 \*≡==---==≡≡==---==≡*/
 
 case class FloatData(val value: Double)
-    extends DataAttribute[Double]("builtin.float_data", value) {
+    extends DataAttribute[Double]("builtin.float_data", value)
+    derives TransparentData {
   override def custom_print = value.toString
 }
 
@@ -163,16 +166,9 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 /*≡==--==≡≡≡≡==--=≡≡*\
 || STRING ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
-
-// shortened definition, does not include type information
-
-object StringData {
-  given Conversion[String, StringData] = StringData(_)
-  given Conversion[StringData, String] = _.stringLiteral
-}
-
 case class StringData(val stringLiteral: String)
-    extends DataAttribute("builtin.string", stringLiteral) {
+    extends DataAttribute("builtin.string", stringLiteral)
+    derives TransparentData {
   override def custom_print = "\"" + stringLiteral + "\""
 }
 
@@ -435,7 +431,8 @@ case class DenseIntOrFPElementsAttr(
 \*≡==---==≡≡==---==≡*/
 
 case class AffineMapAttr(val affine_map: AffineMap)
-    extends DataAttribute[AffineMap]("builtin.affine_map", affine_map) {
+    extends DataAttribute[AffineMap]("builtin.affine_map", affine_map)
+    derives TransparentData {
 
   override def custom_print = s"affine_map<${affine_map}>"
 }
@@ -446,7 +443,8 @@ case class AffineMapAttr(val affine_map: AffineMap)
 // note: in mlir terms this is called an IntegerSetAttr
 
 case class AffineSetAttr(val affine_set: AffineSet)
-    extends DataAttribute[AffineSet]("builtin.affine_set", affine_set) {
+    extends DataAttribute[AffineSet]("builtin.affine_set", affine_set)
+    derives TransparentData {
 
   override def custom_print = s"affine_set<${affine_set}>"
 }
