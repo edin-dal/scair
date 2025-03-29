@@ -29,7 +29,7 @@ import scair.clairV2.macros._
 case class Apply(
     mapOperands: Variadic[Operand[IndexType.type]],
     res: Result[IndexType.type],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.apply"]
     derives MLIRTrait
 
@@ -42,9 +42,9 @@ case class For(
     upperBoundOperands: Variadic[Operand[IndexType.type]],
     inits: Variadic[Operand[Attribute]],
     res: Variadic[Result[Attribute]],
-    lowerBoundMap: Property[AffineMapAttr],
-    upperBoundMap: Property[AffineMapAttr],
-    step: Property[IntegerAttr],
+    lowerBoundMap: AffineMapAttr,
+    upperBoundMap: AffineMapAttr,
+    step: IntegerAttr,
     body: Region
 ) extends MLIRName["affine.for"]
     derives MLIRTrait
@@ -57,11 +57,11 @@ case class Parallel(
     map_operands: Variadic[Operand[IndexType.type]],
     // TODO: Should be ArrayAttribute[StringData]
     // Not supported yet
-    reductions: Property[Attribute],
-    lowerBoundsMap: Property[AffineMapAttr],
-    lowerBoundsGroups: Property[DenseIntOrFPElementsAttr],
-    upperBoundsMap: Property[AffineMapAttr],
-    upperBoundsGroups: Property[DenseIntOrFPElementsAttr],
+    reductions: Attribute,
+    lowerBoundsMap: AffineMapAttr,
+    lowerBoundsGroups: DenseIntOrFPElementsAttr,
+    upperBoundsMap: AffineMapAttr,
+    upperBoundsGroups: DenseIntOrFPElementsAttr,
     res: Variadic[Result[Attribute]],
     body: Region
 ) extends MLIRName["affine.parallel"]
@@ -74,7 +74,7 @@ case class Parallel(
 case class If(
     args: Variadic[Operand[Attribute]],
     res: Variadic[Result[Attribute]],
-    condition: Property[AffineSetAttr],
+    condition: AffineSetAttr,
     then_region: Region,
     else_region: Region
 ) extends MLIRName["affine.if"]
@@ -88,7 +88,7 @@ case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.store"]
     derives MLIRTrait
 
@@ -100,7 +100,7 @@ case class Load(
     memref: Operand[MemrefType],
     indices: Variadic[Operand[IndexType.type]],
     result: Result[Attribute],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.load"]
     derives MLIRTrait
 
@@ -111,7 +111,7 @@ case class Load(
 case class Min(
     arguments: Variadic[Operand[IndexType.type]],
     result: Result[IndexType.type],
-    map: Property[AffineMapAttr]
+    map: AffineMapAttr
 ) extends MLIRName["affine.min"]
     derives MLIRTrait
 

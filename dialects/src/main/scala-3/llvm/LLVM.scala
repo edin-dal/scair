@@ -31,8 +31,8 @@ case class GetElementPtr(
     base: Operand[Ptr],
     dynamicIndices: Variadic[Operand[IntegerType]],
     res: Result[Ptr],
-    rawConstantIndices: Property[DenseArrayAttr],
-    elem_type: Property[Attribute]
+    rawConstantIndices: DenseArrayAttr,
+    elem_type: Attribute
 ) extends MLIRName["llvm.getelementptr"]
     derives MLIRTrait
 

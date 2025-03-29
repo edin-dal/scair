@@ -14,7 +14,7 @@ case class Alloc(
     dynamicSizes: Variadic[Operand[IndexType.type]],
     symbolOperands: Variadic[Operand[IndexType.type]],
     memref: Result[MemrefType],
-    alignment: Property[IntegerAttr]
+    alignment: IntegerAttr
 ) extends MLIRName["memref.alloc"]
     derives MLIRTrait
 

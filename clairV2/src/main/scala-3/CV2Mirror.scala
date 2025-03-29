@@ -33,9 +33,10 @@ import scala.quoted._
   *
   * @return
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
-  *   SuccessorDef, OpPropertyDef, OpAttributeDef
+  *   SuccessorDef, OpPropertyDef
   */
 def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
+  import quotes.reflect._
   val name = Type.of[Label] match
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
@@ -75,10 +76,14 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         name = name,
         Variadicity.Single
       )
-    case '[Property[t]] =>
+    case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
       OpPropertyDef(
         name = name,
         tpe = Type.of[t]
+      )
+    case _: Type[?] =>
+      report.errorAndAbort(
+        s"Field ${Type.show[Label]} : ${Type.show[Elem]} is unsupported for MLIR derivation."
       )
 }
 
