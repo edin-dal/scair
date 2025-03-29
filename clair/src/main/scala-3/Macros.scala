@@ -1,4 +1,4 @@
-package scair.clairV2.macros
+package scair.clair.macros
 
 import scala.quoted.*
 import scair.ir.*
@@ -8,9 +8,9 @@ import scair.dialects.builtin.*
 import scala.collection.mutable.ListBuffer
 
 import scala.compiletime._
-import scair.clairV2.mirrored.getDefImpl
+import scair.clair.mirrored.getDefImpl
 import scala.deriving.Mirror
-import scair.clairV2.codegen._
+import scair.clair.codegen._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗

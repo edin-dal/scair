@@ -4,11 +4,11 @@ import scair.dialects.builtin.IndexType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.MemrefType
 import scair.ir.*
-import scair.clairV2.codegen.*
-import scair.clairV2.mirrored.*
+import scair.clair.codegen.*
+import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clairV2.macros._
+import scair.clair.macros._
 
 case class Alloc(
     dynamicSizes: Variadic[Operand[IndexType.type]],
