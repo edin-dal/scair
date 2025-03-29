@@ -29,10 +29,6 @@ case class Result[+T <: Attribute](override val typ: T)
 
 type Successor = Block
 
-case class Attr[+T <: Attribute](
-    val typ: T
-)
-
 /*≡==--==≡≡≡==--=≡≡*\
 ||      UTILS      ||
 \*≡==---==≡==---==≡*/
