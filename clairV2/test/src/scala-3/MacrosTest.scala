@@ -20,19 +20,19 @@ case class Mul(
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
-    rhs: Variadic[Operand[IntegerType]],
-    result: Variadic[Result[IntegerType]],
+    rhs: Seq[Operand[IntegerType]],
+    result: Seq[Result[IntegerType]],
     randProp: StringData
 ) extends MLIRName["cmath.mulsinglevariadic"]
     derives MLIRTrait
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
-    rhs: Variadic[Operand[IntegerType]],
-    mhs: Variadic[Operand[IntegerType]],
-    result: Variadic[Result[IntegerType]],
+    rhs: Seq[Operand[IntegerType]],
+    mhs: Seq[Operand[IntegerType]],
+    result: Seq[Result[IntegerType]],
     result2: Result[IntegerType],
-    result3: Variadic[Result[IntegerType]],
+    result3: Seq[Result[IntegerType]],
     operandSegmentSizes: DenseArrayAttr,
     resultSegmentSizes: DenseArrayAttr
 ) extends MLIRName["cmath.mulmultivariadic"]
@@ -102,11 +102,11 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val adtMulSinVarOp = MulSingleVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
-      rhs = Variadic(
+      rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned))
       ),
-      result = Variadic(
+      result = Seq(
         Result(IntegerType(IntData(25), Unsigned)),
         Result(IntegerType(IntData(25), Unsigned))
       ),
@@ -153,22 +153,22 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val adtMulMulVarOp = MulMultiVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
-      rhs = Variadic(
+      rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned))
       ),
-      mhs = Variadic(
+      mhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned))
       ),
-      result = Variadic(
+      result = Seq(
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned))
       ),
       result2 = Result(IntegerType(IntData(5), Unsigned)),
-      result3 = Variadic(
+      result3 = Seq(
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned))
       ),

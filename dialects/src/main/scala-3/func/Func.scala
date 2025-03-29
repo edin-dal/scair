@@ -11,8 +11,8 @@ import scair.clairV2.macros._
 
 case class Call(
     callee: SymbolRefAttr,
-    _operands: Variadic[Operand[Attribute]],
-    _results: Variadic[Result[Attribute]]
+    _operands: Seq[Operand[Attribute]],
+    _results: Seq[Result[Attribute]]
 ) extends MLIRName["func.call"]
     derives MLIRTrait
 
@@ -26,7 +26,7 @@ case class Func(
     derives MLIRTrait
 
 case class Return(
-    _operands: Variadic[Operand[Attribute]]
+    _operands: Seq[Operand[Attribute]]
 ) extends MLIRName["func.return"]
     derives MLIRTrait
 

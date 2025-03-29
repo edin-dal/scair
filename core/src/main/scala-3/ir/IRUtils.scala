@@ -22,9 +22,6 @@ import scala.collection.mutable.ListBuffer
 \*≡==---==≡≡≡≡≡==---==≡*/
 // for ClairV2
 
-val Variadic = Seq
-type Variadic[T] = Seq[T]
-
 type Operand[+T <: Attribute] = Value[T]
 
 case class Result[+T <: Attribute](override val typ: T)
