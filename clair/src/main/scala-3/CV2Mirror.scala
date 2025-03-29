@@ -1,7 +1,7 @@
-package scair.clairV2.mirrored
+package scair.clair.mirrored
 
-import scair.clairV2.codegen.*
-import scair.clairV2.macros.*
+import scair.clair.codegen.*
+import scair.clair.macros.*
 import scair.ir.*
 
 import scala.compiletime._

@@ -6,10 +6,10 @@ import scair.dialects.builtin.FloatType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
 import scala.collection.immutable.*
-import scair.clairV2.codegen.*
-import scair.clairV2.mirrored.*
+import scair.clair.codegen.*
+import scair.clair.mirrored.*
 import scair.ir.*
-import scair.clairV2.macros._
+import scair.clair.macros._
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.

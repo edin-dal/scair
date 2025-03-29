@@ -2,11 +2,11 @@ package scair.dialects.llvm
 
 import scair.dialects.builtin.DenseArrayAttr
 import scair.dialects.builtin.IntegerType
-import scair.clairV2.codegen.*
-import scair.clairV2.mirrored.*
+import scair.clair.codegen.*
+import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clairV2.macros._
+import scair.clair.macros._
 
 object Ptr extends AttributeObject {
   override def name: String = "llvm.ptr"

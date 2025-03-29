@@ -1,6 +1,6 @@
 import scair.ir.*
 import scair.dialects.builtin.*
-import scair.clairV2.macros.*
+import scair.clair.macros.*
 import scala.quoted.*
 import scair.Printer
 import org.scalatest.*
