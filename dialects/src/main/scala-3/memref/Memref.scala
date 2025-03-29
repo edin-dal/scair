@@ -6,10 +6,10 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 case class Alloc(
-    dynamicSizes: Variadic[Operand[IndexType.type]],
-    symbolOperands: Variadic[Operand[IndexType.type]],
+    dynamicSizes: Seq[Operand[IndexType.type]],
+    symbolOperands: Seq[Operand[IndexType.type]],
     memref: Result[MemrefType],
-    alignment: Property[IntegerAttr]
+    alignment: IntegerAttr
 ) extends MLIRName["memref.alloc"]
     derives MLIRTrait
 
@@ -20,7 +20,7 @@ case class Dealloc(
 
 case class Load(
     memref: Operand[MemrefType],
-    indices: Variadic[Operand[IndexType.type]],
+    indices: Seq[Operand[IndexType.type]],
     result: Result[Attribute]
 ) extends MLIRName["memref.load"]
     derives MLIRTrait
@@ -28,7 +28,7 @@ case class Load(
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
-    indices: Variadic[Operand[IndexType.type]]
+    indices: Seq[Operand[IndexType.type]]
 ) extends MLIRName["memref.store"]
     derives MLIRTrait
 
