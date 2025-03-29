@@ -59,6 +59,11 @@ abstract class ParametrizedAttribute(
 
 }
 
+object DataAttribute {
+  // Make all DataAttributes implicitely convertible to their held data.
+  given [D]: Conversion[DataAttribute[D], D] = _.data
+}
+
 abstract class DataAttribute[D](
     override val name: String,
     val data: D
