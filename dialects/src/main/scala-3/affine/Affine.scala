@@ -1,12 +1,9 @@
 package scair.dialects.affine
 
-import scair.dialects.builtin.*
-import scair.ir.Attribute
 import scair.clair.codegen.*
-import scair.clair.mirrored.*
+import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.macros._
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

@@ -2,14 +2,14 @@ package scair.dialects.arith
 
 import fastparse.*
 import scair.AttrParser
+import scair.clair.codegen.*
+import scair.clair.macros.*
 import scair.dialects.builtin.FloatType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
-import scala.collection.immutable.*
-import scair.clair.codegen.*
-import scair.clair.mirrored.*
 import scair.ir.*
-import scair.clair.macros._
+
+import scala.collection.immutable.*
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.

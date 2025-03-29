@@ -1,8 +1,7 @@
 package scair.dialects.cmath
 
 import scair.clair.codegen.*
-import scair.clair.mirrored.*
-import scair.clair.macros._
+import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 

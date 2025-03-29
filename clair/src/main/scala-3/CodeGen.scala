@@ -1,10 +1,7 @@
 package scair.clair.codegen
 
-import java.io.File
-import java.io.PrintStream
+import scala.quoted.*
 import scala.reflect.*
-import scair.ir._
-import scala.quoted._
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗

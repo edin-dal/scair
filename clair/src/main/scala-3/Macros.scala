@@ -1,35 +1,13 @@
 package scair.clair.macros
 
-import scala.quoted.*
-import scair.ir.*
-import scala.collection.mutable
-import scair.scairdl.constraints.*
-import scair.dialects.builtin.*
-import scala.collection.mutable.ListBuffer
-
-import scala.compiletime._
+import scair.clair.codegen.*
 import scair.clair.mirrored.getDefImpl
-import scala.deriving.Mirror
-import scair.clair.codegen._
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.scairdl.constraints.*
 
-// ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
-// ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
-// ██║░░╚═╝ ██║░░░░░ ███████║ ██║ ██████╔╝ ╚██╗░██╔╝ ░░███╔═╝
-// ██║░░██╗ ██║░░░░░ ██╔══██║ ██║ ██╔══██╗ ░╚████╔╝░ ██╔══╝░░
-// ╚█████╔╝ ███████╗ ██║░░██║ ██║ ██║░░██║ ░░╚██╔╝░░ ███████╗
-// ░╚════╝░ ╚══════╝ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ╚══════╝
-
-// ███╗░░░███╗ ░█████╗░ ░█████╗░ ██████╗░ ░█████╗░ ░██████╗
-// ████╗░████║ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝
-// ██╔████╔██║ ███████║ ██║░░╚═╝ ██████╔╝ ██║░░██║ ╚█████╗░
-// ██║╚██╔╝██║ ██╔══██║ ██║░░██╗ ██╔══██╗ ██║░░██║ ░╚═══██╗
-// ██║░╚═╝░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ╚█████╔╝ ██████╔╝
-// ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
-
-/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||  ADT to Unverified conversion Macro  ||
-\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
-
+import scala.collection.mutable
+import scala.compiletime.*
 import scala.quoted.*
 
 /** Small helper to select a member of an expression.
@@ -59,7 +37,6 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[_]
 )(using Quotes): Expr[ListType[DefinedInput[Def]]] = {
-  import quotes.reflect.*
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
@@ -91,7 +68,6 @@ def fromADTOperationMacro[T: Type](
 )(using
     Quotes
 ): Expr[UnverifiedOp[T]] =
-  import quotes.reflect.*
 
   /*______________*\
   \*-- OPERANDS --*/

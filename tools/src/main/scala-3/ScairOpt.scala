@@ -12,7 +12,6 @@ import scala.io.Source
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scala.Either
 
 object ScairOpt {
 
