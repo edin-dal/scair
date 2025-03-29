@@ -10,6 +10,24 @@ import scala.collection.mutable
 import scala.compiletime.*
 import scala.quoted.*
 
+// ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
+// ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
+// ██║░░╚═╝ ██║░░░░░ ███████║ ██║ ██████╔╝ ╚██╗░██╔╝ ░░███╔═╝
+// ██║░░██╗ ██║░░░░░ ██╔══██║ ██║ ██╔══██╗ ░╚████╔╝░ ██╔══╝░░
+// ╚█████╔╝ ███████╗ ██║░░██║ ██║ ██║░░██║ ░░╚██╔╝░░ ███████╗
+// ░╚════╝░ ╚══════╝ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ╚══════╝
+
+// ███╗░░░███╗ ░█████╗░ ░█████╗░ ██████╗░ ░█████╗░ ░██████╗
+// ████╗░████║ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝
+// ██╔████╔██║ ███████║ ██║░░╚═╝ ██████╔╝ ██║░░██║ ╚█████╗░
+// ██║╚██╔╝██║ ██╔══██║ ██║░░██╗ ██╔══██╗ ██║░░██║ ░╚═══██╗
+// ██║░╚═╝░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ╚█████╔╝ ██████╔╝
+// ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||  ADT to Unverified conversion Macro  ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
 /** Small helper to select a member of an expression.
   * @param obj
   *   The object to select the member from.
@@ -333,14 +351,12 @@ def partitionedConstructs[Def <: OpInputDef: Type](
         getConstructVariadicity(d) match
           case Variadicity.Single => '{ ${ flat }(${ Expr(i) }) }
           case Variadicity.Variadic =>
-            val e = '{
+            '{
               val sizes = $segmentSizes
               val start = sizes.slice(0, ${ Expr(i) }).sum
               val end = start + sizes(${ Expr(i) })
               ${ flat }.slice(start, end)
             }
-            println(e.show)
-            e
       }
 
 /** Get all verified constructs of a specified type from an UnverifiedOp. That
