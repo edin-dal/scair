@@ -1,4 +1,4 @@
-package scair.clairV2.codegen
+package scair.clair.codegen
 
 import java.io.File
 import java.io.PrintStream

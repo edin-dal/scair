@@ -73,14 +73,11 @@ object `package` extends RootModule with ScairModule {
   }
 
   object clair extends ScairModule {
-    def moduleDeps = Seq(ScaIRDL)
-  }
-  object clairV2 extends ScairModule {
-    def moduleDeps = Seq(core)
+    def moduleDeps = Seq(core, ScaIRDL)
   }
 
   object dialects extends ScairModule {
-    def moduleDeps = Seq(clair, clairV2)
+    def moduleDeps = Seq(clair)
   }
 
   object transformations extends ScairModule {
