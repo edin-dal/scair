@@ -3,6 +3,7 @@ package scair.dialects.builtin
 import fastparse.*
 import scair.Parser
 import scair.Printer
+import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.exceptions.VerifyException
@@ -12,7 +13,6 @@ import scair.scairdl.constraints.ConstraintContext
 
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.core.macros._
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║

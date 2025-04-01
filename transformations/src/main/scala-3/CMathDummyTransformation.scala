@@ -1,8 +1,6 @@
 package scair.transformations.cdt
 
 import scair.dialects.builtin.StringData
-import scair.dialects.cmath.Mul
-import scair.dialects.cmath.Norm
 import scair.ir.*
 import scair.transformations.ModulePass
 import scair.transformations.PatternRewriteWalker

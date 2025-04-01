@@ -1,13 +1,9 @@
 package scair.dialects.func
 
-import scair.dialects.builtin.*
-import scair.ir.Attribute
-import scair.ir.*
 import scair.clair.codegen.*
-import scair.clair.mirrored.*
+import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.macros._
 
 case class Call(
     callee: SymbolRefAttr,

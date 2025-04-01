@@ -1,15 +1,11 @@
 package scair.clair.mirrored
 
 import scair.clair.codegen.*
-import scair.clair.macros.*
 import scair.ir.*
 
-import scala.compiletime._
-import scala.deriving._
-
-import scala.Tuple.Zip
-import scala.collection.View.Empty
-import scala.quoted._
+import scala.compiletime.*
+import scala.deriving.*
+import scala.quoted.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗

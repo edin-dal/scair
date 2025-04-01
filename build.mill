@@ -11,7 +11,7 @@ import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishMod
 import mill.scalalib.publish.{PomSettings, License, VersionControl}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
-import mill.define.{NamedTask, Command, ModuleRef}
+import mill.define.{NamedTask, Command, ModuleRef, Module}
 import mill.main.Tasks
 
 import scala.sys.process._
@@ -94,16 +94,27 @@ object `package` extends RootModule with ScairModule {
   def allScalaSources = Tasks(Resolve.Tasks.resolve(this, Seq("__.sources"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[Seq[PathRef]]]).map(_.asInstanceOf[NamedTask[Seq[PathRef]]])))
   def runAllUnitTests = T{T.sequence(Resolve.Tasks.resolve(this, Seq("__.test"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[(String, Seq[TestResult])]]).map(_.asInstanceOf[NamedTask[(String, Seq[TestResult])]])))()}
    
+  def allChildren = allChidrenRec(millModuleDirectChildren)
+  def allChidrenRec(children: Seq[Module]): Seq[Module] = {
+    children ++ children.flatMap(child => allChidrenRec(child.millModuleDirectChildren))
+  }
+
+  def scalafixAll(args: String*)= T.command {
+    T.sequence(allChildren
+      .flatMap{case m : ScalafixModule => Some(m.fix(args:_*))
+      case _ => None})()
+    }
+
   // Run all formatting on all sources in the framework
   def formatAll() = T.command {
-    fix()
-    scalafmt.ScalafmtModule.reformatAll(allScalaSources)
+    scalafixAll()()
+    scalafmt.ScalafmtModule.reformatAll(allScalaSources)()
   }
 
   // Run all formatting *checks* on all sources in the framework
   def checkFormatAll() = T.command {
-    fix("--check")
-    scalafmt.ScalafmtModule.checkFormatAll(allScalaSources)
+    scalafixAll("--check")()
+    scalafmt.ScalafmtModule.checkFormatAll(allScalaSources)()
   }
 
   // Define a testAll to run the full framework testing infrastructure

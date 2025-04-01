@@ -1,14 +1,9 @@
 package scair.dialects.memref
 
-import scair.dialects.builtin.IndexType
-import scair.dialects.builtin.IntegerAttr
-import scair.dialects.builtin.MemrefType
-import scair.ir.*
 import scair.clair.codegen.*
-import scair.clair.mirrored.*
+import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.macros._
 
 case class Alloc(
     dynamicSizes: Seq[Operand[IndexType.type]],
