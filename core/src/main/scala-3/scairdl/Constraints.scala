@@ -367,8 +367,9 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
             }
             for ((p, c) <- x.parameters zip constraints)
               p match {
-                case p: Attribute      => c.verify(p, constraint_ctx)
-                case p: Seq[_] => c.verify(p.asInstanceOf[Seq[Attribute]], constraint_ctx)
+                case p: Attribute => c.verify(p, constraint_ctx)
+                case p: Seq[_] =>
+                  c.verify(p.asInstanceOf[Seq[Attribute]], constraint_ctx)
               }
 
           case _ =>

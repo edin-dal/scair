@@ -30,8 +30,11 @@ trait TypeAttribute extends Attribute {
 extension (x: Seq[Attribute] | Attribute)
 
   def custom_print: String = x match {
-    case x : Seq[_] => x.asInstanceOf[Seq[Attribute]].map(_.custom_print).mkString("[", ", ", "]")
-    case attr: Attribute     => attr.custom_print
+    case x: Seq[_] =>
+      x.asInstanceOf[Seq[Attribute]]
+        .map(_.custom_print)
+        .mkString("[", ", ", "]")
+    case attr: Attribute => attr.custom_print
   }
 
 abstract class ParametrizedAttribute(
