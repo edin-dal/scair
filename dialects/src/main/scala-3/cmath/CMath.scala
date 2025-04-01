@@ -5,19 +5,17 @@ import scair.clair.mirrored.*
 import scair.clair.macros._
 import scair.dialects.builtin.*
 import scair.ir.*
-
-object Complex extends AttributeObject {
-  override def name: String = "cmath.complex"
-  override def factory = Complex.apply
-}
+import scair.clair.testAttrMacros.*
 
 case class Complex(
-    val typ: Seq[Attribute]
+    val typ: FloatType | IndexType.type
 ) extends ParametrizedAttribute(
       name = "cmath.complex",
       parameters = Seq(typ)
     )
     with TypeAttribute
+    with MLIRName["cmath.complex"]
+    derives AttributeTrait
 
 case class Norm(
     in: Operand[Complex],
@@ -32,4 +30,4 @@ case class Mul(
 ) extends MLIRName["cmath.mul"]
     derives MLIRTrait
 
-val CMathDialect = summonDialect[(Norm, Mul)](Seq(Complex))
+val CMathDialect = summonDialect[Tuple1[Complex], (Norm, Mul)](Seq())

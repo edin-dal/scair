@@ -2,6 +2,7 @@ package scair.dialects.LingoDB.DBOps
 
 import fastparse.*
 import scair.AttrParser
+import scair.Parser.*
 import scair.EnumAttr.I64EnumAttr
 import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
@@ -85,7 +86,10 @@ object DB_CmpPredicateAttr
 
 object DB_CharType extends AttributeObject {
   override def name: String = "db.char"
-  override def factory = DB_CharType.apply
+
+  override def parse[$: P](p: AttrParser) =
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_CharType(_))
+
 }
 
 case class DB_CharType(val typ: Seq[Attribute])
@@ -178,7 +182,10 @@ case class DB_IntervalType(val unit: Attribute)
 
 object DB_DecimalType extends AttributeObject {
   override def name: String = "db.decimal"
-  override def factory = DB_DecimalType.apply
+
+  override def parse[$: P](p: AttrParser) =
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_DecimalType(_))
+
 }
 
 case class DB_DecimalType(val typ: Seq[Attribute])
@@ -224,7 +231,10 @@ case class DB_DecimalType(val typ: Seq[Attribute])
 
 object DB_StringType extends AttributeObject {
   override def name: String = "db.string"
-  override def factory = DB_StringType.apply
+
+  override def parse[$: P](p: AttrParser) =
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_StringType(_))
+
 }
 
 case class DB_StringType(val typ: Seq[Attribute])

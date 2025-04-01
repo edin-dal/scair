@@ -125,5 +125,6 @@ case class Yield(
     derives MLIRTrait
 
 val AffineDialect = summonDialect[
+  EmptyTuple,
   (Apply, For, Parallel, If, Store, Load, Min, Yield)
 ](Seq())

@@ -11,6 +11,7 @@ import scala.compiletime._
 import scair.clair.mirrored.getDefImpl
 import scala.deriving.Mirror
 import scair.clair.codegen._
+import scair.clair.testAttrMacros.summonAttributeTraits
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -546,7 +547,10 @@ inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
       MLIRTrait.derived[t] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
-inline def summonDialect[T <: Tuple](
+inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
     attributes: Seq[AttributeObject]
 ): Dialect =
-  new Dialect(summonMLIRTraits[T], attributes)
+  new Dialect(
+    summonMLIRTraits[Operations],
+    attributes ++ summonAttributeTraits[Attributes]
+  )

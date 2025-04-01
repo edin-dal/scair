@@ -93,6 +93,7 @@ object ScairOpt {
           val ctx = MLContext()
           ctx.register_all_dialects()
           val parser = new scair.Parser(ctx, args)
+
           parser.parseThis(
             chunk,
             pattern = parser.TopLevel(_)
@@ -139,9 +140,8 @@ object ScairOpt {
                       "==------------------=="
                   )
               }
-            case failure: fastparse.Parsed.Failure =>
-              parser.error(failure)
 
+            case failure: fastparse.Parsed.Failure => parser.error(failure)
           }
         }
 

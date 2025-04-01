@@ -34,8 +34,6 @@ val allDialects: Seq[Dialect] =
     CMathDialect,
     AffineDialect,
     FuncDialect,
-    LLVMDialect,
-    AffineDialect,
     LLVMDialect
   )
 
