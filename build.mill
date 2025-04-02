@@ -7,7 +7,7 @@ import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule}
+import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule, TestModule}
 import mill.scalalib.publish.{PomSettings, License, VersionControl}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
@@ -47,10 +47,9 @@ trait ScairModule extends ScairSettings with ScalafixModule with UnidocModule wi
         .filter(_.ext == "tasty")
         .map(PathRef(_))
     }
-  object test extends ScalaTests {
+  object test extends ScalaTests with TestModule.ScalaTest {
 
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
-    def testFramework = "org.scalatest.tools.Framework"
   }
 }
 
