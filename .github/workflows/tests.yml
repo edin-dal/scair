@@ -119,5 +119,3 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./out/coverage/coverage.xml
-        disable_search: true
