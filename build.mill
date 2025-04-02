@@ -6,6 +6,10 @@ import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 
+// Scoverage plugin
+import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
+import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
+
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
 import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule, TestModule, JavaModule}
 import mill.scalalib.publish.{PomSettings, License, VersionControl}
@@ -19,6 +23,8 @@ import scala.language.postfixOps
 import java.io.PrintWriter
 
 trait ScairSettings extends ScalaModule with UnidocModule {
+
+  def scoverageVersion = T{"2.3.0"}
   override def scalaVersion = "3.3.4"
   override def scalacOptions = Seq("-Wunused:imports")
 
@@ -34,7 +40,7 @@ trait ScairSettings extends ScalaModule with UnidocModule {
     }
 }
 
-trait ScairModule extends ScairSettings with ScalafixModule with PublishModule {
+trait ScairModule extends ScalafixModule with PublishModule with ScoverageModule with ScairSettings {
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -46,14 +52,35 @@ trait ScairModule extends ScairSettings with ScalafixModule with PublishModule {
     developers = Seq()
   )
 
-  override def publishVersion: T[String] = VcsVersion.vcsState().format()
-  object test extends ScalaTests with TestModule.ScalaTest {
+  // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
+  // dependencies. This enforces that everythin ScaIR is transitively compiled with
+  // coverage when compiling a module with coverage.
+  trait ScairScoverageData extends ScoverageData {
+    override def transitiveModuleRunModuleDeps = {
+      super .transitiveModuleRunModuleDeps.map {
+        case m: ScairModule => m.scoverage
+        case m => m
+      }
+    }
 
+    override def transitiveModuleCompileModuleDeps = {
+      super .transitiveModuleCompileModuleDeps.map {
+        case m: ScairModule => m.scoverage
+        case m => m
+      }
+    }
+  }
+  
+  override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
+
+  override def publishVersion: T[String] = VcsVersion.vcsState().format()
+
+  object test extends ScoverageTests with TestModule.ScalaTest {
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
   }
 }
 
-object `package` extends RootModule with ScairSettings {
+object `package` extends RootModule with ScairSettings with ScoverageReport {
 
   override def moduleDeps = Seq(tools)
 
@@ -130,7 +157,7 @@ object `package` extends RootModule with ScairSettings {
     // Define a Mill command to run filechecks
     def run() = Task.Command {
         // It depens on the runnable CLI
-        tools.launcher()
+        tools.scoverage.launcher()
 
         // Get the directory root to use as lit's working directory
         val rootPath = rootModule().millModuleBasePath.value
