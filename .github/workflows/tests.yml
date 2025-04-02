@@ -101,13 +101,6 @@ jobs:
         restore-keys: |
           mill-incremental-tests-
 
-    - name: Cache coursier packages
-      uses: coursier/cache-action@v6
-    - name: Install coursier packages (Scala and Mill)
-      uses: coursier/setup-action@v1
-      with:
-        apps: scala:3.3.4
-
     - name: Run all tests
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
