@@ -110,9 +110,10 @@ object RewriteMethods {
   ): Unit = {
 
     val operations = ops match {
-      case x: MLIROperation      => Seq(x)
-      case y: Seq[MLIROperation] => y
+      case x: MLIROperation => Seq(x)
+      case y: Seq[_]        => y.asInstanceOf[Seq[MLIROperation]]
     }
+    val operations2 = Seq.iterableFactory
     insertion_point.insert_before match {
       case Some(op) =>
         insertion_point.block.insert_ops_before(
@@ -151,8 +152,8 @@ object RewriteMethods {
     }
 
     val ops = new_ops match {
-      case x: MLIROperation      => Seq(x)
-      case y: Seq[MLIROperation] => y
+      case x: MLIROperation => Seq(x)
+      case y: Seq[_]        => y.asInstanceOf[Seq[MLIROperation]]
     }
 
     val results = new_results match {

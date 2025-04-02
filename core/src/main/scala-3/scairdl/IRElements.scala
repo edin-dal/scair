@@ -175,13 +175,13 @@ object NewParser {
   def operandDirective[$: P]: P[OperandDirective] =
     P("$" ~ CharsWhileIn("a-zA-Z0-9_").!)
       .filter(_ != "result")
-      .map(OperandDirective)
+      .map(OperandDirective(_))
 
   def typeDirective[$: P]: P[TypeDirective] =
-    P("type(" ~ (operandDirective) ~ ")").map(TypeDirective)
+    P("type(" ~ (operandDirective) ~ ")").map(TypeDirective(_))
 
   def literalDirective[$: P]: P[LiteralDirective] =
-    P(CharIn("`,:").!).map(LiteralDirective)
+    P(CharIn("`,:").!).map(LiteralDirective(_))
 
   def formatDirective[$: P]: P[FormatDirective] =
     P(typeDirective | operandDirective | literalDirective | resultTypeDirective)

@@ -67,12 +67,13 @@ case class Block private (
   ) =
     this(
       ListType.from((arguments_types match {
-        case single: Attribute             => Seq(single)
-        case multiple: Iterable[Attribute] => multiple
+        case single: Attribute     => Seq(single)
+        case multiple: Iterable[_] => multiple.asInstanceOf[Iterable[Attribute]]
       }).map(Value(_))),
       ListType.from((operations match {
-        case single: MLIROperation             => Seq(single)
-        case multiple: Iterable[MLIROperation] => multiple
+        case single: MLIROperation => Seq(single)
+        case multiple: Iterable[_] =>
+          multiple.asInstanceOf[Iterable[MLIROperation]]
       }))
     )
 
@@ -91,12 +92,14 @@ case class Block private (
   ) =
     this(
       ListType.from(args._1 match {
-        case single: Value[Attribute]             => Seq(single)
-        case multiple: Iterable[Value[Attribute]] => multiple
+        case single: Value[Attribute] => Seq(single)
+        case multiple: Iterable[_] =>
+          multiple.asInstanceOf[Iterable[Value[Attribute]]]
       }),
       ListType.from(args._2 match {
-        case single: MLIROperation             => Seq(single)
-        case multiple: Iterable[MLIROperation] => multiple
+        case single: MLIROperation => Seq(single)
+        case multiple: Iterable[_] =>
+          multiple.asInstanceOf[Iterable[MLIROperation]]
       })
     )
 

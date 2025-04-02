@@ -138,7 +138,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
           Type.valueOfConstant[name].get.asInstanceOf[String]
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
-        case _: Type[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
+        case '[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
       val e = OperationDef(
         name = name,
         className = defname,

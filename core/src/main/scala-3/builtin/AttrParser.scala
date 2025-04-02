@@ -124,8 +124,16 @@ class AttrParser(val ctx: MLContext) {
         IntegerAttr(
           x,
           y match {
-            case yy: Some[IntegerType | IndexType.type] => yy.get
-            case None                                   => I64
+            case yy: Some[_] =>
+              yy.get match
+                case i: IntegerType => i
+                case IndexType      => IndexType
+                case _ =>
+                  throw new Exception(
+                    s"Unreachable, fastparse's | is simply weakly typed."
+                  )
+
+            case None => I64
           }
         )
       )
