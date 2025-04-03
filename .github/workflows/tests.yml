@@ -101,17 +101,13 @@ jobs:
         restore-keys: |
           mill-incremental-tests-
 
-    - name: Cache coursier packages
-      uses: coursier/cache-action@v6
-    - name: Install coursier packages (Scala and Mill)
-      uses: coursier/setup-action@v1
-      with:
-        apps: scala:3.3.4
-
     - name: Run all tests
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
+        # I can't get it to work with just cleaning the coverage data, for some reason
+        ./mill clean
         ./mill testAll
+        ./mill xmlReportAll
     - name: Upload coverage report to Codecov
       uses: codecov/codecov-action@v5
       with:

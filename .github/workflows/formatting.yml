@@ -34,13 +34,6 @@ jobs:
         restore-keys: |
           mill-incremental-format-
 
-    - name: Cache coursier packages
-      uses: coursier/cache-action@v6
-    - name: Install coursier packages (Scala and Mill)
-      uses: coursier/setup-action@v1
-      with:
-        apps: scala:3.3.4
-
     # Check if the code is formatted as expected
     - name: Run format checks
       run: ./mill checkFormatAll
