@@ -10,8 +10,8 @@ type AnySignlessIntegerOrIndex = IntegerType | IndexType.type
 type Index = IndexType.type
 
 case class Condition(
-    memref: Operand[I1],
-    symbolOperands: Seq[Operand[Attribute]]
+    condition: Operand[I1],
+    args: Seq[Operand[Attribute]]
 ) extends MLIRName["scf.condition"]
     derives MLIRTrait
 
