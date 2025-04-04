@@ -8,9 +8,9 @@
 
 // CHECK: "builtin.module"() ({
 // CHECK:   "test.op"() ({
-// CHECK:   ^bb0(%0: !cmath.complex<[f32]>, %1: !cmath.complex<[f32]>, %2: !cmath.complex<[f32]>):
+// CHECK:   ^bb0(%0: !cmath.complex<f32>, %1: !cmath.complex<f32>, %2: !cmath.complex<f32>):
 // CHECK:     "test.op"() : () -> ()
-// CHECK:     %3 = "cmath.norm"(%0) : (!cmath.complex<[f32]>) -> (f32)
-// CHECK:     %4 = "cmath.mul"(%1, %2) : (!cmath.complex<[f32]>, !cmath.complex<[f32]>) -> (!cmath.complex<[f32]>)
+// CHECK:     %3 = "cmath.norm"(%0) : (!cmath.complex<f32>) -> (f32)
+// CHECK:     %4 = "cmath.mul"(%1, %2) : (!cmath.complex<f32>, !cmath.complex<f32>) -> (!cmath.complex<f32>)
 
 }) : () -> ()

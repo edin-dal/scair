@@ -22,7 +22,11 @@ import scala.collection.mutable
 
 object TupleStreamTuple extends AttributeObject {
   override def name: String = "tuples.tuple"
-  override def factory = TupleStreamTuple.apply
+
+  override def parse[$: P](p: AttrParser) =
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
+      .map(TupleStreamTuple(_))
+
 }
 
 case class TupleStreamTuple(val tupleVals: Seq[Attribute])
@@ -46,7 +50,10 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 
 object TupleStream extends AttributeObject {
   override def name: String = "tuples.tuplestream"
-  override def factory = TupleStream.apply
+
+  override def parse[$: P](p: AttrParser) =
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(TupleStream(_))
+
 }
 
 case class TupleStream(val tuples: Seq[Attribute])

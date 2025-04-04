@@ -241,6 +241,7 @@ case class Index_Cast(
 
 val ArithDialect =
   summonDialect[
+    EmptyTuple,
     (
         Addf,
         Mulf,
@@ -258,6 +259,4 @@ val ArithDialect =
         Sitofp,
         Index_Cast
     )
-  ](
-    Seq(FastMathFlagsAttr)
-  )
+  ](Seq(FastMathFlagsAttr))

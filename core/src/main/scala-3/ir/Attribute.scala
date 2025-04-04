@@ -87,13 +87,9 @@ abstract class DataAttribute[D](
 
 trait AttributeObject {
   def name: String
-  type FactoryType = (Seq[Attribute]) => Attribute
-  def factory: FactoryType = ???
+  def parse[$: P](p: AttrParser): P[Attribute]
+}
 
-  def parser[$: P](p: AttrParser): P[Seq[Attribute]] =
-    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
-
-  def parse[$: P](p: AttrParser): P[Attribute] =
-    parser(p).map(factory(_))
-
+trait AttributeTraitI[T] extends AttributeObject {
+  extension (op: T) def AttributeTrait = this
 }

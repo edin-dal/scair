@@ -26,4 +26,4 @@ case class Return(
 ) extends MLIRName["func.return"]
     derives MLIRTrait
 
-val FuncDialect = summonDialect[(Call, Func, Return)](Seq())
+val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())

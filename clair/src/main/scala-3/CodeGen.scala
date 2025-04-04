@@ -64,6 +64,11 @@ case class OpPropertyDef(
     val tpe: Type[_]
 ) extends OpInputDef(name) {}
 
+case class AttributeParamDef(
+    val name: String,
+    val tpe: Type[_]
+) {}
+
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||
 \*≡==----=≡≡≡=----==≡*/
@@ -81,5 +86,19 @@ case class OperationDef(
 
   def allDefsWithIndex =
     operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
+
+}
+
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||   ATTRIBUTE DEF   ||
+\*≡==----=≡≡≡=----==≡*/
+
+case class AttributeDef(
+    val name: String,
+    val attributes: Seq[AttributeParamDef] = Seq()
+) {
+
+  def allDefsWithIndex =
+    attributes.zipWithIndex
 
 }

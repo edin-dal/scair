@@ -33,4 +33,4 @@ case class Store(
     derives MLIRTrait
 
 val MemrefDialect =
-  summonDialect[(Alloc, Dealloc, Load, Store)](Seq())
+  summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store)](Seq())

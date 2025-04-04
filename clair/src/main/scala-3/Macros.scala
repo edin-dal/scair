@@ -1,7 +1,10 @@
 package scair.clair.macros
 
+import fastparse.*
+import scair.AttrParser
+import scair.Parser.*
 import scair.clair.codegen.*
-import scair.clair.mirrored.getDefImpl
+import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
@@ -481,9 +484,88 @@ def fromUnverifiedOperationMacro[T: Type](
   )
     .asExprOf[T]
 
+def getAttrConstructor[T: Type](
+    attrDef: AttributeDef,
+    attributes: Expr[Seq[Attribute]]
+)(using
+    Quotes
+): Expr[T] = {
+  import quotes.reflect._
+
+  if !(TypeRepr.of[T] <:< TypeRepr.of[Attribute]) then
+    throw new Exception(
+      s"Type ${Type.show[T]} needs to be a subtype of Attribute"
+    )
+
+  val lengthCheck = '{
+    if ${ Expr(attrDef.attributes.length) } != $attributes.length then
+      throw new Exception(
+        s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes.length}"
+      )
+  }
+
+  val defs = attrDef.attributes
+
+  val verifiedConstructs = (defs.zipWithIndex.map((d, i) =>
+    '{ ${ attributes }(${ Expr(i) }) }
+  ) zip defs)
+    .map { (a, d) =>
+      // expected type of the attribute
+      val tpe = d.tpe
+      tpe match
+        case '[t] =>
+          '{
+            if (!${ a }.isInstanceOf[t & Attribute]) then
+              throw Exception(
+                s"Expected ${${ Expr(d.name) }} to be of type ${${
+                    Expr(Type.show[t])
+                  }}, got ${${ a }}"
+              )
+            ${ a }.asInstanceOf[t & Attribute]
+          }
+    }
+
+  val args = (verifiedConstructs zip attrDef.attributes)
+    .map((e, d) => NamedArg(d.name, e.asTerm))
+
+  val constructorCall = Apply(
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
+    List.from(args)
+  ).asExprOf[T]
+
+  '{
+    $lengthCheck
+    $constructorCall
+  }
+}
+
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR TRAIT    ||
 \*≡==---==≡≡==---==≡*/
+
+trait AttributeTrait[T] extends AttributeTraitI[T] {
+  extension (op: T) override def AttributeTrait = this
+}
+
+object AttributeTrait {
+
+  inline def derived[T]: AttributeTrait[T] = ${ derivedImpl[T] }
+
+  def derivedImpl[T: Type](using Quotes): Expr[AttributeTrait[T]] =
+
+    val attrDef = getAttrDefImpl[T]
+
+    '{
+      new AttributeTrait[T] {
+        override def name: String = ${ Expr(attrDef.name) }
+        override def parse[$: P](p: AttrParser): P[T] = P(
+          ("<" ~/ p.Type.rep(sep = ",") ~ ">")
+        ).orElse(Seq())
+          .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+      }
+    }
+
+}
 
 trait MLIRTrait[T] extends MLIRTraitI[T] {
   extension (op: T) override def MLIRTrait = this
@@ -532,13 +614,23 @@ object MLIRTrait {
 
 }
 
+inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[_]] =
+  inline erasedValue[T] match
+    case _: (t *: ts) =>
+      // slight workaround on that &: TODO -> get rid of it ;)
+      AttributeTrait.derived[t] +: summonAttributeTraits[ts]
+    case _: EmptyTuple => Seq()
+
 inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
       MLIRTrait.derived[t] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
-inline def summonDialect[T <: Tuple](
+inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
     attributes: Seq[AttributeObject]
 ): Dialect =
-  new Dialect(summonMLIRTraits[T], attributes)
+  new Dialect(
+    summonMLIRTraits[Operations],
+    attributes ++ summonAttributeTraits[Attributes]
+  )

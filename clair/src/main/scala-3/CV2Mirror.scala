@@ -97,6 +97,35 @@ def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] = {
     case '[(EmptyTuple, EmptyTuple)] => Nil
 }
 
+def getAttrDef[Label: Type, Elem: Type](using
+    Quotes
+): AttributeParamDef = {
+  val name = Type.of[Label] match
+    case '[String] =>
+      Type.valueOfConstant[Label].get.asInstanceOf[String]
+
+  Type.of[Elem] match
+    case '[Attribute] =>
+      AttributeParamDef(
+        name = name,
+        tpe = Type.of[Elem]
+      )
+    case _ =>
+      throw new Exception(
+        "Expected this type to be an Attribute"
+      )
+}
+
+def summonAttrDefs[Labels: Type, Elems: Type](using
+    Quotes
+): List[AttributeParamDef] = {
+
+  Type.of[(Labels, Elems)] match
+    case '[(label *: labels, elem *: elems)] =>
+      getAttrDef[label, elem] :: summonAttrDefs[labels, elems]
+    case '[(EmptyTuple, EmptyTuple)] => Nil
+}
+
 /** Translates a Tuple of string types into a list of strings.
   *
   * @return
@@ -150,6 +179,32 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         assembly_format = None
       )
       e
+
+def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
+  val m = Expr.summon[Mirror.ProductOf[T]].get
+  m match
+    case '{
+          $m: Mirror.ProductOf[T] {
+            type MirroredLabel = label; type MirroredElemLabels = elemLabels;
+            type MirroredElemTypes = elemTypes
+          }
+        } =>
+      val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
+
+      val paramLabels = stringifyLabels[elemLabels]
+
+      val name = Type.of[T] match
+        case '[MLIRName[name]] =>
+          Type.valueOfConstant[name].get.asInstanceOf[String]
+
+      val attributeDefs = Type.of[(elemLabels, elemTypes)] match
+        case _: Type[(Tuple, Tuple)] => summonAttrDefs[elemLabels, elemTypes]
+
+      AttributeDef(
+        name = name,
+        attributes = attributeDefs
+      )
+}
 
 inline def getNameDefBlaBla[T] = ${ getNameDefBlaBlaImpl[T] }
 

@@ -1,27 +1,30 @@
-// RUN: scair-opt %s --verify_diagnostics --split_input_file | filecheck %s
+// RUN: scair-opt %s --parsing_diagnostics --verify_diagnostics --split_input_file | filecheck %s -DFILE=%s
 
 "test.op"() {"invalid_type" = !cmath.complex<i8>} : () -> ()
 
 // TODO: This should fail because cmath.complex expect f32 | f64. This needs frontend
 // support
 
-// CHECK:       builtin.module {
-// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<[i8]>} : () -> ()
-// CHECK-NEXT:  }
+// CHECK: Parse error at [[FILE]]:3:49:
+// CHECK: "test.op"() {"invalid_type" = !cmath.complex<i8>} : () -> ()                  
+// CHECK:                                                 ^
+// CHECK: Expected typ to be of type scair.dialects.builtin.FloatType | scair.dialects.builtin.IndexType, got IntegerType(IntData(8),Signless)
 
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
-// CHECK:  builtin.module {
-// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<[]>} : () -> ()
-// CHECK-NEXT:  }
+// CHECK: Parse error at [[FILE]]:2:31:
+// CHECK: "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
+// CHECK:                               ^
+// CHECK: (BuiltIn | DialectType | DialectAttribute)
 
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex<f32, f32>} : () -> ()
-// CHECK:  builtin.module {
-// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<[f32, f32]>} : () -> ()
-// CHECK-NEXT:  }
+// CHECK: Parse error at [[FILE]]:2:55:
+// CHECK: "test.op"() {"invalid_type" = !cmath.complex<f32, f32>} : () -> ()
+// CHECK:                                                       ^
+// CHECK: Number of attributes 1 does not match the number of provided attributes 2
 
 // -----
 

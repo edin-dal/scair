@@ -5,18 +5,13 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
-object Ptr extends AttributeObject {
-  override def name: String = "llvm.ptr"
-  override def factory = Ptr.apply
-}
-
-case class Ptr(
-    val typ: Seq[Attribute]
-) extends ParametrizedAttribute(
+case class Ptr()
+    extends ParametrizedAttribute(
       name = "llvm.ptr",
-      parameters = Seq(typ)
+      parameters = Seq()
     )
     with TypeAttribute
+    with MLIRName["llvm.ptr"] derives AttributeTrait
 
 case class Load(
     ptr: Operand[Ptr],
@@ -33,4 +28,4 @@ case class GetElementPtr(
 ) extends MLIRName["llvm.getelementptr"]
     derives MLIRTrait
 
-val LLVMDialect = summonDialect[(Load, GetElementPtr)](Seq(Ptr))
+val LLVMDialect = summonDialect[Tuple1[Ptr], (Load, GetElementPtr)](Seq())
