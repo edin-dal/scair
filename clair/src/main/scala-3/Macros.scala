@@ -1,22 +1,17 @@
 package scair.clair.macros
 
+import fastparse.*
+import scair.AttrParser
+import scair.Parser.*
 import scair.clair.codegen.*
-import scair.clair.mirrored.getDefImpl
+import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
 
-import fastparse.*
-import scala.compiletime._
-import scala.deriving.Mirror
-import scair.clair.codegen._
-import scair.clair.macros.summonAttributeTraits
-import scair.AttrParser
-import scair.Parser.*
-import scair.clair.mirrored._
 import scala.collection.mutable
+import scala.compiletime.*
 import scala.quoted.*
-
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
