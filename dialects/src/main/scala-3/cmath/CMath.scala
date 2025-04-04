@@ -5,7 +5,6 @@ import scair.clair.mirrored.*
 import scair.clair.macros._
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.testAttrMacros.*
 
 case class Complex(
     val typ: FloatType | IndexType.type

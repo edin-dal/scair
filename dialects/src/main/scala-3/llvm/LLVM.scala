@@ -7,7 +7,6 @@ import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.clair.macros._
-import scair.clair.testAttrMacros.*
 
 case class Ptr()
     extends ParametrizedAttribute(
