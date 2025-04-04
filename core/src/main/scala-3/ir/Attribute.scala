@@ -30,8 +30,11 @@ trait TypeAttribute extends Attribute {
 extension (x: Seq[Attribute] | Attribute)
 
   def custom_print: String = x match {
-    case seq: Seq[Attribute] => seq.map(_.custom_print).mkString("[", ", ", "]")
-    case attr: Attribute     => attr.custom_print
+    case x: Seq[_] =>
+      x.asInstanceOf[Seq[Attribute]]
+        .map(_.custom_print)
+        .mkString("[", ", ", "]")
+    case attr: Attribute => attr.custom_print
   }
 
 abstract class ParametrizedAttribute(
@@ -72,7 +75,7 @@ abstract class DataAttribute[D](
 
   override def equals(attr: Any): Boolean = {
     attr match {
-      case x: DataAttribute[D] =>
+      case x: DataAttribute[_] =>
         x.name == this.name &&
         x.getClass == this.getClass &&
         x.data == this.data

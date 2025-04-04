@@ -1,7 +1,8 @@
 package scair.core.macros
 
-import scala.quoted._
 import scair.ir.DataAttribute
+
+import scala.quoted.*
 
 /** Type helper to extract the type of the data from the DataAttribute.
   */

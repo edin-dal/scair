@@ -1,11 +1,10 @@
 package scair.clair.macros
 
-import scala.quoted.*
-import scair.ir.*
-import scala.collection.mutable
-import scair.scairdl.constraints.*
+import scair.clair.codegen.*
+import scair.clair.mirrored.getDefImpl
 import scair.dialects.builtin.*
-import scala.collection.mutable.ListBuffer
+import scair.ir.*
+import scair.scairdl.constraints.*
 
 import fastparse.*
 import scala.compiletime._
@@ -15,6 +14,9 @@ import scair.clair.macros.summonAttributeTraits
 import scair.AttrParser
 import scair.Parser.*
 import scair.clair.mirrored._
+import scala.collection.mutable
+import scala.quoted.*
+
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -33,8 +35,6 @@ import scair.clair.mirrored._
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ADT to Unverified conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
-
-import scala.quoted.*
 
 /** Small helper to select a member of an expression.
   * @param obj
@@ -63,7 +63,6 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[_]
 )(using Quotes): Expr[ListType[DefinedInput[Def]]] = {
-  import quotes.reflect.*
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
@@ -95,7 +94,6 @@ def fromADTOperationMacro[T: Type](
 )(using
     Quotes
 ): Expr[UnverifiedOp[T]] =
-  import quotes.reflect.*
 
   /*______________*\
   \*-- OPERANDS --*/
@@ -126,7 +124,7 @@ def fromADTOperationMacro[T: Type](
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
   val propertiesDict = '{
-    DictType.from(${ propertyNames } zip ${ propertyExprs }.map(_.typ))
+    DictType.from(${ propertyNames } zip ${ propertyExprs })
   }
 
   /*_________________*\
@@ -157,7 +155,7 @@ def fromADTOperationMacro[T: Type](
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[DictType[String, Attribute]],
     propName: String
-)(using Quotes): Expr[Property[A]] =
+)(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
   '{
     val value = $list(${ Expr(propName) })
@@ -169,7 +167,7 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
           s"but found ${value.getClass.getSimpleName}"
       )
     }
-    Property[A](value.asInstanceOf[A])
+    value.asInstanceOf[A]
   }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -179,7 +177,7 @@ type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
   case ResultDef     => Result[A]
   case RegionDef     => Region
   case SuccessorDef  => Successor
-  case OpPropertyDef => Property[A]
+  case OpPropertyDef => A
 }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -361,14 +359,12 @@ def partitionedConstructs[Def <: OpInputDef: Type](
         getConstructVariadicity(d) match
           case Variadicity.Single => '{ ${ flat }(${ Expr(i) }) }
           case Variadicity.Variadic =>
-            val e = '{
+            '{
               val sizes = $segmentSizes
               val start = sizes.slice(0, ${ Expr(i) }).sum
               val end = start + sizes(${ Expr(i) })
               ${ flat }.slice(start, end)
             }
-            println(e.show)
-            e
       }
 
 /** Get all verified constructs of a specified type from an UnverifiedOp. That

@@ -2,14 +2,14 @@ package scair.dialects.arith
 
 import fastparse.*
 import scair.AttrParser
+import scair.clair.codegen.*
+import scair.clair.macros.*
 import scair.dialects.builtin.FloatType
 import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
-import scala.collection.immutable.*
-import scair.clair.codegen.*
-import scair.clair.mirrored.*
 import scair.ir.*
-import scair.clair.macros._
+
+import scala.collection.immutable.*
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
@@ -119,7 +119,7 @@ case class Addf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr]
+    fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.addf"]
     derives MLIRTrait
@@ -128,7 +128,7 @@ case class Mulf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr]
+    fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.mulf"]
     derives MLIRTrait
@@ -138,7 +138,7 @@ case class Divf(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     result: Result[FloatType],
-    fastmath: Property[FastMathFlagsAttr]
+    fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.divf"]
     derives MLIRTrait
@@ -204,7 +204,7 @@ case class Cmpi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1],
-    predicate: Property[IntegerPredicate]
+    predicate: IntegerPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.cmpi"]
     derives MLIRTrait

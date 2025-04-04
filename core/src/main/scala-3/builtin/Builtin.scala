@@ -3,6 +3,7 @@ package scair.dialects.builtin
 import fastparse.*
 import scair.Parser
 import scair.Printer
+import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.exceptions.VerifyException
@@ -12,7 +13,6 @@ import scair.scairdl.constraints.ConstraintContext
 
 import scala.collection.immutable
 import scala.collection.mutable
-import scair.core.macros._
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -319,24 +319,15 @@ case class SymbolRefAttr(
 \*≡==---==≡≡==---==≡*/
 
 case class DenseArrayAttr(
-    val typ: Attribute,
-    val data: Seq[Attribute]
+    val typ: IntegerType | FloatType,
+    val data: Seq[IntegerAttr] | Seq[FloatAttr]
 ) extends ParametrizedAttribute("builtin.dense", Seq(typ, data))
     with Seq[Attribute] {
 
   override def custom_verify(): Unit =
-    typ match {
-      case _: IntegerType | _: FloatType => ()
-      case _ =>
-        throw new VerifyException(
-          "Element type is not an integer or float type"
-        )
-    }
     if !data.forall(_ match {
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ
-        case _ =>
-          throw new VerifyException("Element type is not an integer or float")
       })
     then
       throw new VerifyException(

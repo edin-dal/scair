@@ -1,12 +1,9 @@
 package scair.dialects.llvm
 
-import scair.dialects.builtin.DenseArrayAttr
-import scair.dialects.builtin.IntegerType
 import scair.clair.codegen.*
-import scair.clair.mirrored.*
+import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.macros._
 
 case class Ptr()
     extends ParametrizedAttribute(
@@ -24,10 +21,10 @@ case class Load(
 
 case class GetElementPtr(
     base: Operand[Ptr],
-    dynamicIndices: Variadic[Operand[IntegerType]],
+    dynamicIndices: Seq[Operand[IntegerType]],
     res: Result[Ptr],
-    rawConstantIndices: Property[DenseArrayAttr],
-    elem_type: Property[Attribute]
+    rawConstantIndices: DenseArrayAttr,
+    elem_type: Attribute
 ) extends MLIRName["llvm.getelementptr"]
     derives MLIRTrait
 

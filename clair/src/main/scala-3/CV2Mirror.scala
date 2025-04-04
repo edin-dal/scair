@@ -1,15 +1,11 @@
 package scair.clair.mirrored
 
 import scair.clair.codegen.*
-import scair.clair.macros.*
 import scair.ir.*
 
-import scala.compiletime._
-import scala.deriving._
-
-import scala.Tuple.Zip
-import scala.collection.View.Empty
-import scala.quoted._
+import scala.compiletime.*
+import scala.deriving.*
+import scala.quoted.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -33,21 +29,22 @@ import scala.quoted._
   *
   * @return
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
-  *   SuccessorDef, OpPropertyDef, OpAttributeDef
+  *   SuccessorDef, OpPropertyDef
   */
 def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
+  import quotes.reflect._
   val name = Type.of[Label] match
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
 
   Type.of[Elem] match
-    case '[Variadic[Result[t]]] =>
+    case '[Seq[Result[t]]] =>
       ResultDef(
         name = name,
         tpe = Type.of[t],
         Variadicity.Variadic
       )
-    case '[Variadic[Operand[t]]] =>
+    case '[Seq[Operand[t]]] =>
       OperandDef(
         name = name,
         tpe = Type.of[t],
@@ -75,10 +72,14 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         name = name,
         Variadicity.Single
       )
-    case '[Property[t]] =>
+    case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
       OpPropertyDef(
         name = name,
         tpe = Type.of[t]
+      )
+    case _: Type[?] =>
+      report.errorAndAbort(
+        s"Field ${Type.show[Label]} : ${Type.show[Elem]} is unsupported for MLIR derivation."
       )
 }
 
@@ -166,7 +167,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
           Type.valueOfConstant[name].get.asInstanceOf[String]
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
-        case _: Type[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
+        case '[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
       val e = OperationDef(
         name = name,
         className = defname,

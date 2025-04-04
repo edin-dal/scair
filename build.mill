@@ -6,27 +6,41 @@ import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 
+// Scoverage plugin
+import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
+import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
+
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule}
+import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule, TestModule, JavaModule}
 import mill.scalalib.publish.{PomSettings, License, VersionControl}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
-import mill.define.{NamedTask, Command, ModuleRef}
+import mill.define.{NamedTask, Command, ModuleRef, Module}
 import mill.main.Tasks
 
 import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
 
-trait ScairSettings extends ScalaModule{
-  def scalaVersion = "3.3.4"
-  def scalacOptions = Seq("-Wunused:imports")
-}
+trait ScairSettings extends ScalaModule with UnidocModule {
 
-trait ScairModule extends ScairSettings with ScalafixModule with UnidocModule with PublishModule {
+  def scoverageVersion = T{"2.3.0"}
+  override def scalaVersion = "3.3.4"
+  override def scalacOptions = Seq("-Wunused:imports")
 
   override def unidocVersion: T[Option[String]] = Some("0.5.0")
   override def scalaDocOptions = Seq("-Xsource:3")
+
+  override def unidocSourceFiles = Task {
+      (Seq(compile().classes) ++ T.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
+        .filter(pr => os.exists(pr.path))
+        .flatMap(pr => os.walk(pr.path))
+        .filter(_.ext == "tasty")
+        .map(PathRef(_))
+    }
+}
+
+trait ScairModule extends ScalafixModule with PublishModule with ScoverageModule with ScairSettings {
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -38,23 +52,35 @@ trait ScairModule extends ScairSettings with ScalafixModule with UnidocModule wi
     developers = Seq()
   )
 
+  // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
+  // dependencies. This enforces that everythin ScaIR is transitively compiled with
+  // coverage when compiling a module with coverage.
+  trait ScairScoverageData extends ScoverageData {
+    override def transitiveModuleRunModuleDeps = {
+      super .transitiveModuleRunModuleDeps.map {
+        case m: ScairModule => m.scoverage
+        case m => m
+      }
+    }
+
+    override def transitiveModuleCompileModuleDeps = {
+      super .transitiveModuleCompileModuleDeps.map {
+        case m: ScairModule => m.scoverage
+        case m => m
+      }
+    }
+  }
+  
+  override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
+
   override def publishVersion: T[String] = VcsVersion.vcsState().format()
 
-  override def unidocSourceFiles = Task {
-      (Seq(compile().classes) ++ T.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
-        .filter(pr => os.exists(pr.path))
-        .flatMap(pr => os.walk(pr.path))
-        .filter(_.ext == "tasty")
-        .map(PathRef(_))
-    }
-  object test extends ScalaTests {
-
-      def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
-      def testFramework = "org.scalatest.tools.Framework"
-    }
+  object test extends ScoverageTests with TestModule.ScalaTest {
+    def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
+  }
 }
 
-object `package` extends RootModule with ScairModule {
+object `package` extends RootModule with ScairSettings with ScoverageReport {
 
   override def moduleDeps = Seq(tools)
 
@@ -94,16 +120,27 @@ object `package` extends RootModule with ScairModule {
   def allScalaSources = Tasks(Resolve.Tasks.resolve(this, Seq("__.sources"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[Seq[PathRef]]]).map(_.asInstanceOf[NamedTask[Seq[PathRef]]])))
   def runAllUnitTests = T{T.sequence(Resolve.Tasks.resolve(this, Seq("__.test"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[(String, Seq[TestResult])]]).map(_.asInstanceOf[NamedTask[(String, Seq[TestResult])]])))()}
    
+  def allChildren = allChidrenRec(millModuleDirectChildren)
+  def allChidrenRec(children: Seq[Module]): Seq[Module] = {
+    children ++ children.flatMap(child => allChidrenRec(child.millModuleDirectChildren))
+  }
+
+  def scalafixAll(args: String*)= T.command {
+    T.sequence(allChildren
+      .flatMap{case m : ScalafixModule => Some(m.fix(args:_*))
+      case _ => None})()
+    }
+
   // Run all formatting on all sources in the framework
   def formatAll() = T.command {
-    fix()
-    scalafmt.ScalafmtModule.reformatAll(allScalaSources)
+    scalafixAll()()
+    scalafmt.ScalafmtModule.reformatAll(allScalaSources)()
   }
 
   // Run all formatting *checks* on all sources in the framework
   def checkFormatAll() = T.command {
-    fix("--check")
-    scalafmt.ScalafmtModule.checkFormatAll(allScalaSources)
+    scalafixAll("--check")()
+    scalafmt.ScalafmtModule.checkFormatAll(allScalaSources)()
   }
 
   // Define a testAll to run the full framework testing infrastructure
@@ -114,27 +151,13 @@ object `package` extends RootModule with ScairModule {
 
 
   object filechecks extends TaskModule {
-    // Populate a file with the full classpath to compile some scala sources
-    def classpath = Task.Anon {
-      println("Storing full classpath for lit access")
-      val full_cp = tools.compileClasspath()
-      
-      val file = new PrintWriter((rootModule().millModuleBasePath.value / "full-classpath").toString())
-      file.print(
-        full_cp.map(_.path).mkString(":")
-      )
-      file.flush()
-      file.close()
-    }
 
     // Make filechecks runnable directly as ./mill filechecks
     override def defaultCommandName(): String = "run"
     // Define a Mill command to run filechecks
     def run() = Task.Command {
         // It depens on the runnable CLI
-        tools.launcher()
-          // It expects this task to populate a helper file
-        filechecks.classpath()
+        tools.scoverage.launcher()
 
         // Get the directory root to use as lit's working directory
         val rootPath = rootModule().millModuleBasePath.value
