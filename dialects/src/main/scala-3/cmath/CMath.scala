@@ -4,6 +4,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.clair.constraint._
 
 case class Complex(
     val typ: FloatType | IndexType.type
@@ -15,8 +16,9 @@ case class Complex(
     with MLIRName["cmath.complex"]
     derives AttributeTrait
 
+object cstr extends BaseAttr[Complex]
 case class Norm(
-    in: Operand[Complex],
+    in: Operand[Constrained[cstr.type]],
     res: Result[FloatType]
 ) extends MLIRName["cmath.norm"]
     derives MLIRTrait
