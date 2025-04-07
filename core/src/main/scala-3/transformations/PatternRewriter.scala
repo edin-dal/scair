@@ -79,7 +79,7 @@ case class InsertPoint(
   }
 
   if (insert_before != None) then {
-    if !(insert_before.get.container_block equals Some(block)) then {
+    if !(insert_before.get.container_block `equals` Some(block)) then {
       throw new Error(
         "Given operation's container and given block do not match: " +
           "InsertPoint must be an operation inside a given block."

@@ -42,7 +42,7 @@ object FastMathFlags:
   inline def fast: FastMathFlags =
     reassoc | nnan | ninf | nsz | arcp | contract | afn
 
-  def apply(flags: FastMathFlag*): FastMathFlags = HashSet(flags: _*)
+  def apply(flags: FastMathFlag*): FastMathFlags = HashSet(flags*)
 
 object FastMathFlagsAttr extends AttributeObject {
   override def name: String = "arith.fastmath"

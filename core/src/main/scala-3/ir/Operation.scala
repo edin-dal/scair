@@ -90,7 +90,7 @@ sealed abstract class MLIROperation(
       case Some(x) =>
         x.container_operation match {
           case Some(op) =>
-            (op equals this) match {
+            (op `equals` this) match {
               case true => true
               case false =>
                 op.container_block match {
@@ -104,7 +104,7 @@ sealed abstract class MLIROperation(
       case None => false
     }
   }
-
+  
   def drop_all_references: Unit = {
     container_block = None
     for ((idx, operand) <- (0 to operands.length) zip operands) {

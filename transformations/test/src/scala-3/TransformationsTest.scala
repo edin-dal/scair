@@ -45,8 +45,8 @@ class TransformationsTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(_)
-      )
+        pattern = parser.TopLevel(using _)
+      ): @unchecked
 
       val opToErase = value.regions(0).blocks(0).operations(1)
 
@@ -79,8 +79,8 @@ class TransformationsTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(_)
-      )
+        pattern = parser.TopLevel(using _)
+      ): @unchecked
 
       val opToAdd = value.regions(0).blocks(0).operations(0)
 
@@ -113,8 +113,8 @@ class TransformationsTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(_)
-      )
+        pattern = parser.TopLevel(using _)
+      ): @unchecked
 
       val block =
         value.regions(0).blocks(0).operations(2).regions(0).blocks(0)

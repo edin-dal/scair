@@ -37,7 +37,7 @@ import scala.quoted.*
   * @param name
   *   The name of the member to select.
   */
-def selectMember(obj: Expr[_], name: String)(using
+def selectMember(obj: Expr[?], name: String)(using
     Quotes
 ): Expr[Any] = {
   import quotes.reflect.*
@@ -56,7 +56,7 @@ def selectMember(obj: Expr[_], name: String)(using
   */
 def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
-    adtOpExpr: Expr[_]
+    adtOpExpr: Expr[?]
 )(using Quotes): Expr[ListType[DefinedInput[Def]]] = {
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
@@ -183,7 +183,7 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   Type.of[Def] match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -234,7 +234,7 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   *   The UnverifiedOp expression.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
@@ -291,7 +291,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   */
 def partitionedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   // Get the flat list of constructs from the UnverifiedOp
   val flat = getConstructSeq[Def](op)
@@ -375,7 +375,7 @@ def partitionedConstructs[Def <: OpInputDef: Type](
   */
 def verifiedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) = {
   // For each partitioned construct
   (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
@@ -429,7 +429,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   import quotes.reflect._
   (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
@@ -614,14 +614,14 @@ object MLIRTrait {
 
 }
 
-inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[_]] =
+inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
       // slight workaround on that &: TODO -> get rid of it ;)
       AttributeTrait.derived[t] +: summonAttributeTraits[ts]
     case _: EmptyTuple => Seq()
 
-inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
+inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
       MLIRTrait.derived[t] +: summonMLIRTraits[ts]

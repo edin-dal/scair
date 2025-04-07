@@ -181,14 +181,14 @@ case class Block private (
     for (op <- new_ops) {
       attach_op(op)
     }
-    operations.insertAll(oplen, ListType(new_ops: _*))
+    operations.insertAll(oplen, ListType(new_ops*))
   }
 
   def insert_op_before(
       existing_op: MLIROperation,
       new_op: MLIROperation
   ): Unit = {
-    (existing_op.container_block equals Some(this)) match {
+    (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
         operations.insertAll(getIndexOf(existing_op), ListType(new_op))
@@ -204,12 +204,12 @@ case class Block private (
       existing_op: MLIROperation,
       new_ops: Seq[MLIROperation]
   ): Unit = {
-    (existing_op.container_block equals Some(this)) match {
+    (existing_op.container_block `equals` Some(this)) match {
       case true =>
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(getIndexOf(existing_op), ListType(new_ops: _*))
+        operations.insertAll(getIndexOf(existing_op), ListType(new_ops*))
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -222,7 +222,7 @@ case class Block private (
       existing_op: MLIROperation,
       new_op: MLIROperation
   ): Unit = {
-    (existing_op.container_block equals Some(this)) match {
+    (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
         operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_op))
@@ -238,12 +238,12 @@ case class Block private (
       existing_op: MLIROperation,
       new_ops: Seq[MLIROperation]
   ): Unit = {
-    (existing_op.container_block equals Some(this)) match {
+    (existing_op.container_block `equals` Some(this)) match {
       case true =>
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_ops: _*))
+        operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_ops*))
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -258,7 +258,7 @@ case class Block private (
   }
 
   def detach_op(op: MLIROperation): MLIROperation = {
-    (op.container_block equals Some(this)) match {
+    (op.container_block `equals` Some(this)) match {
       case true =>
         op.container_block = None
         operations -= op

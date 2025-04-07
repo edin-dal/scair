@@ -95,7 +95,7 @@ object ScairOpt {
 
           parser.parseThis(
             chunk,
-            pattern = parser.TopLevel(_)
+            pattern = parser.TopLevel(using _)
           ) match {
             case fastparse.Parsed.Success(input_module, _) =>
               val processed_module = {

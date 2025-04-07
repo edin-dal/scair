@@ -30,7 +30,7 @@ object Parser {
     * It's litteraly fastparse's JavaWhitespace with the /* */ states just
     * erased :)
     */
-  implicit val whitespace: Whitespace = { implicit ctx: P[_] =>
+  implicit val whitespace: Whitespace = { implicit ctx: P[?] =>
     val input = ctx.input
     val startIndex = ctx.index
     @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
@@ -998,8 +998,8 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def parseThis[A, B](
       text: String,
-      pattern: fastparse.P[_] => fastparse.P[B] = { (x: fastparse.P[_]) =>
-        TopLevel(x)
+      pattern: fastparse.P[?] => fastparse.P[B] = { (x: fastparse.P[?]) =>
+        TopLevel(using x)
       },
       verboseFailures: Boolean = false
   ): fastparse.Parsed[B] = {

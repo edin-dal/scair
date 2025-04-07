@@ -12,16 +12,16 @@ type DataTypeOf[T] = T match
 /** Typeclass to provide automatic construction of a DataAttribute from its
   * datatype.
   */
-trait TransparentData[T <: DataAttribute[_]]
+trait TransparentData[T <: DataAttribute[?]]
     extends Conversion[DataTypeOf[T], T] {
   def apply(data: DataTypeOf[T]): T = attrConversion(data)
   def attrConversion(data: DataTypeOf[T]): T
 }
 
 object TransparentData {
-  inline def derived[T <: DataAttribute[_]] = ${ derivedImpl[T] }
+  inline def derived[T <: DataAttribute[?]] = ${ derivedImpl[T] }
 
-  def derivedImpl[T <: DataAttribute[_]: Type](using Quotes) =
+  def derivedImpl[T <: DataAttribute[?]: Type](using Quotes) =
     import quotes.reflect._
 
     Type.of[T] match
