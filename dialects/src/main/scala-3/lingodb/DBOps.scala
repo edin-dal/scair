@@ -6,8 +6,6 @@ import scair.EnumAttr.I64EnumAttr
 import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
 import scair.Parser.*
-import scair.Parser.ValueId
-import scair.Parser.whitespace
 import scair.Printer
 import scair.dialects.builtin.*
 import scair.exceptions.VerifyException

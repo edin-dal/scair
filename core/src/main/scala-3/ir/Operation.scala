@@ -104,7 +104,7 @@ sealed abstract class MLIROperation(
       case None => false
     }
   }
-  
+
   def drop_all_references: Unit = {
     container_block = None
     for ((idx, operand) <- (0 to operands.length) zip operands) {
