@@ -15,12 +15,12 @@ import scala.collection.mutable
 //   AbsfOp   //
 // ==--------== //
 
-object AbsfOp extends MLIROperationObject {
+object AbsfOp extends OperationCompanion {
   override def name: String = "math.absf"
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = {
+  ): P[Operation] = {
     P(
       "" ~ Parser.ValueUse ~ ":" ~ parser.Type
     ).map { case (operandName, type_) =>
@@ -42,7 +42,7 @@ case class AbsfOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "math.absf",
       operands,
       successors,
@@ -72,12 +72,12 @@ case class AbsfOp(
 //   FPowIOp   //
 // ==--------== //
 
-object FPowIOp extends MLIROperationObject {
+object FPowIOp extends OperationCompanion {
   override def name: String = "math.fpowi"
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = {
+  ): P[Operation] = {
     P(
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
     ).map {
@@ -105,7 +105,7 @@ case class FPowIOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "math.fpowi",
       operands,
       successors,

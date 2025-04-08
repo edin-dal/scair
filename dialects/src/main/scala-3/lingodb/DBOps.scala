@@ -270,13 +270,13 @@ case class DB_StringType(val typ: Seq[Attribute])
 //   ConstantOp   //
 // ==----------== //
 
-object DB_ConstantOp extends MLIROperationObject {
+object DB_ConstantOp extends OperationCompanion {
   override def name: String = "db.constant"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -302,7 +302,7 @@ case class DB_ConstantOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.constant",
       operands,
       successors,
@@ -339,13 +339,13 @@ case class DB_ConstantOp(
 //   CompareOp   //
 // ==----------== //
 
-object DB_CmpOp extends MLIROperationObject {
+object DB_CmpOp extends OperationCompanion {
   override def name: String = "db.compare"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -376,7 +376,7 @@ case class DB_CmpOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.compare",
       operands,
       successors,
@@ -424,7 +424,7 @@ case class DB_CmpOp(
 //   MulOp   //
 // ==-----== //
 
-object DB_MulOp extends MLIROperationObject {
+object DB_MulOp extends OperationCompanion {
   override def name: String = "db.mul"
 
   // ==--- Custom Parsing ---== //
@@ -487,7 +487,7 @@ object DB_MulOp extends MLIROperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -517,7 +517,7 @@ case class DB_MulOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.mul",
       operands,
       successors,
@@ -567,7 +567,7 @@ case class DB_MulOp(
 //   DivOp   //
 // ==-----== //
 
-object DB_DivOp extends MLIROperationObject {
+object DB_DivOp extends OperationCompanion {
   override def name: String = "db.div"
 
   // ==--- Custom Parsing ---== //
@@ -633,7 +633,7 @@ object DB_DivOp extends MLIROperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -663,7 +663,7 @@ case class DB_DivOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.div",
       operands,
       successors,
@@ -709,13 +709,13 @@ case class DB_DivOp(
 //   AddOp   //
 // ==-----== //
 
-object DB_AddOp extends MLIROperationObject {
+object DB_AddOp extends OperationCompanion {
   override def name: String = "db.add"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -745,7 +745,7 @@ case class DB_AddOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.add",
       operands,
       successors,
@@ -793,13 +793,13 @@ case class DB_AddOp(
 //   SubOp   //
 // ==-----== //
 
-object DB_SubOp extends MLIROperationObject {
+object DB_SubOp extends OperationCompanion {
   override def name: String = "db.sub"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -829,7 +829,7 @@ case class DB_SubOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.sub",
       operands,
       successors,
@@ -875,13 +875,13 @@ case class DB_SubOp(
 //   CastOp   //
 // ==-----== //
 
-object CastOp extends MLIROperationObject {
+object CastOp extends OperationCompanion {
   override def name: String = "db.cast"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
       ~ parser.OptionalAttributes
   ).map(
@@ -910,7 +910,7 @@ case class CastOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "db.cast",
       operands,
       successors,

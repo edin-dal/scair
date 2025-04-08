@@ -10,7 +10,7 @@ import scair.transformations.RewritePattern
 object AddDummyAttributeToDict extends RewritePattern {
 
   override def match_and_rewrite(
-      op: MLIROperation,
+      op: Operation,
       rewriter: PatternRewriter
   ): Unit = {
     op match {
@@ -29,7 +29,7 @@ object TestInsertingDummyOperation extends RewritePattern {
   def defDum(name: String) = new UnregisteredOperation(name)
 
   override def match_and_rewrite(
-      op: MLIROperation,
+      op: Operation,
       rewriter: PatternRewriter
   ): Unit = {
 
@@ -76,7 +76,7 @@ object TestReplacingDummyOperation extends RewritePattern {
   )
 
   override def match_and_rewrite(
-      op: MLIROperation,
+      op: Operation,
       rewriter: PatternRewriter
   ): Unit = {
 
@@ -99,7 +99,7 @@ object TestReplacingDummyOperation extends RewritePattern {
 object DummyPass extends ModulePass {
   override val name = "dummy-pass"
 
-  override def transform(op: MLIROperation): MLIROperation = {
+  override def transform(op: Operation): Operation = {
     val prw = new PatternRewriteWalker(AddDummyAttributeToDict)
     prw.rewrite_op(op)
 
@@ -111,7 +111,7 @@ object DummyPass extends ModulePass {
 object TestInsertionPass extends ModulePass {
   override val name = "test-ins-pass"
 
-  override def transform(op: MLIROperation): MLIROperation = {
+  override def transform(op: Operation): Operation = {
     val prw = new PatternRewriteWalker(TestInsertingDummyOperation)
     prw.rewrite_op(op)
 
@@ -123,7 +123,7 @@ object TestInsertionPass extends ModulePass {
 object TestReplacementPass extends ModulePass {
   override val name = "test-rep-pass"
 
-  override def transform(op: MLIROperation): MLIROperation = {
+  override def transform(op: Operation): Operation = {
     val prw = new PatternRewriteWalker(TestReplacingDummyOperation)
     prw.rewrite_op(op)
 

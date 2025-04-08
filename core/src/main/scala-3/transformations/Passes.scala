@@ -11,5 +11,5 @@ import scair.ir.*
 
 abstract class ModulePass {
   val name: String
-  def transform(op: MLIROperation): MLIROperation = ???
+  def transform(op: Operation): Operation = ???
 }

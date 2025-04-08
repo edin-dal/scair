@@ -133,7 +133,7 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
 //   ReturnOp   //
 // ==--------== //
 
-object ReturnOp extends MLIROperationObject {
+object ReturnOp extends OperationCompanion {
   override def name: String = "tuples.return"
 
   // ==--- Custom Parsing ---== //
@@ -146,7 +146,7 @@ object ReturnOp extends MLIROperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
       parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
@@ -169,7 +169,7 @@ case class ReturnOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "tuples.return",
       operands,
       successors,
@@ -198,13 +198,13 @@ case class ReturnOp(
 //   GetColumnOp   //
 // ==-----------== //
 
-object GetColumnOp extends MLIROperationObject {
+object GetColumnOp extends OperationCompanion {
   override def name: String = "tuples.getcol"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
       parser.Type ~ parser.OptionalAttributes
   ).map(
@@ -234,7 +234,7 @@ case class GetColumnOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "tuples.getcol",
       operands,
       successors,

@@ -11,7 +11,7 @@ case class TestOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = "test.op",
       operands,
       successors,
@@ -21,7 +21,7 @@ case class TestOp(
       dictionaryAttributes
     )
 
-object TestOp extends MLIROperationObject {
+object TestOp extends OperationCompanion {
   override def name = "test.op"
 }
 

@@ -15,8 +15,6 @@ import scair.Printer
 
 trait MLIRName[name <: String]
 
-sealed abstract class Operation()
-
 class UnverifiedOp[T](
     name: String,
     operands: ListType[Value[Attribute]] = ListType(),
@@ -27,7 +25,7 @@ class UnverifiedOp[T](
       DictType.empty[String, Attribute],
     dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = name,
       operands,
       successors,
@@ -41,23 +39,32 @@ class UnverifiedOp[T](
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-abstract class MLIROperation(
-    val name: String,
-    val operands: ListType[Value[Attribute]] = ListType(),
-    val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    val regions: ListType[Region] = ListType(),
-    val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    val dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends Operation,
-      OpTrait {
+trait Operation {
+  def name: String
+  def operands: ListType[Value[Attribute]]
+  def successors: ListType[Block]
+  def results: ListType[Result[Attribute]]
+  def regions: ListType[Region]
+  def dictionaryProperties: DictType[String, Attribute]
+  def dictionaryAttributes: DictType[String, Attribute]
+  var container_block: Option[Block]
+  def drop_all_references: Unit
+  def erase(drop_refs: Boolean = true): Unit
+  def trait_verify(): Unit = ()
 
-  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
-  def op: MLIROperation = this
+  def custom_print(p: Printer): String =
+    p.printGenericMLIROperation(this)
 
-  var container_block: Option[Block] = None
+  def custom_verify(): Unit = ()
+
+  final def verify(): Unit = {
+    for (result <- results) result.verify()
+    for (region <- regions) region.verify()
+    for ((key, attr) <- dictionaryProperties) attr.custom_verify()
+    for ((key, attr) <- dictionaryAttributes) attr.custom_verify()
+    custom_verify()
+    trait_verify()
+  }
 
   def is_ancestor(node: Block): Boolean = {
     val reg = node.container_region
@@ -80,6 +87,25 @@ abstract class MLIROperation(
     }
   }
 
+}
+
+abstract class BaseOperation(
+    val name: String,
+    val operands: ListType[Value[Attribute]] = ListType(),
+    val successors: ListType[Block] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
+    val regions: ListType[Region] = ListType(),
+    val dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    val dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends Operation {
+
+  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
+  def op: Operation = this
+
+  var container_block: Option[Block] = None
+
   def drop_all_references: Unit = {
     container_block = None
     for ((idx, operand) <- (0 to operands.length) zip operands) {
@@ -100,24 +126,6 @@ abstract class MLIROperation(
     for (result <- results) {
       result.erase()
     }
-  }
-
-  def custom_verify(): Unit = ()
-
-  final def verify(): Unit = {
-    for (result <- results) result.verify()
-    for (region <- regions) region.verify()
-    for ((key, attr) <- dictionaryProperties) attr.custom_verify()
-    for ((key, attr) <- dictionaryAttributes) attr.custom_verify()
-    custom_verify()
-    trait_verify()
-  }
-
-  def custom_print(p: Printer): String =
-    p.printGenericMLIROperation(this)
-
-  final def print(printer: Printer): String = {
-    printer.printOperation(this)
   }
 
   override def hashCode(): Int = {
@@ -145,7 +153,7 @@ case class UnregisteredOperation(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = name,
       operands,
       successors,
@@ -155,10 +163,10 @@ case class UnregisteredOperation(
       dictionaryAttributes
     )
 
-trait MLIROperationObject {
+trait OperationCompanion {
   def name: String
 
-  def parse[$: P](parser: Parser): P[MLIROperation] =
+  def parse[$: P](parser: Parser): P[Operation] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )
@@ -170,7 +178,7 @@ trait MLIROperationObject {
       ListType[Region] /* = regions */,
       DictType[String, Attribute], /* = dictProps */
       DictType[String, Attribute] /* = dictAttrs */
-  ) => MLIROperation
+  ) => Operation
 
   def apply(
       operands: ListType[Value[Attribute]] = ListType(),
@@ -181,11 +189,11 @@ trait MLIROperationObject {
         DictType.empty[String, Attribute],
       dictionaryAttributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): MLIROperation
+  ): Operation
 
 }
 
-trait MLIRTraitI[T] extends MLIROperationObject {
+trait MLIRTraitI[T] extends OperationCompanion {
 
   extension (adtOp: T) def MLIRTrait = this
 
