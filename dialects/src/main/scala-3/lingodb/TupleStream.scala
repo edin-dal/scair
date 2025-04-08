@@ -169,7 +169,7 @@ case class ReturnOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "tuples.return",
       operands,
       successors,
@@ -234,7 +234,7 @@ case class GetColumnOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "tuples.getcol",
       operands,
       successors,

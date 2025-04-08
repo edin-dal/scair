@@ -42,7 +42,7 @@ case class AbsfOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "math.absf",
       operands,
       successors,
@@ -105,7 +105,7 @@ case class FPowIOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "math.fpowi",
       operands,
       successors,

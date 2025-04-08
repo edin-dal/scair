@@ -302,7 +302,7 @@ case class DB_ConstantOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.constant",
       operands,
       successors,
@@ -376,7 +376,7 @@ case class DB_CmpOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.compare",
       operands,
       successors,
@@ -517,7 +517,7 @@ case class DB_MulOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.mul",
       operands,
       successors,
@@ -663,7 +663,7 @@ case class DB_DivOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.div",
       operands,
       successors,
@@ -745,7 +745,7 @@ case class DB_AddOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.add",
       operands,
       successors,
@@ -829,7 +829,7 @@ case class DB_SubOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.sub",
       operands,
       successors,
@@ -910,7 +910,7 @@ case class CastOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "db.cast",
       operands,
       successors,

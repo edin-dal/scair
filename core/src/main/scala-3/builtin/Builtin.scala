@@ -471,7 +471,7 @@ case class ModuleOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "builtin.module",
       operands,
       successors,

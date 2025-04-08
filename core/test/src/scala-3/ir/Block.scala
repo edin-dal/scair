@@ -19,7 +19,7 @@ case class TestOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "test.op",
       operands,
       successors,

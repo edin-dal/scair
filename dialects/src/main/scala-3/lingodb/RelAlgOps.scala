@@ -192,7 +192,7 @@ case class BaseTableOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.basetable",
       operands,
       successors,
@@ -275,7 +275,7 @@ case class SelectionOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.selection",
       operands,
       successors,
@@ -354,7 +354,7 @@ case class MapOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.map",
       operands,
       successors,
@@ -456,7 +456,7 @@ case class AggregationOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.aggregation",
       operands,
       successors,
@@ -558,7 +558,7 @@ case class CountRowsOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.count",
       operands,
       successors,
@@ -639,7 +639,7 @@ case class AggrFuncOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.aggrfn",
       operands,
       successors,
@@ -743,7 +743,7 @@ case class SortOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.sort",
       operands,
       successors,
@@ -845,7 +845,7 @@ case class MaterializeOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "relalg.materialize",
       operands,
       successors,

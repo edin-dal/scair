@@ -41,7 +41,7 @@ class UnverifiedOp[T](
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-sealed abstract class MLIROperation(
+abstract class MLIROperation(
     val name: String,
     val operands: ListType[Value[Attribute]] = ListType(),
     val successors: ListType[Block] = ListType(),
@@ -144,26 +144,6 @@ case class UnregisteredOperation(
     override val dictionaryProperties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends MLIROperation(
-      name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      dictionaryProperties,
-      dictionaryAttributes
-    )
-
-class RegisteredOperation(
-    name: String,
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends MLIROperation(
       name = name,

@@ -21,7 +21,7 @@ case class FillerOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "filler",
       operands,
       successors,
@@ -44,7 +44,7 @@ case class TerminatorOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "terminator",
       operands,
       successors,
@@ -68,7 +68,7 @@ case class NoTerminatorOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends MLIROperation(
       name = "noterminator",
       operands,
       successors,
