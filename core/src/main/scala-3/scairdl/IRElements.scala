@@ -4,7 +4,7 @@ import fastparse.*
 import fastparse.ScalaWhitespace.*
 import scair.dialects.builtin.*
 import scair.ir.Attribute
-import scair.ir.MLIROperation
+import scair.ir.Operation
 import scair.scairdl.constraints.*
 
 import java.io.File
@@ -47,7 +47,7 @@ abstract class EscapeHatch[T: ClassTag] {
 
 class AttrEscapeHatch[T <: Attribute: ClassTag]() extends EscapeHatch[T]
 
-class OpEscapeHatch[T <: MLIROperation: ClassTag]() extends EscapeHatch[T]
+class OpEscapeHatch[T <: Operation: ClassTag]() extends EscapeHatch[T]
 
 /*≡≡=--=≡≡≡=--=≡≡*\
 ||     TYPES     ||

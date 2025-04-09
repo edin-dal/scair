@@ -567,19 +567,59 @@ object AttributeTrait {
 
 }
 
-trait MLIRTrait[T] extends MLIRTraitI[T] {
-  extension (op: T) override def MLIRTrait = this
+trait DerivedOperation[name <: String, T] extends Operation {
+  given DerivedOperationCompanion[T] = deferred
+
+  def operands: ListType[Value[Attribute]]
+  def successors: ListType[Block]
+  def results: ListType[Result[Attribute]]
+  def regions: ListType[Region]
+  def dictionaryProperties: DictType[String, Attribute]
+  def dictionaryAttributes: DictType[String, Attribute]
+  var container_block: Option[Block]
+  def drop_all_references: Unit
+  def erase(drop_refs: Boolean = true): Unit
 }
 
-object MLIRTrait {
+class UnverifiedOp[T](
+    name: String,
+    operands: ListType[Value[Attribute]] = ListType(),
+    successors: ListType[Block] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
+    regions: ListType[Region] = ListType(),
+    dictionaryProperties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    dictionaryAttributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends BaseOperation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      dictionaryProperties,
+      dictionaryAttributes
+    )
 
-  inline def derived[T]: MLIRTrait[T] = ${ derivedImpl[T] }
+trait DerivedOperationCompanion[T] extends OperationCompanion {
 
-  def derivedImpl[T: Type](using Quotes): Expr[MLIRTrait[T]] =
+  def unverify(adtOp: T): UnverifiedOp[T]
+
+  def verify(unverOp: UnverifiedOp[T]): T
+
+}
+
+trait MLIRName[name <: String]
+
+object DerivedOperationCompanion {
+
+  inline def derived[T]: DerivedOperationCompanion[T] = ${ derivedImpl[T] }
+
+  def derivedImpl[T: Type](using Quotes): Expr[DerivedOperationCompanion[T]] =
     val opDef = getDefImpl[T]
     '{
 
-      new MLIRTrait[T]:
+      new DerivedOperationCompanion[T]:
 
         def name: String = ${ Expr(opDef.name) }
 
@@ -608,8 +648,6 @@ object MLIRTrait {
         def verify(unverOp: UnverifiedOp[T]): T =
           ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
 
-        extension (op: T) override def MLIRTrait: MLIRTrait[T] = this
-
     }
 
 }
@@ -621,10 +659,10 @@ inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[?]] =
       AttributeTrait.derived[t] +: summonAttributeTraits[ts]
     case _: EmptyTuple => Seq()
 
-inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[?]] =
+inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      MLIRTrait.derived[t] +: summonMLIRTraits[ts]
+      DerivedOperationCompanion.derived[t] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](

@@ -80,13 +80,13 @@ case class ResultTable(
 //   SetResultOp   //
 // ==-----------== //
 
-object SetResultOp extends MLIROperationObject {
+object SetResultOp extends OperationCompanion {
   override def name: String = "subop.set_result"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     parser.Type ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -114,7 +114,7 @@ case class SetResultOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "subop.set_result",
       operands,
       successors,

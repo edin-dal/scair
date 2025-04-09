@@ -28,7 +28,7 @@ case class Apply(
     res: Result[IndexType.type],
     map: AffineMapAttr
 ) extends MLIRName["affine.apply"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||      FOR OP      ||
@@ -44,7 +44,7 @@ case class For(
     step: IntegerAttr,
     body: Region
 ) extends MLIRName["affine.for"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -62,7 +62,7 @@ case class Parallel(
     res: Seq[Result[Attribute]],
     body: Region
 ) extends MLIRName["affine.parallel"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡=--=≡≡*\
 ||     IF OP     ||
@@ -75,7 +75,7 @@ case class If(
     then_region: Region,
     else_region: Region
 ) extends MLIRName["affine.if"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -87,7 +87,7 @@ case class Store(
     indices: Seq[Operand[IndexType.type]],
     map: AffineMapAttr
 ) extends MLIRName["affine.store"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡=---=≡≡*\
 ||     LOAD OP     ||
@@ -99,7 +99,7 @@ case class Load(
     result: Result[Attribute],
     map: AffineMapAttr
 ) extends MLIRName["affine.load"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||     MIN OP     ||
@@ -110,7 +110,7 @@ case class Min(
     result: Result[IndexType.type],
     map: AffineMapAttr
 ) extends MLIRName["affine.min"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||
@@ -119,7 +119,7 @@ case class Min(
 case class Yield(
     arguments: Seq[Operand[Attribute]]
 ) extends MLIRName["affine.yield"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 val AffineDialect = summonDialect[
   EmptyTuple,

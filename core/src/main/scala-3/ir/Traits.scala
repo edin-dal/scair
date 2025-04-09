@@ -7,31 +7,22 @@ package scair.ir
 // ░░░██║░░░ ██║░░██║ ██║░░██║ ██║ ░░░██║░░░ ██████╔╝
 // ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚═════╝░
 
-/*≡==--=≡≡≡=--=≡≡*\
-||    OPTRAIT    ||
-\*≡==---=≡=---==≡*/
-
-trait OpTrait {
-  def op: MLIROperation
-  def trait_verify(): Unit = ()
-}
-
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||   TERMINATOR   ||
 \*≡==---=≡≡=---==≡*/
 
-trait IsTerminator extends OpTrait {
+trait IsTerminator extends Operation {
 
-  abstract override def trait_verify(): Unit = {
-    op.container_block match {
+  override def trait_verify(): Unit = {
+    this.container_block match {
       case Some(b) =>
-        if (op != b.operations.last) then
+        if (this != b.operations.last) then
           throw new Exception(
-            s"Operation '${op.name}' marked as a terminator, but is not the last operation within its container block"
+            s"Operation '${name}' marked as a terminator, but is not the last operation within its container block"
           )
       case None =>
         throw new Exception(
-          s"Operation '${op.name}' marked as a terminator, but is not contained in any block."
+          s"Operation '${name}' marked as a terminator, but is not contained in any block."
         )
     }
     super.trait_verify()
@@ -43,12 +34,12 @@ trait IsTerminator extends OpTrait {
 ||   NO TERMINATOR   ||
 \*≡==----=≡≡≡=----==≡*/
 
-trait NoTerminator extends OpTrait {
+trait NoTerminator extends Operation {
 
-  abstract override def trait_verify(): Unit = {
-    if (op.regions.filter(x => x.blocks.length != 1).length != 0) then
+  override def trait_verify(): Unit = {
+    if (regions.filter(x => x.blocks.length != 1).length != 0) then
       throw new Exception(
-        s"NoTerminator Operation '${op.name}' requires single-block regions"
+        s"NoTerminator Operation '${name}' requires single-block regions"
       )
 
     super.trait_verify()

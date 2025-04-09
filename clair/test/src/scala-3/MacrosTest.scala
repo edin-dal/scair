@@ -16,7 +16,7 @@ case class Mul(
     result: Result[IntegerType],
     randProp: StringData
 ) extends MLIRName["cmath.mul"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
@@ -24,7 +24,7 @@ case class MulSingleVariadic(
     result: Seq[Result[IntegerType]],
     randProp: StringData
 ) extends MLIRName["cmath.mulsinglevariadic"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
@@ -36,7 +36,7 @@ case class MulMultiVariadic(
     operandSegmentSizes: DenseArrayAttr,
     resultSegmentSizes: DenseArrayAttr
 ) extends MLIRName["cmath.mulmultivariadic"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class MulFull(
     operand1: Operand[IntegerType],
@@ -50,7 +50,7 @@ case class MulFull(
     succ1: Successor,
     succ2: Successor
 ) extends MLIRName["cmath.mulfull"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
@@ -193,7 +193,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Unverified instantiation" should "Correctly instantiates the UniverifiedOp" in {
-    val opT = MLIRTrait.derived[Mul]
+    val opT = DerivedOperationCompanion.derived[Mul]
 
     val unverMulOp = opT(
       operands = ListType(
@@ -220,7 +220,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Conversion to Unverified" should "Correctly translate from ADT operation to Univerified Operation" in {
-    val opT = summon[MLIRTrait[Mul]]
+    val opT = summon[DerivedOperationCompanion[Mul]]
 
     val op = TestCases.adtMulOp
     val unverMulOp = opT.unverify(op)
@@ -241,7 +241,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Conversion to ADTOp" should "Correctly translate from Unverified operation to ADT Operation" in {
-    val opT = summon[MLIRTrait[Mul]]
+    val opT = summon[DerivedOperationCompanion[Mul]]
 
     val op = TestCases.unverOp
     val adtMulOp = opT.verify(op)
@@ -260,7 +260,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "ADTOp test for correctly passing around the same instances" should "test all fields of a ADTOp" in {
-    val opT = MLIRTrait.derived[MulFull]
+    val opT = DerivedOperationCompanion.derived[MulFull]
 
     val op = TestCases.adtMulOpAllFields
 
@@ -284,7 +284,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {
-    val opT = summon[MLIRTrait[MulSingleVariadic]]
+    val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
 
     val op = TestCases.unverMulSinVarOp
     val adtMulSinVarOp = opT.verify(op)
@@ -309,7 +309,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Single Variadic Conversion to Unverified" should "Correctly translate from Single Variadic ADT operation to Univerified Operation" in {
-    val opT = summon[MLIRTrait[MulSingleVariadic]]
+    val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
 
     val op = TestCases.adtMulSinVarOp
     val unverMulSinVarOp = opT.unverify(op)
@@ -334,7 +334,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unverified operation to ADT Operation" in {
-    val opT = summon[MLIRTrait[MulMultiVariadic]]
+    val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
 
     val op = TestCases.unverMulMulVarOp
     val adtMulMulVarOp = opT.verify(op)
@@ -374,7 +374,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Multi Variadic Conversion to Unverified" should "Correctly translate from Multi Variadic ADT operation to Univerified Operation" in {
-    val opT = summon[MLIRTrait[MulMultiVariadic]]
+    val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
 
     val op = TestCases.adtMulMulVarOp
     val unverMulSinVarOp = opT.unverify(op)

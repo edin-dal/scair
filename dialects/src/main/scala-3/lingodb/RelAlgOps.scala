@@ -145,12 +145,10 @@ private def DialectRegion[$: P](parser: Parser) = P(
         b
       })
       ~ "{"
-      ~ parser.Operations(1) ~ "}").map(
-      (b: Block, y: ListType[MLIROperation]) => {
-        b.operations ++= y
-        new Region(Seq(b))
-      }
-    )
+      ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
+      b.operations ++= y
+      new Region(Seq(b))
+    })
 )
   ~ E({ parser.enterParentRegion })
 
@@ -158,7 +156,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
 //   BaseTableOp   //
 // ==-----------== //
 
-object BaseTableOp extends MLIROperationObject {
+object BaseTableOp extends OperationCompanion {
   override def name: String = "relalg.basetable"
 
   // ==--- Custom Parsing ---== //
@@ -192,7 +190,7 @@ case class BaseTableOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.basetable",
       operands,
       successors,
@@ -238,13 +236,13 @@ case class BaseTableOp(
 //   SelectionOp   //
 // ==-----------== //
 
-object SelectionOp extends MLIROperationObject {
+object SelectionOp extends OperationCompanion {
   override def name: String = "relalg.selection"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ DialectRegion(parser) ~
       parser.OptionalKeywordAttributes
   )
@@ -275,7 +273,7 @@ case class SelectionOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.selection",
       operands,
       successors,
@@ -314,13 +312,13 @@ case class SelectionOp(
 //   MapOp   //
 // ==-----== //
 
-object MapOp extends MLIROperationObject {
+object MapOp extends OperationCompanion {
   override def name: String = "relalg.map"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
@@ -354,7 +352,7 @@ case class MapOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.map",
       operands,
       successors,
@@ -408,13 +406,13 @@ case class MapOp(
 //   AggregationOp   //
 // ==-------------== //
 
-object AggregationOp extends MLIROperationObject {
+object AggregationOp extends OperationCompanion {
   override def name: String = "relalg.aggregation"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
         .parse(parser)
@@ -456,7 +454,7 @@ case class AggregationOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.aggregation",
       operands,
       successors,
@@ -525,13 +523,13 @@ case class AggregationOp(
 //   CountRowsOp   //
 // ==-----------== //
 
-object CountRowsOp extends MLIROperationObject {
+object CountRowsOp extends OperationCompanion {
   override def name: String = "relalg.count"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ parser.OptionalAttributes
   ).map(
     (
@@ -558,7 +556,7 @@ case class CountRowsOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.count",
       operands,
       successors,
@@ -601,13 +599,13 @@ case class CountRowsOp(
 //   AggrFuncOp   //
 // ==----------== //
 
-object AggrFuncOp extends MLIROperationObject {
+object AggrFuncOp extends OperationCompanion {
   override def name: String = "relalg.aggrfn"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
       ~ ValueId ~ ":" ~ parser.Type.rep(1)
       ~ parser.OptionalAttributes
@@ -639,7 +637,7 @@ case class AggrFuncOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.aggrfn",
       operands,
       successors,
@@ -704,13 +702,13 @@ case class AggrFuncOp(
 //   SortOp   //
 // ==------== //
 
-object SortOp extends MLIROperationObject {
+object SortOp extends OperationCompanion {
   override def name: String = "relalg.sort"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "[" ~ (SortSpecificationAttr
         .parse(parser))
@@ -743,7 +741,7 @@ case class SortOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.sort",
       operands,
       successors,
@@ -800,13 +798,13 @@ case class SortOp(
 //   MaterializeOp   //
 // ==-------------== //
 
-object MaterializeOp extends MLIROperationObject {
+object MaterializeOp extends OperationCompanion {
   override def name: String = "relalg.materialize"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
         .parse(parser)
@@ -845,7 +843,7 @@ case class MaterializeOp(
     override val regions: ListType[Region],
     override val dictionaryProperties: DictType[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "relalg.materialize",
       operands,
       successors,

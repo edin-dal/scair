@@ -11,26 +11,26 @@ case class Alloc(
     memref: Result[MemrefType],
     alignment: IntegerAttr
 ) extends MLIRName["memref.alloc"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Dealloc(
     memref: Operand[MemrefType]
 ) extends MLIRName["memref.dealloc"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Load(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType.type]],
     result: Result[Attribute]
 ) extends MLIRName["memref.load"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType.type]]
 ) extends MLIRName["memref.store"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 val MemrefDialect =
   summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store)](Seq())

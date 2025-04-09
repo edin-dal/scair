@@ -10,7 +10,7 @@ case class Call(
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]]
 ) extends MLIRName["func.call"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Func(
     sym_name: StringData,
@@ -19,11 +19,11 @@ case class Func(
     // sym_visibility: StringData,
     body: Region
 ) extends MLIRName["func.func"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
 ) extends MLIRName["func.return"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())

@@ -8,7 +8,7 @@ import scair.ir.*
 
 import scala.collection.mutable
 
-object FillerOp extends MLIROperationObject {
+object FillerOp extends OperationCompanion {
   override def name: String = "filler"
 }
 
@@ -21,7 +21,7 @@ case class FillerOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "filler",
       operands,
       successors,
@@ -31,7 +31,7 @@ case class FillerOp(
       dictionaryAttributes
     ) {}
 
-object TerminatorOp extends MLIROperationObject {
+object TerminatorOp extends OperationCompanion {
   override def name: String = "terminator"
 }
 
@@ -44,7 +44,7 @@ case class TerminatorOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "terminator",
       operands,
       successors,
@@ -55,7 +55,7 @@ case class TerminatorOp(
     )
     with IsTerminator {}
 
-object NoTerminatorOp extends MLIROperationObject {
+object NoTerminatorOp extends OperationCompanion {
   override def name: String = "noterminator"
 }
 
@@ -68,7 +68,7 @@ case class NoTerminatorOp(
       DictType.empty[String, Attribute],
     override val dictionaryAttributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "noterminator",
       operands,
       successors,
