@@ -90,7 +90,7 @@ sealed abstract class MLIROperation(
       case Some(x) =>
         x.container_operation match {
           case Some(op) =>
-            (op equals this) match {
+            (op `equals` this) match {
               case true => true
               case false =>
                 op.container_block match {

@@ -16,8 +16,8 @@ case class Printer(
     val indent: String = "  ",
     var valueNextID: Int = 0,
     var blockNextID: Int = 0,
-    val valueNameMap: mutable.Map[Value[_ <: Attribute], String] =
-      mutable.Map.empty[Value[_ <: Attribute], String],
+    val valueNameMap: mutable.Map[Value[? <: Attribute], String] =
+      mutable.Map.empty[Value[? <: Attribute], String],
     val blockNameMap: mutable.Map[Block, String] =
       mutable.Map.empty[Block, String]
 ) {
@@ -26,7 +26,7 @@ case class Printer(
   ||      TOOLS      ||
   \*≡==---==≡==---==≡*/
 
-  def assignValueName(value: Value[_ <: Attribute]): String =
+  def assignValueName(value: Value[? <: Attribute]): String =
     valueNameMap.contains(value) match {
       case true => valueNameMap(value)
       case false =>
@@ -59,14 +59,14 @@ case class Printer(
   ||    VALUE PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
-  def printValue(value: Value[_ <: Attribute]): String = {
+  def printValue(value: Value[? <: Attribute]): String = {
     return s"%${assignValueName(value)}"
   }
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    BLOCK PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
-  def printBlockArgument(value: Value[_ <: Attribute]): String = {
+  def printBlockArgument(value: Value[? <: Attribute]): String = {
     return s"${printValue(value)}: ${printAttribute(value.typ)}"
   }
 

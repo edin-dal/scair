@@ -267,20 +267,20 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val unverMulOp = opT.unverify(op)
     val adtMulOp = opT.verify(unverMulOp)
 
-    adtMulOp.operand1 equals unverMulOp.operands(0) should be(true)
-    adtMulOp.operand2 equals unverMulOp.operands(1) should be(true)
-    adtMulOp.result1 equals unverMulOp.results(0) should be(true)
-    adtMulOp.result2 equals unverMulOp.results(1) should be(true)
-    adtMulOp.randProp1 equals unverMulOp.dictionaryProperties(
+    adtMulOp.operand1 `equals` unverMulOp.operands(0) should be(true)
+    adtMulOp.operand2 `equals` unverMulOp.operands(1) should be(true)
+    adtMulOp.result1 `equals` unverMulOp.results(0) should be(true)
+    adtMulOp.result2 `equals` unverMulOp.results(1) should be(true)
+    adtMulOp.randProp1 `equals` unverMulOp.dictionaryProperties(
       "randProp1"
     ) should be(true)
-    adtMulOp.randProp2 equals unverMulOp.dictionaryProperties(
+    adtMulOp.randProp2 `equals` unverMulOp.dictionaryProperties(
       "randProp2"
     ) should be(true)
-    adtMulOp.reg1 equals unverMulOp.regions(0) should be(true)
-    adtMulOp.reg2 equals unverMulOp.regions(1) should be(true)
-    adtMulOp.succ1 equals unverMulOp.successors(0) should be(true)
-    adtMulOp.succ2 equals unverMulOp.successors(1) should be(true)
+    adtMulOp.reg1 `equals` unverMulOp.regions(0) should be(true)
+    adtMulOp.reg2 `equals` unverMulOp.regions(1) should be(true)
+    adtMulOp.succ1 `equals` unverMulOp.successors(0) should be(true)
+    adtMulOp.succ2 `equals` unverMulOp.successors(1) should be(true)
   }
 
   "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {

@@ -123,8 +123,8 @@ case class DialectDef(
     val name: String,
     val operations: Seq[OperationDef] = Seq(),
     val attributes: Seq[AttributeDef] = Seq(),
-    val opHatches: Seq[OpEscapeHatch[_]] = Seq(),
-    val attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
+    val opHatches: Seq[OpEscapeHatch[?]] = Seq(),
+    val attrHatches: Seq[AttrEscapeHatch[?]] = Seq()
 ) {
 
   def print(indent: Int): String =
@@ -190,7 +190,7 @@ object NewParser {
     P(formatDirective.rep(1))
 
   def parseFormat(input: String): Parsed[Seq[FormatDirective]] =
-    parse(input, assemblyFormat(_))
+    parse(input, assemblyFormat(using _))
 
 }
 
