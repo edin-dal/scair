@@ -4,7 +4,6 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.ir.*
 
-import scala.compiletime.*
 import scala.deriving.*
 import scala.quoted.*
 
@@ -143,14 +142,8 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] = {
     case '[EmptyTuple] => Nil
 }
 
-inline def getMLIRName[T] = inline erasedValue[T] match
-  case _: MLIRName[name] => constValue[name]
-  case _ =>
-    throw new Exception(
-      "Expected this type to extend MLIRName with a constant type-parameter."
-    )
-
 def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
+  import quotes.reflect._
 
   val m = Expr.summon[Mirror.ProductOf[T]].get
   m match
@@ -164,8 +157,13 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
-        case '[MLIRName[name]] =>
+        case '[DerivedOperation[name, _]] =>
           Type.valueOfConstant[name].get.asInstanceOf[String]
+        case _ =>
+          report.errorAndAbort(
+            s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
+            TypeRepr.of[T].typeSymbol.pos.get
+          )
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
         case '[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]

@@ -300,16 +300,16 @@ case class DB_ConstantOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.constant",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -317,7 +317,7 @@ case class DB_ConstantOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (0, 0, 1, 0, 0) =>
     case _ =>
@@ -328,7 +328,7 @@ case class DB_ConstantOp(
 
   override def custom_print(printer: Printer): String = {
     val value =
-      dictionaryAttributes.get("value").map(_.custom_print).getOrElse("")
+      attributes.get("value").map(_.custom_print).getOrElse("")
     val resultType = results.head.typ
     s"$name($value) : ${resultType.custom_print}"
   }
@@ -374,16 +374,16 @@ case class DB_CmpOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.compare",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -391,7 +391,7 @@ case class DB_CmpOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 0, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -414,7 +414,7 @@ case class DB_CmpOp(
       s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
     val resultType = results.head.typ.custom_print
     val predicate =
-      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+      attributes.get("predicate").map(_.custom_print).getOrElse("")
     s"$name $predicate $operand1, $operand2 : $resultType"
   }
 
@@ -515,16 +515,16 @@ case class DB_MulOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.mul",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -532,7 +532,7 @@ case class DB_MulOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -557,7 +557,7 @@ case class DB_MulOp(
       s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
     val resultType = results.head.typ.custom_print
     val predicate =
-      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
+      attributes.get("predicate").map(_.custom_print).getOrElse("")
     s"$name $operand1, $operand2 : $resultType"
   }
 
@@ -661,16 +661,16 @@ case class DB_DivOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.div",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -678,7 +678,7 @@ case class DB_DivOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -743,16 +743,16 @@ case class DB_AddOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.add",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -760,7 +760,7 @@ case class DB_AddOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -827,16 +827,16 @@ case class DB_SubOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.sub",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -844,7 +844,7 @@ case class DB_SubOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -908,16 +908,16 @@ case class CastOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.cast",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -925,7 +925,7 @@ case class CastOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
     case _ =>

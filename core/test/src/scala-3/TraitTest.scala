@@ -17,9 +17,9 @@ case class FillerOp(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = "filler",
@@ -27,8 +27,8 @@ case class FillerOp(
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {}
 
 object TerminatorOp extends OperationCompanion {
@@ -40,9 +40,9 @@ case class TerminatorOp(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = "terminator",
@@ -50,8 +50,8 @@ case class TerminatorOp(
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     )
     with IsTerminator {}
 
@@ -64,9 +64,9 @@ case class NoTerminatorOp(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = "noterminator",
@@ -74,8 +74,8 @@ case class NoTerminatorOp(
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     )
     with NoTerminator {}
 

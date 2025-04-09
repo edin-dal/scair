@@ -9,7 +9,7 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]]
-) extends MLIRName["func.call"]
+) extends DerivedOperation["func.call", Call]
     derives DerivedOperationCompanion
 
 case class Func(
@@ -18,12 +18,12 @@ case class Func(
     // TODO: This needs optional
     // sym_visibility: StringData,
     body: Region
-) extends MLIRName["func.func"]
+) extends DerivedOperation["func.func", Func]
     derives DerivedOperationCompanion
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
-) extends MLIRName["func.return"]
+) extends DerivedOperation["func.return", Return]
     derives DerivedOperationCompanion
 
 val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())

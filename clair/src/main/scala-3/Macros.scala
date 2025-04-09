@@ -132,8 +132,8 @@ def fromADTOperationMacro[T: Type](
       successors = $flatSuccessors,
       results_types = ListType.empty[Attribute],
       regions = $flatRegions,
-      dictionaryProperties = $propertiesDict,
-      dictionaryAttributes = DictType.empty[String, Attribute]
+      properties = $propertiesDict,
+      attributes = DictType.empty[String, Attribute]
     )
     x.results.addAll($flatResults)
     x
@@ -190,7 +190,7 @@ def getConstructSeq[Def <: OpInputDef: Type](
     case '[OperandDef]    => '{ ${ op }.operands }
     case '[RegionDef]     => '{ ${ op }.regions }
     case '[SuccessorDef]  => '{ ${ op }.successors }
-    case '[OpPropertyDef] => '{ ${ op }.dictionaryProperties.toSeq }
+    case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
 
 /** Helper to get the name of a construct definition type.
   */
@@ -239,7 +239,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
     val dense =
-      ${ op }.dictionaryProperties.get(s"${${ Expr(segmentSizesName) }}") match
+      ${ op }.properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
@@ -448,7 +448,7 @@ def constructorArgs(
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           val property = generateCheckedPropertyArgument[t & Attribute](
-            '{ $op.dictionaryProperties },
+            '{ $op.properties },
             name
           )
           NamedArg(name, property.asTerm)
@@ -568,17 +568,20 @@ object AttributeTrait {
 }
 
 trait DerivedOperation[name <: String, T] extends Operation {
-  given DerivedOperationCompanion[T] = deferred
 
-  def operands: ListType[Value[Attribute]]
-  def successors: ListType[Block]
-  def results: ListType[Result[Attribute]]
-  def regions: ListType[Region]
-  def dictionaryProperties: DictType[String, Attribute]
-  def dictionaryAttributes: DictType[String, Attribute]
-  var container_block: Option[Block]
-  def drop_all_references: Unit
-  def erase(drop_refs: Boolean = true): Unit
+  this: T =>
+
+  given companion: DerivedOperationCompanion[T] = deferred
+
+  def name: String = companion.name
+  def operands: ListType[Value[Attribute]] = companion.unverify(this).operands
+  def successors: ListType[Block] = companion.unverify(this).successors
+  def results: ListType[Result[Attribute]] = companion.unverify(this).results
+  def regions: ListType[Region] = companion.unverify(this).regions
+
+  def properties: DictType[String, Attribute] =
+    companion.unverify(this).properties
+
 }
 
 class UnverifiedOp[T](
@@ -587,18 +590,16 @@ class UnverifiedOp[T](
     successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    properties: DictType[String, Attribute] = DictType.empty[String, Attribute],
+    attributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = name,
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     )
 
 trait DerivedOperationCompanion[T] extends OperationCompanion {
@@ -628,9 +629,9 @@ object DerivedOperationCompanion {
             successors: ListType[scair.ir.Block] = ListType(),
             results_types: ListType[Attribute] = ListType(),
             regions: ListType[Region] = ListType(),
-            dictionaryProperties: DictType[String, Attribute] =
+            properties: DictType[String, Attribute] =
               DictType.empty[String, Attribute],
-            dictionaryAttributes: DictType[String, Attribute] =
+            attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
         ): UnverifiedOp[T] = UnverifiedOp[T](
           name = ${ Expr(opDef.name) },
@@ -638,8 +639,8 @@ object DerivedOperationCompanion {
           successors = successors,
           results_types = results_types,
           regions = regions,
-          dictionaryProperties = dictionaryProperties,
-          dictionaryAttributes = dictionaryAttributes
+          properties = properties,
+          attributes = attributes
         )
 
         def unverify(adtOp: T): UnverifiedOp[T] =

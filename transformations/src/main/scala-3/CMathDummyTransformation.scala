@@ -15,9 +15,9 @@ object AddDummyAttributeToDict extends RewritePattern {
   ): Unit = {
     op match {
       case x: UnregisteredOperation =>
-        x.dictionaryAttributes += ("dummy" -> StringData("UnregDumDum"))
+        x.attributes += ("dummy" -> StringData("UnregDumDum"))
       case d =>
-        d.dictionaryAttributes += ("dummy" -> StringData("dumdum"))
+        d.attributes += ("dummy" -> StringData("dumdum"))
     }
     rewriter.has_done_action = true
   }
@@ -45,7 +45,7 @@ object TestInsertingDummyOperation extends RewritePattern {
         )
         rewriter.erase_matched_op()
       case false =>
-        op.dictionaryAttributes += ("replaced" -> StringData("false"))
+        op.attributes += ("replaced" -> StringData("false"))
     }
 
     rewriter.has_done_action = true
@@ -88,7 +88,7 @@ object TestReplacingDummyOperation extends RewritePattern {
           Some(op3.results.toSeq)
         )
       case false =>
-        op.dictionaryAttributes += ("replaced" -> StringData("false"))
+        op.attributes += ("replaced" -> StringData("false"))
     }
 
     rewriter.has_done_action = true

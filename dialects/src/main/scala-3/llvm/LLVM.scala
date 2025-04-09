@@ -16,7 +16,7 @@ case class Ptr()
 case class Load(
     ptr: Operand[Ptr],
     result: Result[Attribute]
-) extends MLIRName["llvm.load"]
+) extends DerivedOperation["llvm.load", Load]
     derives DerivedOperationCompanion
 
 case class GetElementPtr(
@@ -25,7 +25,7 @@ case class GetElementPtr(
     res: Result[Ptr],
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute
-) extends MLIRName["llvm.getelementptr"]
+) extends DerivedOperation["llvm.getelementptr", GetElementPtr]
     derives DerivedOperationCompanion
 
 val LLVMDialect = summonDialect[Tuple1[Ptr], (Load, GetElementPtr)](Seq())

@@ -7,9 +7,9 @@ case class TestOp(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = "test.op",
@@ -17,8 +17,8 @@ case class TestOp(
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     )
 
 object TestOp extends OperationCompanion {

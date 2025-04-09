@@ -22,11 +22,9 @@ trait Operation {
   def successors: ListType[Block]
   def results: ListType[Result[Attribute]]
   def regions: ListType[Region]
-  def dictionaryProperties: DictType[String, Attribute]
-  def dictionaryAttributes: DictType[String, Attribute]
-  var container_block: Option[Block]
-  def drop_all_references: Unit
-  def erase(drop_refs: Boolean = true): Unit
+  def properties: DictType[String, Attribute]
+  val attributes: DictType[String, Attribute] = DictType.empty
+  var container_block: Option[Block] = None
   def trait_verify(): Unit = ()
 
   def custom_print(p: Printer): String =
@@ -37,13 +35,21 @@ trait Operation {
   final def verify(): Unit = {
     for (result <- results) result.verify()
     for (region <- regions) region.verify()
-    for ((key, attr) <- dictionaryProperties) attr.custom_verify()
-    for ((key, attr) <- dictionaryAttributes) attr.custom_verify()
+    for ((key, attr) <- properties) attr.custom_verify()
+    for ((key, attr) <- attributes) attr.custom_verify()
     custom_verify()
     trait_verify()
   }
 
-  def is_ancestor(node: Block): Boolean = {
+  final def drop_all_references: Unit = {
+    container_block = None
+    for ((idx, operand) <- (0 to operands.length) zip operands) {
+      operand.remove_use(new Use(this, idx))
+    }
+    for (region <- regions) region.drop_all_references
+  }
+
+  final def is_ancestor(node: Block): Boolean = {
     val reg = node.container_region
     reg match {
       case Some(x) =>
@@ -64,35 +70,8 @@ trait Operation {
     }
   }
 
-}
-
-abstract class BaseOperation(
-    val name: String,
-    val operands: ListType[Value[Attribute]] = ListType(),
-    val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    val regions: ListType[Region] = ListType(),
-    val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    val dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends Operation {
-
-  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
-  def op: Operation = this
-
-  var container_block: Option[Block] = None
-
-  def drop_all_references: Unit = {
-    container_block = None
-    for ((idx, operand) <- (0 to operands.length) zip operands) {
-      operand.remove_use(new Use(this, idx))
-    }
-    for (region <- regions) region.drop_all_references
-  }
-
   // TO-DO: think harder about the drop_refs - sounds fishy as per PR #45
-  def erase(drop_refs: Boolean = true): Unit = {
+  final def erase(drop_refs: Boolean = true): Unit = {
     if (container_block != None) then {
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
@@ -105,13 +84,29 @@ abstract class BaseOperation(
     }
   }
 
+}
+
+abstract class BaseOperation(
+    val name: String,
+    val operands: ListType[Value[Attribute]] = ListType(),
+    val successors: ListType[Block] = ListType(),
+    results_types: ListType[Attribute] = ListType(),
+    val regions: ListType[Region] = ListType(),
+    val properties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends Operation {
+
+  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
+
   override def hashCode(): Int = {
     return 7 * 41 +
       this.operands.hashCode() +
       this.results.hashCode() +
       this.regions.hashCode() +
-      this.dictionaryProperties.hashCode() +
-      this.dictionaryAttributes.hashCode()
+      this.properties.hashCode() +
+      this.attributes.hashCode()
   }
 
   override def equals(o: Any): Boolean = {
@@ -126,9 +121,9 @@ case class UnregisteredOperation(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = name,
@@ -136,8 +131,8 @@ case class UnregisteredOperation(
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     )
 
 trait OperationCompanion {
@@ -153,9 +148,9 @@ trait OperationCompanion {
       successors: ListType[Block] = ListType(),
       results_types: ListType[Attribute] = ListType(),
       regions: ListType[Region] = ListType(),
-      dictionaryProperties: DictType[String, Attribute] =
+      properties: DictType[String, Attribute] =
         DictType.empty[String, Attribute],
-      dictionaryAttributes: DictType[String, Attribute] =
+      attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): Operation
 

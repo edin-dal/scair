@@ -112,16 +112,16 @@ case class SetResultOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "subop.set_result",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -129,10 +129,10 @@ case class SetResultOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 0, 0, 0, 0) =>
-      dictionaryAttributes.get("result_id") match {
+      attributes.get("result_id") match {
         case Some(x) =>
           x match {
             case _: IntegerAttr =>
