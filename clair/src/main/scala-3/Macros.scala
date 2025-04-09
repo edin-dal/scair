@@ -658,14 +658,13 @@ object DerivedOperationCompanion {
 inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      // slight workaround on that &: TODO -> get rid of it ;)
-      AttributeTrait.derived[t] +: summonAttributeTraits[ts]
+      summonInline[AttributeTrait[t]] +: summonAttributeTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      DerivedOperationCompanion.derived[t] +: summonMLIRTraits[ts]
+      summonInline[DerivedOperationCompanion[t]] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
