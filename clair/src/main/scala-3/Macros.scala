@@ -574,6 +574,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
   given companion: DerivedOperationCompanion[T] = deferred
 
   def name: String = companion.name
+  // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.
   def operands: ListType[Value[Attribute]] = companion.unverify(this).operands
   def successors: ListType[Block] = companion.unverify(this).successors
   def results: ListType[Result[Attribute]] = companion.unverify(this).results
