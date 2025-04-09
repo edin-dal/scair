@@ -3,7 +3,6 @@ package scair.ir
 import fastparse.P
 import scair.Parser
 import scair.Printer
-
 // import scala.reflect.ClassTag
 
 // ██╗ ██████╗░
@@ -12,28 +11,6 @@ import scair.Printer
 // ██║ ██╔══██╗
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
-
-trait MLIRName[name <: String]
-
-class UnverifiedOp[T](
-    name: String,
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      dictionaryProperties,
-      dictionaryAttributes
-    )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||    MLIR OPERATIONS    ||
@@ -190,15 +167,5 @@ trait OperationCompanion {
       dictionaryAttributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): Operation
-
-}
-
-trait MLIRTraitI[T] extends OperationCompanion {
-
-  extension (adtOp: T) def MLIRTrait = this
-
-  def unverify(adtOp: T): UnverifiedOp[T]
-
-  def verify(unverOp: UnverifiedOp[T]): T
 
 }

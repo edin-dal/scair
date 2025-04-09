@@ -122,7 +122,7 @@ case class Addf(
     fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.addf"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Mulf(
     lhs: Operand[FloatType],
@@ -131,7 +131,7 @@ case class Mulf(
     fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.mulf"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 // I'm not sure about the flag here
 case class Divf(
@@ -141,7 +141,7 @@ case class Divf(
     fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.divf"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class Addi(
@@ -150,7 +150,7 @@ case class Addi(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.addi"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Subi(
     lhs: Operand[AnyIntegerType],
@@ -158,7 +158,7 @@ case class Subi(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.subi"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Muli(
     lhs: Operand[AnyIntegerType],
@@ -166,7 +166,7 @@ case class Muli(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.muli"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Divui(
     lhs: Operand[AnyIntegerType],
@@ -174,7 +174,7 @@ case class Divui(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.divui"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Divsi(
     lhs: Operand[AnyIntegerType],
@@ -182,7 +182,7 @@ case class Divsi(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.divsi"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Remui(
     lhs: Operand[AnyIntegerType],
@@ -190,7 +190,7 @@ case class Remui(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.remui"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Remsi(
     lhs: Operand[AnyIntegerType],
@@ -198,7 +198,7 @@ case class Remsi(
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.remsi"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Cmpi(
     lhs: Operand[AnyIntegerType],
@@ -207,7 +207,7 @@ case class Cmpi(
     predicate: IntegerPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.cmpi"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Andi(
     lhs: Operand[AnyIntegerType],
@@ -215,7 +215,7 @@ case class Andi(
     result: Result[I1]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.andi"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Ori(
     lhs: Operand[AnyIntegerType],
@@ -223,21 +223,21 @@ case class Ori(
     result: Result[I1]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends MLIRName["arith.ori"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Sitofp(
     in: Operand[AnyIntegerType],
     out: Result[FloatType]
     // assembly_format: "$in `:` type($in) `to` type($out)"
 ) extends MLIRName["arith.sitofp"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 case class Index_Cast(
     in: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
     // assembly_format: "$in `:` type($in) `to` type($out)"
 ) extends MLIRName["arith.index_cast"]
-    derives MLIRTrait
+    derives DerivedOperationCompanion
 
 val ArithDialect =
   summonDialect[
