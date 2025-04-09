@@ -148,15 +148,6 @@ trait OperationCompanion {
       s"No custom Parser implemented for Operation '${name}'"
     )
 
-  type FactoryType = (
-      ListType[Value[Attribute]] /* = operands */,
-      ListType[Block] /* = successors */,
-      ListType[Attribute] /* = results */,
-      ListType[Region] /* = regions */,
-      DictType[String, Attribute], /* = dictProps */
-      DictType[String, Attribute] /* = dictAttrs */
-  ) => Operation
-
   def apply(
       operands: ListType[Value[Attribute]] = ListType(),
       successors: ListType[Block] = ListType(),
