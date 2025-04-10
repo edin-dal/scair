@@ -591,9 +591,13 @@ trait MLIRName[name <: String]
 
 object DerivedOperationCompanion {
 
-  inline def derived[T]: DerivedOperationCompanion[T] = ${ derivedImpl[T] }
+  inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
+    derivedImpl[T]
+  }
 
-  def derivedImpl[T: Type](using Quotes): Expr[DerivedOperationCompanion[T]] =
+  def derivedImpl[T <: Operation: Type](using
+      Quotes
+  ): Expr[DerivedOperationCompanion[T]] =
     val opDef = getDefImpl[T]
 
     '{
@@ -632,10 +636,7 @@ object DerivedOperationCompanion {
           attributes = attributes
         )
 
-        // TODO: clean this up
-        // getDef would fail if T was not a DerivedOperation AKA Operation.
-        // This (T & Operation) is just the cleanest way I found for this agree to use T's inherited attributes field for now.
-        def unverify(adtOp: T & Operation): UnverifiedOp[T] =
+        def unverify(adtOp: T): UnverifiedOp[T] =
           val x = UnverifiedOp[T](
             name = ${ Expr(opDef.name) },
             operands = operands(adtOp),
