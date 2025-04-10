@@ -167,23 +167,23 @@ case class ReturnOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "tuples.return",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (0, 0, 0, 0) =>
     case _ =>
@@ -232,16 +232,16 @@ case class GetColumnOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "tuples.getcol",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -249,7 +249,7 @@ case class GetColumnOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
       operands(0).typ match {
@@ -259,7 +259,7 @@ case class GetColumnOp(
             "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
           )
       }
-      dictionaryAttributes.get("attr") match {
+      attributes.get("attr") match {
         case Some(x) =>
           x match {
             case _: ColumnRefAttr =>

@@ -283,8 +283,8 @@ case class OperationDef(
 
   def operand_segment_sizes_helper: String =
     s"""def operandSegmentSizes: Seq[Int] =
-    if (!dictionaryProperties.contains("operandSegmentSizes")) then throw new Exception("Expected operandSegmentSizes property")
-    val operandSegmentSizes_attr = dictionaryProperties("operandSegmentSizes") match {
+    if (!properties.contains("operandSegmentSizes")) then throw new Exception("Expected operandSegmentSizes property")
+    val operandSegmentSizes_attr = properties("operandSegmentSizes") match {
       case right: DenseArrayAttr => right
       case _ => throw new Exception("Expected operandSegmentSizes to be a DenseArrayAttr")
     }
@@ -314,8 +314,8 @@ case class OperationDef(
 
   def result_segment_sizes_helper: String =
     s"""def resultSegmentSizes: Seq[Int] =
-    if (!dictionaryProperties.contains("resultSegmentSizes")) then throw new Exception("Expected resultSegmentSizes property")
-    val resultSegmentSizes_attr = dictionaryProperties("resultSegmentSizes") match {
+    if (!properties.contains("resultSegmentSizes")) then throw new Exception("Expected resultSegmentSizes property")
+    val resultSegmentSizes_attr = properties("resultSegmentSizes") match {
       case right: DenseArrayAttr => right
       case _ => throw new Exception("Expected resultSegmentSizes to be a DenseArrayAttr")
     }
@@ -645,11 +645,11 @@ case class OperationDef(
       regions_accessors ++
       successors_accessors ++
       (for pdef <- OpProperty
-      yield s"  def ${pdef.id}: Attribute = dictionaryProperties(\"${pdef.id}\")\n" +
-        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {dictionaryProperties(\"${pdef.id}\") = new_attribute}\n") ++
+      yield s"  def ${pdef.id}: Attribute = properties(\"${pdef.id}\")\n" +
+        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {properties(\"${pdef.id}\") = new_attribute}\n") ++
       (for adef <- OpAttribute
-      yield s"  def ${adef.id}: Attribute = dictionaryAttributes(\"${adef.id}\")\n" +
-        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {dictionaryAttributes(\"${adef.id}\") = new_attribute}\n"))
+      yield s"  def ${adef.id}: Attribute = attributes(\"${adef.id}\")\n" +
+        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {attributes(\"${adef.id}\") = new_attribute}\n"))
       .mkString("\n")
 
   }
@@ -759,11 +759,11 @@ case class $className(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
+    override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, properties, attributes) {
 
 
 ${helpers(indent + 1)}

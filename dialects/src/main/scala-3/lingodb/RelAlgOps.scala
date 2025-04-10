@@ -188,16 +188,16 @@ case class BaseTableOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.basetable",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -214,7 +214,7 @@ case class BaseTableOp(
             "BaseTableOp Operation must contain only 1 result."
           )
       }
-      dictionaryAttributes.get("table_identifier") match {
+      attributes.get("table_identifier") match {
         case Some(x) =>
           x match {
             case _: StringData =>
@@ -271,16 +271,16 @@ case class SelectionOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.selection",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -350,16 +350,16 @@ case class MapOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.map",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -384,7 +384,7 @@ case class MapOp(
           )
       }
 
-      dictionaryAttributes.get("computed_cols") match {
+      attributes.get("computed_cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -452,16 +452,16 @@ case class AggregationOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.aggregation",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -486,7 +486,7 @@ case class AggregationOp(
           )
       }
 
-      dictionaryAttributes.get("computed_cols") match {
+      attributes.get("computed_cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -501,7 +501,7 @@ case class AggregationOp(
           )
       }
 
-      dictionaryAttributes.get("group_by_cols") match {
+      attributes.get("group_by_cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -554,16 +554,16 @@ case class CountRowsOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.count",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -635,16 +635,16 @@ case class AggrFuncOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.aggrfn",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -661,7 +661,7 @@ case class AggrFuncOp(
             "AggrFuncOp Operation must contain 1 operand of type TupleStream."
           )
       }
-      dictionaryAttributes.get("fn") match {
+      attributes.get("fn") match {
         case Some(x) =>
           x match {
             case _: RelAlg_AggrFunc_Case =>
@@ -676,7 +676,7 @@ case class AggrFuncOp(
           )
       }
 
-      dictionaryAttributes.get("attr") match {
+      attributes.get("attr") match {
         case Some(x) =>
           x match {
             case _: ColumnRefAttr =>
@@ -739,16 +739,16 @@ case class SortOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.sort",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -772,7 +772,7 @@ case class SortOp(
             "SortOp Operation must contain 1 operand of type TupleStream."
           )
       }
-      dictionaryAttributes.get("sortspecs") match {
+      attributes.get("sortspecs") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -841,16 +841,16 @@ case class MaterializeOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.materialize",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -875,7 +875,7 @@ case class MaterializeOp(
           )
       }
 
-      dictionaryAttributes.get("cols") match {
+      attributes.get("cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -890,7 +890,7 @@ case class MaterializeOp(
           )
       }
 
-      dictionaryAttributes.get("columns") match {
+      attributes.get("columns") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>

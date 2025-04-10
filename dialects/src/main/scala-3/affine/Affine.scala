@@ -27,7 +27,7 @@ case class Apply(
     mapOperands: Seq[Operand[IndexType.type]],
     res: Result[IndexType.type],
     map: AffineMapAttr
-) extends MLIRName["affine.apply"]
+) extends DerivedOperation["affine.apply", Apply]
     derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡≡=---=≡≡*\
@@ -43,7 +43,7 @@ case class For(
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region
-) extends MLIRName["affine.for"]
+) extends DerivedOperation["affine.for", For]
     derives DerivedOperationCompanion
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
@@ -61,7 +61,7 @@ case class Parallel(
     upperBoundsGroups: DenseIntOrFPElementsAttr,
     res: Seq[Result[Attribute]],
     body: Region
-) extends MLIRName["affine.parallel"]
+) extends DerivedOperation["affine.parallel", Parallel]
     derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡=--=≡≡*\
@@ -74,7 +74,7 @@ case class If(
     condition: AffineSetAttr,
     then_region: Region,
     else_region: Region
-) extends MLIRName["affine.if"]
+) extends DerivedOperation["affine.if", If]
     derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -86,7 +86,7 @@ case class Store(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType.type]],
     map: AffineMapAttr
-) extends MLIRName["affine.store"]
+) extends DerivedOperation["affine.store", Store]
     derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡=---=≡≡*\
@@ -98,7 +98,7 @@ case class Load(
     indices: Seq[Operand[IndexType.type]],
     result: Result[Attribute],
     map: AffineMapAttr
-) extends MLIRName["affine.load"]
+) extends DerivedOperation["affine.load", Load]
     derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -109,7 +109,7 @@ case class Min(
     arguments: Seq[Operand[IndexType.type]],
     result: Result[IndexType.type],
     map: AffineMapAttr
-) extends MLIRName["affine.min"]
+) extends DerivedOperation["affine.min", Min]
     derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -118,7 +118,7 @@ case class Min(
 
 case class Yield(
     arguments: Seq[Operand[Attribute]]
-) extends MLIRName["affine.yield"]
+) extends DerivedOperation["affine.yield", Yield]
     derives DerivedOperationCompanion
 
 val AffineDialect = summonDialect[

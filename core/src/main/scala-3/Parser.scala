@@ -727,9 +727,9 @@ class Parser(val context: MLContext, val args: Args = Args())
         x(
           operands = useAndRefValueSeqs._1,
           successors = useAndRefBlockSeqs._1,
-          dictionaryProperties = properties,
+          properties = properties,
           results_types = ListType.from(resultsTypes),
-          dictionaryAttributes = attributes,
+          attributes = attributes,
           regions = ListType.from(regions)
         )
 
@@ -739,9 +739,9 @@ class Parser(val context: MLContext, val args: Args = Args())
             name = opName,
             operands = useAndRefValueSeqs._1,
             successors = useAndRefBlockSeqs._1,
-            dictionaryProperties = properties,
+            properties = properties,
             results_types = ListType.from(resultsTypes),
-            dictionaryAttributes = attributes,
+            attributes = attributes,
             regions = ListType.from(regions)
           )
         else
@@ -792,7 +792,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   def GenericOperation[$: P](resNames: Seq[String]) = P(
     (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
       ~/ SuccessorList.orElse(Seq())
-      ~/ DictionaryProperties.orElse(DictType.empty)
+      ~/ properties.orElse(DictType.empty)
       ~/ RegionList.orElse(Seq())
       ~/ (DictionaryAttribute).orElse(DictType.empty) ~/ ":" ~/ FunctionType)
       .mapTry(
@@ -950,7 +950,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     * @return
     *   A properties dictionary parser.
     */
-  def DictionaryProperties[$: P] = P(
+  def properties[$: P] = P(
     "<" ~ DictionaryAttribute ~ ">"
   )
 
@@ -972,7 +972,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   present.
     */
   inline def OptionalProperties[$: P]() =
-    (DictionaryProperties).orElse(DictType.empty)
+    (properties).orElse(DictType.empty)
 
   /** Parses an optional attributes dictionary from the input.
     *

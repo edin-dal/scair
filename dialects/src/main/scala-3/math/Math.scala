@@ -40,16 +40,16 @@ case class AbsfOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "math.absf",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -57,7 +57,7 @@ case class AbsfOp(
     results.length,
     successors.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 1, 0, 0, 0) =>
     case _ =>
@@ -103,16 +103,16 @@ case class FPowIOp(
     override val successors: ListType[Block],
     results_types: ListType[Attribute],
     override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
+    override val properties: DictType[String, Attribute],
+    override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "math.fpowi",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -120,7 +120,7 @@ case class FPowIOp(
     results.length,
     successors.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 1, 0, 0, 0) =>
     case _ =>

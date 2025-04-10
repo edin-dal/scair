@@ -166,18 +166,18 @@ case class Printer(
           .mkString(", ") + "]"
       else ""
 
-    val dictionaryProperties: String =
-      if (op.dictionaryProperties.size > 0)
+    val properties: String =
+      if (op.properties.size > 0)
         " <{" + (for {
-          (key, value) <- op.dictionaryProperties
+          (key, value) <- op.properties
         } yield s"$key = ${value.custom_print}")
           .mkString(", ") + "}>"
       else ""
 
-    val dictionaryAttributes: String =
-      if (op.dictionaryAttributes.size > 0)
+    val attributes: String =
+      if (op.attributes.size > 0)
         " {" + (for {
-          (key, value) <- op.dictionaryAttributes
+          (key, value) <- op.attributes
         } yield s"$key = ${value.custom_print}")
           .mkString(", ") + "}"
       else ""
@@ -187,7 +187,7 @@ case class Printer(
         ") -> (" +
         resultsTypes.mkString(", ") + ")"
 
-    return s"${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$dictionaryProperties$operationRegions$dictionaryAttributes : $functionType"
+    return s"${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$properties$operationRegions$attributes : $functionType"
   }
 
   def printOperation(op: Operation, indentLevel: Int = 0): String = {

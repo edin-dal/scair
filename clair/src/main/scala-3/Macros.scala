@@ -75,68 +75,41 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
   '{ ListType.from(${ stuff }.flatten) }
 }
 
-/** Create an UnverifiedOp instance from an ADT expression.
-  * @tparam T
-  *   The ADT type.
-  * @param opDef
-  *   The OperationDef derived from the ADT.
-  * @param adtOpExpr
-  *   The ADT expression.
-  */
-def fromADTOperationMacro[T: Type](
+def operandsMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[T]
-)(using
-    Quotes
-): Expr[UnverifiedOp[T]] =
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[ListType[Operand[Attribute]]] =
+  ADTFlatInputMacro(opDef.operands, adtOpExpr)
 
-  /*______________*\
-  \*-- OPERANDS --*/
+def successorsMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[ListType[Successor]] =
+  ADTFlatInputMacro(opDef.successors, adtOpExpr)
 
-  val flatOperands = ADTFlatInputMacro(opDef.operands, adtOpExpr)
+def resultsMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[ListType[Result[Attribute]]] =
+  ADTFlatInputMacro(opDef.results, adtOpExpr)
 
-  /*________________*\
-  \*-- SUCCESSORS --*/
+def regionsMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[ListType[Region]] =
+  ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
-  val flatSuccessors = ADTFlatInputMacro(opDef.successors, adtOpExpr)
-
-  /*_____________*\
-  \*-- RESULTS --*/
-
-  val flatResults = ADTFlatInputMacro(opDef.results, adtOpExpr)
-
-  /*_____________*\
-  \*-- REGIONS --*/
-
-  val flatRegions = ADTFlatInputMacro(opDef.regions, adtOpExpr)
-
-  /*________________*\
-  \*-- PROPERTIES --*/
-
+def propertiesMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[DictType[String, Attribute]] =
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-  val propertiesDict = '{
-    DictType.from(${ propertyNames } zip ${ propertyExprs })
-  }
-
-  /*_________________*\
-  \*-- CONSTRUCTOR --*/
-
   '{
-    val x = UnverifiedOp[T](
-      name = ${ Expr(opDef.name) },
-      operands = $flatOperands,
-      successors = $flatSuccessors,
-      results_types = ListType.empty[Attribute],
-      regions = $flatRegions,
-      dictionaryProperties = $propertiesDict,
-      dictionaryAttributes = DictType.empty[String, Attribute]
-    )
-    x.results.addAll($flatResults)
-    x
+    DictType.from(${ propertyNames } zip ${ propertyExprs })
   }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -190,7 +163,7 @@ def getConstructSeq[Def <: OpInputDef: Type](
     case '[OperandDef]    => '{ ${ op }.operands }
     case '[RegionDef]     => '{ ${ op }.regions }
     case '[SuccessorDef]  => '{ ${ op }.successors }
-    case '[OpPropertyDef] => '{ ${ op }.dictionaryProperties.toSeq }
+    case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
 
 /** Helper to get the name of a construct definition type.
   */
@@ -239,7 +212,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
     val dense =
-      ${ op }.dictionaryProperties.get(s"${${ Expr(segmentSizesName) }}") match
+      ${ op }.properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
@@ -448,7 +421,7 @@ def constructorArgs(
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           val property = generateCheckedPropertyArgument[t & Attribute](
-            '{ $op.dictionaryProperties },
+            '{ $op.properties },
             name
           )
           NamedArg(name, property.asTerm)
@@ -568,17 +541,20 @@ object AttributeTrait {
 }
 
 trait DerivedOperation[name <: String, T] extends Operation {
-  given DerivedOperationCompanion[T] = deferred
 
-  def operands: ListType[Value[Attribute]]
-  def successors: ListType[Block]
-  def results: ListType[Result[Attribute]]
-  def regions: ListType[Region]
-  def dictionaryProperties: DictType[String, Attribute]
-  def dictionaryAttributes: DictType[String, Attribute]
-  var container_block: Option[Block]
-  def drop_all_references: Unit
-  def erase(drop_refs: Boolean = true): Unit
+  this: T =>
+
+  given companion: DerivedOperationCompanion[T] = deferred
+
+  def name: String = companion.name
+  // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.
+  def operands: ListType[Value[Attribute]] = companion.operands(this)
+  def successors: ListType[Block] = companion.successors(this)
+  def results: ListType[Result[Attribute]] = companion.results(this)
+  def regions: ListType[Region] = companion.regions(this)
+
+  def properties: DictType[String, Attribute] = companion.properties(this)
+
 }
 
 class UnverifiedOp[T](
@@ -587,22 +563,24 @@ class UnverifiedOp[T](
     successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    properties: DictType[String, Attribute] = DictType.empty[String, Attribute],
+    attributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = name,
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     )
 
 trait DerivedOperationCompanion[T] extends OperationCompanion {
-
+  def operands(adtOp: T): ListType[Value[Attribute]]
+  def successors(adtOp: T): ListType[Block]
+  def results(adtOp: T): ListType[Result[Attribute]]
+  def regions(adtOp: T): ListType[Region]
+  def properties(adtOp: T): DictType[String, Attribute]
   def unverify(adtOp: T): UnverifiedOp[T]
 
   def verify(unverOp: UnverifiedOp[T]): T
@@ -613,13 +591,29 @@ trait MLIRName[name <: String]
 
 object DerivedOperationCompanion {
 
-  inline def derived[T]: DerivedOperationCompanion[T] = ${ derivedImpl[T] }
+  inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
+    derivedImpl[T]
+  }
 
-  def derivedImpl[T: Type](using Quotes): Expr[DerivedOperationCompanion[T]] =
+  def derivedImpl[T <: Operation: Type](using
+      Quotes
+  ): Expr[DerivedOperationCompanion[T]] =
     val opDef = getDefImpl[T]
+
     '{
 
       new DerivedOperationCompanion[T]:
+
+        def operands(adtOp: T): ListType[Value[Attribute]] =
+          ${ operandsMacro(opDef, '{ adtOp }) }
+        def successors(adtOp: T): ListType[Block] =
+          ${ successorsMacro(opDef, '{ adtOp }) }
+        def results(adtOp: T): ListType[Result[Attribute]] =
+          ${ resultsMacro(opDef, '{ adtOp }) }
+        def regions(adtOp: T): ListType[Region] =
+          ${ regionsMacro(opDef, '{ adtOp }) }
+        def properties(adtOp: T): DictType[String, Attribute] =
+          ${ propertiesMacro(opDef, '{ adtOp }) }
 
         def name: String = ${ Expr(opDef.name) }
 
@@ -628,9 +622,9 @@ object DerivedOperationCompanion {
             successors: ListType[scair.ir.Block] = ListType(),
             results_types: ListType[Attribute] = ListType(),
             regions: ListType[Region] = ListType(),
-            dictionaryProperties: DictType[String, Attribute] =
+            properties: DictType[String, Attribute] =
               DictType.empty[String, Attribute],
-            dictionaryAttributes: DictType[String, Attribute] =
+            attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
         ): UnverifiedOp[T] = UnverifiedOp[T](
           name = ${ Expr(opDef.name) },
@@ -638,12 +632,22 @@ object DerivedOperationCompanion {
           successors = successors,
           results_types = results_types,
           regions = regions,
-          dictionaryProperties = dictionaryProperties,
-          dictionaryAttributes = dictionaryAttributes
+          properties = properties,
+          attributes = attributes
         )
 
         def unverify(adtOp: T): UnverifiedOp[T] =
-          ${ fromADTOperationMacro[T](opDef, '{ adtOp }) }
+          val x = UnverifiedOp[T](
+            name = ${ Expr(opDef.name) },
+            operands = operands(adtOp),
+            successors = successors(adtOp),
+            results_types = ListType.empty[Attribute],
+            regions = regions(adtOp),
+            properties = properties(adtOp),
+            attributes = adtOp.attributes
+          )
+          x.results.addAll(results(adtOp))
+          x
 
         def verify(unverOp: UnverifiedOp[T]): T =
           ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
@@ -655,14 +659,13 @@ object DerivedOperationCompanion {
 inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      // slight workaround on that &: TODO -> get rid of it ;)
-      AttributeTrait.derived[t] +: summonAttributeTraits[ts]
+      summonInline[AttributeTrait[t]] +: summonAttributeTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      DerivedOperationCompanion.derived[t] +: summonMLIRTraits[ts]
+      summonInline[DerivedOperationCompanion[t]] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
