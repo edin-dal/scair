@@ -212,23 +212,23 @@ class ParserTest
                 ListType(
                   UnregisteredOperation(
                     "test.op",
-                    ListType(),
-                    ListType(),
-                    ListType(
+                    Seq(),
+                    Seq(),
+                    Seq(
                       I32,
                       I64,
                       I32
                     ),
-                    ListType(),
+                    Seq(),
                     _,
                     _
                   ),
                   UnregisteredOperation(
                     "test.op",
-                    ListType(Value(I64), Value(I32)),
-                    ListType(),
-                    ListType(),
-                    ListType(),
+                    Seq(Value(I64), Value(I32)),
+                    Seq(),
+                    Seq(),
+                    Seq(),
                     _,
                     _
                   )
@@ -258,23 +258,23 @@ class ParserTest
                     ListType(
                       UnregisteredOperation(
                         "test.op",
-                        ListType(),
-                        ListType(),
-                        ListType(
+                        Seq(),
+                        Seq(),
+                        Seq(
                           I32,
                           I64,
                           I32
                         ),
-                        ListType(),
+                        Seq(),
                         _,
                         _
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        ListType(Value(I64), Value(I32)),
-                        ListType(),
-                        ListType(),
-                        ListType(),
+                        Seq(Value(I64), Value(I32)),
+                        Seq(),
+                        Seq(),
+                        Seq(),
                         _,
                         _
                       )
@@ -285,26 +285,26 @@ class ParserTest
                     ListType(
                       UnregisteredOperation(
                         "test.op",
-                        ListType(),
-                        ListType(),
-                        ListType(
+                        Seq(),
+                        Seq(),
+                        Seq(
                           I32,
                           I64,
                           I32
                         ),
-                        ListType(),
+                        Seq(),
                         _,
                         _
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        ListType(
+                        Seq(
                           Value(I64),
                           Value(I32)
                         ),
-                        ListType(),
-                        ListType(),
-                        ListType(),
+                        Seq(),
+                        Seq(),
+                        Seq(),
                         _,
                         _
                       )
@@ -372,12 +372,12 @@ class ParserTest
         ListType(UnregisteredOperation("test.op"))
       )
       val bb3 = Block(
-        ListType(UnregisteredOperation("test.op", successors = ListType(bb4)))
+        ListType(UnregisteredOperation("test.op", successors = Seq(bb4)))
       )
       val operation =
         UnregisteredOperation(
           "test.op",
-          regions = ListType(Region(Seq(bb3, bb4)))
+          regions = Seq(Region(Seq(bb3, bb4)))
         )
 
       parser.parseThis(
@@ -396,10 +396,10 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
-                ListType(),
-                ListType(),
-                ListType(),
-                ListType(
+                Seq(),
+                Seq(),
+                Seq(),
+                Seq(
                   Region(
                     Seq(
                       Block(
@@ -407,14 +407,14 @@ class ParserTest
                         ListType(
                           UnregisteredOperation(
                             "test.op",
-                            ListType(),
-                            ListType(),
-                            ListType(
+                            Seq(),
+                            Seq(),
+                            Seq(
                               I32,
                               I64,
                               I32
                             ),
-                            ListType(),
+                            Seq(),
                             _,
                             _
                           )

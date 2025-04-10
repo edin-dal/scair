@@ -3,10 +3,10 @@ package scair.dialects.test
 import scair.ir.*
 
 case class TestOp(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
     override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =

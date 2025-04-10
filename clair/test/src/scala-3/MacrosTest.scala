@@ -58,11 +58,11 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val unverOp = UnverifiedOp[Mul](
       name = "cmath.mul",
-      operands = ListType(
+      operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = ListType[Attribute](IntegerType(IntData(25), Unsigned)),
+      results_types = Seq[Attribute](IntegerType(IntData(25), Unsigned)),
       properties = DictType(("randProp" -> StringData("what")))
     )
 
@@ -88,12 +88,12 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
       name = "cmath.mulsinglevariadic",
-      operands = ListType(
+      operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = ListType[Attribute](
+      results_types = Seq(
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned)
       ),
@@ -115,15 +115,15 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
       name = "cmath.mulmultivariadic",
-      operands = ListType(
-        Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+      operands = Seq(
+        Value(typ = IntegerType(IntData(5), Unsigned)),
+        Value(typ = IntegerType(IntData(5), Unsigned)),
+        Value(typ = IntegerType(IntData(5), Unsigned)),
+        Value(typ = IntegerType(IntData(5), Unsigned)),
+        Value(typ = IntegerType(IntData(5), Unsigned)),
+        Value(typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = ListType[Attribute](
+      results_types = Seq(
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
@@ -196,23 +196,23 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val opT = DerivedOperationCompanion.derived[Mul]
 
     val unverMulOp = opT(
-      operands = ListType(
+      operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = ListType[Attribute](IntegerType(IntData(25), Unsigned)),
+      results_types = Seq(IntegerType(IntData(25), Unsigned)),
       properties = DictType(("randProp" -> StringData("what")))
     )
 
     unverMulOp.name should be("cmath.mul")
     unverMulOp.operands should matchPattern {
-      case ListType(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
     unverMulOp.results should matchPattern {
-      case ListType(Result(IntegerType(IntData(25), Unsigned))) =>
+      case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
     }
     unverMulOp.properties("randProp") should matchPattern {
       case StringData("what") =>
@@ -227,13 +227,13 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     unverMulOp.name should be("cmath.mul")
     unverMulOp.operands should matchPattern {
-      case ListType(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
     unverMulOp.results should matchPattern {
-      case ListType(Result(IntegerType(IntData(25), Unsigned))) =>
+      case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
     }
     unverMulOp.properties("randProp") should matchPattern {
       case StringData("what") =>
@@ -293,13 +293,13 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       case Value(IntegerType(IntData(5), Unsigned)) =>
     }
     adtMulSinVarOp.rhs should matchPattern {
-      case List(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
     adtMulSinVarOp.result should matchPattern {
-      case List(
+      case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned))
           ) =>
@@ -316,14 +316,14 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     unverMulSinVarOp.name should be("cmath.mulsinglevariadic")
     unverMulSinVarOp.operands should matchPattern {
-      case ListType(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
     unverMulSinVarOp.results should matchPattern {
-      case ListType(
+      case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned))
           ) =>
@@ -343,20 +343,20 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       case Value(IntegerType(IntData(5), Unsigned)) =>
     }
     adtMulMulVarOp.rhs should matchPattern {
-      case List(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
     adtMulMulVarOp.mhs should matchPattern {
-      case List(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
     adtMulMulVarOp.result should matchPattern {
-      case List(
+      case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned))
@@ -366,7 +366,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       case Result(IntegerType(IntData(25), Unsigned)) =>
     }
     adtMulMulVarOp.result3 should matchPattern {
-      case List(
+      case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned))
           ) =>
@@ -381,7 +381,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     unverMulSinVarOp.name should be("cmath.mulmultivariadic")
     unverMulSinVarOp.operands should matchPattern {
-      case ListType(
+      case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
@@ -391,7 +391,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
           ) =>
     }
     unverMulSinVarOp.results should matchPattern {
-      case ListType(
+      case Seq(
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),

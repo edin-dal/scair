@@ -296,10 +296,10 @@ object DB_ConstantOp extends OperationCompanion {
 }
 
 case class DB_ConstantOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -370,10 +370,10 @@ object DB_CmpOp extends OperationCompanion {
 }
 
 case class DB_CmpOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -511,10 +511,10 @@ object DB_MulOp extends OperationCompanion {
 }
 
 case class DB_MulOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -657,10 +657,10 @@ object DB_DivOp extends OperationCompanion {
 }
 
 case class DB_DivOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -739,10 +739,10 @@ object DB_AddOp extends OperationCompanion {
 }
 
 case class DB_AddOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -823,10 +823,10 @@ object DB_SubOp extends OperationCompanion {
 }
 
 case class DB_SubOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -904,10 +904,10 @@ object CastOp extends OperationCompanion {
 }
 
 case class CastOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(

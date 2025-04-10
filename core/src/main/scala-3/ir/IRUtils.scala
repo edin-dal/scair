@@ -57,11 +57,17 @@ extension (dt: DictType[String, Attribute]) {
 
 }
 
-extension (lt: ListType[Value[Attribute]]) {
+extension (lt: Seq[Value[Attribute]]) {
 
-  def updateOperandsAndUses(use: Use, newValue: Value[Attribute]): Unit = {
+  def updatedOperandsAndUses(use: Use, newValue: Value[Attribute]) = {
     newValue.uses += use
-    lt.update(use.index, newValue)
+    try {
+      lt.updated(use.index, newValue)
+    } catch {
+      case e =>
+        println(lt)
+        throw e
+    }
   }
 
 }

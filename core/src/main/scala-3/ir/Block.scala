@@ -52,6 +52,15 @@ case class Block private (
     val operations: ListType[Operation]
 ) {
 
+  operations.foreach(op =>
+    op.container_block = op.container_block match
+      case Some(x) =>
+        throw new Exception(
+          s"Operation is already attached to block ${x}"
+        )
+      case None => Some(this)
+  )
+
   /** Constructs a Block instance with the given argument types and operations.
     *
     * @param arguments_types

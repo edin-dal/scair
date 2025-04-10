@@ -11,10 +11,10 @@ import scair.dialects.builtin.I32
 import scair.dialects.builtin.IntegerType
 
 case class TestOp(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
     override val properties: DictType[String, Attribute] =
       DictType.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
@@ -65,7 +65,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
         Block(
           Seq(I32),
           (args: Iterable[Value[Attribute]]) =>
-            Seq(TestOp(operands = ListType.from(args)))
+            Seq(TestOp(operands = args.toSeq))
         ),
         """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()"""
@@ -73,8 +73,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
       (
         Block(
           I32,
-          (arg: Value[Attribute]) =>
-            Seq(TestOp(operands = ListType.from(Seq(arg))))
+          (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg)))
         ),
         """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()"""

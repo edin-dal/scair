@@ -57,7 +57,7 @@ def selectMember(obj: Expr[?], name: String)(using
 def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[ListType[DefinedInput[Def]]] = {
+)(using Quotes): Expr[Seq[DefinedInput[Def]]] = {
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
@@ -72,31 +72,31 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
           }
     )
   )
-  '{ ListType.from(${ stuff }.flatten) }
+  '{ ${ stuff }.flatten }
 }
 
 def operandsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[ListType[Operand[Attribute]]] =
+)(using Quotes): Expr[Seq[Operand[Attribute]]] =
   ADTFlatInputMacro(opDef.operands, adtOpExpr)
 
 def successorsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[ListType[Successor]] =
+)(using Quotes): Expr[Seq[Successor]] =
   ADTFlatInputMacro(opDef.successors, adtOpExpr)
 
 def resultsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[ListType[Result[Attribute]]] =
+)(using Quotes): Expr[Seq[Result[Attribute]]] =
   ADTFlatInputMacro(opDef.results, adtOpExpr)
 
 def regionsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[ListType[Region]] =
+)(using Quotes): Expr[Seq[Region]] =
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
 def propertiesMacro(
@@ -374,15 +374,15 @@ def verifiedConstructs[Def <: OpInputDef: Type](
             '{
               if (
                 !${ c }
-                  .isInstanceOf[ListType[DefinedInputOf[Def, t & Attribute]]]
+                  .isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
               ) then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[ListType[DefinedInputOf[Def, t & Attribute]]])
+                      Expr(Type.show[Seq[DefinedInputOf[Def, t & Attribute]]])
                     }}, got ${${ c }}"
                 )
               ${ c }
-                .asInstanceOf[ListType[DefinedInputOf[Def, t & Attribute]]]
+                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
                 .toSeq
             }
   }
@@ -546,25 +546,44 @@ trait DerivedOperation[name <: String, T] extends Operation {
 
   given companion: DerivedOperationCompanion[T] = deferred
 
+  override def updated(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: scala.collection.mutable.LinkedHashMap[String, Attribute],
+      attributes: scala.collection.mutable.LinkedHashMap[String, Attribute]
+  ) =
+    companion(
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    )
+
   def name: String = companion.name
   // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.
-  def operands: ListType[Value[Attribute]] = companion.operands(this)
-  def successors: ListType[Block] = companion.successors(this)
-  def results: ListType[Result[Attribute]] = companion.results(this)
-  def regions: ListType[Region] = companion.regions(this)
+  def operands: Seq[Value[Attribute]] = companion.operands(this)
+  def successors: Seq[Block] = companion.successors(this)
+  def results: Seq[Result[Attribute]] = companion.results(this)
+  def regions: Seq[Region] = companion.regions(this)
 
   def properties: DictType[String, Attribute] = companion.properties(this)
 
 }
 
-class UnverifiedOp[T](
-    name: String,
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    properties: DictType[String, Attribute] = DictType.empty[String, Attribute],
-    attributes: DictType[String, Attribute] = DictType.empty[String, Attribute]
+case class UnverifiedOp[T](
+    override val name: String,
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: DictType[String, Attribute] =
+      DictType.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = name,
       operands,
@@ -573,16 +592,48 @@ class UnverifiedOp[T](
       regions,
       properties,
       attributes
+    ) {
+
+  override def copy(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: DictType[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ) = {
+    UnregisteredOperation(
+      name = name,
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
     )
+  }
+
+}
 
 trait DerivedOperationCompanion[T] extends OperationCompanion {
-  def operands(adtOp: T): ListType[Value[Attribute]]
-  def successors(adtOp: T): ListType[Block]
-  def results(adtOp: T): ListType[Result[Attribute]]
-  def regions(adtOp: T): ListType[Region]
+  def operands(adtOp: T): Seq[Value[Attribute]]
+  def successors(adtOp: T): Seq[Block]
+  def results(adtOp: T): Seq[Result[Attribute]]
+  def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): DictType[String, Attribute]
-  def unverify(adtOp: T): UnverifiedOp[T]
 
+  def apply(
+      operands: Seq[Value[Attribute]] = Seq(),
+      successors: Seq[scair.ir.Block] = Seq(),
+      results_types: Seq[Attribute] = Seq(),
+      regions: Seq[Region] = Seq(),
+      properties: DictType[String, Attribute] =
+        DictType.empty[String, Attribute],
+      attributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
+
+  def unverify(adtOp: T): UnverifiedOp[T]
   def verify(unverOp: UnverifiedOp[T]): T
 
 }
@@ -604,13 +655,13 @@ object DerivedOperationCompanion {
 
       new DerivedOperationCompanion[T]:
 
-        def operands(adtOp: T): ListType[Value[Attribute]] =
+        def operands(adtOp: T): Seq[Value[Attribute]] =
           ${ operandsMacro(opDef, '{ adtOp }) }
-        def successors(adtOp: T): ListType[Block] =
+        def successors(adtOp: T): Seq[Block] =
           ${ successorsMacro(opDef, '{ adtOp }) }
-        def results(adtOp: T): ListType[Result[Attribute]] =
+        def results(adtOp: T): Seq[Result[Attribute]] =
           ${ resultsMacro(opDef, '{ adtOp }) }
-        def regions(adtOp: T): ListType[Region] =
+        def regions(adtOp: T): Seq[Region] =
           ${ regionsMacro(opDef, '{ adtOp }) }
         def properties(adtOp: T): DictType[String, Attribute] =
           ${ propertiesMacro(opDef, '{ adtOp }) }
@@ -618,10 +669,10 @@ object DerivedOperationCompanion {
         def name: String = ${ Expr(opDef.name) }
 
         def apply(
-            operands: ListType[Value[Attribute]] = ListType(),
-            successors: ListType[scair.ir.Block] = ListType(),
-            results_types: ListType[Attribute] = ListType(),
-            regions: ListType[Region] = ListType(),
+            operands: Seq[Value[Attribute]] = Seq(),
+            successors: Seq[scair.ir.Block] = Seq(),
+            results_types: Seq[Attribute] = Seq(),
+            regions: Seq[Region] = Seq(),
             properties: DictType[String, Attribute] =
               DictType.empty[String, Attribute],
             attributes: DictType[String, Attribute] =
@@ -637,17 +688,15 @@ object DerivedOperationCompanion {
         )
 
         def unverify(adtOp: T): UnverifiedOp[T] =
-          val x = UnverifiedOp[T](
+          UnverifiedOp[T](
             name = ${ Expr(opDef.name) },
             operands = operands(adtOp),
             successors = successors(adtOp),
-            results_types = ListType.empty[Attribute],
+            results_types = results(adtOp).map(_.typ),
             regions = regions(adtOp),
             properties = properties(adtOp),
             attributes = adtOp.attributes
           )
-          x.results.addAll(results(adtOp))
-          x
 
         def verify(unverOp: UnverifiedOp[T]): T =
           ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }

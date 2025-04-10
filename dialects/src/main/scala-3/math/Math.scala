@@ -36,10 +36,10 @@ object AbsfOp extends OperationCompanion {
 }
 
 case class AbsfOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -99,10 +99,10 @@ object FPowIOp extends OperationCompanion {
 }
 
 case class FPowIOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(

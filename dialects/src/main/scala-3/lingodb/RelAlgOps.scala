@@ -140,12 +140,12 @@ private def DialectRegion[$: P](parser: Parser) = P(
     ~ (parser.BlockArgList
       .orElse(Seq())
       .mapTry((x: Seq[(String, Attribute)]) => {
-        val b = new Block(ListType.from(x.map(_._2)), ListType.empty)
+        val b = new Block(Seq.from(x.map(_._2)), Seq.empty)
         parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
       })
       ~ "{"
-      ~ parser.Operations(1) ~ "}").map((b: Block, y: ListType[Operation]) => {
+      ~ parser.Operations(1) ~ "}").map((b: Block, y: Seq[Operation]) => {
       b.operations ++= y
       new Region(Seq(b))
     })
@@ -184,10 +184,10 @@ object BaseTableOp extends OperationCompanion {
 }
 
 case class BaseTableOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -267,10 +267,10 @@ object SelectionOp extends OperationCompanion {
 }
 
 case class SelectionOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -346,10 +346,10 @@ object MapOp extends OperationCompanion {
 }
 
 case class MapOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -448,10 +448,10 @@ object AggregationOp extends OperationCompanion {
 }
 
 case class AggregationOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -550,10 +550,10 @@ object CountRowsOp extends OperationCompanion {
 }
 
 case class CountRowsOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -631,10 +631,10 @@ object AggrFuncOp extends OperationCompanion {
 }
 
 case class AggrFuncOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -735,10 +735,10 @@ object SortOp extends OperationCompanion {
 }
 
 case class SortOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
@@ -837,10 +837,10 @@ object MaterializeOp extends OperationCompanion {
 }
 
 case class MaterializeOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
     override val properties: DictType[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
