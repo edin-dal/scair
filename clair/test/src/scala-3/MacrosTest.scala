@@ -63,7 +63,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
       results_types = Seq[Attribute](IntegerType(IntData(25), Unsigned)),
-      properties = DictType(("randProp" -> StringData("what")))
+      properties = Map(("randProp" -> StringData("what")))
     )
 
     def adtMulOp = Mul(
@@ -97,7 +97,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned)
       ),
-      properties = DictType(("randProp" -> StringData("what")))
+      properties = Map(("randProp" -> StringData("what")))
     )
 
     def adtMulSinVarOp = MulSingleVariadic(
@@ -131,7 +131,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned)
       ),
-      properties = DictType(
+      properties = Map(
         ("operandSegmentSizes" -> DenseArrayAttr(
           IntegerType(IntData(32), Signless),
           Seq[IntegerAttr](
@@ -201,7 +201,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
       results_types = Seq(IntegerType(IntData(25), Unsigned)),
-      properties = DictType(("randProp" -> StringData("what")))
+      properties = Map(("randProp" -> StringData("what")))
     )
 
     unverMulOp.name should be("cmath.mul")
