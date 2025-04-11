@@ -15,7 +15,7 @@ import scair.Parser.*
 ||    ATTRIBUTES    ||
 \*≡==---==≡≡==---==≡*/
 
-sealed trait Attribute {
+trait Attribute {
   def name: String
   def prefix: String = "#"
   def custom_verify(): Unit = ()
