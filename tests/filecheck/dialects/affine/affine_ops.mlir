@@ -36,7 +36,7 @@
 // CHECK-NEXT:    ^bb0(%4: index):
 // CHECK-NEXT:      "affine.yield"() : () -> ()
 // CHECK-NEXT:    }) : () -> ()
-// CHECK-NEXT:    "affine.parallel"(%0) <{lowerBoundsMap = affine_map<()[] -> (0)>, lowerBoundsGroups = dense<1> : vector<1xi32>, upperBoundsMap = affine_map<()[s0] -> (s0)>, upperBoundsGroups = dense<1> : vector<1xi32>, steps = [1], reductions = []}> ({
+// CHECK-NEXT:    "affine.parallel"(%0) <{upperBoundsGroups = dense<1> : vector<1xi32>, upperBoundsMap = affine_map<()[s0] -> (s0)>, lowerBoundsMap = affine_map<()[] -> (0)>, lowerBoundsGroups = dense<1> : vector<1xi32>, reductions = [], steps = [1]}> ({
 // CHECK-NEXT:    ^bb0(%4: index):
 // CHECK-NEXT:      "affine.yield"() : () -> ()
 // CHECK-NEXT:    }) : (index) -> ()

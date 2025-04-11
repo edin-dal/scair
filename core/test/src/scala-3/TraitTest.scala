@@ -13,12 +13,12 @@ object FillerOp extends OperationCompanion {
 }
 
 case class FillerOp(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -36,12 +36,12 @@ object TerminatorOp extends OperationCompanion {
 }
 
 case class TerminatorOp(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -60,12 +60,12 @@ object NoTerminatorOp extends OperationCompanion {
 }
 
 case class NoTerminatorOp(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -87,7 +87,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
     val filler2 = new FillerOp()
     val terminator = new TerminatorOp()
 
-    val block = new Block(operations = ListType(filler1, filler2, terminator))
+    val block = new Block(operations = Seq(filler1, filler2, terminator))
 
     terminator.container_block = Some(block)
     block.verify()
@@ -99,7 +99,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
       val filler2 = new FillerOp()
       val terminator = new TerminatorOp()
 
-      val block = new Block(operations = ListType(filler1, terminator, filler2))
+      val block = new Block(operations = Seq(filler1, terminator, filler2))
 
       terminator.container_block = Some(block)
 
@@ -132,16 +132,16 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
     val filler5 = new FillerOp()
     val filler6 = new FillerOp()
 
-    val block1 = new Block(operations = ListType(filler1, filler2))
-    val block2 = new Block(operations = ListType(filler3, filler4))
-    val block3 = new Block(operations = ListType(filler5, filler6))
+    val block1 = new Block(operations = Seq(filler1, filler2))
+    val block2 = new Block(operations = Seq(filler3, filler4))
+    val block3 = new Block(operations = Seq(filler5, filler6))
 
     val region1 = new Region(Seq(block1))
     val region2 = new Region(Seq(block2))
     val region3 = new Region(Seq(block3))
 
     val noterminator =
-      new NoTerminatorOp(regions = ListType(region1, region2, region3))
+      new NoTerminatorOp(regions = Seq(region1, region2, region3))
 
     noterminator.verify()
   }
@@ -155,15 +155,15 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
     val filler5 = new FillerOp()
     val filler6 = new FillerOp()
 
-    val block1 = new Block(operations = ListType(filler1, filler2))
-    val block2 = new Block(operations = ListType(filler3, filler4))
-    val block3 = new Block(operations = ListType(filler5, filler6))
+    val block1 = new Block(operations = Seq(filler1, filler2))
+    val block2 = new Block(operations = Seq(filler3, filler4))
+    val block3 = new Block(operations = Seq(filler5, filler6))
 
     val region1 = new Region(Seq(block1, block2))
     val region2 = new Region(Seq(block2))
 
     val noterminator =
-      new NoTerminatorOp(regions = ListType(region1, region2))
+      new NoTerminatorOp(regions = Seq(region1, region2))
 
     val exception = intercept[Exception](
       noterminator.verify()
