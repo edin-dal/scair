@@ -14,6 +14,7 @@ package scair.ir
 // TO-DO: perhaps a linked list of a use to other uses within an operation
 //        for faster use retrieval and index update
 case class Use(val operation: Operation, val index: Int)
+
 object Value {
   def apply[T <: Attribute](typ: T): Value[T] = new Value(typ)
   def unapply[T <: Attribute](value: Value[T]): Option[T] = Some(value.typ)

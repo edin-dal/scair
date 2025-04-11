@@ -7,6 +7,7 @@ import fastparse.internal.Util
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
+import scair.transformations.RewriteMethods
 
 import java.lang.Float.parseFloat
 import java.lang.Long.parseLong
@@ -14,7 +15,6 @@ import java.lang.Math.pow
 import scala.annotation.switch
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scair.transformations.RewriteMethods
 
 // ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
@@ -241,15 +241,6 @@ object Parser {
 
         if (valueWaitlist(operation).length == 0) {
           valueWaitlist -= operation
-        }
-
-        // adding Uses to each found operand
-        val operandsLength = operation.operands.length
-
-        // TO-DO: create a new OpOperands class specifically to close the API
-        //        for operations operands
-        for ((operand, i) <- operandList zip (0 to operandList.length)) {
-          operand.uses += Use(operation, operandsLength + i)
         }
 
         // val block = operation.container_block.get
@@ -715,9 +706,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     val useAndRefBlockSeqs =
       currentScope.useBlocks(successorsNames)
 
-    val opObject: Option[OperationCompanion] = ctx.getOperation(opName)
-
-    val op: Operation = opObject match {
+    val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
           operands = useAndRefValueSeqs._1,
@@ -743,14 +732,6 @@ class Parser(val context: MLContext, val args: Args = Args())
           throw new Exception(
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
-    }
-
-    // adding uses for known operands
-    for (
-      (operand, i) <-
-        useAndRefValueSeqs._1 zip (0 to useAndRefValueSeqs._1.length)
-    ) {
-      operand.uses += Use(op, i)
     }
     if (useAndRefValueSeqs._2.length > 0) {
       currentScope.valueWaitlist += op -> useAndRefValueSeqs._2

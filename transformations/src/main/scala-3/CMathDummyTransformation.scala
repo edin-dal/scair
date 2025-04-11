@@ -77,7 +77,7 @@ object TestReplacingDummyOperation extends RewritePattern {
       "replacedOp",
       regions = Seq(
         Region(Seq(Block(operations = Seq(op1, op2, op3))))
-      ),
+      )
       // results_types = Seq(
       //   StringData("replaced(i32)"),
       //   StringData("replaced(i64)")

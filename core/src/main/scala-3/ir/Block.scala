@@ -162,14 +162,14 @@ case class Block private (
     //       "Can't attach an operation already attached to a block."
     //     )
     //   case None =>
-        op.is_ancestor(this) match {
-          case true =>
-            throw new Exception(
-              "Can't add an operation to a block that is contained within that operation"
-            )
-          case false =>
-            op.container_block = Some(this)
-    //     }
+    op.is_ancestor(this) match {
+      case true =>
+        throw new Exception(
+          "Can't add an operation to a block that is contained within that operation"
+        )
+      case false =>
+        op.container_block = Some(this)
+      //     }
     }
   }
 

@@ -200,10 +200,13 @@ case class Printer(
                                           op,
                                           indentLevel
                                         )
-                                      else op.custom_print(this).replaceAllLiterally(
-                                        "\n",
-                                        "\n" + indent * indentLevel
-                                      ))
+                                      else
+                                        op.custom_print(this)
+                                          .replaceAllLiterally(
+                                            "\n",
+                                            "\n" + indent * indentLevel
+                                          )
+    )
   }
 
   def printOperations(

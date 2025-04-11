@@ -16,22 +16,25 @@ import scair.Printer
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 trait IRNode {
-  def parent : Option[IRNode]
+  def parent: Option[IRNode]
 
   final def is_ancestor(other: IRNode): Boolean = {
     other.parent match {
       case Some(parent) if parent == this => true
-      case Some(parent) => is_ancestor(parent)
-      case None => false
-      case null => false
+      case Some(parent)                   => is_ancestor(parent)
+      case None                           => false
+      case null                           => false
     }
   }
+
 }
+
 trait Operation extends IRNode {
 
   final override def parent = container_block
 
   regions.foreach(attach_region)
+  operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
 
   def name: String
 
@@ -73,35 +76,34 @@ trait Operation extends IRNode {
     for (region <- regions) region.drop_all_references
   }
 
-  // TO-DO: think harder about the drop_refs - sounds fishy as per PR #45
-  final def erase(drop_refs: Boolean = true): Unit = {
+  final def erase(): Unit = {
     if (container_block != None) then {
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
       )
     }
-    if (drop_refs) then drop_all_references
+    drop_all_references
 
     for (result <- results) {
       result.erase()
     }
   }
 
-  final def attach_region(region:Region) =
+  final def attach_region(region: Region) =
     // region.container_operation match {
     //   case Some(x) =>
     //     throw new Exception(
     //       "Can't attach a region already attached to an operation."
     //     )
     //   case None =>
-        region.is_ancestor(this) match {
-          case true =>
-            throw new Exception(
-              "Can't add a region to an operation that is contained within that region"
-            )
-          case false =>
-            region.container_operation = Some(this)
-    //     }
+    region.is_ancestor(this) match {
+      case true =>
+        throw new Exception(
+          "Can't add a region to an operation that is contained within that region"
+        )
+      case false =>
+        region.container_operation = Some(this)
+      //     }
     }
 
 }
