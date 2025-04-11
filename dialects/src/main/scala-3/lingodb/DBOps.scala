@@ -283,7 +283,7 @@ object DB_ConstantOp extends OperationCompanion {
     (
         x: Attribute,
         y: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -300,7 +300,7 @@ case class DB_ConstantOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.constant",
@@ -355,7 +355,7 @@ object DB_CmpOp extends OperationCompanion {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -374,7 +374,7 @@ case class DB_CmpOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.compare",
@@ -496,7 +496,7 @@ object DB_MulOp extends OperationCompanion {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -515,7 +515,7 @@ case class DB_MulOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.mul",
@@ -642,7 +642,7 @@ object DB_DivOp extends OperationCompanion {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -661,7 +661,7 @@ case class DB_DivOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.div",
@@ -724,7 +724,7 @@ object DB_AddOp extends OperationCompanion {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -743,7 +743,7 @@ case class DB_AddOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.add",
@@ -808,7 +808,7 @@ object DB_SubOp extends OperationCompanion {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -827,7 +827,7 @@ case class DB_SubOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.sub",
@@ -889,7 +889,7 @@ object CastOp extends OperationCompanion {
         operand: String,
         opType: Attribute,
         resTypes: Seq[Attribute],
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -908,7 +908,7 @@ case class CastOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "db.cast",

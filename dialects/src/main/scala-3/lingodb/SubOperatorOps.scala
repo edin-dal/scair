@@ -94,7 +94,7 @@ object SetResultOp extends OperationCompanion {
         x: Attribute,
         y: String,
         z: Attribute,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -112,7 +112,7 @@ case class SetResultOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "subop.set_result",

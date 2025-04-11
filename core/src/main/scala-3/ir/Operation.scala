@@ -43,7 +43,7 @@ trait Operation extends IRNode {
       successors: Seq[Block] = successors,
       results_types: Seq[Attribute] = results.map(_.typ),
       regions: Seq[Region] = regions,
-      properties: DictType[String, Attribute] = properties,
+      properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ): Operation
 
@@ -52,7 +52,7 @@ trait Operation extends IRNode {
   def results: Seq[Result[Attribute]]
   def regions: Seq[Region]
   final def detached_regions = regions.map(_.detached)
-  def properties: DictType[String, Attribute]
+  def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
   def trait_verify(): Unit = ()
@@ -116,8 +116,8 @@ abstract class BaseOperation(
     val successors: Seq[Block] = Seq(),
     val results_types: Seq[Attribute] = Seq(),
     val regions: Seq[Region] = Seq(),
-    val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends Operation {
@@ -129,7 +129,7 @@ abstract class BaseOperation(
       successors: Seq[Block],
       results_types: Seq[Attribute],
       regions: Seq[Region],
-      properties: DictType[String, Attribute],
+      properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
   ): BaseOperation
 
@@ -138,7 +138,7 @@ abstract class BaseOperation(
       successors: Seq[Block] = successors,
       results_types: Seq[Attribute] = results.map(_.typ),
       regions: Seq[Region] = regions,
-      properties: DictType[String, Attribute] = properties,
+      properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ) = {
     copy(
@@ -174,8 +174,8 @@ case class UnregisteredOperation(
     override val successors: Seq[Block] = Seq(),
     override val results_types: Seq[Attribute] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -193,7 +193,7 @@ case class UnregisteredOperation(
       successors: Seq[Block],
       results_types: Seq[Attribute],
       regions: Seq[Region],
-      properties: DictType[String, Attribute],
+      properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
   ) = {
     UnregisteredOperation(
@@ -222,8 +222,8 @@ trait OperationCompanion {
       successors: Seq[Block] = Seq(),
       results_types: Seq[Attribute] = Seq(),
       regions: Seq[Region] = Seq(),
-      properties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
+      properties: Map[String, Attribute] =
+        Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): Operation

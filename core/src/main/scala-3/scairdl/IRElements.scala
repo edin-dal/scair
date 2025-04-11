@@ -759,8 +759,8 @@ case class $className(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, properties, attributes) {

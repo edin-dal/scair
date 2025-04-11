@@ -166,11 +166,11 @@ object BaseTableOp extends OperationCompanion {
     parser.OptionalAttributes ~
       "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse(parser))
         .rep(0, sep = ",")
-        .map(DictType(_*)) ~ "}"
+        .map(Map(_*)) ~ "}"
   ).map(
     (
-        x: DictType[String, Attribute],
-        y: DictType[String, Attribute]
+        x: Map[String, Attribute],
+        y: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -188,7 +188,7 @@ case class BaseTableOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.basetable",
@@ -250,7 +250,7 @@ object SelectionOp extends OperationCompanion {
       (
           x: String,
           y: Region,
-          z: DictType[String, Attribute]
+          z: Map[String, Attribute]
       ) =>
         val operand_type = parser.currentScope.valueMap(x).typ
         parser.generateOperation(
@@ -271,7 +271,7 @@ case class SelectionOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.selection",
@@ -329,7 +329,7 @@ object MapOp extends OperationCompanion {
         x: String,
         z: Attribute,
         y: Region,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -350,7 +350,7 @@ case class MapOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.map",
@@ -431,7 +431,7 @@ object AggregationOp extends OperationCompanion {
         reff: Attribute,
         deff: Attribute,
         y: Region,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -452,7 +452,7 @@ case class AggregationOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.aggregation",
@@ -534,7 +534,7 @@ object CountRowsOp extends OperationCompanion {
   ).map(
     (
         x: String,
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -554,7 +554,7 @@ case class CountRowsOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.count",
@@ -615,7 +615,7 @@ object AggrFuncOp extends OperationCompanion {
         attr: Attribute,
         x: String,
         resTypes: Seq[Attribute],
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -635,7 +635,7 @@ case class AggrFuncOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.aggrfn",
@@ -719,7 +719,7 @@ object SortOp extends OperationCompanion {
     (
         x: String,
         attr: Attribute,
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -739,7 +739,7 @@ case class SortOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.sort",
@@ -821,7 +821,7 @@ object MaterializeOp extends OperationCompanion {
         cols: Attribute,
         columns: Attribute,
         resTypes: Seq[Attribute],
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(operand).typ
       parser.generateOperation(
@@ -841,7 +841,7 @@ case class MaterializeOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "relalg.materialize",

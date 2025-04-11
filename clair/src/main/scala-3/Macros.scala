@@ -102,14 +102,14 @@ def regionsMacro(
 def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[DictType[String, Attribute]] =
+)(using Quotes): Expr[Map[String, Attribute]] =
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
   '{
-    DictType.from(${ propertyNames } zip ${ propertyExprs })
+    Map.from(${ propertyNames } zip ${ propertyExprs })
   }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -121,7 +121,7 @@ def propertiesMacro(
 /** Helper to verify a property argument.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
-    list: Expr[DictType[String, Attribute]],
+    list: Expr[Map[String, Attribute]],
     propName: String
 )(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
@@ -552,8 +552,8 @@ trait DerivedOperation[name <: String, T] extends Operation {
       successors: Seq[Block],
       results_types: Seq[Attribute],
       regions: Seq[Region],
-      properties: scala.collection.mutable.LinkedHashMap[String, Attribute],
-      attributes: scala.collection.mutable.LinkedHashMap[String, Attribute]
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
   ) =
     companion(
       operands = operands,
@@ -571,7 +571,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
   def results: Seq[Result[Attribute]] = companion.results(this)
   def regions: Seq[Region] = companion.regions(this)
 
-  def properties: DictType[String, Attribute] = companion.properties(this)
+  def properties: Map[String, Attribute] = companion.properties(this)
 
 }
 
@@ -581,8 +581,8 @@ case class UnverifiedOp[T](
     override val successors: Seq[Block] = Seq(),
     override val results_types: Seq[Attribute] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -600,7 +600,7 @@ case class UnverifiedOp[T](
       successors: Seq[Block],
       results_types: Seq[Attribute],
       regions: Seq[Region],
-      properties: DictType[String, Attribute],
+      properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
   ) = {
     UnregisteredOperation(
@@ -621,15 +621,15 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def successors(adtOp: T): Seq[Block]
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
-  def properties(adtOp: T): DictType[String, Attribute]
+  def properties(adtOp: T): Map[String, Attribute]
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
       successors: Seq[scair.ir.Block] = Seq(),
       results_types: Seq[Attribute] = Seq(),
       regions: Seq[Region] = Seq(),
-      properties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
+      properties: Map[String, Attribute] =
+        Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): UnverifiedOp[T]
@@ -664,7 +664,7 @@ object DerivedOperationCompanion {
           ${ resultsMacro(opDef, '{ adtOp }) }
         def regions(adtOp: T): Seq[Region] =
           ${ regionsMacro(opDef, '{ adtOp }) }
-        def properties(adtOp: T): DictType[String, Attribute] =
+        def properties(adtOp: T): Map[String, Attribute] =
           ${ propertiesMacro(opDef, '{ adtOp }) }
 
         def name: String = ${ Expr(opDef.name) }
@@ -674,8 +674,8 @@ object DerivedOperationCompanion {
             successors: Seq[scair.ir.Block] = Seq(),
             results_types: Seq[Attribute] = Seq(),
             regions: Seq[Region] = Seq(),
-            properties: DictType[String, Attribute] =
-              DictType.empty[String, Attribute],
+            properties: Map[String, Attribute] =
+              Map.empty[String, Attribute],
             attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
         ): UnverifiedOp[T] = UnverifiedOp[T](

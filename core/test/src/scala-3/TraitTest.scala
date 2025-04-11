@@ -17,8 +17,8 @@ case class FillerOp(
     override val successors: Seq[Block] = Seq(),
     override val results_types: Seq[Attribute] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -40,8 +40,8 @@ case class TerminatorOp(
     override val successors: Seq[Block] = Seq(),
     override val results_types: Seq[Attribute] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
@@ -64,8 +64,8 @@ case class NoTerminatorOp(
     override val successors: Seq[Block] = Seq(),
     override val results_types: Seq[Attribute] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(

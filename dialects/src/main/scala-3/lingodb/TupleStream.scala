@@ -150,7 +150,7 @@ object ReturnOp extends OperationCompanion {
     parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
       parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
-  ).map((x: DictType[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
+  ).map((x: Map[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
     parser.generateOperation(
       opName = name,
       operandsNames = y._1,
@@ -167,7 +167,7 @@ case class ReturnOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "tuples.return",
@@ -212,7 +212,7 @@ object GetColumnOp extends OperationCompanion {
         x: String,
         y: Attribute,
         z: Attribute,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -232,7 +232,7 @@ case class GetColumnOp(
     override val successors: Seq[Block],
     override val results_types: Seq[Attribute],
     override val regions: Seq[Region],
-    override val properties: DictType[String, Attribute],
+    override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
 ) extends BaseOperation(
       name = "tuples.getcol",

@@ -681,9 +681,9 @@ class Parser(val context: MLContext, val args: Args = Args())
       opName: String,
       operandsNames: Seq[String] = Seq(),
       successorsNames: Seq[String] = Seq(),
-      properties: DictType[String, Attribute] = DictType(),
+      properties: Map[String, Attribute] = Map(),
       regions: Seq[Region] = Seq(),
-      attributes: DictType[String, Attribute] = DictType(),
+      attributes: Map[String, Attribute] = Map(),
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
   ): Operation = {
@@ -707,7 +707,7 @@ class Parser(val context: MLContext, val args: Args = Args())
           successors = useAndRefBlockSeqs._1,
           properties = properties,
           results_types = resultsTypes,
-          attributes = attributes,
+          attributes = DictType.from(attributes),
           regions = regions
         )
 
@@ -719,7 +719,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             successors = useAndRefBlockSeqs._1,
             properties = properties,
             results_types = resultsTypes,
-            attributes = attributes,
+            attributes = DictType.from(attributes),
             regions = regions
           )
         else
@@ -762,18 +762,18 @@ class Parser(val context: MLContext, val args: Args = Args())
   def GenericOperation[$: P](resNames: Seq[String]) = P(
     (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
       ~/ SuccessorList.orElse(Seq())
-      ~/ properties.orElse(DictType.empty)
+      ~/ properties.orElse(Map.empty)
       ~/ RegionList.orElse(Seq())
-      ~/ (DictionaryAttribute).orElse(DictType.empty) ~/ ":" ~/ FunctionType)
+      ~/ (DictionaryAttribute).orElse(Map.empty) ~/ ":" ~/ FunctionType)
       .mapTry(
         (
             (
                 opName: String,
                 operandsNames: Seq[String],
                 successorsNames: Seq[String],
-                properties: DictType[String, Attribute],
+                properties: Map[String, Attribute],
                 regions: Seq[Region],
-                attributes: DictType[String, Attribute],
+                attributes: Map[String, Attribute],
                 operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
             ) =>
               generateOperation(
@@ -932,7 +932,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   inline def DictionaryAttribute[$: P] = P(
     "{" ~ AttributeEntry
       .rep(sep = ",")
-      .map(DictType[String, Attribute](_*)) ~ "}"
+      .map(Map[String, Attribute](_*)) ~ "}"
   )
 
   /** Parses an optional properties dictionary from the input.
@@ -951,7 +951,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   present.
     */
   inline def OptionalAttributes[$: P] =
-    (DictionaryAttribute).orElse(DictType.empty)
+    (DictionaryAttribute).orElse(Map.empty)
 
   /** Parses an optional attributes dictionary from the input, preceded by the
     * `attributes` keyword.
@@ -960,7 +960,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An optional dictionary of attributes - empty if no keyword is present.
     */
   inline def OptionalKeywordAttributes[$: P] =
-    ("attributes" ~/ DictionaryAttribute).orElse(DictType.empty)
+    ("attributes" ~/ DictionaryAttribute).orElse(Map.empty)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||  PARSE FUNCTION  ||
