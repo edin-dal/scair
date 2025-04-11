@@ -628,8 +628,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       successors: Seq[scair.ir.Block] = Seq(),
       results_types: Seq[Attribute] = Seq(),
       regions: Seq[Region] = Seq(),
-      properties: Map[String, Attribute] =
-        Map.empty[String, Attribute],
+      properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): UnverifiedOp[T]
@@ -674,8 +673,7 @@ object DerivedOperationCompanion {
             successors: Seq[scair.ir.Block] = Seq(),
             results_types: Seq[Attribute] = Seq(),
             regions: Seq[Region] = Seq(),
-            properties: Map[String, Attribute] =
-              Map.empty[String, Attribute],
+            properties: Map[String, Attribute] = Map.empty[String, Attribute],
             attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
         ): UnverifiedOp[T] = UnverifiedOp[T](

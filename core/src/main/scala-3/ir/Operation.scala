@@ -116,8 +116,7 @@ abstract class BaseOperation(
     val successors: Seq[Block] = Seq(),
     val results_types: Seq[Attribute] = Seq(),
     val regions: Seq[Region] = Seq(),
-    val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
+    val properties: Map[String, Attribute] = Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends Operation {
@@ -222,8 +221,7 @@ trait OperationCompanion {
       successors: Seq[Block] = Seq(),
       results_types: Seq[Attribute] = Seq(),
       regions: Seq[Region] = Seq(),
-      properties: Map[String, Attribute] =
-        Map.empty[String, Attribute],
+      properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): Operation

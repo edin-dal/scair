@@ -163,12 +163,12 @@ object ReturnOp extends OperationCompanion {
 }
 
 case class ReturnOp(
-    override val operands: Seq[Value[Attribute]],
-    override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
-    override val regions: Seq[Region],
-    override val properties: Map[String, Attribute],
-    override val attributes: DictType[String, Attribute]
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] = Map(),
+    override val attributes: DictType[String, Attribute] = DictType()
 ) extends BaseOperation(
       name = "tuples.return",
       operands,
