@@ -156,20 +156,20 @@ case class Block private (
   var container_region: Option[Region] = None
 
   private def attach_op(op: Operation): Unit = {
-    // op.container_block match {
-    //   case Some(x) =>
-    //     throw new Exception(
-    //       "Can't attach an operation already attached to a block."
-    //     )
-    //   case None =>
-    op.is_ancestor(this) match {
-      case true =>
+    op.container_block match {
+      case Some(x) =>
         throw new Exception(
-          "Can't add an operation to a block that is contained within that operation"
+          "Can't attach an operation already attached to a block."
         )
-      case false =>
-        op.container_block = Some(this)
-      //     }
+      case None =>
+        op.is_ancestor(this) match {
+          case true =>
+            throw new Exception(
+              "Can't add an operation to a block that is contained within that operation"
+            )
+          case false =>
+            op.container_block = Some(this)
+        }
     }
   }
 
@@ -265,7 +265,7 @@ case class Block private (
       case true =>
         op.container_block = None
         operations -= op
-        return op
+        op
       case false =>
         throw new Exception(
           "MLIROperation can only be detached from a block in which it is contained."

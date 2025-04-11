@@ -432,7 +432,7 @@ class ParserTest
     }
   }
 
-  "Value Uses assignment test forward ref" should "Test Operation's Operand uses" in {
+  "Value Uses assignment test forward ref" should "Test Operation's  forward-referenced Operand uses" in {
     withClue("Operand Uses: ") {
 
       val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()

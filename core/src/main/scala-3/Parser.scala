@@ -230,10 +230,12 @@ object Parser {
           case true =>
             val tuple = (name, typ)
             val value = valueMap(name)
-            if (value.typ.name == typ.name) { // to be changed
-              foundOperands += tuple
-              operandList += value
-            }
+            if value.typ != typ then
+              throw new Exception(
+                s"%$name use with type ${typ} but defined with type ${value.typ}"
+              )
+            foundOperands += tuple
+            operandList += value
           case false =>
         }
 
@@ -243,12 +245,8 @@ object Parser {
           valueWaitlist -= operation
         }
 
-        // val block = operation.container_block.get
-        // val idx = block.operations.indexOf(operation)
         val new_op =
           operation.updated(operands = operation.operands ++ operandList)
-        // block.operations(idx).operands.foreach(_.uses.clear())
-        // block.operations(idx) = new_op
         RewriteMethods.replace_op(operation, new_op)
       }
 
@@ -292,7 +290,7 @@ object Parser {
 
       for ((operation, successors) <- blockWaitlist) {
 
-        val foundOperands: ListType[String] = ListType()
+        val foundBlocks: ListType[String] = ListType()
         val successorList: ListType[Block] = ListType()
 
         for {
@@ -302,22 +300,18 @@ object Parser {
             name
           ) match {
           case true =>
-            foundOperands += name
+            foundBlocks += name
             successorList += blockMap(name)
           case false =>
         }
 
-        blockWaitlist(operation) = blockWaitlist(operation) diff foundOperands
+        blockWaitlist(operation) = blockWaitlist(operation) diff foundBlocks
 
         if (blockWaitlist(operation).length == 0) {
           blockWaitlist -= operation
         }
-        // val block = operation.container_block.get
-        // val idx = block.operations.indexOf(operation)
         val new_op =
           operation.updated(successors = operation.successors ++ successorList)
-        // block.operations(idx).operands.foreach(_.uses.clear())
-        // block.operations(idx) = new_op
         RewriteMethods.replace_op(operation, new_op)
       }
 

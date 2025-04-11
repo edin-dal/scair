@@ -51,6 +51,7 @@ trait Operation extends IRNode {
   def successors: Seq[Block]
   def results: Seq[Result[Attribute]]
   def regions: Seq[Region]
+  final def detached_regions = regions.map(_.detached)
   def properties: DictType[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
@@ -90,20 +91,21 @@ trait Operation extends IRNode {
   }
 
   final def attach_region(region: Region) =
-    // region.container_operation match {
-    //   case Some(x) =>
-    //     throw new Exception(
-    //       "Can't attach a region already attached to an operation."
-    //     )
-    //   case None =>
-    region.is_ancestor(this) match {
-      case true =>
+    region.container_operation match {
+      case Some(x) =>
         throw new Exception(
-          "Can't add a region to an operation that is contained within that region"
+          s"""Can't attach a region already attached to an operation:
+              ${Printer().printRegion(region)}"""
         )
-      case false =>
-        region.container_operation = Some(this)
-      //     }
+      case None =>
+        region.is_ancestor(this) match {
+          case true =>
+            throw new Exception(
+              "Can't add a region to an operation that is contained within that region"
+            )
+          case false =>
+            region.container_operation = Some(this)
+        }
     }
 
 }

@@ -161,7 +161,7 @@ def getConstructSeq[Def <: OpInputDef: Type](
   Type.of[Def] match
     case '[ResultDef]     => '{ ${ op }.results }
     case '[OperandDef]    => '{ ${ op }.operands }
-    case '[RegionDef]     => '{ ${ op }.regions }
+    case '[RegionDef]     => '{ ${ op }.regions.map(_.detached) }
     case '[SuccessorDef]  => '{ ${ op }.successors }
     case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
 
@@ -367,6 +367,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
                       Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
                     }}, got ${${ c }}"
                 )
+
               ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
             }
           // If the construct is variadic, check if it is a list of the expected type
@@ -693,7 +694,7 @@ object DerivedOperationCompanion {
             operands = operands(adtOp),
             successors = successors(adtOp),
             results_types = results(adtOp).map(_.typ),
-            regions = regions(adtOp),
+            regions = regions(adtOp).map(_.detached),
             properties = properties(adtOp),
             attributes = adtOp.attributes
           )
