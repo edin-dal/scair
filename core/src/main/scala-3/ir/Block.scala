@@ -50,16 +50,11 @@ object Block {
 case class Block private (
     val arguments: ListType[Value[Attribute]],
     val operations: ListType[Operation]
-) {
+) extends IRNode {
 
-  operations.foreach(op =>
-    op.container_block = op.container_block match
-      case Some(x) =>
-        throw new Exception(
-          s"Operation is already attached to block ${x}"
-        )
-      case None => Some(this)
-  )
+  final override def parent: Option[Region] = container_region
+
+  operations.foreach(attach_op)
 
   /** Constructs a Block instance with the given argument types and operations.
     *
@@ -161,12 +156,12 @@ case class Block private (
   var container_region: Option[Region] = None
 
   private def attach_op(op: Operation): Unit = {
-    op.container_block match {
-      case Some(x) =>
-        throw new Exception(
-          "Can't attach an operation already attached to a block."
-        )
-      case None =>
+    // op.container_block match {
+    //   case Some(x) =>
+    //     throw new Exception(
+    //       "Can't attach an operation already attached to a block."
+    //     )
+    //   case None =>
         op.is_ancestor(this) match {
           case true =>
             throw new Exception(
@@ -174,7 +169,7 @@ case class Block private (
             )
           case false =>
             op.container_block = Some(this)
-        }
+    //     }
     }
   }
 

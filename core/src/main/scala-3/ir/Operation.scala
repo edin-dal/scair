@@ -15,8 +15,24 @@ import scair.Printer
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+trait IRNode {
+  def parent : Option[IRNode]
 
-trait Operation {
+  final def is_ancestor(other: IRNode): Boolean = {
+    other.parent match {
+      case Some(parent) if parent == this => true
+      case Some(parent) => is_ancestor(parent)
+      case None => false
+      case null => false
+    }
+  }
+}
+trait Operation extends IRNode {
+
+  final override def parent = container_block
+
+  regions.foreach(attach_region)
+
   def name: String
 
   def updated(
@@ -53,31 +69,8 @@ trait Operation {
 
   final def drop_all_references: Unit = {
     container_block = None
-    for ((idx, operand) <- (0 to operands.length) zip operands) {
-      operand.remove_use(new Use(this, idx))
-    }
+    operands.foreach(_.uses.filterInPlace(_.operation != this))
     for (region <- regions) region.drop_all_references
-  }
-
-  final def is_ancestor(node: Block): Boolean = {
-    val reg = node.container_region
-    reg match {
-      case Some(x) =>
-        x.container_operation match {
-          case Some(op) =>
-            (op `equals` this) match {
-              case true => true
-              case false =>
-                op.container_block match {
-                  case None => false
-                  case Some(block) =>
-                    is_ancestor(block)
-                }
-            }
-          case None => false
-        }
-      case None => false
-    }
   }
 
   // TO-DO: think harder about the drop_refs - sounds fishy as per PR #45
@@ -93,6 +86,23 @@ trait Operation {
       result.erase()
     }
   }
+
+  final def attach_region(region:Region) =
+    // region.container_operation match {
+    //   case Some(x) =>
+    //     throw new Exception(
+    //       "Can't attach a region already attached to an operation."
+    //     )
+    //   case None =>
+        region.is_ancestor(this) match {
+          case true =>
+            throw new Exception(
+              "Can't add a region to an operation that is contained within that region"
+            )
+          case false =>
+            region.container_operation = Some(this)
+    //     }
+    }
 
 }
 

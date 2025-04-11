@@ -56,7 +56,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   object TestCases {
 
-    val unverOp = UnverifiedOp[Mul](
+    def unverOp = UnverifiedOp[Mul](
       name = "cmath.mul",
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
@@ -66,14 +66,14 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       properties = DictType(("randProp" -> StringData("what")))
     )
 
-    val adtMulOp = Mul(
+    def adtMulOp = Mul(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Value(IntegerType(IntData(5), Unsigned)),
       result = Result(IntegerType(IntData(25), Unsigned)),
       randProp = StringData("what")
     )
 
-    val adtMulOpAllFields = MulFull(
+    def adtMulOpAllFields = MulFull(
       operand1 = Value(IntegerType(IntData(5), Unsigned)),
       operand2 = Value(IntegerType(IntData(5), Unsigned)),
       result1 = Result(IntegerType(IntData(25), Unsigned)),
@@ -86,7 +86,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       succ2 = scair.ir.Block()
     )
 
-    val unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
+    def unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
       name = "cmath.mulsinglevariadic",
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
@@ -100,7 +100,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       properties = DictType(("randProp" -> StringData("what")))
     )
 
-    val adtMulSinVarOp = MulSingleVariadic(
+    def adtMulSinVarOp = MulSingleVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
@@ -113,7 +113,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       randProp = StringData("what")
     )
 
-    val unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
+    def unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
       name = "cmath.mulmultivariadic",
       operands = Seq(
         Value(typ = IntegerType(IntData(5), Unsigned)),
@@ -151,7 +151,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       )
     )
 
-    val adtMulMulVarOp = MulMultiVariadic(
+    def adtMulMulVarOp = MulMultiVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),

@@ -55,30 +55,34 @@ object TestInsertingDummyOperation extends RewritePattern {
 
 object TestReplacingDummyOperation extends RewritePattern {
 
-  val op1 =
-    new UnregisteredOperation("dummy-op1")
-
-  val op2 =
-    new UnregisteredOperation("dummy-op2")
-
-  val op3 =
-    new UnregisteredOperation(
-      "dummy-return",
-      results_types =
-        Seq(StringData("replaced(i32)"), StringData("replaced(i64)"))
-    )
-
-  val opReplace = new UnregisteredOperation(
-    "replacedOp",
-    regions = Seq(
-      Region(Seq(Block(operations = Seq(op1, op2, op3))))
-    )
-  )
-
   override def match_and_rewrite(
       op: Operation,
       rewriter: PatternRewriter
   ): Unit = {
+
+    val op1 =
+      new UnregisteredOperation("dummy-op1")
+
+    val op2 =
+      new UnregisteredOperation("dummy-op2")
+
+    val op3 =
+      new UnregisteredOperation(
+        "dummy-return",
+        results_types =
+          Seq(StringData("replaced(i32)"), StringData("replaced(i64)"))
+      )
+
+    val opReplace = new UnregisteredOperation(
+      "replacedOp",
+      regions = Seq(
+        Region(Seq(Block(operations = Seq(op1, op2, op3))))
+      ),
+      // results_types = Seq(
+      //   StringData("replaced(i32)"),
+      //   StringData("replaced(i64)")
+      // )
+    )
 
     (op.name == "tobereplaced") match {
       case true =>

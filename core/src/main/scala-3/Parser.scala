@@ -14,6 +14,7 @@ import java.lang.Math.pow
 import scala.annotation.switch
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scair.transformations.RewriteMethods
 
 // ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
@@ -251,11 +252,13 @@ object Parser {
           operand.uses += Use(operation, operandsLength + i)
         }
 
-        val block = operation.container_block.get
-        val idx = block.operations.indexOf(operation)
+        // val block = operation.container_block.get
+        // val idx = block.operations.indexOf(operation)
         val new_op =
           operation.updated(operands = operation.operands ++ operandList)
-        block.operations(idx) = new_op
+        // block.operations(idx).operands.foreach(_.uses.clear())
+        // block.operations(idx) = new_op
+        RewriteMethods.replace_op(operation, new_op)
       }
 
       if (valueWaitlist.size > 0) {
@@ -318,11 +321,13 @@ object Parser {
         if (blockWaitlist(operation).length == 0) {
           blockWaitlist -= operation
         }
-        val block = operation.container_block.get
-        val idx = block.operations.indexOf(operation)
+        // val block = operation.container_block.get
+        // val idx = block.operations.indexOf(operation)
         val new_op =
           operation.updated(successors = operation.successors ++ successorList)
-        block.operations(idx) = new_op
+        // block.operations(idx).operands.foreach(_.uses.clear())
+        // block.operations(idx) = new_op
+        RewriteMethods.replace_op(operation, new_op)
       }
 
       if (blockWaitlist.size > 0) {
