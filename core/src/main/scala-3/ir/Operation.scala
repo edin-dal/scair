@@ -201,7 +201,7 @@ case class UnregisteredOperation(
       operands = operands,
       successors = successors,
       results_types = results_types,
-      regions = regions,
+      regions = regions.map(_.detached),
       properties = properties,
       attributes = attributes
     )
