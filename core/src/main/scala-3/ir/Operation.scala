@@ -15,14 +15,44 @@ import scair.Printer
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+trait IRNode {
+  def parent: Option[IRNode]
 
-trait Operation {
+  final def is_ancestor(other: IRNode): Boolean = {
+    other.parent match {
+      case Some(parent) if parent == this => true
+      case Some(parent)                   => is_ancestor(parent)
+      case None                           => false
+      case null                           => false
+    }
+  }
+
+}
+
+trait Operation extends IRNode {
+
+  final override def parent = container_block
+
+  regions.foreach(attach_region)
+  operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
+
   def name: String
-  def operands: ListType[Value[Attribute]]
-  def successors: ListType[Block]
-  def results: ListType[Result[Attribute]]
-  def regions: ListType[Region]
-  def properties: DictType[String, Attribute]
+
+  def updated(
+      operands: Seq[Value[Attribute]] = operands,
+      successors: Seq[Block] = successors,
+      results_types: Seq[Attribute] = results.map(_.typ),
+      regions: Seq[Region] = regions,
+      properties: Map[String, Attribute] = properties,
+      attributes: DictType[String, Attribute] = attributes
+  ): Operation
+
+  def operands: Seq[Value[Attribute]]
+  def successors: Seq[Block]
+  def results: Seq[Result[Attribute]]
+  def regions: Seq[Region]
+  final def detached_regions = regions.map(_.detached)
+  def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
   def trait_verify(): Unit = ()
@@ -43,62 +73,84 @@ trait Operation {
 
   final def drop_all_references: Unit = {
     container_block = None
-    for ((idx, operand) <- (0 to operands.length) zip operands) {
-      operand.remove_use(new Use(this, idx))
-    }
+    operands.foreach(_.uses.filterInPlace(_.operation != this))
     for (region <- regions) region.drop_all_references
   }
 
-  final def is_ancestor(node: Block): Boolean = {
-    val reg = node.container_region
-    reg match {
-      case Some(x) =>
-        x.container_operation match {
-          case Some(op) =>
-            (op `equals` this) match {
-              case true => true
-              case false =>
-                op.container_block match {
-                  case None => false
-                  case Some(block) =>
-                    is_ancestor(block)
-                }
-            }
-          case None => false
-        }
-      case None => false
-    }
-  }
-
-  // TO-DO: think harder about the drop_refs - sounds fishy as per PR #45
-  final def erase(drop_refs: Boolean = true): Unit = {
+  final def erase(): Unit = {
     if (container_block != None) then {
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
       )
     }
-    if (drop_refs) then drop_all_references
+    drop_all_references
 
     for (result <- results) {
       result.erase()
     }
   }
 
+  final def attach_region(region: Region) =
+    region.container_operation match {
+      case Some(x) =>
+        throw new Exception(
+          s"""Can't attach a region already attached to an operation:
+              ${Printer().printRegion(region)}"""
+        )
+      case None =>
+        region.is_ancestor(this) match {
+          case true =>
+            throw new Exception(
+              "Can't add a region to an operation that is contained within that region"
+            )
+          case false =>
+            region.container_operation = Some(this)
+        }
+    }
+
 }
 
 abstract class BaseOperation(
     val name: String,
-    val operands: ListType[Value[Attribute]] = ListType(),
-    val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    val regions: ListType[Region] = ListType(),
-    val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    val operands: Seq[Value[Attribute]] = Seq(),
+    val successors: Seq[Block] = Seq(),
+    val results_types: Seq[Attribute] = Seq(),
+    val regions: Seq[Region] = Seq(),
+    val properties: Map[String, Attribute] = Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends Operation {
 
-  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
+  // def companion : OperationCompanion
+
+  def copy(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ): BaseOperation
+
+  override def updated(
+      operands: Seq[Value[Attribute]] = operands,
+      successors: Seq[Block] = successors,
+      results_types: Seq[Attribute] = results.map(_.typ),
+      regions: Seq[Region] = regions,
+      properties: Map[String, Attribute] = properties,
+      attributes: DictType[String, Attribute] = attributes
+  ) = {
+    copy(
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    )
+  }
+
+  val results: Seq[Result[Attribute]] = results_types.map(Result(_))
 
   override def hashCode(): Int = {
     return 7 * 41 +
@@ -117,23 +169,44 @@ abstract class BaseOperation(
 
 case class UnregisteredOperation(
     override val name: String,
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val properties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
 ) extends BaseOperation(
       name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      properties,
-      attributes
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    ) {
+
+  override def copy(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ) = {
+    UnregisteredOperation(
+      name = name,
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions.map(_.detached),
+      properties = properties,
+      attributes = attributes
     )
+  }
+
+}
 
 trait OperationCompanion {
   def name: String
@@ -144,12 +217,11 @@ trait OperationCompanion {
     )
 
   def apply(
-      operands: ListType[Value[Attribute]] = ListType(),
-      successors: ListType[Block] = ListType(),
-      results_types: ListType[Attribute] = ListType(),
-      regions: ListType[Region] = ListType(),
-      properties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
+      operands: Seq[Value[Attribute]] = Seq(),
+      successors: Seq[Block] = Seq(),
+      results_types: Seq[Attribute] = Seq(),
+      regions: Seq[Region] = Seq(),
+      properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): Operation

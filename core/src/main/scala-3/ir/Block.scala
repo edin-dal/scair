@@ -50,7 +50,11 @@ object Block {
 case class Block private (
     val arguments: ListType[Value[Attribute]],
     val operations: ListType[Operation]
-) {
+) extends IRNode {
+
+  final override def parent: Option[Region] = container_region
+
+  operations.foreach(attach_op)
 
   /** Constructs a Block instance with the given argument types and operations.
     *
@@ -261,7 +265,7 @@ case class Block private (
       case true =>
         op.container_block = None
         operations -= op
-        return op
+        op
       case false =>
         throw new Exception(
           "MLIROperation can only be detached from a block in which it is contained."
