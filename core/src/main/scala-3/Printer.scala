@@ -2,10 +2,8 @@ package scair
 
 import scair.ir.*
 
-import scala.collection.mutable
-
 import java.io.*
-import scair.dialects.builtin.ModuleOp.parse
+import scala.collection.mutable
 
 // ██████╗░ ██████╗░ ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
@@ -23,9 +21,8 @@ case class Printer(
       mutable.Map.empty[Value[? <: Attribute], String],
     val blockNameMap: mutable.Map[Block, String] =
       mutable.Map.empty[Block, String],
-    val p : PrintWriter = new PrintWriter(System.out)
+    val p: PrintWriter = new PrintWriter(System.out)
 ) {
-
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||
@@ -51,7 +48,7 @@ case class Printer(
         blockNextID = blockNextID + 1
         blockNameMap(block) = name
         name
-      }
+    }
     return s"^bb$name"
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -79,7 +76,7 @@ case class Printer(
     printAttribute(value.typ)
   }
 
-  def printBlock(block: Block, indentLevel: Int = 0) : Unit = {
+  def printBlock(block: Block)(using indentLevel: Int = 0): Unit = {
     p.print(indent * indentLevel)
     p.print(s"${assignBlockName(block)}(")
 
@@ -91,30 +88,29 @@ case class Printer(
       })
 
     p.print("):\n")
-    printOperations(block.operations.toSeq, indentLevel + 1)
+    printOperations(block.operations.toSeq)(using indentLevel + 1)
   }
 
   /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-  def printRegion(region: Region, indentLevel: Int = 0) =
-    this.copy()._printRegion(region, indentLevel)
+  def printRegion(region: Region)(using indentLevel: Int = 0) =
+    this.copy()._printRegion(region)
 
-  private def _printRegion(region: Region, indentLevel: Int = 0) = {
+  private def _printRegion(region: Region)(using indentLevel: Int) = {
 
     p.print("{\n")
     region.blocks match {
-      case Nil => ()
+      case Nil             => ()
       case entry +: blocks =>
-          // If the entry block has no arguments, we can avoid printing the header
-          // Unless it is empty, which would make the next block read as the entry!
-          if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
-            printBlock(entry, indentLevel)
-          else
-            printOperations(entry.operations.toSeq, indentLevel + 1)
-          blocks.foreach(block => printBlock(block, indentLevel))
-    }    
+        // If the entry block has no arguments, we can avoid printing the header
+        // Unless it is empty, which would make the next block read as the entry!
+        if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
+          printBlock(entry)
+        else printOperations(entry.operations.toSeq)(using indentLevel + 1)
+        blocks.foreach(block => printBlock(block))
+    }
     p.print(indent * indentLevel + "}")
   }
 
@@ -122,9 +118,8 @@ case class Printer(
   ||    OPERATION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def printGenericMLIROperation(
-      op: Operation,
-      indentLevel: Int = 0
+  def printGenericMLIROperation(op: Operation)(using
+      indentLevel: Int
   ) = {
     p.print(s"\"${op.name}\"(")
     if op.operands.nonEmpty then
@@ -153,10 +148,10 @@ case class Printer(
       p.print("}>")
     if op.regions.nonEmpty then
       p.print(" (")
-      printRegion(op.regions.head, indentLevel)
+      printRegion(op.regions.head)
       for (r <- op.regions.tail)
         p.print(", ")
-        printRegion(r, indentLevel)
+        printRegion(r)
       p.print(")")
     if op.attributes.nonEmpty then
       p.print(" {")
@@ -186,7 +181,7 @@ case class Printer(
     p.print(")")
   }
 
-  def printOperation(op: Operation, indentLevel: Int = 0) : Unit = {
+  def printOperation(op: Operation)(using indentLevel: Int = 0): Unit = {
     p.print(indent * indentLevel)
     if op.results.nonEmpty then
       printValue(op.results.head)
@@ -197,22 +192,19 @@ case class Printer(
       p.print(" = ")
     if strictly_generic then
       printGenericMLIROperation(
-        op,
-        indentLevel
+        op
       )
-    else
-      op.custom_print(this)
-    
+    else op.custom_print(this)
+
     p.print("\n")
     p.flush()
   }
 
-  def printOperations(
-      ops: Seq[Operation],
-      indentLevel: Int = 0
+  def printOperations(ops: Seq[Operation])(using
+      indentLevel: Int
   ) = {
     for { op <- ops }
-      printOperation(op, indentLevel)
+      printOperation(op)
   }
 
 }

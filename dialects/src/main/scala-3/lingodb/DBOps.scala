@@ -326,7 +326,7 @@ case class DB_ConstantOp(
       )
   }
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     val value =
       attributes.get("value").map(_.custom_print).getOrElse("")
     val resultType = results.head.typ
@@ -407,7 +407,7 @@ case class DB_CmpOp(
       )
   }
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.p.print(name)
     printer.p.print(s" ${attributes("predicate").custom_print} ")
     printer.printValue(operands.head)
@@ -553,7 +553,7 @@ case class DB_MulOp(
 
   // added code for custom printing
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     // val operand1 =
     //   s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
     // val operand2 =
@@ -707,7 +707,7 @@ case class DB_DivOp(
       )
   }
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.p.print(s"$name ")
     printer.printValue(operands.head)
     printer.p.print(" : ")
@@ -795,7 +795,7 @@ case class DB_AddOp(
 
 //added code for custom printing
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.p.print(s"$name ")
     printer.printValue(operands.head)
     printer.p.print(" : ")
@@ -881,7 +881,7 @@ case class DB_SubOp(
       )
   }
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.p.print(s"$name ")
     printer.printValue(operands.head)
     printer.p.print(" : ")
@@ -959,7 +959,7 @@ case class CastOp(
       )
   }
 
-  override def custom_print(printer: Printer) = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.p.print(s"$name ")
     printer.printValue(operands.head)
     printer.p.print(" : ")

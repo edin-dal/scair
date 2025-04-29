@@ -139,17 +139,13 @@ object ScairOpt {
                       "==------------------=="
                   )
               }
-              if chunk != input_chunks.last then
-                printer.p.print("// -----\n")
+              if chunk != input_chunks.last then printer.p.print("// -----\n")
               printer.p.flush()
-              
 
             case failure: fastparse.Parsed.Failure =>
               printer.p.print(parser.error(failure))
-              if chunk != input_chunks.last then
-                printer.p.print("// -----\n")
+              if chunk != input_chunks.last then printer.p.print("// -----\n")
               printer.p.flush()
-
 
           }
         }
