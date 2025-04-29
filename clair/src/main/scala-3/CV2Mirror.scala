@@ -1,7 +1,7 @@
 package scair.clair.mirrored
 
 import scair.clair.codegen.*
-import scair.clair.constraint.*
+import scair.core.constraint.*
 import scair.clair.macros.*
 import scair.ir.*
 

@@ -12,6 +12,7 @@ import scair.scairdl.constraints.*
 import scala.collection.mutable
 import scala.compiletime.*
 import scala.quoted.*
+import scair.core.constraint.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -340,9 +341,19 @@ def verifyConstruct[Def <: OpInputDef: Type](
   c: Expr[DefinedInput[Def] | Seq[DefinedInput[Def]]],
   d: Def
 )(using Quotes) = {
+  import quotes.reflect.*
   val constraint = getConstructConstraint(d)
+  println(s"${Type.show(using constraint)}")
+  println(s"${TypeTree.of(using constraint)}")
+  println(s"${TypeRepr.of(using constraint)}")
+
   constraint match
+    case '[type a <: Attribute
+           type c <: Constraint
+          Constrained[`a`, `c`]] =>
+      throw new Exception("YEPIYEP")
     case '[t] =>
+      println("Not matched?")
       '{
         if (!${ c }.isInstanceOf[DefinedInputOf[Def, t & Attribute]]) then
           throw new Exception(
@@ -373,19 +384,22 @@ def verifiedConstructs[Def <: OpInputDef: Type](
   (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
       // Get the expected type and variadicity of the construct
     val constraint = getConstructConstraint(d)
-    val variadicity = getConstructVariadicity(d)  
-    variadicity match
-      // If the construct is not variadic, just check if it is of the expected type
-      case Variadicity.Single =>
-        verifyConstruct(c, d)
-      // If the construct is variadic, check if it is a list of the expected type
-      case Variadicity.Variadic =>
-        '{
-          $c match
-            case s: Seq[DefinedInput[Def]] =>
-              s.map((c : DefinedInput[Def]) => ${verifyConstruct('c, d)})
-          
-        }
+    val variadicity = getConstructVariadicity(d)
+    constraint match
+      case '[t] =>
+      
+        variadicity match
+          // If the construct is not variadic, just check if it is of the expected type
+          case Variadicity.Single =>
+            verifyConstruct(c, d)
+          // If the construct is variadic, check if it is a list of the expected type
+          case Variadicity.Variadic =>
+            '{
+              $c match
+                case s: Seq[DefinedInput[Def]] =>
+                  s.map((c : DefinedInput[Def]) => ${verifyConstruct('c, d)}).asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+              
+            }
   }
 }
 

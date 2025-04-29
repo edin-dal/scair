@@ -4,7 +4,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.constraint.*
+import scair.core.constraint.*
 
 case class Complex(
     val typ: FloatType | IndexType.type
@@ -19,7 +19,7 @@ case class Complex(
 val f16 = Float16Type
 
 case class Norm(
-    in: Operand[Complex Constrained EqualAttr[f16.type]],
+    iinn: Operand[Complex Constrained EqualAttr[f16.type]],
     res: Result[FloatType]
 ) extends DerivedOperation["cmath.norm", Norm]
     derives DerivedOperationCompanion

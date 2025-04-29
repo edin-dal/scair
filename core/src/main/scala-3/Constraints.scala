@@ -1,4 +1,4 @@
-package scair.clair.constraint
+package scair.core.constraint
 
 import scair.ir.*
 import scala.quoted._
@@ -8,7 +8,7 @@ import scair.dialects.builtin.*
 
 trait Constraint {}
 
-infix opaque type Constrained[A <: Attribute, C <: Constraint] = A
+infix opaque type Constrained[A <: Attribute, C <: Constraint] <: A = A
 trait ConstrainedCompanion[A <: Attribute, C <: Constraint] {
     def constrain(a: A) : Either[String, A Constrained C] 
 }
@@ -17,7 +17,7 @@ trait EqualAttr[To <: Attribute] extends Constraint
 
 given [A <: Attribute, To <: Attribute] => (vto : ValueOf[To]) => ConstrainedCompanion[A,EqualAttr[To]] {
     def constrain(a: A) = {
-        if a == vto.value then Right(Constrained[A, EqualAttr[To]](a)) else Left(s"Expected ${a} to be equal to ${vto.value}")
+        if a == vto.value then Right(a) else Left(s"Expected ${a} to be equal to ${vto.value}")
     }
 }
 
