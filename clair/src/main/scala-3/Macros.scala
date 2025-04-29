@@ -157,13 +157,14 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   */
 def getConstructSeq[Def <: OpInputDef: Type](
     op: Expr[UnverifiedOp[?]]
-)(using Quotes) =
-  Type.of[Def] match
+)(using Quotes) : Expr[Seq[DefinedInput[Def]]] =
+  (Type.of[Def] match
     case '[ResultDef]     => '{ ${ op }.results }
     case '[OperandDef]    => '{ ${ op }.operands }
     case '[RegionDef]     => '{ ${ op }.regions.map(_.detached) }
     case '[SuccessorDef]  => '{ ${ op }.successors }
-    case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
+    case '[OpPropertyDef] => '{ ${ op }.properties.toSeq })
+  .asExprOf[Seq[DefinedInput[Def]]]
 
 /** Helper to get the name of a construct definition type.
   */
@@ -265,7 +266,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
 def partitionedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
     op: Expr[UnverifiedOp[?]]
-)(using Quotes) =
+)(using Quotes) : Seq[Expr[DefinedInput[Def] | Seq[DefinedInput[Def]]]] =
   // Get the flat list of constructs from the UnverifiedOp
   val flat = getConstructSeq[Def](op)
   // Check the number of variadic constructs
@@ -335,6 +336,24 @@ def partitionedConstructs[Def <: OpInputDef: Type](
             }
       }
 
+def verifyConstruct[Def <: OpInputDef: Type](
+  c: Expr[DefinedInput[Def] | Seq[DefinedInput[Def]]],
+  d: Def
+)(using Quotes) = {
+  val constraint = getConstructConstraint(d)
+  constraint match
+    case '[t] =>
+      '{
+        if (!${ c }.isInstanceOf[DefinedInputOf[Def, t & Attribute]]) then
+          throw new Exception(
+            s"Expected ${${ Expr(d.name) }} to be of type ${${
+                Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+              }}, got ${${ c }}"
+          )
+        ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
+      }
+}
+
 /** Get all verified constructs of a specified type from an UnverifiedOp. That
   * is, of the expected types and variadicities, as specified by the
   * OperationDef.
@@ -352,40 +371,21 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 )(using Quotes) = {
   // For each partitioned construct
   (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
-    // Get the expected type and variadicity of the construct
-    val tpe = getConstructConstraint(d)
-    val variadicity = getConstructVariadicity(d)
-    tpe match
-      case '[t] =>
-        variadicity match
-          // If the construct is not variadic, just check if it is of the expected type
-          case Variadicity.Single =>
-            '{
-              if (!${ c }.isInstanceOf[DefinedInputOf[Def, t & Attribute]]) then
-                throw new Exception(
-                  s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
-                    }}, got ${${ c }}"
-                )
-
-              ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
-            }
-          // If the construct is variadic, check if it is a list of the expected type
-          case Variadicity.Variadic =>
-            '{
-              if (
-                !${ c }
-                  .isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
-              ) then
-                throw new Exception(
-                  s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[Seq[DefinedInputOf[Def, t & Attribute]]])
-                    }}, got ${${ c }}"
-                )
-              ${ c }
-                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
-                .toSeq
-            }
+      // Get the expected type and variadicity of the construct
+    val constraint = getConstructConstraint(d)
+    val variadicity = getConstructVariadicity(d)  
+    variadicity match
+      // If the construct is not variadic, just check if it is of the expected type
+      case Variadicity.Single =>
+        verifyConstruct(c, d)
+      // If the construct is variadic, check if it is a list of the expected type
+      case Variadicity.Variadic =>
+        '{
+          $c match
+            case s: Seq[DefinedInput[Def]] =>
+              s.map((c : DefinedInput[Def]) => ${verifyConstruct('c, d)})
+          
+        }
   }
 }
 
