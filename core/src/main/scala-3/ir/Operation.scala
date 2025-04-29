@@ -57,7 +57,7 @@ trait Operation extends IRNode {
   var container_block: Option[Block] = None
   def trait_verify(): Unit = ()
 
-  def custom_print(p: Printer): String =
+  def custom_print(p: Printer) =
     p.printGenericMLIROperation(this)
 
   def custom_verify(): Unit = ()

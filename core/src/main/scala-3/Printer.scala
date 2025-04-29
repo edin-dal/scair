@@ -4,6 +4,9 @@ import scair.ir.*
 
 import scala.collection.mutable
 
+import java.io.*
+import scair.dialects.builtin.ModuleOp.parse
+
 // ██████╗░ ██████╗░ ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
 // ██████╔╝ ██████╔╝ ██║ ██╔██╗██║ ░░░██║░░░ █████╗░░ ██████╔╝
@@ -19,101 +22,100 @@ case class Printer(
     val valueNameMap: mutable.Map[Value[? <: Attribute], String] =
       mutable.Map.empty[Value[? <: Attribute], String],
     val blockNameMap: mutable.Map[Block, String] =
-      mutable.Map.empty[Block, String]
+      mutable.Map.empty[Block, String],
+    val p : PrintWriter = new PrintWriter(System.out)
 ) {
+
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||
   \*≡==---==≡==---==≡*/
 
   def assignValueName(value: Value[? <: Attribute]): String =
-    valueNameMap.contains(value) match {
+    val name = valueNameMap.contains(value) match {
       case true => valueNameMap(value)
       case false =>
         val name = valueNextID.toString
         valueNextID = valueNextID + 1
         valueNameMap(value) = name
-        return name
+        name
     }
+    return s"%$name"
 
   def assignBlockName(block: Block): String =
-    blockNameMap.contains(block) match {
+    val name = blockNameMap.contains(block) match {
       case true =>
         blockNameMap(block)
       case false =>
-        val name = s"bb${blockNextID.toString}"
+        val name = blockNextID.toString
         blockNextID = blockNextID + 1
         blockNameMap(block) = name
-        return name
-    }
+        name
+      }
+    return s"^bb$name"
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTE PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def printAttribute(attribute: Attribute): String = {
-    return attribute.custom_print
+  def printAttribute(attribute: Attribute) = {
+    p.print(attribute.custom_print)
   }
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
-  def printValue(value: Value[? <: Attribute]): String = {
-    return s"%${assignValueName(value)}"
+  def printValue(value: Value[? <: Attribute]) = {
+    p.print(s"${assignValueName(value)}")
   }
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    BLOCK PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
-  def printBlockArgument(value: Value[? <: Attribute]): String = {
-    return s"${printValue(value)}: ${printAttribute(value.typ)}"
+  def printBlockArgument(value: Value[? <: Attribute]) = {
+    printValue(value)
+    p.print(": ")
+    printAttribute(value.typ)
   }
 
-  def printBlock(block: Block, indentLevel: Int = 0): String = {
+  def printBlock(block: Block, indentLevel: Int = 0) : Unit = {
+    p.print(indent * indentLevel)
+    p.print(s"${assignBlockName(block)}(")
 
-    val blockName = assignBlockName(block)
+    if block.arguments.nonEmpty then
+      printBlockArgument(block.arguments.head)
+      block.arguments.tail.foreach(a => {
+        p.print(", ")
+        printBlockArgument(a)
+      })
 
-    val blockArguments: String =
-      (for { arg <- block.arguments } yield printBlockArgument(arg))
-        .mkString(", ")
-
-    val blockOperations: String =
-      printOperations(block.operations.toSeq, indentLevel + 1)
-
-    val blockHead: String =
-      indent * indentLevel + s"^${blockName}(${blockArguments}):\n"
-
-    return blockHead + blockOperations
+    p.print("):\n")
+    printOperations(block.operations.toSeq, indentLevel + 1)
   }
 
   /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-  def printRegion(region: Region, indentLevel: Int = 0): String =
+  def printRegion(region: Region, indentLevel: Int = 0) =
     this.copy()._printRegion(region, indentLevel)
 
-  private def _printRegion(region: Region, indentLevel: Int = 0): String = {
+  private def _printRegion(region: Region, indentLevel: Int = 0) = {
 
-    val open: String = "{\n"
-    val close: String = "\n" + indent * indentLevel + "}"
-
-    val regionBlocks: String = region.blocks match {
-      case Nil => ""
+    p.print("{\n")
+    region.blocks match {
+      case Nil => ()
       case entry +: blocks =>
-        {
           // If the entry block has no arguments, we can avoid printing the header
           // Unless it is empty, which would make the next block read as the entry!
-          (if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
-             printBlock(entry, indentLevel)
-           else printOperations(entry.operations.toSeq, indentLevel + 1))
-            +: blocks.map(block => printBlock(block, indentLevel))
-        }.mkString("\n")
-
-    }
-
-    return s"${open}${regionBlocks}${close}"
+          if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
+            printBlock(entry, indentLevel)
+          else
+            printOperations(entry.operations.toSeq, indentLevel + 1)
+          blocks.foreach(block => printBlock(block, indentLevel))
+    }    
+    p.print(indent * indentLevel + "}")
   }
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -123,97 +125,94 @@ case class Printer(
   def printGenericMLIROperation(
       op: Operation,
       indentLevel: Int = 0
-  ): String = {
-    var results: Seq[String] = Seq()
-    var resultsTypes: Seq[String] = Seq()
-    var operands: Seq[String] = Seq()
-    var operandsTypes: Seq[String] = Seq()
-
-    for { res <- op.results } yield (
-      results = results :+ printValue(res),
-      resultsTypes = resultsTypes :+ printAttribute(res.typ)
-    )
-
-    for { oper <- op.operands } yield (
-      operands = operands :+ printValue(oper),
-      operandsTypes = operandsTypes :+ printAttribute(oper.typ)
-    )
-
-    val operationResults: String =
-      if (op.results.length > 0)
-        results.mkString(", ") + " = "
-      else ""
-
-    val operationOperands: String =
-      if (op.operands.length > 0)
-        operands.mkString(", ")
-      else ""
-
-    val operationRegions: String =
-      if (op.regions.length > 0)
-        " (" + (for { region <- op.regions } yield printRegion(
-          region,
-          indentLevel
-        )).mkString(", ") + ")"
-      else ""
-
-    val operationSuccessors: String =
-      if (op.successors.length > 0)
-        "[" + (for { successor <- op.successors } yield assignBlockName(
-          successor
-        ))
-          .map((x: String) => "^" + x)
-          .mkString(", ") + "]"
-      else ""
-
-    val properties: String =
-      if (op.properties.size > 0)
-        " <{" + (for {
-          (key, value) <- op.properties
-        } yield s"$key = ${value.custom_print}")
-          .mkString(", ") + "}>"
-      else ""
-
-    val attributes: String =
-      if (op.attributes.size > 0)
-        " {" + (for {
-          (key, value) <- op.attributes
-        } yield s"$key = ${value.custom_print}")
-          .mkString(", ") + "}"
-      else ""
-
-    val functionType: String =
-      "(" + operandsTypes.mkString(", ") +
-        ") -> (" +
-        resultsTypes.mkString(", ") + ")"
-
-    return s"${"\""}${op.name}${"\""}($operationOperands)$operationSuccessors$properties$operationRegions$attributes : $functionType"
+  ) = {
+    p.print(s"\"${op.name}\"(")
+    if op.operands.nonEmpty then
+      printValue(op.operands.head)
+      for (o <- op.operands.tail)
+        p.print(", ")
+        printValue(o)
+    p.print(")")
+    if op.successors.nonEmpty then
+      p.print("[")
+      p.print(assignBlockName(op.successors.head))
+      for (s <- op.successors.tail)
+        p.print(", ")
+        p.print(assignBlockName(s))
+      p.print("]")
+    if op.properties.nonEmpty then
+      p.print(" <{")
+      p.print(op.properties.head._1)
+      p.print(" = ")
+      p.print(op.properties.head._2.custom_print)
+      for ((k, v) <- op.properties.tail)
+        p.print(s", ")
+        p.print(k)
+        p.print(" = ")
+        p.print(v.custom_print)
+      p.print("}>")
+    if op.regions.nonEmpty then
+      p.print(" (")
+      printRegion(op.regions.head, indentLevel)
+      for (r <- op.regions.tail)
+        p.print(", ")
+        printRegion(r, indentLevel)
+      p.print(")")
+    if op.attributes.nonEmpty then
+      p.print(" {")
+      p.print(op.attributes.head._1)
+      p.print(" = ")
+      p.print(op.attributes.head._2.custom_print)
+      for ((k, v) <- op.attributes.tail)
+        p.print(s", ")
+        p.print(k)
+        p.print(" = ")
+        p.print(v.custom_print)
+      p.print("}")
+    p.print(" : (")
+    if op.operands.nonEmpty then
+      p.print(op.operands.head.typ.custom_print)
+      op.operands.tail.foreach(o => {
+        p.print(", ")
+        p.print(o.typ.custom_print)
+      })
+    p.print(") -> (")
+    if op.results.nonEmpty then
+      p.print(op.results.head.typ.custom_print)
+      op.results.tail.foreach(r => {
+        p.print(", ")
+        p.print(r.typ.custom_print)
+      })
+    p.print(")")
   }
 
-  def printOperation(op: Operation, indentLevel: Int = 0): String = {
-    val results =
-      op.results.map(printValue(_)).mkString(", ") + (if op.results.nonEmpty
-                                                      then " = "
-                                                      else "")
-    indent * indentLevel + results + (if strictly_generic then
-                                        printGenericMLIROperation(
-                                          op,
-                                          indentLevel
-                                        )
-                                      else
-                                        op.custom_print(this)
-                                          .replaceAllLiterally(
-                                            "\n",
-                                            "\n" + indent * indentLevel
-                                          )
-    )
+  def printOperation(op: Operation, indentLevel: Int = 0) : Unit = {
+    p.print(indent * indentLevel)
+    if op.results.nonEmpty then
+      printValue(op.results.head)
+      op.results.tail.foreach(r => {
+        p.print(", ")
+        printValue(r)
+      })
+      p.print(" = ")
+    if strictly_generic then
+      printGenericMLIROperation(
+        op,
+        indentLevel
+      )
+    else
+      op.custom_print(this)
+    
+    p.print("\n")
+    p.flush()
   }
 
   def printOperations(
       ops: Seq[Operation],
       indentLevel: Int = 0
-  ): String = {
-    (for { op <- ops } yield printOperation(op, indentLevel)).mkString("\n")
+  ) = {
+    for { op <- ops }
+      printOperation(op, indentLevel)
   }
 
 }

@@ -9,17 +9,20 @@ import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.dialects.builtin.*
 import scair.ir.*
+import java.io.*
 
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
   val ctx = MLContext()
   val args = scair.core.utils.Args(allow_unregistered = true)
   var parser = new Parser(ctx, args)
-  var printer = new Printer(true)
+  var out = StringWriter()
+  var printer = new Printer(true, p = PrintWriter(out))
 
   before {
     parser = new Parser(ctx, args)
-    printer = new Printer(true)
+    out = StringWriter()
+    printer = new Printer(true, p = PrintWriter(out))
   }
 
   def getResult[A](result: String, expected: A) =
@@ -213,8 +216,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                      |^bb2(%8: i64):
                      |  %9 = "test.op"() : () -> (index)
                      |  "test.op"(%9) : (index) -> ()
-                     |}) : () -> ()""".stripMargin
-    val result = printer.printOperation(program)
+                     |}) : () -> ()
+                     |""".stripMargin
+    printer.printOperation(program)
+    val result = out.toString()
     result shouldEqual expected
   }
 

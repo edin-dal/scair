@@ -11,6 +11,7 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.transformations.RewriteMethods
+import java.io.*
 
 /** In case not clear from style - not a serious test, just temporarily testing
   * new infra at time of writing. Please remove if this seems useless at the
@@ -54,8 +55,9 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
         )
       )
     )
-
-    Printer().printOperation(module) shouldEqual """
+    var out = StringWriter()
+    Printer(p = PrintWriter(out)).printOperation(module)
+    out.toString().trim() shouldEqual """
 builtin.module {
   "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({
   ^bb0(%0: i32):
@@ -63,7 +65,8 @@ builtin.module {
     %2 = "arith.addi"(%0, %1) : (i32, i32) -> (i32)
     "func.return"(%2) : (i32) -> ()
   }) : () -> ()
-}""".trim()
+}
+""".trim()
 
     val func = module.regions.head.blocks.head.operations.head
     val arg = func.regions.head.blocks.head.arguments.head
@@ -71,13 +74,16 @@ builtin.module {
     RewriteMethods.replace_op(add, Seq(), Some(Seq(arg)))
     RewriteMethods.erase_op(zero)
 
-    Printer().printOperation(module) shouldEqual """
+    out = StringWriter()
+    Printer(p = PrintWriter(out)).printOperation(module)
+    out.toString().trim() shouldEqual """
 builtin.module {
   "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({
   ^bb0(%0: i32):
     "func.return"(%0) : (i32) -> ()
   }) : () -> ()
-}""".trim()
+}
+""".trim()
   }
 
 }
