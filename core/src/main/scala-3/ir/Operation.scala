@@ -57,7 +57,7 @@ trait Operation extends IRNode {
   var container_block: Option[Block] = None
   def trait_verify(): Unit = ()
 
-  def custom_print(p: Printer): String =
+  def custom_print(p: Printer)(using indentLevel: Int) =
     p.printGenericMLIROperation(this)
 
   def custom_verify(): Unit = ()
@@ -95,7 +95,7 @@ trait Operation extends IRNode {
       case Some(x) =>
         throw new Exception(
           s"""Can't attach a region already attached to an operation:
-              ${Printer().printRegion(region)}"""
+              ${Printer().print(region)(using 0)}"""
         )
       case None =>
         region.is_ancestor(this) match {

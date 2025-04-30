@@ -32,7 +32,7 @@ object ScairOpt {
         opt[Unit]('a', "allow-unregistered-dialect")
           .optional()
           .text(
-            "Accept unregistered operations and attributes, best effort with generic syntax."
+            "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
           )
           .action((_, c) => c.copy(allow_unregistered = true)),
         opt[Unit]('s', "skip_verify")
@@ -86,12 +86,14 @@ object ScairOpt {
           if (args.split_input_file) input.mkString.split("\n// -----\n")
           else Array(input.mkString)
 
+        // Parse content
+        val ctx = MLContext()
+        ctx.register_all_dialects()
+
         val output_chunks = for (chunk <- input_chunks) yield {
 
-          // Parse content
-          val ctx = MLContext()
-          ctx.register_all_dialects()
           val parser = new scair.Parser(ctx, args)
+          val printer = new Printer(print_generic)
 
           parser.parseThis(
             chunk,
@@ -122,15 +124,13 @@ object ScairOpt {
                       throw exception
                     }
                 }
-
               }
 
-              val printer = new Printer(print_generic)
               processed_module match {
                 case output: String =>
-                  output
+                  printer.print(output)
                 case x: ModuleOp =>
-                  printer.printOperation(x)
+                  printer.print(x)(using 0)
                 case _ =>
                   throw new Exception(
                     "Top level module must be the Builtin module of type ModuleOp.\n" +
@@ -139,13 +139,16 @@ object ScairOpt {
                       "==------------------=="
                   )
               }
+              if chunk != input_chunks.last then printer.print("// -----\n")
+              printer.flush()
 
-            case failure: fastparse.Parsed.Failure => parser.error(failure)
+            case failure: fastparse.Parsed.Failure =>
+              printer.print(parser.error(failure))
+              if chunk != input_chunks.last then printer.print("// -----\n")
+              printer.flush()
+
           }
         }
-
-        // Print the processed modules if not errored
-        println(output_chunks.mkString("\n// -----\n"))
 
       case _ =>
     }

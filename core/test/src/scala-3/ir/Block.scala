@@ -9,6 +9,8 @@ import org.scalatest.prop.Tables.Table
 import scair.Printer
 import scair.dialects.builtin.I32
 import scair.dialects.builtin.IntegerType
+import java.io.StringWriter
+import java.io.PrintWriter
 
 case class TestOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
@@ -54,12 +56,14 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
       (
         Block(Seq(TestOp())),
         """^bb0():
-  "test.op"() : () -> ()"""
+  "test.op"() : () -> ()
+"""
       ),
       (
         Block(TestOp()),
         """^bb0():
-  "test.op"() : () -> ()"""
+  "test.op"() : () -> ()
+"""
       ),
       (
         Block(
@@ -68,7 +72,8 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
             Seq(TestOp(operands = args.toSeq))
         ),
         """^bb0(%0: i32):
-  "test.op"(%0) : (i32) -> ()"""
+  "test.op"(%0) : (i32) -> ()
+"""
       ),
       (
         Block(
@@ -76,13 +81,16 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
           (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg)))
         ),
         """^bb0(%0: i32):
-  "test.op"(%0) : (i32) -> ()"""
+  "test.op"(%0) : (i32) -> ()
+"""
       )
     )
   ) { (block: Block, ir: String) =>
-    printer = new Printer(true)
+    val out = StringWriter()
+    printer = new Printer(true, p = PrintWriter(out))
     // Run the pqrser on the input and check
-    printer.printBlock(block) shouldEqual ir
+    printer.print(block)(using 0)
+    out.toString() shouldEqual ir
 
   }
 

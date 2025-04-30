@@ -483,8 +483,8 @@ case class ModuleOp(
 
   override def custom_print(
       p: Printer
-  ): String =
-    s"builtin.module ${p.printRegion(regions(0))}"
+  )(using indentLevel: Int) =
+    p.print("builtin.module ", regions(0))
 
 }
 

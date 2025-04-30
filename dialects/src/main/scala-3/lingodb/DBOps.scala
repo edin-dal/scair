@@ -326,11 +326,11 @@ case class DB_ConstantOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     val value =
       attributes.get("value").map(_.custom_print).getOrElse("")
     val resultType = results.head.typ
-    s"$name($value) : ${resultType.custom_print}"
+    printer.print(s"$name($value) : ${resultType.custom_print}")
   }
 
 }
@@ -407,15 +407,18 @@ case class DB_CmpOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    val predicate =
-      attributes.get("predicate").map(_.custom_print).getOrElse("")
-    s"$name $predicate $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(name)
+    printer.print(s" ${attributes("predicate").custom_print} ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -550,15 +553,15 @@ case class DB_MulOp(
 
   // added code for custom printing
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    val predicate =
-      attributes.get("predicate").map(_.custom_print).getOrElse("")
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(name, " ", operands.head, " : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -694,13 +697,17 @@ case class DB_DivOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -778,13 +785,17 @@ case class DB_AddOp(
 
 //added code for custom printing
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -860,13 +871,17 @@ case class DB_SubOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -934,11 +949,13 @@ case class CastOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1 -> $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(" -> ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
