@@ -76,7 +76,7 @@ case class Printer(
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
-  inline def print(thing: Printable)(using
+  inline def print(inline thing: Printable)(using
       indentLevel: Int
   ): Unit = thing match {
     case s: String    => print(s)
@@ -87,25 +87,29 @@ case class Printer(
     case a: Attribute => print(a)
   }
 
-  inline def print(things: Printable*)(using
+  inline def print(inline things: (Printable | Iterable[Printable])*)(using
       indentLevel: Int
   ): Unit = {
-    things.foreach(print)
+    things.foreach(_ match
+      case p: Printable => print(p)
+      case i: Iterable[Printable] =>
+        printList(i)
+    )
   }
 
-  inline def print[T <: Printable](
-      iterable: Iterable[T],
+  inline def printList[T <: Printable](
+      inline iterable: Iterable[T],
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = ""
   )(using
       indentLevel: Int
   ): Unit = {
-    printList(iterable, (x: Printable) => print(x), start, sep, end)
+    printListF(iterable, (x: Printable) => print(x), start, sep, end)
   }
 
-  inline def printList[T](
-      iterable: Iterable[T],
+  inline def printListF[T](
+      inline iterable: Iterable[T],
       f: T => Unit,
       inline start: String = "",
       inline sep: String = ", ",
@@ -129,9 +133,9 @@ case class Printer(
 
   def print(block: Block)(using indentLevel: Int): Unit =
     print(indent * indentLevel, assignBlockName(block))
-    printList(block.arguments, a => printArgument(a), "(", ", ", ")")
+    printListF(block.arguments, a => printArgument(a), "(", ", ", ")")
     print(":\n")
-    print(block.operations, sep = "")(using indentLevel + 1)
+    printList(block.operations, sep = "")(using indentLevel + 1)
 
   /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    REGION PRINTER    ||
@@ -150,7 +154,7 @@ case class Printer(
         // Unless it is empty, which would make the next block read as the entry!
         if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
           print(entry)
-        else print(entry.operations, sep = "")(using indentLevel + 1)
+        else printList(entry.operations, sep = "")(using indentLevel + 1)
         blocks.foreach(block => print(block))
     }
     print(indent * indentLevel + "}")
@@ -163,12 +167,11 @@ case class Printer(
   def printGenericMLIROperation(op: Operation)(using
       indentLevel: Int
   ) = {
-    print("\"", op.name, "\"")
-    print(op.operands, "(", ", ", ")")
+    print("\"", op.name, "\"(", op.operands, ")")
     if op.successors.nonEmpty then
-      printList(op.successors, b => print(assignBlockName(b)), "[", ", ", "]")
+      printListF(op.successors, b => print(assignBlockName(b)), "[", ", ", "]")
     if op.properties.nonEmpty then
-      printList(
+      printListF(
         op.properties,
         (k, v) => {
           print(k, " = ", v.custom_print)
@@ -177,10 +180,9 @@ case class Printer(
         ", ",
         "}>"
       )
-    if op.regions.nonEmpty then
-      printList(op.regions, r => print(r), " (", ", ", ")")
+    if op.regions.nonEmpty then printList(op.regions, " (", ", ", ")")
     if op.attributes.nonEmpty then
-      printList(
+      printListF(
         op.attributes,
         (k, v) => {
           print(k, " = ", v.custom_print)
@@ -190,7 +192,7 @@ case class Printer(
         "}"
       )
     print(" : ")
-    printList(
+    printListF(
       op.operands,
       o => {
         print(o.typ.custom_print)
@@ -200,7 +202,7 @@ case class Printer(
       ")"
     )
     print(" -> ")
-    printList(
+    printListF(
       op.results,
       r => {
         print(r.typ.custom_print)
@@ -214,7 +216,7 @@ case class Printer(
   def print(op: Operation)(using indentLevel: Int): Unit = {
     print(indent * indentLevel)
     if op.results.nonEmpty then
-      print(op.results)
+      printList(op.results)
       print(" = ")
     if strictly_generic then
       printGenericMLIROperation(
@@ -223,7 +225,7 @@ case class Printer(
     else op.custom_print(this)
 
     print("\n")
-    p.flush()
+    flush()
   }
 
 }
