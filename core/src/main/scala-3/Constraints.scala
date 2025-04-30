@@ -1,10 +1,7 @@
 package scair.core.constraint
 
-import scair.ir.*
-import scala.quoted._
-import scala.annotation.Annotation
-import scala.annotation.StaticAnnotation
 import scair.dialects.builtin.*
+import scair.ir.*
 
 trait Constraint {}
 

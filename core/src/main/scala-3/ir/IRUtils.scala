@@ -2,8 +2,6 @@ package scair.ir
 
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
-import scair.core.constraint.Constrained
-
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗

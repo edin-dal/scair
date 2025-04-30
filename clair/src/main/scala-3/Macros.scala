@@ -5,6 +5,7 @@ import scair.AttrParser
 import scair.Parser.*
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
+import scair.core.constraint.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
@@ -12,7 +13,6 @@ import scair.scairdl.constraints.*
 import scala.collection.mutable
 import scala.compiletime.*
 import scala.quoted.*
-import scair.core.constraint.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -337,24 +337,38 @@ def partitionedConstructs[Def <: OpInputDef: Type](
             }
       }
 
+def unwrapConstrainedType(using Quotes)(
+    tpe: Type[?]
+): (Type[?], Option[Type[?]]) =
+  import quotes.reflect.*
+
+  // Resolve the symbol of Constrained[?, ?] for matching
+  val constrainedSym = TypeRepr.of[Constrained].typeSymbol
+
+  TypeRepr.of(using tpe) match
+    case AppliedType(constr, List(attrTpe, constraintTpe))
+          if constr.typeSymbol == constrainedSym =>
+      (attrTpe.asType, Some(constraintTpe.asType))
+    case attrTpe : TypeRepr =>
+      (attrTpe.asType, None)
+      
+
 def verifyConstruct[Def <: OpInputDef: Type](
-  c: Expr[DefinedInput[Def] | Seq[DefinedInput[Def]]],
+  c: Expr[DefinedInput[Def]],
   d: Def
 )(using Quotes) = {
-  import quotes.reflect.*
   val constraint = getConstructConstraint(d)
-  println(s"${Type.show(using constraint)}")
-  println(s"${TypeTree.of(using constraint)}")
-  println(s"${TypeRepr.of(using constraint)}")
+  // println(s"${Type.show(using constraint)}")
+  // println(s"${TypeTree.of(using constraint)}")
+  // println(s"${TypeRepr.of(using constraint)}")
 
-  constraint match
-    case '[type a <: Attribute
-           type c <: Constraint
-          Constrained[`a`, `c`]] =>
-      throw new Exception("YEPIYEP")
-    case '[t] =>
-      println("Not matched?")
-      '{
+  // println(unwrapConstrainedType(constraint))
+
+  val (attrTpe, constraintTpe) = unwrapConstrainedType(constraint)
+
+  attrTpe match
+    case '[type t <: Attribute; `t`] =>
+      val constrExpr = '{
         if (!${ c }.isInstanceOf[DefinedInputOf[Def, t & Attribute]]) then
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -363,6 +377,39 @@ def verifyConstruct[Def <: OpInputDef: Type](
           )
         ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
       }
+      
+      constraintTpe match
+        case None =>
+          constrExpr
+        case Some('[type constrT <: Constraint; `constrT`]) =>
+          val attrExpr = (constrExpr match
+            case '{$o : Operand[t & Attribute]} =>
+              '{$o.typ}
+            case '{$o : Result[t & Attribute]} =>
+              '{$o.typ}).asExprOf[t & Attribute]
+
+          val tci = Expr.summon[ConstrainedCompanion[t, constrT]].getOrElse(throw new Exception(
+            s"Could not summon ${Type.show[ConstrainedCompanion[t, constrT]]}"
+          ))
+
+          '{
+            val c = $tci.constrain($attrExpr)
+            c match
+              case Right(_) =>
+                $constrExpr.asInstanceOf[DefinedInputOf[Def, t Constrained constrT]]
+              case Left(err) =>
+                throw new Exception(
+                  s"Constraint error: ${err}"
+                )
+            
+            // $constrExpr.asInstanceOf[DefinedInputOf[Def, t Constrained constrT]]
+          }
+        case _ =>
+          throw new Exception(
+            "Unreachable?"
+          )
+          
+      
 }
 
 /** Get all verified constructs of a specified type from an UnverifiedOp. That
@@ -391,7 +438,17 @@ def verifiedConstructs[Def <: OpInputDef: Type](
         variadicity match
           // If the construct is not variadic, just check if it is of the expected type
           case Variadicity.Single =>
-            verifyConstruct(c, d)
+            '{
+              $c match
+                case s: DefinedInput[Def] =>
+                  ${verifyConstruct('s, d)}
+                case _ =>
+                  throw new Exception(
+                    s"Expected ${${ Expr(d.name) }} to be of type ${${
+                        Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+                      }}, got ${${ c }}"
+                  )
+            }
           // If the construct is variadic, check if it is a list of the expected type
           case Variadicity.Variadic =>
             '{

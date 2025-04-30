@@ -2,9 +2,10 @@ package scair.dialects.cmath
 
 import scair.clair.codegen.*
 import scair.clair.macros.*
+import scair.core.constraint.*
+import scair.core.constraint.given_ConstrainedCompanion_A_EqualAttr
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.core.constraint.*
 
 case class Complex(
     val typ: FloatType | IndexType.type
@@ -16,10 +17,10 @@ case class Complex(
     with MLIRName["cmath.complex"]
     derives AttributeTrait
 
-val f16 = Float16Type
+val cf16 = Complex(Float16Type)
 
 case class Norm(
-    iinn: Operand[Complex Constrained EqualAttr[f16.type]],
+    iinn: Operand[Complex Constrained EqualAttr[cf16.type]],
     res: Result[FloatType]
 ) extends DerivedOperation["cmath.norm", Norm]
     derives DerivedOperationCompanion
@@ -32,3 +33,16 @@ case class Mul(
     derives DerivedOperationCompanion
 
 val CMathDialect = summonDialect[Tuple1[Complex], (Norm, Mul)](Seq())
+
+object DaMain {
+
+  def main(args: Array[String]): Unit = {
+    val n = UnverifiedOp[Norm](
+      "cmath.norm",
+      Seq(new Value(Complex(Float32Type))),
+      results_types = Seq(Complex(Float16Type))
+    )
+    summon[DerivedOperationCompanion[Norm]].verify(n)
+  }
+
+}
