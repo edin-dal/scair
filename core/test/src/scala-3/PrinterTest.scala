@@ -22,6 +22,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
 
   val I32 = new IntegerType(IntData(32), Signless)
   val I64 = new IntegerType(IntData(64), Signless)
+  given indentLevel: Int = 0
 
   "printRegion" should "return the correct string representation of a region" in {
     val region =
@@ -31,7 +32,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val expected = """{
                      |  "op1"() : () -> ()
                      |}""".stripMargin
-    printer.print(region)(using 0)
+    printer.print(region)
     val result = out.toString()
     result shouldEqual expected
   }
@@ -86,7 +87,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
                      |  "op2"() : () -> ()
                      |}) : (f32) -> (f32)
                      |""".stripMargin
-    printer.print(operation)(using 0)
+    printer.print(operation)
     val result = out.toString()
     result shouldEqual expected
   }
@@ -128,7 +129,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
                      |  "test.op"()[^bb0] : () -> ()
                      |}) : () -> ()
                      |""".stripMargin
-    printer.print(program)(using 0)
+    printer.print(program)
     val result = out.toString()
     result shouldEqual expected
   }

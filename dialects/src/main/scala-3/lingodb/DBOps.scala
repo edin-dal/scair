@@ -554,9 +554,7 @@ case class DB_MulOp(
   // added code for custom printing
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
-    printer.print(s"$name ")
-    printer.print(operands.head)
-    printer.print(" : ")
+    printer.print(name, " ", operands.head, " : ")
     printer.print(operands.head.typ.custom_print)
     printer.print(", ")
     printer.print(operands(1))

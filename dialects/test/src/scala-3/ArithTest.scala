@@ -20,6 +20,8 @@ import java.io.*
 
 class ArithTests extends AnyFlatSpec with BeforeAndAfter {
 
+  given indentLevel: Int = 0
+
   "Such real ADT manipulation" should "flex how working it is" in {
     val zero = UnregisteredOperation(
       name = "arith.constant",
@@ -56,7 +58,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
       )
     )
     var out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module)(using 0)
+    Printer(p = PrintWriter(out)).print(module)
     out.toString().trim() shouldEqual """
 builtin.module {
   "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({
@@ -75,7 +77,7 @@ builtin.module {
     RewriteMethods.erase_op(zero)
 
     out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module)(using 0)
+    Printer(p = PrintWriter(out)).print(module)
     out.toString().trim() shouldEqual """
 builtin.module {
   "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({

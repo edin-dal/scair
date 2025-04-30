@@ -218,7 +218,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                      |  "test.op"(%9) : (index) -> ()
                      |}) : () -> ()
                      |""".stripMargin
-    printer.printOperation(program)
+    printer.print(program)(using 0)
     val result = out.toString()
     result shouldEqual expected
   }
