@@ -17,6 +17,8 @@ import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
 import mill.define.{NamedTask, Command, ModuleRef, Module}
 import mill.main.Tasks
+import mill.scalanativelib.{ScalaNativeModule}
+import mill.scalanativelib.api.{ReleaseMode}
 
 import scala.sys.process._
 import scala.language.postfixOps
@@ -40,7 +42,10 @@ trait ScairSettings extends ScalaModule with UnidocModule {
     }
 }
 
-trait ScairModule extends ScalafixModule with PublishModule with ScoverageModule with ScairSettings {
+trait ScairModule extends ScalafixModule with PublishModule with ScoverageModule with ScairSettings with ScalaNativeModule {
+
+  override def scalaNativeVersion: T[String] = "0.5.7"
+  override def releaseMode: T[ReleaseMode] = ReleaseMode.ReleaseFast
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -89,7 +94,9 @@ object `package` extends RootModule with ScairSettings with ScoverageReport {
   object core extends ScairModule {
 
     def ivyDeps = Agg(
+      ivy"com.lihaoyi::fastparse::3.1.0",
       ivy"com.lihaoyi::fastparse:3.1.0",
+      ivy"com.github.scopt::scopt::4.1.0",
       ivy"com.github.scopt::scopt:4.1.0"
     )
   }
