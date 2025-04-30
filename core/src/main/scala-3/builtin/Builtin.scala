@@ -484,8 +484,8 @@ case class ModuleOp(
   override def custom_print(
       p: Printer
   )(using indentLevel: Int) =
-    p.p.print("builtin.module ")
-    p.printRegion(regions(0))
+    p.print("builtin.module ")
+    p.print(regions(0))
 
 }
 

@@ -128,7 +128,7 @@ object ScairOpt {
 
               processed_module match {
                 case output: String =>
-                  printer.p.print(output)
+                  printer.print(output)
                 case x: ModuleOp =>
                   printer.printOperation(x)
                 case _ =>
@@ -139,13 +139,13 @@ object ScairOpt {
                       "==------------------=="
                   )
               }
-              if chunk != input_chunks.last then printer.p.print("// -----\n")
-              printer.p.flush()
+              if chunk != input_chunks.last then printer.print("// -----\n")
+              printer.flush()
 
             case failure: fastparse.Parsed.Failure =>
-              printer.p.print(parser.error(failure))
-              if chunk != input_chunks.last then printer.p.print("// -----\n")
-              printer.p.flush()
+              printer.print(parser.error(failure))
+              if chunk != input_chunks.last then printer.print("// -----\n")
+              printer.flush()
 
           }
         }

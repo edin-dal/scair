@@ -31,7 +31,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val expected = """{
                      |  "op1"() : () -> ()
                      |}""".stripMargin
-    printer.printRegion(region)
+    printer.print(region)(using 0)
     val result = out.toString()
     result shouldEqual expected
   }
@@ -44,26 +44,26 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val expected = """^bb0(%0: i32):
                      |  "op1"() : () -> ()
                      |""".stripMargin
-    printer.printBlock(block)
+    printer.print(block)
     val result = out.toString()
     result shouldEqual expected
   }
 
   "printValue" should "return the correct string representation of a value - 1" in {
     val value = Value(I32)
-    printer.printValue(value)
+    printer.print(value)
     "%0" shouldEqual out.toString()
   }
 
   "printValue" should "return the correct string representation of a value - 2" in {
     val value = Value(I32)
-    printer.printAttribute(value.typ)
+    printer.print(value.typ)
     "i32" shouldEqual out.toString()
   }
 
   "printValue" should "return the correct string representation of a value - 3" in {
     val value = Value(I32)
-    printer.printBlockArgument(value)
+    printer.printArgument(value)
     "%0: i32" shouldEqual out.toString()
   }
 

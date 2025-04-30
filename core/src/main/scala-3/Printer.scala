@@ -21,7 +21,7 @@ case class Printer(
       mutable.Map.empty[Value[? <: Attribute], String],
     val blockNameMap: mutable.Map[Block, String] =
       mutable.Map.empty[Block, String],
-    val p: PrintWriter = new PrintWriter(System.out)
+    private val p: PrintWriter = new PrintWriter(System.out)
 ) {
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -51,67 +51,69 @@ case class Printer(
     }
     return s"^bb$name"
 
+  def print(str: String): Unit = p.print(str)
+
+  @deprecated(
+    "Just a first way to work with Java's PrintWriter from Scala. Find better!"
+  )
+  def flush() = p.flush()
+
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTE PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def printAttribute(attribute: Attribute) = {
-    p.print(attribute.custom_print)
-  }
+  def print(attribute: Attribute): Unit = print(attribute.custom_print)
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
-  def printValue(value: Value[? <: Attribute]) = {
-    p.print(s"${assignValueName(value)}")
-  }
+  def print(value: Value[? <: Attribute]): Unit = print(assignValueName(value))
+
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    BLOCK PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
-  def printBlockArgument(value: Value[? <: Attribute]) = {
-    printValue(value)
-    p.print(": ")
-    printAttribute(value.typ)
-  }
+  def printArgument(value: Value[? <: Attribute]) =
+    print(value)
+    print(": ")
+    print(value.typ)
 
-  def printBlock(block: Block)(using indentLevel: Int = 0): Unit = {
-    p.print(indent * indentLevel)
-    p.print(s"${assignBlockName(block)}(")
+  def print(block: Block)(using indentLevel: Int = 0): Unit =
+    print(indent * indentLevel)
+    print(s"${assignBlockName(block)}(")
 
     if block.arguments.nonEmpty then
-      printBlockArgument(block.arguments.head)
+      printArgument(block.arguments.head)
       block.arguments.tail.foreach(a => {
-        p.print(", ")
-        printBlockArgument(a)
+        print(", ")
+        printArgument(a)
       })
 
-    p.print("):\n")
-    printOperations(block.operations.toSeq)(using indentLevel + 1)
-  }
+    print("):\n")
+    print(block.operations)(using indentLevel + 1)
 
   /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-  def printRegion(region: Region)(using indentLevel: Int = 0) =
+  def print(region: Region)(using indentLevel: Int): Unit =
     this.copy()._printRegion(region)
 
   private def _printRegion(region: Region)(using indentLevel: Int) = {
 
-    p.print("{\n")
+    print("{\n")
     region.blocks match {
       case Nil             => ()
       case entry +: blocks =>
         // If the entry block has no arguments, we can avoid printing the header
         // Unless it is empty, which would make the next block read as the entry!
         if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
-          printBlock(entry)
-        else printOperations(entry.operations.toSeq)(using indentLevel + 1)
-        blocks.foreach(block => printBlock(block))
+          print(entry)
+        else print(entry.operations)(using indentLevel + 1)
+        blocks.foreach(block => print(block))
     }
-    p.print(indent * indentLevel + "}")
+    print(indent * indentLevel + "}")
   }
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -121,90 +123,87 @@ case class Printer(
   def printGenericMLIROperation(op: Operation)(using
       indentLevel: Int
   ) = {
-    p.print(s"\"${op.name}\"(")
+    print(s"\"${op.name}\"(")
     if op.operands.nonEmpty then
-      printValue(op.operands.head)
+      print(op.operands.head)
       for (o <- op.operands.tail)
-        p.print(", ")
-        printValue(o)
-    p.print(")")
+        print(", ")
+        print(o)
+    print(")")
     if op.successors.nonEmpty then
-      p.print("[")
-      p.print(assignBlockName(op.successors.head))
+      print("[")
+      print(assignBlockName(op.successors.head))
       for (s <- op.successors.tail)
-        p.print(", ")
-        p.print(assignBlockName(s))
-      p.print("]")
+        print(", ")
+        print(assignBlockName(s))
+      print("]")
     if op.properties.nonEmpty then
-      p.print(" <{")
-      p.print(op.properties.head._1)
-      p.print(" = ")
-      p.print(op.properties.head._2.custom_print)
+      print(" <{")
+      print(op.properties.head._1)
+      print(" = ")
+      print(op.properties.head._2.custom_print)
       for ((k, v) <- op.properties.tail)
-        p.print(s", ")
-        p.print(k)
-        p.print(" = ")
-        p.print(v.custom_print)
-      p.print("}>")
+        print(s", ")
+        print(k)
+        print(" = ")
+        print(v.custom_print)
+      print("}>")
     if op.regions.nonEmpty then
-      p.print(" (")
-      printRegion(op.regions.head)
+      print(" (")
+      print(op.regions.head)
       for (r <- op.regions.tail)
-        p.print(", ")
-        printRegion(r)
-      p.print(")")
+        print(", ")
+        print(r)
+      print(")")
     if op.attributes.nonEmpty then
-      p.print(" {")
-      p.print(op.attributes.head._1)
-      p.print(" = ")
-      p.print(op.attributes.head._2.custom_print)
+      print(" {")
+      print(op.attributes.head._1)
+      print(" = ")
+      print(op.attributes.head._2.custom_print)
       for ((k, v) <- op.attributes.tail)
-        p.print(s", ")
-        p.print(k)
-        p.print(" = ")
-        p.print(v.custom_print)
-      p.print("}")
-    p.print(" : (")
+        print(s", ")
+        print(k)
+        print(" = ")
+        print(v.custom_print)
+      print("}")
+    print(" : (")
     if op.operands.nonEmpty then
-      p.print(op.operands.head.typ.custom_print)
+      print(op.operands.head.typ.custom_print)
       op.operands.tail.foreach(o => {
-        p.print(", ")
-        p.print(o.typ.custom_print)
+        print(", ")
+        print(o.typ.custom_print)
       })
-    p.print(") -> (")
+    print(") -> (")
     if op.results.nonEmpty then
-      p.print(op.results.head.typ.custom_print)
+      print(op.results.head.typ.custom_print)
       op.results.tail.foreach(r => {
-        p.print(", ")
-        p.print(r.typ.custom_print)
+        print(", ")
+        print(r.typ.custom_print)
       })
-    p.print(")")
+    print(")")
   }
 
   def printOperation(op: Operation)(using indentLevel: Int = 0): Unit = {
-    p.print(indent * indentLevel)
+    print(indent * indentLevel)
     if op.results.nonEmpty then
-      printValue(op.results.head)
+      print(op.results.head)
       op.results.tail.foreach(r => {
-        p.print(", ")
-        printValue(r)
+        print(", ")
+        print(r)
       })
-      p.print(" = ")
+      print(" = ")
     if strictly_generic then
       printGenericMLIROperation(
         op
       )
     else op.custom_print(this)
 
-    p.print("\n")
+    print("\n")
     p.flush()
   }
 
-  def printOperations(ops: Seq[Operation])(using
+  def print(ops: IterableOnce[Operation])(using
       indentLevel: Int
-  ) = {
-    for { op <- ops }
-      printOperation(op)
-  }
+  ) = ops.foreach(printOperation)
 
 }

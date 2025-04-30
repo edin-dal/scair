@@ -95,7 +95,7 @@ trait Operation extends IRNode {
       case Some(x) =>
         throw new Exception(
           s"""Can't attach a region already attached to an operation:
-              ${Printer().printRegion(region)}"""
+              ${Printer().print(region)(using 0)}"""
         )
       case None =>
         region.is_ancestor(this) match {
