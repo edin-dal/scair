@@ -58,6 +58,8 @@ case class Printer(
   )
   def flush() = p.flush()
 
+  // def print(any : Any) = printOperation()
+
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTE PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -183,7 +185,7 @@ case class Printer(
     print(")")
   }
 
-  def printOperation(op: Operation)(using indentLevel: Int = 0): Unit = {
+  def print(op: Operation)(using indentLevel: Int): Unit = {
     print(indent * indentLevel)
     if op.results.nonEmpty then
       print(op.results.head)
@@ -204,6 +206,6 @@ case class Printer(
 
   def print(ops: IterableOnce[Operation])(using
       indentLevel: Int
-  ) = ops.foreach(printOperation)
+  ): Unit = ops.foreach(print)
 
 }

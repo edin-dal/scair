@@ -130,7 +130,7 @@ object ScairOpt {
                 case output: String =>
                   printer.print(output)
                 case x: ModuleOp =>
-                  printer.printOperation(x)
+                  printer.print(x)(using 0)
                 case _ =>
                   throw new Exception(
                     "Top level module must be the Builtin module of type ModuleOp.\n" +
