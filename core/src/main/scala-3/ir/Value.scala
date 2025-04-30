@@ -37,11 +37,14 @@ class Value[+T <: Attribute](
   def replace_by(newValue: Value[Attribute]): Unit = {
     for (use <- uses) {
       val op = use.operation
-      val block = op.container_block.get
-      val new_op =
-        op.updated(operands = op.operands.updatedOperandsAndUses(use, newValue))
-      val idx = block.operations.indexOf(op)
-      block.operations(idx) = new_op
+      if op.container_block.nonEmpty then {
+        val block = op.container_block.get
+        val new_op =
+          op.updated(operands = op.operands.updatedOperandsAndUses(use, newValue))
+        val idx = block.operations.indexOf(op)
+        if idx != -1 then
+        block.operations(idx) = new_op
+      }
     }
     uses = ListType()
   }

@@ -1,5 +1,7 @@
 package scair.ir
 
+import scair.transformations.RewriteMethods
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -286,9 +288,13 @@ case class Block private (
 
   }
 
-  def verify(): Unit = {
-    for (op <- operations) op.verify()
+  def verify(): Block = {
     for (arg <- arguments) arg.verify()
+    val verified_ops = operations.map(_.verify())
+    verified_ops.zip(operations).foreach((v, o) =>
+      RewriteMethods.replace_op(o, Seq(v))
+    )
+    this
   }
 
   override def equals(o: Any): Boolean = {

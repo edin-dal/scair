@@ -24,8 +24,8 @@ case class Region(
     for (block <- blocks) block.drop_all_references
   }
 
-  def verify(): Unit = {
-    for (block <- blocks) block.verify()
+  def verify(): Region = {
+    Region(blocks = blocks.map(_.verify()))
   }
 
   override def equals(o: Any): Boolean = {

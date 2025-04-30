@@ -101,8 +101,9 @@ object ScairOpt {
               val processed_module = {
                 var module = input_module
                 // verify parsed content
-                Try(if (!skip_verify) module.verify()) match {
-                  case Success(_) =>
+                Try(if (!skip_verify) module.verify() else module) match {
+                  case Success(m) =>
+                    module = m
                     // apply the specified passes
                     val transformCtx = new TransformContext()
                     transformCtx.register_all_passes()
@@ -110,7 +111,7 @@ object ScairOpt {
                       transformCtx.getPass(name) match {
                         case Some(pass) =>
                           module = pass.transform(module)
-                          if (!skip_verify) module.verify()
+                          module = if (!skip_verify) module.verify() else module
                         case None =>
                       }
                     }

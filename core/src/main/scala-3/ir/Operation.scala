@@ -62,13 +62,14 @@ trait Operation extends IRNode {
 
   def custom_verify(): Unit = ()
 
-  final def verify(): Unit = {
-    for (result <- results) result.verify()
-    for (region <- regions) region.verify()
-    for ((key, attr) <- properties) attr.custom_verify()
-    for ((key, attr) <- attributes) attr.custom_verify()
-    custom_verify()
+  final def verify(): Operation = {
     trait_verify()
+    for (result <- results) result.verify()
+    val verified_regions = updated(regions = regions.map(_.verify().detached))
+    for ((key, attr) <- verified_regions.properties) attr.custom_verify()
+    for ((key, attr) <- verified_regions.attributes) attr.custom_verify()
+    verified_regions.custom_verify()
+    verified_regions
   }
 
   final def drop_all_references: Unit = {
