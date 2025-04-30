@@ -554,14 +554,6 @@ case class DB_MulOp(
   // added code for custom printing
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
-    // val operand1 =
-    //   s"${printer.print(operands.head)} : ${operands.head.typ.custom_print}"
-    // val operand2 =
-    //   s"${printer.print(operands(1))} : ${operands(1).typ.custom_print}"
-    // val resultType = results.head.typ.custom_print
-    // val predicate =
-    //   attributes.get("predicate").map(_.custom_print).getOrElse("")
-    // printer.print(s"$name $operand1, $operand2 : $resultType")
     printer.print(s"$name ")
     printer.print(operands.head)
     printer.print(" : ")
