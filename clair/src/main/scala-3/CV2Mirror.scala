@@ -6,6 +6,7 @@ import scair.ir.*
 
 import scala.deriving.*
 import scala.quoted.*
+import scair.clair.constraint.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -20,6 +21,18 @@ import scala.quoted.*
 // ██║╚██╔╝██║ ██║ ██╔══██╗ ██╔══██╗ ██║░░██║ ██╔══██╗
 // ██║░╚═╝░██║ ██║ ██║░░██║ ██║░░██║ ╚█████╔╝ ██║░░██║
 // ╚═╝░░░░░╚═╝ ╚═╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝
+
+def cookConstrainedType[C <: Constraint[_] : Type](using Quotes) = 
+  import quotes.reflect.*
+  Type.of[C] match
+    case '[Constraint[bound]] =>
+      val symbol = TypeRepr.of[C].termSymbol
+      throw new NotImplementedError(
+        s"What: ${TypeRepr.of[C].show}, ${Expr.summon[C]}, ${TypeRepr.of[C].termSymbol}, ${symbol.isDefinedInCurrentRun}"
+      )
+    case _ => throw new Exception(
+      s"Expected this type to be a Constraint"
+    )
 
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
 ||    MIRROR LOGIC    ||
@@ -45,11 +58,17 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         Variadicity.Variadic
       )
     case '[Seq[Operand[t]]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Variadic
-      )
+      Type.of[t] match
+        // case '[Constrained[tt]] => throw new Exception(
+        //   s"What: ${Type.of[tt]}"
+        // )
+        case _ =>
+      
+          OperandDef(
+            name = name,
+            tpe = Type.of[t],
+            Variadicity.Variadic
+          )
     case '[Result[t]] =>
       ResultDef(
         name = name,
@@ -57,11 +76,16 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         Variadicity.Single
       )
     case '[Operand[t]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Single
-      )
+      Type.of[t] match
+        case '[Constrained[cstr]] =>
+          cookConstrainedType[cstr]
+        case _ =>
+          println(s"$name:${TypeTree.of[t].show},${TypeRepr.of[t].show}")
+          OperandDef(
+            name = name,
+            tpe = Type.of[t],
+            Variadicity.Single
+          )
     case '[Region] =>
       RegionDef(
         name = name,
