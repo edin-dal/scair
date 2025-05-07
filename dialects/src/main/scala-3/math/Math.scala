@@ -15,12 +15,12 @@ import scala.collection.mutable
 //   AbsfOp   //
 // ==--------== //
 
-object AbsfOp extends MLIROperationObject {
+object AbsfOp extends OperationCompanion {
   override def name: String = "math.absf"
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = {
+  ): P[Operation] = {
     P(
       "" ~ Parser.ValueUse ~ ":" ~ parser.Type
     ).map { case (operandName, type_) =>
@@ -36,20 +36,20 @@ object AbsfOp extends MLIROperationObject {
 }
 
 case class AbsfOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "math.absf",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -57,7 +57,7 @@ case class AbsfOp(
     results.length,
     successors.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 1, 0, 0, 0) =>
     case _ =>
@@ -72,12 +72,12 @@ case class AbsfOp(
 //   FPowIOp   //
 // ==--------== //
 
-object FPowIOp extends MLIROperationObject {
+object FPowIOp extends OperationCompanion {
   override def name: String = "math.fpowi"
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = {
+  ): P[Operation] = {
     P(
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
     ).map {
@@ -99,20 +99,20 @@ object FPowIOp extends MLIROperationObject {
 }
 
 case class FPowIOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "math.fpowi",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -120,7 +120,7 @@ case class FPowIOp(
     results.length,
     successors.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 1, 0, 0, 0) =>
     case _ =>

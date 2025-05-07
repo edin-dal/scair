@@ -140,17 +140,15 @@ private def DialectRegion[$: P](parser: Parser) = P(
     ~ (parser.BlockArgList
       .orElse(Seq())
       .mapTry((x: Seq[(String, Attribute)]) => {
-        val b = new Block(ListType.from(x.map(_._2)), ListType.empty)
+        val b = new Block(Seq.from(x.map(_._2)), Seq.empty)
         parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
         b
       })
       ~ "{"
-      ~ parser.Operations(1) ~ "}").map(
-      (b: Block, y: ListType[MLIROperation]) => {
-        b.operations ++= y
-        new Region(Seq(b))
-      }
-    )
+      ~ parser.Operations(1) ~ "}").map((b: Block, y: Seq[Operation]) => {
+      b.operations ++= y
+      new Region(Seq(b))
+    })
 )
   ~ E({ parser.enterParentRegion })
 
@@ -158,7 +156,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
 //   BaseTableOp   //
 // ==-----------== //
 
-object BaseTableOp extends MLIROperationObject {
+object BaseTableOp extends OperationCompanion {
   override def name: String = "relalg.basetable"
 
   // ==--- Custom Parsing ---== //
@@ -168,11 +166,11 @@ object BaseTableOp extends MLIROperationObject {
     parser.OptionalAttributes ~
       "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse(parser))
         .rep(0, sep = ",")
-        .map(DictType(_*)) ~ "}"
+        .map(Map(_*)) ~ "}"
   ).map(
     (
-        x: DictType[String, Attribute],
-        y: DictType[String, Attribute]
+        x: Map[String, Attribute],
+        y: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -186,20 +184,20 @@ object BaseTableOp extends MLIROperationObject {
 }
 
 case class BaseTableOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.basetable",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -216,7 +214,7 @@ case class BaseTableOp(
             "BaseTableOp Operation must contain only 1 result."
           )
       }
-      dictionaryAttributes.get("table_identifier") match {
+      attributes.get("table_identifier") match {
         case Some(x) =>
           x match {
             case _: StringData =>
@@ -238,13 +236,13 @@ case class BaseTableOp(
 //   SelectionOp   //
 // ==-----------== //
 
-object SelectionOp extends MLIROperationObject {
+object SelectionOp extends OperationCompanion {
   override def name: String = "relalg.selection"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ DialectRegion(parser) ~
       parser.OptionalKeywordAttributes
   )
@@ -252,7 +250,7 @@ object SelectionOp extends MLIROperationObject {
       (
           x: String,
           y: Region,
-          z: DictType[String, Attribute]
+          z: Map[String, Attribute]
       ) =>
         val operand_type = parser.currentScope.valueMap(x).typ
         parser.generateOperation(
@@ -269,20 +267,20 @@ object SelectionOp extends MLIROperationObject {
 }
 
 case class SelectionOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.selection",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -314,13 +312,13 @@ case class SelectionOp(
 //   MapOp   //
 // ==-----== //
 
-object MapOp extends MLIROperationObject {
+object MapOp extends OperationCompanion {
   override def name: String = "relalg.map"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
@@ -331,7 +329,7 @@ object MapOp extends MLIROperationObject {
         x: String,
         z: Attribute,
         y: Region,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -348,20 +346,20 @@ object MapOp extends MLIROperationObject {
 }
 
 case class MapOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.map",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -386,7 +384,7 @@ case class MapOp(
           )
       }
 
-      dictionaryAttributes.get("computed_cols") match {
+      attributes.get("computed_cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -408,13 +406,13 @@ case class MapOp(
 //   AggregationOp   //
 // ==-------------== //
 
-object AggregationOp extends MLIROperationObject {
+object AggregationOp extends OperationCompanion {
   override def name: String = "relalg.aggregation"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
         .parse(parser)
@@ -433,7 +431,7 @@ object AggregationOp extends MLIROperationObject {
         reff: Attribute,
         deff: Attribute,
         y: Region,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -450,20 +448,20 @@ object AggregationOp extends MLIROperationObject {
 }
 
 case class AggregationOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.aggregation",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -488,7 +486,7 @@ case class AggregationOp(
           )
       }
 
-      dictionaryAttributes.get("computed_cols") match {
+      attributes.get("computed_cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -503,7 +501,7 @@ case class AggregationOp(
           )
       }
 
-      dictionaryAttributes.get("group_by_cols") match {
+      attributes.get("group_by_cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -525,18 +523,18 @@ case class AggregationOp(
 //   CountRowsOp   //
 // ==-----------== //
 
-object CountRowsOp extends MLIROperationObject {
+object CountRowsOp extends OperationCompanion {
   override def name: String = "relalg.count"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ parser.OptionalAttributes
   ).map(
     (
         x: String,
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -552,20 +550,20 @@ object CountRowsOp extends MLIROperationObject {
 }
 
 case class CountRowsOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.count",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -601,13 +599,13 @@ case class CountRowsOp(
 //   AggrFuncOp   //
 // ==----------== //
 
-object AggrFuncOp extends MLIROperationObject {
+object AggrFuncOp extends OperationCompanion {
   override def name: String = "relalg.aggrfn"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
       ~ ValueId ~ ":" ~ parser.Type.rep(1)
       ~ parser.OptionalAttributes
@@ -617,7 +615,7 @@ object AggrFuncOp extends MLIROperationObject {
         attr: Attribute,
         x: String,
         resTypes: Seq[Attribute],
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -633,20 +631,20 @@ object AggrFuncOp extends MLIROperationObject {
 }
 
 case class AggrFuncOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.aggrfn",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -663,7 +661,7 @@ case class AggrFuncOp(
             "AggrFuncOp Operation must contain 1 operand of type TupleStream."
           )
       }
-      dictionaryAttributes.get("fn") match {
+      attributes.get("fn") match {
         case Some(x) =>
           x match {
             case _: RelAlg_AggrFunc_Case =>
@@ -678,7 +676,7 @@ case class AggrFuncOp(
           )
       }
 
-      dictionaryAttributes.get("attr") match {
+      attributes.get("attr") match {
         case Some(x) =>
           x match {
             case _: ColumnRefAttr =>
@@ -704,13 +702,13 @@ case class AggrFuncOp(
 //   SortOp   //
 // ==------== //
 
-object SortOp extends MLIROperationObject {
+object SortOp extends OperationCompanion {
   override def name: String = "relalg.sort"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "[" ~ (SortSpecificationAttr
         .parse(parser))
@@ -721,7 +719,7 @@ object SortOp extends MLIROperationObject {
     (
         x: String,
         attr: Attribute,
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -737,20 +735,20 @@ object SortOp extends MLIROperationObject {
 }
 
 case class SortOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.sort",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -774,7 +772,7 @@ case class SortOp(
             "SortOp Operation must contain 1 operand of type TupleStream."
           )
       }
-      dictionaryAttributes.get("sortspecs") match {
+      attributes.get("sortspecs") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -800,13 +798,13 @@ case class SortOp(
 //   MaterializeOp   //
 // ==-------------== //
 
-object MaterializeOp extends MLIROperationObject {
+object MaterializeOp extends OperationCompanion {
   override def name: String = "relalg.materialize"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
         .parse(parser)
@@ -823,7 +821,7 @@ object MaterializeOp extends MLIROperationObject {
         cols: Attribute,
         columns: Attribute,
         resTypes: Seq[Attribute],
-        y: DictType[String, Attribute]
+        y: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(operand).typ
       parser.generateOperation(
@@ -839,20 +837,20 @@ object MaterializeOp extends MLIROperationObject {
 }
 
 case class MaterializeOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "relalg.materialize",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -877,7 +875,7 @@ case class MaterializeOp(
           )
       }
 
-      dictionaryAttributes.get("cols") match {
+      attributes.get("cols") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>
@@ -892,7 +890,7 @@ case class MaterializeOp(
           )
       }
 
-      dictionaryAttributes.get("columns") match {
+      attributes.get("columns") match {
         case Some(x) =>
           x match {
             case _: ArrayAttribute[_] =>

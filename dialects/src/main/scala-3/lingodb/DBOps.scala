@@ -6,8 +6,6 @@ import scair.EnumAttr.I64EnumAttr
 import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
 import scair.Parser.*
-import scair.Parser.ValueId
-import scair.Parser.whitespace
 import scair.Printer
 import scair.dialects.builtin.*
 import scair.exceptions.VerifyException
@@ -272,20 +270,20 @@ case class DB_StringType(val typ: Seq[Attribute])
 //   ConstantOp   //
 // ==----------== //
 
-object DB_ConstantOp extends MLIROperationObject {
+object DB_ConstantOp extends OperationCompanion {
   override def name: String = "db.constant"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
     (
         x: Attribute,
         y: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -298,20 +296,20 @@ object DB_ConstantOp extends MLIROperationObject {
 }
 
 case class DB_ConstantOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.constant",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -319,7 +317,7 @@ case class DB_ConstantOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (0, 0, 1, 0, 0) =>
     case _ =>
@@ -328,11 +326,11 @@ case class DB_ConstantOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
     val value =
-      dictionaryAttributes.get("value").map(_.custom_print).getOrElse("")
+      attributes.get("value").map(_.custom_print).getOrElse("")
     val resultType = results.head.typ
-    s"$name($value) : ${resultType.custom_print}"
+    printer.print(s"$name($value) : ${resultType.custom_print}")
   }
 
 }
@@ -341,13 +339,13 @@ case class DB_ConstantOp(
 //   CompareOp   //
 // ==----------== //
 
-object DB_CmpOp extends MLIROperationObject {
+object DB_CmpOp extends OperationCompanion {
   override def name: String = "db.compare"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -357,7 +355,7 @@ object DB_CmpOp extends MLIROperationObject {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -372,20 +370,20 @@ object DB_CmpOp extends MLIROperationObject {
 }
 
 case class DB_CmpOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.compare",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -393,7 +391,7 @@ case class DB_CmpOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 0, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -409,15 +407,18 @@ case class DB_CmpOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    val predicate =
-      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
-    s"$name $predicate $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(name)
+    printer.print(s" ${attributes("predicate").custom_print} ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -426,7 +427,7 @@ case class DB_CmpOp(
 //   MulOp   //
 // ==-----== //
 
-object DB_MulOp extends MLIROperationObject {
+object DB_MulOp extends OperationCompanion {
   override def name: String = "db.mul"
 
   // ==--- Custom Parsing ---== //
@@ -489,7 +490,7 @@ object DB_MulOp extends MLIROperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -498,7 +499,7 @@ object DB_MulOp extends MLIROperationObject {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -513,20 +514,20 @@ object DB_MulOp extends MLIROperationObject {
 }
 
 case class DB_MulOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.mul",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -534,7 +535,7 @@ case class DB_MulOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -552,15 +553,15 @@ case class DB_MulOp(
 
   // added code for custom printing
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    val predicate =
-      dictionaryAttributes.get("predicate").map(_.custom_print).getOrElse("")
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(name, " ", operands.head, " : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -569,7 +570,7 @@ case class DB_MulOp(
 //   DivOp   //
 // ==-----== //
 
-object DB_DivOp extends MLIROperationObject {
+object DB_DivOp extends OperationCompanion {
   override def name: String = "db.div"
 
   // ==--- Custom Parsing ---== //
@@ -635,7 +636,7 @@ object DB_DivOp extends MLIROperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -644,7 +645,7 @@ object DB_DivOp extends MLIROperationObject {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -659,20 +660,20 @@ object DB_DivOp extends MLIROperationObject {
 }
 
 case class DB_DivOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.div",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -680,7 +681,7 @@ case class DB_DivOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -696,13 +697,17 @@ case class DB_DivOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -711,13 +716,13 @@ case class DB_DivOp(
 //   AddOp   //
 // ==-----== //
 
-object DB_AddOp extends MLIROperationObject {
+object DB_AddOp extends OperationCompanion {
   override def name: String = "db.add"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -726,7 +731,7 @@ object DB_AddOp extends MLIROperationObject {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -741,20 +746,20 @@ object DB_AddOp extends MLIROperationObject {
 }
 
 case class DB_AddOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.add",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -762,7 +767,7 @@ case class DB_AddOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -780,13 +785,17 @@ case class DB_AddOp(
 
 //added code for custom printing
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -795,13 +804,13 @@ case class DB_AddOp(
 //   SubOp   //
 // ==-----== //
 
-object DB_SubOp extends MLIROperationObject {
+object DB_SubOp extends OperationCompanion {
   override def name: String = "db.sub"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -810,7 +819,7 @@ object DB_SubOp extends MLIROperationObject {
         leftType: Attribute,
         right: String,
         rightType: Attribute,
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -825,20 +834,20 @@ object DB_SubOp extends MLIROperationObject {
 }
 
 case class DB_SubOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.sub",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -846,7 +855,7 @@ case class DB_SubOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
@@ -862,13 +871,17 @@ case class DB_SubOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val operand2 =
-      s"${printer.printValue(operands(1))} : ${operands(1).typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1, $operand2 : $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(", ")
+    printer.print(operands(1))
+    printer.print(" : ")
+    printer.print(operands(1).typ.custom_print)
+    printer.print(" : ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }
@@ -877,13 +890,13 @@ case class DB_SubOp(
 //   CastOp   //
 // ==-----== //
 
-object CastOp extends MLIROperationObject {
+object CastOp extends OperationCompanion {
   override def name: String = "db.cast"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
       ~ parser.OptionalAttributes
   ).map(
@@ -891,7 +904,7 @@ object CastOp extends MLIROperationObject {
         operand: String,
         opType: Attribute,
         resTypes: Seq[Attribute],
-        z: DictType[String, Attribute]
+        z: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -906,20 +919,20 @@ object CastOp extends MLIROperationObject {
 }
 
 case class CastOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "db.cast",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -927,7 +940,7 @@ case class CastOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
     case _ =>
@@ -936,11 +949,13 @@ case class CastOp(
       )
   }
 
-  override def custom_print(printer: Printer): String = {
-    val operand1 =
-      s"${printer.printValue(operands.head)} : ${operands.head.typ.custom_print}"
-    val resultType = results.head.typ.custom_print
-    s"$name $operand1 -> $resultType"
+  override def custom_print(printer: Printer)(using indentLevel: Int) = {
+    printer.print(s"$name ")
+    printer.print(operands.head)
+    printer.print(" : ")
+    printer.print(operands.head.typ.custom_print)
+    printer.print(" -> ")
+    printer.print(results.head.typ.custom_print)
   }
 
 }

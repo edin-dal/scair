@@ -25,7 +25,7 @@ import scala.collection.mutable.Stack
 
 object InsertPoint {
 
-  def before(op: MLIROperation): InsertPoint = {
+  def before(op: Operation): InsertPoint = {
     (op.container_block == None) match {
       case true =>
         throw new Exception(
@@ -37,7 +37,7 @@ object InsertPoint {
     }
   }
 
-  def after(op: MLIROperation): InsertPoint = {
+  def after(op: Operation): InsertPoint = {
     (op.container_block == None) match {
       case true =>
         throw new Exception(
@@ -70,7 +70,7 @@ object InsertPoint {
 
 case class InsertPoint(
     val block: Block,
-    val insert_before: Option[MLIROperation]
+    val insert_before: Option[Operation]
 ) {
 
   // custom constructor
@@ -79,7 +79,7 @@ case class InsertPoint(
   }
 
   if (insert_before != None) then {
-    if !(insert_before.get.container_block equals Some(block)) then {
+    if !(insert_before.get.container_block `equals` Some(block)) then {
       throw new Error(
         "Given operation's container and given block do not match: " +
           "InsertPoint must be an operation inside a given block."
@@ -95,7 +95,7 @@ case class InsertPoint(
 
 object RewriteMethods {
 
-  def erase_op(op: MLIROperation) = {
+  def erase_op(op: Operation) = {
     op.container_block match {
       case Some(block) =>
         block.erase_op(op)
@@ -106,12 +106,12 @@ object RewriteMethods {
 
   def insert_ops_at(
       insertion_point: InsertPoint,
-      ops: MLIROperation | Seq[MLIROperation]
+      ops: Operation | Seq[Operation]
   ): Unit = {
 
     val operations = ops match {
-      case x: MLIROperation => Seq(x)
-      case y: Seq[_]        => y.asInstanceOf[Seq[MLIROperation]]
+      case x: Operation => Seq(x)
+      case y: Seq[_]    => y.asInstanceOf[Seq[Operation]]
     }
     val operations2 = Seq.iterableFactory
     insertion_point.insert_before match {
@@ -126,22 +126,22 @@ object RewriteMethods {
   }
 
   def insert_ops_before(
-      op: MLIROperation,
-      new_ops: MLIROperation | Seq[MLIROperation]
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
   ): Unit = {
     insert_ops_at(InsertPoint.before(op), new_ops)
   }
 
   def insert_ops_after(
-      op: MLIROperation,
-      new_ops: MLIROperation | Seq[MLIROperation]
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
   ): Unit = {
     insert_ops_at(InsertPoint.after(op), new_ops)
   }
 
   def replace_op(
-      op: MLIROperation,
-      new_ops: MLIROperation | Seq[MLIROperation],
+      op: Operation,
+      new_ops: Operation | Seq[Operation],
       new_results: Option[Seq[Value[Attribute]]] = None
   ): Unit = {
 
@@ -152,8 +152,8 @@ object RewriteMethods {
     }
 
     val ops = new_ops match {
-      case x: MLIROperation => Seq(x)
-      case y: Seq[_]        => y.asInstanceOf[Seq[MLIROperation]]
+      case x: Operation => Seq(x)
+      case y: Seq[_]    => y.asInstanceOf[Seq[Operation]]
     }
 
     val results = new_results match {
@@ -184,11 +184,11 @@ object RewriteMethods {
 
 //             OPERATION REWRITER              //
 class PatternRewriter(
-    var current_op: MLIROperation
+    var current_op: Operation
 ) {
   var has_done_action: Boolean = false
 
-  def erase_op(op: MLIROperation): Unit = {
+  def erase_op(op: Operation): Unit = {
     RewriteMethods.erase_op(op)
     has_done_action = true
   }
@@ -200,21 +200,21 @@ class PatternRewriter(
 
   def insert_op_at_location(
       insertion_point: InsertPoint,
-      ops: MLIROperation | Seq[MLIROperation]
+      ops: Operation | Seq[Operation]
   ): Unit = {
     RewriteMethods.insert_ops_at(insertion_point, ops)
     has_done_action = true
   }
 
   def insert_op_before_matched_op(
-      ops: MLIROperation | Seq[MLIROperation]
+      ops: Operation | Seq[Operation]
   ): Unit = {
     RewriteMethods.insert_ops_before(current_op, ops)
     has_done_action = true
   }
 
   def insert_op_after_matched_op(
-      ops: MLIROperation | Seq[MLIROperation]
+      ops: Operation | Seq[Operation]
   ): Unit = {
     RewriteMethods.insert_ops_before(current_op, ops)
     has_done_action = true
@@ -222,37 +222,37 @@ class PatternRewriter(
 
   def insert_op_at_end_of(
       block: Block,
-      ops: MLIROperation | Seq[MLIROperation]
+      ops: Operation | Seq[Operation]
   ): Unit = {
     insert_op_at_location(InsertPoint.at_end_of(block), ops)
   }
 
   def insert_op_at_start_of(
       block: Block,
-      ops: MLIROperation | Seq[MLIROperation]
+      ops: Operation | Seq[Operation]
   ): Unit = {
     insert_op_at_location(InsertPoint.at_start_of(block), ops)
   }
 
   def insert_ops_before(
-      op: MLIROperation,
-      new_ops: MLIROperation | Seq[MLIROperation]
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
   ): Unit = {
     RewriteMethods.insert_ops_before(op, new_ops)
     has_done_action = true
   }
 
   def insert_ops_after(
-      op: MLIROperation,
-      new_ops: MLIROperation | Seq[MLIROperation]
+      op: Operation,
+      new_ops: Operation | Seq[Operation]
   ): Unit = {
     RewriteMethods.insert_ops_after(op, new_ops)
     has_done_action = true
   }
 
   def replace_op(
-      op: MLIROperation,
-      new_ops: MLIROperation | Seq[MLIROperation],
+      op: Operation,
+      new_ops: Operation | Seq[Operation],
       new_results: Option[Seq[Value[Attribute]]] = None
   ): Unit = {
     RewriteMethods.replace_op(op, new_ops, new_results)
@@ -262,7 +262,7 @@ class PatternRewriter(
 
 abstract class RewritePattern {
 
-  def match_and_rewrite(op: MLIROperation, rewriter: PatternRewriter): Unit =
+  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
     ???
 
 }
@@ -272,20 +272,20 @@ class PatternRewriteWalker(
     val pattern: RewritePattern
 ) {
 
-  private var worklist = Stack[MLIROperation]()
+  private var worklist = Stack[Operation]()
 
   def rewrite_module(module: ModuleOp): Unit = {
     return rewrite_op(module)
   }
 
-  def rewrite_op(op: MLIROperation): Unit = {
+  def rewrite_op(op: Operation): Unit = {
     populate_worklist(op)
     var op_was_modified = process_worklist()
 
     return op_was_modified
   }
 
-  private def populate_worklist(op: MLIROperation): Unit = {
+  private def populate_worklist(op: Operation): Unit = {
     worklist.push(op)
     op.regions.reverseIterator.foreach((x: Region) =>
       x.blocks.reverseIterator.foreach((y: Block) =>

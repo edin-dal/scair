@@ -133,7 +133,7 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
 //   ReturnOp   //
 // ==--------== //
 
-object ReturnOp extends MLIROperationObject {
+object ReturnOp extends OperationCompanion {
   override def name: String = "tuples.return"
 
   // ==--- Custom Parsing ---== //
@@ -146,11 +146,11 @@ object ReturnOp extends MLIROperationObject {
 
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
       parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
-  ).map((x: DictType[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
+  ).map((x: Map[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
     parser.generateOperation(
       opName = name,
       operandsNames = y._1,
@@ -163,27 +163,27 @@ object ReturnOp extends MLIROperationObject {
 }
 
 case class ReturnOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] = Map(),
+    override val attributes: DictType[String, Attribute] = DictType()
+) extends BaseOperation(
       name = "tuples.return",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
     operands.length,
     successors.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (0, 0, 0, 0) =>
     case _ =>
@@ -198,13 +198,13 @@ case class ReturnOp(
 //   GetColumnOp   //
 // ==-----------== //
 
-object GetColumnOp extends MLIROperationObject {
+object GetColumnOp extends OperationCompanion {
   override def name: String = "tuples.getcol"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
       parser.Type ~ parser.OptionalAttributes
   ).map(
@@ -212,7 +212,7 @@ object GetColumnOp extends MLIROperationObject {
         x: String,
         y: Attribute,
         z: Attribute,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       val operand_type = parser.currentScope.valueMap(x).typ
       parser.generateOperation(
@@ -228,20 +228,20 @@ object GetColumnOp extends MLIROperationObject {
 }
 
 case class GetColumnOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "tuples.getcol",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -249,7 +249,7 @@ case class GetColumnOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
       operands(0).typ match {
@@ -259,7 +259,7 @@ case class GetColumnOp(
             "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
           )
       }
-      dictionaryAttributes.get("attr") match {
+      attributes.get("attr") match {
         case Some(x) =>
           x match {
             case _: ColumnRefAttr =>

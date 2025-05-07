@@ -18,14 +18,14 @@ case class Complex(
 case class Norm(
     in: Operand[Complex],
     res: Result[FloatType]
-) extends MLIRName["cmath.norm"]
-    derives MLIRTrait
+) extends DerivedOperation["cmath.norm", Norm]
+    derives DerivedOperationCompanion
 
 case class Mul(
     lhs: Operand[Complex],
     rhs: Operand[Complex],
     res: Result[Complex]
-) extends MLIRName["cmath.mul"]
-    derives MLIRTrait
+) extends DerivedOperation["cmath.mul", Mul]
+    derives DerivedOperationCompanion
 
 val CMathDialect = summonDialect[Tuple1[Complex], (Norm, Mul)](Seq())

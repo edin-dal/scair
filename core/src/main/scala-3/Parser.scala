@@ -7,6 +7,7 @@ import fastparse.internal.Util
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
+import scair.transformations.RewriteMethods
 
 import java.lang.Float.parseFloat
 import java.lang.Long.parseLong
@@ -30,7 +31,7 @@ object Parser {
     * It's litteraly fastparse's JavaWhitespace with the /* */ states just
     * erased :)
     */
-  implicit val whitespace: Whitespace = { implicit ctx: P[_] =>
+  implicit val whitespace: Whitespace = { implicit ctx: P[?] =>
     val input = ctx.input
     val startIndex = ctx.index
     @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
@@ -147,13 +148,13 @@ object Parser {
       var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[MLIROperation, ListType[
+      var valueWaitlist: mutable.Map[Operation, Seq[
         (String, Attribute)
-      ]] = mutable.Map.empty[MLIROperation, ListType[(String, Attribute)]],
+      ]] = mutable.Map.empty[Operation, Seq[(String, Attribute)]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var blockWaitlist: mutable.Map[MLIROperation, ListType[String]] =
-        mutable.Map.empty[MLIROperation, ListType[String]]
+      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
+        mutable.Map.empty[Operation, Seq[String]]
   ) {
 
     def defineValues(
@@ -171,28 +172,21 @@ object Parser {
 
     def useValues(
         valueIdAndTypeList: Seq[(String, Attribute)]
-    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
+    ) = {
       var forwardRefSeq: ListType[(String, Attribute)] =
         ListType()
       var useValSeq: ListType[Value[Attribute]] =
         ListType()
-      for {
-        (name, typ) <- valueIdAndTypeList
-      } yield !valueMap.contains(name) match {
-        case true =>
-          val tuple = (name, typ)
-          forwardRefSeq += tuple
-        case false =>
-          valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
-              )
-            case false =>
-              useValSeq += valueMap(name)
-          }
-      }
-      return (useValSeq, forwardRefSeq)
+
+      valueIdAndTypeList.partitionMap((name, typ) =>
+        if valueMap.contains(name) then
+          if valueMap(name).typ != typ then
+            throw new Exception(
+              s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
+            )
+          else Left(valueMap(name))
+        else Right((name, typ))
+      )
     }
 
     def useValue(
@@ -220,7 +214,7 @@ object Parser {
       return (useValSeq, forwardRefSeq)
     }
 
-    def checkValueWaitlist(): Unit = {
+    def checkValueWaitlist() = {
 
       for ((operation, operands) <- valueWaitlist) {
 
@@ -236,29 +230,24 @@ object Parser {
           case true =>
             val tuple = (name, typ)
             val value = valueMap(name)
-            if (value.typ.name == typ.name) { // to be changed
-              foundOperands += tuple
-              operandList += value
-            }
+            if value.typ != typ then
+              throw new Exception(
+                s"%$name use with type ${typ} but defined with type ${value.typ}"
+              )
+            foundOperands += tuple
+            operandList += value
           case false =>
         }
 
-        valueWaitlist(operation) --= foundOperands
+        valueWaitlist(operation) = valueWaitlist(operation) diff foundOperands
 
         if (valueWaitlist(operation).length == 0) {
           valueWaitlist -= operation
         }
 
-        // adding Uses to each found operand
-        val operandsLength = operation.operands.length
-
-        // TO-DO: create a new OpOperands class specifically to close the API
-        //        for operations operands
-        for ((operand, i) <- operandList zip (0 to operandList.length)) {
-          operand.uses += Use(operation, operandsLength + i)
-        }
-
-        operation.operands.appendAll(operandList)
+        val new_op =
+          operation.updated(operands = operation.operands ++ operandList)
+        RewriteMethods.replace_op(operation, new_op)
       }
 
       if (valueWaitlist.size > 0) {
@@ -289,29 +278,19 @@ object Parser {
 
     def useBlocks(
         successorList: Seq[String]
-    ): (ListType[Block], ListType[String]) = {
-      var forwardRefSeq: ListType[String] =
-        ListType()
-      var successorBlockSeq: ListType[Block] =
-        ListType()
-      for {
-        name <- successorList
-      } yield !blockMap.contains(name) match {
-        case true =>
-          forwardRefSeq += name
-        case false =>
-          successorBlockSeq += blockMap(name)
-      }
-      return (successorBlockSeq, forwardRefSeq)
-    }
+    ) =
+      successorList.partitionMap(name =>
+        if blockMap.contains(name) then Left(blockMap(name))
+        else Right(name)
+      )
 
     // check block waitlist once you exit the local scope of a region,
     // as well as the global scope of the program at the end
-    def checkBlockWaitlist(): Unit = {
+    def checkBlockWaitlist() = {
 
       for ((operation, successors) <- blockWaitlist) {
 
-        val foundOperands: ListType[String] = ListType()
+        val foundBlocks: ListType[String] = ListType()
         val successorList: ListType[Block] = ListType()
 
         for {
@@ -321,17 +300,19 @@ object Parser {
             name
           ) match {
           case true =>
-            foundOperands += name
+            foundBlocks += name
             successorList += blockMap(name)
           case false =>
         }
 
-        blockWaitlist(operation) --= foundOperands
+        blockWaitlist(operation) = blockWaitlist(operation) diff foundBlocks
 
         if (blockWaitlist(operation).length == 0) {
           blockWaitlist -= operation
         }
-        operation.successors.appendAll(successorList)
+        val new_op =
+          operation.updated(successors = operation.successors ++ successorList)
+        RewriteMethods.replace_op(operation, new_op)
       }
 
       if (blockWaitlist.size > 0) {
@@ -636,18 +617,15 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
   // shortened definition TODO: finish...
 
-  def TopLevel[$: P]: P[MLIROperation] = P(
-    Start ~ (Operations(0)) ~ E({
-      currentScope.checkValueWaitlist()
-      currentScope.checkBlockWaitlist()
-    }) ~ End
-  ).map((toplevel: ListType[MLIROperation]) =>
+  def TopLevel[$: P]: P[Operation] = P(
+    Start ~ (Operations(0)) ~ End
+  ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
       case _ =>
         val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
-        val moduleOp = new ModuleOp(regions = ListType(region))
+        val moduleOp = new ModuleOp(regions = Seq(region))
 
         for (op <- toplevel) op.container_block = Some(block)
         block.container_region = Some(region)
@@ -656,7 +634,10 @@ class Parser(val context: MLContext, val args: Args = Args())
         moduleOp
 
     }
-  )
+  ) ~ E({
+    currentScope.checkValueWaitlist()
+    currentScope.checkBlockWaitlist()
+  })
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    OPERATIONS    ||
@@ -700,12 +681,12 @@ class Parser(val context: MLContext, val args: Args = Args())
       opName: String,
       operandsNames: Seq[String] = Seq(),
       successorsNames: Seq[String] = Seq(),
-      properties: DictType[String, Attribute] = DictType(),
+      properties: Map[String, Attribute] = Map(),
       regions: Seq[Region] = Seq(),
-      attributes: DictType[String, Attribute] = DictType(),
+      attributes: Map[String, Attribute] = Map(),
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
-  ): MLIROperation = {
+  ): Operation = {
 
     if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
@@ -713,24 +694,21 @@ class Parser(val context: MLContext, val args: Args = Args())
       )
     }
 
-    val useAndRefValueSeqs
-        : (ListType[Value[Attribute]], ListType[(String, Attribute)]) =
+    val useAndRefValueSeqs =
       currentScope.useValues(operandsNames zip operandsTypes)
 
-    val useAndRefBlockSeqs: (ListType[Block], ListType[String]) =
+    val useAndRefBlockSeqs =
       currentScope.useBlocks(successorsNames)
 
-    val opObject: Option[MLIROperationObject] = ctx.getOperation(opName)
-
-    val op: MLIROperation = opObject match {
+    val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
           operands = useAndRefValueSeqs._1,
           successors = useAndRefBlockSeqs._1,
-          dictionaryProperties = properties,
-          results_types = ListType.from(resultsTypes),
-          dictionaryAttributes = attributes,
-          regions = ListType.from(regions)
+          properties = properties,
+          results_types = resultsTypes,
+          attributes = DictType.from(attributes),
+          regions = regions
         )
 
       case None =>
@@ -739,23 +717,15 @@ class Parser(val context: MLContext, val args: Args = Args())
             name = opName,
             operands = useAndRefValueSeqs._1,
             successors = useAndRefBlockSeqs._1,
-            dictionaryProperties = properties,
-            results_types = ListType.from(resultsTypes),
-            dictionaryAttributes = attributes,
-            regions = ListType.from(regions)
+            properties = properties,
+            results_types = resultsTypes,
+            attributes = DictType.from(attributes),
+            regions = regions
           )
         else
           throw new Exception(
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
-    }
-
-    // adding uses for known operands
-    for (
-      (operand, i) <-
-        useAndRefValueSeqs._1 zip (0 to useAndRefValueSeqs._1.length)
-    ) {
-      operand.uses += Use(op, i)
     }
     if (useAndRefValueSeqs._2.length > 0) {
       currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
@@ -769,10 +739,10 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def Operations[$: P](
       at_least_this_many: Int = 0
-  ): P[ListType[MLIROperation]] =
-    P(OperationPat.rep(at_least_this_many).map(_.to(ListType)))
+  ): P[Seq[Operation]] =
+    P(OperationPat.rep(at_least_this_many))
 
-  def OperationPat[$: P]: P[MLIROperation] = P(
+  def OperationPat[$: P]: P[Operation] = P(
     OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?
   )
 
@@ -792,18 +762,18 @@ class Parser(val context: MLContext, val args: Args = Args())
   def GenericOperation[$: P](resNames: Seq[String]) = P(
     (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
       ~/ SuccessorList.orElse(Seq())
-      ~/ DictionaryProperties.orElse(DictType.empty)
+      ~/ properties.orElse(Map.empty)
       ~/ RegionList.orElse(Seq())
-      ~/ (DictionaryAttribute).orElse(DictType.empty) ~/ ":" ~/ FunctionType)
+      ~/ (DictionaryAttribute).orElse(Map.empty) ~/ ":" ~/ FunctionType)
       .mapTry(
         (
             (
                 opName: String,
                 operandsNames: Seq[String],
                 successorsNames: Seq[String],
-                properties: DictType[String, Attribute],
+                properties: Map[String, Attribute],
                 regions: Seq[Region],
-                attributes: DictType[String, Attribute],
+                attributes: Map[String, Attribute],
                 operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
             ) =>
               generateOperation(
@@ -846,7 +816,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def createBlock(
       //            name    arguments       operations
-      uncutBlock: (String, Seq[(String, Attribute)], ListType[MLIROperation])
+      uncutBlock: (String, Seq[(String, Attribute)], Seq[Operation])
   ): Block = {
     val newBlock = new Block(
       operations = uncutBlock._3,
@@ -877,7 +847,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - region        ::= `{` operation* block* `}`
 
   def defineRegion(
-      parseResult: (ListType[MLIROperation], Seq[Block])
+      parseResult: (Seq[Operation], Seq[Block])
   ): Region = {
     return parseResult._1.length match {
       case 0 =>
@@ -897,10 +867,10 @@ class Parser(val context: MLContext, val args: Args = Args())
   def Region[$: P] = P(
     "{" ~ E(
       { enterLocalRegion }
-    ) ~ Operations(0) ~ Block.rep ~ "}" ~ E(
-      { enterParentRegion }
-    )
-  ).map(defineRegion)
+    ) ~ Operations(0) ~ Block.rep ~ "}"
+  ).map(defineRegion) ~ E(
+    { enterParentRegion }
+  )
 
   // def EntryBlock[$: P] = P(OperationPat.rep(1))
 
@@ -950,7 +920,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     * @return
     *   A properties dictionary parser.
     */
-  def DictionaryProperties[$: P] = P(
+  def properties[$: P] = P(
     "<" ~ DictionaryAttribute ~ ">"
   )
 
@@ -962,7 +932,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   inline def DictionaryAttribute[$: P] = P(
     "{" ~ AttributeEntry
       .rep(sep = ",")
-      .map(DictType[String, Attribute](_*)) ~ "}"
+      .map(Map[String, Attribute](_*)) ~ "}"
   )
 
   /** Parses an optional properties dictionary from the input.
@@ -972,7 +942,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   present.
     */
   inline def OptionalProperties[$: P]() =
-    (DictionaryProperties).orElse(DictType.empty)
+    (properties).orElse(DictType.empty)
 
   /** Parses an optional attributes dictionary from the input.
     *
@@ -981,7 +951,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   present.
     */
   inline def OptionalAttributes[$: P] =
-    (DictionaryAttribute).orElse(DictType.empty)
+    (DictionaryAttribute).orElse(Map.empty)
 
   /** Parses an optional attributes dictionary from the input, preceded by the
     * `attributes` keyword.
@@ -990,7 +960,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An optional dictionary of attributes - empty if no keyword is present.
     */
   inline def OptionalKeywordAttributes[$: P] =
-    ("attributes" ~/ DictionaryAttribute).orElse(DictType.empty)
+    ("attributes" ~/ DictionaryAttribute).orElse(Map.empty)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||  PARSE FUNCTION  ||
@@ -998,8 +968,8 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def parseThis[A, B](
       text: String,
-      pattern: fastparse.P[_] => fastparse.P[B] = { (x: fastparse.P[_]) =>
-        TopLevel(x)
+      pattern: fastparse.P[?] => fastparse.P[B] = { (x: fastparse.P[?]) =>
+        TopLevel(using x)
       },
       verboseFailures: Boolean = false
   ): fastparse.Parsed[B] = {

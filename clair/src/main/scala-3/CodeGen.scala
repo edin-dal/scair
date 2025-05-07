@@ -35,14 +35,14 @@ enum Variadicity {
 
 case class OperandDef(
     override val name: String,
-    val tpe: Type[_],
+    val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single
 ) extends OpInputDef(name)
     with MayVariadicOpInputDef(variadicity) {}
 
 case class ResultDef(
     override val name: String,
-    val tpe: Type[_],
+    val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single
 ) extends OpInputDef(name)
     with MayVariadicOpInputDef(variadicity) {}
@@ -61,12 +61,12 @@ case class SuccessorDef(
 
 case class OpPropertyDef(
     override val name: String,
-    val tpe: Type[_]
+    val tpe: Type[?]
 ) extends OpInputDef(name) {}
 
 case class AttributeParamDef(
     val name: String,
-    val tpe: Type[_]
+    val tpe: Type[?]
 ) {}
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\

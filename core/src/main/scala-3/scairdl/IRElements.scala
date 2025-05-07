@@ -4,7 +4,7 @@ import fastparse.*
 import fastparse.ScalaWhitespace.*
 import scair.dialects.builtin.*
 import scair.ir.Attribute
-import scair.ir.MLIROperation
+import scair.ir.Operation
 import scair.scairdl.constraints.*
 
 import java.io.File
@@ -47,7 +47,7 @@ abstract class EscapeHatch[T: ClassTag] {
 
 class AttrEscapeHatch[T <: Attribute: ClassTag]() extends EscapeHatch[T]
 
-class OpEscapeHatch[T <: MLIROperation: ClassTag]() extends EscapeHatch[T]
+class OpEscapeHatch[T <: Operation: ClassTag]() extends EscapeHatch[T]
 
 /*≡≡=--=≡≡≡=--=≡≡*\
 ||     TYPES     ||
@@ -123,8 +123,8 @@ case class DialectDef(
     val name: String,
     val operations: Seq[OperationDef] = Seq(),
     val attributes: Seq[AttributeDef] = Seq(),
-    val opHatches: Seq[OpEscapeHatch[_]] = Seq(),
-    val attrHatches: Seq[AttrEscapeHatch[_]] = Seq()
+    val opHatches: Seq[OpEscapeHatch[?]] = Seq(),
+    val attrHatches: Seq[AttrEscapeHatch[?]] = Seq()
 ) {
 
   def print(indent: Int): String =
@@ -190,7 +190,7 @@ object NewParser {
     P(formatDirective.rep(1))
 
   def parseFormat(input: String): Parsed[Seq[FormatDirective]] =
-    parse(input, assemblyFormat(_))
+    parse(input, assemblyFormat(using _))
 
 }
 
@@ -283,8 +283,8 @@ case class OperationDef(
 
   def operand_segment_sizes_helper: String =
     s"""def operandSegmentSizes: Seq[Int] =
-    if (!dictionaryProperties.contains("operandSegmentSizes")) then throw new Exception("Expected operandSegmentSizes property")
-    val operandSegmentSizes_attr = dictionaryProperties("operandSegmentSizes") match {
+    if (!properties.contains("operandSegmentSizes")) then throw new Exception("Expected operandSegmentSizes property")
+    val operandSegmentSizes_attr = properties("operandSegmentSizes") match {
       case right: DenseArrayAttr => right
       case _ => throw new Exception("Expected operandSegmentSizes to be a DenseArrayAttr")
     }
@@ -314,8 +314,8 @@ case class OperationDef(
 
   def result_segment_sizes_helper: String =
     s"""def resultSegmentSizes: Seq[Int] =
-    if (!dictionaryProperties.contains("resultSegmentSizes")) then throw new Exception("Expected resultSegmentSizes property")
-    val resultSegmentSizes_attr = dictionaryProperties("resultSegmentSizes") match {
+    if (!properties.contains("resultSegmentSizes")) then throw new Exception("Expected resultSegmentSizes property")
+    val resultSegmentSizes_attr = properties("resultSegmentSizes") match {
       case right: DenseArrayAttr => right
       case _ => throw new Exception("Expected resultSegmentSizes to be a DenseArrayAttr")
     }
@@ -645,11 +645,11 @@ case class OperationDef(
       regions_accessors ++
       successors_accessors ++
       (for pdef <- OpProperty
-      yield s"  def ${pdef.id}: Attribute = dictionaryProperties(\"${pdef.id}\")\n" +
-        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {dictionaryProperties(\"${pdef.id}\") = new_attribute}\n") ++
+      yield s"  def ${pdef.id}: Attribute = properties(\"${pdef.id}\")\n" +
+        s"  def ${pdef.id}_=(new_attribute: Attribute): Unit = {properties(\"${pdef.id}\") = new_attribute}\n") ++
       (for adef <- OpAttribute
-      yield s"  def ${adef.id}: Attribute = dictionaryAttributes(\"${adef.id}\")\n" +
-        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {dictionaryAttributes(\"${adef.id}\") = new_attribute}\n"))
+      yield s"  def ${adef.id}: Attribute = attributes(\"${adef.id}\")\n" +
+        s"  def ${adef.id}_=(new_attribute: Attribute): Unit = {attributes(\"${adef.id}\") = new_attribute}\n"))
       .mkString("\n")
 
   }
@@ -759,11 +759,11 @@ case class $className(
     override val successors: ListType[Block] = ListType(),
     results_types: ListType[Attribute] = ListType(),
     override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, dictionaryProperties, dictionaryAttributes) {
+) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, properties, attributes) {
 
 
 ${helpers(indent + 1)}

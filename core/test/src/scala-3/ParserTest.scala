@@ -130,57 +130,57 @@ class ParserTest
     ("name", "pattern", "tests"),
     (
       "Digit",
-      ((x: fastparse.P[_]) => Parser.Digit(x)),
+      ((x: fastparse.P[?]) => Parser.Digit(using x)),
       digitTests
     ),
     (
       "HexDigit",
-      ((x: fastparse.P[_]) => Parser.HexDigit(x)),
+      ((x: fastparse.P[?]) => Parser.HexDigit(using x)),
       hexTests
     ),
     (
       "Letter",
-      ((x: fastparse.P[_]) => Parser.Letter(x)),
+      ((x: fastparse.P[?]) => Parser.Letter(using x)),
       letterTests
     ),
     (
       "IdPunct",
-      ((x: fastparse.P[_]) => Parser.IdPunct(x)),
+      ((x: fastparse.P[?]) => Parser.IdPunct(using x)),
       idPunctTests
     ),
     (
       "IntegerLiteral",
-      ((x: fastparse.P[_]) => Parser.IntegerLiteral(x)),
+      ((x: fastparse.P[?]) => Parser.IntegerLiteral(using x)),
       intLiteralTests
     ),
     (
       "DecimalLiteral",
-      ((x: fastparse.P[_]) => Parser.DecimalLiteral(x)),
+      ((x: fastparse.P[?]) => Parser.DecimalLiteral(using x)),
       decimalLiteralTests
     ),
     (
       "HexadecimalLiteral",
-      ((x: fastparse.P[_]) => Parser.HexadecimalLiteral(x)),
+      ((x: fastparse.P[?]) => Parser.HexadecimalLiteral(using x)),
       hexadecimalLiteralTests
     ),
     (
       "FloatLiteral",
-      ((x: fastparse.P[_]) => Parser.FloatLiteral(x)),
+      ((x: fastparse.P[?]) => Parser.FloatLiteral(using x)),
       floatLiteralTests
     ),
     (
       "StringLiteral",
-      ((x: fastparse.P[_]) => Parser.StringLiteral(x)),
+      ((x: fastparse.P[?]) => Parser.StringLiteral(using x)),
       stringLiteralTests
     ),
     (
       "ValueId",
-      ((x: fastparse.P[_]) => Parser.ValueId(x)),
+      ((x: fastparse.P[?]) => Parser.ValueId(using x)),
       valueIdTests
     ),
     (
       "OpResultList",
-      ((x: fastparse.P[_]) => Parser.OpResultList(x)),
+      ((x: fastparse.P[?]) => Parser.OpResultList(using x)),
       opResultListTests
     )
   )
@@ -204,7 +204,7 @@ class ParserTest
         text =
           "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        pattern = parser.Block(_)
+        pattern = parser.Block(using _)
       ) should matchPattern {
         case Parsed.Success(
               Block(
@@ -212,23 +212,23 @@ class ParserTest
                 ListType(
                   UnregisteredOperation(
                     "test.op",
-                    ListType(),
-                    ListType(),
-                    ListType(
+                    Seq(),
+                    Seq(),
+                    Seq(
                       I32,
                       I64,
                       I32
                     ),
-                    ListType(),
+                    Seq(),
                     _,
                     _
                   ),
                   UnregisteredOperation(
                     "test.op",
-                    ListType(Value(I64), Value(I32)),
-                    ListType(),
-                    ListType(),
-                    ListType(),
+                    Seq(Value(I64), Value(I32)),
+                    Seq(),
+                    Seq(),
+                    Seq(),
                     _,
                     _
                   )
@@ -248,7 +248,7 @@ class ParserTest
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        pattern = parser.Region(_)
+        pattern = parser.Region(using _)
       ) should matchPattern {
         case Parsed.Success(
               Region(
@@ -258,23 +258,23 @@ class ParserTest
                     ListType(
                       UnregisteredOperation(
                         "test.op",
-                        ListType(),
-                        ListType(),
-                        ListType(
+                        Seq(),
+                        Seq(),
+                        Seq(
                           I32,
                           I64,
                           I32
                         ),
-                        ListType(),
+                        Seq(),
                         _,
                         _
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        ListType(Value(I64), Value(I32)),
-                        ListType(),
-                        ListType(),
-                        ListType(),
+                        Seq(Value(I64), Value(I32)),
+                        Seq(),
+                        Seq(),
+                        Seq(),
                         _,
                         _
                       )
@@ -285,26 +285,26 @@ class ParserTest
                     ListType(
                       UnregisteredOperation(
                         "test.op",
-                        ListType(),
-                        ListType(),
-                        ListType(
+                        Seq(),
+                        Seq(),
+                        Seq(
                           I32,
                           I64,
                           I32
                         ),
-                        ListType(),
+                        Seq(),
                         _,
                         _
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        ListType(
+                        Seq(
                           Value(I64),
                           Value(I32)
                         ),
-                        ListType(),
-                        ListType(),
-                        ListType(),
+                        Seq(),
+                        Seq(),
+                        Seq(),
                         _,
                         _
                       )
@@ -326,7 +326,7 @@ class ParserTest
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        pattern = parser.Region(_),
+        pattern = parser.Region(using _),
         verboseFailures = true
       ) should matchPattern {
         case Parsed.Failure(
@@ -353,7 +353,7 @@ class ParserTest
       val exception = intercept[Exception](
         parser.parseThis(
           text = text,
-          pattern = parser.TopLevel(_)
+          pattern = parser.TopLevel(using _)
         )
       ).getMessage shouldBe "Successor ^bb3 not defined within Scope"
     }
@@ -372,17 +372,17 @@ class ParserTest
         ListType(UnregisteredOperation("test.op"))
       )
       val bb3 = Block(
-        ListType(UnregisteredOperation("test.op", successors = ListType(bb4)))
+        ListType(UnregisteredOperation("test.op", successors = Seq(bb4)))
       )
       val operation =
         UnregisteredOperation(
           "test.op",
-          regions = ListType(Region(Seq(bb3, bb4)))
+          regions = Seq(Region(Seq(bb3, bb4)))
         )
 
       parser.parseThis(
         text = text,
-        pattern = parser.OperationPat(_)
+        pattern = parser.OperationPat(using _)
       ) should matchPattern { case operation =>
       }
     }
@@ -392,14 +392,14 @@ class ParserTest
     withClue("Test 1: ") {
       parser.parseThis(
         text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        pattern = parser.TopLevel(_)
+        pattern = parser.TopLevel(using _)
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
-                ListType(),
-                ListType(),
-                ListType(),
-                ListType(
+                Seq(),
+                Seq(),
+                Seq(),
+                Seq(
                   Region(
                     Seq(
                       Block(
@@ -407,14 +407,14 @@ class ParserTest
                         ListType(
                           UnregisteredOperation(
                             "test.op",
-                            ListType(),
-                            ListType(),
-                            ListType(
+                            Seq(),
+                            Seq(),
+                            Seq(
                               I32,
                               I64,
                               I32
                             ),
-                            ListType(),
+                            Seq(),
                             _,
                             _
                           )
@@ -432,7 +432,7 @@ class ParserTest
     }
   }
 
-  "Value Uses assignment test forward ref" should "Test Operation's Operand uses" in {
+  "Value Uses assignment test forward ref" should "Test Operation's  forward-referenced Operand uses" in {
     withClue("Operand Uses: ") {
 
       val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
@@ -443,8 +443,8 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(_)
-      )
+        pattern = parser.TopLevel(using _)
+      ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
       val uses1 = value.regions(0).blocks(0).operations(4).results(1).uses
@@ -494,8 +494,8 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(_)
-      )
+        pattern = parser.TopLevel(using _)
+      ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(0).results(0).uses
       val uses1 = value.regions(0).blocks(0).operations(0).results(1).uses
@@ -546,8 +546,8 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(_)
-      )
+        pattern = parser.TopLevel(using _)
+      ): @unchecked
 
       val printer = new Printer(true)
 

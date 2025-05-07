@@ -80,13 +80,13 @@ case class ResultTable(
 //   SetResultOp   //
 // ==-----------== //
 
-object SetResultOp extends MLIROperationObject {
+object SetResultOp extends OperationCompanion {
   override def name: String = "subop.set_result"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] = P(
+  ): P[Operation] = P(
     parser.Type ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
@@ -94,7 +94,7 @@ object SetResultOp extends MLIROperationObject {
         x: Attribute,
         y: String,
         z: Attribute,
-        w: DictType[String, Attribute]
+        w: Map[String, Attribute]
     ) =>
       parser.generateOperation(
         opName = name,
@@ -108,20 +108,20 @@ object SetResultOp extends MLIROperationObject {
 }
 
 case class SetResultOp(
-    override val operands: ListType[Value[Attribute]],
-    override val successors: ListType[Block],
-    results_types: ListType[Attribute],
-    override val regions: ListType[Region],
-    override val dictionaryProperties: DictType[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute]
-) extends RegisteredOperation(
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results_types: Seq[Attribute],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
+    override val attributes: DictType[String, Attribute]
+) extends BaseOperation(
       name = "subop.set_result",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_verify(): Unit = (
@@ -129,10 +129,10 @@ case class SetResultOp(
     successors.length,
     results.length,
     regions.length,
-    dictionaryProperties.size
+    properties.size
   ) match {
     case (1, 0, 0, 0, 0) =>
-      dictionaryAttributes.get("result_id") match {
+      attributes.get("result_id") match {
         case Some(x) =>
           x match {
             case _: IntegerAttr =>

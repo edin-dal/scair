@@ -37,7 +37,7 @@ import scala.quoted.*
   * @param name
   *   The name of the member to select.
   */
-def selectMember(obj: Expr[_], name: String)(using
+def selectMember(obj: Expr[?], name: String)(using
     Quotes
 ): Expr[Any] = {
   import quotes.reflect.*
@@ -56,8 +56,8 @@ def selectMember(obj: Expr[_], name: String)(using
   */
 def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
-    adtOpExpr: Expr[_]
-)(using Quotes): Expr[ListType[DefinedInput[Def]]] = {
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Seq[DefinedInput[Def]]] = {
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
@@ -72,71 +72,44 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
           }
     )
   )
-  '{ ListType.from(${ stuff }.flatten) }
+  '{ ${ stuff }.flatten }
 }
 
-/** Create an UnverifiedOp instance from an ADT expression.
-  * @tparam T
-  *   The ADT type.
-  * @param opDef
-  *   The OperationDef derived from the ADT.
-  * @param adtOpExpr
-  *   The ADT expression.
-  */
-def fromADTOperationMacro[T: Type](
+def operandsMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[T]
-)(using
-    Quotes
-): Expr[UnverifiedOp[T]] =
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Seq[Operand[Attribute]]] =
+  ADTFlatInputMacro(opDef.operands, adtOpExpr)
 
-  /*______________*\
-  \*-- OPERANDS --*/
+def successorsMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Seq[Successor]] =
+  ADTFlatInputMacro(opDef.successors, adtOpExpr)
 
-  val flatOperands = ADTFlatInputMacro(opDef.operands, adtOpExpr)
+def resultsMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Seq[Result[Attribute]]] =
+  ADTFlatInputMacro(opDef.results, adtOpExpr)
 
-  /*________________*\
-  \*-- SUCCESSORS --*/
+def regionsMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Seq[Region]] =
+  ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
-  val flatSuccessors = ADTFlatInputMacro(opDef.successors, adtOpExpr)
-
-  /*_____________*\
-  \*-- RESULTS --*/
-
-  val flatResults = ADTFlatInputMacro(opDef.results, adtOpExpr)
-
-  /*_____________*\
-  \*-- REGIONS --*/
-
-  val flatRegions = ADTFlatInputMacro(opDef.regions, adtOpExpr)
-
-  /*________________*\
-  \*-- PROPERTIES --*/
-
+def propertiesMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Map[String, Attribute]] =
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-  val propertiesDict = '{
-    DictType.from(${ propertyNames } zip ${ propertyExprs })
-  }
-
-  /*_________________*\
-  \*-- CONSTRUCTOR --*/
-
   '{
-    val x = UnverifiedOp[T](
-      name = ${ Expr(opDef.name) },
-      operands = $flatOperands,
-      successors = $flatSuccessors,
-      results_types = ListType.empty[Attribute],
-      regions = $flatRegions,
-      dictionaryProperties = $propertiesDict,
-      dictionaryAttributes = DictType.empty[String, Attribute]
-    )
-    x.results.addAll($flatResults)
-    x
+    Map.from(${ propertyNames } zip ${ propertyExprs })
   }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -148,7 +121,7 @@ def fromADTOperationMacro[T: Type](
 /** Helper to verify a property argument.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
-    list: Expr[DictType[String, Attribute]],
+    list: Expr[Map[String, Attribute]],
     propName: String
 )(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
@@ -183,14 +156,14 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   Type.of[Def] match
     case '[ResultDef]     => '{ ${ op }.results }
     case '[OperandDef]    => '{ ${ op }.operands }
-    case '[RegionDef]     => '{ ${ op }.regions }
+    case '[RegionDef]     => '{ ${ op }.regions.map(_.detached) }
     case '[SuccessorDef]  => '{ ${ op }.successors }
-    case '[OpPropertyDef] => '{ ${ op }.dictionaryProperties.toSeq }
+    case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
 
 /** Helper to get the name of a construct definition type.
   */
@@ -234,12 +207,12 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   *   The UnverifiedOp expression.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
     val dense =
-      ${ op }.dictionaryProperties.get(s"${${ Expr(segmentSizesName) }}") match
+      ${ op }.properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
@@ -291,7 +264,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   */
 def partitionedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   // Get the flat list of constructs from the UnverifiedOp
   val flat = getConstructSeq[Def](op)
@@ -375,7 +348,7 @@ def partitionedConstructs[Def <: OpInputDef: Type](
   */
 def verifiedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) = {
   // For each partitioned construct
   (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
@@ -394,6 +367,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
                       Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
                     }}, got ${${ c }}"
                 )
+
               ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
             }
           // If the construct is variadic, check if it is a list of the expected type
@@ -401,15 +375,15 @@ def verifiedConstructs[Def <: OpInputDef: Type](
             '{
               if (
                 !${ c }
-                  .isInstanceOf[ListType[DefinedInputOf[Def, t & Attribute]]]
+                  .isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
               ) then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[ListType[DefinedInputOf[Def, t & Attribute]]])
+                      Expr(Type.show[Seq[DefinedInputOf[Def, t & Attribute]]])
                     }}, got ${${ c }}"
                 )
               ${ c }
-                .asInstanceOf[ListType[DefinedInputOf[Def, t & Attribute]]]
+                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
                 .toSeq
             }
   }
@@ -429,7 +403,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[UnverifiedOp[_]]
+    op: Expr[UnverifiedOp[?]]
 )(using Quotes) =
   import quotes.reflect._
   (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
@@ -448,7 +422,7 @@ def constructorArgs(
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           val property = generateCheckedPropertyArgument[t & Attribute](
-            '{ $op.dictionaryProperties },
+            '{ $op.properties },
             name
           )
           NamedArg(name, property.asTerm)
@@ -567,30 +541,140 @@ object AttributeTrait {
 
 }
 
-trait MLIRTrait[T] extends MLIRTraitI[T] {
-  extension (op: T) override def MLIRTrait = this
+trait DerivedOperation[name <: String, T] extends Operation {
+
+  this: T =>
+
+  given companion: DerivedOperationCompanion[T] = deferred
+
+  override def updated(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ) =
+    companion(
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    )
+
+  def name: String = companion.name
+  // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.
+  def operands: Seq[Value[Attribute]] = companion.operands(this)
+  def successors: Seq[Block] = companion.successors(this)
+  def results: Seq[Result[Attribute]] = companion.results(this)
+  def regions: Seq[Region] = companion.regions(this)
+
+  def properties: Map[String, Attribute] = companion.properties(this)
+
 }
 
-object MLIRTrait {
+case class UnverifiedOp[T](
+    override val name: String,
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends BaseOperation(
+      name = name,
+      operands,
+      successors,
+      results_types,
+      regions,
+      properties,
+      attributes
+    ) {
 
-  inline def derived[T]: MLIRTrait[T] = ${ derivedImpl[T] }
+  override def copy(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ) = {
+    UnregisteredOperation(
+      name = name,
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    )
+  }
 
-  def derivedImpl[T: Type](using Quotes): Expr[MLIRTrait[T]] =
+}
+
+trait DerivedOperationCompanion[T] extends OperationCompanion {
+  def operands(adtOp: T): Seq[Value[Attribute]]
+  def successors(adtOp: T): Seq[Block]
+  def results(adtOp: T): Seq[Result[Attribute]]
+  def regions(adtOp: T): Seq[Region]
+  def properties(adtOp: T): Map[String, Attribute]
+
+  def apply(
+      operands: Seq[Value[Attribute]] = Seq(),
+      successors: Seq[scair.ir.Block] = Seq(),
+      results_types: Seq[Attribute] = Seq(),
+      regions: Seq[Region] = Seq(),
+      properties: Map[String, Attribute] = Map.empty[String, Attribute],
+      attributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ): UnverifiedOp[T]
+
+  def unverify(adtOp: T): UnverifiedOp[T]
+  def verify(unverOp: UnverifiedOp[T]): T
+
+}
+
+trait MLIRName[name <: String]
+
+object DerivedOperationCompanion {
+
+  inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
+    derivedImpl[T]
+  }
+
+  def derivedImpl[T <: Operation: Type](using
+      Quotes
+  ): Expr[DerivedOperationCompanion[T]] =
     val opDef = getDefImpl[T]
+
     '{
 
-      new MLIRTrait[T]:
+      new DerivedOperationCompanion[T]:
+
+        def operands(adtOp: T): Seq[Value[Attribute]] =
+          ${ operandsMacro(opDef, '{ adtOp }) }
+        def successors(adtOp: T): Seq[Block] =
+          ${ successorsMacro(opDef, '{ adtOp }) }
+        def results(adtOp: T): Seq[Result[Attribute]] =
+          ${ resultsMacro(opDef, '{ adtOp }) }
+        def regions(adtOp: T): Seq[Region] =
+          ${ regionsMacro(opDef, '{ adtOp }) }
+        def properties(adtOp: T): Map[String, Attribute] =
+          ${ propertiesMacro(opDef, '{ adtOp }) }
 
         def name: String = ${ Expr(opDef.name) }
 
         def apply(
-            operands: ListType[Value[Attribute]] = ListType(),
-            successors: ListType[scair.ir.Block] = ListType(),
-            results_types: ListType[Attribute] = ListType(),
-            regions: ListType[Region] = ListType(),
-            dictionaryProperties: DictType[String, Attribute] =
-              DictType.empty[String, Attribute],
-            dictionaryAttributes: DictType[String, Attribute] =
+            operands: Seq[Value[Attribute]] = Seq(),
+            successors: Seq[scair.ir.Block] = Seq(),
+            results_types: Seq[Attribute] = Seq(),
+            regions: Seq[Region] = Seq(),
+            properties: Map[String, Attribute] = Map.empty[String, Attribute],
+            attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
         ): UnverifiedOp[T] = UnverifiedOp[T](
           name = ${ Expr(opDef.name) },
@@ -598,33 +682,38 @@ object MLIRTrait {
           successors = successors,
           results_types = results_types,
           regions = regions,
-          dictionaryProperties = dictionaryProperties,
-          dictionaryAttributes = dictionaryAttributes
+          properties = properties,
+          attributes = attributes
         )
 
         def unverify(adtOp: T): UnverifiedOp[T] =
-          ${ fromADTOperationMacro[T](opDef, '{ adtOp }) }
+          UnverifiedOp[T](
+            name = ${ Expr(opDef.name) },
+            operands = operands(adtOp),
+            successors = successors(adtOp),
+            results_types = results(adtOp).map(_.typ),
+            regions = regions(adtOp).map(_.detached),
+            properties = properties(adtOp),
+            attributes = adtOp.attributes
+          )
 
         def verify(unverOp: UnverifiedOp[T]): T =
           ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
-
-        extension (op: T) override def MLIRTrait: MLIRTrait[T] = this
 
     }
 
 }
 
-inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[_]] =
+inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      // slight workaround on that &: TODO -> get rid of it ;)
-      AttributeTrait.derived[t] +: summonAttributeTraits[ts]
+      summonInline[AttributeTrait[t]] +: summonAttributeTraits[ts]
     case _: EmptyTuple => Seq()
 
-inline def summonMLIRTraits[T <: Tuple]: Seq[MLIRTrait[_]] =
+inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      MLIRTrait.derived[t] +: summonMLIRTraits[ts]
+      summonInline[DerivedOperationCompanion[t]] +: summonMLIRTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](

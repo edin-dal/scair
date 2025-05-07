@@ -3,7 +3,6 @@ package scair.ir
 import fastparse.P
 import scair.Parser
 import scair.Printer
-
 // import scala.reflect.ClassTag
 
 // ██╗ ██████╗░
@@ -13,145 +12,153 @@ import scair.Printer
 // ██║ ██║░░██║
 // ╚═╝ ╚═╝░░╚═╝
 
-trait MLIRName[name <: String]
-
-sealed abstract class Operation()
-
-class UnverifiedOp[T](
-    name: String,
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends MLIROperation(
-      name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      dictionaryProperties,
-      dictionaryAttributes
-    )
-
-/*≡==--==≡≡≡≡==--=≡≡*\
-||    MLIR REALM    ||
-\*≡==---==≡≡==---==≡*/
-
-object MLIRRealm {}
-
-trait MLIRRealm[T]() {
-
-  def constructUnverifiedOp(
-      operands: ListType[Value[Attribute]] = ListType(),
-      successors: ListType[Block] = ListType(),
-      results_types: ListType[Attribute] = ListType(),
-      regions: ListType[Region] = ListType(),
-      dictionaryProperties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
-      dictionaryAttributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
-  ): UnverifiedOp[T]
-
-  def unverify(op: T): UnverifiedOp[T]
-
-  def verify(op: UnverifiedOp[T]): T
-
-}
-
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+trait IRNode {
+  def parent: Option[IRNode]
 
-sealed abstract class MLIROperation(
-    val name: String,
-    val operands: ListType[Value[Attribute]] = ListType(),
-    val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    val regions: ListType[Region] = ListType(),
-    val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    val dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends Operation,
-      OpTrait {
+  final def is_ancestor(other: IRNode): Boolean = {
+    other.parent match {
+      case Some(parent) if parent == this => true
+      case Some(parent)                   => is_ancestor(parent)
+      case None                           => false
+      case null                           => false
+    }
+  }
 
-  val results: ListType[Result[Attribute]] = results_types.map(Result(_))
-  def op: MLIROperation = this
+}
 
+trait Operation extends IRNode {
+
+  final override def parent = container_block
+
+  regions.foreach(attach_region)
+  operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
+
+  def name: String
+
+  def updated(
+      operands: Seq[Value[Attribute]] = operands,
+      successors: Seq[Block] = successors,
+      results_types: Seq[Attribute] = results.map(_.typ),
+      regions: Seq[Region] = regions,
+      properties: Map[String, Attribute] = properties,
+      attributes: DictType[String, Attribute] = attributes
+  ): Operation
+
+  def operands: Seq[Value[Attribute]]
+  def successors: Seq[Block]
+  def results: Seq[Result[Attribute]]
+  def regions: Seq[Region]
+  final def detached_regions = regions.map(_.detached)
+  def properties: Map[String, Attribute]
+  val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
+  def trait_verify(): Unit = ()
 
-  def is_ancestor(node: Block): Boolean = {
-    val reg = node.container_region
-    reg match {
-      case Some(x) =>
-        x.container_operation match {
-          case Some(op) =>
-            (op equals this) match {
-              case true => true
-              case false =>
-                op.container_block match {
-                  case None => false
-                  case Some(block) =>
-                    is_ancestor(block)
-                }
-            }
-          case None => false
-        }
-      case None => false
-    }
-  }
-
-  def drop_all_references: Unit = {
-    container_block = None
-    for ((idx, operand) <- (0 to operands.length) zip operands) {
-      operand.remove_use(new Use(this, idx))
-    }
-    for (region <- regions) region.drop_all_references
-  }
-
-  // TO-DO: think harder about the drop_refs - sounds fishy as per PR #45
-  def erase(drop_refs: Boolean = true): Unit = {
-    if (container_block != None) then {
-      throw new Exception(
-        "Operation should be first detached from its container block before erasure."
-      )
-    }
-    if (drop_refs) then drop_all_references
-
-    for (result <- results) {
-      result.erase()
-    }
-  }
+  def custom_print(p: Printer)(using indentLevel: Int) =
+    p.printGenericMLIROperation(this)
 
   def custom_verify(): Unit = ()
 
   final def verify(): Unit = {
     for (result <- results) result.verify()
     for (region <- regions) region.verify()
-    for ((key, attr) <- dictionaryProperties) attr.custom_verify()
-    for ((key, attr) <- dictionaryAttributes) attr.custom_verify()
+    for ((key, attr) <- properties) attr.custom_verify()
+    for ((key, attr) <- attributes) attr.custom_verify()
     custom_verify()
     trait_verify()
   }
 
-  def custom_print(p: Printer): String =
-    p.printGenericMLIROperation(this)
-
-  final def print(printer: Printer): String = {
-    printer.printOperation(this)
+  final def drop_all_references: Unit = {
+    container_block = None
+    operands.foreach(_.uses.filterInPlace(_.operation != this))
+    for (region <- regions) region.drop_all_references
   }
+
+  final def erase(): Unit = {
+    if (container_block != None) then {
+      throw new Exception(
+        "Operation should be first detached from its container block before erasure."
+      )
+    }
+    drop_all_references
+
+    for (result <- results) {
+      result.erase()
+    }
+  }
+
+  final def attach_region(region: Region) =
+    region.container_operation match {
+      case Some(x) =>
+        throw new Exception(
+          s"""Can't attach a region already attached to an operation:
+              ${Printer().print(region)(using 0)}"""
+        )
+      case None =>
+        region.is_ancestor(this) match {
+          case true =>
+            throw new Exception(
+              "Can't add a region to an operation that is contained within that region"
+            )
+          case false =>
+            region.container_operation = Some(this)
+        }
+    }
+
+}
+
+abstract class BaseOperation(
+    val name: String,
+    val operands: Seq[Value[Attribute]] = Seq(),
+    val successors: Seq[Block] = Seq(),
+    val results_types: Seq[Attribute] = Seq(),
+    val regions: Seq[Region] = Seq(),
+    val properties: Map[String, Attribute] = Map.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends Operation {
+
+  // def companion : OperationCompanion
+
+  def copy(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ): BaseOperation
+
+  override def updated(
+      operands: Seq[Value[Attribute]] = operands,
+      successors: Seq[Block] = successors,
+      results_types: Seq[Attribute] = results.map(_.typ),
+      regions: Seq[Region] = regions,
+      properties: Map[String, Attribute] = properties,
+      attributes: DictType[String, Attribute] = attributes
+  ) = {
+    copy(
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    )
+  }
+
+  val results: Seq[Result[Attribute]] = results_types.map(Result(_))
 
   override def hashCode(): Int = {
     return 7 * 41 +
       this.operands.hashCode() +
       this.results.hashCode() +
       this.regions.hashCode() +
-      this.dictionaryProperties.hashCode() +
-      this.dictionaryAttributes.hashCode()
+      this.properties.hashCode() +
+      this.attributes.hashCode()
   }
 
   override def equals(o: Any): Boolean = {
@@ -162,80 +169,61 @@ sealed abstract class MLIROperation(
 
 case class UnregisteredOperation(
     override val name: String,
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends MLIROperation(
+) extends BaseOperation(
       name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      dictionaryProperties,
-      dictionaryAttributes
-    )
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions,
+      properties = properties,
+      attributes = attributes
+    ) {
 
-class RegisteredOperation(
-    name: String,
-    operands: ListType[Value[Attribute]] = ListType(),
-    successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    regions: ListType[Region] = ListType(),
-    dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    dictionaryAttributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends MLIROperation(
+  override def copy(
+      operands: Seq[Value[Attribute]],
+      successors: Seq[Block],
+      results_types: Seq[Attribute],
+      regions: Seq[Region],
+      properties: Map[String, Attribute],
+      attributes: DictType[String, Attribute]
+  ) = {
+    UnregisteredOperation(
       name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      operands = operands,
+      successors = successors,
+      results_types = results_types,
+      regions = regions.map(_.detached),
+      properties = properties,
+      attributes = attributes
     )
+  }
 
-trait MLIROperationObject {
+}
+
+trait OperationCompanion {
   def name: String
 
-  def parse[$: P](parser: Parser): P[MLIROperation] =
+  def parse[$: P](parser: Parser): P[Operation] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )
 
-  type FactoryType = (
-      ListType[Value[Attribute]] /* = operands */,
-      ListType[Block] /* = successors */,
-      ListType[Attribute] /* = results */,
-      ListType[Region] /* = regions */,
-      DictType[String, Attribute], /* = dictProps */
-      DictType[String, Attribute] /* = dictAttrs */
-  ) => MLIROperation
-
   def apply(
-      operands: ListType[Value[Attribute]] = ListType(),
-      successors: ListType[Block] = ListType(),
-      results_types: ListType[Attribute] = ListType(),
-      regions: ListType[Region] = ListType(),
-      dictionaryProperties: DictType[String, Attribute] =
-        DictType.empty[String, Attribute],
-      dictionaryAttributes: DictType[String, Attribute] =
+      operands: Seq[Value[Attribute]] = Seq(),
+      successors: Seq[Block] = Seq(),
+      results_types: Seq[Attribute] = Seq(),
+      regions: Seq[Region] = Seq(),
+      properties: Map[String, Attribute] = Map.empty[String, Attribute],
+      attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): MLIROperation
-
-}
-
-trait MLIRTraitI[T] extends MLIROperationObject {
-
-  extension (adtOp: T) def MLIRTrait = this
-
-  def unverify(adtOp: T): UnverifiedOp[T]
-
-  def verify(unverOp: UnverifiedOp[T]): T
+  ): Operation
 
 }

@@ -13,15 +13,7 @@ package scair.ir
 
 // TO-DO: perhaps a linked list of a use to other uses within an operation
 //        for faster use retrieval and index update
-case class Use(val operation: MLIROperation, val index: Int) {
-
-  override def equals(o: Any): Boolean = o match {
-    case Use(op, idx) =>
-      (operation eq op) && (index eq idx)
-    case _ => super.equals(o)
-  }
-
-}
+case class Use(val operation: Operation, val index: Int)
 
 object Value {
   def apply[T <: Attribute](typ: T): Value[T] = new Value(typ)
@@ -44,7 +36,12 @@ class Value[+T <: Attribute](
 
   def replace_by(newValue: Value[Attribute]): Unit = {
     for (use <- uses) {
-      use.operation.operands.updateOperandsAndUses(use, newValue)
+      val op = use.operation
+      val block = op.container_block.get
+      val new_op =
+        op.updated(operands = op.operands.updatedOperandsAndUses(use, newValue))
+      val idx = block.operations.indexOf(op)
+      block.operations(idx) = new_op
     }
     uses = ListType()
   }

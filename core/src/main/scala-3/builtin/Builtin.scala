@@ -448,43 +448,43 @@ case class AffineSetAttr(val affine_set: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-object ModuleOp extends MLIROperationObject {
+object ModuleOp extends OperationCompanion {
   override def name = "builtin.module"
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
       parser: Parser
-  ): P[MLIROperation] =
+  ): P[Operation] =
     P(
       parser.Region
-    ).map((x: Region) => ModuleOp(regions = ListType(x)))
+    ).map((x: Region) => ModuleOp(regions = Seq(x)))
   // ==----------------------== //
 
 }
 
 case class ModuleOp(
-    override val operands: ListType[Value[Attribute]] = ListType(),
-    override val successors: ListType[Block] = ListType(),
-    results_types: ListType[Attribute] = ListType(),
-    override val regions: ListType[Region] = ListType(),
-    override val dictionaryProperties: DictType[String, Attribute] =
-      DictType.empty[String, Attribute],
-    override val dictionaryAttributes: DictType[String, Attribute] =
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results_types: Seq[Attribute] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends RegisteredOperation(
+) extends BaseOperation(
       name = "builtin.module",
       operands,
       successors,
       results_types,
       regions,
-      dictionaryProperties,
-      dictionaryAttributes
+      properties,
+      attributes
     ) {
 
   override def custom_print(
       p: Printer
-  ): String =
-    s"builtin.module ${p.printRegion(regions(0))}"
+  )(using indentLevel: Int) =
+    p.print("builtin.module ", regions(0))
 
 }
 
