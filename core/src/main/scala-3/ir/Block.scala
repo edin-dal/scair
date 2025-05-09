@@ -135,8 +135,8 @@ case class Block private (
       (args, operations_expr(args))
     })
 
-  /** Constructs a Block instance with the given arguments type and a function
-    * to generate operations given the created block arguments.
+  /** Constructs a Block instance with the given arguments type and function to
+    * generate operations given the created block arguments.
     *
     * @param argument_type
     *   The types of the arguments as an Iterable of Attributes.
