@@ -103,11 +103,11 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
 
       terminator.container_block = Some(block)
 
-      val exception = intercept[Exception](
-        block.verify()
-      ).getMessage
+      val exception = block.verify()
 
-      exception shouldBe "Operation 'terminator' marked as a terminator, but is not the last operation within its container block"
+      exception shouldBe Right(
+        "Operation 'terminator' marked as a terminator, but is not the last operation within its container block"
+      )
     }
   }
 
@@ -115,11 +115,11 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
     withClue("Terminator not contained in block: ") {
       val terminator = new TerminatorOp()
 
-      val exception = intercept[Exception](
-        terminator.verify()
-      ).getMessage
+      val exception = terminator.verify()
 
-      exception shouldBe "Operation 'terminator' marked as a terminator, but is not contained in any block."
+      exception shouldBe Right(
+        "Operation 'terminator' marked as a terminator, but is not contained in any block."
+      )
     }
   }
 
@@ -165,11 +165,11 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
     val noterminator =
       new NoTerminatorOp(regions = Seq(region1, region2))
 
-    val exception = intercept[Exception](
-      noterminator.verify()
-    ).getMessage
+    val exception = noterminator.verify()
 
-    exception shouldBe "NoTerminator Operation 'noterminator' requires single-block regions"
+    exception shouldBe Right(
+      "NoTerminator Operation 'noterminator' requires single-block regions"
+    )
   }
 
 }

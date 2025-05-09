@@ -6,13 +6,15 @@ import scair.Printer
 import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
-import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.scairdl.constraints.BaseAttr
 import scair.scairdl.constraints.ConstraintContext
 
 import scala.collection.immutable
 import scala.collection.mutable
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -324,15 +326,13 @@ case class DenseArrayAttr(
 ) extends ParametrizedAttribute("builtin.dense", Seq(typ, data))
     with Seq[Attribute] {
 
-  override def custom_verify(): Unit =
+  override def custom_verify(): Either[Unit, String] =
     if !data.forall(_ match {
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ
       })
-    then
-      throw new VerifyException(
-        "Element types do not match the dense array type"
-      )
+    then Right("Element types do not match the dense array type")
+    else Left(())
 
   override def custom_print = {
 
@@ -396,9 +396,18 @@ case class DenseIntOrFPElementsAttr(
 
   val int_or_float = BaseAttr[IntegerType | FloatType]()
 
-  override def custom_verify(): Unit =
-    int_or_float.verify(elementType, new ConstraintContext())
-    for (x <- data.attrValues) int_or_float.verify(x, new ConstraintContext())
+  override def custom_verify(): Either[Unit, String] =
+    Try(int_or_float.verify(elementType, new ConstraintContext())) match {
+      case Success(_) =>
+        Try(
+          for (x <- data.attrValues)
+            int_or_float.verify(x, new ConstraintContext())
+        ) match {
+          case Success(_) => Left(())
+          case Failure(e) => Right(e.getMessage)
+        }
+      case Failure(e) => Right(e.getMessage)
+    }
 
   override def custom_print = {
 

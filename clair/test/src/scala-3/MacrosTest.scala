@@ -52,11 +52,15 @@ case class MulFull(
 ) extends DerivedOperation["cmath.mulfull", MulFull]
     derives DerivedOperationCompanion
 
+val mulComp = summon[DerivedOperationCompanion[Mul]]
+val mulSVComp = summon[DerivedOperationCompanion[MulSingleVariadic]]
+val mulMMVComp = summon[DerivedOperationCompanion[MulMultiVariadic]]
+
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   object TestCases {
 
-    def unverOp = UnverifiedOp[Mul](
+    def unverOp = mulComp.UnverifiedOp(
       name = "cmath.mul",
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
@@ -86,7 +90,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       succ2 = scair.ir.Block()
     )
 
-    def unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
+    def unverMulSinVarOp = new mulSVComp.UnverifiedOp(
       name = "cmath.mulsinglevariadic",
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
@@ -113,7 +117,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       randProp = StringData("what")
     )
 
-    def unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
+    def unverMulMulVarOp = mulMMVComp.UnverifiedOp(
       name = "cmath.mulmultivariadic",
       operands = Seq(
         Value(typ = IntegerType(IntData(5), Unsigned)),
@@ -241,10 +245,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Conversion to ADTOp" should "Correctly translate from Unverified operation to ADT Operation" in {
-    val opT = summon[DerivedOperationCompanion[Mul]]
-
     val op = TestCases.unverOp
-    val adtMulOp = opT.verify(op)
+    val adtMulOp = mulComp.verify(op)
 
     adtMulOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -284,10 +286,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {
-    val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
-
     val op = TestCases.unverMulSinVarOp
-    val adtMulSinVarOp = opT.verify(op)
+    val adtMulSinVarOp = mulSVComp.verify(op)
 
     adtMulSinVarOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -334,10 +334,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unverified operation to ADT Operation" in {
-    val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
-
     val op = TestCases.unverMulMulVarOp
-    val adtMulMulVarOp = opT.verify(op)
+    val adtMulMulVarOp = mulMMVComp.verify(op)
 
     adtMulMulVarOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>

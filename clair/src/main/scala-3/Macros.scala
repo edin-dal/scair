@@ -12,6 +12,9 @@ import scair.scairdl.constraints.*
 import scala.collection.mutable
 import scala.compiletime.*
 import scala.quoted.*
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -156,7 +159,7 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   Type.of[Def] match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -207,7 +210,7 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   *   The UnverifiedOp expression.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
@@ -264,7 +267,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   */
 def partitionedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   // Get the flat list of constructs from the UnverifiedOp
   val flat = getConstructSeq[Def](op)
@@ -348,7 +351,7 @@ def partitionedConstructs[Def <: OpInputDef: Type](
   */
 def verifiedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) = {
   // For each partitioned construct
   (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
@@ -403,7 +406,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   import quotes.reflect._
   (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
@@ -444,7 +447,7 @@ def constructorArgs(
 
 def fromUnverifiedOperationMacro[T: Type](
     opDef: OperationDef,
-    genExpr: Expr[UnverifiedOp[T]]
+    genExpr: Expr[DerivedOperationCompanion[T]#UnverifiedOp]
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
 
@@ -575,53 +578,69 @@ trait DerivedOperation[name <: String, T] extends Operation {
 
 }
 
-case class UnverifiedOp[T](
-    override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      properties,
-      attributes
-    ) {
-
-  override def copy(
-      operands: Seq[Value[Attribute]],
-      successors: Seq[Block],
-      results_types: Seq[Attribute],
-      regions: Seq[Region],
-      properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
-  ) = {
-    UnregisteredOperation(
-      name = name,
-      operands = operands,
-      successors = successors,
-      results_types = results_types,
-      regions = regions,
-      properties = properties,
-      attributes = attributes
-    )
-  }
-
-}
-
 trait DerivedOperationCompanion[T] extends OperationCompanion {
+
+  outer =>
+
   def operands(adtOp: T): Seq[Value[Attribute]]
   def successors(adtOp: T): Seq[Block]
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
+
+  case class UnverifiedOp(
+      override val name: String,
+      override val operands: Seq[Value[Attribute]] = Seq(),
+      override val successors: Seq[Block] = Seq(),
+      override val results_types: Seq[Attribute] = Seq(),
+      override val regions: Seq[Region] = Seq(),
+      override val properties: Map[String, Attribute] =
+        Map.empty[String, Attribute],
+      override val attributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ) extends BaseOperation(
+        name = name,
+        operands,
+        successors,
+        results_types,
+        regions,
+        properties,
+        attributes
+      ) {
+
+    override def copy(
+        operands: Seq[Value[Attribute]],
+        successors: Seq[Block],
+        results_types: Seq[Attribute],
+        regions: Seq[Region],
+        properties: Map[String, Attribute],
+        attributes: DictType[String, Attribute]
+    ) = {
+      UnregisteredOperation(
+        name = name,
+        operands = operands,
+        successors = successors,
+        results_types = results_types,
+        regions = regions,
+        properties = properties,
+        attributes = attributes
+      )
+    }
+
+    override def verify(): Either[Operation, String] = {
+      // TODO: temporary fix for now, to discuss whether we want this at the macro level
+      Try(outer.verify(this)) match {
+        case Success(op) =>
+          op match {
+            case adtOp: DerivedOperation[_, T] => adtOp.verify()
+            case _ =>
+              Right("Critical Error: Operation is not a DerivedOperation")
+          }
+        case Failure(e) => Right(e.toString())
+      }
+    }
+
+  }
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
@@ -631,10 +650,10 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): UnverifiedOp[T]
+  ): UnverifiedOp
 
-  def unverify(adtOp: T): UnverifiedOp[T]
-  def verify(unverOp: UnverifiedOp[T]): T
+  def unverify(adtOp: T): UnverifiedOp
+  def verify(unverOp: UnverifiedOp): T
 
 }
 
@@ -676,7 +695,7 @@ object DerivedOperationCompanion {
             properties: Map[String, Attribute] = Map.empty[String, Attribute],
             attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
-        ): UnverifiedOp[T] = UnverifiedOp[T](
+        ): UnverifiedOp = UnverifiedOp(
           name = ${ Expr(opDef.name) },
           operands = operands,
           successors = successors,
@@ -686,8 +705,8 @@ object DerivedOperationCompanion {
           attributes = attributes
         )
 
-        def unverify(adtOp: T): UnverifiedOp[T] =
-          UnverifiedOp[T](
+        def unverify(adtOp: T): UnverifiedOp =
+          UnverifiedOp(
             name = ${ Expr(opDef.name) },
             operands = operands(adtOp),
             successors = successors(adtOp),
@@ -697,7 +716,7 @@ object DerivedOperationCompanion {
             attributes = adtOp.attributes
           )
 
-        def verify(unverOp: UnverifiedOp[T]): T =
+        def verify(unverOp: UnverifiedOp): T =
           ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
 
     }

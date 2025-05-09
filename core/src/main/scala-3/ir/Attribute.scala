@@ -18,7 +18,7 @@ import scair.Parser.*
 sealed trait Attribute {
   def name: String
   def prefix: String = "#"
-  def custom_verify(): Unit = ()
+  def custom_verify(): Either[Unit, String] = Left(())
   def custom_print: String
 }
 

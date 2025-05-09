@@ -57,6 +57,20 @@ extension (dt: DictType[String, Attribute]) {
 
 }
 
+extension [A](x: ListType[A])
+
+  def findOtherwise(
+      p: A => Boolean,
+      default: A
+  ): A = {
+    val it = x.iterator
+    while (it.hasNext) {
+      val a = it.next()
+      if (p(a)) return a
+    }
+    default
+  }
+
 extension (lt: Seq[Value[Attribute]]) {
 
   def updatedOperandsAndUses(use: Use, newValue: Value[Attribute]) = {

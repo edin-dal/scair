@@ -53,7 +53,7 @@ class Value[+T <: Attribute](
       )
   }
 
-  def verify(): Unit = typ.custom_verify()
+  def verify(): Either[Unit, String] = typ.custom_verify()
 
   override def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
