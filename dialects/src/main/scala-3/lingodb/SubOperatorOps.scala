@@ -124,7 +124,7 @@ case class SetResultOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -135,17 +135,21 @@ case class SetResultOp(
       attributes.get("result_id") match {
         case Some(x) =>
           x match {
-            case _: IntegerAttr =>
+            case _: IntegerAttr => Left(this)
             case _ =>
-              throw new VerifyException(
+              Right(
                 "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
               )
           }
         case _ =>
-          throw new VerifyException(
+          Right(
             "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
           )
       }
+    case _ =>
+      Right(
+        "SetResultOp Operation must have 1 operand, 0 successors, 0 results, 0 regions and 0 properties."
+      )
   }
 
 }

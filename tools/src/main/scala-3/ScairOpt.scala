@@ -6,6 +6,7 @@ import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 import scair.utils.allDialects
 import scair.utils.allPasses
+import scair.exceptions.VerifyException
 import scopt.OParser
 
 import scala.io.Source
@@ -100,11 +101,11 @@ object ScairOpt {
             pattern = parser.TopLevel(using _)
           ) match {
             case fastparse.Parsed.Success(input_module, _) =>
-              val processed_module = {
+              val processed_module: Operation | String = {
                 var module = input_module
                 // verify parsed content
-                Try(if (!skip_verify) module.verify()) match {
-                  case Success(_) =>
+                if (!skip_verify) module.verify() match {
+                  case Left(op) =>
                     // apply the specified passes
                     val transformCtx = new TransformContext()
                     transformCtx.register_all_passes()
@@ -112,17 +113,38 @@ object ScairOpt {
                       transformCtx.getPass(name) match {
                         case Some(pass) =>
                           module = pass.transform(module)
-                          if (!skip_verify) module.verify()
+                          module.verify() match {
+                            case Left(_) =>
+                            case Right(errorMsg) =>
+                              throw new VerifyException(errorMsg)
+                          }
                         case None =>
                       }
                     }
                     module
-                  case Failure(exception) =>
+                  case Right(errorMsg) =>
                     if (args.verify_diagnostics) {
-                      exception.getMessage
+                      errorMsg
                     } else {
-                      throw exception
+                      throw new VerifyException(errorMsg)
                     }
+                }
+                else {
+                  val transformCtx = new TransformContext()
+                  transformCtx.register_all_passes()
+                  for (name <- passes) {
+                    transformCtx.getPass(name) match {
+                      case Some(pass) =>
+                        module = pass.transform(module)
+                        module.verify() match {
+                          case Left(_) =>
+                          case Right(errorMsg) =>
+                            throw new VerifyException(errorMsg)
+                        }
+                      case None =>
+                    }
+                  }
+                  module
                 }
               }
 

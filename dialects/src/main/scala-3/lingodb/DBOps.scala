@@ -97,16 +97,13 @@ case class DB_CharType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Unit = {
+  override def custom_verify(): Either[Unit, String] = {
     if (typ.length != 1) {
-      throw new VerifyException(
-        "TupleStream Tuple must contain 1 elements only."
-      )
+      Right("TupleStream Tuple must contain 1 elements only.")
     } else
       typ(0) match {
-        case _: IntData =>
-        case _ =>
-          throw new VerifyException("CharType type must be IntData")
+        case _: IntData => Left(())
+        case _          => Right("CharType type must be IntData")
       }
   }
 
@@ -193,25 +190,19 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Unit = {
+  override def custom_verify(): Either[Unit, String] = {
     if (typ.length != 2) {
-      throw new VerifyException(
-        "TupleStream Tuple must contain exactly 2 elements."
-      )
+      Right("TupleStream Tuple must contain exactly 2 elements.")
     } else {
       typ(0) match {
-        case _: IntData =>
+        case _: IntData => Left(())
         case _ =>
-          throw new VerifyException(
-            "DB_DecimalType type must be (IntData, IntData)"
-          )
+          Right("DB_DecimalType type must be (IntData, IntData)")
       }
       typ(1) match {
-        case _: IntData =>
+        case _: IntData => Left(())
         case _ =>
-          throw new VerifyException(
-            "DB_DecimalType type must be (IntData, IntData)"
-          )
+          Right("DB_DecimalType type must be (IntData, IntData)")
       }
     }
   }
@@ -242,17 +233,18 @@ case class DB_StringType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Unit = {
+  override def custom_verify(): Either[Unit, String] = {
     if (typ.length > 1) {
-      throw new VerifyException(
+      Right(
         "TupleStream Tuple must contain at most 1 element."
       )
     } else if (typ.length == 1)
       typ(0) match {
-        case _: StringData =>
+        case _: StringData => Left(())
         case _ =>
-          throw new VerifyException("DB_DecimalType type must be StringData")
+          Right("DB_DecimalType type must be StringData")
       }
+    else Left(())
   }
 
   override def custom_print: String = {
@@ -312,16 +304,16 @@ case class DB_ConstantOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
     properties.size
   ) match {
-    case (0, 0, 1, 0, 0) =>
+    case (0, 0, 1, 0, 0) => Left(this)
     case _ =>
-      throw new VerifyException(
+      Right(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
   }
@@ -386,7 +378,7 @@ case class DB_CmpOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -395,14 +387,14 @@ case class DB_CmpOp(
   ) match {
     case (2, 0, 0, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true =>
+        case true => Left(this)
         case false =>
-          throw new VerifyException(
+          Right(
             "In order to be compared, operands' types must match!"
           )
       }
     case _ =>
-      throw new VerifyException(
+      Right(
         "DB_CmpOp Operation must contain only 2 operands."
       )
   }
@@ -530,7 +522,7 @@ case class DB_MulOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -539,14 +531,14 @@ case class DB_MulOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true =>
+        case true => Left(this)
         case false =>
-          throw new VerifyException(
+          Right(
             "In order to be multiplied, operands' types must match!"
           )
       }
     case _ =>
-      throw new VerifyException(
+      Right(
         "DB_MulOp Operation must contain only 2 operands."
       )
   }
@@ -676,7 +668,7 @@ case class DB_DivOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -685,14 +677,14 @@ case class DB_DivOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true =>
+        case true => Left(this)
         case false =>
-          throw new VerifyException(
+          Right(
             "In order to be divided, operands' types must match!"
           )
       }
     case _ =>
-      throw new VerifyException(
+      Right(
         "DB_DivOp Operation must contain only 2 operands."
       )
   }
@@ -762,7 +754,7 @@ case class DB_AddOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -771,14 +763,14 @@ case class DB_AddOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true =>
+        case true => Left(this)
         case false =>
-          throw new VerifyException(
+          Right(
             "In order to be added, operands' types must match!"
           )
       }
     case _ =>
-      throw new VerifyException(
+      Right(
         "DB_AddOp Operation must contain only 2 operands."
       )
   }
@@ -850,7 +842,7 @@ case class DB_SubOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -859,14 +851,14 @@ case class DB_SubOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true =>
+        case true => Left(this)
         case false =>
-          throw new VerifyException(
+          Right(
             "In order to carry out substitution, operands' types must match!"
           )
       }
     case _ =>
-      throw new VerifyException(
+      Right(
         "DB_SubOp Operation must contain only 2 operands."
       )
   }
@@ -935,16 +927,16 @@ case class CastOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
     properties.size
   ) match {
-    case (1, 0, 1, 0, 0) =>
+    case (1, 0, 1, 0, 0) => Left(this)
     case _ =>
-      throw new VerifyException(
+      Right(
         "CastOp Operation must contain only 1 operand and result."
       )
   }
