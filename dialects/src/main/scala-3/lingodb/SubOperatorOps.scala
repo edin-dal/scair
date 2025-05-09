@@ -7,7 +7,6 @@ import scair.Parser.BareId
 import scair.Parser.ValueId
 import scair.Parser.whitespace
 import scair.dialects.builtin.*
-import scair.exceptions.VerifyException
 import scair.ir.*
 
 import scala.collection.immutable

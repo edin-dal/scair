@@ -8,7 +8,6 @@ import scair.Parser
 import scair.Parser.*
 import scair.Printer
 import scair.dialects.builtin.*
-import scair.exceptions.VerifyException
 import scair.ir.*
 
 import scala.collection.immutable

@@ -3,16 +3,13 @@ import scair.Printer
 import scair.TransformContext
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
+import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.utils.allDialects
 import scair.utils.allPasses
-import scair.exceptions.VerifyException
 import scopt.OParser
 
 import scala.io.Source
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
 object ScairOpt {
 

@@ -6,14 +6,15 @@ import scair.Printer
 import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
-import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.scairdl.constraints.BaseAttr
 import scair.scairdl.constraints.ConstraintContext
 
 import scala.collection.immutable
 import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║

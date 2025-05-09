@@ -14,7 +14,6 @@ import scair.Parser.whitespace
 import scair.dialects.LingoDB.SubOperatorOps.*
 import scair.dialects.LingoDB.TupleStream.*
 import scair.dialects.builtin.*
-import scair.exceptions.VerifyException
 import scair.ir.*
 
 import scala.collection.immutable
