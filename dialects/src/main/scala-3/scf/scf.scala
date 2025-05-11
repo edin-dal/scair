@@ -12,14 +12,14 @@ type Index = IndexType.type
 case class Condition(
     condition: Operand[I1],
     args: Seq[Operand[Attribute]]
-) extends MLIRName["scf.condition"]
-    derives MLIRTrait
+) extends DerivedOperation["scf.condition", Condition]
+    derives DerivedOperationCompanion
 
 case class ExecuteRegionOp(
     region: Region,
     result: Seq[Result[Attribute]]
-) extends MLIRName["scf.execute_region"]
-    derives MLIRTrait
+) extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
+    derives DerivedOperationCompanion
 
 case class ForOp(
     lowerBound: Operand[AnySignlessIntegerOrIndex],
@@ -27,9 +27,9 @@ case class ForOp(
     step: Operand[AnySignlessIntegerOrIndex],
     initArgs: Operand[Attribute],
     region: Region,
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.for"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.for", ForOp]
+    derives DerivedOperationCompanion
 
 case class ForallOp(
     dynamicLowerBound: Operand[Index],
@@ -42,22 +42,22 @@ case class ForallOp(
     // TODO: should be optional
     mapping: Seq[Operand[RankedTensorType]],
     region: Region,
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.forall"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.forall", ForallOp]
+    derives DerivedOperationCompanion
 
 case class InParallelOp(
     region: Region
-) extends MLIRName["scf.forall.in_parallel"]
-    derives MLIRTrait
+) extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
+    derives DerivedOperationCompanion
 
 case class IfOp(
     condition: Operand[I1],
     thenRegion: Region,
     elseRegion: Region,
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.if"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.if", IfOp]
+    derives DerivedOperationCompanion
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]],
@@ -65,29 +65,29 @@ case class ParallelOp(
     step: Seq[Operand[Index]],
     initVals: Seq[Operand[Attribute]],
     region: Region,
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.parallel"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.parallel", ParallelOp]
+    derives DerivedOperationCompanion
 
 case class ReduceOp(
-    operands: Seq[Operand[Attribute]],
+    operandss: Seq[Operand[Attribute]],
     // TODO: variadic regions
     reductions: Region
-) extends MLIRName["scf.reduce"]
-    derives MLIRTrait
+) extends DerivedOperation["scf.reduce", ReduceOp]
+    derives DerivedOperationCompanion
 
 case class ReduceReturnOp(
-    results: Result[Attribute]
-) extends MLIRName["scf.reduce.return"]
-    derives MLIRTrait
+    resultss: Result[Attribute]
+) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
+    derives DerivedOperationCompanion
 
 case class WhileOp(
     inits: Seq[Operand[Attribute]],
     before: Region,
     after: Region,
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.while"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.while", WhileOp]
+    derives DerivedOperationCompanion
 
 case class IndexSwitchOp(
     arg: Operand[Index],
@@ -95,14 +95,14 @@ case class IndexSwitchOp(
     defaultRegion: Region,
     // TODO: variadic regions
     caseRegions: Region,
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.index_switch"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.index_switch", IndexSwitchOp]
+    derives DerivedOperationCompanion
 
 case class YieldOp(
-    results: Seq[Result[Attribute]]
-) extends MLIRName["scf.yield"]
-    derives MLIRTrait
+    resultss: Seq[Result[Attribute]]
+) extends DerivedOperation["scf.yield", YieldOp]
+    derives DerivedOperationCompanion
 
 val SCFDialect =
   summonDialect[
