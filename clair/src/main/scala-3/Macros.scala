@@ -8,6 +8,7 @@ import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
+import scair.dialects.builtin.DenseArrayAttr
 
 import scala.collection.mutable
 import scala.compiletime.*
@@ -15,6 +16,7 @@ import scala.quoted.*
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scair.dialects.builtin.IntegerType
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -109,10 +111,142 @@ def propertiesMacro(
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
+  // operands
+  val opSegSizeProp: Expr[Map[String, Attribute]] =
+    opDef.hasMultiVariadicOperands match {
+      case true =>
+        val arrayAttr: Expr[Seq[Int]] =
+          Expr.ofList(
+            opDef.operands.map((d) =>
+              d.variadicity match {
+                case Variadicity.Single => Expr(1)
+                case Variadicity.Variadic =>
+                  '{
+                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                  }
+              }
+            )
+          )
+        '{
+          Map(
+            "operandSegmentSizes" -> DenseArrayAttr(
+              IntegerType(IntData(32), Signless),
+              ${ arrayAttr }.map(x =>
+                IntegerAttr(
+                  IntData(x),
+                  IntegerType(IntData(32), Signless)
+                )
+              )
+            )
+          )
+        }
+      case false => '{ Map.empty[String, Attribute] }
+    }
+
+  // results
+  val resSegSizeProp: Expr[Map[String, Attribute]] =
+    opDef.hasMultiVariadicResults match {
+      case true =>
+        val arrayAttr: Expr[Seq[Int]] =
+          Expr.ofList(
+            opDef.results.map((d) =>
+              d.variadicity match {
+                case Variadicity.Single => Expr(1)
+                case Variadicity.Variadic =>
+                  '{
+                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                  }
+              }
+            )
+          )
+        '{
+          Map(
+            "resultSegmentSizes" -> DenseArrayAttr(
+              IntegerType(IntData(32), Signless),
+              ${ arrayAttr }.map(x =>
+                IntegerAttr(
+                  IntData(x),
+                  IntegerType(IntData(32), Signless)
+                )
+              )
+            )
+          )
+        }
+      case false => '{ Map.empty[String, Attribute] }
+    }
+
+  // regions
+  val regSegSizeProp: Expr[Map[String, Attribute]] =
+    opDef.hasMultiVariadicRegions match {
+      case true =>
+        val arrayAttr: Expr[Seq[Int]] =
+          Expr.ofList(
+            opDef.regions.map((d) =>
+              d.variadicity match {
+                case Variadicity.Single => Expr(1)
+                case Variadicity.Variadic =>
+                  '{
+                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                  }
+              }
+            )
+          )
+        '{
+          Map(
+            "regionSegmentSizes" -> DenseArrayAttr(
+              IntegerType(IntData(32), Signless),
+              ${ arrayAttr }.map(x =>
+                IntegerAttr(
+                  IntData(x),
+                  IntegerType(IntData(32), Signless)
+                )
+              )
+            )
+          )
+        }
+      case false => '{ Map.empty[String, Attribute] }
+    }
+
+  // successors
+  val succSegSizeProp: Expr[Map[String, Attribute]] =
+    opDef.hasMultiVariadicSuccessors match {
+      case true =>
+        val arrayAttr: Expr[Seq[Int]] =
+          Expr.ofList(
+            opDef.operands.map((d) =>
+              d.variadicity match {
+                case Variadicity.Single => Expr(1)
+                case Variadicity.Variadic =>
+                  '{
+                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                  }
+              }
+            )
+          )
+        '{
+          Map(
+            "successorSegmentSizes" -> DenseArrayAttr(
+              IntegerType(IntData(32), Signless),
+              ${ arrayAttr }.map(x =>
+                IntegerAttr(
+                  IntData(x),
+                  IntegerType(IntData(32), Signless)
+                )
+              )
+            )
+          )
+        }
+      case false => '{ Map.empty[String, Attribute] }
+    }
+
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
   '{
     Map.from(${ propertyNames } zip ${ propertyExprs })
+      ++ ${ opSegSizeProp }
+      ++ ${ resSegSizeProp }
+      ++ ${ regSegSizeProp }
+      ++ ${ succSegSizeProp }
   }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -274,7 +408,19 @@ def partitionedConstructs[Def <: OpInputDef: Type](
   // Check the number of variadic constructs
   defs.count(getConstructVariadicity(_) != Variadicity.Single) match
     // If there is no variadic defintion, partionning is just about taking individual elements
-    case 0 => defs.zipWithIndex.map((d, i) => '{ ${ flat }(${ Expr(i) }) })
+    case 0 =>
+      defs.zipWithIndex.map((d, i) =>
+        val defLength = Expr(defs.length)
+        '{
+          if ($flat.length != $defLength) then
+            throw new Exception(
+              s"Expected ${${ Expr(defs.length) }} ${${
+                  Expr(getConstructName[Def])
+                }}s, got ${$flat.length}."
+            )
+          ${ flat }(${ Expr(i) })
+        }
+      )
     // If there is a single variadic definition, partionning is about stripping the preceeding and following single elements, and taking the rest as elements of the variadic construct
     case 1 =>
       val preceeding =
@@ -629,7 +775,8 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       Try(companion.verify(this)) match {
         case Success(op) =>
           op match {
-            case adtOp: DerivedOperation[_, T] => adtOp.verify()
+            case adtOp: DerivedOperation[_, T] =>
+              adtOp.verify()
             case _ =>
               Right("Internal Error: Operation is not a DerivedOperation")
           }
@@ -712,13 +859,15 @@ object DerivedOperationCompanion {
           )
 
         def verify(unverOp: UnverifiedOp): T =
-          ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) } match {
+          ${
+            fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
+          } match {
             case adt: DerivedOperation[_, T] =>
               adt.attributes.addAll(unverOp.attributes)
               adt
             case _ =>
               throw new Exception(
-                s"Internal Error: Hacky did not hack -> UnverifiedOp is not a DerivedOperation: ${unverOp}"
+                s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
               )
           }
 

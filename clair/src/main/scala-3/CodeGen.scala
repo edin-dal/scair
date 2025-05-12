@@ -87,6 +87,18 @@ case class OperationDef(
   def allDefsWithIndex =
     operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
 
+  def hasMultiVariadicOperands =
+    operands.count(_.variadicity == Variadicity.Variadic) > 1
+
+  def hasMultiVariadicResults =
+    results.count(_.variadicity == Variadicity.Variadic) > 1
+
+  def hasMultiVariadicRegions =
+    regions.count(_.variadicity == Variadicity.Variadic) > 1
+
+  def hasMultiVariadicSuccessors =
+    successors.count(_.variadicity == Variadicity.Variadic) > 1
+
 }
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
