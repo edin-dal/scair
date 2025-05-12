@@ -458,8 +458,7 @@ def fromUnverifiedOperationMacro[T: Type](
   Apply(
     Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
     List.from(args)
-  )
-    .asExprOf[T]
+  ).asExprOf[T]
 
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
@@ -573,14 +572,13 @@ trait DerivedOperation[name <: String, T] extends Operation {
   def successors: Seq[Block] = companion.successors(this)
   def results: Seq[Result[Attribute]] = companion.results(this)
   def regions: Seq[Region] = companion.regions(this)
-
   def properties: Map[String, Attribute] = companion.properties(this)
 
 }
 
 trait DerivedOperationCompanion[T] extends OperationCompanion {
 
-  outer =>
+  companion =>
 
   def operands(adtOp: T): Seq[Value[Attribute]]
   def successors(adtOp: T): Seq[Block]
@@ -589,7 +587,6 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def properties(adtOp: T): Map[String, Attribute]
 
   case class UnverifiedOp(
-      override val name: String,
       override val operands: Seq[Value[Attribute]] = Seq(),
       override val successors: Seq[Block] = Seq(),
       override val results_types: Seq[Attribute] = Seq(),
@@ -599,7 +596,8 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       override val attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ) extends BaseOperation(
-        name = name,
+        name =
+          name, // DEFINED IN OperationCompanion, derived in DerivedOperationCompanion Companion
         operands,
         successors,
         results_types,
@@ -628,13 +626,12 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
     }
 
     override def verify(): Either[Operation, String] = {
-      // TODO: temporary fix for now, to discuss whether we want this at the macro level
-      Try(outer.verify(this)) match {
+      Try(companion.verify(this)) match {
         case Success(op) =>
           op match {
             case adtOp: DerivedOperation[_, T] => adtOp.verify()
             case _ =>
-              Right("Critical Error: Operation is not a DerivedOperation")
+              Right("Internal Error: Operation is not a DerivedOperation")
           }
         case Failure(e) => Right(e.toString())
       }
@@ -696,7 +693,6 @@ object DerivedOperationCompanion {
             attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
         ): UnverifiedOp = UnverifiedOp(
-          name = ${ Expr(opDef.name) },
           operands = operands,
           successors = successors,
           results_types = results_types,
@@ -707,7 +703,6 @@ object DerivedOperationCompanion {
 
         def unverify(adtOp: T): UnverifiedOp =
           UnverifiedOp(
-            name = ${ Expr(opDef.name) },
             operands = operands(adtOp),
             successors = successors(adtOp),
             results_types = results(adtOp).map(_.typ),
@@ -717,7 +712,15 @@ object DerivedOperationCompanion {
           )
 
         def verify(unverOp: UnverifiedOp): T =
-          ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
+          ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) } match {
+            case adt: DerivedOperation[_, T] =>
+              adt.attributes.addAll(unverOp.attributes)
+              adt
+            case _ =>
+              throw new Exception(
+                s"Internal Error: Hacky did not hack -> UnverifiedOp is not a DerivedOperation: ${unverOp}"
+              )
+          }
 
     }
 

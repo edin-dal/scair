@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
+// RUN: scair-opt %s | scair-opt | filecheck %s
 
 %0, %1 = "test.op"() : () -> (index, index)
 %m0 = "memref.alloc"() <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 0, 0>}> : () -> memref<f32>

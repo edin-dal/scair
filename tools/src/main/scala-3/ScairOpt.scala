@@ -110,8 +110,8 @@ object ScairOpt {
                       transformCtx.getPass(name) match {
                         case Some(pass) =>
                           module = pass.transform(module)
-                          module.verify() match {
-                            case Left(_) =>
+                          module = module.verify() match {
+                            case Left(op) => op
                             case Right(errorMsg) =>
                               throw new VerifyException(errorMsg)
                           }

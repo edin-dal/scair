@@ -73,7 +73,7 @@ trait Operation extends IRNode {
         }
     }
     lazy val verifyReg: Int => Either[Operation, String] = { (i: Int) =>
-      if i == results.length then Left(this)
+      if i == regions.length then Left(this)
       else
         regions(i).verify() match {
           case Left(v)  => verifyReg(i + 1)
@@ -81,7 +81,7 @@ trait Operation extends IRNode {
         }
     }
     lazy val verifyProp: Int => Either[Operation, String] = { (i: Int) =>
-      if i == results.length then Left(this)
+      if i == properties.size then Left(this)
       else
         properties.values.toSeq(i).custom_verify() match {
           case Left(v)  => verifyProp(i + 1)
