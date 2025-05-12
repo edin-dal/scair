@@ -91,7 +91,7 @@ object `package` extends RootModule with ScairSettings with ScoverageReport {
     def ivyDeps = Agg(
       ivy"com.lihaoyi::fastparse:3.1.0",
       ivy"com.github.scopt::scopt:4.1.0",
-      ivy"com.github.papychacal::scaisl:0.0.0-6-b015e0-DIRTYcb6701df",
+      ivy"com.github.papychacal::scaisl:0.0.0-11-e0f367",
     )
   }
 

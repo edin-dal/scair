@@ -14,6 +14,7 @@ import scair.dialects.math.MathDialect
 import scair.dialects.memref.MemrefDialect
 import scair.dialects.test.Test
 import scair.dialects.isl.ISLDialect
+import scair.dialects.stensor.STensorDialect
 import scair.ir.Dialect
 import scair.transformations.ModulePass
 import scair.transformations.cdt.DummyPass
@@ -36,7 +37,8 @@ val allDialects: Seq[Dialect] =
     AffineDialect,
     FuncDialect,
     LLVMDialect,
-    ISLDialect
+    ISLDialect,
+    STensorDialect,
   )
 
 val allPasses: Seq[ModulePass] =
