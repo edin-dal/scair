@@ -8,7 +8,6 @@ import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
-import scair.dialects.builtin.DenseArrayAttr
 
 import scala.collection.mutable
 import scala.compiletime.*
@@ -16,7 +15,6 @@ import scala.quoted.*
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scair.dialects.builtin.IntegerType
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
