@@ -428,4 +428,13 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
+  "Incorrect Conversion to ADTOp" should "fail gracefully on verification" in {
+    def unverOp = mulComp.UnverifiedOp()
+
+    val verified = unverOp.verify()
+    verified should matchPattern {
+      case Right("java.lang.Exception: Expected 2 operands, got 0.") =>
+    }
+  }
+
 }
