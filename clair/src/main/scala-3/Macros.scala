@@ -48,6 +48,43 @@ def selectMember(obj: Expr[?], name: String)(using
   Select.unique(obj.asTerm, name).asExpr
 }
 
+def checkVariadicity[T <: MayVariadicOpInputDef: Type](
+    hasMultiVariadic: Boolean,
+    defs: Seq[T],
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Map[String, Attribute]] = {
+  val name = Expr(s"${getConstructName[T]}SegmentSizes")
+  hasMultiVariadic match {
+    case true =>
+      val arrayAttr: Expr[Seq[Int]] =
+        Expr.ofList(
+          defs.map((d) =>
+            d.variadicity match {
+              case Variadicity.Single => Expr(1)
+              case Variadicity.Variadic =>
+                '{
+                  ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                }
+            }
+          )
+        )
+      '{
+        Map(
+          $name -> DenseArrayAttr(
+            IntegerType(IntData(32), Signless),
+            ${ arrayAttr }.map(x =>
+              IntegerAttr(
+                IntData(x),
+                IntegerType(IntData(32), Signless)
+              )
+            )
+          )
+        )
+      }
+    case false => '{ Map.empty[String, Attribute] }
+  }
+}
+
 //TODO: handle multi-variadic segmentSizes creation!
 /** Get all constructs of the specified type flattened from the ADT expression.
   * @tparam Def
@@ -109,134 +146,26 @@ def propertiesMacro(
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
-  // operands
-  val opSegSizeProp: Expr[Map[String, Attribute]] =
-    opDef.hasMultiVariadicOperands match {
-      case true =>
-        val arrayAttr: Expr[Seq[Int]] =
-          Expr.ofList(
-            opDef.operands.map((d) =>
-              d.variadicity match {
-                case Variadicity.Single => Expr(1)
-                case Variadicity.Variadic =>
-                  '{
-                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
-                  }
-              }
-            )
-          )
-        '{
-          Map(
-            "operandSegmentSizes" -> DenseArrayAttr(
-              IntegerType(IntData(32), Signless),
-              ${ arrayAttr }.map(x =>
-                IntegerAttr(
-                  IntData(x),
-                  IntegerType(IntData(32), Signless)
-                )
-              )
-            )
-          )
-        }
-      case false => '{ Map.empty[String, Attribute] }
-    }
-
-  // results
-  val resSegSizeProp: Expr[Map[String, Attribute]] =
-    opDef.hasMultiVariadicResults match {
-      case true =>
-        val arrayAttr: Expr[Seq[Int]] =
-          Expr.ofList(
-            opDef.results.map((d) =>
-              d.variadicity match {
-                case Variadicity.Single => Expr(1)
-                case Variadicity.Variadic =>
-                  '{
-                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
-                  }
-              }
-            )
-          )
-        '{
-          Map(
-            "resultSegmentSizes" -> DenseArrayAttr(
-              IntegerType(IntData(32), Signless),
-              ${ arrayAttr }.map(x =>
-                IntegerAttr(
-                  IntData(x),
-                  IntegerType(IntData(32), Signless)
-                )
-              )
-            )
-          )
-        }
-      case false => '{ Map.empty[String, Attribute] }
-    }
-
-  // regions
-  val regSegSizeProp: Expr[Map[String, Attribute]] =
-    opDef.hasMultiVariadicRegions match {
-      case true =>
-        val arrayAttr: Expr[Seq[Int]] =
-          Expr.ofList(
-            opDef.regions.map((d) =>
-              d.variadicity match {
-                case Variadicity.Single => Expr(1)
-                case Variadicity.Variadic =>
-                  '{
-                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
-                  }
-              }
-            )
-          )
-        '{
-          Map(
-            "regionSegmentSizes" -> DenseArrayAttr(
-              IntegerType(IntData(32), Signless),
-              ${ arrayAttr }.map(x =>
-                IntegerAttr(
-                  IntData(x),
-                  IntegerType(IntData(32), Signless)
-                )
-              )
-            )
-          )
-        }
-      case false => '{ Map.empty[String, Attribute] }
-    }
-
-  // successors
-  val succSegSizeProp: Expr[Map[String, Attribute]] =
-    opDef.hasMultiVariadicSuccessors match {
-      case true =>
-        val arrayAttr: Expr[Seq[Int]] =
-          Expr.ofList(
-            opDef.operands.map((d) =>
-              d.variadicity match {
-                case Variadicity.Single => Expr(1)
-                case Variadicity.Variadic =>
-                  '{
-                    ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
-                  }
-              }
-            )
-          )
-        '{
-          Map(
-            "successorSegmentSizes" -> DenseArrayAttr(
-              IntegerType(IntData(32), Signless),
-              ${ arrayAttr }.map(x =>
-                IntegerAttr(
-                  IntData(x),
-                  IntegerType(IntData(32), Signless)
-                )
-              )
-            )
-          )
-        }
-      case false => '{ Map.empty[String, Attribute] }
-    }
-
+  val opSegSizeProp = checkVariadicity(
+    opDef.hasMultiVariadicOperands,
+    opDef.operands,
+    adtOpExpr
+  )
+  val resSegSizeProp = checkVariadicity(
+    opDef.hasMultiVariadicResults,
+    opDef.results,
+    adtOpExpr
+  )
+  val regSegSizeProp = checkVariadicity(
+    opDef.hasMultiVariadicRegions,
+    opDef.regions,
+    adtOpExpr
+  )
+  val succSegSizeProp = checkVariadicity(
+    opDef.hasMultiVariadicSuccessors,
+    opDef.successors,
+    adtOpExpr
+  )
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
   '{
