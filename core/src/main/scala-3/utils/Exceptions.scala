@@ -34,7 +34,7 @@ class VError(
 class TError(
     msg: String
 ) extends ScaIError(msg) {
-  override val errorTag = s"[${CYAN}verification${RESET}]    "
+  override val errorTag = s"[${CYAN}transform${RESET}]    "
 }
 
 /** Error encompassing a internal system error in ScaIR.
