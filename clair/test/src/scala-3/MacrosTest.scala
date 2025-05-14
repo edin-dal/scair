@@ -8,7 +8,10 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scala.collection.mutable.LinkedHashMap
 
-// TODO: create a better constructor for DenseArrayAttr with just integers
+case class RegionOp(
+    wowregions: Seq[Region]
+) extends DerivedOperation["test.region", RegionOp]
+    derives DerivedOperationCompanion
 
 case class Mul(
     lhs: Operand[IntegerType],
@@ -52,12 +55,15 @@ case class MulFull(
 ) extends DerivedOperation["cmath.mulfull", MulFull]
     derives DerivedOperationCompanion
 
+val mulComp = summon[DerivedOperationCompanion[Mul]]
+val mulSVComp = summon[DerivedOperationCompanion[MulSingleVariadic]]
+val mulMMVComp = summon[DerivedOperationCompanion[MulMultiVariadic]]
+
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   object TestCases {
 
-    def unverOp = UnverifiedOp[Mul](
-      name = "cmath.mul",
+    def unverOp = mulComp.UnverifiedOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
@@ -86,8 +92,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       succ2 = scair.ir.Block()
     )
 
-    def unverMulSinVarOp = UnverifiedOp[MulSingleVariadic](
-      name = "cmath.mulsinglevariadic",
+    def unverMulSinVarOp = new mulSVComp.UnverifiedOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
@@ -113,8 +118,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       randProp = StringData("what")
     )
 
-    def unverMulMulVarOp = UnverifiedOp[MulMultiVariadic](
-      name = "cmath.mulmultivariadic",
+    def unverMulMulVarOp = mulMMVComp.UnverifiedOp(
       operands = Seq(
         Value(typ = IntegerType(IntData(5), Unsigned)),
         Value(typ = IntegerType(IntData(5), Unsigned)),
@@ -241,10 +245,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Conversion to ADTOp" should "Correctly translate from Unverified operation to ADT Operation" in {
-    val opT = summon[DerivedOperationCompanion[Mul]]
-
     val op = TestCases.unverOp
-    val adtMulOp = opT.verify(op)
+    val adtMulOp = mulComp.verify(op)
 
     adtMulOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -267,27 +269,25 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val unverMulOp = opT.unverify(op)
     val adtMulOp = opT.verify(unverMulOp)
 
-    adtMulOp.operand1 `equals` unverMulOp.operands(0) should be(true)
-    adtMulOp.operand2 `equals` unverMulOp.operands(1) should be(true)
-    adtMulOp.result1 `equals` unverMulOp.results(0) should be(true)
-    adtMulOp.result2 `equals` unverMulOp.results(1) should be(true)
-    adtMulOp.randProp1 `equals` unverMulOp.properties(
+    adtMulOp.operand1 `eq` unverMulOp.operands(0) should be(true)
+    adtMulOp.operand2 `eq` unverMulOp.operands(1) should be(true)
+    adtMulOp.result1 `eq` unverMulOp.results(0) should be(true)
+    adtMulOp.result2 `eq` unverMulOp.results(1) should be(true)
+    adtMulOp.randProp1 `eq` unverMulOp.properties(
       "randProp1"
     ) should be(true)
-    adtMulOp.randProp2 `equals` unverMulOp.properties(
+    adtMulOp.randProp2 `eq` unverMulOp.properties(
       "randProp2"
     ) should be(true)
-    adtMulOp.reg1 `equals` unverMulOp.regions(0) should be(true)
-    adtMulOp.reg2 `equals` unverMulOp.regions(1) should be(true)
-    adtMulOp.succ1 `equals` unverMulOp.successors(0) should be(true)
-    adtMulOp.succ2 `equals` unverMulOp.successors(1) should be(true)
+    adtMulOp.reg1 `eq` unverMulOp.regions(0) should be(true)
+    adtMulOp.reg2 `eq` unverMulOp.regions(1) should be(true)
+    adtMulOp.succ1 `eq` unverMulOp.successors(0) should be(true)
+    adtMulOp.succ2 `eq` unverMulOp.successors(1) should be(true)
   }
 
   "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {
-    val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
-
     val op = TestCases.unverMulSinVarOp
-    val adtMulSinVarOp = opT.verify(op)
+    val adtMulSinVarOp = mulSVComp.verify(op)
 
     adtMulSinVarOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -334,10 +334,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unverified operation to ADT Operation" in {
-    val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
-
     val op = TestCases.unverMulMulVarOp
-    val adtMulMulVarOp = opT.verify(op)
+    val adtMulMulVarOp = mulMMVComp.verify(op)
 
     adtMulMulVarOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -399,6 +397,43 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned))
           ) =>
+    }
+  }
+
+  "Recursive conversion to ADTOp" should "do the thing \\o/" in {
+    val comp = summon[DerivedOperationCompanion[RegionOp]]
+    val op =
+      comp.UnverifiedOp(regions =
+        Seq(
+          Region(Seq(Block(comp.UnverifiedOp()), Block(comp.UnverifiedOp()))),
+          Region(Seq(Block(comp.UnverifiedOp()), Block(comp.UnverifiedOp())))
+        )
+      )
+
+    val verified = op.verify()
+    verified should matchPattern {
+      case Left(
+            RegionOp(
+              Seq(
+                Region(
+                  Seq(
+                    Block(_, ListType(RegionOp(_))),
+                    Block(_, ListType(RegionOp(_)))
+                  )
+                ),
+                Region(_)
+              )
+            )
+          ) =>
+    }
+  }
+
+  "Incorrect Conversion to ADTOp" should "fail gracefully on verification" in {
+    def unverOp = mulComp.UnverifiedOp()
+
+    val verified = unverOp.verify()
+    verified should matchPattern {
+      case Right("java.lang.Exception: Expected 2 operands, got 0.") =>
     }
   }
 

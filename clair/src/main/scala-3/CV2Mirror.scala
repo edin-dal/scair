@@ -50,6 +50,16 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         tpe = Type.of[t],
         Variadicity.Variadic
       )
+    case '[Seq[Region]] =>
+      RegionDef(
+        name = name,
+        Variadicity.Variadic
+      )
+    case '[Seq[Successor]] =>
+      SuccessorDef(
+        name = name,
+        Variadicity.Variadic
+      )
     case '[Result[t]] =>
       ResultDef(
         name = name,
