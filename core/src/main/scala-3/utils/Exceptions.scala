@@ -26,6 +26,17 @@ class VError(
   override val errorTag = s"[${YELLOW}verification${RESET}]    "
 }
 
+/** Error encompassing a transformation error in ScaIR.
+  *
+  * @param msg:
+  *   String \=> Error message to be displayed.
+  */
+class TError(
+    msg: String
+) extends ScaIError(msg) {
+  override val errorTag = s"[${CYAN}verification${RESET}]    "
+}
+
 /** Error encompassing a internal system error in ScaIR.
   *
   * @param msg:
@@ -34,7 +45,7 @@ class VError(
 class ISError(
     msg: String
 ) extends ScaIError(msg) {
-  override val errorTag = s"[${RED}verification${RESET}]    "
+  override val errorTag = s"[${RED}internal${RESET}]    "
 }
 
 sealed abstract class Verified[+A, +B <: ScaIError] {}
