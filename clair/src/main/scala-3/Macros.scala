@@ -48,7 +48,7 @@ def selectMember(obj: Expr[?], name: String)(using
   Select.unique(obj.asTerm, name).asExpr
 }
 
-def checkVariadicity[T <: MayVariadicOpInputDef: Type](
+def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?]
@@ -146,22 +146,22 @@ def propertiesMacro(
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
-  val opSegSizeProp = checkVariadicity(
+  val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands,
     opDef.operands,
     adtOpExpr
   )
-  val resSegSizeProp = checkVariadicity(
+  val resSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicResults,
     opDef.results,
     adtOpExpr
   )
-  val regSegSizeProp = checkVariadicity(
+  val regSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicRegions,
     opDef.regions,
     adtOpExpr
   )
-  val succSegSizeProp = checkVariadicity(
+  val succSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicSuccessors,
     opDef.successors,
     adtOpExpr

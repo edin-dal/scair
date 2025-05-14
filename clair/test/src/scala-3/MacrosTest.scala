@@ -393,7 +393,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
-            Result(IntegerType(IntData(5), Unsigned)),
+            --
+            Result (IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned))
           ) =>
