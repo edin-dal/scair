@@ -700,13 +700,13 @@ class Parser(val context: MLContext, val args: Args = Args())
     val useAndRefBlockSeqs =
       currentScope.useBlocks(successorsNames)
 
-    val op: Operation = ctx.getOperation(opName) match {
+    val op : Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
           operands = useAndRefValueSeqs._1,
           successors = useAndRefBlockSeqs._1,
           properties = properties,
-          results_types = resultsTypes,
+          results = resultsTypes.map(Result(_)),
           attributes = DictType.from(attributes),
           regions = regions
         )
@@ -718,7 +718,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             operands = useAndRefValueSeqs._1,
             successors = useAndRefBlockSeqs._1,
             properties = properties,
-            results_types = resultsTypes,
+            results = resultsTypes.map(Result(_)),
             attributes = DictType.from(attributes),
             regions = regions
           )

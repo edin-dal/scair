@@ -1,5 +1,8 @@
 package scair.ir
 
+import scair.transformations.PatternRewriter
+import scair.transformations.RewriteMethods
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -35,13 +38,12 @@ class Value[+T <: Attribute](
   }
 
   def replace_by(newValue: Value[Attribute]): Unit = {
-    for (use <- uses) {
+    for (use <- ListType.from(uses)) {
       val op = use.operation
       val block = op.container_block.get
       val new_op =
-        op.updated(operands = op.operands.updatedOperandsAndUses(use, newValue))
-      val idx = block.operations.indexOf(op)
-      block.operations(idx) = new_op
+        op.updated(results = op.results, operands = op.operands.updatedOperandsAndUses(use, newValue))
+      RewriteMethods.replace_op(op, new_op)
     }
     uses = ListType()
   }

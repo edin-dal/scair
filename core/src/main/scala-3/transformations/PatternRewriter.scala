@@ -168,12 +168,13 @@ object RewriteMethods {
       )
     }
 
-    for ((old_res, new_res) <- op.results zip results) {
-      old_res.replace_by(new_res)
+    for ((old_res, new_res) <- (op.results zip results)) {
+      if !(old_res eq new_res) then
+        old_res.replace_by(new_res)
     }
 
     block.insert_ops_after(op, ops)
-    block.erase_op(op)
+    block.erase_op(op, safe_erase = false)
   }
 
 }

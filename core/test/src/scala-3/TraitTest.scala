@@ -15,7 +15,7 @@ object FillerOp extends OperationCompanion {
 case class FillerOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
@@ -25,7 +25,7 @@ case class FillerOp(
       name = "filler",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -38,7 +38,7 @@ object TerminatorOp extends OperationCompanion {
 case class TerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
@@ -48,7 +48,7 @@ case class TerminatorOp(
       name = "terminator",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -62,7 +62,7 @@ object NoTerminatorOp extends OperationCompanion {
 case class NoTerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
@@ -72,7 +72,7 @@ case class NoTerminatorOp(
       name = "noterminator",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

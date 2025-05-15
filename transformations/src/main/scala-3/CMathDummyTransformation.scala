@@ -69,8 +69,8 @@ object TestReplacingDummyOperation extends RewritePattern {
     val op3 =
       new UnregisteredOperation(
         "dummy-return",
-        results_types =
-          Seq(StringData("replaced(i32)"), StringData("replaced(i64)"))
+        results =
+          Seq(StringData("replaced(i32)"), StringData("replaced(i64)")).map(Result(_))
       )
 
     val opReplace = new UnregisteredOperation(

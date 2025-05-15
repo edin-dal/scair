@@ -289,7 +289,7 @@ object DB_ConstantOp extends OperationCompanion {
 case class DB_ConstantOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -297,7 +297,7 @@ case class DB_ConstantOp(
       name = "db.constant",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -363,7 +363,7 @@ object DB_CmpOp extends OperationCompanion {
 case class DB_CmpOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -371,7 +371,7 @@ case class DB_CmpOp(
       name = "db.compare",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -507,7 +507,7 @@ object DB_MulOp extends OperationCompanion {
 case class DB_MulOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -515,7 +515,7 @@ case class DB_MulOp(
       name = "db.mul",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -653,7 +653,7 @@ object DB_DivOp extends OperationCompanion {
 case class DB_DivOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -661,7 +661,7 @@ case class DB_DivOp(
       name = "db.div",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -739,7 +739,7 @@ object DB_AddOp extends OperationCompanion {
 case class DB_AddOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -747,7 +747,7 @@ case class DB_AddOp(
       name = "db.add",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -827,7 +827,7 @@ object DB_SubOp extends OperationCompanion {
 case class DB_SubOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -835,7 +835,7 @@ case class DB_SubOp(
       name = "db.sub",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -912,7 +912,7 @@ object CastOp extends OperationCompanion {
 case class CastOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -920,7 +920,7 @@ case class CastOp(
       name = "db.cast",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

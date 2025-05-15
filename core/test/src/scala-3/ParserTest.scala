@@ -215,9 +215,9 @@ class ParserTest
                     Seq(),
                     Seq(),
                     Seq(
-                      I32,
-                      I64,
-                      I32
+                      Result(I32),
+                      Result(I64),
+                      Result(I32)
                     ),
                     Seq(),
                     _,
@@ -261,9 +261,9 @@ class ParserTest
                         Seq(),
                         Seq(),
                         Seq(
-                          I32,
-                          I64,
-                          I32
+                          Result(I32),
+                          Result(I64),
+                          Result(I32)
                         ),
                         Seq(),
                         _,
@@ -288,9 +288,9 @@ class ParserTest
                         Seq(),
                         Seq(),
                         Seq(
-                          I32,
-                          I64,
-                          I32
+                          Result(I32),
+                          Result(I64),
+                          Result(I32)
                         ),
                         Seq(),
                         _,
@@ -410,9 +410,9 @@ class ParserTest
                             Seq(),
                             Seq(),
                             Seq(
-                              I32,
-                              I64,
-                              I32
+                              Result(I32),
+                              Result(I64),
+                              Result(I32)
                             ),
                             Seq(),
                             _,

@@ -71,7 +71,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
   "printOperation" should "return the correct string representation of an operation" in {
     val operation = UnregisteredOperation(
       "op1",
-      results_types = Seq(F32),
+      results = Seq(Result(F32)),
       operands = Seq(Value(F32)),
       regions = Seq(
         Region(

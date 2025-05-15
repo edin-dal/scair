@@ -176,7 +176,7 @@ object ReturnOp extends OperationCompanion {
 case class ReturnOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] = Map(),
     override val attributes: DictType[String, Attribute] = DictType()
@@ -184,7 +184,7 @@ case class ReturnOp(
       name = "tuples.return",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -241,7 +241,7 @@ object GetColumnOp extends OperationCompanion {
 case class GetColumnOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -249,7 +249,7 @@ case class GetColumnOp(
       name = "tuples.getcol",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
