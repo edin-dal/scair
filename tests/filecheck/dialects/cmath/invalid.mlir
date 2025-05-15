@@ -29,13 +29,9 @@
 // -----
 
 "cmath.norm"() : () -> ()
-// CHECK:  builtin.module {
-// CHECK-NEXT:    "cmath.norm"() : () -> ()
-// CHECK-NEXT:  }
+// CHECK:  java.lang.Exception: Expected 1 operands, got 0.
 
 // -----
 
 "cmath.mul"() : () -> ()
-// CHECK:  builtin.module {
-// CHECK-NEXT:    "cmath.mul"() : () -> ()
-// CHECK-NEXT:  }
+// CHECK:  java.lang.Exception: Expected 2 operands, got 0.

@@ -52,16 +52,16 @@ case class AbsfOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     results.length,
     successors.length,
     regions.length,
     properties.size
   ) match {
-    case (1, 1, 0, 0, 0) =>
+    case (1, 1, 0, 0, 0) => Left(this)
     case _ =>
-      throw new Exception(
+      Right(
         "AbsfOp must have 1 result and 1 operand."
       )
   }
@@ -115,16 +115,16 @@ case class FPowIOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     results.length,
     successors.length,
     regions.length,
     properties.size
   ) match {
-    case (2, 1, 0, 0, 0) =>
+    case (2, 1, 0, 0, 0) => Left(this)
     case _ =>
-      throw new Exception(
+      Right(
         "FPowIOp must have 1 result and 2 operands."
       )
   }

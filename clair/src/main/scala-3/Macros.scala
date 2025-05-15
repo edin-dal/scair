@@ -12,6 +12,9 @@ import scair.scairdl.constraints.*
 import scala.collection.mutable
 import scala.compiletime.*
 import scala.quoted.*
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -43,6 +46,43 @@ def selectMember(obj: Expr[?], name: String)(using
   import quotes.reflect.*
 
   Select.unique(obj.asTerm, name).asExpr
+}
+
+def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
+    hasMultiVariadic: Boolean,
+    defs: Seq[T],
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Map[String, Attribute]] = {
+  val name = Expr(s"${getConstructName[T]}SegmentSizes")
+  hasMultiVariadic match {
+    case true =>
+      val arrayAttr: Expr[Seq[Int]] =
+        Expr.ofList(
+          defs.map((d) =>
+            d.variadicity match {
+              case Variadicity.Single => Expr(1)
+              case Variadicity.Variadic =>
+                '{
+                  ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                }
+            }
+          )
+        )
+      '{
+        Map(
+          $name -> DenseArrayAttr(
+            IntegerType(IntData(32), Signless),
+            ${ arrayAttr }.map(x =>
+              IntegerAttr(
+                IntData(x),
+                IntegerType(IntData(32), Signless)
+              )
+            )
+          )
+        )
+      }
+    case false => '{ Map.empty[String, Attribute] }
+  }
 }
 
 //TODO: handle multi-variadic segmentSizes creation!
@@ -106,10 +146,34 @@ def propertiesMacro(
   // extracting property instances from the ADT
   val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
+  val opSegSizeProp = makeSegmentSizes(
+    opDef.hasMultiVariadicOperands,
+    opDef.operands,
+    adtOpExpr
+  )
+  val resSegSizeProp = makeSegmentSizes(
+    opDef.hasMultiVariadicResults,
+    opDef.results,
+    adtOpExpr
+  )
+  val regSegSizeProp = makeSegmentSizes(
+    opDef.hasMultiVariadicRegions,
+    opDef.regions,
+    adtOpExpr
+  )
+  val succSegSizeProp = makeSegmentSizes(
+    opDef.hasMultiVariadicSuccessors,
+    opDef.successors,
+    adtOpExpr
+  )
   // Populating a Dictionarty with the properties
   val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
   '{
     Map.from(${ propertyNames } zip ${ propertyExprs })
+      ++ ${ opSegSizeProp }
+      ++ ${ resSegSizeProp }
+      ++ ${ regSegSizeProp }
+      ++ ${ succSegSizeProp }
   }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -156,7 +220,7 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   Type.of[Def] match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -207,7 +271,7 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   *   The UnverifiedOp expression.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
   '{
@@ -264,14 +328,26 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   */
 def partitionedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   // Get the flat list of constructs from the UnverifiedOp
   val flat = getConstructSeq[Def](op)
   // Check the number of variadic constructs
   defs.count(getConstructVariadicity(_) != Variadicity.Single) match
     // If there is no variadic defintion, partionning is just about taking individual elements
-    case 0 => defs.zipWithIndex.map((d, i) => '{ ${ flat }(${ Expr(i) }) })
+    case 0 =>
+      defs.zipWithIndex.map((d, i) =>
+        val defLength = Expr(defs.length)
+        '{
+          if ($flat.length != $defLength) then
+            throw new Exception(
+              s"Expected ${${ Expr(defs.length) }} ${${
+                  Expr(getConstructName[Def])
+                }}s, got ${$flat.length}."
+            )
+          ${ flat }(${ Expr(i) })
+        }
+      )
     // If there is a single variadic definition, partionning is about stripping the preceeding and following single elements, and taking the rest as elements of the variadic construct
     case 1 =>
       val preceeding =
@@ -348,7 +424,7 @@ def partitionedConstructs[Def <: OpInputDef: Type](
   */
 def verifiedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) = {
   // For each partitioned construct
   (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
@@ -403,7 +479,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[UnverifiedOp[?]]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
   import quotes.reflect._
   (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
@@ -444,7 +520,7 @@ def constructorArgs(
 
 def fromUnverifiedOperationMacro[T: Type](
     opDef: OperationDef,
-    genExpr: Expr[UnverifiedOp[T]]
+    genExpr: Expr[DerivedOperationCompanion[T]#UnverifiedOp]
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
 
@@ -455,8 +531,7 @@ def fromUnverifiedOperationMacro[T: Type](
   Apply(
     Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
     List.from(args)
-  )
-    .asExprOf[T]
+  ).asExprOf[T]
 
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
@@ -570,58 +645,73 @@ trait DerivedOperation[name <: String, T] extends Operation {
   def successors: Seq[Block] = companion.successors(this)
   def results: Seq[Result[Attribute]] = companion.results(this)
   def regions: Seq[Region] = companion.regions(this)
-
   def properties: Map[String, Attribute] = companion.properties(this)
 
 }
 
-case class UnverifiedOp[T](
-    override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = name,
-      operands,
-      successors,
-      results_types,
-      regions,
-      properties,
-      attributes
-    ) {
-
-  override def copy(
-      operands: Seq[Value[Attribute]],
-      successors: Seq[Block],
-      results_types: Seq[Attribute],
-      regions: Seq[Region],
-      properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
-  ) = {
-    UnregisteredOperation(
-      name = name,
-      operands = operands,
-      successors = successors,
-      results_types = results_types,
-      regions = regions,
-      properties = properties,
-      attributes = attributes
-    )
-  }
-
-}
-
 trait DerivedOperationCompanion[T] extends OperationCompanion {
+
+  companion =>
+
   def operands(adtOp: T): Seq[Value[Attribute]]
   def successors(adtOp: T): Seq[Block]
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
+
+  case class UnverifiedOp(
+      override val operands: Seq[Value[Attribute]] = Seq(),
+      override val successors: Seq[Block] = Seq(),
+      override val results_types: Seq[Attribute] = Seq(),
+      override val regions: Seq[Region] = Seq(),
+      override val properties: Map[String, Attribute] =
+        Map.empty[String, Attribute],
+      override val attributes: DictType[String, Attribute] =
+        DictType.empty[String, Attribute]
+  ) extends BaseOperation(
+        name =
+          name, // DEFINED IN OperationCompanion, derived in DerivedOperationCompanion Companion
+        operands,
+        successors,
+        results_types,
+        regions,
+        properties,
+        attributes
+      ) {
+
+    override def copy(
+        operands: Seq[Value[Attribute]],
+        successors: Seq[Block],
+        results_types: Seq[Attribute],
+        regions: Seq[Region],
+        properties: Map[String, Attribute],
+        attributes: DictType[String, Attribute]
+    ) = {
+      UnregisteredOperation(
+        name = name,
+        operands = operands,
+        successors = successors,
+        results_types = results_types,
+        regions = regions,
+        properties = properties,
+        attributes = attributes
+      )
+    }
+
+    override def verify(): Either[Operation, String] = {
+      Try(companion.verify(this)) match {
+        case Success(op) =>
+          op match {
+            case adtOp: DerivedOperation[_, T] =>
+              adtOp.verify()
+            case _ =>
+              Right("Internal Error: Operation is not a DerivedOperation")
+          }
+        case Failure(e) => Right(e.toString())
+      }
+    }
+
+  }
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
@@ -631,10 +721,10 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): UnverifiedOp[T]
+  ): UnverifiedOp
 
-  def unverify(adtOp: T): UnverifiedOp[T]
-  def verify(unverOp: UnverifiedOp[T]): T
+  def unverify(adtOp: T): UnverifiedOp
+  def verify(unverOp: UnverifiedOp): T
 
 }
 
@@ -676,8 +766,7 @@ object DerivedOperationCompanion {
             properties: Map[String, Attribute] = Map.empty[String, Attribute],
             attributes: DictType[String, Attribute] =
               DictType.empty[String, Attribute]
-        ): UnverifiedOp[T] = UnverifiedOp[T](
-          name = ${ Expr(opDef.name) },
+        ): UnverifiedOp = UnverifiedOp(
           operands = operands,
           successors = successors,
           results_types = results_types,
@@ -686,9 +775,8 @@ object DerivedOperationCompanion {
           attributes = attributes
         )
 
-        def unverify(adtOp: T): UnverifiedOp[T] =
-          UnverifiedOp[T](
-            name = ${ Expr(opDef.name) },
+        def unverify(adtOp: T): UnverifiedOp =
+          UnverifiedOp(
             operands = operands(adtOp),
             successors = successors(adtOp),
             results_types = results(adtOp).map(_.typ),
@@ -697,8 +785,18 @@ object DerivedOperationCompanion {
             attributes = adtOp.attributes
           )
 
-        def verify(unverOp: UnverifiedOp[T]): T =
-          ${ fromUnverifiedOperationMacro[T](opDef, '{ unverOp }) }
+        def verify(unverOp: UnverifiedOp): T =
+          ${
+            fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
+          } match {
+            case adt: DerivedOperation[_, T] =>
+              adt.attributes.addAll(unverOp.attributes)
+              adt
+            case _ =>
+              throw new Exception(
+                s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
+              )
+          }
 
     }
 

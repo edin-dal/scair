@@ -36,9 +36,11 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Unit = {
+  override def custom_verify(): Either[Unit, String] = {
     if (tupleVals.length != 0 && tupleVals.length != 2) {
-      throw new Exception("TupleStream Tuple must contain 2 elements only.")
+      Right("TupleStream Tuple must contain 2 elements only.")
+    } else {
+      Left(())
     }
   }
 
@@ -63,16 +65,25 @@ case class TupleStream(val tuples: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Unit = {
-    for (param <- tuples) {
-      param match {
-        case _: TupleStreamTuple =>
+  override def custom_verify(): Either[Unit, String] = {
+
+    lazy val verifyTuples: Int => Either[Unit, String] = { (i: Int) =>
+      if (i == tuples.length) then Left(())
+
+      tuples(i) match {
+        case x: TupleStreamTuple =>
+          x.custom_verify() match {
+            case Left(_)    => verifyTuples(i + 1)
+            case Right(err) => Right(err)
+          }
         case _ =>
-          throw new Exception(
+          Right(
             "TupleStream must only contain TupleStream Tuple attributes."
           )
       }
     }
+
+    verifyTuples(0)
   }
 
 }
@@ -179,15 +190,15 @@ case class ReturnOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     regions.length,
     properties.size
   ) match {
-    case (0, 0, 0, 0) =>
+    case (0, 0, 0, 0) => Left(this)
     case _ =>
-      throw new Exception(
+      Right(
         "ReturnOp Operation must contain only results and an attribute dictionary."
       )
   }
@@ -244,7 +255,7 @@ case class GetColumnOp(
       attributes
     ) {
 
-  override def custom_verify(): Unit = (
+  override def custom_verify(): Either[Operation, String] = (
     operands.length,
     successors.length,
     results.length,
@@ -252,29 +263,36 @@ case class GetColumnOp(
     properties.size
   ) match {
     case (1, 0, 1, 0, 0) =>
-      operands(0).typ match {
-        case x: TupleStreamTuple => x.custom_verify()
-        case _ =>
-          throw new Exception(
-            "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
-          )
-      }
-      attributes.get("attr") match {
-        case Some(x) =>
-          x match {
-            case _: ColumnRefAttr =>
-            case _ =>
-              throw new Exception(
-                "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
-              )
-          }
-        case None =>
-          throw new Exception(
-            "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
-          )
-      }
+      {
+        operands(0).typ match {
+          case x: TupleStreamTuple =>
+            x.custom_verify() match {
+              case Left(value) => Left(this)
+              case Right(err)  => Right(err)
+            }
+          case _ =>
+            Right(
+              "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
+            )
+        }
+      }.orElse({
+        attributes.get("attr") match {
+          case Some(x) =>
+            x match {
+              case _: ColumnRefAttr => Left(this)
+              case _ =>
+                Right(
+                  "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
+                )
+            }
+          case None =>
+            Right(
+              "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
+            )
+        }
+      })
     case _ =>
-      throw new Exception(
+      Right(
         "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
       )
   }
