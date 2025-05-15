@@ -34,7 +34,9 @@ trait Operation extends IRNode {
   final override def parent = container_block
 
   regions.foreach(attach_region)
-  operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
+  operands.zipWithIndex.foreach((o, i) => 
+    o.uses.addOne(Use(this, i))
+    )
 
   def name: String
 
@@ -180,7 +182,7 @@ abstract class BaseOperation(
   override def updated(
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
-      results_types: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
+      results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = regions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
@@ -224,7 +226,7 @@ case class UnregisteredOperation(
       name = name,
       operands = operands,
       successors = successors,
-      results = results.map(_.typ).map(Result(_)),
+      results = results,
       regions = regions,
       properties = properties,
       attributes = attributes
@@ -242,7 +244,7 @@ case class UnregisteredOperation(
       name = name,
       operands = operands,
       successors = successors,
-      results = results.map(_.typ).map(Result(_)),
+      results = results,
       regions = regions.map(_.detached),
       properties = properties,
       attributes = attributes

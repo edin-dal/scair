@@ -244,9 +244,9 @@ object Parser {
         if (valueWaitlist(operation).length == 0) {
           valueWaitlist -= operation
         }
-
+        
         val new_op =
-          operation.updated(operands = operation.operands ++ operandList)
+          operation.updated(operands = operation.operands ++ operandList, results = operation.results)
         RewriteMethods.replace_op(operation, new_op)
       }
 
@@ -311,7 +311,7 @@ object Parser {
           blockWaitlist -= operation
         }
         val new_op =
-          operation.updated(successors = operation.successors ++ successorList)
+          operation.updated(successors = operation.successors ++ successorList, results = operation.results)
         RewriteMethods.replace_op(operation, new_op)
       }
 
