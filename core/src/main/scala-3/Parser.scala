@@ -244,9 +244,12 @@ object Parser {
         if (valueWaitlist(operation).length == 0) {
           valueWaitlist -= operation
         }
-        
+
         val new_op =
-          operation.updated(operands = operation.operands ++ operandList, results = operation.results)
+          operation.updated(
+            operands = operation.operands ++ operandList,
+            results = operation.results
+          )
         RewriteMethods.replace_op(operation, new_op)
       }
 
@@ -311,7 +314,10 @@ object Parser {
           blockWaitlist -= operation
         }
         val new_op =
-          operation.updated(successors = operation.successors ++ successorList, results = operation.results)
+          operation.updated(
+            successors = operation.successors ++ successorList,
+            results = operation.results
+          )
         RewriteMethods.replace_op(operation, new_op)
       }
 
@@ -700,7 +706,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     val useAndRefBlockSeqs =
       currentScope.useBlocks(successorsNames)
 
-    val op : Operation = ctx.getOperation(opName) match {
+    val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
           operands = useAndRefValueSeqs._1,

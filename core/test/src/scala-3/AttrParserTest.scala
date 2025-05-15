@@ -141,7 +141,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
         F32,
         F64,
         F80
-      ).map(Result(_)),
+      ).map(Result(_))
     )
     val block1 = Block(
       ListType(F128),

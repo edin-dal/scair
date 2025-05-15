@@ -169,7 +169,7 @@ object RewriteMethods {
     }
 
     block.insert_ops_after(op, ops)
-    
+
     for ((old_res, new_res) <- (op.results zip results)) {
       old_res.replace_by(new_res)
     }

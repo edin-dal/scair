@@ -68,7 +68,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results = Seq[Attribute](IntegerType(IntData(25), Unsigned)).map(Result(_)),
+      results =
+        Seq[Attribute](IntegerType(IntData(25), Unsigned)).map(Result(_)),
       properties = Map(("randProp" -> StringData("what")))
     )
 

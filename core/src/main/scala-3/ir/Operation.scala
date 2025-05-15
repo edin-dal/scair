@@ -34,9 +34,7 @@ trait Operation extends IRNode {
   final override def parent = container_block
 
   regions.foreach(attach_region)
-  operands.zipWithIndex.foreach((o, i) => 
-    o.uses.addOne(Use(this, i))
-    )
+  operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
 
   def name: String
 
@@ -122,7 +120,7 @@ trait Operation extends IRNode {
     for (region <- regions) region.drop_all_references
   }
 
-  final def erase(safe_erase:Boolean = true): Unit = {
+  final def erase(safe_erase: Boolean = true): Unit = {
     if (container_block != None) then {
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
@@ -134,7 +132,7 @@ trait Operation extends IRNode {
         result.erase()
       }
     }
-    
+
   }
 
   final def attach_region(region: Region) =
@@ -260,7 +258,6 @@ trait OperationCompanion {
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )
-
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),

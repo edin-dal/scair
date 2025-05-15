@@ -273,7 +273,7 @@ case class Block private (
     }
   }
 
-  def erase_op(op: Operation, safe_erase:Boolean = true) = {
+  def erase_op(op: Operation, safe_erase: Boolean = true) = {
     detach_op(op)
     op.erase(safe_erase)
   }

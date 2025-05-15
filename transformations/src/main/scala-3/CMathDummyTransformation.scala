@@ -68,16 +68,15 @@ object TestReplacingDummyOperation extends RewritePattern {
 
     val op3 =
       new UnregisteredOperation(
-        "dummy-return",
+        "dummy-return"
       )
 
     val opReplace = new UnregisteredOperation(
       "replacedOp",
-      regions = Seq(
-        Region(Seq(Block(operations = Seq(op1, op2, op3))))),
-        results =
-          Seq(StringData("replaced(i32)"), StringData("replaced(i64)")).map(Result(_)))
-    
+      regions = Seq(Region(Seq(Block(operations = Seq(op1, op2, op3))))),
+      results = Seq(StringData("replaced(i32)"), StringData("replaced(i64)"))
+        .map(Result(_))
+    )
 
     (op.name == "tobereplaced") match {
       case true =>

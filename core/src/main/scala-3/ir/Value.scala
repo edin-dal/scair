@@ -1,6 +1,5 @@
 package scair.ir
 
-import scair.transformations.PatternRewriter
 import scair.transformations.RewriteMethods
 
 // ██╗ ██████╗░
@@ -42,7 +41,10 @@ class Value[+T <: Attribute](
       for (use <- Seq.from(uses)) {
         val op = use.operation
         val new_op =
-          op.updated(results = op.results, operands = op.operands.updated(use.index, newValue))
+          op.updated(
+            results = op.results,
+            operands = op.operands.updated(use.index, newValue)
+          )
         RewriteMethods.replace_op(
           op = op,
           new_ops = new_op,
