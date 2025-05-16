@@ -1,0 +1,24 @@
+name: Publishing
+
+# Run on every push to main
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+    publish:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Publish
+          env:
+            MILL_PGP_SECRET_BASE64: ${{ secrets.PGP_SECRET }}
+            MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+            MILL_SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+            MILL_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          run: ./mill _.publishSonatypeCentral

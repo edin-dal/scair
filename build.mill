@@ -10,9 +10,13 @@ import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
 import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
 
+// Sonatype Central publish plugin
+import $ivy.`com.lihaoyi::mill-contrib-sonatypecentral:`
+import mill.contrib.sonatypecentral.SonatypeCentralPublishModule
+
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, PublishModule, TestModule, JavaModule}
-import mill.scalalib.publish.{PomSettings, License, VersionControl}
+import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule}
+import mill.scalalib.publish.{Developer, PomSettings, License, VersionControl}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
 import mill.define.{NamedTask, Command, ModuleRef, Module}
@@ -40,7 +44,9 @@ trait ScairSettings extends ScalaModule with UnidocModule {
     }
 }
 
-trait ScairModule extends ScalafixModule with PublishModule with ScoverageModule with ScairSettings {
+trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings {
+
+  override def artifactName = T { s"scair-${super.artifactName()}"}
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -49,11 +55,22 @@ trait ScairModule extends ScalafixModule with PublishModule with ScoverageModule
     licenses = Seq(License.`Apache-2.0`),
     versionControl = VersionControl.github(owner = "edin-dal", repo = "scair"),
     // TODO ?
-    developers = Seq()
+    developers = Seq(
+      Developer(
+        id = "baymaks",
+        name = "Maks Kret",
+        url = "https://github.com/baymaks/"
+      ),
+      Developer(
+        id = "papychacal",
+        name = "Emilien Bauer",
+        url = "https://github.com/PapyChacal/"
+      )
+    )
   )
 
   // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
-  // dependencies. This enforces that everythin ScaIR is transitively compiled with
+  // dependencies. This enforces that everything ScaIR is transitively compiled with
   // coverage when compiling a module with coverage.
   trait ScairScoverageData extends ScoverageData {
     override def transitiveModuleRunModuleDeps = {
@@ -94,12 +111,8 @@ object `package` extends RootModule with ScairSettings with ScoverageReport {
     )
   }
 
-  object ScaIRDL extends ScairModule {
-    def moduleDeps = Seq(core)
-  }
-
   object clair extends ScairModule {
-    def moduleDeps = Seq(core, ScaIRDL)
+    def moduleDeps = Seq(core)
   }
 
   object dialects extends ScairModule {
@@ -156,20 +169,16 @@ object `package` extends RootModule with ScairSettings with ScoverageReport {
     override def defaultCommandName(): String = "run"
     // Define a Mill command to run filechecks
     def run() = Task.Command {
-        // It depens on the runnable CLI
-        tools.scoverage.launcher()
+      // It depends on the runnable CLI
+      tools.scoverage.launcher()
 
-        // Get the directory root to use as lit's working directory
-        val rootPath = rootModule().millModuleBasePath.value
-        // Run lit
-        val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit)
-        if (litStatus.exitCode != 0) {
-          sys.error(f"Filechecks failed")
-
-        }
-        
+      // Get the directory root to use as lit's working directory
+      val rootPath = rootModule().millModuleBasePath.value
+      // Run lit
+      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit)
+      if (litStatus.exitCode != 0) {
+        sys.error(f"Filechecks failed")
       }
-    
-}
-
+    }
+  }
 }
