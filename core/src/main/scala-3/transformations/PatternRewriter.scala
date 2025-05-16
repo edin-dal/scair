@@ -159,7 +159,7 @@ object RewriteMethods {
     val results = new_results match {
       case Some(x) => x
       case None =>
-        if (ops.length == 0) then ListType() else ops(ops.length - 1).results
+        if (ops.length == 0) then ListType() else ops.last.results
     }
 
     if (op.results.length != results.length) then {
@@ -168,12 +168,13 @@ object RewriteMethods {
       )
     }
 
-    for ((old_res, new_res) <- op.results zip results) {
+    block.insert_ops_after(op, ops)
+
+    for ((old_res, new_res) <- (op.results zip results)) {
       old_res.replace_by(new_res)
     }
 
-    block.insert_ops_after(op, ops)
-    block.erase_op(op)
+    block.erase_op(op, safe_erase = false)
   }
 
 }

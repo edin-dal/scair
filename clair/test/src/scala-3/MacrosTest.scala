@@ -68,7 +68,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = Seq[Attribute](IntegerType(IntData(25), Unsigned)),
+      results =
+        Seq[Attribute](IntegerType(IntData(25), Unsigned)).map(Result(_)),
       properties = Map(("randProp" -> StringData("what")))
     )
 
@@ -98,10 +99,10 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = Seq(
+      results = Seq(
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned)
-      ),
+      ).map(Result(_)),
       properties = Map(("randProp" -> StringData("what")))
     )
 
@@ -127,14 +128,14 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value(typ = IntegerType(IntData(5), Unsigned)),
         Value(typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = Seq(
+      results = Seq(
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned)
-      ),
+      ).map(Result(_)),
       properties = Map(
         ("operandSegmentSizes" -> DenseArrayAttr(
           IntegerType(IntData(32), Signless),
@@ -204,7 +205,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
-      results_types = Seq(IntegerType(IntData(25), Unsigned)),
+      results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
       properties = Map(("randProp" -> StringData("what")))
     )
 

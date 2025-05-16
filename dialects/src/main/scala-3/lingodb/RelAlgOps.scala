@@ -185,7 +185,7 @@ object BaseTableOp extends OperationCompanion {
 case class BaseTableOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -193,7 +193,7 @@ case class BaseTableOp(
       name = "relalg.basetable",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -271,7 +271,7 @@ object SelectionOp extends OperationCompanion {
 case class SelectionOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -279,7 +279,7 @@ case class SelectionOp(
       name = "relalg.selection",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -353,7 +353,7 @@ object MapOp extends OperationCompanion {
 case class MapOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -361,7 +361,7 @@ case class MapOp(
       name = "relalg.map",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -462,7 +462,7 @@ object AggregationOp extends OperationCompanion {
 case class AggregationOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -470,7 +470,7 @@ case class AggregationOp(
       name = "relalg.aggregation",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -570,7 +570,7 @@ object CountRowsOp extends OperationCompanion {
 case class CountRowsOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -578,7 +578,7 @@ case class CountRowsOp(
       name = "relalg.count",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -654,7 +654,7 @@ object AggrFuncOp extends OperationCompanion {
 case class AggrFuncOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -662,7 +662,7 @@ case class AggrFuncOp(
       name = "relalg.aggrfn",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -761,7 +761,7 @@ object SortOp extends OperationCompanion {
 case class SortOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -769,7 +769,7 @@ case class SortOp(
       name = "relalg.sort",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -867,7 +867,7 @@ object MaterializeOp extends OperationCompanion {
 case class MaterializeOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -875,7 +875,7 @@ case class MaterializeOp(
       name = "relalg.materialize",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

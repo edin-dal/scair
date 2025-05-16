@@ -109,7 +109,7 @@ object SetResultOp extends OperationCompanion {
 case class SetResultOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -117,7 +117,7 @@ case class SetResultOp(
       name = "subop.set_result",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

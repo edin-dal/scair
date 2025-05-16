@@ -41,7 +41,7 @@ trait Operation extends IRNode {
   def updated(
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
-      results_types: Seq[Attribute] = results.map(_.typ),
+      results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = regions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
@@ -120,17 +120,19 @@ trait Operation extends IRNode {
     for (region <- regions) region.drop_all_references
   }
 
-  final def erase(): Unit = {
+  final def erase(safe_erase: Boolean = true): Unit = {
     if (container_block != None) then {
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
       )
     }
     drop_all_references
-
-    for (result <- results) {
-      result.erase()
+    if (safe_erase) then {
+      for (result <- results) {
+        result.erase()
+      }
     }
+
   }
 
   final def attach_region(region: Region) =
@@ -157,7 +159,7 @@ abstract class BaseOperation(
     val name: String,
     val operands: Seq[Value[Attribute]] = Seq(),
     val successors: Seq[Block] = Seq(),
-    val results_types: Seq[Attribute] = Seq(),
+    val results: Seq[Result[Attribute]] = Seq(),
     val regions: Seq[Region] = Seq(),
     val properties: Map[String, Attribute] = Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
@@ -169,7 +171,7 @@ abstract class BaseOperation(
   def copy(
       operands: Seq[Value[Attribute]],
       successors: Seq[Block],
-      results_types: Seq[Attribute],
+      results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
@@ -178,7 +180,7 @@ abstract class BaseOperation(
   override def updated(
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
-      results_types: Seq[Attribute] = results.map(_.typ),
+      results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = regions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
@@ -186,14 +188,12 @@ abstract class BaseOperation(
     copy(
       operands = operands,
       successors = successors,
-      results_types = results_types,
+      results = results,
       regions = regions,
       properties = properties,
       attributes = attributes
     )
   }
-
-  val results: Seq[Result[Attribute]] = results_types.map(Result(_))
 
   override def hashCode(): Int = {
     return 7 * 41 +
@@ -214,7 +214,7 @@ case class UnregisteredOperation(
     override val name: String,
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
@@ -224,7 +224,7 @@ case class UnregisteredOperation(
       name = name,
       operands = operands,
       successors = successors,
-      results_types = results_types,
+      results = results,
       regions = regions,
       properties = properties,
       attributes = attributes
@@ -233,7 +233,7 @@ case class UnregisteredOperation(
   override def copy(
       operands: Seq[Value[Attribute]],
       successors: Seq[Block],
-      results_types: Seq[Attribute],
+      results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
@@ -242,7 +242,7 @@ case class UnregisteredOperation(
       name = name,
       operands = operands,
       successors = successors,
-      results_types = results_types,
+      results = results,
       regions = regions.map(_.detached),
       properties = properties,
       attributes = attributes
@@ -262,7 +262,7 @@ trait OperationCompanion {
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
       successors: Seq[Block] = Seq(),
-      results_types: Seq[Attribute] = Seq(),
+      results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =

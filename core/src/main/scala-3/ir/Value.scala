@@ -1,5 +1,7 @@
 package scair.ir
 
+import scair.transformations.RewriteMethods
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -24,7 +26,7 @@ class Value[+T <: Attribute](
     val typ: T
 ) {
 
-  var uses: ListType[Use] = ListType()
+  val uses: ListType[Use] = ListType()
 
   def remove_use(use: Use): Unit = {
     val usesLengthBefore = uses.length
@@ -35,15 +37,23 @@ class Value[+T <: Attribute](
   }
 
   def replace_by(newValue: Value[Attribute]): Unit = {
-    for (use <- uses) {
-      val op = use.operation
-      val block = op.container_block.get
-      val new_op =
-        op.updated(operands = op.operands.updatedOperandsAndUses(use, newValue))
-      val idx = block.operations.indexOf(op)
-      block.operations(idx) = new_op
+    if !(newValue eq this) then {
+      for (use <- Seq.from(uses)) {
+        val op = use.operation
+        val new_op =
+          op.updated(
+            results = op.results,
+            operands = op.operands.updated(use.index, newValue)
+          )
+        RewriteMethods.replace_op(
+          op = op,
+          new_ops = new_op,
+          new_results = Some(new_op.results)
+        )
+
+      }
+      uses.clear()
     }
-    uses = ListType()
   }
 
   def erase(): Unit = {

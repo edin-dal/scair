@@ -25,7 +25,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
   "Such real ADT manipulation" should "flex how working it is" in {
     val zero = UnregisteredOperation(
       name = "arith.constant",
-      results_types = Seq(I32),
+      results = Seq(Result(I32)),
       properties = Map("value" -> IntegerAttr(IntData(0), I32))
     )
     //   val and =
