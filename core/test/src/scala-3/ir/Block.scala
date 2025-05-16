@@ -15,7 +15,7 @@ import java.io.PrintWriter
 case class TestOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
@@ -25,7 +25,7 @@ case class TestOp(
       name = "test.op",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

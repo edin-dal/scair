@@ -273,9 +273,9 @@ case class Block private (
     }
   }
 
-  def erase_op(op: Operation) = {
+  def erase_op(op: Operation, safe_erase: Boolean = true) = {
     detach_op(op)
-    op.erase()
+    op.erase(safe_erase)
   }
 
   def getIndexOf(op: Operation): Int = {

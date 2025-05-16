@@ -474,7 +474,7 @@ object ModuleOp extends OperationCompanion {
 case class ModuleOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
-    override val results_types: Seq[Attribute] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
@@ -484,7 +484,7 @@ case class ModuleOp(
       name = "builtin.module",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

@@ -625,7 +625,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
   override def updated(
       operands: Seq[Value[Attribute]],
       successors: Seq[Block],
-      results_types: Seq[Attribute],
+      results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
@@ -633,7 +633,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
     companion(
       operands = operands,
       successors = successors,
-      results_types = results_types,
+      results = results,
       regions = regions,
       properties = properties,
       attributes = attributes
@@ -662,7 +662,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   case class UnverifiedOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
       override val successors: Seq[Block] = Seq(),
-      override val results_types: Seq[Attribute] = Seq(),
+      override val results: Seq[Result[Attribute]] = Seq(),
       override val regions: Seq[Region] = Seq(),
       override val properties: Map[String, Attribute] =
         Map.empty[String, Attribute],
@@ -673,7 +673,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
           name, // DEFINED IN OperationCompanion, derived in DerivedOperationCompanion Companion
         operands,
         successors,
-        results_types,
+        results,
         regions,
         properties,
         attributes
@@ -682,7 +682,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
     override def copy(
         operands: Seq[Value[Attribute]],
         successors: Seq[Block],
-        results_types: Seq[Attribute],
+        results: Seq[Result[Attribute]],
         regions: Seq[Region],
         properties: Map[String, Attribute],
         attributes: DictType[String, Attribute]
@@ -691,7 +691,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         name = name,
         operands = operands,
         successors = successors,
-        results_types = results_types,
+        results = results,
         regions = regions,
         properties = properties,
         attributes = attributes
@@ -716,7 +716,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
       successors: Seq[scair.ir.Block] = Seq(),
-      results_types: Seq[Attribute] = Seq(),
+      results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
@@ -760,8 +760,8 @@ object DerivedOperationCompanion {
 
         def apply(
             operands: Seq[Value[Attribute]] = Seq(),
-            successors: Seq[scair.ir.Block] = Seq(),
-            results_types: Seq[Attribute] = Seq(),
+            successors: Seq[Block] = Seq(),
+            results: Seq[Result[Attribute]] = Seq(),
             regions: Seq[Region] = Seq(),
             properties: Map[String, Attribute] = Map.empty[String, Attribute],
             attributes: DictType[String, Attribute] =
@@ -769,7 +769,7 @@ object DerivedOperationCompanion {
         ): UnverifiedOp = UnverifiedOp(
           operands = operands,
           successors = successors,
-          results_types = results_types,
+          results = results,
           regions = regions,
           properties = properties,
           attributes = attributes
@@ -779,7 +779,7 @@ object DerivedOperationCompanion {
           UnverifiedOp(
             operands = operands(adtOp),
             successors = successors(adtOp),
-            results_types = results(adtOp).map(_.typ),
+            results = results(adtOp),
             regions = regions(adtOp).map(_.detached),
             properties = properties(adtOp),
             attributes = adtOp.attributes

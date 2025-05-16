@@ -38,7 +38,7 @@ object AbsfOp extends OperationCompanion {
 case class AbsfOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -46,7 +46,7 @@ case class AbsfOp(
       name = "math.absf",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes
@@ -101,7 +101,7 @@ object FPowIOp extends OperationCompanion {
 case class FPowIOp(
     override val operands: Seq[Value[Attribute]],
     override val successors: Seq[Block],
-    override val results_types: Seq[Attribute],
+    override val results: Seq[Result[Attribute]],
     override val regions: Seq[Region],
     override val properties: Map[String, Attribute],
     override val attributes: DictType[String, Attribute]
@@ -109,7 +109,7 @@ case class FPowIOp(
       name = "math.fpowi",
       operands,
       successors,
-      results_types,
+      results,
       regions,
       properties,
       attributes

@@ -137,11 +137,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   "printDataibutesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
     val op = UnregisteredOperation(
       "test.op",
-      results_types = Seq(
+      results = Seq(
         F32,
         F64,
         F80
-      )
+      ).map(Result(_))
     )
     val block1 = Block(
       ListType(F128),
@@ -156,11 +156,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     val op2 = UnregisteredOperation(
       "test.op",
       successors = Seq(block1),
-      results_types = Seq(
+      results = Seq(
         I1,
         I16,
         I32
-      )
+      ).map(Result(_))
     )
     val block2 = Block(
       ListType(I32),
@@ -177,9 +177,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     )
     val op3 = UnregisteredOperation(
       "test.op",
-      results_types = Seq(
+      results = Seq(
         INDEX
-      )
+      ).map(Result(_))
     )
     val block3 = Block(
       ListType(I64),
@@ -246,11 +246,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     val op4 = UnregisteredOperation(
       "test.op",
       successors = Seq(block1),
-      results_types = Seq(
+      results = Seq(
         I1,
         I16,
         I32
-      )
+      ).map(Result(_))
     )
 
     val block2 = new Block(
@@ -269,9 +269,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
 
     val op5 = UnregisteredOperation(
       "test.op",
-      results_types = Seq(
+      results = Seq(
         INDEX
-      )
+      ).map(Result(_))
     )
 
     val block3 = new Block(
@@ -346,9 +346,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                           Seq(),
                           Seq(),
                           Seq(
-                            IntegerType(IntData(32), Signless),
-                            IntegerType(IntData(64), Signed),
-                            IntegerType(IntData(80), Unsigned)
+                            Result(IntegerType(IntData(32), Signless)),
+                            Result(IntegerType(IntData(64), Signed)),
+                            Result(IntegerType(IntData(80), Unsigned))
                           ),
                           Seq(),
                           _,
