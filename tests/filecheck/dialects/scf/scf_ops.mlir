@@ -14,13 +14,13 @@
 %15, %16, %17 = "test.op"() : () -> (array<i1:0, 1>, array<i1:0, 1>, array<i1:0, 1>)
 %18, %19 = "test.op"() : () -> (tensor<1xf32>, tensor<1xf32>)
 
-%20, %21 = "scf.forall"(%11, %12, %13, %15, %16, %17, %18, %19) ({}) : (index, index, index, array<i1:0, 1>, array<i1:0, 1>, array<i1:0, 1>, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
+%20, %21 = "scf.forall"(%11, %12, %13, %15, %16, %17, %18, %19) <{operandSegmentSizes = array<i32: 1, 1, 1, 1, 1, 1, 1, 1>}> ({}) : (index, index, index, array<i1:0, 1>, array<i1:0, 1>, array<i1:0, 1>, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
 
 "scf.forall.in_parallel"() ({}) : () -> ()
 
 %22, %23 = "scf.if"(%20) ({}, {}) : (i1) -> (i1, i1)
 
-%24, %25 = "scf.parallel"(%11, %12, %13, %22, %23) ({}) : (index, index, index, i1, i1) -> (i1, i1)
+%24, %25 = "scf.parallel"(%11, %12, %13, %22, %23) <{operandSegmentSizes = array<i32: 1, 1, 1, 2>}> ({}) : (index, index, index, i1, i1) -> (i1, i1)
 
 "scf.reduce"(%24, %25) ({
     %26 = "scf.reduce.return"() : () -> (i1)
@@ -46,7 +46,7 @@
 // CHECK-NEXT:    %11, %12, %13 = "test.op"() : () -> (index, index, index)
 // CHECK-NEXT:    %14, %15, %16 = "test.op"() : () -> (array<i1: 0, 1>, array<i1: 0, 1>, array<i1: 0, 1>)
 // CHECK-NEXT:    %17, %18 = "test.op"() : () -> (tensor<1xf32>, tensor<1xf32>)
-// CHECK-NEXT:    %19, %20 = "scf.forall"(%11, %12, %13, %14, %15, %16, %17, %18) ({
+// CHECK-NEXT:    %19, %20 = "scf.forall"(%11, %12, %13, %14, %15, %16, %17, %18) <{operandSegmentSizes = array<i32: 1, 1, 1, 1, 1, 1, 1, 1>}> ({
 
 // CHECK:       }) : (index, index, index, array<i1: 0, 1>, array<i1: 0, 1>, array<i1: 0, 1>, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
 // CHECK-NEXT:    "scf.forall.in_parallel"() ({
@@ -57,7 +57,7 @@
 // CHECK:       }, {
 
 // CHECK:       }) : (i1) -> (i1, i1)
-// CHECK-NEXT:    %23, %24 = "scf.parallel"(%11, %12, %13, %21, %22) ({
+// CHECK-NEXT:    %23, %24 = "scf.parallel"(%11, %12, %13, %21, %22) <{operandSegmentSizes = array<i32: 1, 1, 1, 2>}> ({
 
 // CHECK:       }) : (index, index, index, i1, i1) -> (i1, i1)
 // CHECK-NEXT:    "scf.reduce"(%23, %24) ({
