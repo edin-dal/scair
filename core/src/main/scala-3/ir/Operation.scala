@@ -63,43 +63,27 @@ trait Operation extends IRNode {
   def custom_verify(): Either[String, Operation] = Right(this)
 
   def verify(): Either[String, Operation] = {
-
-    lazy val verifyRes: Int => Either[String, Operation] = { (i: Int) =>
-      if i == results.length then Right(this)
-      else
-        results(i).verify().flatMap(_ => verifyRes(i + 1))
-    }
-    lazy val verifyReg: Int => Either[String, Operation] = { (i: Int) =>
-      if i == regions.length then Right(this)
-      else
-        regions(i).verify().flatMap(_ => verifyReg(i + 1))
-    }
-    lazy val verifyProp: Int => Either[String, Operation] = { (i: Int) =>
-      if i == properties.size then Right(this)
-      else
-        properties.values.toSeq(i).custom_verify().flatMap(_ => verifyProp(i + 1))
-    }
-    lazy val verifyAttrs: Int => Either[String, Operation] = { (i: Int) =>
-      if i == attributes.size then Right(this)
-      else
-        attributes.values.toSeq(i).custom_verify().flatMap(_ => verifyAttrs(i + 1))
-    }
-    verifyRes(0)
-      .flatMap(
-        _ => verifyReg(0)
+    results
+      .foldLeft[Either[String, Unit]](Right(()))((res, result) =>
+        res.flatMap(_ => result.verify())
       )
-      .flatMap(
-        _ => verifyProp(0)
+      .flatMap(_ =>
+        regions.foldLeft[Either[String, Unit]](Right(()))((res, region) =>
+          res.flatMap(_ => region.verify())
+        )
       )
-      .flatMap(
-        _ => verifyAttrs(0)
+      .flatMap(_ =>
+        properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+          (res, prop) => res.flatMap(_ => prop.custom_verify())
+        )
       )
-      .flatMap(
-        _ => custom_verify()
+      .flatMap(_ =>
+        attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+          (res, attr) => res.flatMap(_ => attr.custom_verify())
+        )
       )
-      .flatMap(
-        _ => trait_verify()
-      )
+      .flatMap(_ => custom_verify())
+      .flatMap(_ => trait_verify())
   }
 
   final def drop_all_references: Unit = {

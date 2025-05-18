@@ -300,7 +300,7 @@ case class SelectionOp(
               "SelectionOp Operation must contain only 1 operand of type TupleStream."
             )
         }
-      }.flatMap(_ =>{
+      }.flatMap(_ => {
         results(0).typ match {
           case _: TupleStream => Right(this)
           case _ =>
@@ -382,7 +382,7 @@ case class MapOp(
               "MapOp Operation must contain only 1 operand of type TupleStream."
             )
         }
-      }.flatMap(_ =>{
+      }.flatMap(_ => {
         results(0).typ match {
           case _: TupleStream => Right(this)
           case _ =>
@@ -390,7 +390,7 @@ case class MapOp(
               "MapOp Operation must contain only 1 result of type TupleStream."
             )
         }
-      }).flatMap(_ =>{
+      }).flatMap(_ => {
         attributes.get("computed_cols") match {
           case Some(x) =>
             x match {
@@ -599,7 +599,7 @@ case class CountRowsOp(
               "CountRowsOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }.flatMap(_ =>{
+      }.flatMap(_ => {
         results(0).typ match {
           case _: IntegerType => Right(this)
           case _ =>
@@ -790,7 +790,7 @@ case class SortOp(
               "SortOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }.flatMap(_ =>{
+      }.flatMap(_ => {
         results(0).typ match {
           case _: TupleStream => Right(this)
           case _ =>
@@ -798,7 +798,7 @@ case class SortOp(
               "SortOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }).flatMap(_ =>{
+      }).flatMap(_ => {
         attributes.get("sortspecs") match {
           case Some(x) =>
             x match {

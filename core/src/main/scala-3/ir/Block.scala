@@ -287,23 +287,23 @@ case class Block private (
   }
 
   def verify(): Either[String, Unit] = {
-
-    lazy val verifyRecArgs: Int => Either[String, Unit] = { (i: Int) =>
-      if i == arguments.length then Right(())
-      else
-        arguments(i).verify().flatMap(_ => verifyRecArgs(i + 1))
-    }
-
-    lazy val verifyRecOps: Int => Either[String, Unit] = { (i: Int) =>
-      if i == operations.length then Right(())
-      else
-        operations(i).verify().flatMap(v =>
-            operations(i) = v
-            verifyRecOps(i + 1)
+    arguments
+      .foldLeft[Either[String, Unit]](Right(()))((res, arg) =>
+        res.flatMap(_ => arg.verify())
+      )
+      .flatMap(_ =>
+        operations.zipWithIndex.foldLeft[Either[String, Unit]](Right(()))(
+          (res, el) =>
+            val (op, i) = el
+            res.flatMap(_ =>
+              op.verify()
+                .map(v =>
+                  operations(i) = v
+                  ()
+                )
+            )
         )
-    }
-
-    verifyRecArgs(0).flatMap(_ => verifyRecOps(0))
+      )
   }
 
   override def equals(o: Any): Boolean = {

@@ -73,7 +73,7 @@ case class TupleStream(val tuples: Seq[Attribute])
       tuples(i) match {
         case x: TupleStreamTuple =>
           x.custom_verify() match {
-            case Right(_)    => verifyTuples(i + 1)
+            case Right(_)  => verifyTuples(i + 1)
             case Left(err) => Left(err)
           }
         case _ =>
@@ -268,7 +268,7 @@ case class GetColumnOp(
           case x: TupleStreamTuple =>
             x.custom_verify() match {
               case Right(value) => Right(this)
-              case Left(err)  => Left(err)
+              case Left(err)    => Left(err)
             }
           case _ =>
             Left(
