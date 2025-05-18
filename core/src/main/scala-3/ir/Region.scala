@@ -29,10 +29,7 @@ case class Region(
     lazy val verifyRecBlocks: Int => Either[String, Unit] = { (i: Int) =>
       if i == blocks.length then Right(())
       else
-        blocks(i).verify() match {
-          case Right(v)  => verifyRecBlocks(i + 1)
-          case Left(x) => Left(x)
-        }
+        blocks(i).verify().flatMap(_ => verifyRecBlocks(i + 1))
     }
 
     verifyRecBlocks(0)
