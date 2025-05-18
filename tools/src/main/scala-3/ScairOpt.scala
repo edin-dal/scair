@@ -102,7 +102,7 @@ object ScairOpt {
                 var module = input_module
                 // verify parsed content
                 if (!skip_verify) module.verify() match {
-                  case Left(op) =>
+                  case Right(op) =>
                     // apply the specified passes
                     val transformCtx = new TransformContext()
                     transformCtx.register_all_passes()
@@ -111,15 +111,15 @@ object ScairOpt {
                         case Some(pass) =>
                           module = pass.transform(module)
                           module = module.verify() match {
-                            case Left(op) => op
-                            case Right(errorMsg) =>
+                            case Right(op) => op
+                            case Left(errorMsg) =>
                               throw new VerifyException(errorMsg)
                           }
                         case None =>
                       }
                     }
                     module
-                  case Right(errorMsg) =>
+                  case Left(errorMsg) =>
                     if (args.verify_diagnostics) {
                       errorMsg
                     } else {
@@ -134,8 +134,8 @@ object ScairOpt {
                       case Some(pass) =>
                         module = pass.transform(module)
                         module.verify() match {
-                          case Left(_) =>
-                          case Right(errorMsg) =>
+                          case Right(_) =>
+                          case Left(errorMsg) =>
                             throw new VerifyException(errorMsg)
                         }
                       case None =>

@@ -105,7 +105,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
 
       val exception = block.verify()
 
-      exception shouldBe Right(
+      exception shouldBe Left(
         "Operation 'terminator' marked as a terminator, but is not the last operation within its container block"
       )
     }
@@ -117,7 +117,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
 
       val exception = terminator.verify()
 
-      exception shouldBe Right(
+      exception shouldBe Left(
         "Operation 'terminator' marked as a terminator, but is not contained in any block."
       )
     }
@@ -167,7 +167,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
 
     val exception = noterminator.verify()
 
-    exception shouldBe Right(
+    exception shouldBe Left(
       "NoTerminator Operation 'noterminator' requires single-block regions"
     )
   }

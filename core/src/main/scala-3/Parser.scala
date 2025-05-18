@@ -184,8 +184,8 @@ object Parser {
             throw new Exception(
               s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
             )
-          else Left(valueMap(name))
-        else Right((name, typ))
+          else Right(valueMap(name))
+        else Left((name, typ))
       )
     }
 
@@ -283,8 +283,8 @@ object Parser {
         successorList: Seq[String]
     ) =
       successorList.partitionMap(name =>
-        if blockMap.contains(name) then Left(blockMap(name))
-        else Right(name)
+        if blockMap.contains(name) then Right(blockMap(name))
+        else Left(name)
       )
 
     // check block waitlist once you exit the local scope of a region,
@@ -709,8 +709,8 @@ class Parser(val context: MLContext, val args: Args = Args())
     val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
-          operands = useAndRefValueSeqs._1,
-          successors = useAndRefBlockSeqs._1,
+          operands = useAndRefValueSeqs._2,
+          successors = useAndRefBlockSeqs._2,
           properties = properties,
           results = resultsTypes.map(Result(_)),
           attributes = DictType.from(attributes),
@@ -721,8 +721,8 @@ class Parser(val context: MLContext, val args: Args = Args())
         if args.allow_unregistered then
           new UnregisteredOperation(
             name = opName,
-            operands = useAndRefValueSeqs._1,
-            successors = useAndRefBlockSeqs._1,
+            operands = useAndRefValueSeqs._2,
+            successors = useAndRefBlockSeqs._2,
             properties = properties,
             results = resultsTypes.map(Result(_)),
             attributes = DictType.from(attributes),
@@ -733,11 +733,11 @@ class Parser(val context: MLContext, val args: Args = Args())
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
     }
-    if (useAndRefValueSeqs._2.length > 0) {
-      currentScope.valueWaitlist += op -> useAndRefValueSeqs._2
+    if (useAndRefValueSeqs._1.length > 0) {
+      currentScope.valueWaitlist += op -> useAndRefValueSeqs._1
     }
-    if (useAndRefBlockSeqs._2.length > 0) {
-      currentScope.blockWaitlist += op -> useAndRefBlockSeqs._2
+    if (useAndRefBlockSeqs._1.length > 0) {
+      currentScope.blockWaitlist += op -> useAndRefBlockSeqs._1
     }
 
     return op

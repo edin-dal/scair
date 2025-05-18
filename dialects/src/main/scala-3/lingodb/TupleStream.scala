@@ -36,11 +36,11 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Either[Unit, String] = {
+  override def custom_verify(): Either[String, Unit] = {
     if (tupleVals.length != 0 && tupleVals.length != 2) {
-      Right("TupleStream Tuple must contain 2 elements only.")
+      Left("TupleStream Tuple must contain 2 elements only.")
     } else {
-      Left(())
+      Right(())
     }
   }
 
@@ -65,19 +65,19 @@ case class TupleStream(val tuples: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Either[Unit, String] = {
+  override def custom_verify(): Either[String, Unit] = {
 
-    lazy val verifyTuples: Int => Either[Unit, String] = { (i: Int) =>
-      if (i == tuples.length) then Left(())
+    lazy val verifyTuples: Int => Either[String, Unit] = { (i: Int) =>
+      if (i == tuples.length) then Right(())
 
       tuples(i) match {
         case x: TupleStreamTuple =>
           x.custom_verify() match {
-            case Left(_)    => verifyTuples(i + 1)
-            case Right(err) => Right(err)
+            case Right(_)    => verifyTuples(i + 1)
+            case Left(err) => Left(err)
           }
         case _ =>
-          Right(
+          Left(
             "TupleStream must only contain TupleStream Tuple attributes."
           )
       }
@@ -190,15 +190,15 @@ case class ReturnOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     regions.length,
     properties.size
   ) match {
-    case (0, 0, 0, 0) => Left(this)
+    case (0, 0, 0, 0) => Right(this)
     case _ =>
-      Right(
+      Left(
         "ReturnOp Operation must contain only results and an attribute dictionary."
       )
   }
@@ -255,7 +255,7 @@ case class GetColumnOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -267,32 +267,32 @@ case class GetColumnOp(
         operands(0).typ match {
           case x: TupleStreamTuple =>
             x.custom_verify() match {
-              case Left(value) => Left(this)
-              case Right(err)  => Right(err)
+              case Right(value) => Right(this)
+              case Left(err)  => Left(err)
             }
           case _ =>
-            Right(
+            Left(
               "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
             )
         }
-      }.orElse({
+      }.flatMap(_ => {
         attributes.get("attr") match {
           case Some(x) =>
             x match {
-              case _: ColumnRefAttr => Left(this)
+              case _: ColumnRefAttr => Right(this)
               case _ =>
-                Right(
+                Left(
                   "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
                 )
             }
           case None =>
-            Right(
+            Left(
               "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
       )
   }

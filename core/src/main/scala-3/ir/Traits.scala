@@ -13,21 +13,21 @@ package scair.ir
 
 trait IsTerminator extends Operation {
 
-  override def trait_verify(): Either[Operation, String] = {
+  override def trait_verify(): Either[String, Operation] = {
     {
       this.container_block match {
         case Some(b) =>
           if (this != b.operations.last) then
-            Right(
+            Left(
               s"Operation '${name}' marked as a terminator, but is not the last operation within its container block"
             )
-          else Left(this)
+          else Right(this)
         case None =>
-          Right(
+          Left(
             s"Operation '${name}' marked as a terminator, but is not contained in any block."
           )
       }
-    }.orElse(super.trait_verify())
+    }.flatMap(_ => super.trait_verify())
   }
 
 }
@@ -38,14 +38,14 @@ trait IsTerminator extends Operation {
 
 trait NoTerminator extends Operation {
 
-  override def trait_verify(): Either[Operation, String] = {
+  override def trait_verify(): Either[String, Operation] = {
     {
       if (regions.filter(x => x.blocks.length != 1).length != 0) then
-        Right(
+        Left(
           s"NoTerminator Operation '${name}' requires single-block regions"
         )
-      else Left(this)
-    }.orElse(super.trait_verify())
+      else Right(this)
+    }.flatMap(_ => super.trait_verify())
   }
 
 }

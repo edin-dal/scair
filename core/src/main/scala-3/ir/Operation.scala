@@ -55,62 +55,62 @@ trait Operation extends IRNode {
   def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
-  def trait_verify(): Either[Operation, String] = Left(this)
+  def trait_verify(): Either[String, Operation] = Right(this)
 
   def custom_print(p: Printer)(using indentLevel: Int) =
     p.printGenericMLIROperation(this)
 
-  def custom_verify(): Either[Operation, String] = Left(this)
+  def custom_verify(): Either[String, Operation] = Right(this)
 
-  def verify(): Either[Operation, String] = {
+  def verify(): Either[String, Operation] = {
 
-    lazy val verifyRes: Int => Either[Operation, String] = { (i: Int) =>
-      if i == results.length then Left(this)
+    lazy val verifyRes: Int => Either[String, Operation] = { (i: Int) =>
+      if i == results.length then Right(this)
       else
         results(i).verify() match {
-          case Left(v)  => verifyRes(i + 1)
-          case Right(x) => Right(x)
+          case Right(v)  => verifyRes(i + 1)
+          case Left(x) => Left(x)
         }
     }
-    lazy val verifyReg: Int => Either[Operation, String] = { (i: Int) =>
-      if i == regions.length then Left(this)
+    lazy val verifyReg: Int => Either[String, Operation] = { (i: Int) =>
+      if i == regions.length then Right(this)
       else
         regions(i).verify() match {
-          case Left(v)  => verifyReg(i + 1)
-          case Right(x) => Right(x)
+          case Right(v)  => verifyReg(i + 1)
+          case Left(x) => Left(x)
         }
     }
-    lazy val verifyProp: Int => Either[Operation, String] = { (i: Int) =>
-      if i == properties.size then Left(this)
+    lazy val verifyProp: Int => Either[String, Operation] = { (i: Int) =>
+      if i == properties.size then Right(this)
       else
         properties.values.toSeq(i).custom_verify() match {
-          case Left(v)  => verifyProp(i + 1)
-          case Right(x) => Right(x)
+          case Right(v)  => verifyProp(i + 1)
+          case Left(x) => Left(x)
         }
     }
-    lazy val verifyAttrs: Int => Either[Operation, String] = { (i: Int) =>
-      if i == attributes.size then Left(this)
+    lazy val verifyAttrs: Int => Either[String, Operation] = { (i: Int) =>
+      if i == attributes.size then Right(this)
       else
         attributes.values.toSeq(i).custom_verify() match {
-          case Left(v)  => verifyAttrs(i + 1)
-          case Right(x) => Right(x)
+          case Right(v)  => verifyAttrs(i + 1)
+          case Left(x) => Left(x)
         }
     }
     verifyRes(0)
-      .orElse(
-        verifyReg(0)
+      .flatMap(
+        _ => verifyReg(0)
       )
-      .orElse(
-        verifyProp(0)
+      .flatMap(
+        _ => verifyProp(0)
       )
-      .orElse(
-        verifyAttrs(0)
+      .flatMap(
+        _ => verifyAttrs(0)
       )
-      .orElse(
-        custom_verify()
+      .flatMap(
+        _ => custom_verify()
       )
-      .orElse(
-        trait_verify()
+      .flatMap(
+        _ => trait_verify()
       )
   }
 

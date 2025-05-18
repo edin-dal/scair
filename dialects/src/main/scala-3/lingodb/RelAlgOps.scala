@@ -199,7 +199,7 @@ case class BaseTableOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -208,24 +208,24 @@ case class BaseTableOp(
     case (0, 0, 1, 0) =>
       {
         results(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "BaseTableOp Operation must contain only 1 result."
             )
         }
-      }.orElse({
+      }.flatMap(_ => {
         attributes.get("table_identifier") match {
           case Some(x) =>
             x match {
-              case _: StringData => Left(this)
+              case _: StringData => Right(this)
               case _ =>
-                Right(
+                Left(
                   "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
                 )
             }
           case None =>
-            Right(
+            Left(
               "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
             )
         }
@@ -285,7 +285,7 @@ case class SelectionOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -294,17 +294,17 @@ case class SelectionOp(
     case (1, 0, 1, 1) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "SelectionOp Operation must contain only 1 operand of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ =>{
         results(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "SelectionOp Operation must contain only 1 result of type TupleStream."
             )
         }
@@ -367,7 +367,7 @@ case class MapOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -376,38 +376,38 @@ case class MapOp(
     case (1, 0, 1, 1) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "MapOp Operation must contain only 1 operand of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ =>{
         results(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "MapOp Operation must contain only 1 result of type TupleStream."
             )
         }
-      }).orElse({
+      }).flatMap(_ =>{
         attributes.get("computed_cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Left(this)
+              case _: ArrayAttribute[_] => Right(this)
               case _ =>
-                Right(
+                Left(
                   "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
                 )
             }
           case None =>
-            Right(
+            Left(
               "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "MapOp Operation must contain only 1 operand, 1 result and 1 region."
       )
   }
@@ -476,7 +476,7 @@ case class AggregationOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -485,52 +485,52 @@ case class AggregationOp(
     case (1, 0, 1, 1) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "AggregationOp Operation must contain only 1 operand of type TupleStream."
             )
         }
         results(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "AggregationOp Operation must contain only 1 result of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ => {
         attributes.get("computed_cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Left(this)
+              case _: ArrayAttribute[_] => Right(this)
               case _ =>
-                Right(
+                Left(
                   "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
             )
         }
-      }).orElse({
+      }).flatMap(_ => {
         attributes.get("group_by_cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Left(this)
+              case _: ArrayAttribute[_] => Right(this)
               case _ =>
-                Right(
+                Left(
                   "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "AggregationOp Operation must contain only 1 operand, 1 result and 1 region."
       )
   }
@@ -584,7 +584,7 @@ case class CountRowsOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -593,23 +593,23 @@ case class CountRowsOp(
     case (1, 0, 1, 0) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "CountRowsOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ =>{
         results(0).typ match {
-          case _: IntegerType => Left(this)
+          case _: IntegerType => Right(this)
           case _ =>
-            Right(
+            Left(
               "CountRowsOp Operation must contain only 1 result of IntegerType."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "CountRowsOp Operation must contain only 1 operand and 1 result."
       )
   }
@@ -668,7 +668,7 @@ case class AggrFuncOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -677,45 +677,45 @@ case class AggrFuncOp(
     case (1, 0, 1, 0) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "AggrFuncOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ => {
         attributes.get("fn") match {
           case Some(x) =>
             x match {
-              case _: RelAlg_AggrFunc_Case => Left(this)
+              case _: RelAlg_AggrFunc_Case => Right(this)
               case _ =>
-                Right(
+                Left(
                   "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
             )
         }
-      }).orElse({
+      }).flatMap(_ => {
         attributes.get("attr") match {
           case Some(x) =>
             x match {
-              case _: ColumnRefAttr => Left(this)
+              case _: ColumnRefAttr => Right(this)
               case _ =>
-                Right(
+                Left(
                   "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "AggrFuncOp Operation must contain only 1 operand and 1 result."
       )
   }
@@ -775,7 +775,7 @@ case class SortOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -784,38 +784,38 @@ case class SortOp(
     case (1, 0, 1, 0) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "SortOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ =>{
         results(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "SortOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }).orElse({
+      }).flatMap(_ =>{
         attributes.get("sortspecs") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Left(this)
+              case _: ArrayAttribute[_] => Right(this)
               case _ =>
-                Right(
+                Left(
                   "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "SortOp Operation must contain only 1 operand and 1 result."
       )
   }
@@ -881,7 +881,7 @@ case class MaterializeOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -890,53 +890,53 @@ case class MaterializeOp(
     case (1, 0, 1, 0) =>
       {
         operands(0).typ match {
-          case _: TupleStream => Left(this)
+          case _: TupleStream => Right(this)
           case _ =>
-            Right(
+            Left(
               "MaterializeOp Operation must contain 1 operand of type TupleStream."
             )
         }
-      }.orElse({
+      }.flatMap(_ => {
         results(0).typ match {
-          case _: ResultTable => Left(this)
+          case _: ResultTable => Right(this)
           case _ =>
-            Right(
+            Left(
               "MaterializeOp Operation must contain 1 operand of type ResultOp."
             )
         }
-      }).orElse({
+      }).flatMap(_ => {
         attributes.get("cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Left(this)
+              case _: ArrayAttribute[_] => Right(this)
               case _ =>
-                Right(
+                Left(
                   "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
             )
         }
-      }).orElse({
+      }).flatMap(_ => {
         attributes.get("columns") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Left(this)
+              case _: ArrayAttribute[_] => Right(this)
               case _ =>
-                Right(
+                Left(
                   "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
                 )
             }
           case _ =>
-            Right(
+            Left(
               "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
             )
         }
       })
     case _ =>
-      Right(
+      Left(
         "MaterializeOp Operation must contain only 1 operand and 1 result."
       )
   }

@@ -24,14 +24,14 @@ case class Region(
     for (block <- blocks) block.drop_all_references
   }
 
-  def verify(): Either[Unit, String] = {
+  def verify(): Either[String, Unit] = {
 
-    lazy val verifyRecBlocks: Int => Either[Unit, String] = { (i: Int) =>
-      if i == blocks.length then Left(())
+    lazy val verifyRecBlocks: Int => Either[String, Unit] = { (i: Int) =>
+      if i == blocks.length then Right(())
       else
         blocks(i).verify() match {
-          case Left(v)  => verifyRecBlocks(i + 1)
-          case Right(x) => Right(x)
+          case Right(v)  => verifyRecBlocks(i + 1)
+          case Left(x) => Left(x)
         }
     }
 
