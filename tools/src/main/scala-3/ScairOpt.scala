@@ -89,17 +89,17 @@ object ScairOpt {
 
     input_chunks.foreach(chunk => {
 
-      val parser = new scair.Parser(ctx, parsed_args)
-      val printer = new Printer(print_generic)
-
-      val input_module = parser.parseThis(
-        chunk,
-        pattern = parser.TopLevel(using _)
-      ) match {
-        case fastparse.Parsed.Success(input_module, _) =>
-          Right(input_module)
-        case failure: fastparse.Parsed.Failure =>
-          Left(parser.error(failure))
+      val input_module = {
+        val parser = new scair.Parser(ctx, parsed_args)
+        parser.parseThis(
+          chunk,
+          pattern = parser.TopLevel(using _)
+        ) match {
+          case fastparse.Parsed.Success(input_module, _) =>
+            Right(input_module)
+          case failure: fastparse.Parsed.Failure =>
+            Left(parser.error(failure))
+        }
       }
 
       if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
@@ -130,14 +130,17 @@ object ScairOpt {
           }
         })
 
-      processed_module match {
-        case Left(errorMsg) =>
-          printer.print(errorMsg)
-        case Right(x) =>
-          printer.print(x)(using 0)
+      {
+        val printer = new Printer(print_generic)
+        processed_module match {
+          case Left(errorMsg) =>
+            printer.print(errorMsg)
+          case Right(x) =>
+            printer.print(x)(using 0)
+        }
+        if chunk != input_chunks.last then printer.print("// -----\n")
+        printer.flush()
       }
-      if chunk != input_chunks.last then printer.print("// -----\n")
-      printer.flush()
     })
   }
 
