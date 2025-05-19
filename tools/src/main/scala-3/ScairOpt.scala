@@ -108,9 +108,10 @@ object ScairOpt {
 
       val processed_module: Either[String, Operation] =
         input_module.flatMap(input_module => {
-          var module = input_module
+          var module =
+            if (skip_verify) then Right(input_module) else input_module.verify()
           // verify parsed content
-          if (!skip_verify) module.verify() match {
+          module match {
             case Right(op) =>
               // apply the specified passes
               val transformCtx = new TransformContext()
@@ -118,39 +119,19 @@ object ScairOpt {
               for (name <- passes) {
                 transformCtx.getPass(name) match {
                   case Some(pass) =>
-                    module = pass.transform(module)
-                    module = module.verify() match {
-                      case Right(op) => op
-                      case Left(errorMsg) =>
-                        throw new VerifyException(errorMsg)
-                    }
+                    module.map(pass.transform)
+                    module = module.flatMap(_.verify())
+
                   case None =>
                 }
               }
-              Right(module)
+              module
             case Left(errorMsg) =>
               if (parsed_args.verify_diagnostics) {
                 Left(errorMsg)
               } else {
                 throw new VerifyException(errorMsg)
               }
-          }
-          else {
-            val transformCtx = new TransformContext()
-            transformCtx.register_all_passes()
-            for (name <- passes) {
-              transformCtx.getPass(name) match {
-                case Some(pass) =>
-                  module = pass.transform(module)
-                  module.verify() match {
-                    case Right(_) =>
-                    case Left(errorMsg) =>
-                      throw new VerifyException(errorMsg)
-                  }
-                case None =>
-              }
-            }
-            Right(module)
           }
         })
 
