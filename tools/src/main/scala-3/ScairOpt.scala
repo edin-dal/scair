@@ -93,80 +93,77 @@ object ScairOpt {
       val parser = new scair.Parser(ctx, parsed_args)
       val printer = new Printer(print_generic)
 
-      parser.parseThis(
+      val input_module = parser.parseThis(
         chunk,
         pattern = parser.TopLevel(using _)
       ) match {
         case fastparse.Parsed.Success(input_module, _) =>
-          val processed_module: Operation | String = {
-            var module = input_module
-            // verify parsed content
-            if (!skip_verify) module.verify() match {
-              case Right(op) =>
-                // apply the specified passes
-                val transformCtx = new TransformContext()
-                transformCtx.register_all_passes()
-                for (name <- passes) {
-                  transformCtx.getPass(name) match {
-                    case Some(pass) =>
-                      module = pass.transform(module)
-                      module = module.verify() match {
-                        case Right(op) => op
-                        case Left(errorMsg) =>
-                          throw new VerifyException(errorMsg)
-                      }
-                    case None =>
-                  }
-                }
-                module
-              case Left(errorMsg) =>
-                if (parsed_args.verify_diagnostics) {
-                  errorMsg
-                } else {
-                  throw new VerifyException(errorMsg)
-                }
-            }
-            else {
+          Right(input_module)
+        case failure: fastparse.Parsed.Failure =>
+          Left(parser.error(failure))
+      }
+
+      if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
+        throw new Exception(input_module.left.get)
+
+      val processed_module: Either[String, Operation] =
+        input_module.flatMap(input_module => {
+          var module = input_module
+          // verify parsed content
+          if (!skip_verify) module.verify() match {
+            case Right(op) =>
+              // apply the specified passes
               val transformCtx = new TransformContext()
               transformCtx.register_all_passes()
               for (name <- passes) {
                 transformCtx.getPass(name) match {
                   case Some(pass) =>
                     module = pass.transform(module)
-                    module.verify() match {
-                      case Right(_) =>
+                    module = module.verify() match {
+                      case Right(op) => op
                       case Left(errorMsg) =>
                         throw new VerifyException(errorMsg)
                     }
                   case None =>
                 }
               }
-              module
+              Right(module)
+            case Left(errorMsg) =>
+              if (parsed_args.verify_diagnostics) {
+                Left(errorMsg)
+              } else {
+                throw new VerifyException(errorMsg)
+              }
+          }
+          else {
+            val transformCtx = new TransformContext()
+            transformCtx.register_all_passes()
+            for (name <- passes) {
+              transformCtx.getPass(name) match {
+                case Some(pass) =>
+                  module = pass.transform(module)
+                  module.verify() match {
+                    case Right(_) =>
+                    case Left(errorMsg) =>
+                      throw new VerifyException(errorMsg)
+                  }
+                case None =>
+              }
             }
+            Right(module)
           }
+        })
 
-          processed_module match {
-            case output: String =>
-              printer.print(output)
-            case x: ModuleOp =>
-              printer.print(x)(using 0)
-            case _ =>
-              throw new Exception(
-                "Top level module must be the Builtin module of type ModuleOp.\n" +
-                  "==------------------==" +
-                  s"Check your tranformations: ${passes.mkString(", ")}" +
-                  "==------------------=="
-              )
-          }
-          if chunk != input_chunks.last then printer.print("// -----\n")
-          printer.flush()
-
-        case failure: fastparse.Parsed.Failure =>
-          printer.print(parser.error(failure))
-          if chunk != input_chunks.last then printer.print("// -----\n")
-          printer.flush()
-
+      processed_module match {
+        case Left(errorMsg) =>
+          printer.print(errorMsg)
+        case Right(x) =>
+          printer.print(x)(using 0)
       }
+
+      if chunk != input_chunks.last then printer.print("// -----\n")
+      printer.flush()
+
     })
   }
 
