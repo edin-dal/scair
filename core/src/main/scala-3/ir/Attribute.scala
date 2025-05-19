@@ -71,7 +71,7 @@ abstract class DataAttribute[D](
     override val name: String,
     val data: D
 ) extends Attribute {
-  override def custom_print = s"$prefix$name$data"
+  override def custom_print = s"$prefix$name<$data>"
 
   override def equals(attr: Any): Boolean = {
     attr match {
