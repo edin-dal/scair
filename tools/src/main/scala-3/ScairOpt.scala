@@ -37,11 +37,7 @@ trait ScairOptBase {
     }
   }
 
-}
-
-object ScairOptBase extends ScairOptBase:
-
-  def main(args: Array[String]): Unit = {
+  def run(args: Array[String]): Unit = {
 
     // Define CLI args
     val argbuilder = OParser.builder[Args]
@@ -168,4 +164,7 @@ object ScairOptBase extends ScairOptBase:
     })
   }
 
-object ScairOpt extends ScairOptBase
+}
+
+object ScairOpt extends ScairOptBase:
+  def main(args: Array[String]): Unit = run(args)
