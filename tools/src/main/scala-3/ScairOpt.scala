@@ -4,13 +4,40 @@ import scair.TransformContext
 import scair.core.utils.Args
 import scair.exceptions.VerifyException
 import scair.ir.*
-import scair.utils.allDialects
-import scair.utils.allPasses
 import scopt.OParser
 
 import scala.io.Source
 
-object ScairOpt {
+trait ScairOptBase {
+  val ctx = MLContext()
+  val transformCtx = TransformContext()
+
+  register_all_dialects()
+  register_all_passes()
+
+  def allDialects = {
+    scair.utils.allDialects
+  }
+
+  def allPasses = {
+    scair.utils.allPasses
+  }
+
+  final def register_all_dialects(): Unit = {
+    for (dialect <- allDialects) {
+      ctx.registerDialect(dialect)
+    }
+  }
+
+  final def register_all_passes(): Unit = {
+    for (pass <- allPasses) {
+      transformCtx.registerPass(pass)
+    }
+  }
+
+}
+
+object ScairOptBase extends ScairOptBase:
 
   def main(args: Array[String]): Unit = {
 
@@ -66,7 +93,6 @@ object ScairOpt {
     // Parse the CLI args
     val parsed_args = OParser.parse(argparser, args, Args()).get
 
-    import MyExtensions._
     // Open the input file or stdin
     val input = parsed_args.input match {
       case Some(file) => Source.fromFile(file)
@@ -78,14 +104,13 @@ object ScairOpt {
     val print_generic = parsed_args.print_generic
 
     val passes = parsed_args.passes
+
     // TODO: more robust separator splitting
     val input_chunks =
       if (parsed_args.split_input_file) input.mkString.split("\n// -----\n")
       else Array(input.mkString)
 
     // Parse content
-    val ctx = MLContext()
-    ctx.register_all_dialects()
 
     input_chunks.foreach(chunk => {
 
@@ -113,9 +138,6 @@ object ScairOpt {
           module match {
             case Right(op) =>
               // apply the specified passes
-              val transformCtx = new TransformContext()
-              transformCtx.register_all_passes()
-
               passes
                 .map(transformCtx.getPass(_).get)
                 .foldLeft(module)((module, pass) => {
@@ -144,24 +166,4 @@ object ScairOpt {
     })
   }
 
-  object MyExtensions {
-
-    extension (ctx: MLContext)
-
-      def register_all_dialects(): Unit = {
-        for (dialect <- allDialects) {
-          ctx.registerDialect(dialect)
-        }
-      }
-
-    extension (ctx: TransformContext)
-
-      def register_all_passes(): Unit = {
-        for (pass <- allPasses) {
-          ctx.registerPass(pass)
-        }
-      }
-
-  }
-
-}
+object ScairOpt extends ScairOptBase
