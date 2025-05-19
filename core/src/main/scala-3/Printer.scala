@@ -213,7 +213,7 @@ case class Printer(
     )
   }
 
-  def print(op: Operation)(using indentLevel: Int): Unit = {
+  def print(op: Operation)(using indentLevel: Int = 0): Unit = {
     print(indent * indentLevel)
     if op.results.nonEmpty then
       printList(op.results)
