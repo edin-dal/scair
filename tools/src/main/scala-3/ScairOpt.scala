@@ -88,7 +88,7 @@ object ScairOpt {
     val ctx = MLContext()
     ctx.register_all_dialects()
 
-    val output_chunks = for (chunk <- input_chunks) yield {
+    input_chunks.foreach(chunk => {
 
       val parser = new scair.Parser(ctx, parsed_args)
       val printer = new Printer(print_generic)
@@ -167,7 +167,7 @@ object ScairOpt {
           printer.flush()
 
       }
-    }
+    })
   }
 
   object MyExtensions {
