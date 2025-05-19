@@ -413,7 +413,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val verified = op.verify()
     verified should matchPattern {
-      case Left(
+      case Right(
             RegionOp(
               Seq(
                 Region(
@@ -434,7 +434,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val verified = unverOp.verify()
     verified should matchPattern {
-      case Right("java.lang.Exception: Expected 2 operands, got 0.") =>
+      case Left("java.lang.Exception: Expected 2 operands, got 0.") =>
     }
   }
 

@@ -24,18 +24,10 @@ case class Region(
     for (block <- blocks) block.drop_all_references
   }
 
-  def verify(): Either[Unit, String] = {
-
-    lazy val verifyRecBlocks: Int => Either[Unit, String] = { (i: Int) =>
-      if i == blocks.length then Left(())
-      else
-        blocks(i).verify() match {
-          case Left(v)  => verifyRecBlocks(i + 1)
-          case Right(x) => Right(x)
-        }
-    }
-
-    verifyRecBlocks(0)
+  def verify(): Either[String, Unit] = {
+    blocks.foldLeft[Either[String, Unit]](Right(()))((res, block) =>
+      res.flatMap(_ => block.verify())
+    )
   }
 
   override def equals(o: Any): Boolean = {
