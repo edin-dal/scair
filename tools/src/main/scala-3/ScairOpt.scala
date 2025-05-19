@@ -152,12 +152,10 @@ trait ScairOptBase {
 
       {
         val printer = new Printer(print_generic)
-        processed_module match {
-          case Left(errorMsg) =>
-            printer.print(errorMsg)
-          case Right(x) =>
-            printer.print(x)(using 0)
-        }
+        processed_module.fold(
+          printer.print,
+          printer.print
+        )
         if chunk != input_chunks.last then printer.print("// -----\n")
         printer.flush()
       }
