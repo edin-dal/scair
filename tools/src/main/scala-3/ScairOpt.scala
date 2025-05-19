@@ -2,7 +2,6 @@ import scair.MLContext
 import scair.Printer
 import scair.TransformContext
 import scair.core.utils.Args
-import scair.dialects.builtin.ModuleOp
 import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.utils.allDialects
@@ -116,16 +115,12 @@ object ScairOpt {
               // apply the specified passes
               val transformCtx = new TransformContext()
               transformCtx.register_all_passes()
-              for (name <- passes) {
-                transformCtx.getPass(name) match {
-                  case Some(pass) =>
-                    module.map(pass.transform)
-                    module = module.flatMap(_.verify())
 
-                  case None =>
-                }
-              }
-              module
+              passes
+                .map(transformCtx.getPass(_).get)
+                .foldLeft(module)((module, pass) => {
+                  module.map(pass.transform)
+                })
             case Left(errorMsg) =>
               if (parsed_args.verify_diagnostics) {
                 Left(errorMsg)
@@ -141,10 +136,8 @@ object ScairOpt {
         case Right(x) =>
           printer.print(x)(using 0)
       }
-
       if chunk != input_chunks.last then printer.print("// -----\n")
       printer.flush()
-
     })
   }
 
