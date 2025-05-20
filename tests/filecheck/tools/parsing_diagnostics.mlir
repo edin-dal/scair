@@ -1,4 +1,4 @@
-// RUN: scair-opt --split_input_file --parsing_diagnostics %s | filecheck %s -DFILE=%s
+// RUN: scair-opt --split-input-file --parsing-diagnostics %s | filecheck %s -DFILE=%s
 
 
 notir

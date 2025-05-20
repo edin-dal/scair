@@ -57,21 +57,21 @@ trait ScairOptBase {
             "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
           )
           .action((_, c) => c.copy(allow_unregistered = true)),
-        opt[Unit]('s', "skip_verify")
+        opt[Unit]('s', "skip-verify")
           .optional()
           .text("Skip verification")
           .action((_, c) => c.copy(skip_verify = true)),
-        opt[Unit]("split_input_file")
+        opt[Unit]("split-input-file")
           .optional()
           .text("Split input file on `// -----`")
           .action((_, c) => c.copy(split_input_file = true)),
-        opt[Unit]("parsing_diagnostics")
+        opt[Unit]("parsing-diagnostics")
           .optional()
           .text(
             "Parsing diagnose mode, i.e parse errors are not fatal for the whole run"
           )
           .action((_, c) => c.copy(parsing_diagnostics = true)),
-        opt[Unit]('g', "print_generic")
+        opt[Unit]('g', "print-generic")
           .optional()
           .text("Print Strictly in Generic format")
           .action((_, c) => c.copy(print_generic = true)),
@@ -79,7 +79,7 @@ trait ScairOptBase {
           .optional()
           .text("Specify passes to apply to the IR")
           .action((x, c) => c.copy(passes = x)),
-        opt[Unit]("verify_diagnostics")
+        opt[Unit]("verify-diagnostics")
           .optional()
           .text(
             "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
