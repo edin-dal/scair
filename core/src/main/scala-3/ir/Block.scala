@@ -299,7 +299,7 @@ case class Block private (
               op.verify()
                 .map(v =>
                   operations(i) = v
-                  ()
+                  v.container_block = Some(this)
                 )
             )
         )
