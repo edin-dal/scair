@@ -90,7 +90,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   
   override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
 
-  override def publishVersion: T[String] = VcsVersion.vcsState().format()
+  override def publishVersion: T[String] = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
   object test extends ScoverageTests with TestModule.ScalaTest {
     def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
