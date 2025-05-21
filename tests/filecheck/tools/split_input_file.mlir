@@ -1,5 +1,5 @@
 // RUN: scair-opt %s | filecheck %s
-// RUN: scair-opt --split_input_file %s | filecheck %s --check-prefix=SPLIT
+// RUN: scair-opt --split-input-file %s | filecheck %s --check-prefix=SPLIT
 
 "test.op"() : () -> ()
 // -----

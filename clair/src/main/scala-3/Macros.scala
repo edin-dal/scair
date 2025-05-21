@@ -698,16 +698,16 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       )
     }
 
-    override def verify(): Either[Operation, String] = {
+    override def verify(): Either[String, Operation] = {
       Try(companion.verify(this)) match {
         case Success(op) =>
           op match {
             case adtOp: DerivedOperation[_, T] =>
               adtOp.verify()
             case _ =>
-              Right("Internal Error: Operation is not a DerivedOperation")
+              Left("Internal Error: Operation is not a DerivedOperation")
           }
-        case Failure(e) => Right(e.toString())
+        case Failure(e) => Left(e.toString())
       }
     }
 

@@ -96,13 +96,13 @@ case class DB_CharType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Either[Unit, String] = {
+  override def custom_verify(): Either[String, Unit] = {
     if (typ.length != 1) {
-      Right("TupleStream Tuple must contain 1 elements only.")
+      Left("TupleStream Tuple must contain 1 elements only.")
     } else
       typ(0) match {
-        case _: IntData => Left(())
-        case _          => Right("CharType type must be IntData")
+        case _: IntData => Right(())
+        case _          => Left("CharType type must be IntData")
       }
   }
 
@@ -189,19 +189,19 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Either[Unit, String] = {
+  override def custom_verify(): Either[String, Unit] = {
     if (typ.length != 2) {
-      Right("TupleStream Tuple must contain exactly 2 elements.")
+      Left("TupleStream Tuple must contain exactly 2 elements.")
     } else {
       typ(0) match {
-        case _: IntData => Left(())
+        case _: IntData => Right(())
         case _ =>
-          Right("DB_DecimalType type must be (IntData, IntData)")
+          Left("DB_DecimalType type must be (IntData, IntData)")
       }
       typ(1) match {
-        case _: IntData => Left(())
+        case _: IntData => Right(())
         case _ =>
-          Right("DB_DecimalType type must be (IntData, IntData)")
+          Left("DB_DecimalType type must be (IntData, IntData)")
       }
     }
   }
@@ -232,18 +232,18 @@ case class DB_StringType(val typ: Seq[Attribute])
     )
     with TypeAttribute {
 
-  override def custom_verify(): Either[Unit, String] = {
+  override def custom_verify(): Either[String, Unit] = {
     if (typ.length > 1) {
-      Right(
+      Left(
         "TupleStream Tuple must contain at most 1 element."
       )
     } else if (typ.length == 1)
       typ(0) match {
-        case _: StringData => Left(())
+        case _: StringData => Right(())
         case _ =>
-          Right("DB_DecimalType type must be StringData")
+          Left("DB_DecimalType type must be StringData")
       }
-    else Left(())
+    else Right(())
   }
 
   override def custom_print: String = {
@@ -303,16 +303,16 @@ case class DB_ConstantOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
     properties.size
   ) match {
-    case (0, 0, 1, 0, 0) => Left(this)
+    case (0, 0, 1, 0, 0) => Right(this)
     case _ =>
-      Right(
+      Left(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
   }
@@ -377,7 +377,7 @@ case class DB_CmpOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -386,14 +386,14 @@ case class DB_CmpOp(
   ) match {
     case (2, 0, 0, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Left(this)
+        case true => Right(this)
         case false =>
-          Right(
+          Left(
             "In order to be compared, operands' types must match!"
           )
       }
     case _ =>
-      Right(
+      Left(
         "DB_CmpOp Operation must contain only 2 operands."
       )
   }
@@ -521,7 +521,7 @@ case class DB_MulOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -530,14 +530,14 @@ case class DB_MulOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Left(this)
+        case true => Right(this)
         case false =>
-          Right(
+          Left(
             "In order to be multiplied, operands' types must match!"
           )
       }
     case _ =>
-      Right(
+      Left(
         "DB_MulOp Operation must contain only 2 operands."
       )
   }
@@ -667,7 +667,7 @@ case class DB_DivOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -676,14 +676,14 @@ case class DB_DivOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Left(this)
+        case true => Right(this)
         case false =>
-          Right(
+          Left(
             "In order to be divided, operands' types must match!"
           )
       }
     case _ =>
-      Right(
+      Left(
         "DB_DivOp Operation must contain only 2 operands."
       )
   }
@@ -753,7 +753,7 @@ case class DB_AddOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -762,14 +762,14 @@ case class DB_AddOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Left(this)
+        case true => Right(this)
         case false =>
-          Right(
+          Left(
             "In order to be added, operands' types must match!"
           )
       }
     case _ =>
-      Right(
+      Left(
         "DB_AddOp Operation must contain only 2 operands."
       )
   }
@@ -841,7 +841,7 @@ case class DB_SubOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
@@ -850,14 +850,14 @@ case class DB_SubOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Left(this)
+        case true => Right(this)
         case false =>
-          Right(
+          Left(
             "In order to carry out substitution, operands' types must match!"
           )
       }
     case _ =>
-      Right(
+      Left(
         "DB_SubOp Operation must contain only 2 operands."
       )
   }
@@ -926,16 +926,16 @@ case class CastOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[Operation, String] = (
+  override def custom_verify(): Either[String, Operation] = (
     operands.length,
     successors.length,
     results.length,
     regions.length,
     properties.size
   ) match {
-    case (1, 0, 1, 0, 0) => Left(this)
+    case (1, 0, 1, 0, 0) => Right(this)
     case _ =>
-      Right(
+      Left(
         "CastOp Operation must contain only 1 operand and result."
       )
   }

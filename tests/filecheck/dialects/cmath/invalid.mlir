@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --parsing_diagnostics --verify_diagnostics --split_input_file | filecheck %s -DFILE=%s
+// RUN: scair-opt %s --parsing-diagnostics --verify-diagnostics --split-input-file | filecheck %s -DFILE=%s
 
 "test.op"() {"invalid_type" = !cmath.complex<i8>} : () -> ()
 

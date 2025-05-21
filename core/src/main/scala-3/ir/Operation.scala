@@ -55,63 +55,35 @@ trait Operation extends IRNode {
   def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
-  def trait_verify(): Either[Operation, String] = Left(this)
+  def trait_verify(): Either[String, Operation] = Right(this)
 
   def custom_print(p: Printer)(using indentLevel: Int) =
     p.printGenericMLIROperation(this)
 
-  def custom_verify(): Either[Operation, String] = Left(this)
+  def custom_verify(): Either[String, Operation] = Right(this)
 
-  def verify(): Either[Operation, String] = {
-
-    lazy val verifyRes: Int => Either[Operation, String] = { (i: Int) =>
-      if i == results.length then Left(this)
-      else
-        results(i).verify() match {
-          case Left(v)  => verifyRes(i + 1)
-          case Right(x) => Right(x)
-        }
-    }
-    lazy val verifyReg: Int => Either[Operation, String] = { (i: Int) =>
-      if i == regions.length then Left(this)
-      else
-        regions(i).verify() match {
-          case Left(v)  => verifyReg(i + 1)
-          case Right(x) => Right(x)
-        }
-    }
-    lazy val verifyProp: Int => Either[Operation, String] = { (i: Int) =>
-      if i == properties.size then Left(this)
-      else
-        properties.values.toSeq(i).custom_verify() match {
-          case Left(v)  => verifyProp(i + 1)
-          case Right(x) => Right(x)
-        }
-    }
-    lazy val verifyAttrs: Int => Either[Operation, String] = { (i: Int) =>
-      if i == attributes.size then Left(this)
-      else
-        attributes.values.toSeq(i).custom_verify() match {
-          case Left(v)  => verifyAttrs(i + 1)
-          case Right(x) => Right(x)
-        }
-    }
-    verifyRes(0)
-      .orElse(
-        verifyReg(0)
+  def verify(): Either[String, Operation] = {
+    results
+      .foldLeft[Either[String, Unit]](Right(()))((res, result) =>
+        res.flatMap(_ => result.verify())
       )
-      .orElse(
-        verifyProp(0)
+      .flatMap(_ =>
+        regions.foldLeft[Either[String, Unit]](Right(()))((res, region) =>
+          res.flatMap(_ => region.verify())
+        )
       )
-      .orElse(
-        verifyAttrs(0)
+      .flatMap(_ =>
+        properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+          (res, prop) => res.flatMap(_ => prop.custom_verify())
+        )
       )
-      .orElse(
-        custom_verify()
+      .flatMap(_ =>
+        attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+          (res, attr) => res.flatMap(_ => attr.custom_verify())
+        )
       )
-      .orElse(
-        trait_verify()
-      )
+      .flatMap(_ => custom_verify())
+      .flatMap(_ => trait_verify())
   }
 
   final def drop_all_references: Unit = {

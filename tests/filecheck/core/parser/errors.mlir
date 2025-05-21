@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --parsing_diagnostics | filecheck %s -DFILE=%s
+// RUN: scair-opt %s --parsing-diagnostics | filecheck %s -DFILE=%s
 
 %0 = "test.op"() : () -> (i32)
 %2 = "test.op"() : () -> ()

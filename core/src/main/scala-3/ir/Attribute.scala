@@ -18,7 +18,7 @@ import scair.Parser.*
 sealed trait Attribute {
   def name: String
   def prefix: String = "#"
-  def custom_verify(): Either[Unit, String] = Left(())
+  def custom_verify(): Either[String, Unit] = Right(())
   def custom_print: String
 }
 
@@ -71,7 +71,7 @@ abstract class DataAttribute[D](
     override val name: String,
     val data: D
 ) extends Attribute {
-  override def custom_print = data.toString
+  override def custom_print = s"$prefix$name<$data>"
 
   override def equals(attr: Any): Boolean = {
     attr match {
