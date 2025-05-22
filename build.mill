@@ -10,12 +10,8 @@ import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
 import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
 
-// Sonatype Central publish plugin
-import $ivy.`com.lihaoyi::mill-contrib-sonatypecentral:`
-import mill.contrib.sonatypecentral.SonatypeCentralPublishModule
-
 import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule}
+import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
 import mill.scalalib.publish.{Developer, PomSettings, License, VersionControl}
 import mill.testrunner.TestResult
 import mill.resolve.{Resolve, SelectMode}
