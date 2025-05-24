@@ -2,7 +2,6 @@ package scair.ir
 
 import fastparse.*
 import scair.AttrParser
-import scair.Parser.*
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗

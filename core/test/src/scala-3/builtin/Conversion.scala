@@ -1,9 +1,6 @@
 package scair
 
-import scair.core.macros.TransparentData
-
 import scair.dialects.builtin._
-import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 

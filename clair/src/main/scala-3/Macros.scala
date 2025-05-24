@@ -9,7 +9,6 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
 
-import scala.collection.mutable
 import scala.compiletime.*
 import scala.quoted.*
 import scala.util.Failure

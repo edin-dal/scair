@@ -9,9 +9,6 @@ import scair.Parser.whitespace
 import scair.dialects.builtin.*
 import scair.ir.*
 
-import scala.collection.immutable
-import scala.collection.mutable
-
 ///////////
 // TYPES //
 ///////////

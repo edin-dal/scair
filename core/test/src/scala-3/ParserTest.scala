@@ -5,7 +5,6 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.*
-import org.scalatest.prop.Tables.*
 import scair.dialects.builtin.*
 import scair.ir.*
 

@@ -142,7 +142,7 @@ import fastparse.*"""
         .mkString("\n", "\n", "\n") +
       { for (hatch <- attrHatches) yield hatch.importt }
         .mkString("", "\n", "\n") +
-      (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
+      (operations.map(_.print) ++ attributes.map(_.print))
         .mkString("\n") + s"""
 val ${name}Dialect: Dialect = new Dialect(
   operations = Seq(${(operations.map(_.className) ++ opHatches.map(_.name))
@@ -343,12 +343,12 @@ case class OperationDef(
     }
     """
 
-  def helpers(implicit indent: Int): String = s"""
+  def helpers(implicit indent: Int = 0): String = s"""
   ${if (n_variadic_operands > 1) then operand_segment_sizes_helper else ""}
   ${if (n_variadic_results > 1) then result_segment_sizes_helper else ""}
   """
 
-  def print_constr_defs(implicit indent: Int): String = {
+  def print_constr_defs(implicit indent: Int = 0): String = {
     val deff = { (x: String, y: IRDLConstraint) =>
       s"  val ${x}_constr = ${y}"
     }
@@ -404,7 +404,7 @@ case class OperationDef(
       s"from + operandSegmentSizes($index)"
     )
 
-  def operands_accessors(implicit indent: Int): Seq[String] = {
+  def operands_accessors(implicit indent: Int = 0): Seq[String] = {
     n_variadic_operands match {
       case 0 =>
         for ((odef, i) <- operands.zipWithIndex)
@@ -476,7 +476,7 @@ case class OperationDef(
       s"from + resultSegmentSizes($index)"
     )
 
-  def results_accessors(implicit indent: Int): Seq[String] = {
+  def results_accessors(implicit indent: Int = 0): Seq[String] = {
     n_variadic_results match {
       case 0 =>
         for ((odef, i) <- results.zipWithIndex)
@@ -539,7 +539,7 @@ case class OperationDef(
       regions.trimEnd(-diff)
   }\n\n"""
 
-  def regions_accessors(implicit indent: Int): Seq[String] = {
+  def regions_accessors(implicit indent: Int = 0): Seq[String] = {
     n_variadic_regions match {
       case 0 =>
         for ((odef, i) <- regions.zipWithIndex)
@@ -601,7 +601,7 @@ case class OperationDef(
       successors.trimEnd(-diff)
   }\n\n"""
 
-  def successors_accessors(implicit indent: Int): Seq[String] = {
+  def successors_accessors(implicit indent: Int = 0): Seq[String] = {
     n_variadic_successors match {
       case 0 =>
         for ((odef, i) <- successors.zipWithIndex)
@@ -639,7 +639,7 @@ case class OperationDef(
     }
   }
 
-  def accessors(implicit indent: Int): String = {
+  def accessors(implicit indent: Int = 0): String = {
     (operands_accessors ++
       results_accessors ++
       regions_accessors ++
@@ -654,7 +654,7 @@ case class OperationDef(
 
   }
 
-  def constraints_verification(implicit indent: Int): String = {
+  def constraints_verification(implicit indent: Int = 0): String = {
     val verify_value = { (x: String) =>
       s"${x}_constr.verify($x.typ, verification_context)"
     }
@@ -668,7 +668,7 @@ case class OperationDef(
         yield verify_attribute(adef.id))).mkString("\n    ")
   }
 
-  def operands_verification(implicit indent: Int): String =
+  def operands_verification(implicit indent: Int = 0): String =
     n_variadic_operands match {
       case 0 =>
         s"""if (operands.length != ${operands.length}) then throw new Exception(s"Expected ${operands.length} operands, got $${operands.length}")"""
@@ -689,7 +689,7 @@ case class OperationDef(
       }
     }
 
-  def results_verification(implicit indent: Int): String =
+  def results_verification(implicit indent: Int = 0): String =
     n_variadic_results match {
       case 0 =>
         s"""if (results.length != ${results.length}) then throw new Exception(s"Expected ${results.length} results, got $${results.length}")"""
@@ -710,7 +710,7 @@ case class OperationDef(
       }
     }
 
-  def regions_verification(implicit indent: Int): String =
+  def regions_verification(implicit indent: Int = 0): String =
     n_variadic_regions match {
       case 0 =>
         s"""if (regions.length != ${regions.length}) then throw new Exception(s"Expected ${regions.length} regions, got $${regions.length}")"""
@@ -721,7 +721,7 @@ case class OperationDef(
         throw new NotImplementedError("Multivariadic regions not implemented")
     }
 
-  def successors_verification(implicit indent: Int): String =
+  def successors_verification(implicit indent: Int = 0): String =
     n_variadic_successors match {
       case 0 =>
         s"""if (successors.length != ${successors.length}) then throw new Exception(s"Expected ${successors.length} successors, got $${successors.length}")"""
@@ -732,21 +732,21 @@ case class OperationDef(
         throw new NotImplementedError("Multivariadic regions not implemented")
     }
 
-  def constructs_verification(implicit indent: Int): String = s"""
-    ${operands_verification(indent + 1)}
-    ${results_verification(indent + 1)}
-    ${regions_verification(indent + 1)}
-    ${successors_verification(indent + 1)}
+  def constructs_verification(implicit indent: Int = 0): String = s"""
+    ${operands_verification(using indent + 1)}
+    ${results_verification(using indent + 1)}
+    ${regions_verification(using indent + 1)}
+    ${successors_verification(using indent + 1)}
 """
 
-  def irdl_verification(implicit indent: Int): String = s"""
+  def irdl_verification(implicit indent: Int = 0): String = s"""
   override def custom_verify(): Unit = 
     val verification_context = new ConstraintContext()
-    ${constructs_verification(indent + 1)}
-    ${constraints_verification(indent + 1)}
+    ${constructs_verification(using indent + 1)}
+    ${constraints_verification(using indent + 1)}
 """
 
-  def print(implicit indent: Int): String = s"""
+  def print(implicit indent: Int = 0): String = s"""
 object $className extends MLIROperationObject {
   override def name = "$name"
   ${assembly_format
@@ -766,10 +766,10 @@ case class $className(
 ) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, properties, attributes) {
 
 
-${helpers(indent + 1)}
-${accessors(indent + 1)}
-${print_constr_defs(indent + 1)}
-${irdl_verification(indent + 1)}
+${helpers(using indent + 1)}
+${accessors(using indent + 1)}
+${print_constr_defs(using indent + 1)}
+${irdl_verification(using indent + 1)}
 
 }
 """
