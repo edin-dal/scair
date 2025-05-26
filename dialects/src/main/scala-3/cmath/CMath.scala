@@ -13,7 +13,7 @@ case class Complex(
     )
     with TypeAttribute
     with MLIRName["cmath.complex"]
-    derives AttributeTrait
+    derives DerivedAttributeCompanion
 
 case class Norm(
     in: Operand[Complex],

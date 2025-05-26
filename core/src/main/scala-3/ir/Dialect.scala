@@ -13,5 +13,5 @@ package scair.ir
 
 final case class Dialect(
     val operations: Seq[OperationCompanion],
-    val attributes: Seq[AttributeObject]
+    val attributes: Seq[AttributeCompanion]
 ) {}

@@ -97,7 +97,7 @@ object RelAlg_SetSemantic
 //   SortSpecificationAttr   //
 // ==---------------------== //
 
-object SortSpecificationAttr extends AttributeObject {
+object SortSpecificationAttr extends AttributeCompanion {
   override def name: String = "db.sortspec"
 
   override def parse[$: P](parser: AttrParser): P[Attribute] =

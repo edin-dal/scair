@@ -20,7 +20,7 @@ import scala.collection.mutable
 //   Tuple   //
 // ==-----== //
 
-object TupleStreamTuple extends AttributeObject {
+object TupleStreamTuple extends AttributeCompanion {
   override def name: String = "tuples.tuple"
 
   override def parse[$: P](p: AttrParser) =
@@ -50,7 +50,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 //   TupleStream   //
 // ==-----------== //
 
-object TupleStream extends AttributeObject {
+object TupleStream extends AttributeCompanion {
   override def name: String = "tuples.tuplestream"
 
   override def parse[$: P](p: AttrParser) =
@@ -96,7 +96,7 @@ case class TupleStream(val tuples: Seq[Attribute])
 //   ColumnDefAttr   //
 // ==-------------== //
 
-object ColumnDefAttr extends AttributeObject {
+object ColumnDefAttr extends AttributeCompanion {
   override def name: String = "tuples.column_def"
 
   override def parse[$: P](parser: AttrParser): P[Attribute] = P(
@@ -119,7 +119,7 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
 //   ColumnRefAttr   //
 // ==-------------== //
 
-object ColumnRefAttr extends AttributeObject {
+object ColumnRefAttr extends AttributeCompanion {
   override def name: String = "tuples.column_ref"
 
   override def parse[$: P](parser: AttrParser): P[Attribute] =

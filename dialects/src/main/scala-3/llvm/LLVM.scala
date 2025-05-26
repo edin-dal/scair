@@ -11,7 +11,7 @@ case class Ptr()
       parameters = Seq()
     )
     with TypeAttribute
-    with MLIRName["llvm.ptr"] derives AttributeTrait
+    with MLIRName["llvm.ptr"] derives DerivedAttributeCompanion
 
 case class Load(
     ptr: Operand[Ptr],
