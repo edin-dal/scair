@@ -14,7 +14,9 @@ import scala.collection.mutable
 class MLContext() {
 
   val dialectOpContext: mutable.Map[String, OperationCompanion] = mutable.Map()
-  val dialectAttrContext: mutable.Map[String, AttributeCompanion] = mutable.Map()
+
+  val dialectAttrContext: mutable.Map[String, AttributeCompanion] =
+    mutable.Map()
 
   def getOperation(name: String) = dialectOpContext.get(name)
 

@@ -802,7 +802,8 @@ object DerivedOperationCompanion {
 
 }
 
-inline def summonAttributeTraits[T <: Tuple]: Seq[DerivedAttributeCompanion[?]] =
+inline def summonAttributeTraits[T <: Tuple]
+    : Seq[DerivedAttributeCompanion[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
       summonInline[DerivedAttributeCompanion[t]] +: summonAttributeTraits[ts]
