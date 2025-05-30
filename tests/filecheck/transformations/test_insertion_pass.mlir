@@ -9,10 +9,10 @@
 // CHECK: builtin.module {
 // CHECK:   "test.op"() {replaced = "false"} : () -> ()
 // CHECK:   "test.op"() {replaced = "false"} : () -> ()
-// CHECK:   "dummy1"() : () -> ()
-// CHECK:   "dummy2"() : () -> ()
-// CHECK:   "dummy3"() : () -> ()
-// CHECK:   "dummy4"() : () -> ()
+// CHECK:   "dummy1"() {replaced = "false"} : () -> ()
+// CHECK:   "dummy2"() {replaced = "false"} : () -> ()
+// CHECK:   "dummy3"() {replaced = "false"} : () -> ()
+// CHECK:   "dummy4"() {replaced = "false"} : () -> ()
 // CHECK:   "test.op"() {replaced = "false"} : () -> ()
 // CHECK:   "test.op"() {replaced = "false"} : () -> ()
 // CHECK: }
