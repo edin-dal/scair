@@ -30,9 +30,9 @@ import scala.util.Try
 // ██████╔╝ ██║ ██║░░██║ ███████╗ ███████╗ ╚█████╔╝ ░░░██║░░░
 // ╚═════╝░ ╚═╝ ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ░╚════╝░ ░░░╚═╝░░░
 
-def I1 = IntegerType(IntData(1), Signless)
-def I32 = IntegerType(IntData(32), Signless)
-def I64 = IntegerType(IntData(64), Signless)
+val I1 = IntegerType(IntData(1), Signless)
+val I32 = IntegerType(IntData(32), Signless)
+val I64 = IntegerType(IntData(64), Signless)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    SIGNEDNESS   ||
