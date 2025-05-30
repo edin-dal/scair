@@ -15,38 +15,22 @@ ScaIR: MLIR inspired Scala Compiler Framework
 
 ## Installation as a dependency
 
-We are still figuring out the Maven Central repository publication process.
+ScaIR is **now published** on [**Maven Central**](https://central.sonatype.com/artifact/io.github.edin-dal/scair-tools_3/0.0.0-1-670825/overview)! 🙌✊🥳🎉👏
 
-ScaIR is usable now through local publication though:
-
-1. Clone the repository and publish its packages locally by running:
-
-```bash
-./mill _.publishLocal
-```
-
-Which should end with a line like:
-
-```
-[625] Publishing Artifact(io.github.edin-dal,gen_dialects_3,<version>) to ivy repo <USER-PATH>/.ivy2/local
-```
-
-To use this from your project, just add:
+Include in your project via: 
 
 - SBT:
 ```scala
-libraryDependencies += "io.github.edin-dal" %% "scair" % "<version>"
+libraryDependencies += "io.github.edin-dal" % "scair-tools_3" % "<version>"
 ```
 - Mill:
 ```scala
     def ivyDeps = Agg(
       ...,
-      "io.github.edin-dal::tools:<version>",
+      ivy"io.github.edin-dal::scair-tools_3:<version>",
       ...
     )
 ```
-
-to your build defintion (Typically `build.sbt` or `build.mill`)
 
 ---
 

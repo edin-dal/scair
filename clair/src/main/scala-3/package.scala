@@ -27,17 +27,28 @@ package scair
   * ||   defining a custom attribute   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * case class SampleAttribute(
-  *     e1: Operand[IntegerAttr]
-  * ) extends AttributeFE
+  * case class SampleAttr(
+  *     val value: FloatType
+  * ) extends ParametrizedAttribute(
+  *       name = "sample.sample_attr",
+  *       parameters = Seq(value)
+  *     )
+  *     with MLIRName["sample.sample_attr"]
+  *     derives AttributeTrait
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom type attribute   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
   * case class SampleType(
-  *     e1: Operand[IntegerAttr]
-  * ) extends TypeAttributeFE
+  *     val value: FloatType
+  * ) extends ParametrizedAttribute(
+  *       name = "sample.sample_type",
+  *       parameters = Seq(value)
+  *     )
+  *     with TypeAttribute
+  *     with MLIRName["sample.sample_type"]
+  *     derives AttributeTrait
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining custom operations   ||
@@ -45,39 +56,22 @@ package scair
   *
   * case class SampOp1(
   *     e1: Seq[Operand[IntegerAttr]],
-  *     e2: Result[AnyAttribute],
+  *     e2: Result[Attribute],
   *     e3: Region
-  * ) extends OperationFE
+  * ) extends DerivedOperation["sample.sampop1", SampOp1]
+  *   derives DerivedOperationCompanion
   *
   * case class SampOp2(
   *     e1: Seq[Operand[Complex]],
-  *     e2: Result[AnyAttribute]
-  * ) extends OperationFE
+  *     e2: Result[Attribute]
+  * ) extends DerivedOperation["sample.sampop2", SampOp2]
+  *   derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   packaging into a dialect   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
-  *
-  * object Sample {
-  *   val opHatches = Seq()
-  *   val attrHatches = Seq(new AttrEscapeHatch[SampleData])
-  *
-  *   val generator =
-  *     summonDialect[(SampleAttribute, SampOp1, SampOp2)](
-  *       "Sample",
-  *       opHatches,
-  *       attrHatches
-  *     )
-  *
-  * }
-  *
-  * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
-  * ||   print the generated code   ||
-  * \*≡==----≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
-  *
-  * def main(args: Array[String]): Unit = {
-  *   println(CMath.generator.print(0))
-  * }
+  * 
+  * val Sample = summonDialect[(SampleAttr, SampleType), (SampOp1, SampOp1)](Seq(SampleData))
   * ```
   *
   * To include the defined Dialect in ScaIR, the user should put the file into
