@@ -100,7 +100,7 @@ trait Rewriter {
   }
 
   def operation_insertion_handler: (Operation) => Unit = (
-      op: Operation
+    op: Operation
   ) => {
     // default handler does nothing
   }
@@ -236,80 +236,82 @@ class PatternRewriteWalker(
 ) {
 
   class PatternRewriter(
-    var current_op: Operation
+      var current_op: Operation
   ) extends Rewriter {
-  var has_done_action: Boolean = false
+    var has_done_action: Boolean = false
 
-  override def operation_removal_handler: Operation => Unit = clear_worklist
-  override def operation_insertion_handler: Operation => Unit = populate_worklist
+    override def operation_removal_handler: Operation => Unit = clear_worklist
 
-  def erase_op(op: Operation): Unit = {
-    super.erase_op(op)
+    override def operation_insertion_handler: Operation => Unit =
+      populate_worklist
+
+    def erase_op(op: Operation): Unit = {
+      super.erase_op(op)
+    }
+
+    def erase_matched_op(): Unit = {
+      super.erase_op(current_op)
+    }
+
+    def insert_op_at_location(
+        insertion_point: InsertPoint,
+        ops: Operation | Seq[Operation]
+    ): Unit = {
+      super.insert_ops_at(insertion_point, ops)
+    }
+
+    def insert_op_before_matched_op(
+        ops: Operation | Seq[Operation]
+    ): Unit = {
+      super.insert_ops_before(current_op, ops)
+    }
+
+    def insert_op_after_matched_op(
+        ops: Operation | Seq[Operation]
+    ): Unit = {
+      super.insert_ops_before(current_op, ops)
+    }
+
+    def insert_op_at_end_of(
+        block: Block,
+        ops: Operation | Seq[Operation]
+    ): Unit = {
+      insert_op_at_location(InsertPoint.at_end_of(block), ops)
+    }
+
+    def insert_op_at_start_of(
+        block: Block,
+        ops: Operation | Seq[Operation]
+    ): Unit = {
+      insert_op_at_location(InsertPoint.at_start_of(block), ops)
+    }
+
+    override def insert_ops_before(
+        op: Operation,
+        new_ops: Operation | Seq[Operation]
+    ): Unit = {
+      super.insert_ops_before(op, new_ops)
+      has_done_action = true
+    }
+
+    override def insert_ops_after(
+        op: Operation,
+        new_ops: Operation | Seq[Operation]
+    ): Unit = {
+      super.insert_ops_after(op, new_ops)
+      has_done_action = true
+    }
+
+    override def replace_op(
+        op: Operation,
+        new_ops: Operation | Seq[Operation],
+        new_results: Option[Seq[Value[Attribute]]] = None
+    ): Unit = {
+      super.replace_op(op, new_ops, new_results)
+      has_done_action = true
+    }
+
   }
-
-  def erase_matched_op(): Unit = {
-    super.erase_op(current_op)
-  }
-
-  def insert_op_at_location(
-      insertion_point: InsertPoint,
-      ops: Operation | Seq[Operation]
-  ): Unit = {
-    super.insert_ops_at(insertion_point, ops)
-  }
-
-  def insert_op_before_matched_op(
-      ops: Operation | Seq[Operation]
-  ): Unit = {
-    super.insert_ops_before(current_op, ops)
-  }
-
-  def insert_op_after_matched_op(
-      ops: Operation | Seq[Operation]
-  ): Unit = {
-    super.insert_ops_before(current_op, ops)
-  }
-
-  def insert_op_at_end_of(
-      block: Block,
-      ops: Operation | Seq[Operation]
-  ): Unit = {
-    insert_op_at_location(InsertPoint.at_end_of(block), ops)
-  }
-
-  def insert_op_at_start_of(
-      block: Block,
-      ops: Operation | Seq[Operation]
-  ): Unit = {
-    insert_op_at_location(InsertPoint.at_start_of(block), ops)
-  }
-
-  override def insert_ops_before(
-      op: Operation,
-      new_ops: Operation | Seq[Operation]
-  ): Unit = {
-    super.insert_ops_before(op, new_ops)
-    has_done_action = true
-  }
-
-  override def insert_ops_after(
-      op: Operation,
-      new_ops: Operation | Seq[Operation]
-  ): Unit = {
-    super.insert_ops_after(op, new_ops)
-    has_done_action = true
-  }
-
-  override def replace_op(
-      op: Operation,
-      new_ops: Operation | Seq[Operation],
-      new_results: Option[Seq[Value[Attribute]]] = None
-  ): Unit = {
-    super.replace_op(op, new_ops, new_results)
-    has_done_action = true
-  }
-
-}
 
   private var worklist = Stack[Operation]()
 
