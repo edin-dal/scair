@@ -327,7 +327,6 @@ class PatternRewriteWalker(
   }
 
   private def populate_worklist(op: Operation): Unit = {
-    // println(s"adding ${op.name} to worklist")
     worklist.push(op)
     op.regions.reverseIterator.foreach((x: Region) =>
       x.blocks.reverseIterator.foreach((y: Block) =>
@@ -337,7 +336,6 @@ class PatternRewriteWalker(
   }
 
   private def clear_worklist(op: Operation): Unit = {
-    // println(s"removing ${op.name} from worklist")
     worklist -= op
     op.regions.reverseIterator.foreach((x: Region) =>
       x.blocks.reverseIterator.foreach((y: Block) =>
