@@ -93,12 +93,23 @@ case class InsertPoint(
 ||   Static realm   ||
 \*≡==---==≡≡==---==≡*/
 
-object RewriteMethods {
+trait Rewriter {
 
-  def erase_op(op: Operation) = {
+  def operation_removal_handler: Operation => Unit = (op: Operation) => {
+    // default handler does nothing
+  }
+
+  def operation_insertion_handler: (Operation) => Unit = (
+      op: Operation
+  ) => {
+    // default handler does nothing
+  }
+
+  def erase_op(op: Operation, safe_erase: Boolean = true) = {
     op.container_block match {
       case Some(block) =>
-        block.erase_op(op)
+        operation_removal_handler(op)
+        block.erase_op(op, safe_erase)
       case _ =>
         throw new Exception("Cannot erase an operation that has no parents.")
     }
@@ -123,6 +134,7 @@ object RewriteMethods {
       case None =>
         insertion_point.block.add_ops(operations)
     }
+    operations.foreach(operation_insertion_handler)
   }
 
   def insert_ops_before(
@@ -168,57 +180,94 @@ object RewriteMethods {
       )
     }
 
-    block.insert_ops_after(op, ops)
+    insert_ops_after(op, ops)
 
     for ((old_res, new_res) <- (op.results zip results)) {
-      old_res.replace_by(new_res)
+      replace_value(old_res, new_res)
     }
 
-    block.erase_op(op, safe_erase = false)
+    erase_op(op, safe_erase = false)
+  }
+
+  def replace_value(
+      value: Value[Attribute],
+      new_value: Value[Attribute]
+  ): Unit = {
+    if !(new_value eq value) then {
+      for (use <- Seq.from(value.uses)) {
+        val op = use.operation
+        val new_op =
+          op.updated(
+            results = op.results,
+            operands = op.operands.updated(use.index, new_value)
+          )
+        replace_op(
+          op = op,
+          new_ops = new_op,
+          new_results = Some(new_op.results)
+        )
+      }
+      value.uses.clear()
+    }
   }
 
 }
+
+object RewriteMethods extends Rewriter
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||  Abstract realm  ||
 \*≡==---==≡≡==---==≡*/
 
 //             OPERATION REWRITER              //
-class PatternRewriter(
-    var current_op: Operation
+
+type PatternRewriter = PatternRewriteWalker#PatternRewriter
+
+abstract class RewritePattern {
+
+  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
+    ???
+
+}
+
+//    OPERATION REWRITE WALKER    //
+class PatternRewriteWalker(
+    val pattern: RewritePattern
 ) {
+
+  class PatternRewriter(
+    var current_op: Operation
+  ) extends Rewriter {
   var has_done_action: Boolean = false
 
+  override def operation_removal_handler: Operation => Unit = clear_worklist
+  override def operation_insertion_handler: Operation => Unit = populate_worklist
+
   def erase_op(op: Operation): Unit = {
-    RewriteMethods.erase_op(op)
-    has_done_action = true
+    super.erase_op(op)
   }
 
   def erase_matched_op(): Unit = {
-    RewriteMethods.erase_op(current_op)
-    has_done_action = true
+    super.erase_op(current_op)
   }
 
   def insert_op_at_location(
       insertion_point: InsertPoint,
       ops: Operation | Seq[Operation]
   ): Unit = {
-    RewriteMethods.insert_ops_at(insertion_point, ops)
-    has_done_action = true
+    super.insert_ops_at(insertion_point, ops)
   }
 
   def insert_op_before_matched_op(
       ops: Operation | Seq[Operation]
   ): Unit = {
-    RewriteMethods.insert_ops_before(current_op, ops)
-    has_done_action = true
+    super.insert_ops_before(current_op, ops)
   }
 
   def insert_op_after_matched_op(
       ops: Operation | Seq[Operation]
   ): Unit = {
-    RewriteMethods.insert_ops_before(current_op, ops)
-    has_done_action = true
+    super.insert_ops_before(current_op, ops)
   }
 
   def insert_op_at_end_of(
@@ -235,43 +284,32 @@ class PatternRewriter(
     insert_op_at_location(InsertPoint.at_start_of(block), ops)
   }
 
-  def insert_ops_before(
+  override def insert_ops_before(
       op: Operation,
       new_ops: Operation | Seq[Operation]
   ): Unit = {
-    RewriteMethods.insert_ops_before(op, new_ops)
+    super.insert_ops_before(op, new_ops)
     has_done_action = true
   }
 
-  def insert_ops_after(
+  override def insert_ops_after(
       op: Operation,
       new_ops: Operation | Seq[Operation]
   ): Unit = {
-    RewriteMethods.insert_ops_after(op, new_ops)
+    super.insert_ops_after(op, new_ops)
     has_done_action = true
   }
 
-  def replace_op(
+  override def replace_op(
       op: Operation,
       new_ops: Operation | Seq[Operation],
       new_results: Option[Seq[Value[Attribute]]] = None
   ): Unit = {
-    RewriteMethods.replace_op(op, new_ops, new_results)
+    super.replace_op(op, new_ops, new_results)
+    has_done_action = true
   }
 
 }
-
-abstract class RewritePattern {
-
-  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
-    ???
-
-}
-
-//    OPERATION REWRITE WALKER    //
-class PatternRewriteWalker(
-    val pattern: RewritePattern
-) {
 
   private var worklist = Stack[Operation]()
 
@@ -287,10 +325,21 @@ class PatternRewriteWalker(
   }
 
   private def populate_worklist(op: Operation): Unit = {
+    // println(s"adding ${op.name} to worklist")
     worklist.push(op)
     op.regions.reverseIterator.foreach((x: Region) =>
       x.blocks.reverseIterator.foreach((y: Block) =>
         y.operations.reverseIterator.foreach(populate_worklist(_))
+      )
+    )
+  }
+
+  private def clear_worklist(op: Operation): Unit = {
+    // println(s"removing ${op.name} from worklist")
+    worklist -= op
+    op.regions.reverseIterator.foreach((x: Region) =>
+      x.blocks.reverseIterator.foreach((y: Block) =>
+        y.operations.reverseIterator.foreach(clear_worklist(_))
       )
     )
   }

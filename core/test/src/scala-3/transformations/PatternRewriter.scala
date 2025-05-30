@@ -10,6 +10,7 @@ import scair.Parser
 import scair.Printer
 import scair.MLContext
 import scair.core.utils.Args
+import java.io.*
 
 class PatternRewriterTest extends AnyFlatSpec {
 
@@ -19,9 +20,9 @@ class PatternRewriterTest extends AnyFlatSpec {
     val args = Args(allow_unregistered = true)
     val parser = Parser(ctx, args)
     val input = parser.parseThis("""
-%0 = "test.op"() : () -> (i32)
-%1 = "test.op"(%0) : (i32) -> (i32)
-"test.op"(%1) : (i32) -> ()
+%0 = "test.op1"() : () -> (i32)
+%1 = "test.op2"(%0) : (i32) -> (i32)
+"test.op3"(%1) : (i32) -> ()
 """).get.value
 
     object TestPattern extends RewritePattern {
@@ -38,14 +39,14 @@ class PatternRewriterTest extends AnyFlatSpec {
     val walker = PatternRewriteWalker(TestPattern)
 
     walker.rewrite_op(input)
-
-    Printer().print(input) shouldEqual """
-builtin.module {
-  %0 = "test.op"() : () -> (i64)
-  %1 = "test.op"(%0) : (i64) -> (i64)
-  "test.op"(%1) : (i64) -> ()
+    val baos = ByteArrayOutputStream()
+    Printer(p = new PrintWriter(baos)).print(input)
+    baos.toString() shouldEqual
+"""builtin.module {
+  %0 = "test.op1"() : () -> (i64)
+  %1 = "test.op2"(%0) : (i64) -> (i64)
+  "test.op3"(%1) : (i64) -> ()
 }
 """
-
   }
 }
