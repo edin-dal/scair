@@ -15,7 +15,7 @@ ScaIR: MLIR inspired Scala Compiler Framework
 
 ## Installation as a dependency
 
-ScaIR is **now published** on [**Maven Central**](https://central.sonatype.com/artifact/io.github.edin-dal/scair-tools_3/0.0.0-1-670825/overview)! 🙌✊🥳🎉👏
+ScaIR is regularly published on [**Maven Central**](https://central.sonatype.com/artifact/io.github.edin-dal/scair-tools_3/overview)
 
 Include in your project via: 
 
