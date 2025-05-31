@@ -26,10 +26,10 @@ trait ScairSettings extends ScalaModule with UnidocModule {
 
   def scoverageVersion = T{"2.3.0"}
   override def scalaVersion = "3.6.4"
-  override def scalacOptions = Seq("-Wunused:imports")
+  override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports")
+  override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
   override def unidocVersion: T[Option[String]] = Some("0.5.0")
-  override def scalaDocOptions = Seq("-Xsource:3", "-snippet-compiler:compile")
 
   override def unidocSourceFiles = Task {
       (Seq(compile().classes) ++ T.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
