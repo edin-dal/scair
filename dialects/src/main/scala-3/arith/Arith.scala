@@ -44,7 +44,7 @@ object FastMathFlags:
 
   def apply(flags: FastMathFlag*): FastMathFlags = HashSet(flags*)
 
-object FastMathFlagsAttr extends AttributeObject {
+object FastMathFlagsAttr extends AttributeCompanion {
   override def name: String = "arith.fastmath"
 
   override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] = {

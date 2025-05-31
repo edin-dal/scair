@@ -592,20 +592,20 @@ def getAttrConstructor[T: Type](
 ||    MLIR TRAIT    ||
 \*≡==---==≡≡==---==≡*/
 
-trait AttributeTrait[T] extends AttributeTraitI[T] {
+trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
   extension (op: T) override def AttributeTrait = this
 }
 
-object AttributeTrait {
+object DerivedAttributeCompanion {
 
-  inline def derived[T]: AttributeTrait[T] = ${ derivedImpl[T] }
+  inline def derived[T]: DerivedAttributeCompanion[T] = ${ derivedImpl[T] }
 
-  def derivedImpl[T: Type](using Quotes): Expr[AttributeTrait[T]] =
+  def derivedImpl[T: Type](using Quotes): Expr[DerivedAttributeCompanion[T]] =
 
     val attrDef = getAttrDefImpl[T]
 
     '{
-      new AttributeTrait[T] {
+      new DerivedAttributeCompanion[T] {
         override def name: String = ${ Expr(attrDef.name) }
         override def parse[$: P](p: AttrParser): P[T] = P(
           ("<" ~/ p.Type.rep(sep = ",") ~ ">")
@@ -802,10 +802,11 @@ object DerivedOperationCompanion {
 
 }
 
-inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeTrait[?]] =
+inline def summonAttributeTraits[T <: Tuple]
+    : Seq[DerivedAttributeCompanion[?]] =
   inline erasedValue[T] match
     case _: (t *: ts) =>
-      summonInline[AttributeTrait[t]] +: summonAttributeTraits[ts]
+      summonInline[DerivedAttributeCompanion[t]] +: summonAttributeTraits[ts]
     case _: EmptyTuple => Seq()
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
@@ -815,7 +816,7 @@ inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
     case _: EmptyTuple => Seq()
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
-    attributes: Seq[AttributeObject]
+    attributes: Seq[AttributeCompanion]
 ): Dialect =
   new Dialect(
     summonMLIRTraits[Operations],
