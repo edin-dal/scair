@@ -10,10 +10,10 @@
 // CHECK:   "test.op"(%0) {replaced = "false"} : ("replaced(i32)") -> ()
 // CHECK:   "test.op"(%0) {replaced = "false"} : ("replaced(i32)") -> ()
 // CHECK:   %0, %1 = "replacedOp"() ({
-// CHECK:     "dummy-op1"() : () -> ()
-// CHECK:     "dummy-op2"() : () -> ()
-// CHECK:     "dummy-return"() : () -> ()
-// CHECK:   }) : () -> ("replaced(i32)", "replaced(i64)")
+// CHECK:     "dummy-op1"() {replaced = "false"}  : () -> ()
+// CHECK:     "dummy-op2"() {replaced = "false"}  : () -> ()
+// CHECK:     "dummy-return"() {replaced = "false"}  : () -> ()
+// CHECK:   }) {replaced = "false"}  : () -> ("replaced(i32)", "replaced(i64)")
 // CHECK:   "test.op"(%1) {replaced = "false"} : ("replaced(i64)") -> ()
 // CHECK:   "test.op"(%1) {replaced = "false"} : ("replaced(i64)") -> ()
 // CHECK: }

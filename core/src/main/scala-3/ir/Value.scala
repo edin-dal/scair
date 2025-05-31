@@ -1,7 +1,5 @@
 package scair.ir
 
-import scair.transformations.RewriteMethods
-
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -33,26 +31,6 @@ class Value[+T <: Attribute](
     uses -= use
     if (usesLengthBefore == uses.length) then {
       throw new Exception("Use to be removed was not in the Use list.")
-    }
-  }
-
-  def replace_by(newValue: Value[Attribute]): Unit = {
-    if !(newValue eq this) then {
-      for (use <- Seq.from(uses)) {
-        val op = use.operation
-        val new_op =
-          op.updated(
-            results = op.results,
-            operands = op.operands.updated(use.index, newValue)
-          )
-        RewriteMethods.replace_op(
-          op = op,
-          new_ops = new_op,
-          new_results = Some(new_op.results)
-        )
-
-      }
-      uses.clear()
     }
   }
 
