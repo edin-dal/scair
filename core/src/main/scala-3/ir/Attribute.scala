@@ -85,11 +85,11 @@ abstract class DataAttribute[D](
 
 }
 
-trait AttributeObject {
+trait AttributeCompanion {
   def name: String
   def parse[$: P](p: AttrParser): P[Attribute]
 }
 
-trait AttributeTraitI[T] extends AttributeObject {
+trait AttributeCompanionI[T] extends AttributeCompanion {
   extension (op: T) def AttributeTrait = this
 }

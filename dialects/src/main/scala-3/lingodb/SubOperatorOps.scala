@@ -20,7 +20,7 @@ import scala.collection.mutable
 //   StateMembers   //
 // ==------------== //
 
-object StateMembers extends AttributeObject {
+object StateMembers extends AttributeCompanion {
   override def name: String = "subop.state_members"
 
   override def parse[$: P](parser: AttrParser) = P(
@@ -54,7 +54,7 @@ case class StateMembers(
 //   ResultTable   //
 // ==-----------== //
 
-object ResultTable extends AttributeObject {
+object ResultTable extends AttributeCompanion {
   override def name: String = "subop.result_table"
 
   override def parse[$: P](parser: AttrParser) = P(
