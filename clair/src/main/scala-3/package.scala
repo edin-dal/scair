@@ -10,13 +10,16 @@ package scair
   * example:
   *
   * ```scala
-  * import scair.ir.{DataAttribute, AttributeObject}
+  * import scair.ir.*
+  * import scair.clair.macros.*
+  * import scair.dialects.builtin.*
+  * import scair.dialects.cmath.*
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom data attribute   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * object SampleData extends AttributeObject {
+  * object SampleData extends AttributeCompanion {
   *   override def name: String = "sample"
   * }
   *
@@ -34,7 +37,7 @@ package scair
   *       parameters = Seq(value)
   *     )
   *     with MLIRName["sample.sample_attr"]
-  *     derives AttributeTrait
+  *     derives DerivedAttributeCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom type attribute   ||
@@ -48,7 +51,7 @@ package scair
   *     )
   *     with TypeAttribute
   *     with MLIRName["sample.sample_type"]
-  *     derives AttributeTrait
+  *     derives DerivedAttributeCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining custom operations   ||
