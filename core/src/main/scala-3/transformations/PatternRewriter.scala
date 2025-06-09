@@ -3,6 +3,7 @@ package scair.transformations
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
+import scala.annotation.tailrec
 import scala.collection.mutable.Stack
 
 // ██████╗░ ░█████╗░ ████████╗ ████████╗ ███████╗ ██████╗░ ███╗░░██╗
@@ -227,6 +228,30 @@ abstract class RewritePattern {
 
   def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
     ???
+
+}
+
+case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
+    extends RewritePattern {
+
+  @tailrec
+  private final def match_and_rewrite_rec(
+      op: Operation,
+      rewriter: PatternRewriter,
+      patterns: Seq[RewritePattern]
+  ): Unit = {
+    patterns match
+      case Nil => ()
+      case h :: t =>
+        h.match_and_rewrite(op, rewriter)
+        if !rewriter.has_done_action then match_and_rewrite_rec(op, rewriter, t)
+  }
+
+  override def match_and_rewrite(
+      op: Operation,
+      rewriter: PatternRewriter
+  ): Unit =
+    match_and_rewrite_rec(op, rewriter, patterns)
 
 }
 
