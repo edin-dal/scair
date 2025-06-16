@@ -55,9 +55,17 @@ case class MulFull(
 ) extends DerivedOperation["cmath.mulfull", MulFull]
     derives DerivedOperationCompanion
 
+case class MulOptional(
+    lhs: Option[Operand[IntegerType]],
+    rhs: Operand[IntegerType],
+    res: Result[IntegerType]
+) extends DerivedOperation["cmath.mulopt", MulOptional]
+    derives DerivedOperationCompanion
+
 val mulComp = summon[DerivedOperationCompanion[Mul]]
 val mulSVComp = summon[DerivedOperationCompanion[MulSingleVariadic]]
 val mulMMVComp = summon[DerivedOperationCompanion[MulMultiVariadic]]
+val mulOptComp = summon[DerivedOperationCompanion[MulOptional]]
 
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
@@ -193,6 +201,20 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
           IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
         )
       )
+    )
+
+    def adtMulOptional = MulOptional(
+      lhs = Some(Value(IntegerType(IntData(5), Unsigned))),
+      rhs = Value(IntegerType(IntData(5), Unsigned)),
+      res = Result(IntegerType(IntData(25), Unsigned))
+    )
+
+    def unverMulOptional = mulOptComp.UnverifiedOp(
+      operands = Seq(
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+      ),
+      results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_))
     )
 
   }
@@ -438,4 +460,38 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
+  "Single Optional Conversion to Unverified" should "Correctly translate from Single Optional ADT operation to Unverified Operation" in {
+    val op = TestCases.adtMulOptional
+    val unverMulSinVarOp = mulOptComp.unverify(op)
+
+    unverMulSinVarOp.name should be("cmath.mulopt")
+    unverMulSinVarOp.operands should matchPattern {
+      case Seq(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    unverMulSinVarOp.results should matchPattern {
+      case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
+    }
+  }
+
+  "Single Optional Conversion to ADTOp" should "Correctly translate from Single Optional Unverified operation to ADT Operation" in {
+    val op = TestCases.unverMulOptional
+    val adtMulOptional = mulOptComp.verify(op)
+
+    throw new Exception(adtMulOptional.toString) // to ensure the test runs
+
+    adtMulOptional.lhs should matchPattern {
+      case Some(Value(IntegerType(IntData(5), Unsigned))) =>
+    }
+    adtMulOptional.rhs should matchPattern {
+      case Value(IntegerType(IntData(5), Unsigned)) =>
+    }
+    adtMulOptional.res should matchPattern {
+      case Result(IntegerType(IntData(25), Unsigned)) => 
+    }
+    }
 }
+  
+

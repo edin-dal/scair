@@ -101,6 +101,8 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
+        case Variadicity.Optional => 
+          selectMember(adtOpExpr, d.name).asExprOf[Option[DefinedInput[Def]]]
         case Variadicity.Variadic =>
           selectMember(adtOpExpr, d.name).asExprOf[Seq[DefinedInput[Def]]]
         case Variadicity.Single =>
@@ -351,7 +353,10 @@ def partitionedConstructs[Def <: OpInputDef: Type](
     // If there is a single variadic definition, partionning is about stripping the preceeding and following single elements, and taking the rest as elements of the variadic construct
     case 1 =>
       val preceeding =
-        defs.indexWhere(getConstructVariadicity(_) == Variadicity.Variadic)
+        defs.indexWhere(x =>
+          val a = getConstructVariadicity(x)  
+          a == Variadicity.Variadic || 
+          a == Variadicity.Optional)
       val following = defs.length - preceeding - 1
       val preceeding_exprs = defs
         .slice(0, preceeding)
@@ -402,7 +407,7 @@ def partitionedConstructs[Def <: OpInputDef: Type](
       defs.zipWithIndex.map { case (d, i) =>
         getConstructVariadicity(d) match
           case Variadicity.Single => '{ ${ flat }(${ Expr(i) }) }
-          case Variadicity.Variadic =>
+          case Variadicity.Variadic | Variadicity.Optional =>
             '{
               val sizes = $segmentSizes
               val start = sizes.slice(0, ${ Expr(i) }).sum
@@ -434,6 +439,17 @@ def verifiedConstructs[Def <: OpInputDef: Type](
     tpe match
       case '[t] =>
         variadicity match
+          case Variadicity.Optional =>
+            // If the construct is optional, check if it is defined and if so, verify its type
+            '{
+              if (!${ c }.isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]) then
+                throw new Exception(
+                  s"Expected ${${ Expr(d.name) }} to be of type ${${
+                      Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+                    }}, got ${${ c }}"
+                )
+              ${ c }.asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]].headOption
+            }
           // If the construct is not variadic, just check if it is of the expected type
           case Variadicity.Single =>
             '{
