@@ -30,7 +30,7 @@ sealed trait MayVariadicOpInputDef(val variadicity: Variadicity)
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
 // (An Optional structurally is just a Variadic capped at one.)
 enum Variadicity {
-  case Single, Variadic
+  case Single, Variadic, Optional
 }
 
 case class OperandDef(
@@ -61,7 +61,8 @@ case class SuccessorDef(
 
 case class OpPropertyDef(
     override val name: String,
-    val tpe: Type[?]
+    val tpe: Type[?], 
+    val optional: Boolean = false
 ) extends OpInputDef(name) {}
 
 case class AttributeParamDef(

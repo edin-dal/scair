@@ -247,7 +247,7 @@ def getConstructConstraint(_def: OpInputDef)(using Quotes) =
     case ResultDef(name, tpe, variadicity)  => tpe
     case RegionDef(name, variadicity)       => Type.of[Attribute]
     case SuccessorDef(name, variadicity)    => Type.of[Attribute]
-    case OpPropertyDef(name, tpe)           => tpe
+    case OpPropertyDef(name, tpe, _)           => tpe
 
 /** Helper to get the variadicity of a construct definition's construct.
   */
@@ -257,7 +257,7 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
     case ResultDef(name, tpe, variadicity)  => variadicity
     case RegionDef(name, variadicity)       => variadicity
     case SuccessorDef(name, variadicity)    => variadicity
-    case OpPropertyDef(name, tpe)           => Variadicity.Single
+    case OpPropertyDef(name, tpe, _)           => Variadicity.Single
 
 /*__________________*\
 \*-- VERIFICATION --*/
@@ -494,7 +494,7 @@ def constructorArgs(
     (verifiedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe) =>
+    opDef.properties.map { case OpPropertyDef(name, tpe, _) =>
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
           val property = generateCheckedPropertyArgument[t & Attribute](
