@@ -61,7 +61,7 @@ case class SuccessorDef(
 
 case class OpPropertyDef(
     override val name: String,
-    val tpe: Type[?], 
+    val tpe: Type[?],
     val optional: Boolean = false
 ) extends OpInputDef(name) {}
 
