@@ -27,7 +27,10 @@ import scair.ir.*
 abstract class EnumAttrCase[T <: Attribute](
     val symbol: String,
     val typ: T
-) extends ParametrizedAttribute(symbol, Seq(typ)) {
+) extends ParametrizedAttribute {
+  override def name: String = symbol
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(typ)
   def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
   override def custom_print = symbol
 }

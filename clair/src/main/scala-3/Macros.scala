@@ -647,7 +647,17 @@ def getAttrConstructor[T: Type](
 \*≡==---==≡≡==---==≡*/
 
 trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
+  def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   extension (op: T) override def AttributeTrait = this
+}
+
+trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
+
+  this: T =>
+
+  given companion: DerivedAttributeCompanion[T] = deferred
+  override val name: String = companion.name
+  override val parameters: Seq[Attribute | Seq[Attribute]] = companion.parameters(this)
 }
 
 object DerivedAttributeCompanion {
@@ -665,6 +675,7 @@ object DerivedAttributeCompanion {
           ("<" ~/ p.Type.rep(sep = ",") ~ ">")
         ).orElse(Seq())
           .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = Seq()
       }
     }
 

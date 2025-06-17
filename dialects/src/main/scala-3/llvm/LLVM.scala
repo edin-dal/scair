@@ -6,13 +6,10 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 case class Ptr()
-    extends ParametrizedAttribute(
-      name = "llvm.ptr",
-      parameters = Seq()
-    )
+    extends DerivedAttribute["llvm.ptr", Ptr]
     with TypeAttribute
-    with MLIRName["llvm.ptr"] derives DerivedAttributeCompanion
-
+    derives DerivedAttributeCompanion 
+    
 case class Load(
     ptr: Operand[Ptr],
     result: Result[Attribute]

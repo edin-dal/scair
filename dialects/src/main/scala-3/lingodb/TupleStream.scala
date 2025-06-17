@@ -30,11 +30,11 @@ object TupleStreamTuple extends AttributeCompanion {
 }
 
 case class TupleStreamTuple(val tupleVals: Seq[Attribute])
-    extends ParametrizedAttribute(
-      name = "tuples.tuple",
-      parameters = tupleVals
-    )
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "tuples.tuple"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = tupleVals
 
   override def custom_verify(): Either[String, Unit] = {
     if (tupleVals.length != 0 && tupleVals.length != 2) {
@@ -59,11 +59,11 @@ object TupleStream extends AttributeCompanion {
 }
 
 case class TupleStream(val tuples: Seq[Attribute])
-    extends ParametrizedAttribute(
-      name = "tuples.tuplestream",
-      parameters = tuples
-    )
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "tuples.tuplestream"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = tuples
 
   override def custom_verify(): Either[String, Unit] = {
 
@@ -106,10 +106,9 @@ object ColumnDefAttr extends AttributeCompanion {
 }
 
 case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
-    extends ParametrizedAttribute(
-      name = "tuples.column_def"
-    ) {
+    extends ParametrizedAttribute {
 
+  override def name: String = "tuples.column_def"
   override def custom_print =
     s"${refName.custom_print}({type = ${typ.custom_print}})"
 
@@ -130,9 +129,8 @@ object ColumnRefAttr extends AttributeCompanion {
 }
 
 case class ColumnRefAttr(val refName: SymbolRefAttr)
-    extends ParametrizedAttribute(
-      name = "tuples.column_ref"
-    ) {
+    extends ParametrizedAttribute {
+  override def name: String = "tuples.column_ref"
   override def custom_print = s"${refName.custom_print}"
 }
 

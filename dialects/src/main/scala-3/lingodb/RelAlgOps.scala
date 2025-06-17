@@ -116,9 +116,8 @@ object SortSpecificationAttr extends AttributeCompanion {
 case class SortSpecificationAttr(
     val attr: ColumnRefAttr,
     val sortSpec: RelAlg_SortSpec_Case
-) extends ParametrizedAttribute(
-      name = "db.interval"
-    ) {
+) extends ParametrizedAttribute {
+  override def name: String = "db.interval"
   override def custom_print = s"(${attr.custom_print},${sortSpec.custom_print})"
 }
 
