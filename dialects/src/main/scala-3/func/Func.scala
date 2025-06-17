@@ -15,8 +15,7 @@ case class Call(
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
-    // TODO: This needs optional
-    // sym_visibility: StringData,
+    sym_visibility: Option[StringData],
     body: Region
 ) extends DerivedOperation["func.func", Func]
     derives DerivedOperationCompanion

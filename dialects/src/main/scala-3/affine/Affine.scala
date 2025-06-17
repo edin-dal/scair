@@ -52,8 +52,7 @@ case class For(
 
 case class Parallel(
     map_operands: Seq[Operand[IndexType.type]],
-    // TODO: Should be ArrayAttribute[StringData]
-    // Not supported yet
+    steps: Option[ArrayAttribute[IntegerAttr]],
     reductions: Attribute,
     lowerBoundsMap: AffineMapAttr,
     lowerBoundsGroups: DenseIntOrFPElementsAttr,
