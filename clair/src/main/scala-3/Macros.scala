@@ -192,16 +192,42 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
 )(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
   '{
-    val value = $list(${ Expr(propName) })
+    val value: Option[Attribute] = $list.get(${ Expr(propName) })
 
-    if (!value.isInstanceOf[A]) {
+    if (value.isEmpty) {
+      throw new IllegalArgumentException(
+        s"Missing required property \"${${ Expr(propName) }}\" of type ${${
+            Expr(typeName)
+          }}"
+      )
+    } else if (!value.get.isInstanceOf[A]) {
       throw new IllegalArgumentException(
         s"Type mismatch for property \"${${ Expr(propName) }}\": " +
           s"expected ${${ Expr(typeName) }}, " +
           s"but found ${value.getClass.getSimpleName}"
       )
     }
-    value.asInstanceOf[A]
+    value.get.asInstanceOf[A]
+  }
+
+def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
+    list: Expr[Map[String, Attribute]],
+    propName: String
+)(using Quotes): Expr[Option[A]] =
+  val typeName = Type.of[A].toString()
+  '{
+    val value: Option[Attribute] = $list.get(${ Expr(propName) })
+
+    if (value.isEmpty) {
+      value.asInstanceOf[None.type]
+    } else if (value.get.isInstanceOf[A]) {
+      value.asInstanceOf[Option[A]]
+    } else
+      throw new IllegalArgumentException(
+        s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+          s"expected ${${ Expr(typeName) }}, " +
+          s"but found ${value.getClass}"
+      )
   }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -259,7 +285,8 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
     case ResultDef(name, tpe, variadicity)  => variadicity
     case RegionDef(name, variadicity)       => variadicity
     case SuccessorDef(name, variadicity)    => variadicity
-    case OpPropertyDef(name, tpe, _)        => Variadicity.Single
+    case OpPropertyDef(name, tpe, false)    => Variadicity.Single
+    case OpPropertyDef(name, tpe, _)        => Variadicity.Optional
 
 /*__________________*\
 \*-- VERIFICATION --*/
@@ -514,13 +541,20 @@ def constructorArgs(
     (verifiedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, _) =>
+    opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
-          val property = generateCheckedPropertyArgument[t & Attribute](
-            '{ $op.properties },
-            name
-          )
+          val property =
+            if optionality then
+              generateOptionalCheckedPropertyArgument[t & Attribute](
+                '{ $op.properties },
+                name
+              )
+            else
+              generateCheckedPropertyArgument[t & Attribute](
+                '{ $op.properties },
+                name
+              )
           NamedArg(name, property.asTerm)
     }
 
