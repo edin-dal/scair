@@ -62,10 +62,19 @@ case class MulOptional(
 ) extends DerivedOperation["cmath.mulopt", MulOptional]
     derives DerivedOperationCompanion
 
+case class MulMultiOptional(
+    lhs: Option[Operand[IntegerType]],
+    rhs: Option[Operand[IntegerType]],
+    additional: Option[Operand[IntegerType]],
+    res: Result[IntegerType]
+) extends DerivedOperation["cmath.mulmultiopt", MulMultiOptional]
+    derives DerivedOperationCompanion
+
 val mulComp = summon[DerivedOperationCompanion[Mul]]
 val mulSVComp = summon[DerivedOperationCompanion[MulSingleVariadic]]
 val mulMMVComp = summon[DerivedOperationCompanion[MulMultiVariadic]]
 val mulOptComp = summon[DerivedOperationCompanion[MulOptional]]
+val mulMultiOptComp = summon[DerivedOperationCompanion[MulMultiOptional]]
 
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
@@ -215,6 +224,50 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
       results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_))
+    )
+
+    def adtMulMultiOptional = MulMultiOptional(
+      lhs = Some(Value(IntegerType(IntData(5), Unsigned))),
+      rhs = Some(Value(IntegerType(IntData(5), Unsigned))),
+      additional = Some(Value(IntegerType(IntData(5), Unsigned))),
+      res = Result(IntegerType(IntData(25), Unsigned))
+    )
+
+    def unverMulMultiOptional = mulMultiOptComp.UnverifiedOp(
+      operands = Seq(
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+      ),
+      results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
+      properties = Map(
+        ("operandSegmentSizes" -> DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          Seq[IntegerAttr](
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless))
+          )
+        ))
+      )
+    )
+
+    def unverMulMultiMissingOptional = mulMultiOptComp.UnverifiedOp(
+      operands = Seq(
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+      ),
+      results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
+      properties = Map(
+        ("operandSegmentSizes" -> DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          Seq[IntegerAttr](
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(0), IntegerType(IntData(32), Signless)),
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless))
+          )
+        ))
+      )
     )
 
   }
@@ -480,8 +533,6 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val op = TestCases.unverMulOptional
     val adtMulOptional = mulOptComp.verify(op)
 
-    throw new Exception(adtMulOptional.toString) // to ensure the test runs
-
     adtMulOptional.lhs should matchPattern {
       case Some(Value(IntegerType(IntData(5), Unsigned))) =>
     }
@@ -489,9 +540,60 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       case Value(IntegerType(IntData(5), Unsigned)) =>
     }
     adtMulOptional.res should matchPattern {
-      case Result(IntegerType(IntData(25), Unsigned)) => 
+      case Result(IntegerType(IntData(25), Unsigned)) =>
     }
-    }
-}
-  
+  }
 
+  "Multi Optional Conversion to Unverified" should "Correctly translate from Multi Optional ADT operation to Unverified Operation" in {
+    val op = TestCases.adtMulMultiOptional
+    val unverMulSinVarOp = mulMultiOptComp.unverify(op)
+
+    unverMulSinVarOp.name should be("cmath.mulmultiopt")
+    unverMulSinVarOp.operands should matchPattern {
+      case Seq(
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned)),
+            Value(IntegerType(IntData(5), Unsigned))
+          ) =>
+    }
+    unverMulSinVarOp.results should matchPattern {
+      case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
+    }
+  }
+
+  "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unverified operation to ADT Operation" in {
+    val op = TestCases.unverMulMultiOptional
+    val adtMulOptional = mulMultiOptComp.verify(op)
+
+    adtMulOptional.lhs should matchPattern {
+      case Some(Value(IntegerType(IntData(5), Unsigned))) =>
+    }
+    adtMulOptional.rhs should matchPattern {
+      case Some(Value(IntegerType(IntData(5), Unsigned))) =>
+    }
+    adtMulOptional.additional should matchPattern {
+      case Some(Value(IntegerType(IntData(5), Unsigned))) =>
+    }
+    adtMulOptional.res should matchPattern {
+      case Result(IntegerType(IntData(25), Unsigned)) =>
+    }
+  }
+
+  "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unverified operation to ADT Operation with missing middle Operand" in {
+    val op = TestCases.unverMulMultiMissingOptional
+    val adtMulOptional = mulMultiOptComp.verify(op)
+
+    adtMulOptional.lhs should matchPattern {
+      case Some(Value(IntegerType(IntData(5), Unsigned))) =>
+    }
+    adtMulOptional.rhs should matchPattern { case None =>
+    }
+    adtMulOptional.additional should matchPattern {
+      case Some(Value(IntegerType(IntData(5), Unsigned))) =>
+    }
+    adtMulOptional.res should matchPattern {
+      case Result(IntegerType(IntData(25), Unsigned)) =>
+    }
+  }
+
+}

@@ -101,7 +101,7 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
-        case Variadicity.Optional => 
+        case Variadicity.Optional =>
           selectMember(adtOpExpr, d.name).asExprOf[Option[DefinedInput[Def]]]
         case Variadicity.Variadic =>
           selectMember(adtOpExpr, d.name).asExprOf[Seq[DefinedInput[Def]]]
@@ -354,9 +354,10 @@ def partitionedConstructs[Def <: OpInputDef: Type](
     case 1 =>
       val preceeding =
         defs.indexWhere(x =>
-          val a = getConstructVariadicity(x)  
-          a == Variadicity.Variadic || 
-          a == Variadicity.Optional)
+          val a = getConstructVariadicity(x)
+          a == Variadicity.Variadic ||
+          a == Variadicity.Optional
+        )
       val following = defs.length - preceeding - 1
       val preceeding_exprs = defs
         .slice(0, preceeding)
@@ -442,13 +443,16 @@ def verifiedConstructs[Def <: OpInputDef: Type](
           case Variadicity.Optional =>
             // If the construct is optional, check if it is defined and if so, verify its type
             '{
-              if (!${ c }.isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]) then
+              if (!${ c }.isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]])
+              then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
                       Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
                     }}, got ${${ c }}"
                 )
-              ${ c }.asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]].headOption
+              ${ c }
+                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+                .headOption
             }
           // If the construct is not variadic, just check if it is of the expected type
           case Variadicity.Single =>
