@@ -109,6 +109,7 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
     extends ParametrizedAttribute {
 
   override def name: String = "tuples.column_def"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(refName, typ)
 
   override def custom_print =
     s"${refName.custom_print}({type = ${typ.custom_print}})"
@@ -132,6 +133,7 @@ object ColumnRefAttr extends AttributeCompanion {
 case class ColumnRefAttr(val refName: SymbolRefAttr)
     extends ParametrizedAttribute {
   override def name: String = "tuples.column_ref"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(refName)
   override def custom_print = s"${refName.custom_print}"
 }
 

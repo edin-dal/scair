@@ -118,6 +118,7 @@ case class SortSpecificationAttr(
     val sortSpec: RelAlg_SortSpec_Case
 ) extends ParametrizedAttribute {
   override def name: String = "db.interval"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(attr, sortSpec)
   override def custom_print = s"(${attr.custom_print},${sortSpec.custom_print})"
 }
 

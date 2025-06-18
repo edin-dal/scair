@@ -52,7 +52,9 @@ case object Signless extends Signedness("signless", "i")
 \*≡==---==≡≡==---==≡*/
 
 abstract class FloatType(override val name: String)
-    extends ParametrizedAttribute
+    extends ParametrizedAttribute {
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
+}
 
 case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
   override def custom_print = "f16"
@@ -160,6 +162,7 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 case object IndexType extends ParametrizedAttribute with TypeAttribute {
   override def name: String = "builtin.index"
   override def custom_print = "index"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -411,6 +414,7 @@ case class DenseIntOrFPElementsAttr(
 ) extends ParametrizedAttribute {
 
   override def name: String = "builtin.dense"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
 
   def elementType = typ match {
     case x: TensorType => x.elementType
