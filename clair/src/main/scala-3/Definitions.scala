@@ -22,13 +22,12 @@ import scala.reflect.*
 \*≡=--==≡≡==--=≡*/
 
 sealed trait OpInputDef {
-  def name : String
+  def name: String
 }
 
-sealed trait MayVariadicOpInputDef
-    extends OpInputDef {
-      def variadicity: Variadicity
-    }
+sealed trait MayVariadicOpInputDef extends OpInputDef {
+  def variadicity: Variadicity
+}
 
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.

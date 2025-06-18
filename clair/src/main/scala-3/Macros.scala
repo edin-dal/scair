@@ -659,85 +659,85 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-def derivedAttributeCompanion[T: Type](using Quotes): Expr[DerivedAttributeCompanion[T]] =
+def derivedAttributeCompanion[T: Type](using
+    Quotes
+): Expr[DerivedAttributeCompanion[T]] =
 
-    val attrDef = getAttrDefImpl[T]
+  val attrDef = getAttrDefImpl[T]
 
-    '{
-      new DerivedAttributeCompanion[T] {
-        override def name: String = ${ Expr(attrDef.name) }
-        override def parse[$: P](p: AttrParser): P[T] = P(
-          ("<" ~/ p.Type.rep(sep = ",") ~ ">")
-        ).orElse(Seq())
-          .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
-        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
-          parametersMacro(attrDef, '{ attr })
-        }
+  '{
+    new DerivedAttributeCompanion[T] {
+      override def name: String = ${ Expr(attrDef.name) }
+      override def parse[$: P](p: AttrParser): P[T] = P(
+        ("<" ~/ p.Type.rep(sep = ",") ~ ">")
+      ).orElse(Seq())
+        .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+      def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
+        parametersMacro(attrDef, '{ attr })
       }
     }
+  }
 
 def deriveOperationCompanion[T <: Operation: Type](using
-      Quotes
-  ): Expr[DerivedOperationCompanion[T]] =
-    val opDef = getDefImpl[T]
+    Quotes
+): Expr[DerivedOperationCompanion[T]] =
+  val opDef = getDefImpl[T]
 
-    '{
+  '{
 
-      new DerivedOperationCompanion[T]:
+    new DerivedOperationCompanion[T]:
 
-        def operands(adtOp: T): Seq[Value[Attribute]] =
-          ${ operandsMacro(opDef, '{ adtOp }) }
-        def successors(adtOp: T): Seq[Block] =
-          ${ successorsMacro(opDef, '{ adtOp }) }
-        def results(adtOp: T): Seq[Result[Attribute]] =
-          ${ resultsMacro(opDef, '{ adtOp }) }
-        def regions(adtOp: T): Seq[Region] =
-          ${ regionsMacro(opDef, '{ adtOp }) }
-        def properties(adtOp: T): Map[String, Attribute] =
-          ${ propertiesMacro(opDef, '{ adtOp }) }
+      def operands(adtOp: T): Seq[Value[Attribute]] =
+        ${ operandsMacro(opDef, '{ adtOp }) }
+      def successors(adtOp: T): Seq[Block] =
+        ${ successorsMacro(opDef, '{ adtOp }) }
+      def results(adtOp: T): Seq[Result[Attribute]] =
+        ${ resultsMacro(opDef, '{ adtOp }) }
+      def regions(adtOp: T): Seq[Region] =
+        ${ regionsMacro(opDef, '{ adtOp }) }
+      def properties(adtOp: T): Map[String, Attribute] =
+        ${ propertiesMacro(opDef, '{ adtOp }) }
 
-        def name: String = ${ Expr(opDef.name) }
+      def name: String = ${ Expr(opDef.name) }
 
-        def apply(
-            operands: Seq[Value[Attribute]] = Seq(),
-            successors: Seq[Block] = Seq(),
-            results: Seq[Result[Attribute]] = Seq(),
-            regions: Seq[Region] = Seq(),
-            properties: Map[String, Attribute] = Map.empty[String, Attribute],
-            attributes: DictType[String, Attribute] =
-              DictType.empty[String, Attribute]
-        ): UnverifiedOp = UnverifiedOp(
-          operands = operands,
-          successors = successors,
-          results = results,
-          regions = regions,
-          properties = properties,
-          attributes = attributes
+      def apply(
+          operands: Seq[Value[Attribute]] = Seq(),
+          successors: Seq[Block] = Seq(),
+          results: Seq[Result[Attribute]] = Seq(),
+          regions: Seq[Region] = Seq(),
+          properties: Map[String, Attribute] = Map.empty[String, Attribute],
+          attributes: DictType[String, Attribute] =
+            DictType.empty[String, Attribute]
+      ): UnverifiedOp = UnverifiedOp(
+        operands = operands,
+        successors = successors,
+        results = results,
+        regions = regions,
+        properties = properties,
+        attributes = attributes
+      )
+
+      def unverify(adtOp: T): UnverifiedOp =
+        UnverifiedOp(
+          operands = operands(adtOp),
+          successors = successors(adtOp),
+          results = results(adtOp),
+          regions = regions(adtOp).map(_.detached),
+          properties = properties(adtOp),
+          attributes = adtOp.attributes
         )
 
-        def unverify(adtOp: T): UnverifiedOp =
-          UnverifiedOp(
-            operands = operands(adtOp),
-            successors = successors(adtOp),
-            results = results(adtOp),
-            regions = regions(adtOp).map(_.detached),
-            properties = properties(adtOp),
-            attributes = adtOp.attributes
-          )
+      def verify(unverOp: UnverifiedOp): T =
+        ${
+          fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
+        } match {
+          case adt: DerivedOperation[_, T] =>
+            adt.attributes.addAll(unverOp.attributes)
+            adt
+          case _ =>
+            throw new Exception(
+              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
+            )
+        }
 
-        def verify(unverOp: UnverifiedOp): T =
-          ${
-            fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
-          } match {
-            case adt: DerivedOperation[_, T] =>
-              adt.attributes.addAll(unverOp.attributes)
-              adt
-            case _ =>
-              throw new Exception(
-                s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
-              )
-          }
-
-    }
-
-
+  }

@@ -23,7 +23,9 @@ trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
 
 object DerivedAttributeCompanion {
 
-  inline def derived[T]: DerivedAttributeCompanion[T] = ${ derivedAttributeCompanion[T] }
+  inline def derived[T]: DerivedAttributeCompanion[T] = ${
+    derivedAttributeCompanion[T]
+  }
 
 }
 
@@ -59,7 +61,6 @@ trait DerivedOperation[name <: String, T] extends Operation {
   def properties: Map[String, Attribute] = companion.properties(this)
 
 }
-
 
 trait DerivedOperationCompanion[T] extends OperationCompanion {
 
@@ -142,14 +143,12 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
 
 trait MLIRName[name <: String]
 
-
 object DerivedOperationCompanion {
 
   inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
     deriveOperationCompanion[T]
   }
 
-  
 }
 
 inline def summonAttributeTraits[T <: Tuple]
