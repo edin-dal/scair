@@ -7,12 +7,8 @@ import scair.ir.*
 
 case class Complex(
     val typ: FloatType | IndexType.type
-) extends ParametrizedAttribute(
-      name = "cmath.complex",
-      parameters = Seq(typ)
-    )
+) extends DerivedAttribute["cmath.complex", Complex]
     with TypeAttribute
-    with MLIRName["cmath.complex"]
     derives DerivedAttributeCompanion
 
 case class Norm(

@@ -642,12 +642,42 @@ def getAttrConstructor[T: Type](
   }
 }
 
+def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
+    attrInputDefs: Seq[AttributeParamDef],
+    adtAttrExpr: Expr[?]
+)(using Quotes): Expr[Seq[Attribute]] = {
+  Expr.ofList(
+    attrInputDefs.map(d =>
+      selectMember(adtAttrExpr, d.name).asExprOf[Attribute]
+    )
+  )
+}
+
+def parametersMacro(
+    attrDef: AttributeDef,
+    adtAttrExpr: Expr[?]
+)(using Quotes): Expr[Seq[Attribute]] =
+  ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
+
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR TRAIT    ||
 \*≡==---==≡≡==---==≡*/
 
 trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
+  def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   extension (op: T) override def AttributeTrait = this
+}
+
+trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
+
+  this: T =>
+
+  given companion: DerivedAttributeCompanion[T] = deferred
+  override val name: String = companion.name
+
+  override val parameters: Seq[Attribute | Seq[Attribute]] =
+    companion.parameters(this)
+
 }
 
 object DerivedAttributeCompanion {
@@ -665,6 +695,9 @@ object DerivedAttributeCompanion {
           ("<" ~/ p.Type.rep(sep = ",") ~ ">")
         ).orElse(Seq())
           .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
+          parametersMacro(attrDef, '{ attr })
+        }
       }
     }
 

@@ -37,10 +37,9 @@ extension (x: Seq[Attribute] | Attribute)
     case attr: Attribute => attr.custom_print
   }
 
-abstract class ParametrizedAttribute(
-    override val name: String,
-    val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
-) extends Attribute {
+abstract class ParametrizedAttribute() extends Attribute {
+
+  def parameters: Seq[Attribute | Seq[Attribute]]
 
   override def custom_print =
     s"${prefix}${name}${

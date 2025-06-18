@@ -51,7 +51,10 @@ case object Signless extends Signedness("signless", "i")
 ||    FLOAT TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class FloatType(val namee: String) extends ParametrizedAttribute(namee)
+abstract class FloatType(override val name: String)
+    extends ParametrizedAttribute {
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
+}
 
 case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
   override def custom_print = "f16"
@@ -88,8 +91,11 @@ case class IntData(val value: Long)
 \*≡==---==≡≡==---==≡*/
 
 case class IntegerType(val width: IntData, val sign: Signedness)
-    extends ParametrizedAttribute("builtin.int_type", Seq(width, sign))
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "builtin.int_type"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(width, sign)
 
   override def custom_print = sign match {
     case Signless => s"${sign.custom_print}${width.custom_print}"
@@ -106,9 +112,12 @@ case class IntegerType(val width: IntData, val sign: Signedness)
 case class IntegerAttr(
     val value: IntData,
     val typ: IntegerType | IndexType.type
-) extends ParametrizedAttribute("builtin.integer_attr", Seq(value, typ)) {
+) extends ParametrizedAttribute {
 
   def this(value: IntData) = this(value, I64)
+
+  override def name: String = "builtin.integer_attr"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
 
   override def custom_print = (value, typ) match {
     case (IntData(1), IntegerType(IntData(1), Signless)) => "true"
@@ -134,7 +143,10 @@ case class FloatData(val value: Double)
 \*≡==---==≡≡==---==≡*/
 
 case class FloatAttr(val value: FloatData, val typ: FloatType)
-    extends ParametrizedAttribute("builtin.float_attr", Seq(value, typ)) {
+    extends ParametrizedAttribute {
+
+  override def name: String = "builtin.float_attr"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
 
   override def custom_print = (value, typ) match {
     case (_, Float64Type) => s"${value.custom_print}"
@@ -147,10 +159,10 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 ||   INDEX TYPE     ||
 \*≡==---==≡≡==---==≡*/
 
-case object IndexType
-    extends ParametrizedAttribute("builtin.index")
-    with TypeAttribute {
+case object IndexType extends ParametrizedAttribute with TypeAttribute {
+  override def name: String = "builtin.index"
   override def custom_print = "index"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -188,8 +200,10 @@ abstract class TensorType(
     override val name: String,
     val elementType: Attribute,
     val features: Seq[Attribute]
-) extends ParametrizedAttribute(name, features)
-    with TypeAttribute
+) extends ParametrizedAttribute
+    with TypeAttribute {
+  override def parameters: Seq[Attribute | Seq[Attribute]] = features
+}
 
 case class RankedTensorType(
     val dimensionList: ArrayAttribute[IntData],
@@ -238,8 +252,10 @@ abstract class MemrefType(
     override val name: String,
     val elementType: Attribute,
     val features: Seq[Attribute]
-) extends ParametrizedAttribute(name, features)
-    with TypeAttribute
+) extends ParametrizedAttribute
+    with TypeAttribute {
+  override def parameters: Seq[Attribute | Seq[Attribute]] = features
+}
 
 case class RankedMemrefType(
     val shape: Seq[IntData],
@@ -280,10 +296,12 @@ case class VectorType(
     val shape: Seq[IntData],
     val elementType: Attribute,
     val scalableDims: Seq[IntData]
-) extends ParametrizedAttribute(
-      name = "builtin.vector",
-      parameters = Seq(shape, elementType, scalableDims)
-    ) {
+) extends ParametrizedAttribute {
+
+  override def name: String = "builtin.vector_type"
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(shape, elementType, scalableDims)
 
   override def custom_print: String = {
 
@@ -306,10 +324,12 @@ case class VectorType(
 case class SymbolRefAttr(
     val rootRef: StringData,
     val nestedRefs: Seq[StringData] = Seq()
-) extends ParametrizedAttribute(
-      name = "builtin.symbol_ref",
-      Seq(rootRef, nestedRefs)
-    ) {
+) extends ParametrizedAttribute {
+
+  override def name: String = "builtin.symbol_ref"
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(rootRef, nestedRefs)
 
   override def custom_print =
     (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
@@ -323,8 +343,11 @@ case class SymbolRefAttr(
 case class DenseArrayAttr(
     val typ: IntegerType | FloatType,
     val data: Seq[IntegerAttr] | Seq[FloatAttr]
-) extends ParametrizedAttribute("builtin.dense", Seq(typ, data))
+) extends ParametrizedAttribute
     with Seq[Attribute] {
+
+  override def name: String = "builtin.dense_array"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
 
   override def custom_verify(): Either[String, Unit] =
     if !data.forall(_ match {
@@ -359,11 +382,13 @@ case class DenseArrayAttr(
 case class FunctionType(
     val inputs: Seq[Attribute],
     val outputs: Seq[Attribute]
-) extends ParametrizedAttribute(
-      "builtin.function_type",
-      Seq(inputs, outputs)
-    )
+) extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "builtin.function_type"
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(inputs, outputs)
 
   override def custom_print = {
     val inputsString = inputs.map(_.custom_print).mkString(", ")
@@ -386,7 +411,10 @@ type TensorLiteralArray =
 case class DenseIntOrFPElementsAttr(
     val typ: TensorType | MemrefType | VectorType,
     val data: TensorLiteralArray
-) extends ParametrizedAttribute("builtin.dense") {
+) extends ParametrizedAttribute {
+
+  override def name: String = "builtin.dense"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
 
   def elementType = typ match {
     case x: TensorType => x.elementType

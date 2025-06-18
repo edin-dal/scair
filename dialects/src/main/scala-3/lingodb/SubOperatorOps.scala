@@ -36,10 +36,12 @@ object StateMembers extends AttributeCompanion {
 case class StateMembers(
     val names: Seq[StringData],
     val types: Seq[Attribute]
-) extends ParametrizedAttribute(
-      name = "subop.state_members",
-      parameters = names :++ types
-    ) {
+) extends ParametrizedAttribute {
+
+  override def name: String = "subop.state_members"
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    names :++ types
 
   override def custom_print =
     s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
@@ -65,11 +67,12 @@ object ResultTable extends AttributeCompanion {
 
 case class ResultTable(
     val members: StateMembers
-) extends ParametrizedAttribute(
-      name = "subop.result_table",
-      parameters = Seq(members)
-    )
-    with TypeAttribute
+) extends ParametrizedAttribute
+    with TypeAttribute {
+
+  override def name: String = "subop.result_table"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(members)
+}
 
 ////////////////
 // OPERATIONS //

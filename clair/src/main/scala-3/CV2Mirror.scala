@@ -209,6 +209,8 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
       e
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
+  import quotes.reflect._
+
   val m = Expr.summon[Mirror.ProductOf[T]].get
   m match
     case '{
@@ -222,8 +224,13 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
       val paramLabels = stringifyLabels[elemLabels]
 
       val name = Type.of[T] match
-        case '[MLIRName[name]] =>
+        case '[DerivedAttribute[name, _]] =>
           Type.valueOfConstant[name].get.asInstanceOf[String]
+        case _ =>
+          report.errorAndAbort(
+            s"${Type.show[T]} should extend DerivedAttribute to derive DerivedAttributeCompanion.",
+            TypeRepr.of[T].typeSymbol.pos.get
+          )
 
       val attributeDefs = Type.of[(elemLabels, elemTypes)] match
         case _: Type[(Tuple, Tuple)] => summonAttrDefs[elemLabels, elemTypes]

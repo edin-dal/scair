@@ -90,11 +90,11 @@ object DB_CharType extends AttributeCompanion {
 }
 
 case class DB_CharType(val typ: Seq[Attribute])
-    extends ParametrizedAttribute(
-      name = "db.char",
-      parameters = typ
-    )
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "db.char"
+  override def parameters: Seq[Attribute] = typ
 
   override def custom_verify(): Either[String, Unit] = {
     if (typ.length != 1) {
@@ -127,11 +127,11 @@ object DB_DateType extends AttributeCompanion {
 }
 
 case class DB_DateType(val unit: DB_DateUnit_Case)
-    extends ParametrizedAttribute(
-      name = "db.date",
-      parameters = Seq(unit)
-    )
-    with TypeAttribute
+    extends ParametrizedAttribute
+    with TypeAttribute {
+  override def name: String = "db.date"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(unit)
+}
 
 // ==------------== //
 //   IntervalType   //
@@ -146,11 +146,11 @@ object DB_IntervalType extends AttributeCompanion {
 }
 
 case class DB_IntervalType(val unit: Attribute)
-    extends ParametrizedAttribute(
-      name = "db.interval",
-      parameters = Seq(unit)
-    )
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "db.interval"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(unit)
 
   // override def custom_verify(): Unit = {
   //   if (typ.length != 1) {
@@ -183,11 +183,11 @@ object DB_DecimalType extends AttributeCompanion {
 }
 
 case class DB_DecimalType(val typ: Seq[Attribute])
-    extends ParametrizedAttribute(
-      name = "db.decimal",
-      parameters = typ
-    )
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "db.decimal"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = typ
 
   override def custom_verify(): Either[String, Unit] = {
     if (typ.length != 2) {
@@ -226,11 +226,11 @@ object DB_StringType extends AttributeCompanion {
 }
 
 case class DB_StringType(val typ: Seq[Attribute])
-    extends ParametrizedAttribute(
-      name = "db.string",
-      parameters = typ
-    )
+    extends ParametrizedAttribute
     with TypeAttribute {
+
+  override def name: String = "db.string"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = typ
 
   override def custom_verify(): Either[String, Unit] = {
     if (typ.length > 1) {
