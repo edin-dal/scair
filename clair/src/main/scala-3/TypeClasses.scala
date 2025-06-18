@@ -1,8 +1,11 @@
 package scair.clair.macros
 
 import scair.ir.*
+
 import scala.compiletime.*
-import scala.util.{Try, Success, Failure}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
