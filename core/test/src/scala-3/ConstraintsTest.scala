@@ -22,8 +22,8 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Any Constraint Test" should "test AnyAttr constraint" in {
     val any_constraint = AnyAttr
-    any_constraint.verify(Float16Type, constraint_ctx)
-    any_constraint.verify(Float32Type, constraint_ctx)
+    any_constraint.verify(Float16Type(), constraint_ctx)
+    any_constraint.verify(Float32Type(), constraint_ctx)
   }
 
   /////////////
@@ -32,8 +32,8 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Equal Constraint Test 1" should "verify EqualAttr constraint (should PASS)" in {
 
-    val this_attr = ArrayAttribute(Seq(IndexType, Float16Type, I64))
-    val that_attr = ArrayAttribute(Seq(IndexType, Float16Type, I64))
+    val this_attr = ArrayAttribute(Seq(IndexType(), Float16Type(), I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), Float16Type(), I64))
 
     val equal_constraint = EqualAttr(this_attr)
 
@@ -42,8 +42,8 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Equal Constraint Test 2" should "not verify EqualAttr constraint (should FAIL)" in {
 
-    val this_attr = ArrayAttribute(Seq(IndexType, Float16Type, I64))
-    val that_attr = ArrayAttribute(Seq(IndexType, Float32Type, I64))
+    val this_attr = ArrayAttribute(Seq(IndexType(), Float16Type(), I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), Float32Type(), I64))
 
     val equal_constraint = EqualAttr(this_attr)
 
@@ -59,8 +59,8 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val attr1 = IntegerAttr(IntData(5), I32)
     val attr2 = IntegerAttr(IntData(5), I32)
 
-    val this_attr = ArrayAttribute(Seq(IndexType, attr1, I64))
-    val that_attr = ArrayAttribute(Seq(IndexType, attr2, I64))
+    val this_attr = ArrayAttribute(Seq(IndexType(), attr1, I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), attr2, I64))
 
     val equal_constraint = EqualAttr(this_attr)
 
@@ -72,8 +72,8 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val attr1 = IntegerAttr(IntData(5), I32)
     val attr2 = IntegerAttr(IntData(6), I32)
 
-    val this_attr = ArrayAttribute(Seq(IndexType, attr1, I64))
-    val that_attr = ArrayAttribute(Seq(IndexType, attr2, I64))
+    val this_attr = ArrayAttribute(Seq(IndexType(), attr1, I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), attr2, I64))
 
     val equal_constraint = EqualAttr(this_attr)
 
@@ -90,7 +90,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Base Constraint Test 1" should "verify BaseAttr constraint (should PASS)" in {
 
-    val that_attr = ArrayAttribute(Seq(IndexType, Float32Type, I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), Float32Type(), I64))
 
     val base_constraint = BaseAttr[ArrayAttribute[Attribute]]()
 
@@ -99,7 +99,7 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Base Constraint Test 2" should "not verify BaseAttr constraint (should FAIL)" in {
 
-    val that_attr = IndexType
+    val that_attr = IndexType()
 
     val base_constraint = BaseAttr[ArrayAttribute[IntData]]()
 
@@ -115,13 +115,13 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "OR Constraint Test 1" should "verify AnyOf constraint (should PASS)" in {
 
-    val that_attr = ArrayAttribute(Seq(IndexType, IndexType, I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), IndexType(), I64))
 
     val attr1 = IntegerAttr(IntData(5), I32)
     val attr2 = IntegerAttr(IntData(6), I32)
-    val attr3 = Float32Type
-    val attr4 = IndexType
-    val attr5 = ArrayAttribute(Seq(IndexType, attr4, I64))
+    val attr3 = Float32Type()
+    val attr4 = IndexType()
+    val attr5 = ArrayAttribute(Seq(IndexType(), attr4, I64))
 
     val or_constraint = attr1 || attr2 || attr3 || attr4 || attr5
 
@@ -131,31 +131,32 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
   "OR Constraint Test 2" should "not verify AnyOf constraint (should FAIL)" in {
 
     val that_attr =
-      ArrayAttribute(Seq(IndexType, IntegerAttr(IntData(5), I32), I64))
+      ArrayAttribute(Seq(IndexType(), IntegerAttr(IntData(5), I32), I64))
 
     val attr1 = IntegerAttr(IntData(5), I32)
     val attr2 = IntegerAttr(IntData(6), I32)
-    val attr3 = Float32Type
-    val attr4 = IndexType
+    val attr3 = Float32Type()
+    val attr4 = IndexType()
 
     val or_constraint = attr1 || attr2 || attr3 || attr4
 
     val exception = intercept[Exception](
       or_constraint.verify(that_attr, constraint_ctx)
     ).getMessage shouldBe
-      "builtin.array_attr does not match IntegerAttr(IntData(5),IntegerType(IntData(32),Signless)) || IntegerAttr(IntData(6),IntegerType(IntData(32),Signless)) || Float32Type || IndexType\n"
+      "builtin.array_attr does not match IntegerAttr(IntData(5),IntegerType(IntData(32),Signless)) || IntegerAttr(IntData(6),IntegerType(IntData(32),Signless)) || Float32Type() || IndexType()\n"
   }
 
   "OR Constraint Test 3" should "verify AnyOf constraint (should PASS)" in {
 
-    val that_attr = ArrayAttribute(Seq(IndexType, IndexType, I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), IndexType(), I64))
 
     val attr1 = IntegerAttr(IntData(5), I32)
     val attr2 = IntegerAttr(IntData(6), I32)
-    val attr3 = Float32Type
-    val attr4 = IndexType
-    val attrcnst1 = BaseAttr[IndexType.type]()
-    val attrcnst2 = EqualAttr(ArrayAttribute(Seq(IndexType, IndexType, I64)))
+    val attr3 = Float32Type()
+    val attr4 = IndexType()
+    val attrcnst1 = BaseAttr[IndexType]()
+    val attrcnst2 =
+      EqualAttr(ArrayAttribute(Seq(IndexType(), IndexType(), I64)))
 
     val or_constraint = attr1 || attr2 || attr3 || attrcnst1 || attrcnst2
 
@@ -165,14 +166,14 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
   "OR Constraint Test 4" should "not verify AnyOf constraint (should FAIL)" in {
 
     val that_attr =
-      ArrayAttribute(Seq(IndexType, IntegerAttr(IntData(5), I32), I64))
+      ArrayAttribute(Seq(IndexType(), IntegerAttr(IntData(5), I32), I64))
 
     val attr1 = IntegerAttr(IntData(5), I32)
     val attr2 = IntegerAttr(IntData(6), I32)
-    val attr3 = Float32Type
-    val attr4 = IndexType
-    val attrcnst1 = BaseAttr[IndexType.type]()
-    val attrcnst2 = EqualAttr(ArrayAttribute(Seq(IndexType, I32, I64)))
+    val attr3 = Float32Type()
+    val attr4 = IndexType()
+    val attrcnst1 = BaseAttr[IndexType]()
+    val attrcnst2 = EqualAttr(ArrayAttribute(Seq(IndexType(), I32, I64)))
 
     val or_constraint =
       attr1 || attr2 || attr3 || attr4 || attrcnst1 || attrcnst2
@@ -190,21 +191,21 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Parametric Constraint Test 1" should "verify ParametrizedAttrConstraint constraint (should PASS)" in {
 
-    val that_attr = FloatAttr(FloatData(1.5), Float32Type)
+    val that_attr = FloatAttr(FloatData(1.5), Float32Type())
 
     val parametric_constraint =
-      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type()))
 
     parametric_constraint.verify(that_attr, constraint_ctx)
   }
 
   "Parametric Constraint Test 2" should "not verify ParametrizedAttrConstraint constraint (should FAIL)" in {
 
-    val that_attr = ArrayAttribute(Seq(IndexType, Float32Type, I64))
+    val that_attr = ArrayAttribute(Seq(IndexType(), Float32Type(), I64))
 
     val parametric_constraint =
       ParametrizedAttrConstraint[ArrayAttribute[Attribute]](
-        Seq(IndexType, I32, I64)
+        Seq(IndexType(), I32, I64)
       )
 
     val exception = intercept[Exception](
@@ -215,10 +216,10 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Parametric Constraint Test 3" should "not verify ParametrizedAttrConstraint constraint (should FAIL)" in {
 
-    val that_attr = FloatAttr(FloatData(1.5), Float32Type)
+    val that_attr = FloatAttr(FloatData(1.5), Float32Type())
 
     val parametric_constraint =
-      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.6), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.6), Float32Type()))
 
     val exception = intercept[Exception](
       parametric_constraint.verify(that_attr, constraint_ctx)
@@ -228,10 +229,12 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Parametric Constraint Test 4" should "not verify ParametrizedAttrConstraint constraint (should FAIL)" in {
 
-    val that_attr = FloatAttr(FloatData(1.5), Float32Type)
+    val that_attr = FloatAttr(FloatData(1.5), Float32Type())
 
     val parametric_constraint =
-      ParametrizedAttrConstraint[IntegerAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[IntegerAttr](
+        Seq(FloatData(1.5), Float32Type())
+      )
 
     val exception = intercept[Exception](
       parametric_constraint.verify(that_attr, constraint_ctx)
@@ -245,10 +248,10 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Variable Constraint Test 1" should "verify VarConstraint constraint (should PASS)" in {
 
-    val that_attr = FloatAttr(FloatData(1.5), Float32Type)
+    val that_attr = FloatAttr(FloatData(1.5), Float32Type())
 
     val parametric_constraint =
-      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type()))
 
     val var_constraint = VarConstraint("T", parametric_constraint)
 
@@ -259,11 +262,11 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Variable Constraint Test 2" should "not verify VarConstraint constraint (should FAIL)" in {
 
-    val that_attr = FloatAttr(FloatData(1.5), Float32Type)
-    val that_attr2 = FloatAttr(FloatData(1.6), Float32Type)
+    val that_attr = FloatAttr(FloatData(1.5), Float32Type())
+    val that_attr2 = FloatAttr(FloatData(1.6), Float32Type())
 
     val parametric_constraint =
-      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type()))
 
     val var_constraint = VarConstraint("T", parametric_constraint)
 
@@ -277,10 +280,10 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Variable Constraint Test 3" should "not verify VarConstraint constraint (should FAIL)" in {
 
-    val that_attr = FloatAttr(FloatData(1.6), Float32Type)
+    val that_attr = FloatAttr(FloatData(1.6), Float32Type())
 
     val parametric_constraint =
-      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type))
+      ParametrizedAttrConstraint[FloatAttr](Seq(FloatData(1.5), Float32Type()))
 
     val var_constraint = VarConstraint("T", parametric_constraint)
 

@@ -56,23 +56,23 @@ abstract class FloatType(override val name: String)
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 }
 
-case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
+case class Float16Type() extends FloatType("builtin.f16") with TypeAttribute {
   override def custom_print = "f16"
 }
 
-case object Float32Type extends FloatType("builtin.f32") with TypeAttribute {
+case class Float32Type() extends FloatType("builtin.f32") with TypeAttribute {
   override def custom_print = "f32"
 }
 
-case object Float64Type extends FloatType("builtin.f64") with TypeAttribute {
+case class Float64Type() extends FloatType("builtin.f64") with TypeAttribute {
   override def custom_print = "f64"
 }
 
-case object Float80Type extends FloatType("builtin.f80") with TypeAttribute {
+case class Float80Type() extends FloatType("builtin.f80") with TypeAttribute {
   override def custom_print = "f80"
 }
 
-case object Float128Type extends FloatType("builtin.f128") with TypeAttribute {
+case class Float128Type() extends FloatType("builtin.f128") with TypeAttribute {
   override def custom_print = "f128"
 }
 
@@ -111,7 +111,7 @@ case class IntegerType(val width: IntData, val sign: Signedness)
 
 case class IntegerAttr(
     val value: IntData,
-    val typ: IntegerType | IndexType.type
+    val typ: IntegerType | IndexType
 ) extends ParametrizedAttribute {
 
   def this(value: IntData) = this(value, I64)
@@ -159,7 +159,7 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 ||   INDEX TYPE     ||
 \*≡==---==≡≡==---==≡*/
 
-case object IndexType extends ParametrizedAttribute with TypeAttribute {
+case class IndexType() extends ParametrizedAttribute with TypeAttribute {
   override def name: String = "builtin.index"
   override def custom_print = "index"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()

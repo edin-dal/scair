@@ -6,7 +6,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 case class Complex(
-    val typ: FloatType | IndexType.type
+    val typ: FloatType | IndexType
 ) extends DerivedAttribute["cmath.complex", Complex]
     with TypeAttribute
     derives DerivedAttributeCompanion

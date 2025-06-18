@@ -31,16 +31,16 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       case "Failure" => Parsed.Failure(_, _, _)
     }
 
-  val F16 = Float16Type
-  val F32 = Float32Type
-  val F64 = Float64Type
-  val F80 = Float80Type
-  val F128 = Float128Type
+  val F16 = Float16Type()
+  val F32 = Float32Type()
+  val F64 = Float64Type()
+  val F80 = Float80Type()
+  val F128 = Float128Type()
   val I1 = IntegerType(IntData(1), Signless)
   val I16 = IntegerType(IntData(16), Signless)
   val I32 = IntegerType(IntData(32), Signless)
   val I64 = IntegerType(IntData(64), Signless)
-  val INDEX = IndexType
+  val INDEX = IndexType()
 
   val attrToStringTests = Table(
     ("input", "result", "expected"),
@@ -59,13 +59,13 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     (
       RankedTensorType(
         ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
-        Float32Type,
+        Float32Type(),
         None
       ),
       "Success",
       "tensor<3x?x5xf32>"
     ),
-    (UnrankedTensorType(Float32Type), "Success", "tensor<*xf32>"),
+    (UnrankedTensorType(Float32Type()), "Success", "tensor<*xf32>"),
     (
       ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
       "Success",
@@ -102,11 +102,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       "Success",
       RankedTensorType(
         ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
-        Float32Type,
+        Float32Type(),
         None
       )
     ),
-    ("tensor<*xf32>", "Success", UnrankedTensorType(Float32Type)),
+    ("tensor<*xf32>", "Success", UnrankedTensorType(Float32Type())),
     ("fg12", "Failure", "")
   )
 

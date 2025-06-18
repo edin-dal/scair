@@ -17,8 +17,8 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     printer = new Printer(true, p = PrintWriter(out))
   }
 
-  val F32 = Float32Type
-  val F64 = Float64Type
+  val F32 = Float32Type()
+  val F64 = Float64Type()
 
   val I32 = new IntegerType(IntData(32), Signless)
   val I64 = new IntegerType(IntData(64), Signless)

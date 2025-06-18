@@ -6,8 +6,8 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 type I1 = IntegerType
-type AnySignlessIntegerOrIndex = IntegerType | IndexType.type
-type Index = IndexType.type
+type AnySignlessIntegerOrIndex = IntegerType | IndexType
+type Index = IndexType
 
 case class Condition(
     condition: Operand[I1],
