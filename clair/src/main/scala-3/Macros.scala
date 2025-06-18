@@ -101,6 +101,8 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
   val stuff = Expr.ofList(
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
+        case Variadicity.Optional =>
+          selectMember(adtOpExpr, d.name).asExprOf[Option[DefinedInput[Def]]]
         case Variadicity.Variadic =>
           selectMember(adtOpExpr, d.name).asExprOf[Seq[DefinedInput[Def]]]
         case Variadicity.Single =>
@@ -190,16 +192,42 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
 )(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
   '{
-    val value = $list(${ Expr(propName) })
+    val value: Option[Attribute] = $list.get(${ Expr(propName) })
 
-    if (!value.isInstanceOf[A]) {
+    if (value.isEmpty) {
+      throw new IllegalArgumentException(
+        s"Missing required property \"${${ Expr(propName) }}\" of type ${${
+            Expr(typeName)
+          }}"
+      )
+    } else if (!value.get.isInstanceOf[A]) {
       throw new IllegalArgumentException(
         s"Type mismatch for property \"${${ Expr(propName) }}\": " +
           s"expected ${${ Expr(typeName) }}, " +
           s"but found ${value.getClass.getSimpleName}"
       )
     }
-    value.asInstanceOf[A]
+    value.get.asInstanceOf[A]
+  }
+
+def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
+    list: Expr[Map[String, Attribute]],
+    propName: String
+)(using Quotes): Expr[Option[A]] =
+  val typeName = Type.of[A].toString()
+  '{
+    val value: Option[Attribute] = $list.get(${ Expr(propName) })
+
+    if (value.isEmpty) {
+      value.asInstanceOf[None.type]
+    } else if (value.get.isInstanceOf[A]) {
+      value.asInstanceOf[Option[A]]
+    } else
+      throw new IllegalArgumentException(
+        s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+          s"expected ${${ Expr(typeName) }}, " +
+          s"but found ${value.getClass}"
+      )
   }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -257,7 +285,8 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
     case ResultDef(name, tpe, variadicity)  => variadicity
     case RegionDef(name, variadicity)       => variadicity
     case SuccessorDef(name, variadicity)    => variadicity
-    case OpPropertyDef(name, tpe, _)        => Variadicity.Single
+    case OpPropertyDef(name, tpe, false)    => Variadicity.Single
+    case OpPropertyDef(name, tpe, _)        => Variadicity.Optional
 
 /*__________________*\
 \*-- VERIFICATION --*/
@@ -351,7 +380,11 @@ def partitionedConstructs[Def <: OpInputDef: Type](
     // If there is a single variadic definition, partionning is about stripping the preceeding and following single elements, and taking the rest as elements of the variadic construct
     case 1 =>
       val preceeding =
-        defs.indexWhere(getConstructVariadicity(_) == Variadicity.Variadic)
+        defs.indexWhere(x =>
+          val a = getConstructVariadicity(x)
+          a == Variadicity.Variadic ||
+          a == Variadicity.Optional
+        )
       val following = defs.length - preceeding - 1
       val preceeding_exprs = defs
         .slice(0, preceeding)
@@ -402,7 +435,7 @@ def partitionedConstructs[Def <: OpInputDef: Type](
       defs.zipWithIndex.map { case (d, i) =>
         getConstructVariadicity(d) match
           case Variadicity.Single => '{ ${ flat }(${ Expr(i) }) }
-          case Variadicity.Variadic =>
+          case Variadicity.Variadic | Variadicity.Optional =>
             '{
               val sizes = $segmentSizes
               val start = sizes.slice(0, ${ Expr(i) }).sum
@@ -434,6 +467,20 @@ def verifiedConstructs[Def <: OpInputDef: Type](
     tpe match
       case '[t] =>
         variadicity match
+          case Variadicity.Optional =>
+            // If the construct is optional, check if it is defined and if so, verify its type
+            '{
+              if (!${ c }.isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]])
+              then
+                throw new Exception(
+                  s"Expected ${${ Expr(d.name) }} to be of type ${${
+                      Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+                    }}, got ${${ c }}"
+                )
+              ${ c }
+                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+                .headOption
+            }
           // If the construct is not variadic, just check if it is of the expected type
           case Variadicity.Single =>
             '{
@@ -494,13 +541,20 @@ def constructorArgs(
     (verifiedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, _) =>
+    opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
       tpe match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
-          val property = generateCheckedPropertyArgument[t & Attribute](
-            '{ $op.properties },
-            name
-          )
+          val property =
+            if optionality then
+              generateOptionalCheckedPropertyArgument[t & Attribute](
+                '{ $op.properties },
+                name
+              )
+            else
+              generateCheckedPropertyArgument[t & Attribute](
+                '{ $op.properties },
+                name
+              )
           NamedArg(name, property.asTerm)
     }
 

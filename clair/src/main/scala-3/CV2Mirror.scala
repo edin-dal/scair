@@ -31,6 +31,7 @@ import scala.quoted.*
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef
   */
+
 def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   import quotes.reflect._
   val name = Type.of[Label] match
