@@ -38,7 +38,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
       Type.valueOfConstant[Label].get.asInstanceOf[String]
 
   Type.of[Elem] match
-    case '[Option[t]] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+    case '[type t <: Attribute; Option[`t`]] =>
       OpPropertyDef(
         name = name,
         tpe = Type.of[t],
@@ -100,7 +100,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
         name = name,
         Variadicity.Single
       )
-    case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+    case '[type t <: Attribute; `t`] =>
       OpPropertyDef(
         name = name,
         tpe = Type.of[t]
