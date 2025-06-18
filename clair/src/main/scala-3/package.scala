@@ -32,11 +32,7 @@ package scair
   *
   * case class SampleAttr(
   *     val value: FloatType
-  * ) extends ParametrizedAttribute(
-  *       name = "sample.sample_attr",
-  *       parameters = Seq(value)
-  *     )
-  *     with MLIRName["sample.sample_attr"]
+  * ) extends DerivedAttribute["sample.sample_attr", SampleAttr]
   *     derives DerivedAttributeCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
@@ -45,12 +41,8 @@ package scair
   *
   * case class SampleType(
   *     val value: FloatType
-  * ) extends ParametrizedAttribute(
-  *       name = "sample.sample_type",
-  *       parameters = Seq(value)
-  *     )
+  * ) extends DerivedAttribute["sample.sample_type", SampleType]
   *     with TypeAttribute
-  *     with MLIRName["sample.sample_type"]
   *     derives DerivedAttributeCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
