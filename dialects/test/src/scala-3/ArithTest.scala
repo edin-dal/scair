@@ -38,6 +38,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
                 Func(
                   "suchCompute",
                   FunctionType(Seq(I32), Seq(I32)),
+                  None,
                   Region(
                     Seq(
                       Block(
