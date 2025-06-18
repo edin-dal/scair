@@ -647,7 +647,9 @@ def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     adtAttrExpr: Expr[?]
 )(using Quotes): Expr[Seq[Attribute]] = {
   Expr.ofList(
-    attrInputDefs.map(d => selectMember(adtAttrExpr, d.name).asExprOf[Attribute])
+    attrInputDefs.map(d =>
+      selectMember(adtAttrExpr, d.name).asExprOf[Attribute]
+    )
   )
 }
 
@@ -672,7 +674,10 @@ trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
 
   given companion: DerivedAttributeCompanion[T] = deferred
   override val name: String = companion.name
-  override val parameters: Seq[Attribute | Seq[Attribute]] = companion.parameters(this)
+
+  override val parameters: Seq[Attribute | Seq[Attribute]] =
+    companion.parameters(this)
+
 }
 
 object DerivedAttributeCompanion {
@@ -690,8 +695,8 @@ object DerivedAttributeCompanion {
           ("<" ~/ p.Type.rep(sep = ",") ~ ">")
         ).orElse(Seq())
           .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
-        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${ 
-          parametersMacro(attrDef, '{ attr }) 
+        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
+          parametersMacro(attrDef, '{ attr })
         }
       }
     }

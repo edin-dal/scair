@@ -148,7 +148,7 @@ object DB_IntervalType extends AttributeCompanion {
 case class DB_IntervalType(val unit: Attribute)
     extends ParametrizedAttribute
     with TypeAttribute {
-  
+
   override def name: String = "db.interval"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(unit)
 

@@ -14,7 +14,7 @@ case class Complex(
 case class Norm(
     in: Operand[Complex],
     res: Result[FloatType]
-) extends DerivedOperation["cmath.norm", Norm] 
+) extends DerivedOperation["cmath.norm", Norm]
     derives DerivedOperationCompanion
 
 case class Mul(

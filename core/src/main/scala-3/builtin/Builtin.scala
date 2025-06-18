@@ -51,7 +51,8 @@ case object Signless extends Signedness("signless", "i")
 ||    FLOAT TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class FloatType(override val name: String) extends ParametrizedAttribute
+abstract class FloatType(override val name: String)
+    extends ParametrizedAttribute
 
 case object Float16Type extends FloatType("builtin.f16") with TypeAttribute {
   override def custom_print = "f16"
@@ -156,9 +157,7 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 ||   INDEX TYPE     ||
 \*≡==---==≡≡==---==≡*/
 
-case object IndexType
-    extends ParametrizedAttribute
-    with TypeAttribute {
+case object IndexType extends ParametrizedAttribute with TypeAttribute {
   override def name: String = "builtin.index"
   override def custom_print = "index"
 }
@@ -297,6 +296,7 @@ case class VectorType(
 ) extends ParametrizedAttribute {
 
   override def name: String = "builtin.vector_type"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(shape, elementType, scalableDims)
 
@@ -324,6 +324,7 @@ case class SymbolRefAttr(
 ) extends ParametrizedAttribute {
 
   override def name: String = "builtin.symbol_ref"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(rootRef, nestedRefs)
 
@@ -382,6 +383,7 @@ case class FunctionType(
     with TypeAttribute {
 
   override def name: String = "builtin.function_type"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(inputs, outputs)
 

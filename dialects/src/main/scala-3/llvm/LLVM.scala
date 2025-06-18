@@ -5,11 +5,9 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
-case class Ptr()
-    extends DerivedAttribute["llvm.ptr", Ptr]
-    with TypeAttribute
-    derives DerivedAttributeCompanion 
-    
+case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
+    derives DerivedAttributeCompanion
+
 case class Load(
     ptr: Operand[Ptr],
     result: Result[Attribute]

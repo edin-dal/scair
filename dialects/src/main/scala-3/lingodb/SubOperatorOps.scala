@@ -39,6 +39,7 @@ case class StateMembers(
 ) extends ParametrizedAttribute {
 
   override def name: String = "subop.state_members"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     names :++ types
 
@@ -68,7 +69,7 @@ case class ResultTable(
     val members: StateMembers
 ) extends ParametrizedAttribute
     with TypeAttribute {
-  
+
   override def name: String = "subop.result_table"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(members)
 }
