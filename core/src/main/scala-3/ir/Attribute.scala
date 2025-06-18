@@ -38,7 +38,7 @@ extension (x: Seq[Attribute] | Attribute)
   }
 
 abstract class ParametrizedAttribute() extends Attribute {
-  
+
   def parameters: Seq[Attribute | Seq[Attribute]]
 
   override def custom_print =
