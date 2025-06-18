@@ -642,6 +642,21 @@ def getAttrConstructor[T: Type](
   }
 }
 
+def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
+    attrInputDefs: Seq[AttributeParamDef],
+    adtAttrExpr: Expr[?]
+)(using Quotes): Expr[Seq[Attribute]] = {
+  Expr.ofList(
+    attrInputDefs.map(d => selectMember(adtAttrExpr, d.name).asExprOf[Attribute])
+  )
+}
+
+def parametersMacro(
+    attrDef: AttributeDef,
+    adtAttrExpr: Expr[?]
+)(using Quotes): Expr[Seq[Attribute]] =
+  ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
+
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    MLIR TRAIT    ||
 \*≡==---==≡≡==---==≡*/
@@ -675,7 +690,9 @@ object DerivedAttributeCompanion {
           ("<" ~/ p.Type.rep(sep = ",") ~ ">")
         ).orElse(Seq())
           .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
-        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = Seq()
+        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${ 
+          parametersMacro(attrDef, '{ attr }) 
+        }
       }
     }
 
