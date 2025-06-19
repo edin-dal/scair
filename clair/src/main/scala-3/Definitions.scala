@@ -21,10 +21,13 @@ import scala.reflect.*
 ||  CONTAINERS  ||
 \*≡=--==≡≡==--=≡*/
 
-sealed trait OpInputDef(val name: String) {}
+sealed trait OpInputDef {
+  def name: String
+}
 
-sealed trait MayVariadicOpInputDef(val variadicity: Variadicity)
-    extends OpInputDef
+sealed trait MayVariadicOpInputDef extends OpInputDef {
+  def variadicity: Variadicity
+}
 
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
@@ -37,33 +40,33 @@ case class OperandDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name)
-    with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef
+    with MayVariadicOpInputDef {}
 
 case class ResultDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name)
-    with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef
+    with MayVariadicOpInputDef {}
 
 case class RegionDef(
     override val name: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name)
-    with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef
+    with MayVariadicOpInputDef {}
 
 case class SuccessorDef(
     override val name: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef(name)
-    with MayVariadicOpInputDef(variadicity) {}
+) extends OpInputDef
+    with MayVariadicOpInputDef {}
 
 case class OpPropertyDef(
     override val name: String,
     val tpe: Type[?],
     val optional: Boolean = false
-) extends OpInputDef(name) {}
+) extends OpInputDef {}
 
 case class AttributeParamDef(
     val name: String,
