@@ -10,11 +10,7 @@ import scair.ir.*
 import scair.scairdl.constraints.*
 
 import scala.collection.mutable
-import scala.compiletime.*
 import scala.quoted.*
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -659,123 +655,56 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-/*≡==--==≡≡≡≡==--=≡≡*\
-||    MLIR TRAIT    ||
-\*≡==---==≡≡==---==≡*/
+def derivedAttributeCompanion[T: Type](using
+    Quotes
+): Expr[DerivedAttributeCompanion[T]] =
 
-trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
-  def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
-  extension (op: T) override def AttributeTrait = this
-}
+  val attrDef = getAttrDefImpl[T]
 
-trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
-
-  this: T =>
-
-  given companion: DerivedAttributeCompanion[T] = deferred
-  override val name: String = companion.name
-
-  override val parameters: Seq[Attribute | Seq[Attribute]] =
-    companion.parameters(this)
-
-}
-
-object DerivedAttributeCompanion {
-
-  inline def derived[T]: DerivedAttributeCompanion[T] = ${ derivedImpl[T] }
-
-  def derivedImpl[T: Type](using Quotes): Expr[DerivedAttributeCompanion[T]] =
-
-    val attrDef = getAttrDefImpl[T]
-
-    '{
-      new DerivedAttributeCompanion[T] {
-        override def name: String = ${ Expr(attrDef.name) }
-        override def parse[$: P](p: AttrParser): P[T] = P(
-          ("<" ~/ p.Type.rep(sep = ",") ~ ">")
-        ).orElse(Seq())
-          .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
-        def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
-          parametersMacro(attrDef, '{ attr })
-        }
+  '{
+    new DerivedAttributeCompanion[T] {
+      override def name: String = ${ Expr(attrDef.name) }
+      override def parse[$: P](p: AttrParser): P[T] = P(
+        ("<" ~/ p.Type.rep(sep = ",") ~ ">")
+      ).orElse(Seq())
+        .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+      def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
+        parametersMacro(attrDef, '{ attr })
       }
     }
+  }
 
-}
+def deriveOperationCompanion[T <: Operation: Type](using
+    Quotes
+): Expr[DerivedOperationCompanion[T]] =
+  val opDef = getDefImpl[T]
 
-trait DerivedOperation[name <: String, T] extends Operation {
+  '{
 
-  this: T =>
+    new DerivedOperationCompanion[T]:
 
-  given companion: DerivedOperationCompanion[T] = deferred
+      def operands(adtOp: T): Seq[Value[Attribute]] =
+        ${ operandsMacro(opDef, '{ adtOp }) }
+      def successors(adtOp: T): Seq[Block] =
+        ${ successorsMacro(opDef, '{ adtOp }) }
+      def results(adtOp: T): Seq[Result[Attribute]] =
+        ${ resultsMacro(opDef, '{ adtOp }) }
+      def regions(adtOp: T): Seq[Region] =
+        ${ regionsMacro(opDef, '{ adtOp }) }
+      def properties(adtOp: T): Map[String, Attribute] =
+        ${ propertiesMacro(opDef, '{ adtOp }) }
 
-  override def updated(
-      operands: Seq[Value[Attribute]],
-      successors: Seq[Block],
-      results: Seq[Result[Attribute]],
-      regions: Seq[Region],
-      properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
-  ) =
-    companion(
-      operands = operands,
-      successors = successors,
-      results = results,
-      regions = regions,
-      properties = properties,
-      attributes = attributes
-    )
+      def name: String = ${ Expr(opDef.name) }
 
-  def name: String = companion.name
-  // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.
-  def operands: Seq[Value[Attribute]] = companion.operands(this)
-  def successors: Seq[Block] = companion.successors(this)
-  def results: Seq[Result[Attribute]] = companion.results(this)
-  def regions: Seq[Region] = companion.regions(this)
-  def properties: Map[String, Attribute] = companion.properties(this)
-
-}
-
-trait DerivedOperationCompanion[T] extends OperationCompanion {
-
-  companion =>
-
-  def operands(adtOp: T): Seq[Value[Attribute]]
-  def successors(adtOp: T): Seq[Block]
-  def results(adtOp: T): Seq[Result[Attribute]]
-  def regions(adtOp: T): Seq[Region]
-  def properties(adtOp: T): Map[String, Attribute]
-
-  case class UnverifiedOp(
-      override val operands: Seq[Value[Attribute]] = Seq(),
-      override val successors: Seq[Block] = Seq(),
-      override val results: Seq[Result[Attribute]] = Seq(),
-      override val regions: Seq[Region] = Seq(),
-      override val properties: Map[String, Attribute] =
-        Map.empty[String, Attribute],
-      override val attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
-  ) extends BaseOperation(
-        name =
-          name, // DEFINED IN OperationCompanion, derived in DerivedOperationCompanion Companion
-        operands,
-        successors,
-        results,
-        regions,
-        properties,
-        attributes
-      ) {
-
-    override def copy(
-        operands: Seq[Value[Attribute]],
-        successors: Seq[Block],
-        results: Seq[Result[Attribute]],
-        regions: Seq[Region],
-        properties: Map[String, Attribute],
-        attributes: DictType[String, Attribute]
-    ) = {
-      UnregisteredOperation(
-        name = name,
+      def apply(
+          operands: Seq[Value[Attribute]] = Seq(),
+          successors: Seq[Block] = Seq(),
+          results: Seq[Result[Attribute]] = Seq(),
+          regions: Seq[Region] = Seq(),
+          properties: Map[String, Attribute] = Map.empty[String, Attribute],
+          attributes: DictType[String, Attribute] =
+            DictType.empty[String, Attribute]
+      ): UnverifiedOp = UnverifiedOp(
         operands = operands,
         successors = successors,
         results = results,
@@ -783,129 +712,28 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         properties = properties,
         attributes = attributes
       )
-    }
 
-    override def verify(): Either[String, Operation] = {
-      Try(companion.verify(this)) match {
-        case Success(op) =>
-          op match {
-            case adtOp: DerivedOperation[_, T] =>
-              adtOp.verify()
-            case _ =>
-              Left("Internal Error: Operation is not a DerivedOperation")
-          }
-        case Failure(e) => Left(e.toString())
-      }
-    }
-
-  }
-
-  def apply(
-      operands: Seq[Value[Attribute]] = Seq(),
-      successors: Seq[scair.ir.Block] = Seq(),
-      results: Seq[Result[Attribute]] = Seq(),
-      regions: Seq[Region] = Seq(),
-      properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
-  ): UnverifiedOp
-
-  def unverify(adtOp: T): UnverifiedOp
-  def verify(unverOp: UnverifiedOp): T
-
-}
-
-trait MLIRName[name <: String]
-
-object DerivedOperationCompanion {
-
-  inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
-    derivedImpl[T]
-  }
-
-  def derivedImpl[T <: Operation: Type](using
-      Quotes
-  ): Expr[DerivedOperationCompanion[T]] =
-    val opDef = getDefImpl[T]
-
-    '{
-
-      new DerivedOperationCompanion[T]:
-
-        def operands(adtOp: T): Seq[Value[Attribute]] =
-          ${ operandsMacro(opDef, '{ adtOp }) }
-        def successors(adtOp: T): Seq[Block] =
-          ${ successorsMacro(opDef, '{ adtOp }) }
-        def results(adtOp: T): Seq[Result[Attribute]] =
-          ${ resultsMacro(opDef, '{ adtOp }) }
-        def regions(adtOp: T): Seq[Region] =
-          ${ regionsMacro(opDef, '{ adtOp }) }
-        def properties(adtOp: T): Map[String, Attribute] =
-          ${ propertiesMacro(opDef, '{ adtOp }) }
-
-        def name: String = ${ Expr(opDef.name) }
-
-        def apply(
-            operands: Seq[Value[Attribute]] = Seq(),
-            successors: Seq[Block] = Seq(),
-            results: Seq[Result[Attribute]] = Seq(),
-            regions: Seq[Region] = Seq(),
-            properties: Map[String, Attribute] = Map.empty[String, Attribute],
-            attributes: DictType[String, Attribute] =
-              DictType.empty[String, Attribute]
-        ): UnverifiedOp = UnverifiedOp(
-          operands = operands,
-          successors = successors,
-          results = results,
-          regions = regions,
-          properties = properties,
-          attributes = attributes
+      def unverify(adtOp: T): UnverifiedOp =
+        UnverifiedOp(
+          operands = operands(adtOp),
+          successors = successors(adtOp),
+          results = results(adtOp),
+          regions = regions(adtOp).map(_.detached),
+          properties = properties(adtOp),
+          attributes = adtOp.attributes
         )
 
-        def unverify(adtOp: T): UnverifiedOp =
-          UnverifiedOp(
-            operands = operands(adtOp),
-            successors = successors(adtOp),
-            results = results(adtOp),
-            regions = regions(adtOp).map(_.detached),
-            properties = properties(adtOp),
-            attributes = adtOp.attributes
-          )
+      def verify(unverOp: UnverifiedOp): T =
+        ${
+          fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
+        } match {
+          case adt: DerivedOperation[_, T] =>
+            adt.attributes.addAll(unverOp.attributes)
+            adt
+          case _ =>
+            throw new Exception(
+              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
+            )
+        }
 
-        def verify(unverOp: UnverifiedOp): T =
-          ${
-            fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
-          } match {
-            case adt: DerivedOperation[_, T] =>
-              adt.attributes.addAll(unverOp.attributes)
-              adt
-            case _ =>
-              throw new Exception(
-                s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
-              )
-          }
-
-    }
-
-}
-
-inline def summonAttributeTraits[T <: Tuple]
-    : Seq[DerivedAttributeCompanion[?]] =
-  inline erasedValue[T] match
-    case _: (t *: ts) =>
-      summonInline[DerivedAttributeCompanion[t]] +: summonAttributeTraits[ts]
-    case _: EmptyTuple => Seq()
-
-inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
-  inline erasedValue[T] match
-    case _: (t *: ts) =>
-      summonInline[DerivedOperationCompanion[t]] +: summonMLIRTraits[ts]
-    case _: EmptyTuple => Seq()
-
-inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
-    attributes: Seq[AttributeCompanion]
-): Dialect =
-  new Dialect(
-    summonMLIRTraits[Operations],
-    attributes ++ summonAttributeTraits[Attributes]
-  )
+  }
