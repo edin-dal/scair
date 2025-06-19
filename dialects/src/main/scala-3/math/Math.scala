@@ -5,8 +5,6 @@ import scair.Parser
 import scair.Parser.whitespace
 import scair.ir.*
 
-import scala.collection.mutable
-
 ////////////////
 // OPERATIONS //
 ////////////////

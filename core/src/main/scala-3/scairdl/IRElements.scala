@@ -142,7 +142,7 @@ import fastparse.*"""
         .mkString("\n", "\n", "\n") +
       { for (hatch <- attrHatches) yield hatch.importt }
         .mkString("", "\n", "\n") +
-      (operations.map(_.print(0)) ++ attributes.map(_.print(0)))
+      (operations.map(_.print(using 0)) ++ attributes.map(_.print(0)))
         .mkString("\n") + s"""
 val ${name}Dialect: Dialect = new Dialect(
   operations = Seq(${(operations.map(_.className) ++ opHatches.map(_.name))
@@ -733,20 +733,20 @@ case class OperationDef(
     }
 
   def constructs_verification(implicit indent: Int): String = s"""
-    ${operands_verification(indent + 1)}
-    ${results_verification(indent + 1)}
-    ${regions_verification(indent + 1)}
-    ${successors_verification(indent + 1)}
+    ${operands_verification(using indent + 1)}
+    ${results_verification(using indent + 1)}
+    ${regions_verification(using indent + 1)}
+    ${successors_verification(using indent + 1)}
 """
 
   def irdl_verification(implicit indent: Int): String = s"""
   override def custom_verify(): Unit = 
     val verification_context = new ConstraintContext()
-    ${constructs_verification(indent + 1)}
-    ${constraints_verification(indent + 1)}
+    ${constructs_verification(using indent + 1)}
+    ${constraints_verification(using indent + 1)}
 """
 
-  def print(implicit indent: Int): String = s"""
+  def print(implicit indent: Int = 0): String = s"""
 object $className extends MLIROperationObject {
   override def name = "$name"
   ${assembly_format
@@ -766,10 +766,10 @@ case class $className(
 ) extends RegisteredOperation(name = "$name", operands, successors, results_types, regions, properties, attributes) {
 
 
-${helpers(indent + 1)}
-${accessors(indent + 1)}
-${print_constr_defs(indent + 1)}
-${irdl_verification(indent + 1)}
+${helpers(using indent + 1)}
+${accessors(using indent + 1)}
+${print_constr_defs(using indent + 1)}
+${irdl_verification(using indent + 1)}
 
 }
 """

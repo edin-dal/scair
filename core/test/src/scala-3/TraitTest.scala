@@ -3,10 +3,7 @@ package scair
 import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
-import scair.Parser.*
 import scair.ir.*
-
-import scala.collection.mutable
 
 object FillerOp extends OperationCompanion {
   override def name: String = "filler"

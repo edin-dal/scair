@@ -16,9 +16,6 @@ import scair.dialects.LingoDB.TupleStream.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
-import scala.collection.immutable
-import scala.collection.mutable
-
 // ==---== //
 //  Enums
 // ==---== //
