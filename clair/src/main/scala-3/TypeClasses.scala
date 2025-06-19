@@ -144,8 +144,6 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
 
 }
 
-trait MLIRName[name <: String]
-
 object DerivedOperationCompanion {
 
   inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
