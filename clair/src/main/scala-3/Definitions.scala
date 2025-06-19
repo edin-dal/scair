@@ -90,6 +90,9 @@ case class OperationDef(
     val assembly_format: Option[AssemblyFormatDirective] = None
 ) {
 
+  def allDefs =
+    operands ++ results ++ regions ++ successors ++ properties
+
   def allDefsWithIndex =
     operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
 

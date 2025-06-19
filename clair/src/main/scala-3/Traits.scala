@@ -50,6 +50,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
   def regions: Seq[Region] = companion.regions(this)
   def properties: Map[String, Attribute] = companion.properties(this)
 
-  override def custom_print(p: Printer)(using indentLevel: Int): Unit = companion.custom_print(this, p)
+  override def custom_print(p: Printer)(using indentLevel: Int): Unit =
+    companion.custom_print(this, p)
 
 }
