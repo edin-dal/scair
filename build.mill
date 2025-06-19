@@ -25,7 +25,7 @@ import java.io.PrintWriter
 trait ScairSettings extends ScalaModule with UnidocModule {
 
   def scoverageVersion = T{"2.3.0"}
-  override def scalaVersion = "3.6.4"
+  override def scalaVersion = "3.7.1"
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 

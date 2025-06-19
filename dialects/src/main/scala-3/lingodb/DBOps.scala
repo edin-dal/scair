@@ -10,8 +10,6 @@ import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*
 
-import scala.collection.immutable
-import scala.collection.mutable
 import scala.math.max
 
 // ==---== //

@@ -4,7 +4,6 @@ import fastparse.*
 import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
-import org.scalatest.prop.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.dialects.LingoDB.TupleStream.*

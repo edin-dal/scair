@@ -9,7 +9,6 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
 
-import scala.collection.mutable
 import scala.quoted.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
@@ -57,7 +56,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
           defs.map((d) =>
             d.variadicity match {
               case Variadicity.Single => Expr(1)
-              case Variadicity.Variadic =>
+              case Variadicity.Variadic | Variadicity.Optional =>
                 '{
                   ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
                 }

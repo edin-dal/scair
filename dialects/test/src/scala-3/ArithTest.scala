@@ -3,7 +3,6 @@ package scair
 import scair.ir.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
-import scair.dialects.test.*
 import scair.dialects.func.*
 import scair.Printer
 

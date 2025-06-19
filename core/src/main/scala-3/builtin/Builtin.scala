@@ -10,8 +10,6 @@ import scair.ir.*
 import scair.scairdl.constraints.BaseAttr
 import scair.scairdl.constraints.ConstraintContext
 
-import scala.collection.immutable
-import scala.collection.mutable
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try

@@ -55,7 +55,7 @@ abstract class EnumAttr[T <: Attribute](
     //  then "parse("ascc", v(_))"
     //  returns "Success("asc")"
     //  but we need "Success("ascc")"
-    parser(cases.sortBy(_.symbol.length)(Ordering[Int].reverse))
+    parser(cases.sortBy(_.symbol.length)(using Ordering[Int].reverse))
   }
 
 }
