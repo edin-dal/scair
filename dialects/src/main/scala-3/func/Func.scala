@@ -21,6 +21,7 @@ case class Func(
 case class Return(
     _operands: Seq[Operand[Attribute]]
 ) extends DerivedOperation["func.return", Return]
+  with AssemblyFormat["`(` `)`"]
     derives DerivedOperationCompanion
 
 val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())
