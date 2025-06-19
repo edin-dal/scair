@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Issue Template is supposed to give some minimal structure to issue creation, try to address all points where it makes sense, feel free to add/remove otherwise :) 
+Try to address all points where it makes sense, feel free to add/remove otherwise :) 
 
 ## Description
 Description of the issue, and some context.
