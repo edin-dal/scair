@@ -184,6 +184,11 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         } =>
       val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
 
+      val format = Type.of[T] match
+        case '[AssemblyFormat[format]] =>
+          Some(parseAssemblyFormat(Type.valueOfConstant[format].get))
+        case _ => None
+
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
         case '[DerivedOperation[name, _]] =>
@@ -204,7 +209,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        assembly_format = None
+        assembly_format = format
       )
       e
 

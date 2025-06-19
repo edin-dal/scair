@@ -7,6 +7,7 @@ import scala.compiletime.summonInline
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scair.Printer
 
 trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
@@ -30,6 +31,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
+  def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
 
   case class UnverifiedOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
