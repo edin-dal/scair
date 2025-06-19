@@ -6,8 +6,8 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 case class Alloc(
-    dynamicSizes: Seq[Operand[IndexType.type]],
-    symbolOperands: Seq[Operand[IndexType.type]],
+    dynamicSizes: Seq[Operand[IndexType]],
+    symbolOperands: Seq[Operand[IndexType]],
     memref: Result[MemrefType],
     alignment: IntegerAttr
 ) extends DerivedOperation["memref.alloc", Alloc]
@@ -20,7 +20,7 @@ case class Dealloc(
 
 case class Load(
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType.type]],
+    indices: Seq[Operand[IndexType]],
     result: Result[Attribute]
 ) extends DerivedOperation["memref.load", Load]
     derives DerivedOperationCompanion
@@ -28,7 +28,7 @@ case class Load(
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType.type]]
+    indices: Seq[Operand[IndexType]]
 ) extends DerivedOperation["memref.store", Store]
     derives DerivedOperationCompanion
 

@@ -74,11 +74,11 @@ class AttrParser(val ctx: MLContext) {
   ||    FLOAT TYPE    ||
   \*≡==---==≡≡==---==≡*/
 
-  def Float16TypeP[$: P]: P[FloatType] = P("f16").map(_ => Float16Type)
-  def Float32TypeP[$: P]: P[FloatType] = P("f32").map(_ => Float32Type)
-  def Float64TypeP[$: P]: P[FloatType] = P("f64").map(_ => Float64Type)
-  def Float80TypeP[$: P]: P[FloatType] = P("f80").map(_ => Float80Type)
-  def Float128TypeP[$: P]: P[FloatType] = P("f128").map(_ => Float128Type)
+  def Float16TypeP[$: P]: P[Float16Type] = P("f16").map(_ => Float16Type())
+  def Float32TypeP[$: P]: P[Float32Type] = P("f32").map(_ => Float32Type())
+  def Float64TypeP[$: P]: P[Float64Type] = P("f64").map(_ => Float64Type())
+  def Float80TypeP[$: P]: P[Float80Type] = P("f80").map(_ => Float80Type())
+  def Float128TypeP[$: P]: P[Float128Type] = P("f128").map(_ => Float128Type())
 
   def FloatTypeP[$: P]: P[FloatType] = P(
     Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP
@@ -127,7 +127,7 @@ class AttrParser(val ctx: MLContext) {
             case yy: Some[_] =>
               yy.get match
                 case i: IntegerType => i
-                case IndexType      => IndexType
+                case i: IndexType   => i
                 case _ =>
                   throw new Exception(
                     s"Unreachable, fastparse's | is simply weakly typed."
@@ -158,7 +158,7 @@ class AttrParser(val ctx: MLContext) {
           x,
           y match {
             case Some(a) => a
-            case None    => Float64Type
+            case None    => Float64Type()
           }
         )
       ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP).map((x, y) =>
@@ -170,7 +170,7 @@ class AttrParser(val ctx: MLContext) {
   ||    INDEX TYPE    ||
   \*≡==---==≡≡==---==≡*/
 
-  def IndexTypeP[$: P]: P[IndexType.type] = P("index").map(_ => IndexType)
+  def IndexTypeP[$: P]: P[IndexType] = P("index").map(_ => IndexType())
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||  ARRAY ATTRIBUTE  ||
@@ -334,7 +334,7 @@ class AttrParser(val ctx: MLContext) {
       case (x: IntData) =>
         ArrayAttribute[IntegerAttr](Seq(IntegerAttr(x, I32)))
       case (y: FloatData) =>
-        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type)))
+        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type())))
     })
 
   def MultipleTensorLiteral[$: P]: P[TensorLiteralArray] =
@@ -350,7 +350,7 @@ class AttrParser(val ctx: MLContext) {
   def MultipleFloatTensorLiteral[$: P]: P[ArrayAttribute[FloatAttr]] =
     P("[" ~ FloatDataP.rep(1, sep = ",") ~ "]").map((y: Seq[FloatData]) =>
       ArrayAttribute[FloatAttr](
-        for (y1 <- y) yield FloatAttr(y1, Float32Type)
+        for (y1 <- y) yield FloatAttr(y1, Float32Type())
       )
     )
 

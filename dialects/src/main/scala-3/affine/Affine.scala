@@ -24,8 +24,8 @@ import scair.ir.*
 \*≡==----==≡≡==----==≡*/
 
 case class Apply(
-    mapOperands: Seq[Operand[IndexType.type]],
-    res: Result[IndexType.type],
+    mapOperands: Seq[Operand[IndexType]],
+    res: Result[IndexType],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.apply", Apply]
     derives DerivedOperationCompanion
@@ -35,8 +35,8 @@ case class Apply(
 \*≡==----=≡≡=----==≡*/
 
 case class For(
-    lowerBoundOperands: Seq[Operand[IndexType.type]],
-    upperBoundOperands: Seq[Operand[IndexType.type]],
+    lowerBoundOperands: Seq[Operand[IndexType]],
+    upperBoundOperands: Seq[Operand[IndexType]],
     inits: Seq[Operand[Attribute]],
     res: Seq[Result[Attribute]],
     lowerBoundMap: AffineMapAttr,
@@ -51,7 +51,7 @@ case class For(
 \*≡==----==≡≡≡==----==≡*/
 
 case class Parallel(
-    map_operands: Seq[Operand[IndexType.type]],
+    map_operands: Seq[Operand[IndexType]],
     steps: Option[ArrayAttribute[IntegerAttr]],
     reductions: Attribute,
     lowerBoundsMap: AffineMapAttr,
@@ -83,7 +83,7 @@ case class If(
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType.type]],
+    indices: Seq[Operand[IndexType]],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.store", Store]
     derives DerivedOperationCompanion
@@ -94,7 +94,7 @@ case class Store(
 
 case class Load(
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType.type]],
+    indices: Seq[Operand[IndexType]],
     result: Result[Attribute],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.load", Load]
@@ -105,8 +105,8 @@ case class Load(
 \*≡==---=≡≡=---==≡*/
 
 case class Min(
-    arguments: Seq[Operand[IndexType.type]],
-    result: Result[IndexType.type],
+    arguments: Seq[Operand[IndexType]],
+    result: Result[IndexType],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.min", Min]
     derives DerivedOperationCompanion
