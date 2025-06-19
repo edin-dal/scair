@@ -175,14 +175,20 @@ def propertiesMacro(
   }
 
 def customPrintMacro(
-  opDef: OperationDef,
-  adtOpExpr: Expr[?],
-  p: Expr[Printer],
-  indentLevel: Expr[Int]
+    opDef: OperationDef,
+    adtOpExpr: Expr[?],
+    p: Expr[Printer],
+    indentLevel: Expr[Int]
 )(using Quotes): Expr[Unit] =
   opDef.assembly_format match
-    case Some(format) => format.print(adtOpExpr, p)
-    case None => '{$p.printGenericMLIROperation(${adtOpExpr}.asInstanceOf[Operation])(using $indentLevel)}
+    case Some(format) =>
+      format.print(adtOpExpr, p)
+    case None =>
+      '{
+        $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])(
+          using $indentLevel
+        )
+      }
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  Unverified to ADT conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -725,7 +731,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def name: String = ${ Expr(opDef.name) }
 
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
-        ${ customPrintMacro(opDef, '{ adtOp }, '{ p}, '{ indentLevel })}
+        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
       def apply(
           operands: Seq[Value[Attribute]] = Seq(),

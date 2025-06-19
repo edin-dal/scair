@@ -184,10 +184,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         } =>
       val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
 
-      val format = Type.of[T] match
-        case '[AssemblyFormat[format]] =>
-          Some(parseAssemblyFormat(Type.valueOfConstant[format].get))
-        case _ => None
+      
 
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
@@ -201,7 +198,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
         case '[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
-      val e = OperationDef(
+      val opDef = OperationDef(
         name = name,
         className = defname,
         operands = inputs.collect { case a: OperandDef => a },
@@ -209,9 +206,13 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        assembly_format = format
+        assembly_format = None
       )
-      e
+      val format = Type.of[T] match
+        case '[AssemblyFormat[format]] =>
+          Some(parseAssemblyFormat(Type.valueOfConstant[format].get, opDef))
+        case _ => None
+      opDef.copy(assembly_format = format)
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
   import quotes.reflect._
