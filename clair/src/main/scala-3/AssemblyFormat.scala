@@ -84,10 +84,35 @@ case class AssemblyFormatDirective(
     
     def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
         
-        directives.foldLeft('{Pass(using $ctx).asInstanceOf[P[Any]]})((run, d) =>
-            '{
-                given P[Any] = $ctx
-                $run ~ ${d.parse(p)(using ctx)}})
+        directives.map(_.parse(p)(using ctx)).reduce((run, next) =>
+            // This match to specialize the parsers types for fastparse's summoned Sequencer
+            // cf fastparse.Implicits.Sequencer.
+            //
+            // I feel like there might be a more elegant way, but I spent enough time to
+            // search for it and this sounds liek a localized enough compromise.
+            (run, next) match
+                case ('{$run: P[Unit]}, '{$next: P[n]}) =>
+                    '{
+                        given P[Any] = $ctx
+                        $run ~ $next
+                    }
+                case ('{$run: P[r]}, '{$next: P[Unit]}) =>
+                    '{
+                        given P[Any] = $ctx
+                        $run ~ $next
+                    }
+                case ('{$run: P[Tuple]}, '{$next: P[Any]}) =>
+                    '{
+                        given P[Any] = $ctx
+                        given fastparse.Implicits.Sequencer[Tuple, Any, Tuple] = fastparse.Implicits.Sequencer.NarySequencer[Tuple, Any, Tuple](_ :* _)
+                        `~`($run)[Any, Tuple]($next)
+                    }
+                case _ =>
+                    '{
+                        given P[Any] = $ctx
+                        $run ~ $next
+                    }
+        )
 
 }
 
