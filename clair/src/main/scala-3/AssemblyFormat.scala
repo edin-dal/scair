@@ -1,16 +1,20 @@
 package scair.clair.macros
 
-import scala.quoted.*
-
 import fastparse.*
 import fastparse.SingleLineWhitespace.given
-
-import scair.ir.*
+import fastparse.internal.MacroInlineImpls.*
+import scair.Parser
 import scair.Printer
 import scair.clair.codegen.*
+import scair.ir.*
+
+import scala.quoted.*
 
 trait Directive {
     def print(op : Expr[?], p: Expr[Printer])(using Quotes) : Expr[Unit]
+
+    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes) : Expr[P[Any]]
+
 }
 
 case class LiteralDirective(
@@ -19,6 +23,9 @@ case class LiteralDirective(
     def print(op : Expr[?], p: Expr[Printer])(using Quotes) : Expr[Unit] = {
         '{ $p.print(${Expr(literal)}) }
     }
+
+    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes) = 
+        literalStrMacro(Expr(literal))(ctx)
 }
 
 case class VariableDirective(
@@ -33,6 +40,15 @@ case class VariableDirective(
                 }
         }
     }
+
+    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
+        construct match {
+            case OperandDef(name = n, variadicity = v) =>
+                v match {
+                    case Variadicity.Variadic =>
+                        '{Parser.ValueUseList(using $ctx)}
+                }
+        }
 }
 
 case class TypeDirective(
@@ -46,6 +62,17 @@ case class TypeDirective(
                         '{ $p.printList(${selectMember(op, n).asExprOf[Seq[Operand[?]]]}.map(_.typ))(using 0) }
         }
     }
+
+    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
+        construct match {
+            case OperandDef(name = n, variadicity = v) =>
+                v match {
+                    case Variadicity.Variadic =>
+                        '{
+                            $p.AttributeValueList(using $ctx)
+                        }
+                }
+        }
 }
 
 case class AssemblyFormatDirective(
@@ -54,6 +81,14 @@ case class AssemblyFormatDirective(
     def print(op : Expr[?], p: Expr[Printer])(using Quotes) : Expr[Unit] = {
         Expr.block('{$p.print($op.asInstanceOf[Operation].name)} +: directives.map(_.print(op, p)).toList, '{})
     }
+    
+    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
+        
+        directives.foldLeft('{Pass(using $ctx).asInstanceOf[P[Any]]})((run, d) =>
+            '{
+                given P[Any] = $ctx
+                $run ~ ${d.parse(p)(using ctx)}})
+
 }
 
 

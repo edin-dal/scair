@@ -1,5 +1,6 @@
 package scair.clair.macros
 
+import scair.Printer
 import scair.ir.*
 
 import scala.compiletime.erasedValue
@@ -7,7 +8,6 @@ import scala.compiletime.summonInline
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scair.Printer
 
 trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
