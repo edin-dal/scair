@@ -57,8 +57,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
     (IntegerType(IntData(8), Unsigned), "Success", "ui8"),
     (
       RankedTensorType(
-        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
         Float32Type(),
+        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
         None
       ),
       "Success",
@@ -100,8 +100,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
       "tensor<3x?x5xf32>",
       "Success",
       RankedTensorType(
-        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
         Float32Type(),
+        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
         None
       )
     ),

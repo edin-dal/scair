@@ -230,7 +230,7 @@ class AttrParser(val ctx: MLContext) {
     DimensionList ~ Type ~ ("," ~ Encoding).?
   ).map((x: (ArrayAttribute[IntData], Attribute, Option[Attribute])) =>
     RankedTensorType(
-      dimensionList = x._1,
+      shape = x._1,
       elementType = x._2,
       encoding = x._3
     )
@@ -267,7 +267,7 @@ class AttrParser(val ctx: MLContext) {
     DimensionList ~ Type
   ).map((x: (ArrayAttribute[IntData], Attribute)) =>
     RankedMemrefType(
-      shape = x._1.data,
+      shape = x._1,
       elementType = x._2
     )
   )
@@ -289,9 +289,9 @@ class AttrParser(val ctx: MLContext) {
     "vector<" ~/ VectorDimensionList ~/ Type ~/ ">"
   ).map((shape: Seq[IntData], scalableDims: Seq[IntData], typ: Attribute) =>
     VectorType(
-      shape = shape,
+      shape = ArrayAttribute[IntData](shape),
       elementType = typ,
-      scalableDims = scalableDims
+      scalableDims = ArrayAttribute[IntData](scalableDims)
     )
   )
 
