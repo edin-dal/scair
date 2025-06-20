@@ -1,9 +1,9 @@
 package scair.clair.codegen
 
+import scair.clair.macros.AssemblyFormatDirective
+
 import scala.quoted.*
 import scala.reflect.*
-
-import scair.clair.macros.AssemblyFormatDirective
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗

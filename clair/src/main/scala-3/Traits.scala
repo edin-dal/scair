@@ -1,9 +1,9 @@
 package scair.clair.macros
 
+import scair.Printer
 import scair.ir.*
 
 import scala.compiletime.deferred
-import scair.Printer
 
 trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
 

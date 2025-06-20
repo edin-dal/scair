@@ -66,6 +66,8 @@ class AttrParser(val ctx: MLContext) {
     Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
   )
 
+  def AttributeValueList[$: P] = AttributeValue.rep(sep = ",")
+
   def Type[$: P] = P(
     (BuiltIn | DialectType | DialectAttribute)./
   ) // shortened definition TODO: finish...
@@ -179,8 +181,7 @@ class AttrParser(val ctx: MLContext) {
   // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
   def ArrayAttributeP[$: P]: P[ArrayAttribute[Attribute]] = P(
-    "[" ~ (AttributeValue
-      .rep(sep = ","))
+    "[" ~ AttributeValueList
       .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
 
