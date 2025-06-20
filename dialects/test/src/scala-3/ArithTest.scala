@@ -44,7 +44,10 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
                         I32,
                         (arg: Value[?]) =>
                           val addres = Result(I32)
-                          val add = Addi(arg, zero.results.head, addres)
+                          val lhs = arg.asInstanceOf[Value[IntegerType]]
+                          val rhs =
+                            zero.results.head.asInstanceOf[Result[IntegerType]]
+                          val add = Addi(lhs, rhs, addres)
                           val ret = Return(Seq(addres))
                           Seq(zero, add, ret)
                       )

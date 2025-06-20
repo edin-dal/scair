@@ -210,10 +210,6 @@ case class RankedTensorType(
       ShapedType {
 
   override def name: String = "builtin.ranked_tensor"
-<<<<<<< HEAD
-=======
-
->>>>>>> 5006862 (adding semantics to shaped_type and slight refactor)
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
 
@@ -263,10 +259,6 @@ case class RankedMemrefType(
       ShapedType {
 
   override def name: String = "builtin.ranked_memref"
-<<<<<<< HEAD
-=======
-
->>>>>>> 5006862 (adding semantics to shaped_type and slight refactor)
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
 
