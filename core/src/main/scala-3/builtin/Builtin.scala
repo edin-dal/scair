@@ -198,8 +198,7 @@ trait ShapedType extends TypeAttribute {
 ||   TENSOR TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class TensorType extends 
-  ParametrizedAttribute, TypeAttribute {
+abstract class TensorType extends ParametrizedAttribute, TypeAttribute {
   def elementType: Attribute
 }
 
@@ -207,10 +206,12 @@ case class RankedTensorType(
     override val elementType: Attribute,
     val shape: ArrayAttribute[IntData],
     val encoding: Option[Attribute] = None
-) extends TensorType, ShapedType {
+) extends TensorType,
+      ShapedType {
 
   override def name: String = "builtin.ranked_tensor"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = 
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
@@ -236,8 +237,10 @@ case class RankedTensorType(
 case class UnrankedTensorType(override val elementType: Attribute)
     extends TensorType {
   override def name: String = "builtin.unranked_tensor"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(elementType)
+
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
@@ -245,19 +248,20 @@ case class UnrankedTensorType(override val elementType: Attribute)
 ||   MEMREF TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class MemrefType extends 
-  ParametrizedAttribute, TypeAttribute {
-  def elementType: Attribute 
+abstract class MemrefType extends ParametrizedAttribute, TypeAttribute {
+  def elementType: Attribute
 }
 
 case class RankedMemrefType(
     override val elementType: Attribute,
     val shape: ArrayAttribute[IntData],
     val encoding: Option[Attribute] = None
-) extends MemrefType, ShapedType {
+) extends MemrefType,
+      ShapedType {
 
   override def name: String = "builtin.ranked_memref"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = 
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
@@ -280,6 +284,7 @@ case class UnrankedMemrefType(override val elementType: Attribute)
     extends MemrefType {
 
   override def name: String = "builtin.unranked_memref"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(elementType)
 
@@ -294,9 +299,11 @@ case class VectorType(
     val elementType: Attribute,
     val shape: ArrayAttribute[IntData],
     val scalableDims: ArrayAttribute[IntData]
-) extends ParametrizedAttribute, ShapedType {
+) extends ParametrizedAttribute,
+      ShapedType {
 
   override def name: String = "builtin.vector_type"
+
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(shape, elementType, scalableDims)
 
