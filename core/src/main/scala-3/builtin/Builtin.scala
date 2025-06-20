@@ -188,37 +188,37 @@ case class StringData(val stringLiteral: String)
 ||   SHAPED TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-trait ShapedType extends TypeAttribute
+trait ShapedType extends TypeAttribute {
+  def getNumDims: Int
+  def getShape: Seq[Long]
+  def elementCount: Long = getShape.product
+}
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   TENSOR TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class TensorType(
-    override val name: String,
-    val elementType: Attribute,
-    val features: Seq[Attribute]
-) extends ParametrizedAttribute
-    with TypeAttribute {
-  override def parameters: Seq[Attribute | Seq[Attribute]] = features
+abstract class TensorType extends 
+  ParametrizedAttribute, TypeAttribute {
+  def elementType: Attribute
 }
 
 case class RankedTensorType(
-    val dimensionList: ArrayAttribute[IntData],
     override val elementType: Attribute,
-    val encoding: Option[Attribute]
-) extends TensorType(
-      name = "builtin.ranked_tensor",
-      elementType,
-      features = dimensionList +:
-        elementType +:
-        encoding.toSeq
-    ) {
+    val shape: ArrayAttribute[IntData],
+    val encoding: Option[Attribute] = None
+) extends TensorType, ShapedType {
+
+  override def name: String = "builtin.ranked_tensor"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = 
+    shape +: elementType +: encoding.toSeq
+
+  override def getNumDims = shape.attrValues.length
+  override def getShape = shape.attrValues.map(_.data)
 
   override def custom_print: String = {
-
     val shapeString =
-      (dimensionList.data.map(x =>
+      (shape.data.map(x =>
         if (x.data == -1) "?" else x.custom_print
       ) :+ elementType.custom_print)
         .mkString("x")
@@ -234,11 +234,10 @@ case class RankedTensorType(
 }
 
 case class UnrankedTensorType(override val elementType: Attribute)
-    extends TensorType(
-      "builtin.unranked_tensor",
-      elementType,
-      Seq(elementType)
-    ) {
+    extends TensorType {
+  override def name: String = "builtin.unranked_tensor"
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(elementType)
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
@@ -246,23 +245,23 @@ case class UnrankedTensorType(override val elementType: Attribute)
 ||   MEMREF TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class MemrefType(
-    override val name: String,
-    val elementType: Attribute,
-    val features: Seq[Attribute]
-) extends ParametrizedAttribute
-    with TypeAttribute {
-  override def parameters: Seq[Attribute | Seq[Attribute]] = features
+abstract class MemrefType extends 
+  ParametrizedAttribute, TypeAttribute {
+  def elementType: Attribute 
 }
 
 case class RankedMemrefType(
-    val shape: Seq[IntData],
-    override val elementType: Attribute
-) extends MemrefType(
-      name = "builtin.ranked_tensor",
-      elementType,
-      features = shape :+ elementType
-    ) {
+    override val elementType: Attribute,
+    val shape: ArrayAttribute[IntData],
+    val encoding: Option[Attribute] = None
+) extends MemrefType, ShapedType {
+
+  override def name: String = "builtin.ranked_memref"
+  override def parameters: Seq[Attribute | Seq[Attribute]] = 
+    shape +: elementType +: encoding.toSeq
+
+  override def getNumDims = shape.attrValues.length
+  override def getShape = shape.attrValues.map(_.data)
 
   override def custom_print: String = {
 
@@ -278,11 +277,12 @@ case class RankedMemrefType(
 }
 
 case class UnrankedMemrefType(override val elementType: Attribute)
-    extends MemrefType(
-      "builtin.unranked_memref",
-      elementType,
-      Seq(elementType)
-    ) {
+    extends MemrefType {
+
+  override def name: String = "builtin.unranked_memref"
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(elementType)
+
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
@@ -291,15 +291,17 @@ case class UnrankedMemrefType(override val elementType: Attribute)
 \*≡==---==≡≡==---==≡*/
 
 case class VectorType(
-    val shape: Seq[IntData],
     val elementType: Attribute,
-    val scalableDims: Seq[IntData]
-) extends ParametrizedAttribute {
+    val shape: ArrayAttribute[IntData],
+    val scalableDims: ArrayAttribute[IntData]
+) extends ParametrizedAttribute, ShapedType {
 
   override def name: String = "builtin.vector_type"
-
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(shape, elementType, scalableDims)
+
+  override def getNumDims = shape.attrValues.length
+  override def getShape = shape.attrValues.map(_.data)
 
   override def custom_print: String = {
 
