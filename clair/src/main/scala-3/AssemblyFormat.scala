@@ -13,7 +13,7 @@ import scala.quoted.*
 trait Directive {
     def print(op : Expr[?], p: Expr[Printer])(using Quotes) : Expr[Unit]
 
-    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes) : Expr[P[Any]]
+    def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) : Expr[P[Any]]
 
 }
 
@@ -24,7 +24,7 @@ case class LiteralDirective(
         '{ $p.print(${Expr(literal)}) }
     }
 
-    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes) = 
+    def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) : Expr[P[Unit]]= 
         literalStrMacro(Expr(literal))(ctx)
 }
 
@@ -41,7 +41,7 @@ case class VariableDirective(
         }
     }
 
-    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
+    def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) = 
         construct match {
             case OperandDef(name = n, variadicity = v) =>
                 v match {
@@ -63,7 +63,7 @@ case class TypeDirective(
         }
     }
 
-    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
+    def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) = 
         construct match {
             case OperandDef(name = n, variadicity = v) =>
                 v match {
@@ -82,9 +82,9 @@ case class AssemblyFormatDirective(
         Expr.block('{$p.print($op.asInstanceOf[Operation].name)} +: directives.map(_.print(op, p)).toList, '{})
     }
     
-    def parse(p: Expr[Parser])(using ctx: Expr[ParsingRun[Any]])(using quotes: Quotes): Expr[ParsingRun[Any]] = 
+    def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes): Expr[P[Tuple]] = 
         
-        directives.map(_.parse(p)(using ctx)).reduce((run, next) =>
+        val seq = directives.map(_.parse(p)(using ctx)).reduce((run, next) =>
             // This match to specialize the parsers types for fastparse's summoned Sequencer
             // cf fastparse.Implicits.Sequencer.
             //
@@ -113,6 +113,12 @@ case class AssemblyFormatDirective(
                         $run ~ $next
                     }
         )
+        seq match
+            case '{$tuple : P[Tuple]} =>
+                tuple
+            case '{$default : P[d]} =>
+                println(s"Default case in assembly format parsing: ${Type.show[d]}")
+                '{$default.map(Tuple1(_))}
 
 }
 
