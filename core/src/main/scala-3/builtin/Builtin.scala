@@ -210,7 +210,6 @@ case class RankedTensorType(
       ShapedType {
 
   override def name: String = "builtin.ranked_tensor"
-
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
 
@@ -237,10 +236,8 @@ case class RankedTensorType(
 case class UnrankedTensorType(override val elementType: Attribute)
     extends TensorType {
   override def name: String = "builtin.unranked_tensor"
-
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(elementType)
-
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
 
@@ -260,7 +257,6 @@ case class RankedMemrefType(
       ShapedType {
 
   override def name: String = "builtin.ranked_memref"
-
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
 
@@ -284,7 +280,6 @@ case class UnrankedMemrefType(override val elementType: Attribute)
     extends MemrefType {
 
   override def name: String = "builtin.unranked_memref"
-
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(elementType)
 
@@ -303,7 +298,6 @@ case class VectorType(
       ShapedType {
 
   override def name: String = "builtin.vector_type"
-
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(shape, elementType, scalableDims)
 
