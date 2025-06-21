@@ -242,20 +242,22 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
 /** Helper to access the right sequence of constructs from an UnverifiedOp,
   * given a construct definition type.
   */
-def getConstructSeq[Def <: OpInputDef: Type](
+def getConstructSeq[Def <: OpInputDef: Type as d](
     op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
 )(using Quotes) =
-  Type.of[Def] match
+  (d match
     case '[ResultDef]     => '{ ${ op }.results }
     case '[OperandDef]    => '{ ${ op }.operands }
     case '[RegionDef]     => '{ ${ op }.regions.map(_.detached) }
     case '[SuccessorDef]  => '{ ${ op }.successors }
     case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
+    case _                => throw new Exception(s"wtf: ${Type.show(using d)}")
+  ).asExprOf[Seq[DefinedInput[Def]]]
 
 /** Helper to get the name of a construct definition type.
   */
-def getConstructName[Def <: OpInputDef: Type](using Quotes) =
-  Type.of[Def] match
+def getConstructName[Def <: OpInputDef: Type as d](using Quotes) =
+  d match
     case '[ResultDef]     => "result"
     case '[OperandDef]    => "operand"
     case '[RegionDef]     => "region"
@@ -350,12 +352,11 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   * @param op
   *   The UnverifiedOp expression.
   */
-def partitionedConstructs[Def <: OpInputDef: Type](
+def partitionConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp],
+    flat: Expr[Seq[DefinedInput[Def]]]
 )(using Quotes) =
-  // Get the flat list of constructs from the UnverifiedOp
-  val flat = getConstructSeq[Def](op)
   // Check the number of variadic constructs
   defs.count(getConstructVariadicity(_) != Variadicity.Single) match
     // If there is no variadic defintion, partionning is just about taking individual elements
@@ -450,12 +451,12 @@ def partitionedConstructs[Def <: OpInputDef: Type](
   * @param op
   *   The UnverifiedOp expression.
   */
-def verifiedConstructs[Def <: OpInputDef: Type](
+def verifiyConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp],
+    partitioned: Seq[Expr[DefinedInput[Def] | Seq[DefinedInput[Def]]]]
 )(using Quotes) = {
-  // For each partitioned construct
-  (partitionedConstructs(defs, op) zip defs).map { (c, d) =>
+  (partitioned zip defs).map { (c, d) =>
     // Get the expected type and variadicity of the construct
     val tpe = getConstructConstraint(d)
     val variadicity = getConstructVariadicity(d)
@@ -506,6 +507,23 @@ def verifiedConstructs[Def <: OpInputDef: Type](
                 .toSeq
             }
   }
+}
+
+def verifiedConstructs[Def <: OpInputDef: Type](
+    defs: Seq[Def],
+    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+)(using Quotes) = {
+  // Get the flat sequence of these constructs
+  val flat = getConstructSeq(op)
+  // partition the constructs according to their definitions
+  val partitioned = partitionConstructs(
+    defs,
+    op,
+    flat
+  )
+
+  // Verify the constructs
+  verifiyConstructs(defs, op, partitioned)
 }
 
 /** Return all named arguments for the primary constructor of an ADT. Those are
