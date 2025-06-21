@@ -43,8 +43,7 @@ case class For(
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region
-) extends DerivedOperation["affine.for", For]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.for", For] derives DerivedOperationCompanion
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -73,8 +72,7 @@ case class If(
     condition: AffineSetAttr,
     then_region: Region,
     else_region: Region
-) extends DerivedOperation["affine.if", If]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.if", If] derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -108,8 +106,7 @@ case class Min(
     arguments: Seq[Operand[IndexType]],
     result: Result[IndexType],
     map: AffineMapAttr
-) extends DerivedOperation["affine.min", Min]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.min", Min] derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||

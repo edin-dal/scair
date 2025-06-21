@@ -423,12 +423,12 @@ case class OperationDef(
               s"operands.length - ${operands.length - variadic_index - 1}"
             ))) ++
           (for (
-            (odef, i) <- operands.zipWithIndex
-              .slice(
-                variadic_index + 1,
-                operands.length
-              )
-          )
+              (odef, i) <- operands.zipWithIndex
+                .slice(
+                  variadic_index + 1,
+                  operands.length
+                )
+            )
             yield single_operand_accessor(
               odef.id,
               s"operands.length - ${operands.length - i}"
@@ -495,12 +495,12 @@ case class OperationDef(
               s"results.length - ${results.length - variadic_index - 1}"
             ))) ++
           (for (
-            (odef, i) <- results.zipWithIndex
-              .slice(
-                variadic_index + 1,
-                results.length
-              )
-          )
+              (odef, i) <- results.zipWithIndex
+                .slice(
+                  variadic_index + 1,
+                  results.length
+                )
+            )
             yield single_result_accessor(
               odef.id,
               s"results.length - ${results.length - i}"
@@ -558,12 +558,12 @@ case class OperationDef(
               s"regions.length - ${regions.length - variadic_index - 1}"
             ))) ++
           (for (
-            (odef, i) <- regions.zipWithIndex
-              .slice(
-                variadic_index + 1,
-                regions.length
-              )
-          )
+              (odef, i) <- regions.zipWithIndex
+                .slice(
+                  variadic_index + 1,
+                  regions.length
+                )
+            )
             yield single_region_accessor(
               odef.id,
               s"regions.length - ${regions.length - i}"
@@ -620,12 +620,12 @@ case class OperationDef(
               s"successors.length - ${successors.length - variadic_index - 1}"
             ))) ++
           (for (
-            (odef, i) <- successors.zipWithIndex
-              .slice(
-                variadic_index + 1,
-                successors.length
-              )
-          )
+              (odef, i) <- successors.zipWithIndex
+                .slice(
+                  variadic_index + 1,
+                  successors.length
+                )
+            )
             yield single_successor_accessor(
               odef.id,
               s"successors.length - ${successors.length - i}"
@@ -679,10 +679,10 @@ case class OperationDef(
         s"""val operandSegmentSizesSum = operandSegmentSizes.fold(0)(_ + _)
     if (operandSegmentSizesSum != operands.length) then throw new Exception(s"Expected $${operandSegmentSizesSum} operands, got $${operands.length}")\n""" +
           (for (
-            (odef, i) <- operands.zipWithIndex.filter(
-              _._1.variadicity == Variadicity.Single
+              (odef, i) <- operands.zipWithIndex.filter(
+                _._1.variadicity == Variadicity.Single
+              )
             )
-          )
             yield s"""    if operandSegmentSizes($i) != 1 then throw new Exception(s"operand segment size expected to be 1 for singular operand ${odef.id} at index $i, got $${operandSegmentSizes($i)}")""")
             .mkString("\n")
 
@@ -700,10 +700,10 @@ case class OperationDef(
         s"""val resultSegmentSizesSum = resultSegmentSizes.fold(0)(_ + _)
     if (resultSegmentSizesSum != results.length) then throw new Exception(s"Expected $${resultSegmentSizesSum} results, got $${results.length}")\n""" +
           (for (
-            (odef, i) <- results.zipWithIndex.filter(
-              _._1.variadicity == Variadicity.Single
+              (odef, i) <- results.zipWithIndex.filter(
+                _._1.variadicity == Variadicity.Single
+              )
             )
-          )
             yield s"""    if resultSegmentSizes($i) != 1 then throw new Exception(s"result segment size expected to be 1 for singular result ${odef.id} at index $i, got $${resultSegmentSizes($i)}")""")
             .mkString("\n")
 

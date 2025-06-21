@@ -193,12 +193,12 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     } else {
       typ(0) match {
         case _: IntData => Right(())
-        case _ =>
+        case _          =>
           Left("DB_DecimalType type must be (IntData, IntData)")
       }
       typ(1) match {
         case _: IntData => Right(())
-        case _ =>
+        case _          =>
           Left("DB_DecimalType type must be (IntData, IntData)")
       }
     }
@@ -238,7 +238,7 @@ case class DB_StringType(val typ: Seq[Attribute])
     } else if (typ.length == 1)
       typ(0) match {
         case _: StringData => Right(())
-        case _ =>
+        case _             =>
           Left("DB_DecimalType type must be StringData")
       }
     else Right(())
@@ -309,7 +309,7 @@ case class DB_ConstantOp(
     properties.size
   ) match {
     case (0, 0, 1, 0, 0) => Right(this)
-    case _ =>
+    case _               =>
       Left(
         "DB_ConstantOp Operation must contain only 2 dictionary attributes."
       )
@@ -384,7 +384,7 @@ case class DB_CmpOp(
   ) match {
     case (2, 0, 0, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Right(this)
+        case true  => Right(this)
         case false =>
           Left(
             "In order to be compared, operands' types must match!"
@@ -424,8 +424,8 @@ object DB_MulOp extends OperationCompanion {
     (opLeft.getClass == opRight.getClass) match {
       case true =>
         opLeft match {
-          case x: IntegerAttr => Seq(opLeft)
-          case y: FloatAttr   => Seq(opLeft)
+          case x: IntegerAttr    => Seq(opLeft)
+          case y: FloatAttr      => Seq(opLeft)
           case z: DB_DecimalType =>
             Seq(
               DB_DecimalType(
@@ -528,7 +528,7 @@ case class DB_MulOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Right(this)
+        case true  => Right(this)
         case false =>
           Left(
             "In order to be multiplied, operands' types must match!"
@@ -567,8 +567,8 @@ object DB_DivOp extends OperationCompanion {
     (opLeft.getClass == opRight.getClass) match {
       case true =>
         opLeft match {
-          case x: IntegerAttr => Seq(opLeft)
-          case y: FloatAttr   => Seq(opLeft)
+          case x: IntegerAttr    => Seq(opLeft)
+          case y: FloatAttr      => Seq(opLeft)
           case z: DB_DecimalType =>
             val opLeft0 =
               opLeft
@@ -674,7 +674,7 @@ case class DB_DivOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Right(this)
+        case true  => Right(this)
         case false =>
           Left(
             "In order to be divided, operands' types must match!"
@@ -760,7 +760,7 @@ case class DB_AddOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Right(this)
+        case true  => Right(this)
         case false =>
           Left(
             "In order to be added, operands' types must match!"
@@ -848,7 +848,7 @@ case class DB_SubOp(
   ) match {
     case (2, 0, 1, 0, 0) =>
       (operands(0).typ == operands(1).typ) match {
-        case true => Right(this)
+        case true  => Right(this)
         case false =>
           Left(
             "In order to carry out substitution, operands' types must match!"
@@ -932,7 +932,7 @@ case class CastOp(
     properties.size
   ) match {
     case (1, 0, 1, 0, 0) => Right(this)
-    case _ =>
+    case _               =>
       Left(
         "CastOp Operation must contain only 1 operand and result."
       )

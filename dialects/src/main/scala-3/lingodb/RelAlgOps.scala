@@ -206,7 +206,7 @@ case class BaseTableOp(
       {
         results(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "BaseTableOp Operation must contain only 1 result."
             )
@@ -216,7 +216,7 @@ case class BaseTableOp(
           case Some(x) =>
             x match {
               case _: StringData => Right(this)
-              case _ =>
+              case _             =>
                 Left(
                   "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
                 )
@@ -292,7 +292,7 @@ case class SelectionOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "SelectionOp Operation must contain only 1 operand of type TupleStream."
             )
@@ -300,7 +300,7 @@ case class SelectionOp(
       }.flatMap(_ => {
         results(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "SelectionOp Operation must contain only 1 result of type TupleStream."
             )
@@ -374,7 +374,7 @@ case class MapOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "MapOp Operation must contain only 1 operand of type TupleStream."
             )
@@ -382,7 +382,7 @@ case class MapOp(
       }.flatMap(_ => {
         results(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "MapOp Operation must contain only 1 result of type TupleStream."
             )
@@ -392,7 +392,7 @@ case class MapOp(
           case Some(x) =>
             x match {
               case _: ArrayAttribute[_] => Right(this)
-              case _ =>
+              case _                    =>
                 Left(
                   "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
                 )
@@ -483,14 +483,14 @@ case class AggregationOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "AggregationOp Operation must contain only 1 operand of type TupleStream."
             )
         }
         results(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "AggregationOp Operation must contain only 1 result of type TupleStream."
             )
@@ -500,7 +500,7 @@ case class AggregationOp(
           case Some(x) =>
             x match {
               case _: ArrayAttribute[_] => Right(this)
-              case _ =>
+              case _                    =>
                 Left(
                   "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
                 )
@@ -515,7 +515,7 @@ case class AggregationOp(
           case Some(x) =>
             x match {
               case _: ArrayAttribute[_] => Right(this)
-              case _ =>
+              case _                    =>
                 Left(
                   "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
                 )
@@ -591,7 +591,7 @@ case class CountRowsOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "CountRowsOp Operation must contain 1 operand of type TupleStream."
             )
@@ -599,7 +599,7 @@ case class CountRowsOp(
       }.flatMap(_ => {
         results(0).typ match {
           case _: IntegerType => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "CountRowsOp Operation must contain only 1 result of IntegerType."
             )
@@ -675,7 +675,7 @@ case class AggrFuncOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "AggrFuncOp Operation must contain 1 operand of type TupleStream."
             )
@@ -685,7 +685,7 @@ case class AggrFuncOp(
           case Some(x) =>
             x match {
               case _: RelAlg_AggrFunc_Case => Right(this)
-              case _ =>
+              case _                       =>
                 Left(
                   "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
                 )
@@ -700,7 +700,7 @@ case class AggrFuncOp(
           case Some(x) =>
             x match {
               case _: ColumnRefAttr => Right(this)
-              case _ =>
+              case _                =>
                 Left(
                   "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
                 )
@@ -782,7 +782,7 @@ case class SortOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "SortOp Operation must contain 1 operand of type TupleStream."
             )
@@ -790,7 +790,7 @@ case class SortOp(
       }.flatMap(_ => {
         results(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "SortOp Operation must contain 1 operand of type TupleStream."
             )
@@ -800,7 +800,7 @@ case class SortOp(
           case Some(x) =>
             x match {
               case _: ArrayAttribute[_] => Right(this)
-              case _ =>
+              case _                    =>
                 Left(
                   "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
                 )
@@ -888,7 +888,7 @@ case class MaterializeOp(
       {
         operands(0).typ match {
           case _: TupleStream => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "MaterializeOp Operation must contain 1 operand of type TupleStream."
             )
@@ -896,7 +896,7 @@ case class MaterializeOp(
       }.flatMap(_ => {
         results(0).typ match {
           case _: ResultTable => Right(this)
-          case _ =>
+          case _              =>
             Left(
               "MaterializeOp Operation must contain 1 operand of type ResultOp."
             )
@@ -906,7 +906,7 @@ case class MaterializeOp(
           case Some(x) =>
             x match {
               case _: ArrayAttribute[_] => Right(this)
-              case _ =>
+              case _                    =>
                 Left(
                   "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
                 )
@@ -921,7 +921,7 @@ case class MaterializeOp(
           case Some(x) =>
             x match {
               case _: ArrayAttribute[_] => Right(this)
-              case _ =>
+              case _                    =>
                 Left(
                   "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
                 )

@@ -9,16 +9,14 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]]
-) extends DerivedOperation["func.call", Call]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
     sym_visibility: Option[StringData],
     body: Region
-) extends DerivedOperation["func.func", Func]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["func.func", Func] derives DerivedOperationCompanion
 
 case class Return(
     _operands: Seq[Operand[Attribute]]

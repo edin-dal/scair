@@ -217,7 +217,7 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
 
     that_attr match {
       case _: T =>
-      case _ =>
+      case _    =>
         val className = implicitly[ClassTag[T]].runtimeClass.getName
         val errstr =
           s"${that_attr.name}'s class does not equal ${className}\n"
@@ -368,7 +368,7 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
             for ((p, c) <- x.parameters zip constraints)
               p match {
                 case p: Attribute => c.verify(p, constraint_ctx)
-                case p: Seq[_] =>
+                case p: Seq[_]    =>
                   c.verify(p.asInstanceOf[Seq[Attribute]], constraint_ctx)
               }
 

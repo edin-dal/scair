@@ -55,7 +55,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
         Expr.ofList(
           defs.map((d) =>
             d.variadicity match {
-              case Variadicity.Single => Expr(1)
+              case Variadicity.Single                          => Expr(1)
               case Variadicity.Variadic | Variadicity.Optional =>
                 '{
                   ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
@@ -304,7 +304,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
-            case _ =>
+            case _                     =>
               throw new Exception(
                 s"Expected ${${ Expr(segmentSizesName) }} to be a DenseArrayAttr"
               )
@@ -333,7 +333,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
 
     for (s <- dense) yield s match {
       case right: IntegerAttr => right.value.data.toInt
-      case _ =>
+      case _                  =>
         throw new Exception(
           "Unreachable exception as per above constraint check."
         )
@@ -492,9 +492,10 @@ def verifiedConstructs[Def <: OpInputDef: Type](
           case Variadicity.Variadic =>
             '{
               if (
-                !${ c }
-                  .isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
-              ) then
+                  !${ c }
+                    .isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+                )
+              then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
                       Expr(Type.show[Seq[DefinedInputOf[Def, t & Attribute]]])
