@@ -30,7 +30,7 @@ case class Printer(
 
   def assignValueName(value: Value[? <: Attribute]): String =
     val name = valueNameMap.contains(value) match {
-      case true => valueNameMap(value)
+      case true  => valueNameMap(value)
       case false =>
         val name = valueNextID.toString
         valueNextID = valueNextID + 1
@@ -91,10 +91,9 @@ case class Printer(
       indentLevel: Int
   ): Unit = {
     things.foreach(_ match
-      case p: Printable => print(p)
+      case p: Printable           => print(p)
       case i: Iterable[Printable] =>
-        printList(i)
-    )
+        printList(i))
   }
 
   inline def printList[T <: Printable](

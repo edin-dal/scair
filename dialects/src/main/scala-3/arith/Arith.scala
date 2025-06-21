@@ -121,8 +121,7 @@ case class Addf(
     result: Result[FloatType],
     fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.addf", Addf]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.addf", Addf] derives DerivedOperationCompanion
 
 case class Mulf(
     lhs: Operand[FloatType],
@@ -130,8 +129,7 @@ case class Mulf(
     result: Result[FloatType],
     fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.mulf", Mulf]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.mulf", Mulf] derives DerivedOperationCompanion
 
 // I'm not sure about the flag here
 case class Divf(
@@ -140,8 +138,7 @@ case class Divf(
     result: Result[FloatType],
     fastmath: FastMathFlagsAttr
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.divf", Divf]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.divf", Divf] derives DerivedOperationCompanion
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class Addi(
@@ -149,24 +146,21 @@ case class Addi(
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.addi", Addi]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.addi", Addi] derives DerivedOperationCompanion
 
 case class Subi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.subi", Subi]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.subi", Subi] derives DerivedOperationCompanion
 
 case class Muli(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.muli", Muli]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.muli", Muli] derives DerivedOperationCompanion
 
 case class Divui(
     lhs: Operand[AnyIntegerType],
@@ -206,24 +200,21 @@ case class Cmpi(
     result: Result[I1],
     predicate: IntegerPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.cmpi", Cmpi]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.cmpi", Cmpi] derives DerivedOperationCompanion
 
 case class Andi(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.andi", Andi]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.andi", Andi] derives DerivedOperationCompanion
 
 case class Ori(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[I1]
     // assembly_format: "$lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.ori", Ori]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["arith.ori", Ori] derives DerivedOperationCompanion
 
 case class Sitofp(
     in: Operand[AnyIntegerType],

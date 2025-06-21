@@ -16,8 +16,7 @@ case class Mul(
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: StringData
-) extends DerivedOperation["cmath.mul", Mul]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mul", Mul] derives DerivedOperationCompanion
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],

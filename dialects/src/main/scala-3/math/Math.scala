@@ -58,7 +58,7 @@ case class AbsfOp(
     properties.size
   ) match {
     case (1, 1, 0, 0, 0) => Right(this)
-    case _ =>
+    case _               =>
       Left(
         "AbsfOp must have 1 result and 1 operand."
       )
@@ -121,7 +121,7 @@ case class FPowIOp(
     properties.size
   ) match {
     case (2, 1, 0, 0, 0) => Right(this)
-    case _ =>
+    case _               =>
       Left(
         "FPowIOp must have 1 result and 2 operands."
       )

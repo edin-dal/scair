@@ -28,8 +28,7 @@ case class ForOp(
     initArgs: Operand[Attribute],
     region: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.for", ForOp]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["scf.for", ForOp] derives DerivedOperationCompanion
 
 case class ForallOp(
     dynamicLowerBound: Operand[Index],
@@ -56,8 +55,7 @@ case class IfOp(
     thenRegion: Region,
     elseRegion: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.if", IfOp]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["scf.if", IfOp] derives DerivedOperationCompanion
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]],

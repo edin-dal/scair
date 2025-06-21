@@ -135,7 +135,7 @@ case class SetResultOp(
         case Some(x) =>
           x match {
             case _: IntegerAttr => Right(this)
-            case _ =>
+            case _              =>
               Left(
                 "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
               )

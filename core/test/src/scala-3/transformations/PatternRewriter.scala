@@ -32,8 +32,7 @@ class PatternRewriterTest extends AnyFlatSpec {
       ): Unit =
         val newRes = op.results.map(_ match
           case Result(I32) => Result(I64)
-          case r           => r
-        )
+          case r           => r)
         if newRes != op.results then
           rewriter.replace_op(op, op.updated(results = newRes))
     }

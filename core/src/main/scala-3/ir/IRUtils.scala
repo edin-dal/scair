@@ -48,7 +48,7 @@ extension (dt: DictType[String, Attribute]) {
   ): Attribute = {
     dt.get(key) match {
       case Some(b) => b
-      case None =>
+      case None    =>
         throw new Exception(
           s"Operation '${op_name}' must include an attribute named '${key}' of type '${}'"
         )

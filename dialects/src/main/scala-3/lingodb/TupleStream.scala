@@ -195,7 +195,7 @@ case class ReturnOp(
     properties.size
   ) match {
     case (0, 0, 0, 0) => Right(this)
-    case _ =>
+    case _            =>
       Left(
         "ReturnOp Operation must contain only results and an attribute dictionary."
       )
@@ -278,7 +278,7 @@ case class GetColumnOp(
           case Some(x) =>
             x match {
               case _: ColumnRefAttr => Right(this)
-              case _ =>
+              case _                =>
                 Left(
                   "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
                 )

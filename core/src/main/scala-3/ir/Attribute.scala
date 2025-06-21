@@ -42,7 +42,8 @@ abstract class ParametrizedAttribute() extends Attribute {
 
   override def custom_print =
     s"${prefix}${name}${
-        if parameters.size > 0 then parameters.map(x => x.custom_print).mkString("<", ", ", ">")
+        if parameters.size > 0
+        then parameters.map(x => x.custom_print).mkString("<", ", ", ">")
         else ""
       }"
 

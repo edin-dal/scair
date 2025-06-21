@@ -48,7 +48,7 @@ object InsertPoint {
         val block = op.container_block.get
         val opIdx = block.getIndexOf(op)
         (opIdx == block.operations.length - 1) match {
-          case true => new InsertPoint(block)
+          case true  => new InsertPoint(block)
           case false =>
             InsertPoint(block, Some(block.operations(opIdx + 1)))
         }
@@ -160,7 +160,7 @@ trait Rewriter {
 
     val block = op.container_block match {
       case Some(x) => x
-      case None =>
+      case None    =>
         throw new Exception("Cannot replace an operation without a parent")
     }
 
@@ -171,7 +171,7 @@ trait Rewriter {
 
     val results = new_results match {
       case Some(x) => x
-      case None =>
+      case None    =>
         if (ops.length == 0) then ListType() else ops.last.results
     }
 
@@ -241,7 +241,7 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
       patterns: Seq[RewritePattern]
   ): Unit = {
     patterns match
-      case Nil => ()
+      case Nil    => ()
       case h :: t =>
         h.match_and_rewrite(op, rewriter)
         if !rewriter.has_done_action then match_and_rewrite_rec(op, rewriter, t)

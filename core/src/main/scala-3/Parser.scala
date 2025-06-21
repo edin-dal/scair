@@ -256,7 +256,7 @@ object Parser {
       if (valueWaitlist.size > 0) {
         parentScope match {
           case Some(x) => x.valueWaitlist ++= valueWaitlist
-          case None =>
+          case None    =>
             val opName = valueWaitlist.head._1.name
             val operandName = valueWaitlist.head._2(0)._1
             val operandTyp = valueWaitlist.head._2(0)._2
@@ -324,7 +324,7 @@ object Parser {
       if (blockWaitlist.size > 0) {
         parentScope match {
           case Some(x) => x.blockWaitlist ++= blockWaitlist
-          case None =>
+          case None    =>
             throw new Exception(
               s"Successor ^${blockWaitlist.head._2.head} not defined within Scope"
             )
@@ -628,7 +628,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
-      case _ =>
+      case _                       =>
         val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
         val moduleOp = new ModuleOp(regions = Seq(region))

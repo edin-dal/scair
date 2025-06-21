@@ -128,7 +128,7 @@ class AttrParser(val ctx: MLContext) {
               yy.get match
                 case i: IntegerType => i
                 case i: IndexType   => i
-                case _ =>
+                case _              =>
                   throw new Exception(
                     s"Unreachable, fastparse's | is simply weakly typed."
                   )
