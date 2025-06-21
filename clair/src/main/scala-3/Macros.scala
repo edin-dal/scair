@@ -251,7 +251,6 @@ def getConstructSeq[Def <: OpInputDef: Type as d](
     case '[RegionDef]     => '{ ${ op }.regions.map(_.detached) }
     case '[SuccessorDef]  => '{ ${ op }.successors }
     case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
-    case _                => throw new Exception(s"wtf: ${Type.show(using d)}")
   ).asExprOf[Seq[DefinedInput[Def]]]
 
 /** Helper to get the name of a construct definition type.
@@ -461,49 +460,49 @@ def verifiyConstructs[Def <: OpInputDef: Type](
     val tpe = getConstructConstraint(d)
     val variadicity = getConstructVariadicity(d)
     tpe match
-      case '[t] =>
+      case '[type t <: Attribute; `t`] =>
         variadicity match
           case Variadicity.Optional =>
             // If the construct is optional, check if it is defined and if so, verify its type
             '{
-              if (!${ c }.isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]])
+              if (!${ c }.isInstanceOf[Seq[DefinedInputOf[Def, t]]])
               then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+                      Expr(Type.show[DefinedInputOf[Def, t]])
                     }}, got ${${ c }}"
                 )
               ${ c }
-                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+                .asInstanceOf[Seq[DefinedInputOf[Def, t]]]
                 .headOption
             }
           // If the construct is not variadic, just check if it is of the expected type
           case Variadicity.Single =>
             '{
-              if (!${ c }.isInstanceOf[DefinedInputOf[Def, t & Attribute]]) then
+              if (!${ c }.isInstanceOf[DefinedInputOf[Def, t]]) then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[DefinedInputOf[Def, t & Attribute]])
+                      Expr(Type.show[DefinedInputOf[Def, t]])
                     }}, got ${${ c }}"
                 )
 
-              ${ c }.asInstanceOf[DefinedInputOf[Def, t & Attribute]]
+              ${ c }.asInstanceOf[DefinedInputOf[Def, t]]
             }
           // If the construct is variadic, check if it is a list of the expected type
           case Variadicity.Variadic =>
             '{
               if (
                   !${ c }
-                    .isInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+                    .isInstanceOf[Seq[DefinedInputOf[Def, t]]]
                 )
               then
                 throw new Exception(
                   s"Expected ${${ Expr(d.name) }} to be of type ${${
-                      Expr(Type.show[Seq[DefinedInputOf[Def, t & Attribute]]])
+                      Expr(Type.show[Seq[DefinedInputOf[Def, t]]])
                     }}, got ${${ c }}"
                 )
               ${ c }
-                .asInstanceOf[Seq[DefinedInputOf[Def, t & Attribute]]]
+                .asInstanceOf[Seq[DefinedInputOf[Def, t]]]
                 .toSeq
             }
   }
@@ -557,15 +556,15 @@ def constructorArgs(
     ) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
       tpe match
-        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[Attribute] =>
+        case '[type t <: Attribute; `t`] =>
           val property =
             if optionality then
-              generateOptionalCheckedPropertyArgument[t & Attribute](
+              generateOptionalCheckedPropertyArgument[t](
                 '{ $op.properties },
                 name
               )
             else
-              generateCheckedPropertyArgument[t & Attribute](
+              generateCheckedPropertyArgument[t](
                 '{ $op.properties },
                 name
               )
@@ -607,19 +606,20 @@ def getAttrConstructor[T: Type](
 )(using
     Quotes
 ): Expr[T] = {
-  import quotes.reflect._
+  import quotes.reflect.*
 
-  if !(TypeRepr.of[T] <:< TypeRepr.of[Attribute]) then
-    throw new Exception(
-      s"Type ${Type.show[T]} needs to be a subtype of Attribute"
-    )
-
-  val lengthCheck = '{
-    if ${ Expr(attrDef.attributes.length) } != $attributes.length then
-      throw new Exception(
-        s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes.length}"
+  val lengthCheck = Type.of[T] match
+    case '[type t <: Attribute; `t`] =>
+      '{
+          if ${ Expr(attrDef.attributes.length) } != $attributes.length then
+            throw new Exception(
+              s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes.length}"
+            )
+        }
+    case _ =>
+      report.errorAndAbort(
+        s"Type ${Type.show[T]} needs to be a subtype of Attribute"
       )
-  }
 
   val defs = attrDef.attributes
 
@@ -632,13 +632,13 @@ def getAttrConstructor[T: Type](
       tpe match
         case '[t] =>
           '{
-            if (!${ a }.isInstanceOf[t & Attribute]) then
+            if (!${ a }.isInstanceOf[t]) then
               throw Exception(
                 s"Expected ${${ Expr(d.name) }} to be of type ${${
                     Expr(Type.show[t])
                   }}, got ${${ a }}"
               )
-            ${ a }.asInstanceOf[t & Attribute]
+            ${ a }.asInstanceOf[t]
           }
     }
 
