@@ -770,7 +770,7 @@ class Parser(val context: MLContext, val args: Args = Args())
       ~/ SuccessorList.orElse(Seq())
       ~/ properties.orElse(Map.empty)
       ~/ RegionList.orElse(Seq())
-      ~/ (DictionaryAttribute).orElse(Map.empty) ~/ ":" ~/ FunctionType)
+      ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .mapTry(
         (
             (
