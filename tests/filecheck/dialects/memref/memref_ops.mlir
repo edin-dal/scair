@@ -19,11 +19,11 @@
 "memref.store"(%6, %m4, %1, %0, %1) : (f32, memref<?x5x?xf32>, index, index, index) -> ()
 
 
-memref.dealloc%m0:memref<f32>
-memref.dealloc%m1:memref<1xf32>
-memref.dealloc%m2:memref<?xf32>
-memref.dealloc%m3:memref<3x?x5xf32>
-memref.dealloc%m4:memref<?x5x?xf32>
+memref.dealloc %m0 : memref<f32>
+memref.dealloc %m1 : memref<1xf32>
+memref.dealloc %m2 : memref<?xf32>
+memref.dealloc %m3 : memref<3x?x5xf32>
+memref.dealloc %m4 : memref<?x5x?xf32>
 
 // CHECK: builtin.module {
 // CHECK-NEXT:    %0, %1 = "test.op"() : () -> (index, index)
