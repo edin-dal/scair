@@ -10,8 +10,26 @@ import scair.ir.*
 
 import scala.quoted.*
 
+private inline def isalpha(c: Char): Boolean =
+  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+
+private def printSpace(p: Expr[Printer], state: PrintingState)(using Quotes) =
+
+  val print =
+    if (state.shouldEmitSpace || !state.lastWasPunctuation)
+      '{ $p.print(" ") }
+    else '{}
+
+  state.lastWasPunctuation = false;
+  state.shouldEmitSpace = true;
+
+  print
+
 trait Directive {
-  def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit]
+
+  def print(op: Expr[?], p: Expr[Printer])(using
+      state: PrintingState
+  )(using Quotes): Expr[Unit]
 
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
@@ -23,8 +41,31 @@ case class LiteralDirective(
     literal: String
 ) extends Directive {
 
-  def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
-    '{ $p.print(${ Expr(literal) }) }
+  private inline def shouldEmitSpaceBefore(
+      inline lastWasPunctuation: Boolean
+  ): Boolean =
+    if (literal.size != 1 && literal != "->")
+      true
+    else if (lastWasPunctuation)
+      !">)}],".contains(literal.head)
+    else
+      !"<>(){}[],".contains(literal.head)
+
+  def print(op: Expr[?], p: Expr[Printer])(using
+      state: PrintingState
+  )(using Quotes): Expr[Unit] = {
+    val toPrint =
+      if (
+        state.shouldEmitSpace && shouldEmitSpaceBefore(state.lastWasPunctuation)
+      )
+        " " + literal
+      else
+        literal
+
+    state.shouldEmitSpace = literal.size != 1 || !"<({[".contains(literal.head)
+    state.lastWasPunctuation = literal.head != '_' && !isalpha(literal.head)
+    
+    '{ $p.print(${ Expr(toPrint) }) }
   }
 
   def parse(p: Expr[Parser])(using
@@ -36,7 +77,10 @@ case class LiteralDirective(
 
 case class AttrDictDirective() extends Directive {
 
-  def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
+  def print(op: Expr[?], p: Expr[Printer])(using
+      state: PrintingState
+  )(using Quotes): Expr[Unit] = {
+    state.lastWasPunctuation = false
     '{
       $p.printOptionalAttrDict(${
         selectMember(op, "attributes").asExprOf[DictType[String, Attribute]]
@@ -55,8 +99,11 @@ case class VariableDirective(
     construct: OpInputDef
 ) extends Directive {
 
-  def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
-    construct match {
+  def print(op: Expr[?], p: Expr[Printer])(using
+      state: PrintingState
+  )(using Quotes): Expr[Unit] = {
+    val space = printSpace(p, state)
+    val printVar = construct match {
       case OperandDef(name = n, variadicity = v) =>
         v match {
           case Variadicity.Single =>
@@ -69,6 +116,7 @@ case class VariableDirective(
             }
         }
     }
+    Expr.block(List(space), printVar)
   }
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
@@ -88,8 +136,13 @@ case class TypeDirective(
     construct: OperandDef | ResultDef
 ) extends Directive {
 
-  def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
-    construct match {
+  def print(op: Expr[?], p: Expr[Printer])(using
+      state: PrintingState
+  )(using Quotes): Expr[Unit] = {
+
+    val space = printSpace(p, state)
+
+    val printType = construct match {
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
@@ -101,6 +154,7 @@ case class TypeDirective(
               }.map(_.typ))(using 0)
             }
     }
+    Expr.block(List(space), printType)
   }
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
@@ -151,11 +205,17 @@ def chainParsers(
         $run ~ $next
       }
 
+case class PrintingState(
+    var shouldEmitSpace: Boolean = true,
+    var lastWasPunctuation: Boolean = false
+)
+
 case class AssemblyFormatDirective(
     directives: Seq[Directive]
-) extends Directive {
+) {
 
   def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
+    given PrintingState = PrintingState()
     Expr.block(
       '{ $p.print($op.asInstanceOf[Operation].name) } +: directives
         .map(_.print(op, p))
@@ -259,7 +319,9 @@ transparent inline def assemblyFormat[$: P](using
 ): P[AssemblyFormatDirective] =
   directive.rep(1).map(AssemblyFormatDirective.apply)
 
-transparent inline def directive[$: P](using opDef: OperationDef): P[Directive] =
+transparent inline def directive[$: P](using
+    opDef: OperationDef
+): P[Directive] =
   typeDirective | literalDirective | variableDirective | attrDictDirective
 
 transparent inline def literalDirective[$: P]: P[LiteralDirective] =
