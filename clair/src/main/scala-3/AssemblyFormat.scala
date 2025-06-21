@@ -64,7 +64,7 @@ case class LiteralDirective(
 
     state.shouldEmitSpace = literal.size != 1 || !"<({[".contains(literal.head)
     state.lastWasPunctuation = literal.head != '_' && !isalpha(literal.head)
-    
+
     '{ $p.print(${ Expr(toPrint) }) }
   }
 
@@ -254,7 +254,7 @@ case class AssemblyFormatDirective(
             case _                                          => None
         )
       )
-      .mapValues(i => '{ $parsed.productIterator.toList(${ Expr(i) }) })
+      .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val operandNamesArg =
       Expr.ofList(opDef.operands.map(od => (operandNames(od.name))))
     val flatNames = '{
@@ -273,7 +273,7 @@ case class AssemblyFormatDirective(
             case _                                      => None
         )
       )
-      .mapValues(i => '{ $parsed.productIterator.toList(${ Expr(i) }) })
+      .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val operandTypesArg =
       Expr.ofList(opDef.operands.map(od => (operandTypes(od.name))))
     val flatTypes = '{
