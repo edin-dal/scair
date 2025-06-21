@@ -184,8 +184,6 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         } =>
       val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
 
-      
-
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
         case '[DerivedOperation[name, _]] =>
