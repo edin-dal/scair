@@ -116,6 +116,41 @@ case class TypeDirective(
 
 }
 
+def chainParsers(
+    run: Expr[P[Any]],
+    next: Expr[P[Any]]
+)(using quotes: Quotes, ctx: Expr[P[Any]]): Expr[P[Any]] =
+
+  // This match to specialize the parsers types for fastparse's summoned Sequencer
+  // cf fastparse.Implicits.Sequencer.
+  //
+  // I feel like there might be a more elegant way, but I spent enough time to
+  // search for it and this sounds liek a localized enough compromise.
+  (run, next) match
+    case ('{ $run: P[Unit] }, '{ $next: P[n] }) =>
+      '{
+        given P[Any] = $ctx
+        $run ~ $next
+      }
+    case ('{ $run: P[r] }, '{ $next: P[Unit] }) =>
+      '{
+        given P[Any] = $ctx
+        $run ~ $next
+      }
+    case ('{ $run: P[Tuple] }, '{ $next: P[Any] }) =>
+      '{
+        given P[Any] = $ctx
+        given fastparse.Implicits.Sequencer[Tuple, Any, Tuple] =
+          fastparse.Implicits.Sequencer
+            .NarySequencer[Tuple, Any, Tuple](_ :* _)
+        `~`($run)[Any, Tuple]($next)
+      }
+    case _ =>
+      '{
+        given P[Any] = $ctx
+        $run ~ $next
+      }
+
 case class AssemblyFormatDirective(
     directives: Seq[Directive]
 ) extends Directive {
@@ -133,44 +168,10 @@ case class AssemblyFormatDirective(
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Tuple]] =
 
-    val seq = directives
-      .map(_.parse(p)(using ctx))
-      .reduce((run, next) =>
-        // This match to specialize the parsers types for fastparse's summoned Sequencer
-        // cf fastparse.Implicits.Sequencer.
-        //
-        // I feel like there might be a more elegant way, but I spent enough time to
-        // search for it and this sounds liek a localized enough compromise.
-        (run, next) match
-          case ('{ $run: P[Unit] }, '{ $next: P[n] }) =>
-            '{
-              given P[Any] = $ctx
-              $run ~ $next
-            }
-          case ('{ $run: P[r] }, '{ $next: P[Unit] }) =>
-            '{
-              given P[Any] = $ctx
-              $run ~ $next
-            }
-          case ('{ $run: P[Tuple] }, '{ $next: P[Any] }) =>
-            '{
-              given P[Any] = $ctx
-              given fastparse.Implicits.Sequencer[Tuple, Any, Tuple] =
-                fastparse.Implicits.Sequencer
-                  .NarySequencer[Tuple, Any, Tuple](_ :* _)
-              `~`($run)[Any, Tuple]($next)
-            }
-          case _ =>
-            '{
-              given P[Any] = $ctx
-              $run ~ $next
-            }
-      )
-    seq match
+    directives.map(_.parse(p)).reduce(chainParsers) match
       case '{ $tuple: P[Tuple] } =>
         tuple
       case '{ $default: P[d] } =>
-        println(s"Default case in assembly format parsing: ${Type.show[d]}")
         '{ $default.map(Tuple1(_)) }
 
   def parsedDirectives: Seq[Directive] =
@@ -250,28 +251,28 @@ case class AssemblyFormatDirective(
 // Parses an assembly format identifier
 // Those should match Scala's identifier rules, for maximum compatibility with the ADT
 // fields. This is an approximation
-def assemblyId[$: P]: P[String] =
+transparent inline def assemblyId[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
-def assemblyFormat[$: P](using
+transparent inline def assemblyFormat[$: P](using
     opDef: OperationDef
 ): P[AssemblyFormatDirective] =
   directive.rep(1).map(AssemblyFormatDirective.apply)
 
-def directive[$: P](using opDef: OperationDef): P[Directive] =
+transparent inline def directive[$: P](using opDef: OperationDef): P[Directive] =
   typeDirective | literalDirective | variableDirective | attrDictDirective
 
-def literalDirective[$: P]: P[LiteralDirective] =
+transparent inline def literalDirective[$: P]: P[LiteralDirective] =
   ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
 
-def variableDirective[$: P](using opDef: OperationDef) =
+transparent inline def variableDirective[$: P](using opDef: OperationDef) =
   ("$" ~~ assemblyId)
     .map(name => opDef.allDefs.find(_.name == name))
     .filter(_.nonEmpty)
     .map(_.get)
     .map(VariableDirective(_))
 
-def typeDirective[$: P](using opDef: OperationDef) =
+transparent inline def typeDirective[$: P](using opDef: OperationDef) =
   ("type(" ~~ variableDirective ~~ ")")
     .map(d =>
       d match
@@ -282,7 +283,7 @@ def typeDirective[$: P](using opDef: OperationDef) =
     .filter(_.nonEmpty)
     .map(_.get)
 
-def attrDictDirective[$: P]: P[AttrDictDirective] =
+transparent inline def attrDictDirective[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
 
 def parseAssemblyFormat(
