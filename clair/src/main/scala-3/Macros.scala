@@ -204,10 +204,7 @@ def parseMacro(
       '{
         given P[Any] = $ctx
         ${ format.parse(p) }.map(parsed =>
-          new UnregisteredOperation(
-            "custom.parser.stub",
-            attributes = DictType("parsed" -> StringData(parsed.toString()))
-          ).asInstanceOf[Operation]
+          ${ format.extractGenerationArgs(opDef, p, '{ parsed }) }
         )
       }
     case None =>
