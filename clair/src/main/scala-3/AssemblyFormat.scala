@@ -120,6 +120,42 @@ case class AssemblyFormatDirective(
                 println(s"Default case in assembly format parsing: ${Type.show[d]}")
                 '{$default.map(Tuple1(_))}
 
+    def parsedDirectives : Seq[Directive] =
+        directives.filter(_ match
+            case _ : LiteralDirective => false
+            case _ => true
+        )
+
+    def extractGenerationArgs(opDef : OperationDef, p: Expr[Parser], parsed: Expr[Tuple])(using Quotes) =
+
+        val operandNames = Map.from(parsedDirectives.zipWithIndex.flatMap((d, i) =>
+                d match
+                    case VariableDirective(OperandDef(name = name)) => Some(name -> i)
+                    case _ => None
+            )).mapValues(i => '{$parsed.productIterator.toList(${Expr(i)})})
+        val operandNamesArg = Expr.ofList(opDef.operands.map(od => (operandNames(od.name))))
+        val flatNames = '{$operandNamesArg.flatMap(op => op match
+            case op: String => Seq(op)
+            case op: Seq[String] => op
+        )}
+
+        val operandTypes = Map.from(parsedDirectives.zipWithIndex.flatMap((d, i) =>
+                d match
+                    case TypeDirective(OperandDef(name = name)) => Some(name -> i)
+                    case _ => None
+            )).mapValues(i => '{$parsed.productIterator.toList(${Expr(i)})})
+        val operandTypesArg = Expr.ofList(opDef.operands.map(od => (operandTypes(od.name))))
+        val flatTypes = '{$operandTypesArg.flatMap(op => op match
+            case op: Attribute => Seq(op)
+            case op: Seq[Attribute] => op
+        )}
+
+        '{$p.generateOperation(
+            opName = ${Expr(opDef.name)},
+            operandsNames = $flatNames,
+            operandsTypes = $flatTypes
+        )}
+
 }
 
 
