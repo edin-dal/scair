@@ -1,5 +1,7 @@
 package scair.clair.codegen
 
+import scair.clair.macros.AssemblyFormatDirective
+
 import scala.quoted.*
 import scala.reflect.*
 
@@ -85,8 +87,11 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val assembly_format: Option[String] = None
+    val assembly_format: Option[AssemblyFormatDirective] = None
 ) {
+
+  def allDefs =
+    operands ++ results ++ regions ++ successors ++ properties
 
   def allDefsWithIndex =
     operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex

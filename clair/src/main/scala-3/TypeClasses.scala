@@ -1,5 +1,6 @@
 package scair.clair.macros
 
+import scair.Printer
 import scair.ir.*
 
 import scala.compiletime.erasedValue
@@ -30,6 +31,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
+  def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
 
   case class UnverifiedOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
