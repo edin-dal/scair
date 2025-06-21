@@ -57,7 +57,7 @@ case class VariableDirective(
 
   def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
     construct match {
-      case OperandDef(n, _, v) =>
+      case OperandDef(name = n, variadicity = v) =>
         v match {
           case Variadicity.Single =>
             '{ $p.print(${ selectMember(op, n).asExprOf[Operand[?]] }) }
@@ -73,7 +73,7 @@ case class VariableDirective(
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
     construct match {
-      case OperandDef(n, _, v) =>
+      case OperandDef(name = n, variadicity = v) =>
         v match {
           case Variadicity.Single =>
             '{ Parser.ValueUse(using $ctx) }
@@ -90,7 +90,7 @@ case class TypeDirective(
 
   def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] = {
     construct match {
-      case OperandDef(n, _, v) =>
+      case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
             '{ $p.print(${ selectMember(op, n).asExprOf[Operand[?]] }.typ) }
@@ -105,7 +105,7 @@ case class TypeDirective(
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
     construct match {
-      case OperandDef(n, _, v) =>
+      case OperandDef(name = n, variadicity = v) =>
         v match {
           case Variadicity.Single =>
             '{ $p.AttributeValue(using $ctx) }
