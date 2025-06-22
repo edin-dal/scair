@@ -370,9 +370,10 @@ case class AssemblyFormatDirective(
       )
     }
 
-  /** Generate a complete specialized parser for this assembly format and operation definition.
-    * This will parse the assembly format into a tuple of parsed values, which
-    * can then be used to build the operation using the operation definition.
+  /** Generate a complete specialized parser for this assembly format and
+    * operation definition. This will parse the assembly format into a tuple of
+    * parsed values, which can then be used to build the operation using the
+    * operation definition.
     *
     * @param opDef
     *   The OperationDef for which to generate the parser.
@@ -382,7 +383,7 @@ case class AssemblyFormatDirective(
     *   The P context for the generated parser.
     * @return
     *   Specialized code to parse an assembly format into an Operation.
-   */
+    */
   def parse(opDef: OperationDef, p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes) =
