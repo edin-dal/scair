@@ -201,12 +201,7 @@ def parseMacro(
 ): Expr[P[Operation]] =
   opDef.assembly_format match
     case Some(format) =>
-      '{
-        given P[Any] = $ctx
-        ${ format.parse(p) }.map(parsed =>
-          ${ format.extractGenerationArgs(opDef, p, '{ parsed }) }
-        )
-      }
+      format.parse(opDef, p)
     case None =>
       '{
         throw new Exception(

@@ -10,9 +10,13 @@ import scair.ir.*
 
 import scala.quoted.*
 
+/** Utility function to check if a character is alphabetic */
 private inline def isalpha(c: Char): Boolean =
   (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 
+/** Prints a space in the output if required by printing context. Manages
+  * spacing rules based on punctuation and previous tokens.
+  */
 private def printSpace(p: Expr[Printer], state: PrintingState)(using Quotes) =
 
   val print =
@@ -25,18 +29,44 @@ private def printSpace(p: Expr[Printer], state: PrintingState)(using Quotes) =
 
   print
 
+/** Base trait for assembly format directives. Directives represent a unit of
+  * the assembly format, and can generate printing and parsing implementations
+  * for their constructs.
+  */
 trait Directive {
 
+  /** Generate a specialized printer for the directive's subset of an
+    * operation's definition.
+    * @param op
+    *   The Operation argument of the generated printer.
+    * @param p
+    *   The Printer argument of the generated printer.
+    * @param state
+    *   The current printer generation state.
+    * @return
+    *   Specialized code to print one construct of a specific operation type.
+    */
   def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit]
 
+  /** Generate a specialized parser for the directive's subset of an operation's
+    * definition.
+    * @param p
+    *   The Parser argument of the generated parser.
+    * @return
+    *   Specialized code to parse one construct of a specific operation type.
+    */
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Any]]
 
 }
 
+/** Directive for literal text in the assembly format. Examples include
+  * keywords, punctuation, and other fixed strings. Typically used to clarify
+  * semantic or solve ambiguity.
+  */
 case class LiteralDirective(
     literal: String
 ) extends Directive {
@@ -75,6 +105,10 @@ case class LiteralDirective(
 
 }
 
+/** Directive for an operation's attribute dictionnary. Its presence is
+  * mandatory in every declarative assembly format, as this ensures the
+  * operation's unknown added attributes are carried by its syntax.
+  */
 case class AttrDictDirective() extends Directive {
 
   def print(op: Expr[?], p: Expr[Printer])(using
@@ -95,6 +129,9 @@ case class AttrDictDirective() extends Directive {
 
 }
 
+/** Directive for variables, handling operations' individual constructs
+  * (operands, results, regions, successors or properties).
+  */
 case class VariableDirective(
     construct: OpInputDef
 ) extends Directive {
@@ -132,6 +169,8 @@ case class VariableDirective(
 
 }
 
+/** Directive for types of individual operands or results.
+  */
 case class TypeDirective(
     construct: OperandDef | ResultDef
 ) extends Directive {
@@ -170,7 +209,11 @@ case class TypeDirective(
 
 }
 
-def chainParsers(
+/** Helper function to chain parsers together using fastparse's sequencing
+  * operator. Handles different return types by matching on the specific parser
+  * types.
+  */
+transparent inline def chainParsers(
     run: Expr[P[Any]],
     next: Expr[P[Any]]
 )(using quotes: Quotes, ctx: Expr[P[Any]]): Expr[P[Any]] =
@@ -205,11 +248,16 @@ def chainParsers(
         $run ~ $next
       }
 
+/** Holds state during printer generation to manage spacing and punctuation.
+  */
 case class PrintingState(
     var shouldEmitSpace: Boolean = true,
     var lastWasPunctuation: Boolean = false
 )
 
+/** Declarative assembly format representation. Contains a sequence of
+  * directives that define the format.
+  */
 case class AssemblyFormatDirective(
     directives: Seq[Directive]
 ) {
@@ -224,7 +272,11 @@ case class AssemblyFormatDirective(
     )
   }
 
-  def parse(p: Expr[Parser])(using
+  /** Generates a parser for this assembly format. It currently simply chains
+    * all the individual directives parsers. This will parse each directives'
+    * output into a tuple, which can then be used to generate the operation.
+    */
+  def parseTuple(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Tuple]] =
 
@@ -234,18 +286,27 @@ case class AssemblyFormatDirective(
       case '{ $default: P[d] } =>
         '{ $default.map(Tuple1(_)) }
 
+  /** The list of directives that parse into something, as opposed to literal.
+    * Helps with indexing the parsed tuple.
+    */
   def parsedDirectives: Seq[Directive] =
     directives.filter(_ match
       case _: LiteralDirective => false
       case _                   => true)
 
-  def extractGenerationArgs(
+  /** Use the operation definition to generate logic to build the operation from
+    * the parsed tuple.
+    */
+  def buildOperation(
       opDef: OperationDef,
       p: Expr[Parser],
       parsed: Expr[Tuple]
   )(using Quotes) =
     import quotes.reflect.report
 
+    // TODO: Bunch of refactoring to do here, akin to what happened in main Macros.
+    // I'm postponing it for now, as I feel it is worth considering actual code reuse
+    // with Macros, rather than just overengineering this part.
     val operandNames = Map
       .from(
         parsedDirectives.zipWithIndex.flatMap((d, i) =>
@@ -297,6 +358,9 @@ case class AssemblyFormatDirective(
       $parsed(${ Expr(attrDictIndex) }).asInstanceOf[Map[String, Attribute]]
     }
 
+    // This pushes the constructor disptching to runtime just like with generic syntax.
+    // TODO: This should at least generate a call to the right Unverified[T] constructor.
+    // Or of course, directly T if so we choose.
     '{
       $p.generateOperation(
         opName = ${ Expr(opDef.name) },
@@ -306,27 +370,62 @@ case class AssemblyFormatDirective(
       )
     }
 
+  /** Generate a complete specialized parser for this assembly format and operation definition.
+    * This will parse the assembly format into a tuple of parsed values, which
+    * can then be used to build the operation using the operation definition.
+    *
+    * @param opDef
+    *   The OperationDef for which to generate the parser.
+    * @param p
+    *   The Parser argument of the generated parser.
+    * @param ctx
+    *   The P context for the generated parser.
+    * @return
+    *   Specialized code to parse an assembly format into an Operation.
+   */
+  def parse(opDef: OperationDef, p: Expr[Parser])(using
+      ctx: Expr[P[Any]]
+  )(using quotes: Quotes) =
+    '{
+      given P[Any] = $ctx
+      ${ parseTuple(p) }.map(parsed =>
+        ${ buildOperation(opDef, p, '{ parsed }) }
+      )
+    }
+
 }
 
-// Parses an assembly format identifier
-// Those should match Scala's identifier rules, for maximum compatibility with the ADT
-// fields. This is an approximation
+/** Parses an assembly format identifier. Those should match Scala's identifier
+  * rules, for maximum compatibility with the ADT fields; this is an
+  * approximation.
+  */
 transparent inline def assemblyId[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
+/** Parser for the complete assembly format. Parses one or more directives into
+  * an AssemblyFormatDirective.
+  */
 transparent inline def assemblyFormat[$: P](using
     opDef: OperationDef
 ): P[AssemblyFormatDirective] =
   directive.rep(1).map(AssemblyFormatDirective.apply)
 
+/** Parser for any directive.
+  */
 transparent inline def directive[$: P](using
     opDef: OperationDef
 ): P[Directive] =
   typeDirective | literalDirective | variableDirective | attrDictDirective
 
+/** Parser for literal directives. Parses text enclosed in backticks as a
+  * literal directive.
+  */
 transparent inline def literalDirective[$: P]: P[LiteralDirective] =
   ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
 
+/** Parser for variable directives. Parses a dollar sign followed by an
+  * identifier, which references a construct of the Operation.
+  */
 transparent inline def variableDirective[$: P](using opDef: OperationDef) =
   ("$" ~~ assemblyId)
     .map(name => opDef.allDefs.find(_.name == name))
@@ -334,6 +433,9 @@ transparent inline def variableDirective[$: P](using opDef: OperationDef) =
     .map(_.get)
     .map(VariableDirective(_))
 
+/** Parser for type directives. Parses "type($var)" where $var is a variable
+  * directive.
+  */
 transparent inline def typeDirective[$: P](using opDef: OperationDef) =
   ("type(" ~~ variableDirective ~~ ")")
     .map(d =>
@@ -345,9 +447,15 @@ transparent inline def typeDirective[$: P](using opDef: OperationDef) =
     .filter(_.nonEmpty)
     .map(_.get)
 
+/** Parser for attribute dictionary directives. Parses the keyword "attr-dict"
+  * into an AttrDictDirective.
+  */
 transparent inline def attrDictDirective[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
 
+/** Parse a declarative assembly format string into an AssemblyFormatDirective,
+  * its internal representation for implementation generation.
+  */
 def parseAssemblyFormat(
     format: String,
     opDef: OperationDef
