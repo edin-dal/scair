@@ -226,6 +226,7 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
         }
     }
   }
+
 }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -696,28 +697,28 @@ val ArithDialect =
         MinNumF,
         MinSI,
         MinUI,
-        MulF
-        // MulI,
-        // MulSIExtended,
-        // MulUIExtended,
-        // NegF,
-        // Ori,
-        // RemF,
-        // RemSI,
-        // RemUI,
-        // ScalingExtF,
-        // ScalingTruncF,
-        // SelectOp,
-        // ShLI,
-        // ShRSI,
-        // ShRUI,
-        // SIToFP,
-        // SubF,
-        // SubI,
-        // TruncF,
-        // TruncI,
-        // UIToFP,
-        // XOrI
-        // IndexCast
+        MulF,
+        MulI,
+        MulSIExtended,
+        MulUIExtended,
+        NegF,
+        Ori,
+        RemF,
+        RemSI,
+        RemUI,
+        ScalingExtF,
+        ScalingTruncF,
+        SelectOp,
+        ShLI,
+        ShRSI,
+        ShRUI,
+        SIToFP,
+        SubF,
+        SubI,
+        TruncF,
+        TruncI,
+        UIToFP,
+        XOrI,
+        IndexCast
     )
   ](Seq(FastMathFlagsAttr))
