@@ -611,11 +611,11 @@ def getAttrConstructor[T: Type](
   val lengthCheck = Type.of[T] match
     case '[type t <: Attribute; `t`] =>
       '{
-          if ${ Expr(attrDef.attributes.length) } != $attributes.length then
-            throw new Exception(
-              s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes.length}"
-            )
-        }
+        if ${ Expr(attrDef.attributes.length) } != $attributes.length then
+          throw new Exception(
+            s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes.length}"
+          )
+      }
     case _ =>
       report.errorAndAbort(
         s"Type ${Type.show[T]} needs to be a subtype of Attribute"
