@@ -11,8 +11,7 @@ case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
 case class Load(
     ptr: Operand[Ptr],
     result: Result[Attribute]
-) extends DerivedOperation["llvm.load", Load]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["llvm.load", Load] derives DerivedOperationCompanion
 
 case class GetElementPtr(
     base: Operand[Ptr],
