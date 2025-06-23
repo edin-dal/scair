@@ -163,6 +163,26 @@ case class Printer(
   ||    OPERATION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
+  def printAttrDict(
+      attrs: Map[String, Attribute]
+  )(using indentLevel: Int): Unit = {
+    printListF(
+      attrs,
+      (k, v) => {
+        print(k, " = ", v.custom_print)
+      },
+      " {",
+      ", ",
+      "}"
+    )
+  }
+
+  def printOptionalAttrDict(
+      attrs: Map[String, Attribute]
+  )(using indentLevel: Int): Unit = {
+    if attrs.nonEmpty then printAttrDict(attrs)
+  }
+
   def printGenericMLIROperation(op: Operation)(using
       indentLevel: Int
   ) = {
@@ -180,16 +200,7 @@ case class Printer(
         "}>"
       )
     if op.regions.nonEmpty then printList(op.regions, " (", ", ", ")")
-    if op.attributes.nonEmpty then
-      printListF(
-        op.attributes,
-        (k, v) => {
-          print(k, " = ", v.custom_print)
-        },
-        " {",
-        ", ",
-        "}"
-      )
+    printOptionalAttrDict(op.attributes.toMap)
     print(" : ")
     printListF(
       op.operands,

@@ -1,5 +1,6 @@
 package scair.clair.macros
 
+import scair.Printer
 import scair.ir.*
 
 import scala.compiletime.deferred
@@ -15,6 +16,8 @@ trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
     companion.parameters(this)
 
 }
+
+trait AssemblyFormat[format <: String]
 
 trait DerivedOperation[name <: String, T] extends Operation {
 
@@ -46,5 +49,8 @@ trait DerivedOperation[name <: String, T] extends Operation {
   def results: Seq[Result[Attribute]] = companion.results(this)
   def regions: Seq[Region] = companion.regions(this)
   def properties: Map[String, Attribute] = companion.properties(this)
+
+  override def custom_print(p: Printer)(using indentLevel: Int): Unit =
+    companion.custom_print(this, p)
 
 }

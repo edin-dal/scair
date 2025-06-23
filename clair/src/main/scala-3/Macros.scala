@@ -2,7 +2,9 @@ package scair.clair.macros
 
 import fastparse.*
 import scair.AttrParser
+import scair.Parser
 import scair.Parser.*
+import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
@@ -172,6 +174,40 @@ def propertiesMacro(
       ++ ${ regSegSizeProp }
       ++ ${ succSegSizeProp }
   }
+
+def customPrintMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?],
+    p: Expr[Printer],
+    indentLevel: Expr[Int]
+)(using Quotes): Expr[Unit] =
+  opDef.assembly_format match
+    case Some(format) =>
+      format.print(adtOpExpr, p)
+    case None =>
+      '{
+        $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])(
+          using $indentLevel
+        )
+      }
+
+def parseMacro(
+    opDef: OperationDef,
+    p: Expr[Parser]
+)(using
+    ctx: Expr[P[Any]]
+)(using
+    Quotes
+): Expr[P[Operation]] =
+  opDef.assembly_format match
+    case Some(format) =>
+      format.parse(opDef, p)
+    case None =>
+      '{
+        throw new Exception(
+          s"No custom Parser implemented for Operation '${${ Expr(opDef.name) }}'"
+        )
+      }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  Unverified to ADT conversion Macro  ||
@@ -713,6 +749,12 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${ propertiesMacro(opDef, '{ adtOp }) }
 
       def name: String = ${ Expr(opDef.name) }
+
+      def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
+        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+
+      override def parse[$: P as ctx](parser: Parser): P[Operation] =
+        ${ parseMacro(opDef, '{ parser })(using '{ ctx }) }
 
       def apply(
           operands: Seq[Value[Attribute]] = Seq(),
