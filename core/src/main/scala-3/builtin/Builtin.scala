@@ -261,7 +261,7 @@ case class RankedMemrefType(
   override def name: String = "builtin.ranked_memref"
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     shape +: elementType +: encoding.toSeq
-  S
+
   override def getNumDims = shape.attrValues.length
   override def getShape = shape.attrValues.map(_.data)
 
