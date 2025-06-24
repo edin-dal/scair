@@ -118,7 +118,11 @@ def summonMLIRTraitsMacro[T <: Tuple: Type](using
       val dat = Expr
         .summon[DerivedOperationCompanion[t]]
         // TODO: Come on.
-        .getOrElse(report.errorAndAbort("summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."))
+        .getOrElse(
+          report.errorAndAbort(
+            "summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."
+          )
+        )
       '{ $dat +: ${ summonMLIRTraitsMacro[ts] } }
     case '[EmptyTuple] => '{ Seq() }
 
@@ -130,7 +134,11 @@ def summonAttributeTraitsMacro[T <: Tuple: Type](using
     case '[t *: ts] =>
       val dat = Expr
         .summon[DerivedAttributeCompanion[t]]
-        .getOrElse(report.errorAndAbort("summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."))
+        .getOrElse(
+          report.errorAndAbort(
+            "summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."
+          )
+        )
       '{ $dat +: ${ summonAttributeTraitsMacro[ts] } }
     case '[EmptyTuple] => '{ Seq() }
 
