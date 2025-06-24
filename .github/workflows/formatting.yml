@@ -21,18 +21,18 @@ jobs:
       uses: actions/checkout@v4
 
     # Restore Mill's incremental build cache
-    - name: Cache Incremental Build
-      uses: actions/cache@v4
-      with:
-        path: ./out
-        # Caches are immutable; we need to uniquely identify them to always push the recent ones
-        # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
-        key: mill-incremental-format-${{ github.run_id }}-${{ github.run_attempt }}
-        # When restoring, we restore the most recent one pushed by such a job
-        # Those are scoped by branch too; e.g., the most recent one from the main branch would
-        # be fetched in a fresh PR, then the most recent one from this PR.
-        restore-keys: |
-          mill-incremental-format-
+    # - name: Cache Incremental Build
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ./out
+    #     # Caches are immutable; we need to uniquely identify them to always push the recent ones
+    #     # There is an LRU-like policy in place on GitHub's side, capped at 10GB caches per repo
+    #     key: mill-incremental-format-${{ github.run_id }}-${{ github.run_attempt }}
+    #     # When restoring, we restore the most recent one pushed by such a job
+    #     # Those are scoped by branch too; e.g., the most recent one from the main branch would
+    #     # be fetched in a fresh PR, then the most recent one from this PR.
+    #     restore-keys: |
+    #       mill-incremental-format-
 
     # Check if the code is formatted as expected
     - name: Run format checks
