@@ -488,7 +488,6 @@ def partitionConstructs[Def <: OpInputDef: Type](
   */
 def verifiyConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp],
     partitioned: Seq[Expr[DefinedInput[Def] | Seq[DefinedInput[Def]]]]
 )(using Quotes) = {
   (partitioned zip defs).map { (c, d) =>
@@ -558,7 +557,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
   )
 
   // Verify the constructs
-  verifiyConstructs(defs, op, partitioned)
+  verifiyConstructs(defs, partitioned)
 }
 
 /** Return all named arguments for the primary constructor of an ADT. Those are
