@@ -109,9 +109,9 @@ object DerivedOperationCompanion {
 
 }
 
-def summonMLIRTraitsMacro[T <: Tuple: Type](using
+def summonMLIRTraitsMacroRec[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedOperationCompanion[?]]] =
+): Seq[Expr[DerivedOperationCompanion[?]]] =
   import quotes.reflect.*
   Type.of[T] match
     case '[t *: ts] =>
@@ -123,12 +123,18 @@ def summonMLIRTraitsMacro[T <: Tuple: Type](using
             "summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."
           )
         )
-      '{ $dat +: ${ summonMLIRTraitsMacro[ts] } }
-    case '[EmptyTuple] => '{ Seq() }
+      dat +: summonMLIRTraitsMacroRec[ts]
 
-def summonAttributeTraitsMacro[T <: Tuple: Type](using
+    case '[EmptyTuple] => Seq()
+
+def summonMLIRTraitsMacro[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedAttributeCompanion[?]]] =
+): Expr[Seq[DerivedOperationCompanion[?]]] =
+  Expr.ofSeq(summonMLIRTraitsMacroRec[T])
+
+def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
+    Quotes
+): Seq[Expr[DerivedAttributeCompanion[?]]] =
   import quotes.reflect.*
   Type.of[T] match
     case '[t *: ts] =>
@@ -139,8 +145,13 @@ def summonAttributeTraitsMacro[T <: Tuple: Type](using
             "summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."
           )
         )
-      '{ $dat +: ${ summonAttributeTraitsMacro[ts] } }
-    case '[EmptyTuple] => '{ Seq() }
+      dat +: summonAttributeTraitsMacroRec[ts]
+    case '[EmptyTuple] => Seq()
+
+def summonAttributeTraitsMacro[T <: Tuple: Type](using
+    Quotes
+): Expr[Seq[DerivedAttributeCompanion[?]]] =
+  Expr.ofSeq(summonAttributeTraitsMacroRec[T])
 
 inline def summonAttributeTraits[T <: Tuple]
     : Seq[DerivedAttributeCompanion[?]] =
