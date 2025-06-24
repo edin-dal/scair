@@ -3,8 +3,7 @@ package scair.clair.macros
 import scair.Printer
 import scair.ir.*
 
-import scala.compiletime.erasedValue
-import scala.compiletime.summonInline
+import scala.quoted.*
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -110,18 +109,37 @@ object DerivedOperationCompanion {
 
 }
 
+def summonMLIRTraitsMacro[T <: Tuple: Type](using
+    Quotes
+): Expr[Seq[DerivedOperationCompanion[?]]] =
+  import quotes.reflect.*
+  Type.of[T] match
+    case '[t *: ts] =>
+      val dat = Expr
+        .summon[DerivedOperationCompanion[t]]
+        // TODO: Come on.
+        .getOrElse(report.errorAndAbort("summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."))
+      '{ $dat +: ${ summonMLIRTraitsMacro[ts] } }
+    case '[EmptyTuple] => '{ Seq() }
+
+def summonAttributeTraitsMacro[T <: Tuple: Type](using
+    Quotes
+): Expr[Seq[DerivedAttributeCompanion[?]]] =
+  import quotes.reflect.*
+  Type.of[T] match
+    case '[t *: ts] =>
+      val dat = Expr
+        .summon[DerivedAttributeCompanion[t]]
+        .getOrElse(report.errorAndAbort("summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."))
+      '{ $dat +: ${ summonAttributeTraitsMacro[ts] } }
+    case '[EmptyTuple] => '{ Seq() }
+
 inline def summonAttributeTraits[T <: Tuple]
     : Seq[DerivedAttributeCompanion[?]] =
-  inline erasedValue[T] match
-    case _: (t *: ts) =>
-      summonInline[DerivedAttributeCompanion[t]] +: summonAttributeTraits[ts]
-    case _: EmptyTuple => Seq()
+  ${ summonAttributeTraitsMacro[T] }
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
-  inline erasedValue[T] match
-    case _: (t *: ts) =>
-      summonInline[DerivedOperationCompanion[t]] +: summonMLIRTraits[ts]
-    case _: EmptyTuple => Seq()
+  ${ summonMLIRTraitsMacro[T] }
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
     attributes: Seq[AttributeCompanion]
