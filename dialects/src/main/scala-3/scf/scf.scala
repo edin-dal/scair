@@ -5,9 +5,49 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
+// ░██████╗ ░█████╗░ ███████╗ 
+// ██╔════╝ ██╔══██╗ ██╔════╝ 
+// ╚█████╗░ ██║░░╚═╝ █████╗░░ 
+// ░╚═══██╗ ██║░░██╗ ██╔══╝░░ 
+// ██████╔╝ ╚█████╔╝ ██║░░░░░ 
+// ╚═════╝░ ░╚════╝░ ╚═╝░░░░░
+
+// ██████╗░ ██╗ ░█████╗░ ██╗░░░░░ ███████╗ ░░██████╗░ ████████╗ 
+// ██╔══██╗ ██║ ██╔══██╗ ██║░░░░░ ██╔════╝ ░██ ╔══██╗ ╚══██╔══╝ 
+// ██║░░██║ ██║ ███████║ ██║░░░░░ █████╗░░ ░██ ║░░╚═╝ ░░░██║░░░ 
+// ██║░░██║ ██║ ██╔══██║ ██║░░░░░ ██╔══╝░░ ░██ ║░░██╗ ░░░██║░░░ 
+// ██████╔╝ ██║ ██║░░██║ ███████╗ ███████╗ ░░██████╔╝ ░░░██║░░░ 
+// ╚═════╝░ ╚═╝ ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ░░ ╚════╝░ ░░░╚═╝░░░ 
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||  TYPES AND CONSTRAINTS  ||
+\*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
+
+// TODO: this needs to be constrained specifically to an I1 integer
 type I1 = IntegerType
+// TODO: this needs to be a signless integer type specifically
 type AnySignlessIntegerOrIndex = IntegerType | IndexType
 type Index = IndexType
+
+trait AllTypesMatch(values: Attribute*) extends Operation {
+
+  override def trait_verify(): Either[String, Operation] = {
+    if (values.isEmpty) Right(this)
+    else {
+      val firstClass = values.head.getClass
+      if (values.tail.forall(_.getClass == firstClass)) Right(this)
+      else
+        Left(
+          "All parameters of AllTypesMatch must be of the same type in operation " + this.name
+        )
+    }
+  }
+
+}
+
+/*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||  OPERATION DEFINTION  ||
+\*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 case class Condition(
     condition: Operand[I1],
@@ -21,6 +61,7 @@ case class ExecuteRegionOp(
 ) extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
     derives DerivedOperationCompanion
 
+// TODO: this should also contain a SingleBlockImplicitTerminator<"scf::YieldOp">,
 case class ForOp(
     lowerBound: Operand[AnySignlessIntegerOrIndex],
     upperBound: Operand[AnySignlessIntegerOrIndex],
@@ -28,18 +69,19 @@ case class ForOp(
     initArgs: Operand[Attribute],
     region: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.for", ForOp] derives DerivedOperationCompanion
+) extends DerivedOperation["scf.for", ForOp] 
+  with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
+  derives DerivedOperationCompanion
 
 case class ForallOp(
-    dynamicLowerBound: Operand[Index],
-    dynamicUpperBound: Operand[Index],
-    dynamicStep: Operand[Index],
+    dynamicLowerBound: Seq[Operand[Index]],
+    dynamicUpperBound: Seq[Operand[Index]],
+    dynamicStep: Seq[Operand[Index]],
     staticLowerBound: Operand[DenseArrayAttr],
     staticUpperBound: Operand[DenseArrayAttr],
     staticStep: Operand[DenseArrayAttr],
     outputs: Seq[Operand[RankedTensorType]],
-    // TODO: should be optional
-    mapping: Seq[Operand[RankedTensorType]],
+    // mapping: Option[Operand[RankedTensorType]],
     region: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.forall", ForallOp]
@@ -48,6 +90,7 @@ case class ForallOp(
 case class InParallelOp(
     region: Region
 ) extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
+    with IsTerminator
     derives DerivedOperationCompanion
 
 case class IfOp(
@@ -55,7 +98,8 @@ case class IfOp(
     thenRegion: Region,
     elseRegion: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.if", IfOp] derives DerivedOperationCompanion
+) extends DerivedOperation["scf.if", IfOp] 
+  derives DerivedOperationCompanion
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]],
@@ -72,11 +116,13 @@ case class ReduceOp(
     // TODO: variadic regions
     reductions: Region
 ) extends DerivedOperation["scf.reduce", ReduceOp]
+    with IsTerminator
     derives DerivedOperationCompanion
 
 case class ReduceReturnOp(
     resultss: Result[Attribute]
 ) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
+    with IsTerminator
     derives DerivedOperationCompanion
 
 case class WhileOp(
@@ -100,6 +146,7 @@ case class IndexSwitchOp(
 case class YieldOp(
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.yield", YieldOp]
+    with IsTerminator
     derives DerivedOperationCompanion
 
 val SCFDialect =
