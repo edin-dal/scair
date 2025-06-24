@@ -180,7 +180,10 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 case class DictionaryAttr(val entries: Map[String, Attribute])
-    extends DataAttribute[Map[String, Attribute]]("builtin.array_attr", entries) {
+    extends DataAttribute[Map[String, Attribute]](
+      "builtin.array_attr",
+      entries
+    ) {
 
   override def custom_print =
     "{" + entries.map((name, attr) => s"$name = $attr").mkString(", ") + "}"
