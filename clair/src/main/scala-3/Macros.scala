@@ -38,12 +38,12 @@ import scala.quoted.*
   * @param name
   *   The name of the member to select.
   */
-def selectMember(obj: Expr[?], name: String)(using
+def selectMember[T: Type](obj: Expr[?], name: String)(using
     Quotes
-): Expr[Any] = {
+): Expr[T] = {
   import quotes.reflect.*
 
-  Select.unique(obj.asTerm, name).asExpr
+  Select.unique(obj.asTerm, name).asExprOf[T]
 }
 
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
@@ -61,7 +61,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
               case Variadicity.Single                          => Expr(1)
               case Variadicity.Variadic | Variadicity.Optional =>
                 '{
-                  ${ selectMember(adtOpExpr, d.name).asExprOf[Seq[?]] }.length
+                  ${ selectMember[Seq[?]](adtOpExpr, d.name) }.length
                 }
             }
           )
@@ -100,14 +100,14 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs.map((d: Def) =>
       getConstructVariadicity(d) match
         case Variadicity.Optional =>
-          selectMember(adtOpExpr, d.name).asExprOf[Option[DefinedInput[Def]]]
+          selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
         case Variadicity.Variadic =>
-          selectMember(adtOpExpr, d.name).asExprOf[Seq[DefinedInput[Def]]]
+          selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
         case Variadicity.Single =>
           '{
             Seq(${
-              selectMember(adtOpExpr, d.name)
-                .asExprOf[DefinedInput[Def]]
+              selectMember[DefinedInput[Def]](adtOpExpr, d.name)
+
             })
           }
     )
@@ -751,9 +751,7 @@ def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     adtAttrExpr: Expr[?]
 )(using Quotes): Expr[Seq[Attribute]] = {
   Expr.ofList(
-    attrInputDefs.map(d =>
-      selectMember(adtAttrExpr, d.name).asExprOf[Attribute]
-    )
+    attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
   )
 }
 
