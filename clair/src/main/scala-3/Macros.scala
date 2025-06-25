@@ -332,13 +332,11 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   * @param op
   *   The UnverifiedOp expression.
   */
-def expectSegmentSizes[Def <: OpInputDef: Type](
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
-)(using Quotes) =
+def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
-  '{
+  '{ (op: DerivedOperationCompanion[?]#UnverifiedOp) =>
     val dense =
-      ${ op }.properties.get(s"${${ Expr(segmentSizesName) }}") match
+      op.properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
@@ -389,9 +387,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](
   *   The UnverifiedOp expression.
   */
 def partitionConstructs[Def <: OpInputDef: Type](
-    defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp],
-    flat: Expr[Seq[DefinedInput[Def]]]
+    defs: Seq[Def]
 )(using Quotes) =
   // Check the number of variadic constructs
   defs.count(getConstructVariadicity(_) != Variadicity.Single) match
@@ -400,13 +396,17 @@ def partitionConstructs[Def <: OpInputDef: Type](
       defs.zipWithIndex.map((d, i) =>
         val defLength = Expr(defs.length)
         '{
-          if ($flat.length != $defLength) then
-            throw new Exception(
-              s"Expected ${${ Expr(defs.length) }} ${${
-                  Expr(getConstructName[Def])
-                }}s, got ${$flat.length}."
-            )
-          ${ flat }(${ Expr(i) })
+          (
+              op: DerivedOperationCompanion[?]#UnverifiedOp,
+              flat: Seq[DefinedInput[Def]]
+          ) =>
+            if (flat.length != $defLength) then
+              throw new Exception(
+                s"Expected ${${ Expr(defs.length) }} ${${
+                    Expr(getConstructName[Def])
+                  }}s, got ${flat.length}."
+              )
+            flat(${ Expr(i) })
         }
       )
     // If there is a single variadic definition, partionning is about stripping the preceeding and following single elements, and taking the rest as elements of the variadic construct
@@ -421,11 +421,24 @@ def partitionConstructs[Def <: OpInputDef: Type](
       val preceeding_exprs = defs
         .slice(0, preceeding)
         .zipWithIndex
-        .map((d, i) => '{ ${ flat }.apply(${ Expr(i) }) })
+        .map((d, i) =>
+          '{
+
+            (
+                op: DerivedOperationCompanion[?]#UnverifiedOp,
+                flat: Seq[DefinedInput[Def]]
+            ) =>
+              flat.apply(${ Expr(i) })
+          }
+        )
 
       val variadic_expr = '{
-        ${ flat }
-          .slice(${ Expr(preceeding) }, ${ flat }.length - ${ Expr(following) })
+        (
+            op: DerivedOperationCompanion[?]#UnverifiedOp,
+            flat: Seq[DefinedInput[Def]]
+        ) =>
+          flat
+            .slice(${ Expr(preceeding) }, flat.length - ${ Expr(following) })
       }
 
       val following_exprs = defs
@@ -433,9 +446,13 @@ def partitionConstructs[Def <: OpInputDef: Type](
         .zipWithIndex
         .map((d, i) =>
           '{
-            ${ flat }.apply(${ flat }.length - ${ Expr(following) } + ${
-              Expr(i)
-            })
+            (
+                op: DerivedOperationCompanion[?]#UnverifiedOp,
+                flat: Seq[DefinedInput[Def]]
+            ) =>
+              flat.apply(flat.length - ${ Expr(following) } + ${
+                Expr(i)
+              })
           }
         )
 
@@ -444,35 +461,49 @@ def partitionConstructs[Def <: OpInputDef: Type](
     case _ =>
       // Expect a coherent segmentSizes and interpret it as a list of integers.
       val segmentSizes = '{
-        val sizes = ${ expectSegmentSizes[Def](op) }
-        val segments = sizes.length
-        val total = sizes.sum
-        // Check the segmentSizes define a segment for each definition
-        if (segments != ${ Expr(defs.length) }) then
-          throw new Exception(
-            s"Expected ${${ Expr(defs.length) }} entries in ${${
-                Expr(getConstructName[Def])
-              }}SegmentSizes, got ${segments}."
-          )
-        // Check the segmentSizes' sum is coherent with the number of constructs
-        if (total != ${ flat }.length) then
-          throw new Exception(
-            s"${${ Expr(getConstructName[Def]) }}'s sum does not match the op's ${${
-                flat
-              }.length} ${${ Expr(getConstructName[Def]) }}s."
-          )
-        sizes
+        (
+            op: DerivedOperationCompanion[?]#UnverifiedOp,
+            flat: Seq[DefinedInput[Def]]
+        ) =>
+          val sizes = ${ expectSegmentSizes[Def] }(op)
+          val segments = sizes.length
+          val total = sizes.sum
+          // Check the segmentSizes define a segment for each definition
+          if (segments != ${ Expr(defs.length) }) then
+            throw new Exception(
+              s"Expected ${${ Expr(defs.length) }} entries in ${${
+                  Expr(getConstructName[Def])
+                }}SegmentSizes, got ${segments}."
+            )
+          // Check the segmentSizes' sum is coherent with the number of constructs
+          if (total != flat.length) then
+            throw new Exception(
+              s"${${ Expr(getConstructName[Def]) }}'s sum does not match the op's ${flat}.length} ${${
+                  Expr(getConstructName[Def])
+                }}s."
+            )
+          sizes
       }
       // Partition the constructs according to the segmentSizes
       defs.zipWithIndex.map { case (d, i) =>
         getConstructVariadicity(d) match
-          case Variadicity.Single => '{ ${ flat }(${ Expr(i) }) }
+          case Variadicity.Single =>
+            '{
+              (
+                  op: DerivedOperationCompanion[?]#UnverifiedOp,
+                  flat: Seq[DefinedInput[Def]]
+              ) => flat(${ Expr(i) })
+            }
           case Variadicity.Variadic | Variadicity.Optional =>
             '{
-              val sizes = $segmentSizes
-              val start = sizes.slice(0, ${ Expr(i) }).sum
-              val end = start + sizes(${ Expr(i) })
-              ${ flat }.slice(start, end)
+              (
+                  op: DerivedOperationCompanion[?]#UnverifiedOp,
+                  flat: Seq[DefinedInput[Def]]
+              ) =>
+                val sizes = ${ segmentSizes }(op, flat)
+                val start = sizes.slice(0, ${ Expr(i) }).sum
+                val end = start + sizes(${ Expr(i) })
+                flat.slice(start, end)
             }
       }
 
@@ -560,15 +591,11 @@ def verifiedConstructs[Def <: OpInputDef: Type](
   // Get the flat sequence of these constructs
   val flat = getConstructSeq(op)
   // partition the constructs according to their definitions
-  val partitioned = partitionConstructs(
-    defs,
-    op,
-    flat
-  )
+  val partitioned = partitionConstructs(defs).map(p => '{ ${ p }($op, $flat) })
 
   // Verify the constructs
   (partitioned zip defs).map { (c, d) =>
-    '{ ${ constructVerifier(d) }($c) }
+    '{ ${ constructVerifier(d) }(${ c }) }
   }
 }
 
