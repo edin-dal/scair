@@ -376,9 +376,10 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   }
 
 /** Partition a construct sequence, in the case of no variadic defintion.
- * 
- * @see [[constructPartitioner]]
- */
+  *
+  * @see
+  *   [[constructPartitioner]]
+  */
 def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     Quotes
 ) =
@@ -402,9 +403,10 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
   )
 
 /** Partition a construct sequence, in the case of a single variadic defintion.
- * 
- * @see [[constructPartitioner]]
- */
+  *
+  * @see
+  *   [[constructPartitioner]]
+  */
 def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
     using Quotes
 ) =
@@ -456,9 +458,10 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
   (preceeding_exprs :+ variadic_expr) ++ following_exprs
 
 /** Partition a construct sequence, in the case of multiple variadic definitions
- * 
- * @see [[constructPartitioner]]
- */
+  *
+  * @see
+  *   [[constructPartitioner]]
+  */
 def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     defs: Seq[Def]
 )(using Quotes) =
@@ -519,8 +522,9 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
   *   The construct definition type.
   * @param defs
   *   The construct definitions.
-  * @return A function of an operation and its flat sequence of constructs, returning the
-  * sequence of partitions according to the definitions.
+  * @return
+  *   A function of an operation and its flat sequence of constructs, returning
+  *   the sequence of partitions according to the definitions.
   */
 def constructPartitioner[Def <: OpInputDef: Type](
     defs: Seq[Def]
@@ -532,7 +536,7 @@ def constructPartitioner[Def <: OpInputDef: Type](
     case _ => multivariadicConstructPartitioner(defs)
 
 /* Return a verifier for a single-defined construct
-*/
+ */
 def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -552,7 +556,7 @@ def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
   }
 
 /* Return a verifier for a variadic-defined construct
-*/
+ */
 def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -571,7 +575,7 @@ def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
   }
 
 /* Return a verifier for an optional-defined construct
-*/
+ */
 def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -589,10 +593,11 @@ def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
   }
 
 /** Returns a verifier expression for the passed construct definition.
-  * 
+  *
   * @param defs
   *   The constructs definitions.
-  * @returns A function of a construct(s), returning the typed, verified vonstruct(s)
+  * @returns
+  *   A function of a construct(s), returning the typed, verified vonstruct(s)
   */
 def constructVerifier[Def <: OpInputDef: Type](
     d: Def
