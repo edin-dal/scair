@@ -11,6 +11,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
 
+import scala.annotation.switch
 import scala.quoted.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
@@ -475,7 +476,7 @@ def partitionConstructs[Def <: OpInputDef: Type](
             }
       }
 
-def verifySingleConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
+def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
@@ -493,13 +494,13 @@ def verifySingleConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[DefinedInputOf[Def, t]]
   }
 
-def verifyVariadicConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
+def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
     (c match
         case s: Seq[DefinedInput[Def]] =>
-          s.map(e => ${ verifySingleConstruct(d) }(e))
+          s.map(e => ${ singleConstructVerifier(d) }(e))
         case _ =>
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -510,11 +511,11 @@ def verifyVariadicConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
   }
 
-def verifyOptionalConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
+def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
-    val cs = ${ verifyVariadicConstruct(d) }(c)
+    val cs = ${ variadicConstructVerifier(d) }(c)
     if cs.length > 1 then
       throw new Exception(
         s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -537,18 +538,18 @@ def verifyOptionalConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
   * @param op
   *   The UnverifiedOp expression.
   */
-def verifiyConstruct[Def <: OpInputDef: Type](
+def constructVerifier[Def <: OpInputDef: Type](
     d: Def
 )(using Quotes) = {
   getConstructConstraint(d) match
     case '[type t <: Attribute; `t`] =>
-      getConstructVariadicity(d) match
-        case Variadicity.Optional =>
-          verifyOptionalConstruct[Def, t](d)
+      getConstructVariadicity(d): @switch match
         case Variadicity.Single =>
-          verifySingleConstruct[Def, t](d)
+          singleConstructVerifier[Def, t](d)
         case Variadicity.Variadic =>
-          verifyVariadicConstruct[Def, t](d)
+          variadicConstructVerifier[Def, t](d)
+        case Variadicity.Optional =>
+          optionalConstructVerifier[Def, t](d)
 
 }
 
@@ -567,7 +568,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 
   // Verify the constructs
   (partitioned zip defs).map { (c, d) =>
-    '{ ${ verifiyConstruct(d) }($c) }
+    '{ ${ constructVerifier(d) }($c) }
   }
 }
 
