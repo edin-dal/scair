@@ -475,57 +475,56 @@ def partitionConstructs[Def <: OpInputDef: Type](
             }
       }
 
-def verifySingleConstruct[Def <: OpInputDef: Type](d: Def)(using Quotes) =
-  val tpe = getConstructConstraint(d)
-  tpe match
-    case '[type t <: Attribute; `t`] =>
-      '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
-        (c match
-            case v: DefinedInputOf[Def, t] => v
-            case _                         =>
-              throw new Exception(
-                s"Expected ${${ Expr(d.name) }} to be of type ${${
-                    Expr(Type.show[DefinedInputOf[Def, t]])
-                  }}, got ${c}"
-              )
-            // This somehow fails to carry type information if not casted explicitely here.
-            // Including the exact same asInstanceOf in the case above.
-            // I think I'm missing something..
-        ).asInstanceOf[DefinedInputOf[Def, t]]
-      }
-
-def verifyVariadicConstruct[Def <: OpInputDef: Type](d: Def)(using Quotes) =
-  val tpe = getConstructConstraint(d)
-  tpe match
-    case '[type t <: Attribute; `t`] =>
-      '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
-        (c match
-          case s: Seq[DefinedInput[Def]] =>
-            s.map(e => ${ verifySingleConstruct(d) }(e))
-          case _ =>
-            throw new Exception(
-              s"Expected ${${ Expr(d.name) }} to be of type ${${
-                  Expr(Type.show[Seq[DefinedInputOf[Def, t]]])
-                }}, got ${c}"
-            )
-        ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
-      }
-
-def verifyOptionalConstruct[Def <: OpInputDef: Type](d: Def)(using Quotes) =
-  val tpe = getConstructConstraint(d)
-  tpe match
-    case '[type t <: Attribute; `t`] =>
-      '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
-        val cs = ${ verifyVariadicConstruct(d) }(c)
-        if cs.length > 1 then
+def verifySingleConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
+    d: Def
+)(using Quotes) =
+  '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
+    (c match
+        case v: DefinedInputOf[Def, t] => v
+        case _                         =>
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
                 Expr(Type.show[DefinedInputOf[Def, t]])
               }}, got ${c}"
           )
-        cs.headOption
-          .asInstanceOf[Option[DefinedInputOf[Def, t]]]
-      }
+        // This somehow fails to carry type information if not casted explicitely here.
+        // Including the exact same asInstanceOf in the case above.
+        // I think I'm missing something..
+    ).asInstanceOf[DefinedInputOf[Def, t]]
+  }
+
+def verifyVariadicConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
+    d: Def
+)(using Quotes) =
+  '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
+    (c match
+        case s: Seq[DefinedInput[Def]] =>
+          s.map(e => ${ verifySingleConstruct(d) }(e))
+        case _ =>
+          throw new Exception(
+            s"Expected ${${ Expr(d.name) }} to be of type ${${
+                Expr(Type.show[Seq[DefinedInputOf[Def, t]]])
+              }}, got ${c}"
+          )
+        // Idem, see `verifySingleConstruct`
+    ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
+  }
+
+def verifyOptionalConstruct[Def <: OpInputDef: Type, t <: Attribute: Type](
+    d: Def
+)(using Quotes) =
+  '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
+    val cs = ${ verifyVariadicConstruct(d) }(c)
+    if cs.length > 1 then
+      throw new Exception(
+        s"Expected ${${ Expr(d.name) }} to be of type ${${
+            Expr(Type.show[DefinedInputOf[Def, t]])
+          }}, got ${c}"
+      )
+    cs.headOption
+      // Idem, see `verifySingleConstruct`
+      .asInstanceOf[Option[DefinedInputOf[Def, t]]]
+  }
 
 /** Get all verified constructs of a specified type from an UnverifiedOp. That
   * is, of the expected types and variadicities, as specified by the
@@ -541,16 +540,15 @@ def verifyOptionalConstruct[Def <: OpInputDef: Type](d: Def)(using Quotes) =
 def verifiyConstruct[Def <: OpInputDef: Type](
     d: Def
 )(using Quotes) = {
-  getConstructVariadicity(d) match
-    case Variadicity.Optional =>
-      // If the construct is optional, check if it is defined and if so, verify its type
-      verifyOptionalConstruct(d)
-    // If the construct is not variadic, just check if it is of the expected type
-    case Variadicity.Single =>
-      verifySingleConstruct(d)
-    // If the construct is variadic, check if it is a list of the expected type
-    case Variadicity.Variadic =>
-      verifyVariadicConstruct(d)
+  getConstructConstraint(d) match
+    case '[type t <: Attribute; `t`] =>
+      getConstructVariadicity(d) match
+        case Variadicity.Optional =>
+          verifyOptionalConstruct[Def, t](d)
+        case Variadicity.Single =>
+          verifySingleConstruct[Def, t](d)
+        case Variadicity.Variadic =>
+          verifyVariadicConstruct[Def, t](d)
 
 }
 
