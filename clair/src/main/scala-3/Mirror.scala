@@ -187,7 +187,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
         case '[DerivedOperation[name, _]] =>
-          Type.valueOfConstant[name].get.asInstanceOf[String]
+          Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(
             s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
@@ -223,29 +223,23 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
             type MirroredElemTypes = elemTypes
           }
         } =>
-      val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
+      val defname = Type.valueOfConstant[label].get
 
       val paramLabels = stringifyLabels[elemLabels]
 
       val name = Type.of[T] match
         case '[DerivedAttribute[name, _]] =>
-          Type.valueOfConstant[name].get.asInstanceOf[String]
+          Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(
             s"${Type.show[T]} should extend DerivedAttribute to derive DerivedAttributeCompanion.",
             TypeRepr.of[T].typeSymbol.pos.get
           )
 
-      val attributeDefs = Type.of[(elemLabels, elemTypes)] match
-        case _: Type[(Tuple, Tuple)] => summonAttrDefs[elemLabels, elemTypes]
+      val attributeDefs = summonAttrDefs[elemLabels, elemTypes]
 
       AttributeDef(
         name = name,
         attributes = attributeDefs
       )
 }
-
-inline def getNameDefBlaBla[T] = ${ getNameDefBlaBlaImpl[T] }
-
-def getNameDefBlaBlaImpl[T: Type](using quotes: Quotes): Expr[String] =
-  Expr(getDefImpl[T].name)

@@ -117,7 +117,7 @@ case class AttrDictDirective() extends Directive {
     state.lastWasPunctuation = false
     '{
       $p.printOptionalAttrDict(${
-        selectMember(op, "attributes").asExprOf[DictType[String, Attribute]]
+        selectMember[DictType[String, Attribute]](op, "attributes")
       }.toMap)(using 0)
     }
   }
@@ -144,11 +144,11 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match {
           case Variadicity.Single =>
-            '{ $p.print(${ selectMember(op, n).asExprOf[Operand[?]] }) }
+            '{ $p.print(${ selectMember[Operand[?]](op, n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember(op, n).asExprOf[Seq[Operand[?]]] })(
-                using 0
+              $p.printList(${ selectMember(op, n) })(using
+                0
               )
             }
         }
@@ -185,11 +185,11 @@ case class TypeDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ $p.print(${ selectMember(op, n).asExprOf[Operand[?]] }.typ) }
+            '{ $p.print(${ selectMember[Operand[?]](op, n) }.typ) }
           case Variadicity.Variadic =>
             '{
               $p.printList(${
-                selectMember(op, n).asExprOf[Seq[Operand[?]]]
+                selectMember[Seq[Operand[?]]](op, n)
               }.map(_.typ))(using 0)
             }
     }
