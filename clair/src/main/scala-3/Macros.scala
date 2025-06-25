@@ -83,7 +83,6 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
   }
 }
 
-//TODO: handle multi-variadic segmentSizes creation!
 /** Get all constructs of the specified type flattened from the ADT expression.
   * @tparam Def
   *   The construct definition type.
@@ -376,6 +375,10 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
     }
   }
 
+/** Partition a construct sequence, in the case of no variadic defintion.
+ * 
+ * @see [[constructPartitioner]]
+ */
 def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     Quotes
 ) =
@@ -398,6 +401,10 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     }
   )
 
+/** Partition a construct sequence, in the case of a single variadic defintion.
+ * 
+ * @see [[constructPartitioner]]
+ */
 def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
     using Quotes
 ) =
@@ -448,6 +455,10 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
 
   (preceeding_exprs :+ variadic_expr) ++ following_exprs
 
+/** Partition a construct sequence, in the case of multiple variadic definitions
+ * 
+ * @see [[constructPartitioner]]
+ */
 def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     defs: Seq[Def]
 )(using Quotes) =
@@ -508,21 +519,20 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
   *   The construct definition type.
   * @param defs
   *   The construct definitions.
-  * @param op
-  *   The UnverifiedOp expression.
+  * @return A function of an operation and its flat sequence of constructs, returning the
+  * sequence of partitions according to the definitions.
   */
 def constructPartitioner[Def <: OpInputDef: Type](
     defs: Seq[Def]
 )(using Quotes) =
   // Check the number of variadic constructs
   defs.count(getConstructVariadicity(_) != Variadicity.Single) match
-    case 0 =>
-      uniadicConstructPartitioner(defs)
-    case 1 =>
-      univariadicConstructPartitioner(defs)
-    case _ =>
-      multivariadicConstructPartitioner(defs)
+    case 0 => uniadicConstructPartitioner(defs)
+    case 1 => univariadicConstructPartitioner(defs)
+    case _ => multivariadicConstructPartitioner(defs)
 
+/* Return a verifier for a single-defined construct
+*/
 def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -541,6 +551,8 @@ def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[DefinedInputOf[Def, t]]
   }
 
+/* Return a verifier for a variadic-defined construct
+*/
 def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -558,6 +570,8 @@ def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
   }
 
+/* Return a verifier for an optional-defined construct
+*/
 def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -574,16 +588,11 @@ def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
       .asInstanceOf[Option[DefinedInputOf[Def, t]]]
   }
 
-/** Get all verified constructs of a specified type from an UnverifiedOp. That
-  * is, of the expected types and variadicities, as specified by the
-  * OperationDef.
-  *
-  * @tparam Def
-  *   The construct definition type.
+/** Returns a verifier expression for the passed construct definition.
+  * 
   * @param defs
   *   The constructs definitions.
-  * @param op
-  *   The UnverifiedOp expression.
+  * @returns A function of a construct(s), returning the typed, verified vonstruct(s)
   */
 def constructVerifier[Def <: OpInputDef: Type](
     d: Def
