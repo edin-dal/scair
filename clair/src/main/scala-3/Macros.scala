@@ -167,8 +167,7 @@ def parseMacro(opDef: OperationDef, p: Expr[Parser])(using
 
 /*_____________*\
 \*-- HELPERS --*/
-/** Helper to verify a property argument.
-  */
+/** Helper to verify a property argument. */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
     propName: String
@@ -207,8 +206,7 @@ def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
     )
   }
 
-/** Type helper to get the defined input type of a construct definition.
-  */
+/** Type helper to get the defined input type of a construct definition. */
 type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
   case OperandDef    => Operand[A]
   case ResultDef     => Result[A]
@@ -217,8 +215,7 @@ type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
   case OpPropertyDef => A
 }
 
-/** Type helper to get the defined input type of a construct definition.
-  */
+/** Type helper to get the defined input type of a construct definition. */
 type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
 
 /** Helper to access the right sequence of constructs from an UnverifiedOp,
@@ -234,8 +231,7 @@ def getConstructSeq[Def <: OpInputDef: Type as d](
   case '[OpPropertyDef] => '{ ${ op }.properties.toSeq }
 ).asExprOf[Seq[DefinedInput[Def]]]
 
-/** Helper to get the name of a construct definition type.
-  */
+/** Helper to get the name of a construct definition type. */
 def getConstructName[Def <: OpInputDef: Type as d](using Quotes) = d match
   case '[ResultDef]     => "result"
   case '[OperandDef]    => "operand"
@@ -243,8 +239,7 @@ def getConstructName[Def <: OpInputDef: Type as d](using Quotes) = d match
   case '[SuccessorDef]  => "successor"
   case '[OpPropertyDef] => "property"
 
-/** Helper to get the expected type of a construct definition's construct.
-  */
+/** Helper to get the expected type of a construct definition's construct. */
 def getConstructConstraint(_def: OpInputDef)(using Quotes) = _def match
   case OperandDef(name, tpe, variadicity) => tpe
   case ResultDef(name, tpe, variadicity)  => tpe
@@ -252,8 +247,7 @@ def getConstructConstraint(_def: OpInputDef)(using Quotes) = _def match
   case SuccessorDef(name, variadicity)    => Type.of[Attribute]
   case OpPropertyDef(name, tpe, _)        => tpe
 
-/** Helper to get the variadicity of a construct definition's construct.
-  */
+/** Helper to get the variadicity of a construct definition's construct. */
 def getConstructVariadicity(_def: OpInputDef)(using Quotes) = _def match
   case OperandDef(name, tpe, variadicity) => variadicity
   case ResultDef(name, tpe, variadicity)  => variadicity

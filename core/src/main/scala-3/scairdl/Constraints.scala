@@ -56,8 +56,7 @@ def check_equal[T <: Attribute: ClassTag](that_attr: Attribute): Boolean =
 ||   CONSTRAINT CONTEXT   ||
 \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
 
-/** Represents the context for constraints, holding variable constraints.
-  */
+/** Represents the context for constraints, holding variable constraints. */
 class ConstraintContext() {
 
   val var_constraints: DictType[String, Attribute] = DictType
@@ -65,8 +64,7 @@ class ConstraintContext() {
 
 }
 
-/** Abstract class representing an IRDL constraint.
-  */
+/** Abstract class representing an IRDL constraint. */
 abstract class IRDLConstraint {
 
   /** Verifies if the given attribute satisfies the constraint within the
@@ -117,8 +115,7 @@ abstract class IRDLConstraint {
 ||     ANY ATTR     ||
 \*≡==---==≡≡==---==≡*/
 
-/** An IRDL constraint that matches any attribute.
-  */
+/** An IRDL constraint that matches any attribute. */
 object AnyAttr extends IRDLConstraint {
 
   /** Verifies if the given attribute satisfies the constraint within the
@@ -135,8 +132,7 @@ object AnyAttr extends IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit = {}
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString(): String = "AnyAttr"
 }
 
@@ -175,13 +171,11 @@ case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
     }
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = this_attr.toString
 }
 
-/** A given conversion from Attribute to IRDLConstraint.
-  */
+/** A given conversion from Attribute to IRDLConstraint. */
 given attr2constraint: Conversion[Attribute, IRDLConstraint] with {
   def apply(attr: Attribute): IRDLConstraint = EqualAttr(attr)
 }
@@ -222,8 +216,7 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
     }
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString =
     s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]()"
 
@@ -278,8 +271,7 @@ case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
     }
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = constraints.mkString(" || ")
 }
 
@@ -315,8 +307,7 @@ case class AllOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit = for (c <- constraints) c.verify(that_attr, constraint_ctx)
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = constraints.mkString(" && ")
 }
 
@@ -373,8 +364,7 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
       throw new VerifyException(errstr)
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = s"ParametrizedAttrConstraint[${implicitly[ClassTag[T]]
       .runtimeClass.getName}](${constraints})"
 

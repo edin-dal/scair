@@ -150,8 +150,7 @@ case class VariableDirective(construct: OpInputDef) extends Directive {
 
 }
 
-/** Directive for types of individual operands or results.
-  */
+/** Directive for types of individual operands or results. */
 case class TypeDirective(construct: OperandDef | ResultDef) extends Directive {
 
   def print(op: Expr[?], p: Expr[Printer])(using
@@ -217,8 +216,7 @@ transparent inline def chainParsers(run: Expr[P[Any]], next: Expr[P[Any]])(using
         $run ~ $next
       }
 
-/** Holds state during printer generation to manage spacing and punctuation.
-  */
+/** Holds state during printer generation to manage spacing and punctuation. */
 case class PrintingState(
     var shouldEmitSpace: Boolean = true,
     var lastWasPunctuation: Boolean = false
@@ -364,8 +362,7 @@ transparent inline def assemblyFormat[$: P](using
 ): P[AssemblyFormatDirective] = directive.rep(1)
   .map(AssemblyFormatDirective.apply)
 
-/** Parser for any directive.
-  */
+/** Parser for any directive. */
 transparent inline def directive[$: P](using
     opDef: OperationDef
 ): P[Directive] = typeDirective | literalDirective | variableDirective |

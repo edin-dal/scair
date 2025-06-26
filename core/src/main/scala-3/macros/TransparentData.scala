@@ -4,8 +4,7 @@ import scair.ir.DataAttribute
 
 import scala.quoted.*
 
-/** Type helper to extract the type of the data from the DataAttribute.
-  */
+/** Type helper to extract the type of the data from the DataAttribute. */
 type DataTypeOf[T] = T match
   case DataAttribute[t] => t
 
