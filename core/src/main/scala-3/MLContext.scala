@@ -24,15 +24,15 @@ class MLContext() {
 
   def registerDialect(dialect: Dialect) = {
     dialectOpContext ++= {
-      for { dialectOp <- dialect.operations } yield {
-        dialectOp.name -> dialectOp
-      }
+      for {
+        dialectOp <- dialect.operations
+      } yield { dialectOp.name -> dialectOp }
     }
 
     dialectAttrContext ++= {
-      for { dialectAttr <- dialect.attributes } yield {
-        dialectAttr.name -> dialectAttr
-      }
+      for {
+        dialectAttr <- dialect.attributes
+      } yield { dialectAttr.name -> dialectAttr }
     }
   }
 

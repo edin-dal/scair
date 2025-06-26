@@ -112,9 +112,8 @@ case class Min(
 ||    YIELD OP    ||
 \*≡==---=≡≡=---==≡*/
 
-case class Yield(
-    arguments: Seq[Operand[Attribute]]
-) extends DerivedOperation["affine.yield", Yield]
+case class Yield(arguments: Seq[Operand[Attribute]])
+    extends DerivedOperation["affine.yield", Yield]
     derives DerivedOperationCompanion
 
 val AffineDialect = summonDialect[

@@ -16,18 +16,14 @@ import scair.ir.*
 object AbsfOp extends OperationCompanion {
   override def name: String = "math.absf"
 
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = {
-    P(
-      "" ~ Parser.ValueUse ~ ":" ~ parser.Type
-    ).map { case (operandName, type_) =>
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(operandName),
-        operandsTypes = Seq(type_),
-        resultsTypes = Seq(type_)
-      )
+  override def parse[$: P](parser: Parser): P[Operation] = {
+    P("" ~ Parser.ValueUse ~ ":" ~ parser.Type).map {
+      case (operandName, type_) => parser.generateOperation(
+          opName = name,
+          operandsNames = Seq(operandName),
+          operandsTypes = Seq(type_),
+          resultsTypes = Seq(type_)
+        )
     }
   }
 
@@ -58,10 +54,7 @@ case class AbsfOp(
     properties.size
   ) match {
     case (1, 1, 0, 0, 0) => Right(this)
-    case _               =>
-      Left(
-        "AbsfOp must have 1 result and 1 operand."
-      )
+    case _               => Left("AbsfOp must have 1 result and 1 operand.")
   }
 
 }
@@ -73,24 +66,17 @@ case class AbsfOp(
 object FPowIOp extends OperationCompanion {
   override def name: String = "math.fpowi"
 
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = {
+  override def parse[$: P](parser: Parser): P[Operation] = {
     P(
-      Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
-    ).map {
-      case (
-            operand1Name,
-            operand2Name,
-            operand1Type,
-            operand2Type
-          ) =>
-        parser.generateOperation(
-          opName = name,
-          operandsNames = Seq(operand1Name, operand2Name),
-          operandsTypes = Seq(operand1Type, operand2Type),
-          resultsTypes = Seq(operand1Type)
-        )
+      Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~
+        parser.Type
+    ).map { case (operand1Name, operand2Name, operand1Type, operand2Type) =>
+      parser.generateOperation(
+        opName = name,
+        operandsNames = Seq(operand1Name, operand2Name),
+        operandsTypes = Seq(operand1Type, operand2Type),
+        resultsTypes = Seq(operand1Type)
+      )
     }
   }
 
@@ -121,10 +107,7 @@ case class FPowIOp(
     properties.size
   ) match {
     case (2, 1, 0, 0, 0) => Right(this)
-    case _               =>
-      Left(
-        "FPowIOp must have 1 result and 2 operands."
-      )
+    case _               => Left("FPowIOp must have 1 result and 2 operands.")
   }
 
 }
@@ -133,7 +116,4 @@ case class FPowIOp(
 /////////////
 
 val MathDialect: Dialect =
-  new Dialect(
-    operations = Seq(AbsfOp, FPowIOp),
-    attributes = Seq()
-  )
+  new Dialect(operations = Seq(AbsfOp, FPowIOp), attributes = Seq())

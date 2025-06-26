@@ -57,33 +57,27 @@ trait Operation extends IRNode {
   var container_block: Option[Block] = None
   def trait_verify(): Either[String, Operation] = Right(this)
 
-  def custom_print(p: Printer)(using indentLevel: Int) =
-    p.printGenericMLIROperation(this)
+  def custom_print(p: Printer)(using indentLevel: Int) = p
+    .printGenericMLIROperation(this)
 
   def custom_verify(): Either[String, Operation] = Right(this)
 
   def verify(): Either[String, Operation] = {
-    results
-      .foldLeft[Either[String, Unit]](Right(()))((res, result) =>
-        res.flatMap(_ => result.verify())
+    results.foldLeft[Either[String, Unit]](Right(
+      ()
+    ))((res, result) => res.flatMap(_ => result.verify())).flatMap(_ =>
+      regions.foldLeft[Either[String, Unit]](Right(
+        ()
+      ))((res, region) => res.flatMap(_ => region.verify()))
+    ).flatMap(_ =>
+      properties.values.toSeq.foldLeft[Either[String, Unit]](Right(
+        ()
+      ))((res, prop) => res.flatMap(_ => prop.custom_verify()))
+    ).flatMap(_ =>
+      attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+        (res, attr) => res.flatMap(_ => attr.custom_verify())
       )
-      .flatMap(_ =>
-        regions.foldLeft[Either[String, Unit]](Right(()))((res, region) =>
-          res.flatMap(_ => region.verify())
-        )
-      )
-      .flatMap(_ =>
-        properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, prop) => res.flatMap(_ => prop.custom_verify())
-        )
-      )
-      .flatMap(_ =>
-        attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, attr) => res.flatMap(_ => attr.custom_verify())
-        )
-      )
-      .flatMap(_ => custom_verify())
-      .flatMap(_ => trait_verify())
+    ).flatMap(_ => custom_verify()).flatMap(_ => trait_verify())
   }
 
   final def drop_all_references: Unit = {
@@ -99,31 +93,22 @@ trait Operation extends IRNode {
       )
     }
     drop_all_references
-    if (safe_erase) then {
-      for (result <- results) {
-        result.erase()
-      }
-    }
+    if (safe_erase) then { for (result <- results) { result.erase() } }
 
   }
 
-  final def attach_region(region: Region) =
-    region.container_operation match {
-      case Some(x) =>
-        throw new Exception(
-          s"""Can't attach a region already attached to an operation:
+  final def attach_region(region: Region) = region.container_operation match {
+    case Some(x) => throw new Exception(
+        s"""Can't attach a region already attached to an operation:
               ${Printer().print(region)(using 0)}"""
-        )
-      case None =>
-        region.is_ancestor(this) match {
-          case true =>
-            throw new Exception(
-              "Can't add a region to an operation that is contained within that region"
-            )
-          case false =>
-            region.container_operation = Some(this)
-        }
-    }
+      )
+    case None => region.is_ancestor(this) match {
+        case true => throw new Exception(
+            "Can't add a region to an operation that is contained within that region"
+          )
+        case false => region.container_operation = Some(this)
+      }
+  }
 
 }
 
@@ -134,8 +119,8 @@ abstract class BaseOperation(
     val results: Seq[Result[Attribute]] = Seq(),
     val regions: Seq[Region] = Seq(),
     val properties: Map[String, Attribute] = Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends Operation {
 
   // def companion : OperationCompanion
@@ -168,11 +153,8 @@ abstract class BaseOperation(
   }
 
   override def hashCode(): Int = {
-    return 7 * 41 +
-      this.operands.hashCode() +
-      this.results.hashCode() +
-      this.regions.hashCode() +
-      this.properties.hashCode() +
+    return 7 * 41 + this.operands.hashCode() + this.results.hashCode() +
+      this.regions.hashCode() + this.properties.hashCode() +
       this.attributes.hashCode()
   }
 
@@ -188,10 +170,10 @@ case class UnregisteredOperation(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = name,
       operands = operands,
@@ -227,9 +209,7 @@ trait OperationCompanion {
   def name: String
 
   def parse[$: P](parser: Parser): P[Operation] =
-    throw new Exception(
-      s"No custom Parser implemented for Operation '${name}'"
-    )
+    throw new Exception(s"No custom Parser implemented for Operation '${name}'")
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
@@ -237,8 +217,8 @@ trait OperationCompanion {
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+      attributes: DictType[String, Attribute] = DictType
+        .empty[String, Attribute]
   ): Operation
 
 }

@@ -20,26 +20,24 @@ class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
     printer = new Printer(true)
   }
 
-  def getResult[A](result: String, expected: A) =
-    result match {
-      case "Success" => ((x: Int) => Parsed.Success(expected, x))
-      case "Failure" => Parsed.Failure(_, _, _)
-    }
+  def getResult[A](result: String, expected: A) = result match {
+    case "Success" => ((x: Int) => Parsed.Success(expected, x))
+    case "Failure" => Parsed.Failure(_, _, _)
+  }
 
-  val strToAttributeTests =
-    Table(
-      ("input", "result", "expected"),
-      (
-        "!tuples.tuple<f32, f32>",
-        "Success",
-        TupleStreamTuple(Seq(Float32Type(), Float32Type()))
-      ),
-      (
-        "!tuples.tuplestream<f32, f32>",
-        "Success",
-        TupleStreamTuple(Seq(Float32Type(), Float32Type()))
-      )
+  val strToAttributeTests = Table(
+    ("input", "result", "expected"),
+    (
+      "!tuples.tuple<f32, f32>",
+      "Success",
+      TupleStreamTuple(Seq(Float32Type(), Float32Type()))
+    ),
+    (
+      "!tuples.tuplestream<f32, f32>",
+      "Success",
+      TupleStreamTuple(Seq(Float32Type(), Float32Type()))
     )
+  )
 
   forAll(strToAttributeTests) { (input, result, expected) =>
     // Get the expected output

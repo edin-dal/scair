@@ -13,9 +13,8 @@ case class Alloc(
 ) extends DerivedOperation["memref.alloc", Alloc]
     derives DerivedOperationCompanion
 
-case class Dealloc(
-    memref: Operand[MemrefType]
-) extends DerivedOperation["memref.dealloc", Dealloc]
+case class Dealloc(memref: Operand[MemrefType])
+    extends DerivedOperation["memref.dealloc", Dealloc]
     with AssemblyFormat["$memref attr-dict `:` type($memref)"]
     derives DerivedOperationCompanion
 

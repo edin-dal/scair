@@ -56,17 +56,15 @@ def check_equal[T <: Attribute: ClassTag](that_attr: Attribute): Boolean =
 ||   CONSTRAINT CONTEXT   ||
 \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
 
-/** Represents the context for constraints, holding variable constraints.
-  */
+/** Represents the context for constraints, holding variable constraints. */
 class ConstraintContext() {
 
-  val var_constraints: DictType[String, Attribute] =
-    DictType.empty[String, Attribute]
+  val var_constraints: DictType[String, Attribute] = DictType
+    .empty[String, Attribute]
 
 }
 
-/** Abstract class representing an IRDL constraint.
-  */
+/** Abstract class representing an IRDL constraint. */
 abstract class IRDLConstraint {
 
   /** Verifies if the given attribute satisfies the constraint within the
@@ -90,8 +88,7 @@ abstract class IRDLConstraint {
   def verify(
       those_attrs: Seq[Attribute],
       constraint_ctx: ConstraintContext
-  ): Unit =
-    for (attr <- those_attrs) verify(attr, constraint_ctx)
+  ): Unit = for (attr <- those_attrs) verify(attr, constraint_ctx)
 
   /** Combines this constraint with another constraint using logical AND.
     *
@@ -118,8 +115,7 @@ abstract class IRDLConstraint {
 ||     ANY ATTR     ||
 \*≡==---==≡≡==---==≡*/
 
-/** An IRDL constraint that matches any attribute.
-  */
+/** An IRDL constraint that matches any attribute. */
 object AnyAttr extends IRDLConstraint {
 
   /** Verifies if the given attribute satisfies the constraint within the
@@ -136,8 +132,7 @@ object AnyAttr extends IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit = {}
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString(): String = "AnyAttr"
 }
 
@@ -170,20 +165,17 @@ case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
   ): Unit = {
 
     if (this_attr != that_attr) {
-      val errstr =
-        s"${that_attr.name} does not equal ${this_attr.name}:\n" +
-          s"Got ${that_attr.custom_print}, expected ${this_attr.custom_print}"
+      val errstr = s"${that_attr.name} does not equal ${this_attr.name}:\n" +
+        s"Got ${that_attr.custom_print}, expected ${this_attr.custom_print}"
       throw new VerifyException(errstr)
     }
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = this_attr.toString
 }
 
-/** A given conversion from Attribute to IRDLConstraint.
-  */
+/** A given conversion from Attribute to IRDLConstraint. */
 given attr2constraint: Conversion[Attribute, IRDLConstraint] with {
   def apply(attr: Attribute): IRDLConstraint = EqualAttr(attr)
 }
@@ -219,14 +211,12 @@ case class BaseAttr[T <: Attribute: ClassTag]() extends IRDLConstraint {
       case _: T =>
       case _    =>
         val className = implicitly[ClassTag[T]].runtimeClass.getName
-        val errstr =
-          s"${that_attr.name}'s class does not equal ${className}\n"
+        val errstr = s"${that_attr.name}'s class does not equal ${className}\n"
         throw new VerifyException(errstr)
     }
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString =
     s"BaseAttr[${implicitly[ClassTag[T]].runtimeClass.getName}]()"
 
@@ -276,14 +266,12 @@ case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
         }
       })
     ) {
-      val errstr =
-        s"${that_attr.name} does not match $toString\n"
+      val errstr = s"${that_attr.name} does not match $toString\n"
       throw new VerifyException(errstr)
     }
   }
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = constraints.mkString(" || ")
 }
 
@@ -317,11 +305,9 @@ case class AllOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
   override def verify(
       that_attr: Attribute,
       constraint_ctx: ConstraintContext
-  ): Unit =
-    for (c <- constraints) c.verify(that_attr, constraint_ctx)
+  ): Unit = for (c <- constraints) c.verify(that_attr, constraint_ctx)
 
-  /** Returns a string representation of the constraint.
-    */
+  /** Returns a string representation of the constraint. */
   override def toString = constraints.mkString(" && ")
 }
 
@@ -355,39 +341,32 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
   override def verify(
       that_attr: Attribute,
       constraint_ctx: ConstraintContext
-  ): Unit =
-    check_same_class(that_attr) match {
-      case true =>
-        that_attr match {
-          case x: ParametrizedAttribute =>
-            if (!(x.parameters.length == constraints.length)) {
-              throw new VerifyException(
-                s"Expected ${constraints.length} parameters, got ${x.parameters.length}\n"
-              )
-            }
-            for ((p, c) <- x.parameters zip constraints)
-              p match {
-                case p: Attribute => c.verify(p, constraint_ctx)
-                case p: Seq[_]    =>
-                  c.verify(p.asInstanceOf[Seq[Attribute]], constraint_ctx)
-              }
+  ): Unit = check_same_class(that_attr) match {
+    case true => that_attr match {
+        case x: ParametrizedAttribute =>
+          if (!(x.parameters.length == constraints.length)) {
+            throw new VerifyException(s"Expected ${constraints
+                .length} parameters, got ${x.parameters.length}\n")
+          }
+          for ((p, c) <- x.parameters zip constraints) p match {
+            case p: Attribute => c.verify(p, constraint_ctx)
+            case p: Seq[_]    => c
+                .verify(p.asInstanceOf[Seq[Attribute]], constraint_ctx)
+          }
 
-          case _ =>
-            throw new VerifyException(
-              "Attribute being verified must be of type ParametrizedAttribute.\n"
-            )
-        }
-      case false =>
-        val className = implicitly[ClassTag[T]].runtimeClass.getName
-        val errstr =
-          s"${that_attr.name}'s class does not equal ${className}.\n"
-        throw new VerifyException(errstr)
-    }
+        case _ => throw new VerifyException(
+            "Attribute being verified must be of type ParametrizedAttribute.\n"
+          )
+      }
+    case false =>
+      val className = implicitly[ClassTag[T]].runtimeClass.getName
+      val errstr = s"${that_attr.name}'s class does not equal ${className}.\n"
+      throw new VerifyException(errstr)
+  }
 
-  /** Returns a string representation of the constraint.
-    */
-  override def toString =
-    s"ParametrizedAttrConstraint[${implicitly[ClassTag[T]].runtimeClass.getName}](${constraints})"
+  /** Returns a string representation of the constraint. */
+  override def toString = s"ParametrizedAttrConstraint[${implicitly[ClassTag[T]]
+      .runtimeClass.getName}](${constraints})"
 
 }
 
@@ -426,8 +405,7 @@ case class VarConstraint(val name: String, val constraint: IRDLConstraint)
     val var_consts = constraint_ctx.var_constraints
 
     var_consts.contains(name) match {
-      case true =>
-        if (var_consts.apply(name) != that_attr) {
+      case true => if (var_consts.apply(name) != that_attr) {
           throw new VerifyException("oh mah gawd")
         }
       case false =>

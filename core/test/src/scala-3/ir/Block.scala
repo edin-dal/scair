@@ -15,10 +15,10 @@ case class TestOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = "test.op",
       operands,
@@ -33,57 +33,51 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
 
   var printer = new Printer(true);
 
-  forAll(
-    Table(
-      ("block", "ir"),
-      (
-        Block(),
-        """^bb0():
+  forAll(Table(
+    ("block", "ir"),
+    (
+      Block(),
+      """^bb0():
 """
-      ),
-      (
-        Block(Seq()),
-        """^bb0():
+    ),
+    (
+      Block(Seq()),
+      """^bb0():
 """
-      ),
-      (
-        Block(Seq(), Seq()),
-        """^bb0():
+    ),
+    (
+      Block(Seq(), Seq()),
+      """^bb0():
 """
-      ),
-      (
-        Block(Seq(TestOp())),
-        """^bb0():
+    ),
+    (
+      Block(Seq(TestOp())),
+      """^bb0():
   "test.op"() : () -> ()
 """
-      ),
-      (
-        Block(TestOp()),
-        """^bb0():
+    ),
+    (
+      Block(TestOp()),
+      """^bb0():
   "test.op"() : () -> ()
 """
+    ),
+    (
+      Block(
+        Seq(I32),
+        (args: Iterable[Value[Attribute]]) => Seq(TestOp(operands = args.toSeq))
       ),
-      (
-        Block(
-          Seq(I32),
-          (args: Iterable[Value[Attribute]]) =>
-            Seq(TestOp(operands = args.toSeq))
-        ),
-        """^bb0(%0: i32):
+      """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()
 """
-      ),
-      (
-        Block(
-          I32,
-          (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg)))
-        ),
-        """^bb0(%0: i32):
+    ),
+    (
+      Block(I32, (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg)))),
+      """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()
 """
-      )
     )
-  ) { (block: Block, ir: String) =>
+  )) { (block: Block, ir: String) =>
     val out = StringWriter()
     printer = new Printer(true, p = PrintWriter(out))
     // Run the pqrser on the input and check

@@ -97,16 +97,14 @@ object RelAlg_SetSemantic
 object SortSpecificationAttr extends AttributeCompanion {
   override def name: String = "db.sortspec"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] =
-    P(
-      "(" ~ ColumnRefAttr.parse(parser) ~ "," ~ RelAlg_SortSpec.caseParser ~ ")"
+  override def parse[$: P](parser: AttrParser): P[Attribute] = P(
+    "(" ~ ColumnRefAttr.parse(parser) ~ "," ~ RelAlg_SortSpec.caseParser ~ ")"
+  ).map((x, y) =>
+    SortSpecificationAttr(
+      x.asInstanceOf[ColumnRefAttr],
+      y.asInstanceOf[RelAlg_SortSpec_Case]
     )
-      .map((x, y) =>
-        SortSpecificationAttr(
-          x.asInstanceOf[ColumnRefAttr],
-          y.asInstanceOf[RelAlg_SortSpec_Case]
-        )
-      )
+  )
 
 }
 
@@ -132,21 +130,17 @@ case class SortSpecificationAttr(
 // ==------------------== //
 
 private def DialectRegion[$: P](parser: Parser) = P(
-  E({ parser.enterLocalRegion })
-    ~ (parser.BlockArgList
-      .orElse(Seq())
-      .mapTry((x: Seq[(String, Attribute)]) => {
-        val b = new Block(Seq.from(x.map(_._2)), Seq.empty)
-        parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
-        b
+  E({ parser.enterLocalRegion }) ~
+    (parser.BlockArgList.orElse(Seq()).mapTry((x: Seq[(String, Attribute)]) => {
+      val b = new Block(Seq.from(x.map(_._2)), Seq.empty)
+      parser.currentScope.defineValues(x.map(_._1) zip b.arguments)
+      b
+    }) ~ "{" ~ parser.Operations(1) ~ "}")
+      .map((b: Block, y: Seq[Operation]) => {
+        b.operations ++= y
+        new Region(Seq(b))
       })
-      ~ "{"
-      ~ parser.Operations(1) ~ "}").map((b: Block, y: Seq[Operation]) => {
-      b.operations ++= y
-      new Region(Seq(b))
-    })
-)
-  ~ E({ parser.enterParentRegion })
+) ~ E({ parser.enterParentRegion })
 
 // ==-----------== //
 //   BaseTableOp   //
@@ -156,24 +150,17 @@ object BaseTableOp extends OperationCompanion {
   override def name: String = "relalg.basetable"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ) = P(
-    parser.OptionalAttributes ~
-      "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse(parser))
-        .rep(0, sep = ",")
+  override def parse[$: P](parser: Parser) = P(
+    parser.OptionalAttributes ~ "columns" ~ ":" ~ "{" ~
+      (BareId ~ "=>" ~ ColumnDefAttr.parse(parser)).rep(0, sep = ",")
         .map(Map(_*)) ~ "}"
-  ).map(
-    (
-        x: Map[String, Attribute],
-        y: Map[String, Attribute]
-    ) =>
-      parser.generateOperation(
-        opName = name,
-        resultsTypes = Seq(TupleStream(Seq())),
-        attributes = x,
-        properties = y
-      )
+  ).map((x: Map[String, Attribute], y: Map[String, Attribute]) =>
+    parser.generateOperation(
+      opName = name,
+      resultsTypes = Seq(TupleStream(Seq())),
+      attributes = x,
+      properties = y
+    )
   )
   // ==----------------------== //
 
@@ -196,38 +183,27 @@ case class BaseTableOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (0, 0, 1, 0) =>
-      {
-        results(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "BaseTableOp Operation must contain only 1 result."
-            )
-        }
-      }.flatMap(_ => {
-        attributes.get("table_identifier") match {
-          case Some(x) =>
-            x match {
-              case _: StringData => Right(this)
-              case _             =>
-                Left(
-                  "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
-                )
-            }
-          case None =>
-            Left(
-              "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
-            )
-        }
-      })
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (0, 0, 1, 0) => {
+          results(0).typ match {
+            case _: TupleStream => Right(this)
+            case _ => Left("BaseTableOp Operation must contain only 1 result.")
+          }
+        }.flatMap(_ => {
+          attributes.get("table_identifier") match {
+            case Some(x) => x match {
+                case _: StringData => Right(this)
+                case _             => Left(
+                    "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
+                  )
+              }
+            case None => Left(
+                "BaseTableOp Operation must contain a StringAttr named 'table_identifier'."
+              )
+          }
+        })
+    }
 
 }
 
@@ -239,28 +215,19 @@ object SelectionOp extends OperationCompanion {
   override def name: String = "relalg.selection"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ DialectRegion(parser) ~
-      parser.OptionalKeywordAttributes
-  )
-    .map(
-      (
-          x: String,
-          y: Region,
-          z: Map[String, Attribute]
-      ) =>
-        val operand_type = parser.currentScope.valueMap(x).typ
-        parser.generateOperation(
-          opName = name,
-          operandsNames = Seq(x),
-          operandsTypes = Seq(operand_type),
-          resultsTypes = Seq(TupleStream(Seq())),
-          regions = Seq(y),
-          attributes = z
-        )
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ DialectRegion(parser) ~ parser.OptionalKeywordAttributes
+  ).map((x: String, y: Region, z: Map[String, Attribute]) =>
+    val operand_type = parser.currentScope.valueMap(x).typ
+    parser.generateOperation(
+      opName = name,
+      operandsNames = Seq(x),
+      operandsTypes = Seq(operand_type),
+      resultsTypes = Seq(TupleStream(Seq())),
+      regions = Seq(y),
+      attributes = z
     )
+  )
   // ==----------------------== //
 
 }
@@ -282,31 +249,24 @@ case class SelectionOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 1) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "SelectionOp Operation must contain only 1 operand of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        results(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "SelectionOp Operation must contain only 1 result of type TupleStream."
-            )
-        }
-      })
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 1) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "SelectionOp Operation must contain only 1 operand of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          results(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "SelectionOp Operation must contain only 1 result of type TupleStream."
+              )
+          }
+        })
+    }
 
 }
 
@@ -318,30 +278,20 @@ object MapOp extends OperationCompanion {
   override def name: String = "relalg.map"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId
-      ~ "computes" ~ ":"
-      ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
-      ~ DialectRegion(parser)
-      ~ parser.OptionalKeywordAttributes
-  ).map(
-    (
-        x: String,
-        z: Attribute,
-        y: Region,
-        w: Map[String, Attribute]
-    ) =>
-      val operand_type = parser.currentScope.valueMap(x).typ
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(x),
-        operandsTypes = Seq(operand_type),
-        resultsTypes = Seq(TupleStream(Seq())),
-        regions = Seq(y),
-        attributes = w + ("computed_cols" -> z)
-      )
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ "computes" ~ ":" ~ "[" ~
+      ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]" ~
+      DialectRegion(parser) ~ parser.OptionalKeywordAttributes
+  ).map((x: String, z: Attribute, y: Region, w: Map[String, Attribute]) =>
+    val operand_type = parser.currentScope.valueMap(x).typ
+    parser.generateOperation(
+      opName = name,
+      operandsNames = Seq(x),
+      operandsTypes = Seq(operand_type),
+      resultsTypes = Seq(TupleStream(Seq())),
+      regions = Seq(y),
+      attributes = w + ("computed_cols" -> z)
+    )
   )
   // ==----------------------== //
 
@@ -364,50 +314,39 @@ case class MapOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 1) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "MapOp Operation must contain only 1 operand of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        results(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "MapOp Operation must contain only 1 result of type TupleStream."
-            )
-        }
-      }).flatMap(_ => {
-        attributes.get("computed_cols") match {
-          case Some(x) =>
-            x match {
-              case _: ArrayAttribute[_] => Right(this)
-              case _                    =>
-                Left(
-                  "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
-                )
-            }
-          case None =>
-            Left(
-              "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
-            )
-        }
-      })
-    case _ =>
-      Left(
-        "MapOp Operation must contain only 1 operand, 1 result and 1 region."
-      )
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 1) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "MapOp Operation must contain only 1 operand of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          results(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "MapOp Operation must contain only 1 result of type TupleStream."
+              )
+          }
+        }).flatMap(_ => {
+          attributes.get("computed_cols") match {
+            case Some(x) => x match {
+                case _: ArrayAttribute[_] => Right(this)
+                case _                    => Left(
+                    "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
+                  )
+              }
+            case None => Left(
+                "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
+              )
+          }
+        })
+      case _ => Left(
+          "MapOp Operation must contain only 1 operand, 1 result and 1 region."
+        )
+    }
 
 }
 
@@ -419,21 +358,11 @@ object AggregationOp extends OperationCompanion {
   override def name: String = "relalg.aggregation"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId
-      ~ "[" ~ ColumnRefAttr
-        .parse(parser)
-        .rep(sep = ",")
-        .map(ArrayAttribute(_)) ~ "]"
-      ~ "computes" ~ ":"
-      ~ "[" ~ ColumnDefAttr
-        .parse(parser)
-        .rep(sep = ",")
-        .map(ArrayAttribute(_)) ~ "]"
-      ~ DialectRegion(parser)
-      ~ parser.OptionalKeywordAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ "[" ~ ColumnRefAttr.parse(parser).rep(sep = ",")
+      .map(ArrayAttribute(_)) ~ "]" ~ "computes" ~ ":" ~ "[" ~
+      ColumnDefAttr.parse(parser).rep(sep = ",").map(ArrayAttribute(_)) ~ "]" ~
+      DialectRegion(parser) ~ parser.OptionalKeywordAttributes
   ).map(
     (
         x: String,
@@ -473,64 +402,50 @@ case class AggregationOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 1) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "AggregationOp Operation must contain only 1 operand of type TupleStream."
-            )
-        }
-        results(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "AggregationOp Operation must contain only 1 result of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        attributes.get("computed_cols") match {
-          case Some(x) =>
-            x match {
-              case _: ArrayAttribute[_] => Right(this)
-              case _                    =>
-                Left(
-                  "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
-                )
-            }
-          case _ =>
-            Left(
-              "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
-            )
-        }
-      }).flatMap(_ => {
-        attributes.get("group_by_cols") match {
-          case Some(x) =>
-            x match {
-              case _: ArrayAttribute[_] => Right(this)
-              case _                    =>
-                Left(
-                  "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
-                )
-            }
-          case _ =>
-            Left(
-              "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
-            )
-        }
-      })
-    case _ =>
-      Left(
-        "AggregationOp Operation must contain only 1 operand, 1 result and 1 region."
-      )
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 1) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "AggregationOp Operation must contain only 1 operand of type TupleStream."
+              )
+          }
+          results(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "AggregationOp Operation must contain only 1 result of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          attributes.get("computed_cols") match {
+            case Some(x) => x match {
+                case _: ArrayAttribute[_] => Right(this)
+                case _                    => Left(
+                    "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
+                  )
+              }
+            case _ => Left(
+                "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
+              )
+          }
+        }).flatMap(_ => {
+          attributes.get("group_by_cols") match {
+            case Some(x) => x match {
+                case _: ArrayAttribute[_] => Right(this)
+                case _                    => Left(
+                    "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
+                  )
+              }
+            case _ => Left(
+                "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
+              )
+          }
+        })
+      case _ => Left(
+          "AggregationOp Operation must contain only 1 operand, 1 result and 1 region."
+        )
+    }
 
 }
 
@@ -542,23 +457,17 @@ object CountRowsOp extends OperationCompanion {
   override def name: String = "relalg.count"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
+  override def parse[$: P](parser: Parser): P[Operation] = P(
     ValueId ~ parser.OptionalAttributes
-  ).map(
-    (
-        x: String,
-        y: Map[String, Attribute]
-    ) =>
-      val operand_type = parser.currentScope.valueMap(x).typ
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(x),
-        operandsTypes = Seq(operand_type),
-        resultsTypes = Seq(I64),
-        attributes = y
-      )
+  ).map((x: String, y: Map[String, Attribute]) =>
+    val operand_type = parser.currentScope.valueMap(x).typ
+    parser.generateOperation(
+      opName = name,
+      operandsNames = Seq(x),
+      operandsTypes = Seq(operand_type),
+      resultsTypes = Seq(I64),
+      attributes = y
+    )
   )
   // ==----------------------== //
 
@@ -581,35 +490,26 @@ case class CountRowsOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 0) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "CountRowsOp Operation must contain 1 operand of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        results(0).typ match {
-          case _: IntegerType => Right(this)
-          case _              =>
-            Left(
-              "CountRowsOp Operation must contain only 1 result of IntegerType."
-            )
-        }
-      })
-    case _ =>
-      Left(
-        "CountRowsOp Operation must contain only 1 operand and 1 result."
-      )
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 0) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "CountRowsOp Operation must contain 1 operand of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          results(0).typ match {
+            case _: IntegerType => Right(this)
+            case _              => Left(
+                "CountRowsOp Operation must contain only 1 result of IntegerType."
+              )
+          }
+        })
+      case _ =>
+        Left("CountRowsOp Operation must contain only 1 operand and 1 result.")
+    }
 
 }
 
@@ -621,12 +521,9 @@ object AggrFuncOp extends OperationCompanion {
   override def name: String = "relalg.aggrfn"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
-      ~ ValueId ~ ":" ~ parser.Type.rep(1)
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser) ~ ValueId ~ ":" ~
+      parser.Type.rep(1) ~ parser.OptionalAttributes
   ).map(
     (
         aggrfunc: Attribute,
@@ -665,57 +562,43 @@ case class AggrFuncOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 0) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "AggrFuncOp Operation must contain 1 operand of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        attributes.get("fn") match {
-          case Some(x) =>
-            x match {
-              case _: RelAlg_AggrFunc_Case => Right(this)
-              case _                       =>
-                Left(
-                  "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
-                )
-            }
-          case _ =>
-            Left(
-              "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
-            )
-        }
-      }).flatMap(_ => {
-        attributes.get("attr") match {
-          case Some(x) =>
-            x match {
-              case _: ColumnRefAttr => Right(this)
-              case _                =>
-                Left(
-                  "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
-                )
-            }
-          case _ =>
-            Left(
-              "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
-            )
-        }
-      })
-    case _ =>
-      Left(
-        "AggrFuncOp Operation must contain only 1 operand and 1 result."
-      )
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 0) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "AggrFuncOp Operation must contain 1 operand of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          attributes.get("fn") match {
+            case Some(x) => x match {
+                case _: RelAlg_AggrFunc_Case => Right(this)
+                case _                       => Left(
+                    "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
+                  )
+              }
+            case _ => Left(
+                "AggrFuncOp Operation must contain an RelAlg_AggrFunc enum named 'fn'."
+              )
+          }
+        }).flatMap(_ => {
+          attributes.get("attr") match {
+            case Some(x) => x match {
+                case _: ColumnRefAttr => Right(this)
+                case _                => Left(
+                    "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
+                  )
+              }
+            case _ => Left(
+                "AggrFuncOp Operation must contain an ColumnRefAttr named 'attr'."
+              )
+          }
+        })
+      case _ =>
+        Left("AggrFuncOp Operation must contain only 1 operand and 1 result.")
+    }
 
 }
 
@@ -727,29 +610,18 @@ object SortOp extends OperationCompanion {
   override def name: String = "relalg.sort"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId
-      ~ "[" ~ (SortSpecificationAttr
-        .parse(parser))
-        .rep(sep = ",")
-        .map(ArrayAttribute(_)) ~ "]"
-      ~ parser.OptionalAttributes
-  ).map(
-    (
-        x: String,
-        attr: Attribute,
-        y: Map[String, Attribute]
-    ) =>
-      val operand_type = parser.currentScope.valueMap(x).typ
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(x),
-        operandsTypes = Seq(operand_type),
-        resultsTypes = Seq(TupleStream(Seq())),
-        attributes = y + ("sortspecs" -> attr)
-      )
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ "[" ~ (SortSpecificationAttr.parse(parser)).rep(sep = ",")
+      .map(ArrayAttribute(_)) ~ "]" ~ parser.OptionalAttributes
+  ).map((x: String, attr: Attribute, y: Map[String, Attribute]) =>
+    val operand_type = parser.currentScope.valueMap(x).typ
+    parser.generateOperation(
+      opName = name,
+      operandsNames = Seq(x),
+      operandsTypes = Seq(operand_type),
+      resultsTypes = Seq(TupleStream(Seq())),
+      attributes = y + ("sortspecs" -> attr)
+    )
   )
   // ==----------------------== //
 
@@ -772,50 +644,38 @@ case class SortOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 0) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "SortOp Operation must contain 1 operand of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        results(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "SortOp Operation must contain 1 operand of type TupleStream."
-            )
-        }
-      }).flatMap(_ => {
-        attributes.get("sortspecs") match {
-          case Some(x) =>
-            x match {
-              case _: ArrayAttribute[_] => Right(this)
-              case _                    =>
-                Left(
-                  "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
-                )
-            }
-          case _ =>
-            Left(
-              "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
-            )
-        }
-      })
-    case _ =>
-      Left(
-        "SortOp Operation must contain only 1 operand and 1 result."
-      )
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 0) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "SortOp Operation must contain 1 operand of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          results(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "SortOp Operation must contain 1 operand of type TupleStream."
+              )
+          }
+        }).flatMap(_ => {
+          attributes.get("sortspecs") match {
+            case Some(x) => x match {
+                case _: ArrayAttribute[_] => Right(this)
+                case _                    => Left(
+                    "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
+                  )
+              }
+            case _ => Left(
+                "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
+              )
+          }
+        })
+      case _ =>
+        Left("SortOp Operation must contain only 1 operand and 1 result.")
+    }
 
 }
 
@@ -827,19 +687,10 @@ object MaterializeOp extends OperationCompanion {
   override def name: String = "relalg.materialize"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId
-      ~ "[" ~ ColumnRefAttr
-        .parse(parser)
-        .rep(sep = ",")
-        .map(ArrayAttribute(_)) ~ "]"
-      ~ "=" ~ ">"
-      ~ parser.ArrayAttributeP
-      ~ ":"
-      ~ parser.Type.rep
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ "[" ~ ColumnRefAttr.parse(parser).rep(sep = ",")
+      .map(ArrayAttribute(_)) ~ "]" ~ "=" ~ ">" ~ parser.ArrayAttributeP ~ ":" ~
+      parser.Type.rep ~ parser.OptionalAttributes
   ).map(
     (
         operand: String,
@@ -878,79 +729,64 @@ case class MaterializeOp(
       attributes
     ) {
 
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length
-  ) match {
-    case (1, 0, 1, 0) =>
-      {
-        operands(0).typ match {
-          case _: TupleStream => Right(this)
-          case _              =>
-            Left(
-              "MaterializeOp Operation must contain 1 operand of type TupleStream."
-            )
-        }
-      }.flatMap(_ => {
-        results(0).typ match {
-          case _: ResultTable => Right(this)
-          case _              =>
-            Left(
-              "MaterializeOp Operation must contain 1 operand of type ResultOp."
-            )
-        }
-      }).flatMap(_ => {
-        attributes.get("cols") match {
-          case Some(x) =>
-            x match {
-              case _: ArrayAttribute[_] => Right(this)
-              case _                    =>
-                Left(
-                  "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
-                )
-            }
-          case _ =>
-            Left(
-              "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
-            )
-        }
-      }).flatMap(_ => {
-        attributes.get("columns") match {
-          case Some(x) =>
-            x match {
-              case _: ArrayAttribute[_] => Right(this)
-              case _                    =>
-                Left(
-                  "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
-                )
-            }
-          case _ =>
-            Left(
-              "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
-            )
-        }
-      })
-    case _ =>
-      Left(
-        "MaterializeOp Operation must contain only 1 operand and 1 result."
-      )
-  }
+  override def custom_verify(): Either[String, Operation] =
+    (operands.length, successors.length, results.length, regions.length) match {
+      case (1, 0, 1, 0) => {
+          operands(0).typ match {
+            case _: TupleStream => Right(this)
+            case _              => Left(
+                "MaterializeOp Operation must contain 1 operand of type TupleStream."
+              )
+          }
+        }.flatMap(_ => {
+          results(0).typ match {
+            case _: ResultTable => Right(this)
+            case _              => Left(
+                "MaterializeOp Operation must contain 1 operand of type ResultOp."
+              )
+          }
+        }).flatMap(_ => {
+          attributes.get("cols") match {
+            case Some(x) => x match {
+                case _: ArrayAttribute[_] => Right(this)
+                case _                    => Left(
+                    "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
+                  )
+              }
+            case _ => Left(
+                "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
+              )
+          }
+        }).flatMap(_ => {
+          attributes.get("columns") match {
+            case Some(x) => x match {
+                case _: ArrayAttribute[_] => Right(this)
+                case _                    => Left(
+                    "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
+                  )
+              }
+            case _ => Left(
+                "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."
+              )
+          }
+        })
+      case _ => Left(
+          "MaterializeOp Operation must contain only 1 operand and 1 result."
+        )
+    }
 
 }
 
-val RelAlgOps: Dialect =
-  new Dialect(
-    operations = Seq(
-      BaseTableOp,
-      SelectionOp,
-      MapOp,
-      AggregationOp,
-      CountRowsOp,
-      AggrFuncOp,
-      SortOp,
-      MaterializeOp
-    ),
-    attributes = Seq()
-  )
+val RelAlgOps: Dialect = new Dialect(
+  operations = Seq(
+    BaseTableOp,
+    SelectionOp,
+    MapOp,
+    AggregationOp,
+    CountRowsOp,
+    AggrFuncOp,
+    SortOp,
+    MaterializeOp
+  ),
+  attributes = Seq()
+)

@@ -35,81 +35,31 @@ import scala.quoted.*
 def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   import quotes.reflect._
   val name = Type.of[Label] match
-    case '[String] =>
-      Type.valueOfConstant[Label].get.asInstanceOf[String]
+    case '[String] => Type.valueOfConstant[Label].get.asInstanceOf[String]
 
   Type.of[Elem] match
     case '[type t <: Attribute; Option[`t`]] =>
-      OpPropertyDef(
-        name = name,
-        tpe = Type.of[t],
-        true
-      )
+      OpPropertyDef(name = name, tpe = Type.of[t], true)
     case '[Option[Result[t]]] =>
-      ResultDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Optional
-      )
+      ResultDef(name = name, tpe = Type.of[t], Variadicity.Optional)
     case '[Option[Operand[t]]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Optional
-      )
+      OperandDef(name = name, tpe = Type.of[t], Variadicity.Optional)
     case '[Seq[Result[t]]] =>
-      ResultDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Variadic
-      )
+      ResultDef(name = name, tpe = Type.of[t], Variadicity.Variadic)
     case '[Seq[Operand[t]]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Variadic
-      )
-    case '[Seq[Region]] =>
-      RegionDef(
-        name = name,
-        Variadicity.Variadic
-      )
-    case '[Seq[Successor]] =>
-      SuccessorDef(
-        name = name,
-        Variadicity.Variadic
-      )
-    case '[Result[t]] =>
-      ResultDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Single
-      )
+      OperandDef(name = name, tpe = Type.of[t], Variadicity.Variadic)
+    case '[Seq[Region]]    => RegionDef(name = name, Variadicity.Variadic)
+    case '[Seq[Successor]] => SuccessorDef(name = name, Variadicity.Variadic)
+    case '[Result[t]]      =>
+      ResultDef(name = name, tpe = Type.of[t], Variadicity.Single)
     case '[Operand[t]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Single
-      )
-    case '[Region] =>
-      RegionDef(
-        name = name,
-        Variadicity.Single
-      )
-    case '[Successor] =>
-      SuccessorDef(
-        name = name,
-        Variadicity.Single
-      )
+      OperandDef(name = name, tpe = Type.of[t], Variadicity.Single)
+    case '[Region]    => RegionDef(name = name, Variadicity.Single)
+    case '[Successor] => SuccessorDef(name = name, Variadicity.Single)
     case '[type t <: Attribute; `t`] =>
-      OpPropertyDef(
-        name = name,
-        tpe = Type.of[t]
-      )
-    case _: Type[?] =>
-      report.errorAndAbort(
-        s"Field ${Type.show[Label]} : ${Type.show[Elem]} is unsupported for MLIR derivation."
-      )
+      OpPropertyDef(name = name, tpe = Type.of[t])
+    case _: Type[?] => report.errorAndAbort(s"Field ${Type.show[Label]} : ${Type
+          .show[Elem]} is unsupported for MLIR derivation.")
 }
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -121,28 +71,18 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
 def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] = {
 
   Type.of[(Labels, Elems)] match
-    case '[(label *: labels, elem *: elems)] =>
-      getDefInput[label, elem] :: summonInput[labels, elems]
+    case '[(label *: labels, elem *: elems)] => getDefInput[label, elem] ::
+        summonInput[labels, elems]
     case '[(EmptyTuple, EmptyTuple)] => Nil
 }
 
-def getAttrDef[Label: Type, Elem: Type](using
-    Quotes
-): AttributeParamDef = {
+def getAttrDef[Label: Type, Elem: Type](using Quotes): AttributeParamDef = {
   val name = Type.of[Label] match
-    case '[String] =>
-      Type.valueOfConstant[Label].get.asInstanceOf[String]
+    case '[String] => Type.valueOfConstant[Label].get.asInstanceOf[String]
 
   Type.of[Elem] match
-    case '[Attribute] =>
-      AttributeParamDef(
-        name = name,
-        tpe = Type.of[Elem]
-      )
-    case _ =>
-      throw new Exception(
-        "Expected this type to be an Attribute"
-      )
+    case '[Attribute] => AttributeParamDef(name = name, tpe = Type.of[Elem])
+    case _ => throw new Exception("Expected this type to be an Attribute")
 }
 
 def summonAttrDefs[Labels: Type, Elems: Type](using
@@ -150,8 +90,8 @@ def summonAttrDefs[Labels: Type, Elems: Type](using
 ): List[AttributeParamDef] = {
 
   Type.of[(Labels, Elems)] match
-    case '[(label *: labels, elem *: elems)] =>
-      getAttrDef[label, elem] :: summonAttrDefs[labels, elems]
+    case '[(label *: labels, elem *: elems)] => getAttrDef[label, elem] ::
+        summonAttrDefs[labels, elems]
     case '[(EmptyTuple, EmptyTuple)] => Nil
 }
 
@@ -163,10 +103,7 @@ def summonAttrDefs[Labels: Type, Elems: Type](using
 def stringifyLabels[Elems: Type](using Quotes): List[String] = {
 
   Type.of[Elems] match
-    case '[elem *: elems] =>
-      Type
-        .valueOfConstant[elem]
-        .get
+    case '[elem *: elems] => Type.valueOfConstant[elem].get
         .asInstanceOf[String] :: stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 }
@@ -186,11 +123,11 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
-        case '[DerivedOperation[name, _]] =>
-          Type.valueOfConstant[name].get.asInstanceOf[String]
-        case _ =>
-          report.errorAndAbort(
-            s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
+        case '[DerivedOperation[name, _]] => Type.valueOfConstant[name].get
+            .asInstanceOf[String]
+        case _ => report.errorAndAbort(
+            s"${Type
+                .show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
             TypeRepr.of[T].typeSymbol.pos.get
           )
 
@@ -228,21 +165,18 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
       val paramLabels = stringifyLabels[elemLabels]
 
       val name = Type.of[T] match
-        case '[DerivedAttribute[name, _]] =>
-          Type.valueOfConstant[name].get.asInstanceOf[String]
-        case _ =>
-          report.errorAndAbort(
-            s"${Type.show[T]} should extend DerivedAttribute to derive DerivedAttributeCompanion.",
+        case '[DerivedAttribute[name, _]] => Type.valueOfConstant[name].get
+            .asInstanceOf[String]
+        case _ => report.errorAndAbort(
+            s"${Type
+                .show[T]} should extend DerivedAttribute to derive DerivedAttributeCompanion.",
             TypeRepr.of[T].typeSymbol.pos.get
           )
 
       val attributeDefs = Type.of[(elemLabels, elemTypes)] match
         case _: Type[(Tuple, Tuple)] => summonAttrDefs[elemLabels, elemTypes]
 
-      AttributeDef(
-        name = name,
-        attributes = attributeDefs
-      )
+      AttributeDef(name = name, attributes = attributeDefs)
 }
 
 inline def getNameDefBlaBla[T] = ${ getNameDefBlaBlaImpl[T] }

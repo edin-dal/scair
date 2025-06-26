@@ -34,23 +34,22 @@ object Parser {
   implicit val whitespace: Whitespace = { implicit ctx: P[?] =>
     val input = ctx.input
     val startIndex = ctx.index
-    @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
+    @tailrec
+    def rec(current: Int, state: Int): ParsingRun[Unit] = {
       if (!input.isReachable(current)) {
         if (state == 0 || state == 1) ctx.freshSuccessUnit(current)
         else ctx.freshSuccessUnit(current - 1)
       } else {
         val currentChar = input(current)
         (state: @switch) match {
-          case 0 =>
-            (currentChar: @switch) match {
+          case 0 => (currentChar: @switch) match {
               case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
               case '/'                      => rec(current + 1, state = 2)
               case _                        => ctx.freshSuccessUnit(current)
             }
           case 1 =>
             rec(current + 1, state = if (currentChar == '\n') 0 else state)
-          case 2 =>
-            (currentChar: @switch) match {
+          case 2 => (currentChar: @switch) match {
               case '/' => rec(current + 1, state = 1)
               case _   => ctx.freshSuccessUnit(current - 1)
             }
@@ -89,9 +88,8 @@ object Parser {
       * @return
       *   An optional parser, defaulting to default.
       */
-    inline def orElse[$: P](inline default: T): P[T] = P(
-      p.?.map(_.getOrElse(default))
-    )
+    inline def orElse[$: P](inline default: T): P[T] =
+      P(p.?.map(_.getOrElse(default)))
 
     /** Like fastparse's flatMapX but capturing exceptions as standard parse
       * errors.
@@ -107,12 +105,7 @@ object Parser {
       */
     inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
       p.flatMapX(parsed =>
-        try {
-          f(parsed)
-        } catch {
-          case e: Exception =>
-            Fail(e.getMessage())
-        }
+        try { f(parsed) } catch { case e: Exception => Fail(e.getMessage()) }
       )
     )
 
@@ -127,16 +120,10 @@ object Parser {
       *   A parser that applies f to the parsed value, catching exceptions and
       *   turning them into parse errors.
       */
-    inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
-      p.flatMapX(parsed =>
-        try {
-          Pass(f(parsed))
-        } catch {
-          case e: Exception =>
-            Fail(e.getMessage())
-        }
-      )
-    )
+    inline def mapTry[$: P, V](inline f: T => V): P[V] = P(p.flatMapX(parsed =>
+      try { Pass(f(parsed)) }
+      catch { case e: Exception => Fail(e.getMessage()) }
+    ))
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||
@@ -146,15 +133,14 @@ object Parser {
 
   class Scope(
       var parentScope: Option[Scope] = None,
-      var valueMap: mutable.Map[String, Value[Attribute]] =
-        mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[Operation, Seq[
-        (String, Attribute)
-      ]] = mutable.Map.empty[Operation, Seq[(String, Attribute)]],
-      var blockMap: mutable.Map[String, Block] =
-        mutable.Map.empty[String, Block],
-      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
-        mutable.Map.empty[Operation, Seq[String]]
+      var valueMap: mutable.Map[String, Value[Attribute]] = mutable.Map
+        .empty[String, Value[Attribute]],
+      var valueWaitlist: mutable.Map[Operation, Seq[(String, Attribute)]] =
+        mutable.Map.empty[Operation, Seq[(String, Attribute)]],
+      var blockMap: mutable.Map[String, Block] = mutable.Map
+        .empty[String, Block],
+      var blockWaitlist: mutable.Map[Operation, Seq[String]] = mutable.Map
+        .empty[Operation, Seq[String]]
   ) {
 
     def defineValues(
@@ -164,25 +150,22 @@ object Parser {
         valueMap.contains(name) match {
           case true =>
             throw new Exception(s"SSA Value cannot be defined twice %${name}")
-          case false =>
-            valueMap(name) = value
+          case false => valueMap(name) = value
         }
       )
     }
 
-    def useValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    ) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
+    def useValues(valueIdAndTypeList: Seq[(String, Attribute)]) = {
+      var forwardRefSeq: ListType[(String, Attribute)] = ListType()
+      var useValSeq: ListType[Value[Attribute]] = ListType()
 
       valueIdAndTypeList.partitionMap((name, typ) =>
         if valueMap.contains(name) then
           if valueMap(name).typ != typ then
             throw new Exception(
-              s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
+              s"%$name use with type ${typ} but defined with type ${valueMap(
+                  name
+                ).typ}"
             )
           else Right(valueMap(name))
         else Left((name, typ))
@@ -193,22 +176,19 @@ object Parser {
         name: String,
         typ: Attribute
     ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
+      var forwardRefSeq: ListType[(String, Attribute)] = ListType()
+      var useValSeq: ListType[Value[Attribute]] = ListType()
       !valueMap.contains(name) match {
         case true =>
           val tuple = (name, typ)
           forwardRefSeq += tuple
-        case false =>
-          valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
+        case false => valueMap(name).typ != typ match {
+            case true => throw new Exception(
+                s"%$name use with type ${typ} but defined with type ${valueMap(
+                    name
+                  ).typ}"
               )
-            case false =>
-              useValSeq += valueMap(name)
+            case false => useValSeq += valueMap(name)
           }
       }
       return (useValSeq, forwardRefSeq)
@@ -223,16 +203,14 @@ object Parser {
 
         for {
           (name, typ) <- operands
-        } yield valueMap
-          .contains(
-            name
-          ) match {
+        } yield valueMap.contains(name) match {
           case true =>
             val tuple = (name, typ)
             val value = valueMap(name)
             if value.typ != typ then
               throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${value.typ}"
+                s"%$name use with type ${typ} but defined with type ${value
+                    .typ}"
               )
             foundOperands += tuple
             operandList += value
@@ -241,15 +219,12 @@ object Parser {
 
         valueWaitlist(operation) = valueWaitlist(operation) diff foundOperands
 
-        if (valueWaitlist(operation).length == 0) {
-          valueWaitlist -= operation
-        }
+        if (valueWaitlist(operation).length == 0) { valueWaitlist -= operation }
 
-        val new_op =
-          operation.updated(
-            operands = operation.operands ++ operandList,
-            results = operation.results
-          )
+        val new_op = operation.updated(
+          operands = operation.operands ++ operandList,
+          results = operation.results
+        )
         RewriteMethods.replace_op(operation, new_op)
       }
 
@@ -267,24 +242,17 @@ object Parser {
       }
     }
 
-    def defineBlock(
-        blockName: String,
-        block: Block
-    ): Unit = blockMap.contains(blockName) match {
-      case true =>
-        throw new Exception(
-          s"Block cannot be defined twice within the same scope - ^${blockName}"
-        )
-      case false =>
-        blockMap(blockName) = block
-    }
+    def defineBlock(blockName: String, block: Block): Unit =
+      blockMap.contains(blockName) match {
+        case true => throw new Exception(
+            s"Block cannot be defined twice within the same scope - ^${blockName}"
+          )
+        case false => blockMap(blockName) = block
+      }
 
-    def useBlocks(
-        successorList: Seq[String]
-    ) =
-      successorList.partitionMap(name =>
-        if blockMap.contains(name) then Right(blockMap(name))
-        else Left(name)
+    def useBlocks(successorList: Seq[String]) = successorList
+      .partitionMap(name =>
+        if blockMap.contains(name) then Right(blockMap(name)) else Left(name)
       )
 
     // check block waitlist once you exit the local scope of a region,
@@ -298,10 +266,7 @@ object Parser {
 
         for {
           name <- successors
-        } yield blockMap
-          .contains(
-            name
-          ) match {
+        } yield blockMap.contains(name) match {
           case true =>
             foundBlocks += name
             successorList += blockMap(name)
@@ -310,24 +275,19 @@ object Parser {
 
         blockWaitlist(operation) = blockWaitlist(operation) diff foundBlocks
 
-        if (blockWaitlist(operation).length == 0) {
-          blockWaitlist -= operation
-        }
-        val new_op =
-          operation.updated(
-            successors = operation.successors ++ successorList,
-            results = operation.results
-          )
+        if (blockWaitlist(operation).length == 0) { blockWaitlist -= operation }
+        val new_op = operation.updated(
+          successors = operation.successors ++ successorList,
+          results = operation.results
+        )
         RewriteMethods.replace_op(operation, new_op)
       }
 
       if (blockWaitlist.size > 0) {
         parentScope match {
           case Some(x) => x.blockWaitlist ++= blockWaitlist
-          case None    =>
-            throw new Exception(
-              s"Successor ^${blockWaitlist.head._2.head} not defined within Scope"
-            )
+          case None => throw new Exception(s"Successor ^${blockWaitlist.head._2
+                .head} not defined within Scope")
         }
       }
     }
@@ -346,8 +306,7 @@ object Parser {
         scope.checkValueWaitlist()
         scope.checkBlockWaitlist()
         x
-      case None =>
-        scope
+      case None => scope
     }
 
   }
@@ -367,8 +326,10 @@ object Parser {
   // [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
   // [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
 
-  val excludedCharacters: Set[Char] = Set('\"', '\n', '\f', '\u000B',
-    '\r') // \u000B represents \v escape character
+  val excludedCharacters: Set[Char] =
+    Set(
+      '\"', '\n', '\f', '\u000B', '\r'
+    ) // \u000B represents \v escape character
 
   def Digit[$: P] = P(CharIn("0-9").!)
 
@@ -380,13 +341,11 @@ object Parser {
 
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
-  def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
-      parseLong(sign + literal)
-    )
+  def DecimalLiteral[$: P] = P(("-" | "+").?.! ~ Digit.repX(1).!)
+    .map((sign: String, literal: String) => parseLong(sign + literal))
 
-  def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => parseLong(hex, 16))
+  def HexadecimalLiteral[$: P] = P("0x" ~~ HexDigit.repX(1).!)
+    .map((hex: String) => parseLong(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -395,14 +354,12 @@ object Parser {
   }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).!
-      ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).orElse("0")
+    CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).! ~~
+      (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
-  def notExcluded[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
-  )
+  def notExcluded[$: P] =
+    P(CharPred(char => !excludedCharacters.contains(char)))
 
   def StringLiteral[$: P] = P("\"" ~~ notExcluded.rep.! ~~ "\"")
 
@@ -429,25 +386,22 @@ object Parser {
       case (name, None)         => name
     }
 
-  def BareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).repX
-  ).!
+  def BareId[$: P] = P((Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).repX)
+    .!
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
   def AliasName[$: P] = P(BareId)
 
-  def SuffixId[$: P] = P(
-    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
-  ).!
+  def SuffixId[$: P] =
+    P(DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX).!
 
   def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
-  def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~~ DecimalLiteral).?).map(simplifyValueName)
+  def ValueUse[$: P] = P(ValueId ~ ("#" ~~ DecimalLiteral).?)
+    .map(simplifyValueName)
 
-  def ValueUseList[$: P] =
-    P(ValueUse.rep(sep = ","))
+  def ValueUseList[$: P] = P(ValueUse.rep(sep = ","))
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TYPES      ||
@@ -479,27 +433,25 @@ object Parser {
   // [x] successor             ::= caret-id (`:` block-arg-list)?
   // [x] trailing-location     ::= `loc` `(` location `)`
 
-  def OpResultList[$: P] = P(
-    OpResult.rep(1, sep = ",") ~ "="
-  ).map((results: Seq[Seq[String]]) => results.flatten)
+  def OpResultList[$: P] = P(OpResult.rep(1, sep = ",") ~ "=")
+    .map((results: Seq[Seq[String]]) => results.flatten)
 
-  def sequenceValues(value: (String, Option[Long])): Seq[String] =
-    value match {
-      case (name, Some(totalNo)) =>
-        (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
-      case (name, None) => Seq(name)
-    }
+  def sequenceValues(value: (String, Option[Long])): Seq[String] = value match {
+    case (name, Some(totalNo)) => (0 to (totalNo.toInt - 1))
+        .map(no => s"$name#$no")
+    case (name, None) => Seq(name)
+  }
 
-  def OpResult[$: P] =
-    P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
+  def OpResult[$: P] = P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
 
   def Successor[$: P] = P(CaretId) // possibly shortened version
 
-  def TrailingLocation[$: P] = P(
-    "loc" ~ "(" ~ "unknown" ~ ")"
-  ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
+  def TrailingLocation[$: P] =
+    P(
+      "loc" ~ "(" ~ "unknown" ~ ")"
+    ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||      BLOCKS      ||
@@ -533,31 +485,25 @@ object Parser {
   val excludedCharactersDTC: Set[Char] =
     Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
 
-  def notExcludedDTC[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
-  )
+  def notExcludedDTC[$: P] =
+    P(CharPred(char => !excludedCharacters.contains(char)))
 
-  def DialectBareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX
-  ).!
+  def DialectBareId[$: P] =
+    P((Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX).!
 
   def DialectNamespace[$: P] = P(DialectBareId)
 
-  def PrettyDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
-  )
+  def PrettyDialectReferenceName[$: P] =
+    P((DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName))
 
-  def OpaqueDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName)
-  )
+  def OpaqueDialectReferenceName[$: P] =
+    P((DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName))
 
-  def DialectReferenceName[$: P] = P(
-    PrettyDialectReferenceName | OpaqueDialectReferenceName
-  )
+  def DialectReferenceName[$: P] =
+    P(PrettyDialectReferenceName | OpaqueDialectReferenceName)
 
-  def PrettyDialectTypeOrAttReferenceName[$: P] = P(
-    (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
-  )
+  def PrettyDialectTypeOrAttReferenceName[$: P] =
+    P((CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!)
 
 }
 
@@ -585,8 +531,8 @@ class Parser(val context: MLContext, val args: Args = Args())
     // Reparse for more context on error.
     val traced = failure.trace()
     // Get the line and column of the error.
-    val prettyIndex =
-      traced.input.prettyIndex(traced.index).split(":").map(_.toInt)
+    val prettyIndex = traced.input.prettyIndex(traced.index).split(":")
+      .map(_.toInt)
     val (line, col) = (prettyIndex(0), prettyIndex(1))
 
     // Get the error's line's content
@@ -597,8 +543,9 @@ class Parser(val context: MLContext, val args: Args = Args())
     val indicator = " " * (col - 1) + "^"
 
     // Build the error message.
-    val msg =
-      s"Parse error at ${args.input.getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced.label}"
+    val msg = s"Parse error at ${args.input
+        .getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced
+        .label}"
 
     if args.parsing_diagnostics then msg
     else {
@@ -608,9 +555,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   implicit var currentScope: Scope = new Scope()
 
-  def enterLocalRegion = {
-    currentScope = currentScope.createChild()
-  }
+  def enterLocalRegion = { currentScope = currentScope.createChild() }
 
   def enterParentRegion = {
     currentScope = currentScope.switchWithParent(currentScope)
@@ -623,24 +568,23 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
   // shortened definition TODO: finish...
 
-  def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (Operations(0)) ~ End
-  ).map((toplevel: Seq[Operation]) =>
-    toplevel.toList match {
-      case (head: ModuleOp) :: Nil => head
-      case _                       =>
-        val block = new Block(operations = toplevel)
-        val region = new Region(blocks = Seq(block))
-        val moduleOp = new ModuleOp(regions = Seq(region))
+  def TopLevel[$: P]: P[Operation] = P(Start ~ (Operations(0)) ~ End)
+    .map((toplevel: Seq[Operation]) =>
+      toplevel.toList match {
+        case (head: ModuleOp) :: Nil => head
+        case _                       =>
+          val block = new Block(operations = toplevel)
+          val region = new Region(blocks = Seq(block))
+          val moduleOp = new ModuleOp(regions = Seq(region))
 
-        for (op <- toplevel) op.container_block = Some(block)
-        block.container_region = Some(region)
-        region.container_operation = Some(moduleOp)
+          for (op <- toplevel) op.container_block = Some(block)
+          block.container_region = Some(region)
+          region.container_operation = Some(moduleOp)
 
-        moduleOp
+          moduleOp
 
-    }
-  ) ~ E({
+      }
+    ) ~ E({
     currentScope.checkValueWaitlist()
     currentScope.checkBlockWaitlist()
   })
@@ -700,15 +644,13 @@ class Parser(val context: MLContext, val args: Args = Args())
       )
     }
 
-    val useAndRefValueSeqs =
-      currentScope.useValues(operandsNames zip operandsTypes)
+    val useAndRefValueSeqs = currentScope
+      .useValues(operandsNames zip operandsTypes)
 
-    val useAndRefBlockSeqs =
-      currentScope.useBlocks(successorsNames)
+    val useAndRefBlockSeqs = currentScope.useBlocks(successorsNames)
 
     val op: Operation = ctx.getOperation(opName) match {
-      case Some(x) =>
-        x(
+      case Some(x) => x(
           operands = useAndRefValueSeqs._2,
           successors = useAndRefBlockSeqs._2,
           properties = properties,
@@ -743,22 +685,19 @@ class Parser(val context: MLContext, val args: Args = Args())
     return op
   }
 
-  def Operations[$: P](
-      at_least_this_many: Int = 0
-  ): P[Seq[Operation]] =
+  def Operations[$: P](at_least_this_many: Int = 0): P[Seq[Operation]] =
     P(OperationPat.rep(at_least_this_many))
 
-  def OperationPat[$: P]: P[Operation] = P(
-    OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?
-  )
+  def OperationPat[$: P]: P[Operation] =
+    P(OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?)
 
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
   ).mapTry(op => {
     if (resNames.length != op.results.length) {
-      throw new Exception(
-        s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${op.results.length}) in \"${op.name}\"."
-      )
+      throw new Exception(s"Number of results (${resNames
+          .length}) does not match the number of the corresponding result types (${op
+          .results.length}) in \"${op.name}\".")
     }
     currentScope.defineValues(resNames zip op.results)
     for (region <- op.regions) region.container_operation = Some(op)
@@ -766,11 +705,9 @@ class Parser(val context: MLContext, val args: Args = Args())
   })
 
   def GenericOperation[$: P](resNames: Seq[String]) = P(
-    (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
-      ~/ SuccessorList.orElse(Seq())
-      ~/ properties.orElse(Map.empty)
-      ~/ RegionList.orElse(Seq())
-      ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
+    (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")" ~/
+      SuccessorList.orElse(Seq()) ~/ properties.orElse(Map.empty) ~/
+      RegionList.orElse(Seq()) ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .mapTry(
         (
             (
@@ -793,25 +730,21 @@ class Parser(val context: MLContext, val args: Args = Args())
                 operandsAndResultsTypes._1
               )
         ).tupled
-      )
-      ./
+      )./
   )
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
-        case Some(y) =>
-          Pass ~ y.parse(this)
-        case None =>
-          throw new Exception(
+        case Some(y) => Pass ~ y.parse(this)
+        case None    => throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
           )
       }
     }
   )
 
-  def RegionList[$: P] =
-    P("(" ~ Region.rep(sep = ",") ~ ")")
+  def RegionList[$: P] = P("(" ~ Region.rep(sep = ",") ~ ")")
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||      BLOCKS      ||
@@ -834,12 +767,9 @@ class Parser(val context: MLContext, val args: Args = Args())
     return newBlock
   }
 
-  def Block[$: P] =
-    P(BlockLabel ~/ Operations(0)).mapTry(createBlock)
+  def Block[$: P] = P(BlockLabel ~/ Operations(0)).mapTry(createBlock)
 
-  def BlockLabel[$: P] = P(
-    BlockId ~/ BlockArgList.orElse(Seq()) ~ ":"
-  )
+  def BlockLabel[$: P] = P(BlockId ~/ BlockArgList.orElse(Seq()) ~ ":")
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||      REGIONS      ||
@@ -852,9 +782,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   //                   \/
   // [x] - region        ::= `{` operation* block* `}`
 
-  def defineRegion(
-      parseResult: (Seq[Operation], Seq[Block])
-  ): Region = {
+  def defineRegion(parseResult: (Seq[Operation], Seq[Block])): Region = {
     return parseResult._1.length match {
       case 0 =>
         val region = new Region(blocks = parseResult._2)
@@ -870,13 +798,9 @@ class Parser(val context: MLContext, val args: Args = Args())
   }
 
   // EntryBlock might break - take out if it does...
-  def Region[$: P] = P(
-    "{" ~ E(
-      { enterLocalRegion }
-    ) ~ Operations(0) ~ Block.rep ~ "}"
-  ).map(defineRegion) ~ E(
-    { enterParentRegion }
-  )
+  def Region[$: P] =
+    P("{" ~ E({ enterLocalRegion }) ~ Operations(0) ~ Block.rep ~ "}")
+      .map(defineRegion) ~ E({ enterParentRegion })
 
   // def EntryBlock[$: P] = P(OperationPat.rep(1))
 
@@ -884,9 +808,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] type-alias-def ::= `!` alias-name `=` type
   // [x] type-alias ::= `!` alias-name
 
-  def TypeAliasDef[$: P] = P(
-    "!" ~~ AliasName ~ "=" ~ Type
-  )
+  def TypeAliasDef[$: P] = P("!" ~~ AliasName ~ "=" ~ Type)
 
   def TypeAlias[$: P] = P("!" ~~ AliasName)
 
@@ -898,9 +820,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
   // [x] - attribute-alias ::= `#` alias-name
 
-  def AttributeAliasDef[$: P] = P(
-    "#" ~~ AliasName ~ "=" ~ AttributeValue
-  )
+  def AttributeAliasDef[$: P] = P("#" ~~ AliasName ~ "=" ~ AttributeValue)
 
   // [x] - value-id-and-type ::= value-id `:` type
 
@@ -911,11 +831,9 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
 
-  def ValueIdAndTypeList[$: P] =
-    P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
+  def ValueIdAndTypeList[$: P] = P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
-  def BlockArgList[$: P] =
-    P("(" ~/ ValueIdAndTypeList ~/ ")")
+  def BlockArgList[$: P] = P("(" ~/ ValueIdAndTypeList ~/ ")")
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
@@ -926,20 +844,15 @@ class Parser(val context: MLContext, val args: Args = Args())
     * @return
     *   A properties dictionary parser.
     */
-  def properties[$: P] = P(
-    "<" ~ DictionaryAttribute ~ ">"
-  )
+  def properties[$: P] = P("<" ~ DictionaryAttribute ~ ">")
 
   /** Parses an attributes dictionary.
     *
     * @return
     *   An attribute dictionary parser.
     */
-  inline def DictionaryAttribute[$: P] = P(
-    "{" ~ AttributeEntry
-      .rep(sep = ",")
-      .map(Map[String, Attribute](_*)) ~ "}"
-  )
+  inline def DictionaryAttribute[$: P] =
+    P("{" ~ AttributeEntry.rep(sep = ",").map(Map[String, Attribute](_*)) ~ "}")
 
   /** Parses an optional properties dictionary from the input.
     *
@@ -947,8 +860,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An optional dictionary of properties - empty if no dictionary is
     *   present.
     */
-  inline def OptionalProperties[$: P]() =
-    (properties).orElse(DictType.empty)
+  inline def OptionalProperties[$: P]() = (properties).orElse(DictType.empty)
 
   /** Parses an optional attributes dictionary from the input.
     *
@@ -956,8 +868,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An optional dictionary of attributes - empty if no dictionary is
     *   present.
     */
-  inline def OptionalAttributes[$: P] =
-    (DictionaryAttribute).orElse(Map.empty)
+  inline def OptionalAttributes[$: P] = (DictionaryAttribute).orElse(Map.empty)
 
   /** Parses an optional attributes dictionary from the input, preceded by the
     * `attributes` keyword.

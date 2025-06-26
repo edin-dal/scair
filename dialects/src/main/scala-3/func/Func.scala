@@ -18,9 +18,8 @@ case class Func(
     body: Region
 ) extends DerivedOperation["func.func", Func] derives DerivedOperationCompanion
 
-case class Return(
-    _operands: Seq[Operand[Attribute]]
-) extends DerivedOperation["func.return", Return]
+case class Return(_operands: Seq[Operand[Attribute]])
+    extends DerivedOperation["func.return", Return]
     derives DerivedOperationCompanion
 
 val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())

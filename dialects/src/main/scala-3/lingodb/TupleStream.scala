@@ -27,8 +27,7 @@ object TupleStreamTuple extends AttributeCompanion {
 }
 
 case class TupleStreamTuple(val tupleVals: Seq[Attribute])
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "tuples.tuple"
   override def parameters: Seq[Attribute | Seq[Attribute]] = tupleVals
@@ -36,9 +35,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
   override def custom_verify(): Either[String, Unit] = {
     if (tupleVals.length != 0 && tupleVals.length != 2) {
       Left("TupleStream Tuple must contain 2 elements only.")
-    } else {
-      Right(())
-    }
+    } else { Right(()) }
   }
 
 }
@@ -56,8 +53,7 @@ object TupleStream extends AttributeCompanion {
 }
 
 case class TupleStream(val tuples: Seq[Attribute])
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "tuples.tuplestream"
   override def parameters: Seq[Attribute | Seq[Attribute]] = tuples
@@ -68,15 +64,12 @@ case class TupleStream(val tuples: Seq[Attribute])
       if (i == tuples.length) then Right(())
 
       tuples(i) match {
-        case x: TupleStreamTuple =>
-          x.custom_verify() match {
+        case x: TupleStreamTuple => x.custom_verify() match {
             case Right(_)  => verifyTuples(i + 1)
             case Left(err) => Left(err)
           }
         case _ =>
-          Left(
-            "TupleStream must only contain TupleStream Tuple attributes."
-          )
+          Left("TupleStream must only contain TupleStream Tuple attributes.")
       }
     }
 
@@ -96,9 +89,9 @@ case class TupleStream(val tuples: Seq[Attribute])
 object ColumnDefAttr extends AttributeCompanion {
   override def name: String = "tuples.column_def"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] = P(
-    parser.SymbolRefAttrP ~ "(" ~ "{" ~ parser.AttributeEntry ~ "}" ~ ")"
-  ).map((x, y) => ColumnDefAttr(x.asInstanceOf[SymbolRefAttr], y._2))
+  override def parse[$: P](parser: AttrParser): P[Attribute] =
+    P(parser.SymbolRefAttrP ~ "(" ~ "{" ~ parser.AttributeEntry ~ "}" ~ ")")
+      .map((x, y) => ColumnDefAttr(x.asInstanceOf[SymbolRefAttr], y._2))
 
 }
 
@@ -121,9 +114,8 @@ object ColumnRefAttr extends AttributeCompanion {
   override def name: String = "tuples.column_ref"
 
   override def parse[$: P](parser: AttrParser): P[Attribute] =
-    P(parser.SymbolRefAttrP).map(x =>
-      ColumnRefAttr(x.asInstanceOf[SymbolRefAttr])
-    )
+    P(parser.SymbolRefAttrP)
+      .map(x => ColumnRefAttr(x.asInstanceOf[SymbolRefAttr]))
 
 }
 
@@ -153,12 +145,10 @@ object ReturnOp extends OperationCompanion {
     case None         => (Seq(), Seq())
   }
 
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
-      ~ ":" ~
-      parser.Type.rep(sep = ",")).orElse((Seq(), Seq()))
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    parser.OptionalAttributes ~
+      (ValueId.rep(sep = ",") ~ ":" ~ parser.Type.rep(sep = ","))
+        .orElse((Seq(), Seq()))
   ).map((x: Map[String, Attribute], y: (Seq[String], Seq[Attribute])) =>
     parser.generateOperation(
       opName = name,
@@ -195,8 +185,7 @@ case class ReturnOp(
     properties.size
   ) match {
     case (0, 0, 0, 0) => Right(this)
-    case _            =>
-      Left(
+    case _            => Left(
         "ReturnOp Operation must contain only results and an attribute dictionary."
       )
   }
@@ -211,26 +200,18 @@ object GetColumnOp extends OperationCompanion {
   override def name: String = "tuples.getcol"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
-      parser.Type ~ parser.OptionalAttributes
-  ).map(
-    (
-        x: String,
-        y: Attribute,
-        z: Attribute,
-        w: Map[String, Attribute]
-    ) =>
-      val operand_type = parser.currentScope.valueMap(x).typ
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(x),
-        operandsTypes = Seq(operand_type),
-        resultsTypes = Seq(z),
-        attributes = w + ("attr" -> y)
-      )
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~ parser.Type ~
+      parser.OptionalAttributes
+  ).map((x: String, y: Attribute, z: Attribute, w: Map[String, Attribute]) =>
+    val operand_type = parser.currentScope.valueMap(x).typ
+    parser.generateOperation(
+      opName = name,
+      operandsNames = Seq(x),
+      operandsTypes = Seq(operand_type),
+      resultsTypes = Seq(z),
+      attributes = w + ("attr" -> y)
+    )
   )
   // ==----------------------== //
 
@@ -260,37 +241,30 @@ case class GetColumnOp(
     regions.length,
     properties.size
   ) match {
-    case (1, 0, 1, 0, 0) =>
-      {
+    case (1, 0, 1, 0, 0) => {
         operands(0).typ match {
-          case x: TupleStreamTuple =>
-            x.custom_verify() match {
+          case x: TupleStreamTuple => x.custom_verify() match {
               case Right(value) => Right(this)
               case Left(err)    => Left(err)
             }
-          case _ =>
-            Left(
+          case _ => Left(
               "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
             )
         }
       }.flatMap(_ => {
         attributes.get("attr") match {
-          case Some(x) =>
-            x match {
+          case Some(x) => x match {
               case _: ColumnRefAttr => Right(this)
-              case _                =>
-                Left(
+              case _                => Left(
                   "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
                 )
             }
-          case None =>
-            Left(
+          case None => Left(
               "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
             )
         }
       })
-    case _ =>
-      Left(
+    case _ => Left(
         "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
       )
   }
@@ -301,9 +275,7 @@ case class GetColumnOp(
 // DIALECT //
 /////////////
 
-val TupleStreamDialect: Dialect =
-  new Dialect(
-    operations = Seq(ReturnOp, GetColumnOp),
-    attributes =
-      Seq(TupleStreamTuple, TupleStream, ColumnDefAttr, ColumnRefAttr)
-  )
+val TupleStreamDialect: Dialect = new Dialect(
+  operations = Seq(ReturnOp, GetColumnOp),
+  attributes = Seq(TupleStreamTuple, TupleStream, ColumnDefAttr, ColumnRefAttr)
+)

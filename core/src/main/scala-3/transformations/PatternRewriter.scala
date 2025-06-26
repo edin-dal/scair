@@ -28,8 +28,7 @@ object InsertPoint {
 
   def before(op: Operation): InsertPoint = {
     (op.container_block == None) match {
-      case true =>
-        throw new Exception(
+      case true => throw new Exception(
           "Operation insertion point must have a parent block."
         )
       case false =>
@@ -40,8 +39,7 @@ object InsertPoint {
 
   def after(op: Operation): InsertPoint = {
     (op.container_block == None) match {
-      case true =>
-        throw new Exception(
+      case true => throw new Exception(
           "Operation insertion point must have a parent block."
         )
       case false =>
@@ -49,8 +47,7 @@ object InsertPoint {
         val opIdx = block.getIndexOf(op)
         (opIdx == block.operations.length - 1) match {
           case true  => new InsertPoint(block)
-          case false =>
-            InsertPoint(block, Some(block.operations(opIdx + 1)))
+          case false => InsertPoint(block, Some(block.operations(opIdx + 1)))
         }
     }
   }
@@ -63,21 +60,14 @@ object InsertPoint {
     }
   }
 
-  def at_end_of(block: Block): InsertPoint = {
-    new InsertPoint(block)
-  }
+  def at_end_of(block: Block): InsertPoint = { new InsertPoint(block) }
 
 }
 
-case class InsertPoint(
-    val block: Block,
-    val insert_before: Option[Operation]
-) {
+case class InsertPoint(val block: Block, val insert_before: Option[Operation]) {
 
   // custom constructor
-  def this(block: Block) = {
-    this(block, None)
-  }
+  def this(block: Block) = { this(block, None) }
 
   if (insert_before != None) then {
     if !(insert_before.get.container_block `equals` Some(block)) then {
@@ -100,9 +90,7 @@ trait Rewriter {
     // default handler does nothing
   }
 
-  def operation_insertion_handler: (Operation) => Unit = (
-    op: Operation
-  ) => {
+  def operation_insertion_handler: (Operation) => Unit = (op: Operation) => {
     // default handler does nothing
   }
 
@@ -127,13 +115,8 @@ trait Rewriter {
     }
     val operations2 = Seq.iterableFactory
     insertion_point.insert_before match {
-      case Some(op) =>
-        insertion_point.block.insert_ops_before(
-          op,
-          operations
-        )
-      case None =>
-        insertion_point.block.add_ops(operations)
+      case Some(op) => insertion_point.block.insert_ops_before(op, operations)
+      case None     => insertion_point.block.add_ops(operations)
     }
     operations.foreach(operation_insertion_handler)
   }
@@ -141,16 +124,12 @@ trait Rewriter {
   def insert_ops_before(
       op: Operation,
       new_ops: Operation | Seq[Operation]
-  ): Unit = {
-    insert_ops_at(InsertPoint.before(op), new_ops)
-  }
+  ): Unit = { insert_ops_at(InsertPoint.before(op), new_ops) }
 
   def insert_ops_after(
       op: Operation,
       new_ops: Operation | Seq[Operation]
-  ): Unit = {
-    insert_ops_at(InsertPoint.after(op), new_ops)
-  }
+  ): Unit = { insert_ops_at(InsertPoint.after(op), new_ops) }
 
   def replace_op(
       op: Operation,
@@ -171,8 +150,7 @@ trait Rewriter {
 
     val results = new_results match {
       case Some(x) => x
-      case None    =>
-        if (ops.length == 0) then ListType() else ops.last.results
+      case None    => if (ops.length == 0) then ListType() else ops.last.results
     }
 
     if (op.results.length != results.length) then {
@@ -197,11 +175,10 @@ trait Rewriter {
     if !(new_value eq value) then {
       for (use <- Seq.from(value.uses)) {
         val op = use.operation
-        val new_op =
-          op.updated(
-            results = op.results,
-            operands = op.operands.updated(use.index, new_value)
-          )
+        val new_op = op.updated(
+          results = op.results,
+          operands = op.operands.updated(use.index, new_value)
+        )
         replace_op(
           op = op,
           new_ops = new_op,
@@ -226,8 +203,7 @@ type PatternRewriter = PatternRewriteWalker#PatternRewriter
 
 abstract class RewritePattern {
 
-  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
-    ???
+  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit = ???
 
 }
 
@@ -250,19 +226,14 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
   override def match_and_rewrite(
       op: Operation,
       rewriter: PatternRewriter
-  ): Unit =
-    match_and_rewrite_rec(op, rewriter, patterns)
+  ): Unit = match_and_rewrite_rec(op, rewriter, patterns)
 
 }
 
 //    OPERATION REWRITE WALKER    //
-class PatternRewriteWalker(
-    val pattern: RewritePattern
-) {
+class PatternRewriteWalker(val pattern: RewritePattern) {
 
-  class PatternRewriter(
-      var current_op: Operation
-  ) extends Rewriter {
+  class PatternRewriter(var current_op: Operation) extends Rewriter {
     var has_done_action: Boolean = false
 
     override def operation_removal_handler: Operation => Unit = clear_worklist
@@ -270,46 +241,32 @@ class PatternRewriteWalker(
     override def operation_insertion_handler: Operation => Unit =
       populate_worklist
 
-    def erase_op(op: Operation): Unit = {
-      super.erase_op(op)
-    }
+    def erase_op(op: Operation): Unit = { super.erase_op(op) }
 
-    def erase_matched_op(): Unit = {
-      super.erase_op(current_op)
-    }
+    def erase_matched_op(): Unit = { super.erase_op(current_op) }
 
     def insert_op_at_location(
         insertion_point: InsertPoint,
         ops: Operation | Seq[Operation]
-    ): Unit = {
-      super.insert_ops_at(insertion_point, ops)
-    }
+    ): Unit = { super.insert_ops_at(insertion_point, ops) }
 
-    def insert_op_before_matched_op(
-        ops: Operation | Seq[Operation]
-    ): Unit = {
+    def insert_op_before_matched_op(ops: Operation | Seq[Operation]): Unit = {
       super.insert_ops_before(current_op, ops)
     }
 
-    def insert_op_after_matched_op(
-        ops: Operation | Seq[Operation]
-    ): Unit = {
+    def insert_op_after_matched_op(ops: Operation | Seq[Operation]): Unit = {
       super.insert_ops_before(current_op, ops)
     }
 
     def insert_op_at_end_of(
         block: Block,
         ops: Operation | Seq[Operation]
-    ): Unit = {
-      insert_op_at_location(InsertPoint.at_end_of(block), ops)
-    }
+    ): Unit = { insert_op_at_location(InsertPoint.at_end_of(block), ops) }
 
     def insert_op_at_start_of(
         block: Block,
         ops: Operation | Seq[Operation]
-    ): Unit = {
-      insert_op_at_location(InsertPoint.at_start_of(block), ops)
-    }
+    ): Unit = { insert_op_at_location(InsertPoint.at_start_of(block), ops) }
 
     override def insert_ops_before(
         op: Operation,
@@ -340,9 +297,7 @@ class PatternRewriteWalker(
 
   private var worklist = Stack[Operation]()
 
-  def rewrite_module(module: ModuleOp): Unit = {
-    return rewrite_op(module)
-  }
+  def rewrite_module(module: ModuleOp): Unit = { return rewrite_op(module) }
 
   def rewrite_op(op: Operation): Unit = {
     populate_worklist(op)
@@ -382,9 +337,8 @@ class PatternRewriteWalker(
       rewriter.has_done_action = false
       rewriter.current_op = op
 
-      try {
-        pattern.match_and_rewrite(op, rewriter)
-      } catch {
+      try { pattern.match_and_rewrite(op, rewriter) }
+      catch {
         case e: Exception => throw e // throw new Exception("Caught exception!")
       }
 

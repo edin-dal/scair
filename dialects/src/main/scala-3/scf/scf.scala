@@ -9,16 +9,12 @@ type I1 = IntegerType
 type AnySignlessIntegerOrIndex = IntegerType | IndexType
 type Index = IndexType
 
-case class Condition(
-    condition: Operand[I1],
-    args: Seq[Operand[Attribute]]
-) extends DerivedOperation["scf.condition", Condition]
+case class Condition(condition: Operand[I1], args: Seq[Operand[Attribute]])
+    extends DerivedOperation["scf.condition", Condition]
     derives DerivedOperationCompanion
 
-case class ExecuteRegionOp(
-    region: Region,
-    result: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
+case class ExecuteRegionOp(region: Region, result: Seq[Result[Attribute]])
+    extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
     derives DerivedOperationCompanion
 
 case class ForOp(
@@ -45,9 +41,8 @@ case class ForallOp(
 ) extends DerivedOperation["scf.forall", ForallOp]
     derives DerivedOperationCompanion
 
-case class InParallelOp(
-    region: Region
-) extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
+case class InParallelOp(region: Region)
+    extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
     derives DerivedOperationCompanion
 
 case class IfOp(
@@ -74,9 +69,8 @@ case class ReduceOp(
 ) extends DerivedOperation["scf.reduce", ReduceOp]
     derives DerivedOperationCompanion
 
-case class ReduceReturnOp(
-    resultss: Result[Attribute]
-) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
+case class ReduceReturnOp(resultss: Result[Attribute])
+    extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
     derives DerivedOperationCompanion
 
 case class WhileOp(
@@ -97,26 +91,24 @@ case class IndexSwitchOp(
 ) extends DerivedOperation["scf.index_switch", IndexSwitchOp]
     derives DerivedOperationCompanion
 
-case class YieldOp(
-    resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.yield", YieldOp]
+case class YieldOp(resultss: Seq[Result[Attribute]])
+    extends DerivedOperation["scf.yield", YieldOp]
     derives DerivedOperationCompanion
 
-val SCFDialect =
-  summonDialect[
-    EmptyTuple,
-    (
-        Condition,
-        ExecuteRegionOp,
-        ForOp,
-        ForallOp,
-        InParallelOp,
-        IfOp,
-        ParallelOp,
-        ReduceOp,
-        ReduceReturnOp,
-        WhileOp,
-        IndexSwitchOp,
-        YieldOp
-    )
-  ](Seq())
+val SCFDialect = summonDialect[
+  EmptyTuple,
+  (
+      Condition,
+      ExecuteRegionOp,
+      ForOp,
+      ForallOp,
+      InParallelOp,
+      IfOp,
+      ParallelOp,
+      ReduceOp,
+      ReduceReturnOp,
+      WhileOp,
+      IndexSwitchOp,
+      YieldOp
+  )
+](Seq())

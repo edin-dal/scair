@@ -7,10 +7,10 @@ case class TestOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = "test.op",
       operands,
@@ -25,8 +25,4 @@ object TestOp extends OperationCompanion {
   override def name = "test.op"
 }
 
-val Test: Dialect =
-  new Dialect(
-    operations = Seq(TestOp),
-    attributes = Seq()
-  )
+val Test: Dialect = new Dialect(operations = Seq(TestOp), attributes = Seq())
