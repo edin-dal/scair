@@ -37,8 +37,8 @@ object FastMathFlags:
   inline def contract: FastMathFlags = HashSet(FastMathFlag.contract)
   inline def afn: FastMathFlags = HashSet(FastMathFlag.afn)
 
-  inline def fast: FastMathFlags =
-    reassoc | nnan | ninf | nsz | arcp | contract | afn
+  inline def fast: FastMathFlags = reassoc | nnan | ninf | nsz | arcp |
+    contract | afn
 
   def apply(flags: FastMathFlag*): FastMathFlags = HashSet(flags*)
 
@@ -49,26 +49,24 @@ object FastMathFlagsAttr extends AttributeCompanion {
 
     import scair.Parser.whitespace
     P(
-      "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
-        sep = ","
-      ) ~ ">"
+      "<" ~
+        ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" |
+          "afn" | "fast").!.rep(sep = ",") ~ ">"
     ).map { parsed_flags =>
       if parsed_flags.isEmpty then
         throw new Exception("FastMathFlagsAttr requires at least one flag")
-      val flags = parsed_flags
-        .map(_ match {
-          case "none"     => FastMathFlags.none
-          case "reassoc"  => FastMathFlags.reassoc
-          case "nnan"     => FastMathFlags.nnan
-          case "ninf"     => FastMathFlags.ninf
-          case "nsz"      => FastMathFlags.nsz
-          case "arcp"     => FastMathFlags.arcp
-          case "contract" => FastMathFlags.contract
-          case "afn"      => FastMathFlags.afn
-          case "fast"     => FastMathFlags.fast
-          case f          => throw new Exception(s"Invalid fastmath flag '$f'")
-        })
-        .reduce(_ | _)
+      val flags = parsed_flags.map(_ match {
+        case "none"     => FastMathFlags.none
+        case "reassoc"  => FastMathFlags.reassoc
+        case "nnan"     => FastMathFlags.nnan
+        case "ninf"     => FastMathFlags.ninf
+        case "nsz"      => FastMathFlags.nsz
+        case "arcp"     => FastMathFlags.arcp
+        case "contract" => FastMathFlags.contract
+        case "afn"      => FastMathFlags.afn
+        case "fast"     => FastMathFlags.fast
+        case f          => throw new Exception(s"Invalid fastmath flag '$f'")
+      }).reduce(_ | _)
       FastMathFlagsAttr(flags)
     }
 
@@ -84,17 +82,15 @@ case class FastMathFlagsAttr(val flags: FastMathFlags)
       if flags == FastMathFlags.fast then "fast"
       else if flags == FastMathFlags.none then "none"
       else
-        this.flags
-          .map {
-            case FastMathFlag.reassoc  => "reassoc"
-            case FastMathFlag.nnan     => "nnan"
-            case FastMathFlag.ninf     => "ninf"
-            case FastMathFlag.nsz      => "nsz"
-            case FastMathFlag.arcp     => "arcp"
-            case FastMathFlag.contract => "contract"
-            case FastMathFlag.afn      => "afn"
-          }
-          .mkString(",")
+        this.flags.map {
+          case FastMathFlag.reassoc  => "reassoc"
+          case FastMathFlag.nnan     => "nnan"
+          case FastMathFlag.ninf     => "ninf"
+          case FastMathFlag.nsz      => "nsz"
+          case FastMathFlag.arcp     => "arcp"
+          case FastMathFlag.contract => "contract"
+          case FastMathFlag.afn      => "afn"
+        }.mkString(",")
     s"#arith.fastmath<$p>"
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -136,10 +132,10 @@ trait SameOperandsAndResultTypes extends Operation {
     else {
       val firstClass = params.head.getClass
       if (params.tail.forall(_.getClass == firstClass)) Right(this)
-      else
-        Left(
-          "All parameters of TypeConstraint must be of the same type in operation " + this.name
-        )
+      else Left(
+        "All parameters of TypeConstraint must be of the same type in operation " +
+          this.name
+      )
     }
   }
 
@@ -181,9 +177,8 @@ trait SameInputOutputTensorDims extends Operation {
       if (params.map(_.getShape == firstShape).reduceLeft(_ && _)) then
         Right(this)
       else
-        Left(
-          s"All parameters of operation '${this.name}' must have compatible shape"
-        )
+        Left(s"All parameters of operation '${this
+            .name}' must have compatible shape")
     }
   }
 
@@ -196,10 +191,10 @@ trait AllTypesMatch(values: Attribute*) extends Operation {
     else {
       val firstClass = values.head.getClass
       if (values.tail.forall(_.getClass == firstClass)) Right(this)
-      else
-        Left(
-          "All parameters of AllTypesMatch must be of the same type in operation " + this.name
-        )
+      else Left(
+        "All parameters of AllTypesMatch must be of the same type in operation " +
+          this.name
+      )
     }
   }
 
@@ -211,17 +206,18 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
   override def trait_verify(): Either[String, Operation] = {
     condition match {
       case IntegerType(IntData(1), Signless) => Right(this)
-      case x: ShapedType                     =>
-        result match {
+      case x: ShapedType                     => result match {
           case y: ShapedType =>
             if (x.getShape == y.getShape) then Right(this)
             else
               Left(
-                s"Condition must be a I1 boolean, or the result of operation '${this.name}' must have the same shape as the condition, but got ${x.getShape} and ${y.getShape}"
+                s"Condition must be a I1 boolean, or the result of operation '${this
+                    .name}' must have the same shape as the condition, but got ${x
+                    .getShape} and ${y.getShape}"
               )
-          case _ =>
-            Left(
-              s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
+          case _ => Left(
+              s"Condition must be a I1 boolean, or a shaped type in operation '${this
+                  .name}'"
             )
         }
     }
@@ -238,16 +234,16 @@ case class AddF(
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.addf", AddF]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.addf", AddF] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class AddI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.addi", AddI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.addi", AddI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class AddUIExtendedOp(
     val lhs: Operand[AnyIntegerType],
@@ -261,13 +257,11 @@ case class AndI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[I1]
-) extends DerivedOperation["arith.andi", AndI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.andi", AndI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
-case class BitCast(
-    val in: Operand[BitcastType],
-    val out: Operand[BitcastType]
-) extends DerivedOperation["arith.bitcast", BitCast]
+case class BitCast(val in: Operand[BitcastType], val out: Operand[BitcastType])
+    extends DerivedOperation["arith.bitcast", BitCast]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims derives DerivedOperationCompanion
 
@@ -312,22 +306,22 @@ case class DivF(
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.divf", DivF]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.divf", DivF] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class DivSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.divsi", DivSI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.divsi", DivSI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class DivUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.divui", DivUI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.divui", DivUI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class ExtF(
     val in: Operand[FloatType],
@@ -407,15 +401,15 @@ case class MaxSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.maxsi", MaxSI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.maxsi", MaxSI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class MaxUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.maxui", MaxUI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.maxui", MaxUI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class MinimumF(
     val lhs: Operand[FloatType],
@@ -437,15 +431,15 @@ case class MinSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.minsi", MinSI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.minsi", MinSI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class MinUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.minui", MinUI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.minui", MinUI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class MulF(
     val lhs: Operand[FloatType],
@@ -482,8 +476,8 @@ case class NegF(
     val operand: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.negf", NegF]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.negf", NegF] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class Ori(
     val lhs: Operand[AnyIntegerType],
@@ -496,22 +490,22 @@ case class RemF(
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.remf", RemF]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.remf", RemF] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class RemSI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.remsi", RemSI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.remsi", RemSI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class RemUI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.remui", RemUI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.remui", RemUI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class ScalingExtF(
     val in: Operand[FloatType],
@@ -545,22 +539,22 @@ case class ShLI(
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
     // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
-) extends DerivedOperation["arith.shli", ShLI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.shli", ShLI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class ShRSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.shrsi", ShRSI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.shrsi", ShRSI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class ShRUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.shrui", ShRUI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.shrui", ShRUI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class SIToFP(
     in: Operand[SignlessFixedWidthIntegerLike],
@@ -575,16 +569,16 @@ case class SubF(
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: Option[FastMathFlagsAttr] = None
-) extends DerivedOperation["arith.subf", SubF]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.subf", SubF] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class SubI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
     // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
-) extends DerivedOperation["arith.subi", SubI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.subi", SubI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
 case class TruncF(
     val in: Operand[FloatType],
@@ -613,64 +607,63 @@ case class XOrI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.xori", XOrI]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+) extends DerivedOperation["arith.xori", XOrI] with SameOperandsAndResultTypes
+    derives DerivedOperationCompanion
 
-val ArithDialect =
-  summonDialect[
-    EmptyTuple,
-    (
-        AddF,
-        AddI,
-        AddUIExtendedOp,
-        AndI,
-        BitCast,
-        CeilDivSi,
-        CeilDivUi,
-        CmpF,
-        CmpI,
-        Constant,
-        DivF,
-        DivSI,
-        DivUI,
-        ExtF,
-        ExtSI,
-        ExtUI,
-        FloorDivSI,
-        FPToSI,
-        FPToUI,
-        IndexCast,
-        IndexCastUI,
-        MaximumF,
-        MaxNumF,
-        MaxSI,
-        MaxUI,
-        MinimumF,
-        MinNumF,
-        MinSI,
-        MinUI,
-        MulF,
-        MulI,
-        MulSIExtended,
-        MulUIExtended,
-        NegF,
-        Ori,
-        RemF,
-        RemSI,
-        RemUI,
-        ScalingExtF,
-        ScalingTruncF,
-        SelectOp,
-        ShLI,
-        ShRSI,
-        ShRUI,
-        SIToFP,
-        SubF,
-        SubI,
-        TruncF,
-        TruncI,
-        UIToFP,
-        XOrI,
-        IndexCast
-    )
-  ](Seq(FastMathFlagsAttr))
+val ArithDialect = summonDialect[
+  EmptyTuple,
+  (
+      AddF,
+      AddI,
+      AddUIExtendedOp,
+      AndI,
+      BitCast,
+      CeilDivSi,
+      CeilDivUi,
+      CmpF,
+      CmpI,
+      Constant,
+      DivF,
+      DivSI,
+      DivUI,
+      ExtF,
+      ExtSI,
+      ExtUI,
+      FloorDivSI,
+      FPToSI,
+      FPToUI,
+      IndexCast,
+      IndexCastUI,
+      MaximumF,
+      MaxNumF,
+      MaxSI,
+      MaxUI,
+      MinimumF,
+      MinNumF,
+      MinSI,
+      MinUI,
+      MulF,
+      MulI,
+      MulSIExtended,
+      MulUIExtended,
+      NegF,
+      Ori,
+      RemF,
+      RemSI,
+      RemUI,
+      ScalingExtF,
+      ScalingTruncF,
+      SelectOp,
+      ShLI,
+      ShRSI,
+      ShRUI,
+      SIToFP,
+      SubF,
+      SubI,
+      TruncF,
+      TruncI,
+      UIToFP,
+      XOrI,
+      IndexCast
+  )
+](Seq(FastMathFlagsAttr))

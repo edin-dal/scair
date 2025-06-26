@@ -89,8 +89,7 @@ case class IntData(val value: Long)
 \*≡==---==≡≡==---==≡*/
 
 case class IntegerType(val width: IntData, val sign: Signedness)
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "builtin.int_type"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(width, sign)
@@ -107,10 +106,8 @@ case class IntegerType(val width: IntData, val sign: Signedness)
 || INTEGER ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
 
-case class IntegerAttr(
-    val value: IntData,
-    val typ: IntegerType | IndexType
-) extends ParametrizedAttribute {
+case class IntegerAttr(val value: IntData, val typ: IntegerType | IndexType)
+    extends ParametrizedAttribute {
 
   def this(value: IntData) = this(value, I64)
 
@@ -170,8 +167,8 @@ case class IndexType() extends ParametrizedAttribute with TypeAttribute {
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
 
-  override def custom_print =
-    "[" + attrValues.map(x => x.custom_print).mkString(", ") + "]"
+  override def custom_print = "[" + attrValues.map(x => x.custom_print)
+    .mkString(", ") + "]"
 
 }
 
@@ -206,23 +203,20 @@ case class RankedTensorType(
     override val elementType: Attribute,
     val shape: ArrayAttribute[IntData],
     val encoding: Option[Attribute] = None
-) extends TensorType,
-      ShapedType {
+) extends TensorType, ShapedType {
 
   override def name: String = "builtin.ranked_tensor"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    shape +: elementType +: encoding.toSeq
+  override def parameters: Seq[Attribute | Seq[Attribute]] = shape +:
+    elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
   override def getShape = shape.attrValues.map(_.data)
 
   override def custom_print: String = {
     val shapeString =
-      (shape.data.map(x =>
-        if (x.data == -1) "?" else x.custom_print
-      ) :+ elementType.custom_print)
-        .mkString("x")
+      (shape.data.map(x => if (x.data == -1) "?" else x.custom_print) :+
+        elementType.custom_print).mkString("x")
 
     val encodingString = encoding match {
       case Some(x) => x.custom_print
@@ -238,8 +232,7 @@ case class UnrankedTensorType(override val elementType: Attribute)
     extends TensorType {
   override def name: String = "builtin.unranked_tensor"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    Seq(elementType)
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(elementType)
 
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
@@ -256,13 +249,12 @@ case class RankedMemrefType(
     override val elementType: Attribute,
     val shape: ArrayAttribute[IntData],
     val encoding: Option[Attribute] = None
-) extends MemrefType,
-      ShapedType {
+) extends MemrefType, ShapedType {
 
   override def name: String = "builtin.ranked_memref"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    shape +: elementType +: encoding.toSeq
+  override def parameters: Seq[Attribute | Seq[Attribute]] = shape +:
+    elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
   override def getShape = shape.attrValues.map(_.data)
@@ -270,10 +262,8 @@ case class RankedMemrefType(
   override def custom_print: String = {
 
     val shapeString =
-      (shape.map(x =>
-        if (x.data == -1) "?" else x.custom_print
-      ) :+ elementType.custom_print)
-        .mkString("x")
+      (shape.map(x => if (x.data == -1) "?" else x.custom_print) :+
+        elementType.custom_print).mkString("x")
 
     return s"memref<${shapeString}>"
   }
@@ -285,8 +275,7 @@ case class UnrankedMemrefType(override val elementType: Attribute)
 
   override def name: String = "builtin.unranked_memref"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    Seq(elementType)
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(elementType)
 
   override def custom_print = s"tensor<*x${elementType.custom_print}>"
 }
@@ -299,8 +288,7 @@ case class VectorType(
     val elementType: Attribute,
     val shape: ArrayAttribute[IntData],
     val scalableDims: ArrayAttribute[IntData]
-) extends ParametrizedAttribute,
-      ShapedType {
+) extends ParametrizedAttribute, ShapedType {
 
   override def name: String = "builtin.vector_type"
 
@@ -313,11 +301,9 @@ case class VectorType(
   override def custom_print: String = {
 
     val shapeString =
-      ((shape, scalableDims).zipped
-        .map((size, scalable) =>
-          if scalable.data != 0 then s"[${size.data}]" else s"${size.data}"
-        ) :+ elementType.custom_print)
-        .mkString("x")
+      ((shape, scalableDims).zipped.map((size, scalable) =>
+        if scalable.data != 0 then s"[${size.data}]" else s"${size.data}"
+      ) :+ elementType.custom_print).mkString("x")
 
     return s"vector<${shapeString}>"
   }
@@ -338,8 +324,8 @@ case class SymbolRefAttr(
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(rootRef, nestedRefs)
 
-  override def custom_print =
-    (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
+  override def custom_print = (rootRef +: nestedRefs).map(_.data).map("@" + _)
+    .mkString("::")
 
 }
 
@@ -350,8 +336,7 @@ case class SymbolRefAttr(
 case class DenseArrayAttr(
     val typ: IntegerType | FloatType,
     val data: Seq[IntegerAttr] | Seq[FloatAttr]
-) extends ParametrizedAttribute
-    with Seq[Attribute] {
+) extends ParametrizedAttribute with Seq[Attribute] {
 
   override def name: String = "builtin.dense_array"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
@@ -370,8 +355,7 @@ case class DenseArrayAttr(
         .map(_ match {
           case IntegerAttr(value, _) => value.custom_print
           case FloatAttr(value, _)   => value.custom_print
-        })
-        .mkString(", ")}>"
+        }).mkString(", ")}>"
   }
 
   // Seq methods
@@ -386,11 +370,8 @@ case class DenseArrayAttr(
 ||  FunctionType    ||
 \*≡==---==≡≡==---==≡*/
 
-case class FunctionType(
-    val inputs: Seq[Attribute],
-    val outputs: Seq[Attribute]
-) extends ParametrizedAttribute
-    with TypeAttribute {
+case class FunctionType(val inputs: Seq[Attribute], val outputs: Seq[Attribute])
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "builtin.function_type"
 
@@ -412,8 +393,8 @@ case class FunctionType(
 || DenseIntOrFPAttr ||
 \*≡==---==≡≡==---==≡*/
 
-type TensorLiteralArray =
-  ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
+type TensorLiteralArray = ArrayAttribute[IntegerAttr] |
+  ArrayAttribute[FloatAttr]
 
 case class DenseIntOrFPElementsAttr(
     val typ: TensorType | MemrefType | VectorType,
@@ -433,10 +414,9 @@ case class DenseIntOrFPElementsAttr(
 
   override def custom_verify(): Either[String, Unit] =
     Try(int_or_float.verify(elementType, new ConstraintContext())) match {
-      case Success(_) =>
-        Try(
-          for (x <- data.attrValues)
-            int_or_float.verify(x, new ConstraintContext())
+      case Success(_) => Try(
+          for (x <- data.attrValues) int_or_float
+            .verify(x, new ConstraintContext())
         ) match {
           case Success(_) => Right(())
           case Failure(e) => Left(e.getMessage)
@@ -496,12 +476,8 @@ object ModuleOp extends OperationCompanion {
   override def name = "builtin.module"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] =
-    P(
-      parser.Region
-    ).map((x: Region) => ModuleOp(regions = Seq(x)))
+  override def parse[$: P](parser: Parser): P[Operation] = P(parser.Region)
+    .map((x: Region) => ModuleOp(regions = Seq(x)))
   // ==----------------------== //
 
 }
@@ -511,10 +487,10 @@ case class ModuleOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = "builtin.module",
       operands,
@@ -525,10 +501,8 @@ case class ModuleOp(
       attributes
     ) {
 
-  override def custom_print(
-      p: Printer
-  )(using indentLevel: Int) =
-    p.print("builtin.module ", regions(0))
+  override def custom_print(p: Printer)(using indentLevel: Int) = p
+    .print("builtin.module ", regions(0))
 
 }
 

@@ -31,36 +31,29 @@ class AttrParser(val ctx: MLContext) {
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
         ctx.getAttribute(s"${dialect}.${attrName}") match {
-          case Some(attr) =>
-            attr.parse(this)
-          case None =>
-            throw new Exception(
+          case Some(attr) => attr.parse(this)
+          case None       => throw new Exception(
               s"Attribute $dialect.$attrName is not defined in any supported Dialect."
             )
         }
     }
   )
 
-  def DialectType[$: P]: P[Attribute] = P(
-    "!" ~~ PrettyDialectReferenceName.flatMapTry {
-      (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match {
-          case Some(attr) =>
-            attr.parse(this)
-          case None =>
-            throw new Exception(
-              s"Type $dialect.$attrName is not defined in any supported Dialect."
-            )
-        }
-    }
-  )
+  def DialectType[$: P]
+      : P[Attribute] = P("!" ~~ PrettyDialectReferenceName.flatMapTry {
+    (dialect: String, attrName: String) =>
+      ctx.getAttribute(s"${dialect}.${attrName}") match {
+        case Some(attr) => attr.parse(this)
+        case None       => throw new Exception(
+            s"Type $dialect.$attrName is not defined in any supported Dialect."
+          )
+      }
+  })
 
   // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
   // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
-  def AttributeEntry[$: P] = P(
-    (BareId | StringLiteral) ~ "=" ~/ AttributeValue
-  )
+  def AttributeEntry[$: P] = P((BareId | StringLiteral) ~ "=" ~/ AttributeValue)
 
   def AttributeValue[$: P] = P(
     Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
@@ -68,9 +61,10 @@ class AttrParser(val ctx: MLContext) {
 
   def AttributeValueList[$: P] = AttributeValue.rep(sep = ",")
 
-  def Type[$: P] = P(
-    (BuiltIn | DialectType | DialectAttribute)./
-  ) // shortened definition TODO: finish...
+  def Type[$: P] =
+    P(
+      (BuiltIn | DialectType | DialectAttribute)./
+    ) // shortened definition TODO: finish...
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    FLOAT TYPE    ||
@@ -82,9 +76,8 @@ class AttrParser(val ctx: MLContext) {
   def Float80TypeP[$: P]: P[Float80Type] = P("f80").map(_ => Float80Type())
   def Float128TypeP[$: P]: P[Float128Type] = P("f128").map(_ => Float128Type())
 
-  def FloatTypeP[$: P]: P[FloatType] = P(
-    Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP
-  )
+  def FloatTypeP[$: P]: P[FloatType] =
+    P(Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||     INT DATA     ||
@@ -101,47 +94,40 @@ class AttrParser(val ctx: MLContext) {
   // signless-integer-type  ::=  `i`  [1-9][0-9]*
   // integer-type           ::=  signed-integer-type | unsigned-integer-type | signless-integer-type
 
-  def SignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("si" ~~ DecimalLiteral).map((x: Long) => IntegerType(IntData(x), Signed))
+  def SignedIntegerTypeP[$: P]: P[IntegerType] = P("si" ~~ DecimalLiteral)
+    .map((x: Long) => IntegerType(IntData(x), Signed))
 
-  def UnsignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("ui" ~~ DecimalLiteral).map((x: Long) =>
-      IntegerType(IntData(x), Unsigned)
-    )
+  def UnsignedIntegerTypeP[$: P]: P[IntegerType] = P("ui" ~~ DecimalLiteral)
+    .map((x: Long) => IntegerType(IntData(x), Unsigned))
 
-  def SignlessIntegerTypeP[$: P]: P[IntegerType] =
-    P("i" ~~ DecimalLiteral).map((x: Long) => IntegerType(IntData(x), Signless))
+  def SignlessIntegerTypeP[$: P]: P[IntegerType] = P("i" ~~ DecimalLiteral)
+    .map((x: Long) => IntegerType(IntData(x), Signless))
 
-  def IntegerTypeP[$: P]: P[IntegerType] = P(
-    SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
-  )
+  def IntegerTypeP[$: P]: P[IntegerType] =
+    P(SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||   INTEGER ATTR   ||
   \*≡==---==≡≡==---==≡*/
 
-  def IntegerAttrP[$: P]: P[IntegerAttr] =
-    P(
-      (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)).?).map((x, y) =>
-        IntegerAttr(
-          x,
-          y match {
-            case yy: Some[_] =>
-              yy.get match
-                case i: IntegerType => i
-                case i: IndexType   => i
-                case _              =>
-                  throw new Exception(
-                    s"Unreachable, fastparse's | is simply weakly typed."
-                  )
+  def IntegerAttrP[$: P]: P[IntegerAttr] = P(
+    (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)).?).map((x, y) =>
+      IntegerAttr(
+        x,
+        y match {
+          case yy: Some[_] => yy.get match
+              case i: IntegerType => i
+              case i: IndexType   => i
+              case _              => throw new Exception(
+                  s"Unreachable, fastparse's | is simply weakly typed."
+                )
 
-            case None => I64
-          }
-        )
+          case None => I64
+        }
       )
-        | "true".map(_ => IntegerAttr(IntData(1), I1))
-        | "false".map(_ => IntegerAttr(IntData(0), I1))
-    )
+    ) | "true".map(_ => IntegerAttr(IntData(1), I1)) |
+      "false".map(_ => IntegerAttr(IntData(0), I1))
+  )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    FLOAT DATA    ||
@@ -153,20 +139,18 @@ class AttrParser(val ctx: MLContext) {
   ||    FLOAT ATTR    ||
   \*≡==---==≡≡==---==≡*/
 
-  def FloatAttrP[$: P]: P[FloatAttr] =
-    P(
-      (FloatDataP ~ (":" ~ FloatTypeP).?).map((x, y) =>
-        FloatAttr(
-          x,
-          y match {
-            case Some(a) => a
-            case None    => Float64Type()
-          }
-        )
-      ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP).map((x, y) =>
-        FloatAttr(FloatData(intBitsToFloat(x.intValue())), y)
+  def FloatAttrP[$: P]: P[FloatAttr] = P(
+    (FloatDataP ~ (":" ~ FloatTypeP).?).map((x, y) =>
+      FloatAttr(
+        x,
+        y match {
+          case Some(a) => a
+          case None    => Float64Type()
+        }
       )
-    )
+    ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP)
+      .map((x, y) => FloatAttr(FloatData(intBitsToFloat(x.intValue())), y))
+  )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    INDEX TYPE    ||
@@ -181,8 +165,9 @@ class AttrParser(val ctx: MLContext) {
   // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
   def ArrayAttributeP[$: P]: P[ArrayAttribute[Attribute]] = P(
-    "[" ~ AttributeValueList
-      .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
+    "[" ~
+      AttributeValueList
+        .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -192,14 +177,14 @@ class AttrParser(val ctx: MLContext) {
   // dense-array-attribute  ::=  `array` `<` (integer-type | float-type) (`:` tensor-literal)? `>`
 
   def DenseArrayAttributeP[$: P]: P[DenseArrayAttr] = P(
-    "array<" ~ (((IntegerTypeP) ~ (":" ~ IntDataP.rep(sep = ",")).orElse(
-      Seq()
-    )).map((typ: IntegerType, x: Seq[IntData]) =>
-      DenseArrayAttr(typ, x.map(IntegerAttr(_, typ)))
-    ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).orElse(Seq())).map(
-      (typ: FloatType, x: Seq[FloatData]) =>
-        DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
-    )) ~ ">"
+    "array<" ~
+      (((IntegerTypeP) ~ (":" ~ IntDataP.rep(sep = ",")).orElse(Seq()))
+        .map((typ: IntegerType, x: Seq[IntData]) =>
+          DenseArrayAttr(typ, x.map(IntegerAttr(_, typ)))
+        ) | ((FloatTypeP) ~ (":" ~ FloatDataP.rep(sep = ",")).orElse(Seq()))
+        .map((typ: FloatType, x: Seq[FloatData]) =>
+          DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
+        )) ~ ">"
   )
 
   /*≡==--==≡≡≡≡≡≡==--=≡≡*\
@@ -223,30 +208,23 @@ class AttrParser(val ctx: MLContext) {
   // dimension             ::=   `?` | decimal-literal
   // encoding              ::=   attribute-value
 
-  def TensorTypeP[$: P]: P[TensorType] = P(
-    "tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
-  )
+  def TensorTypeP[$: P]: P[TensorType] =
+    P("tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">")
 
   def RankedTensorTypeP[$: P]: P[TensorType] = P(
     DimensionList ~ Type ~ ("," ~ Encoding).?
   ).map((x: (ArrayAttribute[IntData], Attribute, Option[Attribute])) =>
-    RankedTensorType(
-      shape = x._1,
-      elementType = x._2,
-      encoding = x._3
-    )
+    RankedTensorType(shape = x._1, elementType = x._2, encoding = x._3)
   )
 
-  def UnrankedTensorTypeP[$: P]: P[TensorType] =
-    P("*" ~ "x" ~ Type).map((x: Attribute) =>
-      UnrankedTensorType(elementType = x)
-    )
+  def UnrankedTensorTypeP[$: P]: P[TensorType] = P("*" ~ "x" ~ Type)
+    .map((x: Attribute) => UnrankedTensorType(elementType = x))
 
-  def DimensionList[$: P] =
-    P((Dimension ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
+  def DimensionList[$: P] = P((Dimension ~ "x").rep)
+    .map(x => ArrayAttribute(attrValues = x))
 
-  def Dimension[$: P]: P[IntData] =
-    P("?".map(_ => -1: Long) | DecimalLiteral).map(x => IntData(x))
+  def Dimension[$: P]: P[IntData] = P("?".map(_ => -1: Long) | DecimalLiteral)
+    .map(x => IntData(x))
 
   def Encoding[$: P] = P(AttributeValue)
 
@@ -260,31 +238,22 @@ class AttrParser(val ctx: MLContext) {
   // dimension-list        ::=   (dimension `x`)*
   // dimension             ::=   `?` | decimal-literal
 
-  def MemrefTypeP[$: P]: P[MemrefType] = P(
-    "memref" ~ "<" ~/ (UnrankedMemrefTypeP | RankedMemrefTypeP) ~ ">"
+  def MemrefTypeP[$: P]: P[MemrefType] =
+    P("memref" ~ "<" ~/ (UnrankedMemrefTypeP | RankedMemrefTypeP) ~ ">")
+
+  def RankedMemrefTypeP[$: P]: P[MemrefType] = P(DimensionList ~ Type)
+    .map((x: (ArrayAttribute[IntData], Attribute)) =>
+      RankedMemrefType(shape = x._1, elementType = x._2)
+    )
+
+  def UnrankedMemrefTypeP[$: P]: P[UnrankedMemrefType] = P("*" ~ "x" ~ Type)
+    .map((x: Attribute) => UnrankedMemrefType(elementType = x))
+
+  def VectorDimensionList[$: P] = P(
+    ((DecimalLiteral.map(x => (IntData(x), IntData(0))) |
+      "[" ~ DecimalLiteral.map(x => (IntData(x), IntData(1))) ~ "]") ~ "x")
+      .rep(1).map(_.unzip)
   )
-
-  def RankedMemrefTypeP[$: P]: P[MemrefType] = P(
-    DimensionList ~ Type
-  ).map((x: (ArrayAttribute[IntData], Attribute)) =>
-    RankedMemrefType(
-      shape = x._1,
-      elementType = x._2
-    )
-  )
-
-  def UnrankedMemrefTypeP[$: P]: P[UnrankedMemrefType] =
-    P("*" ~ "x" ~ Type).map((x: Attribute) =>
-      UnrankedMemrefType(elementType = x)
-    )
-
-  def VectorDimensionList[$: P] =
-    P(
-      ((DecimalLiteral
-        .map(x => (IntData(x), IntData(0))) | "[" ~ DecimalLiteral.map(x =>
-        (IntData(x), IntData(1))
-      ) ~ "]") ~ "x").rep(1).map(_.unzip)
-    )
 
   def VectorTypeP[$: P]: P[VectorType] = P(
     "vector<" ~/ VectorDimensionList ~/ Type ~/ ">"
@@ -303,10 +272,7 @@ class AttrParser(val ctx: MLContext) {
   def SymbolRefAttrP[$: P]: P[SymbolRefAttr] = P(
     SymbolRefId ~~ ("::" ~~ SymbolRefId).rep
   ).map((x: String, y: Seq[String]) =>
-    SymbolRefAttr(
-      StringData(x),
-      y.map(z => StringData(z))
-    )
+    SymbolRefAttr(StringData(x), y.map(z => StringData(z)))
   )
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -316,47 +282,44 @@ class AttrParser(val ctx: MLContext) {
   // TO-DO : it can also parse a vector type or a memref type
   // TO-DO : Figure out why it is throwing an error when you get rid of asInstanceOf...
 
-  def DenseIntOrFPElementsAttrP[$: P]: P[DenseIntOrFPElementsAttr] =
-    P(
-      "dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~ (TensorTypeP | MemrefTypeP | VectorTypeP)
-    ).map((x, y) =>
-      y match {
-        case yy: (TensorType | MemrefType | VectorType) =>
-          DenseIntOrFPElementsAttr(yy, x.asInstanceOf[TensorLiteralArray])
-      }
-      // DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])
-    )
+  def DenseIntOrFPElementsAttrP[$: P]: P[DenseIntOrFPElementsAttr] = P(
+    "dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~
+      (TensorTypeP | MemrefTypeP | VectorTypeP)
+  ).map((x, y) =>
+    y match {
+      case yy: (TensorType | MemrefType | VectorType) =>
+        DenseIntOrFPElementsAttr(yy, x.asInstanceOf[TensorLiteralArray])
+    }
+    // DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])
+  )
 
   def TensorLiteral[$: P]: P[TensorLiteralArray] =
     P(SingleTensorLiteral | EmptyTensorLiteral | MultipleTensorLiteral)
 
-  def SingleTensorLiteral[$: P]: P[TensorLiteralArray] =
-    P(FloatDataP | IntDataP).map(_ match {
-      case (x: IntData) =>
-        ArrayAttribute[IntegerAttr](Seq(IntegerAttr(x, I32)))
-      case (y: FloatData) =>
-        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type())))
-    })
+  def SingleTensorLiteral[$: P]: P[TensorLiteralArray] = P(
+    FloatDataP | IntDataP
+  ).map(_ match {
+    case (x: IntData)   => ArrayAttribute[IntegerAttr](Seq(IntegerAttr(x, I32)))
+    case (y: FloatData) =>
+      ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type())))
+  })
 
   def MultipleTensorLiteral[$: P]: P[TensorLiteralArray] =
     P(MultipleFloatTensorLiteral | MultipleIntTensorLiteral)
 
   def MultipleIntTensorLiteral[$: P]: P[ArrayAttribute[IntegerAttr]] =
     P("[" ~ IntDataP.rep(1, sep = ",") ~ "]").map((x: Seq[IntData]) =>
-      ArrayAttribute[IntegerAttr](
-        for (x1 <- x) yield IntegerAttr(x1, I32)
-      )
+      ArrayAttribute[IntegerAttr](for (x1 <- x) yield IntegerAttr(x1, I32))
     )
 
-  def MultipleFloatTensorLiteral[$: P]: P[ArrayAttribute[FloatAttr]] =
-    P("[" ~ FloatDataP.rep(1, sep = ",") ~ "]").map((y: Seq[FloatData]) =>
-      ArrayAttribute[FloatAttr](
-        for (y1 <- y) yield FloatAttr(y1, Float32Type())
-      )
-    )
+  def MultipleFloatTensorLiteral[$: P]: P[ArrayAttribute[FloatAttr]] = P(
+    "[" ~ FloatDataP.rep(1, sep = ",") ~ "]"
+  ).map((y: Seq[FloatData]) =>
+    ArrayAttribute[FloatAttr](for (y1 <- y) yield FloatAttr(y1, Float32Type()))
+  )
 
-  def EmptyTensorLiteral[$: P]: P[TensorLiteralArray] =
-    P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr](Seq()))
+  def EmptyTensorLiteral[$: P]: P[TensorLiteralArray] = P("[" ~ "]")
+    .map(_ => ArrayAttribute[IntegerAttr](Seq()))
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||   AFFINE MAP ATTR   ||
@@ -376,36 +339,20 @@ class AttrParser(val ctx: MLContext) {
   ||   FUNCTION TYPE   ||
   \*≡==---==≡≡≡==---==≡*/
 
-  def ParenTypeList[$: P] = P(
-    "(" ~ Type.rep(sep = ",") ~ ")"
-  )
+  def ParenTypeList[$: P] = P("(" ~ Type.rep(sep = ",") ~ ")")
 
-  def FunctionType[$: P] = P(
-    ParenTypeList ~ "->" ~/ (ParenTypeList | Type.map(Seq(_)))
-  )
+  def FunctionType[$: P] =
+    P(ParenTypeList ~ "->" ~/ (ParenTypeList | Type.map(Seq(_))))
 
-  def FunctionTypeP[$: P]: P[FunctionType] = P(
-    FunctionType.map((inputs, outputs) =>
-      scair.dialects.builtin.FunctionType(inputs, outputs)
-    )
-  )
+  def FunctionTypeP[$: P]: P[FunctionType] = P(FunctionType.map(
+    (inputs, outputs) => scair.dialects.builtin.FunctionType(inputs, outputs)
+  ))
 
   def BuiltIn[$: P]: P[Attribute] = P(
-    FloatTypeP |
-      IntegerTypeP |
-      IndexTypeP |
-      ArrayAttributeP |
-      DenseArrayAttributeP |
-      FunctionTypeP |
-      StringAttributeP |
-      TensorTypeP |
-      MemrefTypeP |
-      VectorTypeP |
-      SymbolRefAttrP |
-      FloatAttrP |
-      IntegerAttrP |
-      DenseIntOrFPElementsAttrP |
-      AffineMapAttrP | AffineSetAttrP
+    FloatTypeP | IntegerTypeP | IndexTypeP | ArrayAttributeP |
+      DenseArrayAttributeP | FunctionTypeP | StringAttributeP | TensorTypeP |
+      MemrefTypeP | VectorTypeP | SymbolRefAttrP | FloatAttrP | IntegerAttrP |
+      DenseIntOrFPElementsAttrP | AffineMapAttrP | AffineSetAttrP
   )
 
 }

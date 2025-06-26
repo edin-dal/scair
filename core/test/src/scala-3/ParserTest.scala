@@ -9,26 +9,21 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 class ParserTest
-    extends AnyFlatSpec
-    with BeforeAndAfter
-    with TableDrivenPropertyChecks {
+    extends AnyFlatSpec with BeforeAndAfter with TableDrivenPropertyChecks {
 
   val I32 = IntegerType(IntData(32), Signless)
   val I64 = IntegerType(IntData(64), Signless)
 
-  def getResult[A](result: String, expected: A) =
-    result match {
-      case "Success" => ((x: Int) => Parsed.Success(expected, x))
-      case "Failure" => Parsed.Failure(_, _, _)
-    }
+  def getResult[A](result: String, expected: A) = result match {
+    case "Success" => ((x: Int) => Parsed.Success(expected, x))
+    case "Failure" => Parsed.Failure(_, _, _)
+  }
 
   val ctx = new MLContext()
   val args = scair.core.utils.Args(allow_unregistered = true)
   var parser: Parser = new Parser(ctx, args)
 
-  before {
-    parser = new Parser(ctx, args)
-  }
+  before { parser = new Parser(ctx, args) }
 
   val digitTests = Table(
     ("input", "result", "expected"),
@@ -102,10 +97,8 @@ class ParserTest
     ("1.", "Failure", "")
   )
 
-  val stringLiteralTests = Table(
-    ("input", "result", "expected"),
-    ("\"hello\"", "Success", "hello")
-  )
+  val stringLiteralTests =
+    Table(("input", "result", "expected"), ("\"hello\"", "Success", "hello"))
 
   val valueIdTests = Table(
     ("input", "result", "expected"),
@@ -127,26 +120,10 @@ class ParserTest
 
   val unitTests = Table(
     ("name", "pattern", "tests"),
-    (
-      "Digit",
-      ((x: fastparse.P[?]) => Parser.Digit(using x)),
-      digitTests
-    ),
-    (
-      "HexDigit",
-      ((x: fastparse.P[?]) => Parser.HexDigit(using x)),
-      hexTests
-    ),
-    (
-      "Letter",
-      ((x: fastparse.P[?]) => Parser.Letter(using x)),
-      letterTests
-    ),
-    (
-      "IdPunct",
-      ((x: fastparse.P[?]) => Parser.IdPunct(using x)),
-      idPunctTests
-    ),
+    ("Digit", ((x: fastparse.P[?]) => Parser.Digit(using x)), digitTests),
+    ("HexDigit", ((x: fastparse.P[?]) => Parser.HexDigit(using x)), hexTests),
+    ("Letter", ((x: fastparse.P[?]) => Parser.Letter(using x)), letterTests),
+    ("IdPunct", ((x: fastparse.P[?]) => Parser.IdPunct(using x)), idPunctTests),
     (
       "IntegerLiteral",
       ((x: fastparse.P[?]) => Parser.IntegerLiteral(using x)),
@@ -172,11 +149,7 @@ class ParserTest
       ((x: fastparse.P[?]) => Parser.StringLiteral(using x)),
       stringLiteralTests
     ),
-    (
-      "ValueId",
-      ((x: fastparse.P[?]) => Parser.ValueId(using x)),
-      valueIdTests
-    ),
+    ("ValueId", ((x: fastparse.P[?]) => Parser.ValueId(using x)), valueIdTests),
     (
       "OpResultList",
       ((x: fastparse.P[?]) => Parser.OpResultList(using x)),
@@ -200,9 +173,9 @@ class ParserTest
   "Block - Unit Tests" should "parse correctly" in {
     withClue("Test 1: ") {
       parser.parseThis(
-        text =
-          "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()",
+        text = "^bb0(%5: i32):\n" +
+          "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+          "\"test.op\"(%1, %0) : (i64, i32) -> ()",
         pattern = parser.Block(using _)
       ) should matchPattern {
         case Parsed.Success(
@@ -213,11 +186,7 @@ class ParserTest
                     "test.op",
                     Seq(),
                     Seq(),
-                    Seq(
-                      Result(I32),
-                      Result(I64),
-                      Result(I32)
-                    ),
+                    Seq(Result(I32), Result(I64), Result(I32)),
                     Seq(),
                     _,
                     _
@@ -243,10 +212,11 @@ class ParserTest
 
     withClue("Test 1: ") {
       parser.parseThis(
-        text =
-          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
+        text = "{^bb0(%5: i32):\n" +
+          "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+          "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" +
+          "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+          "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
         pattern = parser.Region(using _)
       ) should matchPattern {
         case Parsed.Success(
@@ -259,11 +229,7 @@ class ParserTest
                         "test.op",
                         Seq(),
                         Seq(),
-                        Seq(
-                          Result(I32),
-                          Result(I64),
-                          Result(I32)
-                        ),
+                        Seq(Result(I32), Result(I64), Result(I32)),
                         Seq(),
                         _,
                         _
@@ -286,21 +252,14 @@ class ParserTest
                         "test.op",
                         Seq(),
                         Seq(),
-                        Seq(
-                          Result(I32),
-                          Result(I64),
-                          Result(I32)
-                        ),
+                        Seq(Result(I32), Result(I64), Result(I32)),
                         Seq(),
                         _,
                         _
                       ),
                       UnregisteredOperation(
                         "test.op",
-                        Seq(
-                          Value(I64),
-                          Value(I32)
-                        ),
+                        Seq(Value(I64), Value(I32)),
                         Seq(),
                         Seq(),
                         Seq(),
@@ -321,10 +280,11 @@ class ParserTest
 
     withClue("Test 2: ") {
       parser.parseThis(
-        text =
-          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
+        text = "{^bb0(%5: i32):\n" +
+          "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+          "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb0(%4: i32):\n" +
+          "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+          "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
         pattern = parser.Region(using _),
         verboseFailures = true
       ) should matchPattern {
@@ -350,10 +310,7 @@ class ParserTest
                    |}) : () -> ()""".stripMargin
 
       val exception = intercept[Exception](
-        parser.parseThis(
-          text = text,
-          pattern = parser.TopLevel(using _)
-        )
+        parser.parseThis(text = text, pattern = parser.TopLevel(using _))
       ).getMessage shouldBe "Successor ^bb3 not defined within Scope"
     }
   }
@@ -367,23 +324,15 @@ class ParserTest
                  |    "test.op"() : () -> ()
                  |  }) : () -> ()""".stripMargin
 
-      val bb4 = Block(
-        ListType(UnregisteredOperation("test.op"))
-      )
-      val bb3 = Block(
-        ListType(UnregisteredOperation("test.op", successors = Seq(bb4)))
-      )
+      val bb4 = Block(ListType(UnregisteredOperation("test.op")))
+      val bb3 =
+        Block(ListType(UnregisteredOperation("test.op", successors = Seq(bb4))))
       val operation =
-        UnregisteredOperation(
-          "test.op",
-          regions = Seq(Region(Seq(bb3, bb4)))
-        )
+        UnregisteredOperation("test.op", regions = Seq(Region(Seq(bb3, bb4))))
 
-      parser.parseThis(
-        text = text,
-        pattern = parser.OperationPat(using _)
-      ) should matchPattern { case operation =>
-      }
+      parser
+        .parseThis(text = text, pattern = parser.OperationPat(using _)) should
+        matchPattern { case operation => }
     }
   }
 
@@ -408,11 +357,7 @@ class ParserTest
                             "test.op",
                             Seq(),
                             Seq(),
-                            Seq(
-                              Result(I32),
-                              Result(I64),
-                              Result(I32)
-                            ),
+                            Seq(Result(I32), Result(I64), Result(I32)),
                             Seq(),
                             _,
                             _
@@ -431,56 +376,58 @@ class ParserTest
     }
   }
 
-  "Value Uses assignment test forward ref" should "Test Operation's  forward-referenced Operand uses" in {
-    withClue("Operand Uses: ") {
+  "Value Uses assignment test forward ref" should
+    "Test Operation's  forward-referenced Operand uses" in {
+      withClue("Operand Uses: ") {
 
-      val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
+        val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()
-                    | %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)""".stripMargin
+                    | %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)"""
+          .stripMargin
 
-      val Parsed.Success(value, _) = parser.parseThis(
-        text = text,
-        pattern = parser.TopLevel(using _)
-      ): @unchecked
+        val Parsed.Success(value, _) = parser.parseThis(
+          text = text,
+          pattern = parser.TopLevel(using _)
+        ): @unchecked
 
-      val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
-      val uses1 = value.regions(0).blocks(0).operations(4).results(1).uses
-      val uses2 = value.regions(0).blocks(0).operations(4).results(2).uses
+        val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
+        val uses1 = value.regions(0).blocks(0).operations(4).results(1).uses
+        val uses2 = value.regions(0).blocks(0).operations(4).results(2).uses
 
-      uses0.length shouldEqual 4
-      uses0(0).operation.name shouldEqual "op1"
-      uses0(0).index shouldEqual 0
-      uses0(1).operation.name shouldEqual "op2"
-      uses0(1).index shouldEqual 0
-      uses0(2).operation.name shouldEqual "op3"
-      uses0(2).index shouldEqual 0
-      uses0(3).operation.name shouldEqual "op4"
-      uses0(3).index shouldEqual 0
+        uses0.length shouldEqual 4
+        uses0(0).operation.name shouldEqual "op1"
+        uses0(0).index shouldEqual 0
+        uses0(1).operation.name shouldEqual "op2"
+        uses0(1).index shouldEqual 0
+        uses0(2).operation.name shouldEqual "op3"
+        uses0(2).index shouldEqual 0
+        uses0(3).operation.name shouldEqual "op4"
+        uses0(3).index shouldEqual 0
 
-      uses1.length shouldEqual 4
-      uses1(0).operation.name shouldEqual "op1"
-      uses1(0).index shouldEqual 1
-      uses1(1).operation.name shouldEqual "op2"
-      uses1(1).index shouldEqual 1
-      uses1(2).operation.name shouldEqual "op3"
-      uses1(2).index shouldEqual 1
-      uses1(3).operation.name shouldEqual "op4"
-      uses1(3).index shouldEqual 1
+        uses1.length shouldEqual 4
+        uses1(0).operation.name shouldEqual "op1"
+        uses1(0).index shouldEqual 1
+        uses1(1).operation.name shouldEqual "op2"
+        uses1(1).index shouldEqual 1
+        uses1(2).operation.name shouldEqual "op3"
+        uses1(2).index shouldEqual 1
+        uses1(3).operation.name shouldEqual "op4"
+        uses1(3).index shouldEqual 1
 
-      uses2.length shouldEqual 4
-      uses2(0).operation.name shouldEqual "op1"
-      uses2(0).index shouldEqual 2
-      uses2(1).operation.name shouldEqual "op2"
-      uses2(1).index shouldEqual 2
-      uses2(2).operation.name shouldEqual "op3"
-      uses2(2).index shouldEqual 2
-      uses2(3).operation.name shouldEqual "op4"
-      uses2(3).index shouldEqual 2
+        uses2.length shouldEqual 4
+        uses2(0).operation.name shouldEqual "op1"
+        uses2(0).index shouldEqual 2
+        uses2(1).operation.name shouldEqual "op2"
+        uses2(1).index shouldEqual 2
+        uses2(2).operation.name shouldEqual "op3"
+        uses2(2).index shouldEqual 2
+        uses2(3).operation.name shouldEqual "op4"
+        uses2(3).index shouldEqual 2
 
+      }
     }
-  }
 
   "Value Uses assignment test" should "Test Operation's Operand uses" in {
     withClue("Operand Uses: ") {
@@ -491,10 +438,8 @@ class ParserTest
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()""".stripMargin
 
-      val Parsed.Success(value, _) = parser.parseThis(
-        text = text,
-        pattern = parser.TopLevel(using _)
-      ): @unchecked
+      val Parsed.Success(value, _) = parser
+        .parseThis(text = text, pattern = parser.TopLevel(using _)): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(0).results(0).uses
       val uses1 = value.regions(0).blocks(0).operations(0).results(1).uses
@@ -543,21 +488,19 @@ class ParserTest
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()""".stripMargin
 
-      val Parsed.Success(value, _) = parser.parseThis(
-        text = text,
-        pattern = parser.TopLevel(using _)
-      ): @unchecked
+      val Parsed.Success(value, _) = parser
+        .parseThis(text = text, pattern = parser.TopLevel(using _)): @unchecked
 
       val printer = new Printer(true)
 
       val opToErase = value.regions(0).blocks(0).operations(1)
 
-      val block =
-        opToErase.container_block.getOrElse(throw new Exception("bruh"))
+      val block = opToErase.container_block
+        .getOrElse(throw new Exception("bruh"))
 
-      val exception = intercept[Exception](
-        block.erase_op(opToErase)
-      ).getMessage shouldBe "Attempting to erase a Value that has uses in other operations."
+      val exception = intercept[Exception](block.erase_op(opToErase))
+        .getMessage shouldBe
+        "Attempting to erase a Value that has uses in other operations."
 
       opToErase.container_block shouldEqual None
     }

@@ -17,24 +17,16 @@ trait ScairOptBase {
   register_all_dialects()
   register_all_passes()
 
-  def allDialects = {
-    scair.utils.allDialects
-  }
+  def allDialects = { scair.utils.allDialects }
 
-  def allPasses = {
-    scair.utils.allPasses
-  }
+  def allPasses = { scair.utils.allPasses }
 
   final def register_all_dialects(): Unit = {
-    for (dialect <- allDialects) {
-      ctx.registerDialect(dialect)
-    }
+    for (dialect <- allDialects) { ctx.registerDialect(dialect) }
   }
 
   final def register_all_passes(): Unit = {
-    for (pass <- allPasses) {
-      transformCtx.registerPass(pass)
-    }
+    for (pass <- allPasses) { transformCtx.registerPass(pass) }
   }
 
   def run(args: Array[String]): Unit = {
@@ -47,44 +39,28 @@ trait ScairOptBase {
         programName("scair-opt"),
         head("scair-opt", "0"),
         // The input file - defaulting to stdin
-        arg[String]("file")
-          .optional()
-          .text("input file")
+        arg[String]("file").optional().text("input file")
           .action((x, c) => c.copy(input = Some(x))),
-        opt[Unit]('a', "allow-unregistered-dialect")
-          .optional()
-          .text(
-            "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
-          )
-          .action((_, c) => c.copy(allow_unregistered = true)),
-        opt[Unit]('s', "skip-verify")
-          .optional()
-          .text("Skip verification")
+        opt[Unit]('a', "allow-unregistered-dialect").optional().text(
+          "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
+        ).action((_, c) => c.copy(allow_unregistered = true)),
+        opt[Unit]('s', "skip-verify").optional().text("Skip verification")
           .action((_, c) => c.copy(skip_verify = true)),
-        opt[Unit]("split-input-file")
-          .optional()
+        opt[Unit]("split-input-file").optional()
           .text("Split input file on `// -----`")
           .action((_, c) => c.copy(split_input_file = true)),
-        opt[Unit]("parsing-diagnostics")
-          .optional()
-          .text(
-            "Parsing diagnose mode, i.e parse errors are not fatal for the whole run"
-          )
-          .action((_, c) => c.copy(parsing_diagnostics = true)),
-        opt[Unit]('g', "print-generic")
-          .optional()
+        opt[Unit]("parsing-diagnostics").optional().text(
+          "Parsing diagnose mode, i.e parse errors are not fatal for the whole run"
+        ).action((_, c) => c.copy(parsing_diagnostics = true)),
+        opt[Unit]('g', "print-generic").optional()
           .text("Print Strictly in Generic format")
           .action((_, c) => c.copy(print_generic = true)),
-        opt[Seq[String]]('p', "passes")
-          .optional()
+        opt[Seq[String]]('p', "passes").optional()
           .text("Specify passes to apply to the IR")
           .action((x, c) => c.copy(passes = x)),
-        opt[Unit]("verify-diagnostics")
-          .optional()
-          .text(
-            "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
-          )
-          .action((_, c) => c.copy(verify_diagnostics = true))
+        opt[Unit]("verify-diagnostics").optional().text(
+          "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
+        ).action((_, c) => c.copy(verify_diagnostics = true))
       )
     }
 
@@ -114,48 +90,37 @@ trait ScairOptBase {
 
       val input_module = {
         val parser = new scair.Parser(ctx, parsed_args)
-        parser.parseThis(
-          chunk,
-          pattern = parser.TopLevel(using _)
-        ) match {
-          case fastparse.Parsed.Success(input_module, _) =>
-            Right(input_module)
-          case failure: fastparse.Parsed.Failure =>
-            Left(parser.error(failure))
+        parser.parseThis(chunk, pattern = parser.TopLevel(using _)) match {
+          case fastparse.Parsed.Success(input_module, _) => Right(input_module)
+          case failure: fastparse.Parsed.Failure => Left(parser.error(failure))
         }
       }
 
       if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
         throw new Exception(input_module.left.get)
 
-      val processed_module: Either[String, Operation] =
-        input_module.flatMap(input_module => {
+      val processed_module: Either[String, Operation] = input_module.flatMap(
+        input_module => {
           var module =
             if (skip_verify) then Right(input_module) else input_module.verify()
           // verify parsed content
           module match {
             case Right(op) =>
               // apply the specified passes
-              passes
-                .map(transformCtx.getPass(_).get)
+              passes.map(transformCtx.getPass(_).get)
                 .foldLeft(module)((module, pass) => {
                   module.map(pass.transform)
                 })
             case Left(errorMsg) =>
-              if (parsed_args.verify_diagnostics) {
-                Left(errorMsg)
-              } else {
-                throw new VerifyException(errorMsg)
-              }
+              if (parsed_args.verify_diagnostics) { Left(errorMsg) }
+              else { throw new VerifyException(errorMsg) }
           }
-        })
+        }
+      )
 
       {
         val printer = new Printer(print_generic)
-        processed_module.fold(
-          printer.print,
-          printer.print
-        )
+        processed_module.fold(printer.print, printer.print)
         if chunk != input_chunks.last then printer.print("// -----\n")
         printer.flush()
       }

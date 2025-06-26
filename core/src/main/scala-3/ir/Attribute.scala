@@ -29,9 +29,7 @@ trait TypeAttribute extends Attribute {
 extension (x: Seq[Attribute] | Attribute)
 
   def custom_print: String = x match {
-    case x: Seq[_] =>
-      x.asInstanceOf[Seq[Attribute]]
-        .map(_.custom_print)
+    case x: Seq[_] => x.asInstanceOf[Seq[Attribute]].map(_.custom_print)
         .mkString("[", ", ", "]")
     case attr: Attribute => attr.custom_print
   }
@@ -40,21 +38,19 @@ abstract class ParametrizedAttribute() extends Attribute {
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
-  override def custom_print =
-    s"${prefix}${name}${
-        if parameters.size > 0
-        then parameters.map(x => x.custom_print).mkString("<", ", ", ">")
-        else ""
-      }"
+  override def custom_print = s"${prefix}${name}${
+      if parameters.size > 0 then
+        parameters.map(x => x.custom_print).mkString("<", ", ", ">")
+      else ""
+    }"
 
   override def equals(attr: Any): Boolean = {
     attr match {
-      case x: ParametrizedAttribute =>
-        x.name == this.name &&
+      case x: ParametrizedAttribute => x.name == this.name &&
         x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
-        (for ((i, j) <- x.parameters zip this.parameters)
-          yield i == j).foldLeft(true)((i, j) => i && j)
+        (for ((i, j) <- x.parameters zip this.parameters) yield i == j)
+          .foldLeft(true)((i, j) => i && j)
       case _ => false
     }
   }
@@ -66,18 +62,14 @@ object DataAttribute {
   given [D]: Conversion[DataAttribute[D], D] = _.data
 }
 
-abstract class DataAttribute[D](
-    override val name: String,
-    val data: D
-) extends Attribute {
+abstract class DataAttribute[D](override val name: String, val data: D)
+    extends Attribute {
   override def custom_print = s"$prefix$name<$data>"
 
   override def equals(attr: Any): Boolean = {
     attr match {
-      case x: DataAttribute[_] =>
-        x.name == this.name &&
-        x.getClass == this.getClass &&
-        x.data == this.data
+      case x: DataAttribute[_] => x.name == this.name &&
+        x.getClass == this.getClass && x.data == this.data
       case _ => false
     }
   }

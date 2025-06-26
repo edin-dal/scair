@@ -14,10 +14,9 @@ object AddDummyAttributeToDict extends RewritePattern {
       rewriter: PatternRewriter
   ): Unit = {
     op match {
-      case x: UnregisteredOperation =>
-        x.attributes += ("dummy" -> StringData("UnregDumDum"))
-      case d =>
-        d.attributes += ("dummy" -> StringData("dumdum"))
+      case x: UnregisteredOperation => x.attributes +=
+          ("dummy" -> StringData("UnregDumDum"))
+      case d => d.attributes += ("dummy" -> StringData("dumdum"))
     }
     rewriter.has_done_action = true
   }
@@ -35,17 +34,14 @@ object TestInsertingDummyOperation extends RewritePattern {
 
     (op.name == "tobereplaced") && (op.results.length == 0) match {
       case true =>
-        rewriter.insert_op_before_matched_op(
-          Seq(
-            defDum("dummy1"),
-            defDum("dummy2"),
-            defDum("dummy3"),
-            defDum("dummy4")
-          )
-        )
+        rewriter.insert_op_before_matched_op(Seq(
+          defDum("dummy1"),
+          defDum("dummy2"),
+          defDum("dummy3"),
+          defDum("dummy4")
+        ))
         rewriter.erase_matched_op()
-      case false =>
-        op.attributes += ("replaced" -> StringData("false"))
+      case false => op.attributes += ("replaced" -> StringData("false"))
     }
 
     rewriter.has_done_action = true
@@ -60,16 +56,11 @@ object TestReplacingDummyOperation extends RewritePattern {
       rewriter: PatternRewriter
   ): Unit = {
 
-    val op1 =
-      new UnregisteredOperation("dummy-op1")
+    val op1 = new UnregisteredOperation("dummy-op1")
 
-    val op2 =
-      new UnregisteredOperation("dummy-op2")
+    val op2 = new UnregisteredOperation("dummy-op2")
 
-    val op3 =
-      new UnregisteredOperation(
-        "dummy-return"
-      )
+    val op3 = new UnregisteredOperation("dummy-return")
 
     val opReplace = new UnregisteredOperation(
       "replacedOp",
@@ -79,13 +70,8 @@ object TestReplacingDummyOperation extends RewritePattern {
     )
 
     (op.name == "tobereplaced") match {
-      case true =>
-        rewriter.replace_op(
-          op,
-          opReplace
-        )
-      case false =>
-        op.attributes += ("replaced" -> StringData("false"))
+      case true  => rewriter.replace_op(op, opReplace)
+      case false => op.attributes += ("replaced" -> StringData("false"))
     }
 
     rewriter.has_done_action = true

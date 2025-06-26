@@ -12,8 +12,8 @@ trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
   given companion: DerivedAttributeCompanion[T] = deferred
   override val name: String = companion.name
 
-  override val parameters: Seq[Attribute | Seq[Attribute]] =
-    companion.parameters(this)
+  override val parameters: Seq[Attribute | Seq[Attribute]] = companion
+    .parameters(this)
 
 }
 
@@ -32,15 +32,14 @@ trait DerivedOperation[name <: String, T] extends Operation {
       regions: Seq[Region],
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
-  ) =
-    companion(
-      operands = operands,
-      successors = successors,
-      results = results,
-      regions = regions,
-      properties = properties,
-      attributes = attributes
-    )
+  ) = companion(
+    operands = operands,
+    successors = successors,
+    results = results,
+    regions = regions,
+    properties = properties,
+    attributes = attributes
+  )
 
   def name: String = companion.name
   // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.

@@ -21,8 +21,8 @@ object StateMembers extends AttributeCompanion {
   override def name: String = "subop.state_members"
 
   override def parse[$: P](parser: AttrParser) = P(
-    "[" ~ (BareId.map(StringData(_)) ~ ":" ~ parser.Type)
-      .rep(0, sep = ",") ~ "]"
+    "[" ~ (BareId.map(StringData(_)) ~ ":" ~ parser.Type).rep(0, sep = ",") ~
+      "]"
   ).map((x: Seq[(StringData, Attribute)]) => {
     val (names, types) = x.unzip
     StateMembers(names, types)
@@ -30,18 +30,16 @@ object StateMembers extends AttributeCompanion {
 
 }
 
-case class StateMembers(
-    val names: Seq[StringData],
-    val types: Seq[Attribute]
-) extends ParametrizedAttribute {
+case class StateMembers(val names: Seq[StringData], val types: Seq[Attribute])
+    extends ParametrizedAttribute {
 
   override def name: String = "subop.state_members"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    names :++ types
+  override def parameters: Seq[Attribute | Seq[Attribute]] = names :++ types
 
-  override def custom_print =
-    s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
+  override def custom_print = s"[${(for {
+      (x, y) <- (names zip types)
+    } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
 
 }
 
@@ -56,16 +54,14 @@ case class StateMembers(
 object ResultTable extends AttributeCompanion {
   override def name: String = "subop.result_table"
 
-  override def parse[$: P](parser: AttrParser) = P(
-    "<" ~ StateMembers.parse(parser) ~ ">"
-  ).map(x => ResultTable(x.asInstanceOf[StateMembers]))
+  override def parse[$: P](parser: AttrParser) =
+    P("<" ~ StateMembers.parse(parser) ~ ">")
+      .map(x => ResultTable(x.asInstanceOf[StateMembers]))
 
 }
 
-case class ResultTable(
-    val members: StateMembers
-) extends ParametrizedAttribute
-    with TypeAttribute {
+case class ResultTable(val members: StateMembers)
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "subop.result_table"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(members)
@@ -83,24 +79,15 @@ object SetResultOp extends OperationCompanion {
   override def name: String = "subop.set_result"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    parser.Type ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
-  ).map(
-    (
-        x: Attribute,
-        y: String,
-        z: Attribute,
-        w: Map[String, Attribute]
-    ) =>
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(y),
-        operandsTypes = Seq(z),
-        attributes = w + ("result_id" -> x)
-      )
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    parser.Type ~ ValueId ~ ":" ~ parser.Type ~ parser.OptionalAttributes
+  ).map((x: Attribute, y: String, z: Attribute, w: Map[String, Attribute]) =>
+    parser.generateOperation(
+      opName = name,
+      operandsNames = Seq(y),
+      operandsTypes = Seq(z),
+      attributes = w + ("result_id" -> x)
+    )
   )
   // ==----------------------== //
 
@@ -130,23 +117,18 @@ case class SetResultOp(
     regions.length,
     properties.size
   ) match {
-    case (1, 0, 0, 0, 0) =>
-      attributes.get("result_id") match {
-        case Some(x) =>
-          x match {
+    case (1, 0, 0, 0, 0) => attributes.get("result_id") match {
+        case Some(x) => x match {
             case _: IntegerAttr => Right(this)
-            case _              =>
-              Left(
+            case _              => Left(
                 "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
               )
           }
-        case _ =>
-          Left(
+        case _ => Left(
             "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
           )
       }
-    case _ =>
-      Left(
+    case _ => Left(
         "SetResultOp Operation must have 1 operand, 0 successors, 0 results, 0 regions and 0 properties."
       )
   }
@@ -154,9 +136,6 @@ case class SetResultOp(
 }
 
 val SubOperatorOps: Dialect =
-  new Dialect(
-    operations = Seq(SetResultOp),
-    attributes = Seq(ResultTable)
-  )
+  new Dialect(operations = Seq(SetResultOp), attributes = Seq(ResultTable))
 
 // !subop.result_table<[avg_disc$0 : !db.decimal<31, 21>, count_order$0 : i64]>

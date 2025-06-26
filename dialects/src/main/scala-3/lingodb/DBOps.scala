@@ -29,13 +29,7 @@ object DB_DateUnit_DAY extends DB_DateUnit_Case("day")
 object DB_DateUnit_MS extends DB_DateUnit_Case("millisecond")
 
 object DB_DateUnitAttr
-    extends I64EnumAttr(
-      "DateUnitAttr",
-      Seq(
-        DB_DateUnit_DAY,
-        DB_DateUnit_MS
-      )
-    )
+    extends I64EnumAttr("DateUnitAttr", Seq(DB_DateUnit_DAY, DB_DateUnit_MS))
 
 object DB_IntervalUnit_MONTH extends DB_IntervalUnit_Case("months")
 object DB_IntervalUnit_DAYTIME extends DB_IntervalUnit_Case("daytime")
@@ -43,10 +37,7 @@ object DB_IntervalUnit_DAYTIME extends DB_IntervalUnit_Case("daytime")
 object DB_IntervalUnitAttr
     extends I64EnumAttr(
       "IntervalUnitAttr",
-      Seq(
-        DB_IntervalUnit_MONTH,
-        DB_IntervalUnit_DAYTIME
-      )
+      Seq(DB_IntervalUnit_MONTH, DB_IntervalUnit_DAYTIME)
     )
 
 object DB_CMP_P_EQ extends DB_CmpPredicate_Case("eq");
@@ -88,8 +79,7 @@ object DB_CharType extends AttributeCompanion {
 }
 
 case class DB_CharType(val typ: Seq[Attribute])
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "db.char"
   override def parameters: Seq[Attribute] = typ
@@ -97,11 +87,10 @@ case class DB_CharType(val typ: Seq[Attribute])
   override def custom_verify(): Either[String, Unit] = {
     if (typ.length != 1) {
       Left("TupleStream Tuple must contain 1 elements only.")
-    } else
-      typ(0) match {
-        case _: IntData => Right(())
-        case _          => Left("CharType type must be IntData")
-      }
+    } else typ(0) match {
+      case _: IntData => Right(())
+      case _          => Left("CharType type must be IntData")
+    }
   }
 
   override def custom_print: String = {
@@ -125,8 +114,7 @@ object DB_DateType extends AttributeCompanion {
 }
 
 case class DB_DateType(val unit: DB_DateUnit_Case)
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
   override def name: String = "db.date"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(unit)
 }
@@ -144,8 +132,7 @@ object DB_IntervalType extends AttributeCompanion {
 }
 
 case class DB_IntervalType(val unit: Attribute)
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "db.interval"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(unit)
@@ -181,8 +168,7 @@ object DB_DecimalType extends AttributeCompanion {
 }
 
 case class DB_DecimalType(val typ: Seq[Attribute])
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "db.decimal"
   override def parameters: Seq[Attribute | Seq[Attribute]] = typ
@@ -193,13 +179,11 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     } else {
       typ(0) match {
         case _: IntData => Right(())
-        case _          =>
-          Left("DB_DecimalType type must be (IntData, IntData)")
+        case _ => Left("DB_DecimalType type must be (IntData, IntData)")
       }
       typ(1) match {
         case _: IntData => Right(())
-        case _          =>
-          Left("DB_DecimalType type must be (IntData, IntData)")
+        case _ => Left("DB_DecimalType type must be (IntData, IntData)")
       }
     }
   }
@@ -224,23 +208,18 @@ object DB_StringType extends AttributeCompanion {
 }
 
 case class DB_StringType(val typ: Seq[Attribute])
-    extends ParametrizedAttribute
-    with TypeAttribute {
+    extends ParametrizedAttribute with TypeAttribute {
 
   override def name: String = "db.string"
   override def parameters: Seq[Attribute | Seq[Attribute]] = typ
 
   override def custom_verify(): Either[String, Unit] = {
     if (typ.length > 1) {
-      Left(
-        "TupleStream Tuple must contain at most 1 element."
-      )
-    } else if (typ.length == 1)
-      typ(0) match {
-        case _: StringData => Right(())
-        case _             =>
-          Left("DB_DecimalType type must be StringData")
-      }
+      Left("TupleStream Tuple must contain at most 1 element.")
+    } else if (typ.length == 1) typ(0) match {
+      case _: StringData => Right(())
+      case _             => Left("DB_DecimalType type must be StringData")
+    }
     else Right(())
   }
 
@@ -263,22 +242,14 @@ object DB_ConstantOp extends OperationCompanion {
   override def name: String = "db.constant"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
-  ).map(
-    (
-        x: Attribute,
-        y: Attribute,
-        z: Map[String, Attribute]
-    ) =>
-      parser.generateOperation(
-        opName = name,
-        resultsTypes = Seq(y),
-        attributes = z + ("value" -> x)
-      )
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type ~ parser.OptionalAttributes
+  ).map((x: Attribute, y: Attribute, z: Map[String, Attribute]) =>
+    parser.generateOperation(
+      opName = name,
+      resultsTypes = Seq(y),
+      attributes = z + ("value" -> x)
+    )
   )
   // ==----------------------== //
 
@@ -310,14 +281,11 @@ case class DB_ConstantOp(
   ) match {
     case (0, 0, 1, 0, 0) => Right(this)
     case _               =>
-      Left(
-        "DB_ConstantOp Operation must contain only 2 dictionary attributes."
-      )
+      Left("DB_ConstantOp Operation must contain only 2 dictionary attributes.")
   }
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
-    val value =
-      attributes.get("value").map(_.custom_print).getOrElse("")
+    val value = attributes.get("value").map(_.custom_print).getOrElse("")
     val resultType = results.head.typ
     printer.print(s"$name($value) : ${resultType.custom_print}")
   }
@@ -332,11 +300,9 @@ object DB_CmpOp extends OperationCompanion {
   override def name: String = "db.compare"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~
+      ValueId ~ ":" ~ parser.Type ~ parser.OptionalAttributes
   ).map(
     (
         x: Attribute,
@@ -382,18 +348,12 @@ case class DB_CmpOp(
     regions.length,
     properties.size
   ) match {
-    case (2, 0, 0, 0, 0) =>
-      (operands(0).typ == operands(1).typ) match {
+    case (2, 0, 0, 0, 0) => (operands(0).typ == operands(1).typ) match {
         case true  => Right(this)
         case false =>
-          Left(
-            "In order to be compared, operands' types must match!"
-          )
+          Left("In order to be compared, operands' types must match!")
       }
-    case _ =>
-      Left(
-        "DB_CmpOp Operation must contain only 2 operands."
-      )
+    case _ => Left("DB_CmpOp Operation must contain only 2 operands.")
   }
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
@@ -422,53 +382,26 @@ object DB_MulOp extends OperationCompanion {
   // ==--- Custom Parsing ---== //
   private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
     (opLeft.getClass == opRight.getClass) match {
-      case true =>
-        opLeft match {
+      case true => opLeft match {
           case x: IntegerAttr    => Seq(opLeft)
           case y: FloatAttr      => Seq(opLeft)
-          case z: DB_DecimalType =>
-            Seq(
-              DB_DecimalType(
-                Seq(
-                  new IntegerAttr(
-                    IntData(
-                      opLeft
-                        .asInstanceOf[DB_DecimalType]
-                        .typ(0)
-                        .asInstanceOf[IntegerAttr]
-                        .value
-                        .value
-                        +
-                          opRight
-                            .asInstanceOf[DB_DecimalType]
-                            .typ(0)
-                            .asInstanceOf[IntegerAttr]
-                            .value
-                            .value
-                    )
-                  ),
-                  new IntegerAttr(
-                    IntData(
-                      opLeft
-                        .asInstanceOf[DB_DecimalType]
-                        .typ(1)
-                        .asInstanceOf[IntegerAttr]
-                        .value
-                        .value
-                        +
-                          opRight
-                            .asInstanceOf[DB_DecimalType]
-                            .typ(1)
-                            .asInstanceOf[IntegerAttr]
-                            .value
-                            .value
-                    )
-                  )
-                )
-              )
+          case z: DB_DecimalType => Seq(
+              DB_DecimalType(Seq(
+                new IntegerAttr(IntData(
+                  opLeft.asInstanceOf[DB_DecimalType].typ(0)
+                    .asInstanceOf[IntegerAttr].value.value +
+                    opRight.asInstanceOf[DB_DecimalType].typ(0)
+                      .asInstanceOf[IntegerAttr].value.value
+                )),
+                new IntegerAttr(IntData(
+                  opLeft.asInstanceOf[DB_DecimalType].typ(1)
+                    .asInstanceOf[IntegerAttr].value.value +
+                    opRight.asInstanceOf[DB_DecimalType].typ(1)
+                      .asInstanceOf[IntegerAttr].value.value
+                ))
+              ))
             )
-          case _ =>
-            throw new Exception(
+          case _ => throw new Exception(
               "Operand types for the MulOp must be of type IntegerAttr, FloatAttr or DB_DecimalType."
             )
         }
@@ -477,11 +410,9 @@ object DB_MulOp extends OperationCompanion {
     }
   }
 
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type ~
+      parser.OptionalAttributes
   ).map(
     (
         left: String,
@@ -526,18 +457,12 @@ case class DB_MulOp(
     regions.length,
     properties.size
   ) match {
-    case (2, 0, 1, 0, 0) =>
-      (operands(0).typ == operands(1).typ) match {
+    case (2, 0, 1, 0, 0) => (operands(0).typ == operands(1).typ) match {
         case true  => Right(this)
         case false =>
-          Left(
-            "In order to be multiplied, operands' types must match!"
-          )
+          Left("In order to be multiplied, operands' types must match!")
       }
-    case _ =>
-      Left(
-        "DB_MulOp Operation must contain only 2 operands."
-      )
+    case _ => Left("DB_MulOp Operation must contain only 2 operands.")
   }
 
   // added code for custom printing
@@ -565,56 +490,25 @@ object DB_DivOp extends OperationCompanion {
   // ==--- Custom Parsing ---== //
   private def inferRetType(opLeft: Attribute, opRight: Attribute) = {
     (opLeft.getClass == opRight.getClass) match {
-      case true =>
-        opLeft match {
+      case true => opLeft match {
           case x: IntegerAttr    => Seq(opLeft)
           case y: FloatAttr      => Seq(opLeft)
           case z: DB_DecimalType =>
-            val opLeft0 =
-              opLeft
-                .asInstanceOf[DB_DecimalType]
-                .typ(0)
-                .asInstanceOf[IntegerAttr]
-                .value
-                .value
-            val opLeft1 =
-              opLeft
-                .asInstanceOf[DB_DecimalType]
-                .typ(1)
-                .asInstanceOf[IntegerAttr]
-                .value
-                .value
-            val opRight0 =
-              opRight
-                .asInstanceOf[DB_DecimalType]
-                .typ(0)
-                .asInstanceOf[IntegerAttr]
-                .value
-                .value
-            val opRight1 =
-              opRight
-                .asInstanceOf[DB_DecimalType]
-                .typ(1)
-                .asInstanceOf[IntegerAttr]
-                .value
-                .value
-            Seq(
-              DB_DecimalType(
-                Seq(
-                  new IntegerAttr(
-                    IntData(
-                      opLeft0 - opLeft1 + opRight1
-                        + max(opLeft1 + opRight0, 6)
-                    )
-                  ),
-                  new IntegerAttr(
-                    IntData(max(opLeft1 + opRight0, 6))
-                  )
-                )
-              )
-            )
-          case _ =>
-            throw new Exception(
+            val opLeft0 = opLeft.asInstanceOf[DB_DecimalType].typ(0)
+              .asInstanceOf[IntegerAttr].value.value
+            val opLeft1 = opLeft.asInstanceOf[DB_DecimalType].typ(1)
+              .asInstanceOf[IntegerAttr].value.value
+            val opRight0 = opRight.asInstanceOf[DB_DecimalType].typ(0)
+              .asInstanceOf[IntegerAttr].value.value
+            val opRight1 = opRight.asInstanceOf[DB_DecimalType].typ(1)
+              .asInstanceOf[IntegerAttr].value.value
+            Seq(DB_DecimalType(Seq(
+              new IntegerAttr(IntData(
+                opLeft0 - opLeft1 + opRight1 + max(opLeft1 + opRight0, 6)
+              )),
+              new IntegerAttr(IntData(max(opLeft1 + opRight0, 6)))
+            )))
+          case _ => throw new Exception(
               "Operand types for the DivOp must be of type IntegerAttr, FloatAttr or DB_DecimalType."
             )
         }
@@ -623,11 +517,9 @@ object DB_DivOp extends OperationCompanion {
     }
   }
 
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type ~
+      parser.OptionalAttributes
   ).map(
     (
         left: String,
@@ -672,18 +564,12 @@ case class DB_DivOp(
     regions.length,
     properties.size
   ) match {
-    case (2, 0, 1, 0, 0) =>
-      (operands(0).typ == operands(1).typ) match {
+    case (2, 0, 1, 0, 0) => (operands(0).typ == operands(1).typ) match {
         case true  => Right(this)
         case false =>
-          Left(
-            "In order to be divided, operands' types must match!"
-          )
+          Left("In order to be divided, operands' types must match!")
       }
-    case _ =>
-      Left(
-        "DB_DivOp Operation must contain only 2 operands."
-      )
+    case _ => Left("DB_DivOp Operation must contain only 2 operands.")
   }
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
@@ -709,11 +595,9 @@ object DB_AddOp extends OperationCompanion {
   override def name: String = "db.add"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type ~
+      parser.OptionalAttributes
   ).map(
     (
         left: String,
@@ -758,18 +642,11 @@ case class DB_AddOp(
     regions.length,
     properties.size
   ) match {
-    case (2, 0, 1, 0, 0) =>
-      (operands(0).typ == operands(1).typ) match {
+    case (2, 0, 1, 0, 0) => (operands(0).typ == operands(1).typ) match {
         case true  => Right(this)
-        case false =>
-          Left(
-            "In order to be added, operands' types must match!"
-          )
+        case false => Left("In order to be added, operands' types must match!")
       }
-    case _ =>
-      Left(
-        "DB_AddOp Operation must contain only 2 operands."
-      )
+    case _ => Left("DB_AddOp Operation must contain only 2 operands.")
   }
 
 //added code for custom printing
@@ -797,11 +674,9 @@ object DB_SubOp extends OperationCompanion {
   override def name: String = "db.sub"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type ~
+      parser.OptionalAttributes
   ).map(
     (
         left: String,
@@ -846,18 +721,13 @@ case class DB_SubOp(
     regions.length,
     properties.size
   ) match {
-    case (2, 0, 1, 0, 0) =>
-      (operands(0).typ == operands(1).typ) match {
+    case (2, 0, 1, 0, 0) => (operands(0).typ == operands(1).typ) match {
         case true  => Right(this)
-        case false =>
-          Left(
+        case false => Left(
             "In order to carry out substitution, operands' types must match!"
           )
       }
-    case _ =>
-      Left(
-        "DB_SubOp Operation must contain only 2 operands."
-      )
+    case _ => Left("DB_SubOp Operation must contain only 2 operands.")
   }
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
@@ -883,11 +753,9 @@ object CastOp extends OperationCompanion {
   override def name: String = "db.cast"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
-      parser: Parser
-  ): P[Operation] = P(
-    ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
-      ~ parser.OptionalAttributes
+  override def parse[$: P](parser: Parser): P[Operation] = P(
+    ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep ~
+      parser.OptionalAttributes
   ).map(
     (
         operand: String,
@@ -932,10 +800,7 @@ case class CastOp(
     properties.size
   ) match {
     case (1, 0, 1, 0, 0) => Right(this)
-    case _               =>
-      Left(
-        "CastOp Operation must contain only 1 operand and result."
-      )
+    case _ => Left("CastOp Operation must contain only 1 operand and result.")
   }
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
@@ -949,16 +814,15 @@ case class CastOp(
 
 }
 
-val DBOps: Dialect =
-  new Dialect(
-    operations = Seq(
-      DB_ConstantOp,
-      DB_CmpOp,
-      DB_MulOp,
-      DB_DivOp,
-      DB_SubOp,
-      DB_AddOp,
-      CastOp
-    ),
-    attributes = Seq(DB_CharType, DB_DateType, DB_DecimalType, DB_StringType)
-  )
+val DBOps: Dialect = new Dialect(
+  operations = Seq(
+    DB_ConstantOp,
+    DB_CmpOp,
+    DB_MulOp,
+    DB_DivOp,
+    DB_SubOp,
+    DB_AddOp,
+    CastOp
+  ),
+  attributes = Seq(DB_CharType, DB_DateType, DB_DecimalType, DB_StringType)
+)

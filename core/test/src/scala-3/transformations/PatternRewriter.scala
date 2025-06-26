@@ -17,22 +17,22 @@ class PatternRewriterTest extends AnyFlatSpec {
     val ctx = MLContext()
     val args = Args(allow_unregistered = true)
     val parser = Parser(ctx, args)
-    val input = parser
-      .parseThis("""
+    val input = parser.parseThis("""
 %0 = "test.op1"() : () -> (i32)
 %1 = "test.op2"(%0) : (i32) -> (i32)
 "test.op3"(%1) : (i32) -> ()
-""").get
-      .value
+""").get.value
 
     object TestPattern extends RewritePattern {
       override def match_and_rewrite(
           op: Operation,
           rewriter: PatternRewriter
       ): Unit =
-        val newRes = op.results.map(_ match
-          case Result(I32) => Result(I64)
-          case r           => r)
+        val newRes = op.results.map(
+          _ match
+            case Result(I32) => Result(I64)
+            case r           => r
+        )
         if newRes != op.results then
           rewriter.replace_op(op, op.updated(results = newRes))
     }
@@ -43,8 +43,7 @@ class PatternRewriterTest extends AnyFlatSpec {
     walker.rewrite_op(input)
     val baos = ByteArrayOutputStream()
     Printer(p = new PrintWriter(baos)).print(input)
-    baos.toString() shouldEqual
-      """builtin.module {
+    baos.toString() shouldEqual """builtin.module {
   %0 = "test.op1"() : () -> (i64)
   %1 = "test.op2"(%0) : (i64) -> (i64)
   "test.op3"(%1) : (i64) -> ()

@@ -20,24 +20,23 @@ import scair.transformations.cdt.DummyPass
 import scair.transformations.cdt.TestInsertionPass
 import scair.transformations.cdt.TestReplacementPass
 
-val allDialects: Seq[Dialect] =
-  Seq(
-    BuiltinDialect,
-    MathDialect,
-    TupleStreamDialect,
-    DBOps,
-    SubOperatorOps,
-    RelAlgOps,
-    Test,
-    // Clair
-    ArithDialect,
-    MemrefDialect,
-    CMathDialect,
-    AffineDialect,
-    FuncDialect,
-    LLVMDialect,
-    SCFDialect
-  )
+val allDialects: Seq[Dialect] = Seq(
+  BuiltinDialect,
+  MathDialect,
+  TupleStreamDialect,
+  DBOps,
+  SubOperatorOps,
+  RelAlgOps,
+  Test,
+  // Clair
+  ArithDialect,
+  MemrefDialect,
+  CMathDialect,
+  AffineDialect,
+  FuncDialect,
+  LLVMDialect,
+  SCFDialect
+)
 
 val allPasses: Seq[ModulePass] =
   Seq(DummyPass, TestInsertionPass, TestReplacementPass)

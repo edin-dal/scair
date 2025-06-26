@@ -25,8 +25,7 @@ object TransparentData {
     import quotes.reflect._
 
     Type.of[T] match
-      case '[DataAttribute[t]] =>
-        '{
+      case '[DataAttribute[t]] => '{
           new TransparentData[T]:
 
             def attrConversion(data: t): T = ${

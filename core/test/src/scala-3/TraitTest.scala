@@ -14,10 +14,10 @@ case class FillerOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = "filler",
       operands,
@@ -37,10 +37,10 @@ case class TerminatorOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = "terminator",
       operands,
@@ -61,10 +61,10 @@ case class NoTerminatorOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute]
 ) extends BaseOperation(
       name = "noterminator",
       operands,
@@ -159,8 +159,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
     val region1 = new Region(Seq(block1, block2))
     val region2 = new Region(Seq(block2))
 
-    val noterminator =
-      new NoTerminatorOp(regions = Seq(region1, region2))
+    val noterminator = new NoTerminatorOp(regions = Seq(region1, region2))
 
     val exception = noterminator.verify()
 

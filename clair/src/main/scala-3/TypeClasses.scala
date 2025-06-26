@@ -15,9 +15,8 @@ trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
 
 object DerivedAttributeCompanion {
 
-  inline def derived[T]: DerivedAttributeCompanion[T] = ${
-    derivedAttributeCompanion[T]
-  }
+  inline def derived[T]: DerivedAttributeCompanion[T] =
+    ${ derivedAttributeCompanion[T] }
 
 }
 
@@ -37,10 +36,10 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       override val successors: Seq[Block] = Seq(),
       override val results: Seq[Result[Attribute]] = Seq(),
       override val regions: Seq[Region] = Seq(),
-      override val properties: Map[String, Attribute] =
-        Map.empty[String, Attribute],
-      override val attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+      override val properties: Map[String, Attribute] = Map
+        .empty[String, Attribute],
+      override val attributes: DictType[String, Attribute] = DictType
+        .empty[String, Attribute]
   ) extends BaseOperation(
         name =
           name, // DEFINED IN OperationCompanion, derived in DerivedOperationCompanion Companion
@@ -73,11 +72,9 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
 
     override def verify(): Either[String, Operation] = {
       Try(companion.verify(this)) match {
-        case Success(op) =>
-          op match {
-            case adtOp: DerivedOperation[_, ?] =>
-              adtOp.verify()
-            case _ =>
+        case Success(op) => op match {
+            case adtOp: DerivedOperation[_, ?] => adtOp.verify()
+            case _                             =>
               Left("Internal Error: Operation is not a DerivedOperation")
           }
         case Failure(e) => Left(e.toString())
@@ -92,8 +89,8 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+      attributes: DictType[String, Attribute] = DictType
+        .empty[String, Attribute]
   ): UnverifiedOp
 
   def unverify(adtOp: T): UnverifiedOp
@@ -103,9 +100,8 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
 
 object DerivedOperationCompanion {
 
-  inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
-    deriveOperationCompanion[T]
-  }
+  inline def derived[T <: Operation]: DerivedOperationCompanion[T] =
+    ${ deriveOperationCompanion[T] }
 
 }
 
@@ -115,22 +111,19 @@ def summonMLIRTraitsMacroRec[T <: Tuple: Type](using
   import quotes.reflect.*
   Type.of[T] match
     case '[t *: ts] =>
-      val dat = Expr
-        .summon[DerivedOperationCompanion[t]]
+      val dat = Expr.summon[DerivedOperationCompanion[t]]
         // TODO: Come on.
-        .getOrElse(
-          report.errorAndAbort(
-            "summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."
-          )
-        )
+        .getOrElse(report.errorAndAbort(
+          "summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."
+        ))
       dat +: summonMLIRTraitsMacroRec[ts]
 
     case '[EmptyTuple] => Seq()
 
 def summonMLIRTraitsMacro[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedOperationCompanion[?]]] =
-  Expr.ofSeq(summonMLIRTraitsMacroRec[T])
+): Expr[Seq[DerivedOperationCompanion[?]]] = Expr
+  .ofSeq(summonMLIRTraitsMacroRec[T])
 
 def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
     Quotes
@@ -138,32 +131,27 @@ def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
   import quotes.reflect.*
   Type.of[T] match
     case '[t *: ts] =>
-      val dat = Expr
-        .summon[DerivedAttributeCompanion[t]]
-        .getOrElse(
-          report.errorAndAbort(
-            "summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."
-          )
-        )
+      val dat = Expr.summon[DerivedAttributeCompanion[t]]
+        .getOrElse(report.errorAndAbort(
+          "summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."
+        ))
       dat +: summonAttributeTraitsMacroRec[ts]
     case '[EmptyTuple] => Seq()
 
 def summonAttributeTraitsMacro[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedAttributeCompanion[?]]] =
-  Expr.ofSeq(summonAttributeTraitsMacroRec[T])
+): Expr[Seq[DerivedAttributeCompanion[?]]] = Expr
+  .ofSeq(summonAttributeTraitsMacroRec[T])
 
 inline def summonAttributeTraits[T <: Tuple]
-    : Seq[DerivedAttributeCompanion[?]] =
-  ${ summonAttributeTraitsMacro[T] }
+    : Seq[DerivedAttributeCompanion[?]] = ${ summonAttributeTraitsMacro[T] }
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   ${ summonMLIRTraitsMacro[T] }
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
     attributes: Seq[AttributeCompanion]
-): Dialect =
-  new Dialect(
-    summonMLIRTraits[Operations],
-    attributes ++ summonAttributeTraits[Attributes]
-  )
+): Dialect = new Dialect(
+  summonMLIRTraits[Operations],
+  attributes ++ summonAttributeTraits[Attributes]
+)

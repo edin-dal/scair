@@ -17,10 +17,10 @@ case class Printer(
     val indent: String = "  ",
     var valueNextID: Int = 0,
     var blockNextID: Int = 0,
-    val valueNameMap: mutable.Map[Value[? <: Attribute], String] =
-      mutable.Map.empty[Value[? <: Attribute], String],
-    val blockNameMap: mutable.Map[Block, String] =
-      mutable.Map.empty[Block, String],
+    val valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
+      .empty[Value[? <: Attribute], String],
+    val blockNameMap: mutable.Map[Block, String] = mutable.Map
+      .empty[Block, String],
     private val p: PrintWriter = new PrintWriter(System.out)
 ) {
 
@@ -41,8 +41,7 @@ case class Printer(
 
   def assignBlockName(block: Block): String =
     val name = blockNameMap.contains(block) match {
-      case true =>
-        blockNameMap(block)
+      case true  => blockNameMap(block)
       case false =>
         val name = blockNextID.toString
         blockNextID = blockNextID + 1
@@ -76,24 +75,24 @@ case class Printer(
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
-  inline def print(inline thing: Printable)(using
-      indentLevel: Int
-  ): Unit = thing match {
-    case s: String    => print(s)
-    case v: Value[?]  => print(v)
-    case b: Block     => print(b)
-    case r: Region    => print(r)
-    case o: Operation => print(o)
-    case a: Attribute => print(a)
-  }
+  inline def print(inline thing: Printable)(using indentLevel: Int): Unit =
+    thing match {
+      case s: String    => print(s)
+      case v: Value[?]  => print(v)
+      case b: Block     => print(b)
+      case r: Region    => print(r)
+      case o: Operation => print(o)
+      case a: Attribute => print(a)
+    }
 
-  inline def print(inline things: (Printable | Iterable[Printable])*)(using
-      indentLevel: Int
-  ): Unit = {
-    things.foreach(_ match
-      case p: Printable           => print(p)
-      case i: Iterable[Printable] =>
-        printList(i))
+  inline def print(
+      inline things: (Printable | Iterable[Printable])*
+  )(using indentLevel: Int): Unit = {
+    things.foreach(
+      _ match
+        case p: Printable           => print(p)
+        case i: Iterable[Printable] => printList(i)
+    )
   }
 
   inline def printList[T <: Printable](
@@ -101,9 +100,7 @@ case class Printer(
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = ""
-  )(using
-      indentLevel: Int
-  ): Unit = {
+  )(using indentLevel: Int): Unit = {
     printListF(iterable, (x: Printable) => print(x), start, sep, end)
   }
 
@@ -113,9 +110,7 @@ case class Printer(
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = ""
-  )(using
-      indentLevel: Int
-  ): Unit = {
+  )(using indentLevel: Int): Unit = {
     inline if start != "" then print(start)
     inline if sep == "" then iterable.foreach(f)
     else if iterable.nonEmpty then
@@ -140,8 +135,8 @@ case class Printer(
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-  def print(region: Region)(using indentLevel: Int): Unit =
-    this.copy()._printRegion(region)
+  def print(region: Region)(using indentLevel: Int): Unit = this.copy()
+    ._printRegion(region)
 
   private def _printRegion(region: Region)(using indentLevel: Int) = {
 
@@ -168,33 +163,25 @@ case class Printer(
   )(using indentLevel: Int): Unit = {
     printListF(
       attrs,
-      (k, v) => {
-        print(k, " = ", v.custom_print)
-      },
+      (k, v) => { print(k, " = ", v.custom_print) },
       " {",
       ", ",
       "}"
     )
   }
 
-  def printOptionalAttrDict(
-      attrs: Map[String, Attribute]
-  )(using indentLevel: Int): Unit = {
-    if attrs.nonEmpty then printAttrDict(attrs)
-  }
-
-  def printGenericMLIROperation(op: Operation)(using
+  def printOptionalAttrDict(attrs: Map[String, Attribute])(using
       indentLevel: Int
-  ) = {
+  ): Unit = { if attrs.nonEmpty then printAttrDict(attrs) }
+
+  def printGenericMLIROperation(op: Operation)(using indentLevel: Int) = {
     print("\"", op.name, "\"(", op.operands, ")")
     if op.successors.nonEmpty then
       printListF(op.successors, b => print(assignBlockName(b)), "[", ", ", "]")
     if op.properties.nonEmpty then
       printListF(
         op.properties,
-        (k, v) => {
-          print(k, " = ", v.custom_print)
-        },
+        (k, v) => { print(k, " = ", v.custom_print) },
         " <{",
         ", ",
         "}>"
@@ -202,25 +189,9 @@ case class Printer(
     if op.regions.nonEmpty then printList(op.regions, " (", ", ", ")")
     printOptionalAttrDict(op.attributes.toMap)
     print(" : ")
-    printListF(
-      op.operands,
-      o => {
-        print(o.typ.custom_print)
-      },
-      "(",
-      ", ",
-      ")"
-    )
+    printListF(op.operands, o => { print(o.typ.custom_print) }, "(", ", ", ")")
     print(" -> ")
-    printListF(
-      op.results,
-      r => {
-        print(r.typ.custom_print)
-      },
-      "(",
-      ", ",
-      ")"
-    )
+    printListF(op.results, r => { print(r.typ.custom_print) }, "(", ", ", ")")
   }
 
   def print(op: Operation)(using indentLevel: Int = 0): Unit = {
@@ -228,10 +199,7 @@ case class Printer(
     if op.results.nonEmpty then
       printList(op.results)
       print(" = ")
-    if strictly_generic then
-      printGenericMLIROperation(
-        op
-      )
+    if strictly_generic then printGenericMLIROperation(op)
     else op.custom_print(this)
 
     print("\n")

@@ -78,11 +78,11 @@ def DimUseP[$: P]: P[String] = P("d" ~~ DecimalLiteral).!
 
 def SymUseP[$: P]: P[String] = P("s" ~~ DecimalLiteral).!
 
-def DimUseListP[$: P]: P[Seq[String]] =
-  P("(" ~ DimUseP.rep(0, sep = ",") ~ ")").map(checkDistinct("dimensions", _))
+def DimUseListP[$: P]: P[Seq[String]] = P("(" ~ DimUseP.rep(0, sep = ",") ~ ")")
+  .map(checkDistinct("dimensions", _))
 
-def SymUseListP[$: P]: P[Seq[String]] =
-  P("[" ~ SymUseP.rep(0, sep = ",") ~ "]").map(checkDistinct("symbols", _))
+def SymUseListP[$: P]: P[Seq[String]] = P("[" ~ SymUseP.rep(0, sep = ",") ~ "]")
+  .map(checkDistinct("symbols", _))
 
 def DimSymUseListP[$: P]: P[(Seq[String], Seq[String])] =
   P(DimUseListP ~ SymUseListP.rep(min = 0, max = 1).map(_.flatten))
@@ -108,10 +108,8 @@ def DimSymUseListP[$: P]: P[(Seq[String], Seq[String])] =
 
 def AffineSinglesP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
   P(
-    "(" ~ AffineExprP(dims, symbs) ~ ")" |
-      "-" ~ AffineSinglesP(dims, symbs) |
-      AffineDimExprP(dims, symbs) |
-      AffineSymExprP(dims, symbs) |
+    "(" ~ AffineExprP(dims, symbs) ~ ")" | "-" ~ AffineSinglesP(dims, symbs) |
+      AffineDimExprP(dims, symbs) | AffineSymExprP(dims, symbs) |
       AffineConstantP(dims, symbs)
   )
 
@@ -124,19 +122,14 @@ def AffineSymExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
 def AffineConstantP[$: P](
     dims: Seq[String],
     symbs: Seq[String]
-): P[AffineExpr] =
-  P(IntegerLiteral).map(AffineConstantExpr(_))
+): P[AffineExpr] = P(IntegerLiteral).map(AffineConstantExpr(_))
 
-def AffineExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
-  P(
-    AffineAddExpr(dims, symbs) |
-      AffineMinusExpr(dims, symbs) |
-      AffineMultiplyExpr(dims, symbs) |
-      AffineCeilDivExpr(dims, symbs) |
-      AffineFloorDivExpr(dims, symbs) |
-      AffineModExpr(dims, symbs) |
-      AffineSinglesP(dims, symbs)
-  )
+def AffineExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] = P(
+  AffineAddExpr(dims, symbs) | AffineMinusExpr(dims, symbs) |
+    AffineMultiplyExpr(dims, symbs) | AffineCeilDivExpr(dims, symbs) |
+    AffineFloorDivExpr(dims, symbs) | AffineModExpr(dims, symbs) |
+    AffineSinglesP(dims, symbs)
+)
 
 def AffineAddExpr[$: P](
     dims: Seq[String],
@@ -155,14 +148,10 @@ def AffineMinusExpr[$: P](
 def AffineMultiplyExpr[$: P](
     dims: Seq[String],
     symbs: Seq[String]
-): P[AffineBinaryOpExpr] =
-  P(
-    AffineConstantP(dims, symbs) ~ "*" ~ AffineSinglesP(
-      dims,
-      symbs
-    ) | AffineSinglesP(dims, symbs) ~ "*" ~ AffineConstantP(dims, symbs)
-  )
-    .map(AffineBinaryOpExpr(multiply, _, _))
+): P[AffineBinaryOpExpr] = P(
+  AffineConstantP(dims, symbs) ~ "*" ~ AffineSinglesP(dims, symbs) |
+    AffineSinglesP(dims, symbs) ~ "*" ~ AffineConstantP(dims, symbs)
+).map(AffineBinaryOpExpr(multiply, _, _))
 
 def AffineCeilDivExpr[$: P](
     dims: Seq[String],
@@ -201,10 +190,11 @@ def MultiDimAffineExpr[$: P](
 //  module-header-def  ::= affine-map-def
 //  affine-map         ::= affine-map-id | affine-map-inline
 
-def AffineMapP[$: P]: P[AffineMap] =
-  P(DimSymUseListP.flatMap { (x: (Seq[String], Seq[String])) =>
+def AffineMapP[$: P]: P[AffineMap] = P(
+  DimSymUseListP.flatMap { (x: (Seq[String], Seq[String])) =>
     P("->" ~ MultiDimAffineExpr(x._1, x._2)).map(AffineMap(x._1, x._2, _))
-  })
+  }
+)
 
 // TODO : implement logic for these two
 // def AffineMapID[$: P]: P[Any] = P( "#" ~ SuffixId )
@@ -225,11 +215,12 @@ def AffineMapP[$: P]: P[AffineMap] =
 //  affine-constraint-conjunction
 //    ::= affine-constraint (`,` affine-constraint)*
 
-def AffineSetP[$: P]: P[AffineSet] =
-  P(DimSymUseListP.flatMap { (x: (Seq[String], Seq[String])) =>
+def AffineSetP[$: P]: P[AffineSet] = P(
+  DimSymUseListP.flatMap { (x: (Seq[String], Seq[String])) =>
     P(":" ~ "(" ~ AffineConstraintP(x._1, x._2).rep(0, sep = ",") ~ ")")
       .map(AffineSet(x._1, x._2, _))
-  })
+  }
+)
 
 def AffineConstraintP[$: P](
     dims: Seq[String],
@@ -241,31 +232,27 @@ def GreaterEqualP[$: P](
     dims: Seq[String],
     symbs: Seq[String]
 ): P[AffineConstraintExpr] =
-  P(AffineExprP(dims, symbs) ~ ">=" ~ AffineExprP(dims, symbs)).map(
-    AffineConstraintExpr(greaterequal, _, _)
-  )
+  P(AffineExprP(dims, symbs) ~ ">=" ~ AffineExprP(dims, symbs))
+    .map(AffineConstraintExpr(greaterequal, _, _))
 
 def LessEqualP[$: P](
     dims: Seq[String],
     symbs: Seq[String]
 ): P[AffineConstraintExpr] =
-  P(AffineExprP(dims, symbs) ~ "<=" ~ AffineExprP(dims, symbs)).map(
-    AffineConstraintExpr(lessequal, _, _)
-  )
+  P(AffineExprP(dims, symbs) ~ "<=" ~ AffineExprP(dims, symbs))
+    .map(AffineConstraintExpr(lessequal, _, _))
 
 def EqualP[$: P](
     dims: Seq[String],
     symbs: Seq[String]
 ): P[AffineConstraintExpr] =
-  P(AffineExprP(dims, symbs) ~ "==" ~ AffineExprP(dims, symbs)).map(
-    AffineConstraintExpr(equal, _, _)
-  )
+  P(AffineExprP(dims, symbs) ~ "==" ~ AffineExprP(dims, symbs))
+    .map(AffineConstraintExpr(equal, _, _))
 
 object TestAffine {
 
   def main(args: Array[String]): Unit = {
-    val parsed =
-      parse("d0 + d1", AffineExprP(Seq("d0", "d1"), Seq())(using _))
+    val parsed = parse("d0 + d1", AffineExprP(Seq("d0", "d1"), Seq())(using _))
     println(parsed)
     val parsed1 =
       parse("(d0, d1)[s0] -> (d0 + d1 + s0, d1 + s0)", AffineMapP(using _))

@@ -24,8 +24,6 @@ class TransformContext() {
 
   def getPass(name: String) = passContext.get(name)
 
-  def registerPass(pass: ModulePass) = {
-    passContext += pass.name -> pass
-  }
+  def registerPass(pass: ModulePass) = { passContext += pass.name -> pass }
 
 }

@@ -42,27 +42,23 @@ case class OperandDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef
-    with MayVariadicOpInputDef {}
+) extends OpInputDef with MayVariadicOpInputDef {}
 
 case class ResultDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef
-    with MayVariadicOpInputDef {}
+) extends OpInputDef with MayVariadicOpInputDef {}
 
 case class RegionDef(
     override val name: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef
-    with MayVariadicOpInputDef {}
+) extends OpInputDef with MayVariadicOpInputDef {}
 
 case class SuccessorDef(
     override val name: String,
     override val variadicity: Variadicity = Variadicity.Single
-) extends OpInputDef
-    with MayVariadicOpInputDef {}
+) extends OpInputDef with MayVariadicOpInputDef {}
 
 case class OpPropertyDef(
     override val name: String,
@@ -70,10 +66,7 @@ case class OpPropertyDef(
     val optional: Boolean = false
 ) extends OpInputDef {}
 
-case class AttributeParamDef(
-    val name: String,
-    val tpe: Type[?]
-) {}
+case class AttributeParamDef(val name: String, val tpe: Type[?]) {}
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||
@@ -90,23 +83,22 @@ case class OperationDef(
     val assembly_format: Option[AssemblyFormatDirective] = None
 ) {
 
-  def allDefs =
-    operands ++ results ++ regions ++ successors ++ properties
+  def allDefs = operands ++ results ++ regions ++ successors ++ properties
 
-  def allDefsWithIndex =
-    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
+  def allDefsWithIndex = operands.zipWithIndex ++ results.zipWithIndex ++
+    regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
 
-  def hasMultiVariadicOperands =
-    operands.count(_.variadicity == Variadicity.Variadic) > 1
+  def hasMultiVariadicOperands = operands
+    .count(_.variadicity == Variadicity.Variadic) > 1
 
-  def hasMultiVariadicResults =
-    results.count(_.variadicity == Variadicity.Variadic) > 1
+  def hasMultiVariadicResults = results
+    .count(_.variadicity == Variadicity.Variadic) > 1
 
-  def hasMultiVariadicRegions =
-    regions.count(_.variadicity == Variadicity.Variadic) > 1
+  def hasMultiVariadicRegions = regions
+    .count(_.variadicity == Variadicity.Variadic) > 1
 
-  def hasMultiVariadicSuccessors =
-    successors.count(_.variadicity == Variadicity.Variadic) > 1
+  def hasMultiVariadicSuccessors = successors
+    .count(_.variadicity == Variadicity.Variadic) > 1
 
 }
 
@@ -119,7 +111,6 @@ case class AttributeDef(
     val attributes: Seq[AttributeParamDef] = Seq()
 ) {
 
-  def allDefsWithIndex =
-    attributes.zipWithIndex
+  def allDefsWithIndex = attributes.zipWithIndex
 
 }

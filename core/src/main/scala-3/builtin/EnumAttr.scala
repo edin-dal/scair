@@ -24,14 +24,11 @@ import scair.ir.*
 ||  ENUM ATTRIBUTE INHERITANCE  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-abstract class EnumAttrCase[T <: Attribute](
-    val symbol: String,
-    val typ: T
-) extends ParametrizedAttribute {
+abstract class EnumAttrCase[T <: Attribute](val symbol: String, val typ: T)
+    extends ParametrizedAttribute {
   override def name: String = symbol
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    Seq(typ)
+  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ)
 
   def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
   override def custom_print = symbol
