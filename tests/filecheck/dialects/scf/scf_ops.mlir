@@ -30,7 +30,7 @@
 
 %29, %30 = "scf.index_switch"(%13, %15) ({}, {}) : (index, array<i1:0, 1>) -> (i1, i1)
 
-%31 = "scf.yield"() : () -> (i1)
+"scf.yield"(%29) : (i1) -> ()
 
 
 // CHECK:       builtin.module {
@@ -73,5 +73,5 @@
 // CHECK:       }, {
 
 // CHECK:       }) : (index, array<i1: 0, 1>) -> (i1, i1)
-// CHECK-NEXT:    %29 = "scf.yield"() : () -> (i1)
+// CHECK-NEXT:    "scf.yield"(%27) : (i1) -> ()
 // CHECK-NEXT:  }
