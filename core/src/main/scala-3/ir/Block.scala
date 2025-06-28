@@ -255,11 +255,6 @@ case class Block private (
     }
   }
 
-  def drop_all_references: Unit = {
-    container_region = None
-    for (op <- operations) op.drop_all_references
-  }
-
   def detach_op(op: Operation): Operation = {
     (op.container_block `equals` Some(this)) match {
       case true =>
