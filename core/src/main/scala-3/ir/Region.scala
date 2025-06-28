@@ -19,10 +19,7 @@ case class Region(
 
   var container_operation: Option[Operation] = None
 
-  def drop_all_references: Unit = {
-    container_operation = None
-    for (block <- blocks) block.drop_all_references
-  }
+  blocks.foreach(attach_block)
 
   def verify(): Either[String, Unit] = {
     blocks.foldLeft[Either[String, Unit]](Right(()))((res, block) =>

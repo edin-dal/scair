@@ -42,7 +42,7 @@ trait Operation extends IRNode {
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-      regions: Seq[Region] = regions,
+      regions: Seq[Region] = detached_regions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ): Operation
@@ -89,7 +89,6 @@ trait Operation extends IRNode {
   final def drop_all_references: Unit = {
     container_block = None
     operands.foreach(_.uses.filterInPlace(_.operation != this))
-    for (region <- regions) region.drop_all_references
   }
 
   final def erase(safe_erase: Boolean = true): Unit = {
@@ -153,7 +152,7 @@ abstract class BaseOperation(
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-      regions: Seq[Region] = regions,
+      regions: Seq[Region] = detached_regions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ) = {
