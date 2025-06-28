@@ -25,7 +25,7 @@ case class ForOp(
     lowerBound: Operand[AnySignlessIntegerOrIndex],
     upperBound: Operand[AnySignlessIntegerOrIndex],
     step: Operand[AnySignlessIntegerOrIndex],
-    initArgs: Operand[Attribute],
+    initArgs: Seq[Operand[Attribute]],
     region: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.for", ForOp] derives DerivedOperationCompanion
@@ -98,7 +98,7 @@ case class IndexSwitchOp(
     derives DerivedOperationCompanion
 
 case class YieldOp(
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.yield", YieldOp]
     derives DerivedOperationCompanion
 
