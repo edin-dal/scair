@@ -303,7 +303,7 @@ case class CmpI(
 
 case class Constant(
     val value: Attribute,
-    val result: Result[SignlessIntegerOrFloatLike]
+    val result: Result[Attribute]
 ) extends DerivedOperation["arith.constant", Constant]
     with AllTypesMatch(value, result.typ) derives DerivedOperationCompanion
 

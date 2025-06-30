@@ -125,7 +125,7 @@ trait Rewriter {
       case x: Operation => Seq(x)
       case y: Seq[_]    => y.asInstanceOf[Seq[Operation]]
     }
-    val operations2 = Seq.iterableFactory
+
     insertion_point.insert_before match {
       case Some(op) =>
         insertion_point.block.insert_ops_before(
@@ -135,6 +135,7 @@ trait Rewriter {
       case None =>
         insertion_point.block.add_ops(operations)
     }
+
     operations.foreach(operation_insertion_handler)
   }
 
@@ -195,12 +196,15 @@ trait Rewriter {
       new_value: Value[Attribute]
   ): Unit = {
     if !(new_value eq value) then {
-      for (use <- Seq.from(value.uses)) {
-        val op = use.operation
+      for ((op, uses) <- value.uses.groupBy(_.operation)) {
+        val indices = Set.from(uses.map(_.index))
+        val new_operands = op.operands.zipWithIndex.map((v, i) =>
+          if indices.contains(i) then new_value else v
+        )
         val new_op =
           op.updated(
             results = op.results,
-            operands = op.operands.updated(use.index, new_value)
+            operands = new_operands
           )
         replace_op(
           op = op,
