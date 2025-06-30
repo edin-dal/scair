@@ -391,7 +391,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
           flat: Seq[DefinedInput[Def]]
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
-        // writing thoug. Conceptually this should end up in some kind of header.
+        // writing though. Conceptually this should end up in some kind of header.
         if (flat.length != $defLength) then
           throw new Exception(
             s"Expected ${${ Expr(defs.length) }} ${${
