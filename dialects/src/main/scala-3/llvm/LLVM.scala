@@ -9,9 +9,11 @@ case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
     derives DerivedAttributeCompanion
 
 case class Load(
-    ptr: Operand[Ptr],
-    result: Result[Attribute]
-) extends DerivedOperation["llvm.load", Load] derives DerivedOperationCompanion
+    addr: Operand[Ptr],
+    res: Result[Attribute]
+) extends DerivedOperation["llvm.load", Load]
+    with AssemblyFormat["$addr attr-dict `:` type($addr) `->` type($res)"]
+    derives DerivedOperationCompanion
 
 case class GetElementPtr(
     base: Operand[Ptr],
