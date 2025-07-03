@@ -23,8 +23,25 @@ import scala.reflect.*
 ||  CONTAINERS  ||
 \*≡=--==≡≡==--=≡*/
 
+object OpInputDef {
+
+  def unapply(d: Any) = d match
+    case d: OpInputDef => Some((name = d.name))
+    case _             => None
+
+}
+
 sealed trait OpInputDef {
   def name: String
+}
+
+object MayVariadicOpInputDef {
+
+  def unapply(d: Any) = d match
+    case d: MayVariadicOpInputDef =>
+      Some((name = d.name, variadicity = d.variadicity))
+    case _ => None
+
 }
 
 sealed trait MayVariadicOpInputDef extends OpInputDef {
