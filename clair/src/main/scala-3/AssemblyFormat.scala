@@ -117,7 +117,7 @@ case class AttrDictDirective() extends Directive {
     state.lastWasPunctuation = false
     '{
       $p.printOptionalAttrDict(${
-        selectMember(op, "attributes").asExprOf[DictType[String, Attribute]]
+        selectMember[DictType[String, Attribute]](op, "attributes")
       }.toMap)(using 0)
     }
   }
@@ -144,11 +144,11 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match {
           case Variadicity.Single =>
-            '{ $p.print(${ selectMember(op, n).asExprOf[Operand[?]] }) }
+            '{ $p.print(${ selectMember[Operand[?]](op, n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember(op, n).asExprOf[Seq[Operand[?]]] })(
-                using 0
+              $p.printList(${ selectMember(op, n) })(using
+                0
               )
             }
         }
@@ -182,29 +182,36 @@ case class TypeDirective(
     val space = printSpace(p, state)
 
     val printType = construct match {
-      case OperandDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ $p.print(${ selectMember(op, n).asExprOf[Operand[?]] }.typ) }
-          case Variadicity.Variadic =>
-            '{
-              $p.printList(${
-                selectMember(op, n).asExprOf[Seq[Operand[?]]]
-              }.map(_.typ))(using 0)
-            }
+      case OperandDef(name = n, variadicity = Variadicity.Single) =>
+        '{ $p.print(${ selectMember[Operand[?]](op, n) }.typ) }
+      case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
+        '{
+          $p.printList(${
+            selectMember[Seq[Operand[?]]](op, n)
+          }.map(_.typ))(using 0)
+        }
+      case ResultDef(name = n, variadicity = Variadicity.Single) =>
+        '{ $p.print(${ selectMember[Result[?]](op, n) }.typ) }
+      case ResultDef(name = n, variadicity = Variadicity.Variadic) =>
+        '{
+          $p.printList(${
+            selectMember[Seq[Result[?]]](op, n)
+          }.map(_.typ))(using 0)
+        }
     }
     Expr.block(List(space), printType)
   }
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
     construct match {
-      case OperandDef(name = n, variadicity = v) =>
-        v match {
-          case Variadicity.Single =>
-            '{ $p.AttributeValue(using $ctx) }
-          case Variadicity.Variadic =>
-            '{ $p.AttributeValueList(using $ctx) }
-        }
+      case OperandDef(name = n, variadicity = Variadicity.Single) =>
+        '{ $p.AttributeValue(using $ctx) }
+      case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
+        '{ $p.AttributeValueList(using $ctx) }
+      case ResultDef(name = n, variadicity = Variadicity.Single) =>
+        '{ $p.AttributeValue(using $ctx) }
+      case ResultDef(name = n, variadicity = Variadicity.Variadic) =>
+        '{ $p.AttributeValueList(using $ctx) }
     }
 
 }
@@ -318,7 +325,7 @@ case class AssemblyFormatDirective(
       .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val operandNamesArg =
       Expr.ofList(opDef.operands.map(od => (operandNames(od.name))))
-    val flatNames = '{
+    val flatOperandNames = '{
       $operandNamesArg.flatMap(op =>
         op match
           case op: String      => Seq(op)
@@ -337,8 +344,27 @@ case class AssemblyFormatDirective(
       .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val operandTypesArg =
       Expr.ofList(opDef.operands.map(od => (operandTypes(od.name))))
-    val flatTypes = '{
+    val flatOperandTypes = '{
       $operandTypesArg.flatMap(op =>
+        op match
+          case op: Attribute      => Seq(op)
+          case op: Seq[Attribute] => op
+      )
+    }
+
+    val resultTypes = Map
+      .from(
+        parsedDirectives.zipWithIndex.flatMap((d, i) =>
+          d match
+            case TypeDirective(ResultDef(name = name)) => Some(name -> i)
+            case _                                     => None
+        )
+      )
+      .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
+    val resultTypesArg =
+      Expr.ofList(opDef.results.map(od => (resultTypes(od.name))))
+    val flatResultTypes = '{
+      $resultTypesArg.flatMap(op =>
         op match
           case op: Attribute      => Seq(op)
           case op: Seq[Attribute] => op
@@ -364,8 +390,9 @@ case class AssemblyFormatDirective(
     '{
       $p.generateOperation(
         opName = ${ Expr(opDef.name) },
-        operandsNames = $flatNames,
-        operandsTypes = $flatTypes,
+        operandsNames = $flatOperandNames,
+        operandsTypes = $flatOperandTypes,
+        resultsTypes = $flatResultTypes,
         attributes = $attrDict
       )
     }
