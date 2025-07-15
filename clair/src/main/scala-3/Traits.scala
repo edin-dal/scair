@@ -37,13 +37,12 @@ trait DerivedOperation[name <: String, T] extends Operation {
       operands = operands,
       successors = successors,
       results = results,
-      regions = regions,
+      regions = detached_regions,
       properties = properties,
       attributes = attributes
     )
 
   def name: String = companion.name
-  // TODO: refactor this to have efficient generic accessors here and combine that in unverify instead.
   def operands: Seq[Value[Attribute]] = companion.operands(this)
   def successors: Seq[Block] = companion.successors(this)
   def results: Seq[Result[Attribute]] = companion.results(this)

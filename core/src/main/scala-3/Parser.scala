@@ -936,9 +936,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     *   An attribute dictionary parser.
     */
   inline def DictionaryAttribute[$: P] = P(
-    "{" ~ AttributeEntry
-      .rep(sep = ",")
-      .map(Map[String, Attribute](_*)) ~ "}"
+    DictionaryAttributeP.map(_.entries)
   )
 
   /** Parses an optional properties dictionary from the input.

@@ -92,20 +92,20 @@ jobs:
         pip install --upgrade pip
         pip install lit filecheck
 
-    # Restore Mill's incremental build cache
-    - name: Cache Incremental Build
-      uses: actions/cache@v4
-      with:
-        path: ./out
-        key: mill-incremental-tests-${{ github.run_id }}-${{ github.run_attempt }}
-        restore-keys: |
-          mill-incremental-tests-
+    # # Restore Mill's incremental build cache
+    # - name: Cache Incremental Build
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ./out
+    #     key: mill-incremental-tests-${{ github.run_id }}-${{ github.run_attempt }}
+    #     restore-keys: |
+    #       mill-incremental-tests-
 
     - name: Run all tests
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
         # I can't get it to work with just cleaning the coverage data, for some reason
-        ./mill clean
+        # ./mill clean
         ./mill testAll
         ./mill xmlReportAll
     - name: Upload coverage report to Codecov
