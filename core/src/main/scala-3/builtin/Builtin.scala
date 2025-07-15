@@ -181,7 +181,7 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 
 case class DictionaryAttr(val entries: Map[String, Attribute])
     extends DataAttribute[Map[String, Attribute]](
-      "builtin.array_attr",
+      "builtin.dict_attr",
       entries
     ) {
 

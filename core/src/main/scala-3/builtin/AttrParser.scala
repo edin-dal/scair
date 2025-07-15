@@ -185,6 +185,16 @@ class AttrParser(val ctx: MLContext) {
       .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
 
+  /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  || DICTIONARY ATTRIBUTE  ||
+  \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+
+  def DictionaryAttributeP[$: P]: P[DictionaryAttr] = P(
+    "{" ~ AttributeEntry.rep(sep = ",") ~ "}"
+  ).map((entries: Seq[(String, Attribute)]) =>
+    DictionaryAttr(entries.map((name, attr) => (name, attr)).toMap)
+  )
+
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||  DENSE ARRAY ATTRIBUTE  ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
