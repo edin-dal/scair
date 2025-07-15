@@ -14,9 +14,10 @@
 %15, %16, %17 = "test.op"() : () -> (array<i1:0, 1>, array<i1:0, 1>, array<i1:0, 1>)
 %18, %19 = "test.op"() : () -> (tensor<1xf32>, tensor<1xf32>)
 
-%20, %21 = "scf.forall"(%11, %12, %13, %15, %16, %17, %18, %19) <{operandSegmentSizes = array<i32: 1, 1, 1, 1, 1, 1, 1, 1>}> ({}) : (index, index, index, array<i1:0, 1>, array<i1:0, 1>, array<i1:0, 1>, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
+%20, %21 = "scf.forall"(%11, %12, %13, %18, %19) <{operandSegmentSizes = array<i32: 1, 1, 1, 2>, staticLowerBound = array<i1:0, 1>, staticUpperBound = array<i1:0, 1>, staticStep = array<i1:0, 1>}> ({
+    "scf.forall.in_parallel"() ({}) : () -> ()
+}) : (index, index, index, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
 
-"scf.forall.in_parallel"() ({}) : () -> ()
 
 %22, %23 = "scf.if"(%20) ({}, {}) : (i1) -> (i1, i1)
 
@@ -46,9 +47,9 @@
 // CHECK-NEXT:    %11, %12, %13 = "test.op"() : () -> (index, index, index)
 // CHECK-NEXT:    %14, %15, %16 = "test.op"() : () -> (array<i1: 0, 1>, array<i1: 0, 1>, array<i1: 0, 1>)
 // CHECK-NEXT:    %17, %18 = "test.op"() : () -> (tensor<1xf32>, tensor<1xf32>)
-// CHECK-NEXT:    %19, %20 = "scf.forall"(%11, %12, %13, %14, %15, %16, %17, %18) <{operandSegmentSizes = array<i32: 1, 1, 1, 1, 1, 1, 1, 1>}> ({
+// CHECK-NEXT:    %19, %20 = "scf.forall"(%11, %12, %13, %17, %18) <{operandSegmentSizes = array<i32: 1, 1, 1, 2>}> ({
 
-// CHECK:       }) : (index, index, index, array<i1: 0, 1>, array<i1: 0, 1>, array<i1: 0, 1>, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
+// CHECK:       }) : (index, index, index, tensor<1xf32>, tensor<1xf32>) -> (i1, i1)
 // CHECK-NEXT:    "scf.forall.in_parallel"() ({
 
 // CHECK:       }) : () -> ()

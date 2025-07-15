@@ -77,11 +77,12 @@ case class ForallOp(
     dynamicLowerBound: Seq[Operand[Index]],
     dynamicUpperBound: Seq[Operand[Index]],
     dynamicStep: Seq[Operand[Index]],
-    staticLowerBound: Operand[DenseArrayAttr],
-    staticUpperBound: Operand[DenseArrayAttr],
-    staticStep: Operand[DenseArrayAttr],
+    staticLowerBound: DenseArrayAttr,
+    staticUpperBound: DenseArrayAttr,
+    staticStep: DenseArrayAttr,
     outputs: Seq[Operand[RankedTensorType]],
-    // mapping: Option[Operand[RankedTensorType]],
+    // TODO: Should be array of "DeviceMappingAttribute", but we're not interested yet.
+    mapping: Option[ArrayAttribute[Attribute]],
     region: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.forall", ForallOp]
