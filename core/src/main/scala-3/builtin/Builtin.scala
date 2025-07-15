@@ -532,4 +532,27 @@ case class ModuleOp(
 
 }
 
-val BuiltinDialect = Dialect(Seq(ModuleOp), Seq())
+object UnrealizedConversionCastOp extends OperationCompanion {
+  override def name = "builtin.unrealized_conversion_cast"
+}
+
+case class UnrealizedConversionCastOp(
+    override val operands: Seq[Value[Attribute]] = Seq(),
+    override val successors: Seq[Block] = Seq(),
+    override val results: Seq[Result[Attribute]] = Seq(),
+    override val regions: Seq[Region] = Seq(),
+    override val properties: Map[String, Attribute] =
+      Map.empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] =
+      DictType.empty[String, Attribute]
+) extends BaseOperation(
+      name = "builtin.unrealized_conversion_cast",
+      operands,
+      successors,
+      results,
+      regions,
+      properties,
+      attributes
+    )
+
+val BuiltinDialect = Dialect(Seq(ModuleOp, UnrealizedConversionCastOp), Seq())
