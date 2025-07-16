@@ -5,9 +5,49 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
+// ░██████╗ ░█████╗░ ███████╗
+// ██╔════╝ ██╔══██╗ ██╔════╝
+// ╚█████╗░ ██║░░╚═╝ █████╗░░
+// ░╚═══██╗ ██║░░██╗ ██╔══╝░░
+// ██████╔╝ ╚█████╔╝ ██║░░░░░
+// ╚═════╝░ ░╚════╝░ ╚═╝░░░░░
+
+// ██████╗░ ██╗ ░█████╗░ ██╗░░░░░ ███████╗ ░░██████╗░ ████████╗
+// ██╔══██╗ ██║ ██╔══██╗ ██║░░░░░ ██╔════╝ ░██ ╔══██╗ ╚══██╔══╝
+// ██║░░██║ ██║ ███████║ ██║░░░░░ █████╗░░ ░██ ║░░╚═╝ ░░░██║░░░
+// ██║░░██║ ██║ ██╔══██║ ██║░░░░░ ██╔══╝░░ ░██ ║░░██╗ ░░░██║░░░
+// ██████╔╝ ██║ ██║░░██║ ███████╗ ███████╗ ░░██████╔╝ ░░░██║░░░
+// ╚═════╝░ ╚═╝ ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ░░ ╚════╝░ ░░░╚═╝░░░
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||  TYPES AND CONSTRAINTS  ||
+\*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
+
+// TODO: this needs to be constrained specifically to an I1 integer
 type I1 = IntegerType
+// TODO: this needs to be a signless integer type specifically
 type AnySignlessIntegerOrIndex = IntegerType | IndexType
 type Index = IndexType
+
+trait AllTypesMatch(values: Attribute*) extends Operation {
+
+  override def trait_verify(): Either[String, Operation] = {
+    if (values.isEmpty) Right(this)
+    else {
+      val firstClass = values.head.getClass
+      if (values.tail.forall(_.getClass == firstClass)) Right(this)
+      else
+        Left(
+          "All parameters of AllTypesMatch must be of the same type in operation " + this.name
+        )
+    }
+  }
+
+}
+
+/*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||  OPERATION DEFINTION  ||
+\*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 case class Condition(
     condition: Operand[I1],
@@ -21,6 +61,7 @@ case class ExecuteRegionOp(
 ) extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
     derives DerivedOperationCompanion
 
+// TODO: this should also contain a SingleBlockImplicitTerminator<"scf::YieldOp">,
 case class ForOp(
     lowerBound: Operand[AnySignlessIntegerOrIndex],
     upperBound: Operand[AnySignlessIntegerOrIndex],
@@ -28,18 +69,20 @@ case class ForOp(
     initArgs: Seq[Operand[Attribute]],
     region: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.for", ForOp] derives DerivedOperationCompanion
+) extends DerivedOperation["scf.for", ForOp]
+    with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
+    derives DerivedOperationCompanion
 
 case class ForallOp(
-    dynamicLowerBound: Operand[Index],
-    dynamicUpperBound: Operand[Index],
-    dynamicStep: Operand[Index],
-    staticLowerBound: Operand[DenseArrayAttr],
-    staticUpperBound: Operand[DenseArrayAttr],
-    staticStep: Operand[DenseArrayAttr],
+    dynamicLowerBound: Seq[Operand[Index]],
+    dynamicUpperBound: Seq[Operand[Index]],
+    dynamicStep: Seq[Operand[Index]],
+    staticLowerBound: DenseArrayAttr,
+    staticUpperBound: DenseArrayAttr,
+    staticStep: DenseArrayAttr,
     outputs: Seq[Operand[RankedTensorType]],
-    // TODO: should be optional
-    mapping: Seq[Operand[RankedTensorType]],
+    // TODO: Should be array of "DeviceMappingAttribute", but we're not interested yet.
+    mapping: Option[ArrayAttribute[Attribute]],
     region: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.forall", ForallOp]
