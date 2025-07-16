@@ -5,19 +5,19 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
-// ░██████╗ ░█████╗░ ███████╗ 
-// ██╔════╝ ██╔══██╗ ██╔════╝ 
-// ╚█████╗░ ██║░░╚═╝ █████╗░░ 
-// ░╚═══██╗ ██║░░██╗ ██╔══╝░░ 
-// ██████╔╝ ╚█████╔╝ ██║░░░░░ 
+// ░██████╗ ░█████╗░ ███████╗
+// ██╔════╝ ██╔══██╗ ██╔════╝
+// ╚█████╗░ ██║░░╚═╝ █████╗░░
+// ░╚═══██╗ ██║░░██╗ ██╔══╝░░
+// ██████╔╝ ╚█████╔╝ ██║░░░░░
 // ╚═════╝░ ░╚════╝░ ╚═╝░░░░░
 
-// ██████╗░ ██╗ ░█████╗░ ██╗░░░░░ ███████╗ ░░██████╗░ ████████╗ 
-// ██╔══██╗ ██║ ██╔══██╗ ██║░░░░░ ██╔════╝ ░██ ╔══██╗ ╚══██╔══╝ 
-// ██║░░██║ ██║ ███████║ ██║░░░░░ █████╗░░ ░██ ║░░╚═╝ ░░░██║░░░ 
-// ██║░░██║ ██║ ██╔══██║ ██║░░░░░ ██╔══╝░░ ░██ ║░░██╗ ░░░██║░░░ 
-// ██████╔╝ ██║ ██║░░██║ ███████╗ ███████╗ ░░██████╔╝ ░░░██║░░░ 
-// ╚═════╝░ ╚═╝ ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ░░ ╚════╝░ ░░░╚═╝░░░ 
+// ██████╗░ ██╗ ░█████╗░ ██╗░░░░░ ███████╗ ░░██████╗░ ████████╗
+// ██╔══██╗ ██║ ██╔══██╗ ██║░░░░░ ██╔════╝ ░██ ╔══██╗ ╚══██╔══╝
+// ██║░░██║ ██║ ███████║ ██║░░░░░ █████╗░░ ░██ ║░░╚═╝ ░░░██║░░░
+// ██║░░██║ ██║ ██╔══██║ ██║░░░░░ ██╔══╝░░ ░██ ║░░██╗ ░░░██║░░░
+// ██████╔╝ ██║ ██║░░██║ ███████╗ ███████╗ ░░██████╔╝ ░░░██║░░░
+// ╚═════╝░ ╚═╝ ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ░░ ╚════╝░ ░░░╚═╝░░░
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  TYPES AND CONSTRAINTS  ||
@@ -69,9 +69,9 @@ case class ForOp(
     initArgs: Seq[Operand[Attribute]],
     region: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.for", ForOp] 
-  with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
-  derives DerivedOperationCompanion
+) extends DerivedOperation["scf.for", ForOp]
+    with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
+    derives DerivedOperationCompanion
 
 case class ForallOp(
     dynamicLowerBound: Seq[Operand[Index]],
@@ -91,7 +91,6 @@ case class ForallOp(
 case class InParallelOp(
     region: Region
 ) extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
-    with IsTerminator
     derives DerivedOperationCompanion
 
 case class IfOp(
@@ -99,8 +98,7 @@ case class IfOp(
     thenRegion: Region,
     elseRegion: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.if", IfOp] 
-  derives DerivedOperationCompanion
+) extends DerivedOperation["scf.if", IfOp] derives DerivedOperationCompanion
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]],
@@ -117,13 +115,11 @@ case class ReduceOp(
     // TODO: variadic regions
     reductions: Region
 ) extends DerivedOperation["scf.reduce", ReduceOp]
-    with IsTerminator
     derives DerivedOperationCompanion
 
 case class ReduceReturnOp(
     resultss: Result[Attribute]
 ) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
-    with IsTerminator
     derives DerivedOperationCompanion
 
 case class WhileOp(
@@ -147,7 +143,6 @@ case class IndexSwitchOp(
 case class YieldOp(
     resultss: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.yield", YieldOp]
-    with IsTerminator
     derives DerivedOperationCompanion
 
 val SCFDialect =
