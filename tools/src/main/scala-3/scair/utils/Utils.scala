@@ -41,4 +41,9 @@ val allDialects: Seq[Dialect] =
   )
 
 val allPasses: Seq[ModulePass] =
-  Seq(DummyPass, ReconcileUnrealizedCasts, TestInsertionPass, TestReplacementPass)
+  Seq(
+    DummyPass,
+    ReconcileUnrealizedCasts,
+    TestInsertionPass,
+    TestReplacementPass
+  )
