@@ -52,24 +52,24 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         attributes
       ) {
 
-    override def copy(
-        operands: Seq[Value[Attribute]],
-        successors: Seq[Block],
-        results: Seq[Result[Attribute]],
-        regions: Seq[Region],
-        properties: Map[String, Attribute],
-        attributes: DictType[String, Attribute]
-    ) = {
-      UnregisteredOperation(
-        name = name,
-        operands = operands,
-        successors = successors,
-        results = results,
-        regions = regions,
-        properties = properties,
-        attributes = attributes
-      )
-    }
+    // override def copy(
+    //     operands: Seq[Value[Attribute]],
+    //     successors: Seq[Block],
+    //     results: Seq[Result[Attribute]],
+    //     regions: Seq[Region],
+    //     properties: Map[String, Attribute],
+    //     attributes: DictType[String, Attribute]
+    // ) = {
+    //   UnregisteredOperation(
+    //     name = name,
+    //     operands = operands,
+    //     successors = successors,
+    //     results = results,
+    //     regions = regions,
+    //     properties = properties,
+    //     attributes = attributes
+    //   )
+    // }
 
     override def verify(): Either[String, Operation] = {
       Try(companion.verify(this)) match {

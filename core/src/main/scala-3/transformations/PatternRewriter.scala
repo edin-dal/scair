@@ -5,6 +5,7 @@ import scair.ir.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable.Stack
+import scair.Printer
 
 // ██████╗░ ░█████╗░ ████████╗ ████████╗ ███████╗ ██████╗░ ███╗░░██╗
 // ██╔══██╗ ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔════╝ ██╔══██╗ ████╗░██║
@@ -158,6 +159,15 @@ trait Rewriter {
       new_ops: Operation | Seq[Operation],
       new_results: Option[Seq[Value[Attribute]]] = None
   ): Unit = {
+
+    println(
+      s"Replacing operation ${op.name}: ${op.getClass()} = $op with new operations: ${new_ops}"
+    )
+    println("Block state:")
+    op.container_block match {
+      case Some(b) => Printer().print(b)(using 0)
+      case None     => println("No parent block found.")
+    }
 
     val block = op.container_block match {
       case Some(x) => x

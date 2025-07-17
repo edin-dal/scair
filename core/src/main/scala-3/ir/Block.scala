@@ -275,7 +275,7 @@ case class Block private (
 
   def getIndexOf(op: Operation): Int = {
     operations.lastIndexOf(op) match {
-      case -1 => throw new Exception("MLIROperation not present in the block.")
+      case -1 => throw new Exception(s"Operation ${op.name}: ${op.getClass()} not present in the block.")
       case x  => x
     }
 
