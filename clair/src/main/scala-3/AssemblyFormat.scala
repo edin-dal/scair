@@ -175,6 +175,7 @@ case class VariableDirective(
     }
 
   override def parsed(p: Expr[?])(using Quotes) =
+    import quotes.reflect.*
     construct match
       case MayVariadicOpInputDef(
             name = n,
@@ -186,25 +187,14 @@ case class VariableDirective(
             variadicity = Variadicity.Optional
           ) =>
         '{ ${ p }.asInstanceOf[Option[?]].isDefined }
-
-  override def isPresent(op: Expr[?])(using Quotes) =
-    import quotes.reflect.*
-    construct match {
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Variadic
-          ) =>
-        '{ ${ selectMember[Seq[?]](op, n) }.size > 0 }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Optional
-          ) =>
-        '{ ${ selectMember[Option[?]](op, n) }.isDefined }
       case d: OpInputDef =>
         report.errorAndAbort(
           s"Variable directives can only be used as anchors when variadic or optional, tried to use `${d.name}`."
         )
-    }
+
+  override def isPresent(op: Expr[?])(using Quotes) =
+    construct match
+      case OpInputDef(name = n) => parsed(selectMember[Any](op, n))
 
 }
 
@@ -609,10 +599,9 @@ transparent inline def possiblyAnchoredDirective[$: P](using
   (directive ~~ "^").map(Anchor.apply) | directive
 
 def optionalGroupDirective[$: P](using opDef: OperationDef): P[Directive] =
-  ("(" ~ possiblyAnchoredDirective.rep(1) ~ ")" ~ "?")
-    .filter(
-      _.count(_.isInstanceOf[Anchor]) == 1
-    )
+  ("(" ~ possiblyAnchoredDirective.rep(1) ~ ")" ~ "?")./.filter(
+    _.count(_.isInstanceOf[Anchor]) == 1
+  )
     .map(directives =>
       val anchor = directives
         .find(_.isInstanceOf[Anchor])
