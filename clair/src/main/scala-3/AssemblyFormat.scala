@@ -61,6 +61,20 @@ trait Directive {
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Any]]
 
+  // Did the directive parse something?
+  def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
+    import quotes.reflect.*
+    report.errorAndAbort(
+      s"Directive $this is not supposed to be used as an optional group's leading element, or is not implemented yet."
+    )
+
+  def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] = {
+    import quotes.reflect.*
+    report.errorAndAbort(
+      s"Directive $this is not supposed to be used as an anchor, or is not implemented yet."
+    )
+  }
+
 }
 
 /** Directive for literal text in the assembly format. Examples include
@@ -141,17 +155,10 @@ case class VariableDirective(
   )(using Quotes): Expr[Unit] = {
     val space = printSpace(p, state)
     val printVar = construct match {
-      case OperandDef(name = n, variadicity = v) =>
-        v match {
-          case Variadicity.Single =>
-            '{ $p.print(${ selectMember[Operand[?]](op, n) }) }
-          case Variadicity.Variadic =>
-            '{
-              $p.printList(${ selectMember(op, n) })(using
-                0
-              )
-            }
-        }
+      case OperandDef(name = n, variadicity = Variadicity.Single) =>
+        '{ $p.print(${ selectMember[Operand[?]](op, n) }) }
+      case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
+        '{ $p.printList(${ selectMember[Seq[Operand[?]]](op, n) })(using 0) }
     }
     Expr.block(List(space), printVar)
   }
@@ -166,6 +173,28 @@ case class VariableDirective(
             '{ Parser.ValueUseList(using $ctx) }
         }
     }
+
+  override def parsed(p: Expr[?])(using Quotes) =
+    import quotes.reflect.*
+    construct match
+      case MayVariadicOpInputDef(
+            name = n,
+            variadicity = Variadicity.Variadic
+          ) =>
+        '{ ${ p }.asInstanceOf[Seq[?]].size > 0 }
+      case MayVariadicOpInputDef(
+            name = n,
+            variadicity = Variadicity.Optional
+          ) =>
+        '{ ${ p }.asInstanceOf[Option[?]].isDefined }
+      case d: OpInputDef =>
+        report.errorAndAbort(
+          s"Variable directives can only be used as anchors when variadic or optional, tried to use `${d.name}`."
+        )
+
+  override def isPresent(op: Expr[?])(using Quotes) =
+    construct match
+      case OpInputDef(name = n) => parsed(selectMember[Any](op, n))
 
 }
 
@@ -182,36 +211,95 @@ case class TypeDirective(
     val space = printSpace(p, state)
 
     val printType = construct match {
-      case OperandDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.print(${ selectMember[Operand[?]](op, n) }.typ) }
-      case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
+      case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
+        '{ $p.print(${ selectMember[Value[?]](op, n) }.typ) }
+      case MayVariadicOpInputDef(
+            name = n,
+            variadicity = Variadicity.Variadic
+          ) =>
         '{
-          $p.printList(${
-            selectMember[Seq[Operand[?]]](op, n)
-          }.map(_.typ))(using 0)
+          $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))(using
+            0
+          )
         }
-      case ResultDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.print(${ selectMember[Result[?]](op, n) }.typ) }
-      case ResultDef(name = n, variadicity = Variadicity.Variadic) =>
+      case MayVariadicOpInputDef(
+            name = n,
+            variadicity = Variadicity.Optional
+          ) =>
         '{
-          $p.printList(${
-            selectMember[Seq[Result[?]]](op, n)
-          }.map(_.typ))(using 0)
+          ${ selectMember[Option[Value[?]]](op, n) }
+            .map(_.typ)
+            .map($p.print)
+            .getOrElse(())
         }
     }
+
     Expr.block(List(space), printType)
   }
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
     construct match {
-      case OperandDef(name = n, variadicity = Variadicity.Single) =>
+      case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
         '{ $p.AttributeValue(using $ctx) }
-      case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
+      case MayVariadicOpInputDef(
+            name = n,
+            variadicity = Variadicity.Variadic
+          ) =>
         '{ $p.AttributeValueList(using $ctx) }
-      case ResultDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.AttributeValue(using $ctx) }
-      case ResultDef(name = n, variadicity = Variadicity.Variadic) =>
-        '{ $p.AttributeValueList(using $ctx) }
+    }
+
+}
+
+case class OptionalGroupDirective(
+    anchor: Directive,
+    directives: Seq[Directive]
+) extends Directive {
+
+  def parse(
+      p: Expr[Parser]
+  )(using ctx: Expr[P[Any]])(using quotes: Quotes): Expr[P[Tuple]] =
+    '{
+      given P[?] = $ctx
+      ${ directives.head.parse(p) }.flatMap(v =>
+        if ${ directives.head.parsed('v) } then
+          ${ AssemblyFormatDirective(directives.tail).parseTuple(p) }
+            .map(v *: _)
+        else
+          Pass(${
+            Expr.ofTupleFromSeq(
+              AssemblyFormatDirective(directives).parsedDirectives.map(empty)
+            )
+          })
+      )
+    }
+
+  def print(op: Expr[?], p: Expr[Printer])(using
+      state: PrintingState
+  )(using Quotes) =
+    '{
+      if ${ anchor.isPresent(op) }
+      then ${ Expr.block(directives.map(_.print(op, p)).toList, '{ () }) }
+    }
+
+  def empty(directive: Directive)(using quotes: Quotes) =
+    import quotes.reflect.*
+    directive match {
+      case VariableDirective(
+            MayVariadicOpInputDef(variadicity = Variadicity.Variadic)
+          ) | TypeDirective(
+            MayVariadicOpInputDef(variadicity = Variadicity.Variadic)
+          ) =>
+        '{ Seq() }
+      case VariableDirective(
+            MayVariadicOpInputDef(variadicity = Variadicity.Optional)
+          ) | TypeDirective(
+            MayVariadicOpInputDef(variadicity = Variadicity.Optional)
+          ) =>
+        '{ None }
+      case _ =>
+        report.errorAndAbort(
+          s"Unsupported directive in optional group: $directive"
+        )
     }
 
 }
@@ -240,6 +328,22 @@ transparent inline def chainParsers(
       '{
         given P[Any] = $ctx
         $run ~ $next
+      }
+    case ('{ $run: P[Tuple] }, '{ $next: P[Tuple] }) =>
+      '{
+        given P[Any] = $ctx
+        given fastparse.Implicits.Sequencer[Tuple, Tuple, Tuple] =
+          fastparse.Implicits.Sequencer
+            .NarySequencer[Tuple, Tuple, Tuple](_ ++ _)
+        `~`($run)[Tuple, Tuple]($next)
+      }
+    case ('{ $run: P[Any] }, '{ $next: P[Tuple] }) =>
+      '{
+        given P[Any] = $ctx
+        given fastparse.Implicits.Sequencer[Any, Tuple, Tuple] =
+          fastparse.Implicits.Sequencer
+            .NarySequencer[Any, Tuple, Tuple](_ *: _)
+        `~`($run)[Tuple, Tuple]($next)
       }
     case ('{ $run: P[Tuple] }, '{ $next: P[Any] }) =>
       '{
@@ -297,9 +401,15 @@ case class AssemblyFormatDirective(
     * Helps with indexing the parsed tuple.
     */
   def parsedDirectives: Seq[Directive] =
-    directives.filter(_ match
-      case _: LiteralDirective => false
-      case _                   => true)
+    directives
+      .flatMap(
+        _ match
+          case OptionalGroupDirective(_, ds) => ds
+          case d: Directive                  => Some(d)
+      )
+      .filter(_ match
+        case _: LiteralDirective => false
+        case _                   => true)
 
   /** Use the operation definition to generate logic to build the operation from
     * the parsed tuple.
@@ -423,6 +533,8 @@ case class AssemblyFormatDirective(
 
 }
 
+case class Anchor(directive: Directive)
+
 /** Parses an assembly format identifier. Those should match Scala's identifier
   * rules, for maximum compatibility with the ADT fields; this is an
   * approximation.
@@ -436,14 +548,14 @@ transparent inline def assemblyId[$: P]: P[String] =
 transparent inline def assemblyFormat[$: P](using
     opDef: OperationDef
 ): P[AssemblyFormatDirective] =
-  directive.rep(1).map(AssemblyFormatDirective.apply)
+  (directive.rep(1) ~ End).map(AssemblyFormatDirective.apply)
 
 /** Parser for any directive.
   */
 transparent inline def directive[$: P](using
     opDef: OperationDef
 ): P[Directive] =
-  typeDirective | literalDirective | variableDirective | attrDictDirective
+  typeDirective | literalDirective | variableDirective | attrDictDirective | optionalGroupDirective
 
 /** Parser for literal directives. Parses text enclosed in backticks as a
   * literal directive.
@@ -480,6 +592,29 @@ transparent inline def typeDirective[$: P](using opDef: OperationDef) =
   */
 transparent inline def attrDictDirective[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
+
+transparent inline def possiblyAnchoredDirective[$: P](using
+    opDef: OperationDef
+) =
+  (directive ~~ "^").map(Anchor.apply) | directive
+
+def optionalGroupDirective[$: P](using opDef: OperationDef): P[Directive] =
+  ("(" ~ possiblyAnchoredDirective.rep(1) ~ ")" ~ "?")./.filter(
+    _.count(_.isInstanceOf[Anchor]) == 1
+  )
+    .map(directives =>
+      val anchor = directives
+        .find(_.isInstanceOf[Anchor])
+        .get
+        .asInstanceOf[Anchor]
+        .directive
+      val flatDirectives = directives.map(d =>
+        d match
+          case Anchor(d)    => d
+          case d: Directive => d
+      )
+      OptionalGroupDirective(anchor, flatDirectives)
+    )
 
 /** Parse a declarative assembly format string into an AssemblyFormatDirective,
   * its internal representation for implementation generation.
