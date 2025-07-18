@@ -275,8 +275,9 @@ case class Block private (
 
   def getIndexOf(op: Operation): Int = {
     operations.lastIndexOf(op) match {
-      case -1 => throw new Exception("MLIROperation not present in the block.")
-      case x  => x
+      case -1 =>
+        throw new Exception(s"Operation ${op.name} not present in the block.")
+      case x => x
     }
 
   }
@@ -293,6 +294,10 @@ case class Block private (
             res.flatMap(_ =>
               op.verify()
                 .map(v =>
+                  if !(v eq op) then
+                    op.operands.foreach(
+                      _.uses.filterInPlace(_.operation != op)
+                    )
                   operations(i) = v
                   v.container_block = Some(this)
                 )
