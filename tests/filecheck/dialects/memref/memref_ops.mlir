@@ -18,6 +18,9 @@
 %6 = "memref.load"(%m4, %0, %1, %0) : (memref<?x5x?xf32>, index, index, index) -> f32
 "memref.store"(%6, %m4, %1, %0, %1) : (f32, memref<?x5x?xf32>, index, index, index) -> ()
 
+%7 = "memref.dim"(%m2, %0) : (memref<?xf32>, index) -> index
+%8 = "memref.dim"(%m3, %1) : (memref<3x?x5xf32>, index) -> index
+
 
 memref.dealloc %m0 {some = "attr"} : memref<f32>
 memref.dealloc %m1 : memref<1xf32>
@@ -42,6 +45,8 @@ memref.dealloc %m4 : memref<?x5x?xf32>
 // CHECK-NEXT:    "memref.store"(%10, %5, %1, %0, %1) : (f32, memref<3x?x5xf32>, index, index, index) -> ()
 // CHECK-NEXT:    %11 = "memref.load"(%6, %0, %1, %0) : (memref<?x5x?xf32>, index, index, index) -> (f32)
 // CHECK-NEXT:    "memref.store"(%11, %6, %1, %0, %1) : (f32, memref<?x5x?xf32>, index, index, index) -> ()
+// CHECK-NEXT:    %12 = "memref.dim"(%4, %0) : (memref<?xf32>, index) -> (index)
+// CHECK-NEXT:    %13 = "memref.dim"(%5, %1) : (memref<3x?x5xf32>, index) -> (index)
 // CHECK-NEXT:    memref.dealloc %2 {some = "attr"} : memref<f32>
 // CHECK-NEXT:    memref.dealloc %3 : memref<1xf32>
 // CHECK-NEXT:    memref.dealloc %4 : memref<?xf32>
