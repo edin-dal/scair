@@ -19,6 +19,12 @@ case class Dealloc(
     with AssemblyFormat["$memref attr-dict `:` type($memref)"]
     derives DerivedOperationCompanion
 
+case class Dim(
+    memref: Operand[MemrefType],
+    index: Operand[IndexType],
+    result: Result[IndexType]
+) extends DerivedOperation["memref.dim", Dim] derives DerivedOperationCompanion
+
 case class Load(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
@@ -34,4 +40,4 @@ case class Store(
     derives DerivedOperationCompanion
 
 val MemrefDialect =
-  summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store)](Seq())
+  summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store, Dim)](Seq())
