@@ -18,7 +18,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      MLIR-Version: 98e674c9f16d677d95c67bc130e267fae331e43c
+      MLIR-Version: llvmorg-20.1.7
 
     steps:
     - name: Checkout Scair
