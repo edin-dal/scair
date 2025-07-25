@@ -52,17 +52,13 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         attributes
       ) {
 
+    override def structured = Try(companion.structure(this)) match {
+      case Failure(e)  => Left(e.toString())
+      case Success(op) => op.asInstanceOf[Operation].structured
+    }
+
     override def verify(): Either[String, Operation] = {
-      Try(companion.verify(this)) match {
-        case Success(op) =>
-          op match {
-            case adtOp: DerivedOperation[_, ?] =>
-              adtOp.verify()
-            case _ =>
-              Left("Internal Error: Operation is not a DerivedOperation")
-          }
-        case Failure(e) => Left(e.toString())
-      }
+      structured.flatMap(op => op.verify())
     }
 
   }
@@ -78,7 +74,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   ): UnverifiedOp
 
   def unverify(adtOp: T): UnverifiedOp
-  def verify(unverOp: UnverifiedOp): T
+  def structure(unverOp: UnverifiedOp): T
 
 }
 

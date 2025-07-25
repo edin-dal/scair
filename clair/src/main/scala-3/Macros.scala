@@ -849,7 +849,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
           attributes = adtOp.attributes
         )
 
-      def verify(unverOp: UnverifiedOp): T =
+      def structure(unverOp: UnverifiedOp): T =
         ${
           fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
         } match {

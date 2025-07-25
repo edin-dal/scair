@@ -372,7 +372,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Conversion to ADTOp" should "Correctly translate from Unverified operation to ADT Operation" in {
     val op = TestCases.unverOp
-    val adtMulOp = mulComp.verify(op)
+    val adtMulOp = mulComp.structure(op)
 
     adtMulOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -393,7 +393,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val op = TestCases.adtMulOpAllFields
 
     val unverMulOp = opT.unverify(op)
-    val adtMulOp = opT.verify(unverMulOp)
+    val adtMulOp = opT.structure(unverMulOp)
 
     adtMulOp.operand1 `eq` unverMulOp.operands(0) should be(true)
     adtMulOp.operand2 `eq` unverMulOp.operands(1) should be(true)
@@ -413,7 +413,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {
     val op = TestCases.unverMulSinVarOp
-    val adtMulSinVarOp = mulSVComp.verify(op)
+    val adtMulSinVarOp = mulSVComp.structure(op)
 
     adtMulSinVarOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -461,7 +461,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unverified operation to ADT Operation" in {
     val op = TestCases.unverMulMulVarOp
-    val adtMulMulVarOp = mulMMVComp.verify(op)
+    val adtMulMulVarOp = mulMMVComp.structure(op)
 
     adtMulMulVarOp.lhs should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
@@ -536,7 +536,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         )
       )
 
-    val verified = op.verify()
+    val verified = op.structured
     verified should matchPattern {
       case Right(
             RegionOp(
@@ -581,7 +581,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Single Optional Conversion to ADTOp" should "Correctly translate from Single Optional Unverified operation to ADT Operation" in {
     val op = TestCases.unverMulOptional
-    val adtMulOptional = mulOptComp.verify(op)
+    val adtMulOptional = mulOptComp.structure(op)
 
     adtMulOptional.lhs should matchPattern {
       case Some(Value(IntegerType(IntData(5), Unsigned))) =>
@@ -613,7 +613,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unverified operation to ADT Operation" in {
     val op = TestCases.unverMulMultiOptional
-    val adtMulOptional = mulMultiOptComp.verify(op)
+    val adtMulOptional = mulMultiOptComp.structure(op)
 
     adtMulOptional.lhs should matchPattern {
       case Some(Value(IntegerType(IntData(5), Unsigned))) =>
@@ -631,7 +631,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unverified operation to ADT Operation with missing middle Operand" in {
     val op = TestCases.unverMulMultiMissingOptional
-    val adtMulOptional = mulMultiOptComp.verify(op)
+    val adtMulOptional = mulMultiOptComp.structure(op)
 
     adtMulOptional.lhs should matchPattern {
       case Some(Value(IntegerType(IntData(5), Unsigned))) =>
@@ -648,7 +648,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Property Conversion to ADTOp" should "Correctly translate from Multi Optional Properties Unverified operation to ADT Operation" in {
     val op = TestCases.unverMultiOptionalPropOp
-    val mulPropOptional = multiOptPropOpComp.verify(op)
+    val mulPropOptional = multiOptPropOpComp.structure(op)
 
     mulPropOptional.prop1 should matchPattern {
       case Some(IntegerType(IntData(5), Unsigned)) =>
@@ -682,7 +682,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Composition Conversion to ADTOp" should "Correctly translate from Multi Optional Properties Unverified operation to ADT Operation" in {
     val op = TestCases.unverMultiCompOptional
-    val adtPropOptionalComp = multiOptCompOp.verify(op)
+    val adtPropOptionalComp = multiOptCompOp.structure(op)
 
     adtPropOptionalComp.operand should matchPattern {
       case Some(Value(IntegerType(IntData(5), Unsigned))) =>
