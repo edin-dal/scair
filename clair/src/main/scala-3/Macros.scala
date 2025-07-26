@@ -29,7 +29,7 @@ import scala.quoted.*
 // ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||  ADT to Unverified conversion Macro  ||
+||  ADT to Unstructured conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 /** Small helper to select a member of an expression.
@@ -210,7 +210,7 @@ def parseMacro(
       }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||  Unverified to ADT conversion Macro  ||
+|| Unstructured to ADT conversion Macro ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 /*_____________*\
@@ -275,11 +275,11 @@ type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
   */
 type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
 
-/** Helper to access the right sequence of constructs from an UnverifiedOp,
+/** Helper to access the right sequence of constructs from an UnstructuredOp,
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type as d](
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) =
   (d match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -321,7 +321,7 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
     case OpPropertyDef(name, tpe, _)        => Variadicity.Optional
 
 /*__________________*\
-\*-- VERIFICATION --*/
+\*-- STRUCTURING  --*/
 
 /** Expect a segmentSizes property of DenseArrayAttr type, and return it as a
   * list of integers.
@@ -329,11 +329,11 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   * @tparam Def
   *   The construct definition type.
   * @param op
-  *   The UnverifiedOp expression.
+  *   The UnstructuredOp expression.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
-  '{ (op: DerivedOperationCompanion[?]#UnverifiedOp) =>
+  '{ (op: DerivedOperationCompanion[?]#UnstructuredOp) =>
     val dense =
       op.properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
@@ -387,7 +387,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     val defLength = Expr(defs.length)
     '{
       (
-          op: DerivedOperationCompanion[?]#UnverifiedOp,
+          op: DerivedOperationCompanion[?]#UnstructuredOp,
           flat: Seq[DefinedInput[Def]]
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
@@ -424,7 +424,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       '{
 
         (
-            op: DerivedOperationCompanion[?]#UnverifiedOp,
+            op: DerivedOperationCompanion[?]#UnstructuredOp,
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(${ Expr(i) })
@@ -433,7 +433,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
 
   val variadic_expr = '{
     (
-        op: DerivedOperationCompanion[?]#UnverifiedOp,
+        op: DerivedOperationCompanion[?]#UnstructuredOp,
         flat: Seq[DefinedInput[Def]]
     ) =>
       flat
@@ -446,7 +446,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
     .map((d, i) =>
       '{
         (
-            op: DerivedOperationCompanion[?]#UnverifiedOp,
+            op: DerivedOperationCompanion[?]#UnstructuredOp,
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(flat.length - ${ Expr(following) } + ${
@@ -470,7 +470,7 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     // TODO: This does not really belong here. Bigger fishes to fry at the time of
     // writing thoug. Conceptually this should end up in some kind of header.
     (
-        op: DerivedOperationCompanion[?]#UnverifiedOp,
+        op: DerivedOperationCompanion[?]#UnstructuredOp,
         flat: Seq[DefinedInput[Def]]
     ) =>
       val sizes = ${ expectSegmentSizes[Def] }(op)
@@ -498,14 +498,14 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
       case Variadicity.Single =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnverifiedOp,
+              op: DerivedOperationCompanion[?]#UnstructuredOp,
               flat: Seq[DefinedInput[Def]]
           ) => flat(${ Expr(i) })
         }
       case Variadicity.Variadic | Variadicity.Optional =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnverifiedOp,
+              op: DerivedOperationCompanion[?]#UnstructuredOp,
               flat: Seq[DefinedInput[Def]]
           ) =>
             val sizes = ${ segmentSizes }(op, flat)
@@ -616,7 +616,7 @@ def constructVerifier[Def <: OpInputDef: Type](
 
 def verifiedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) = {
   // Get the flat sequence of these constructs
   val flat = getConstructSeq(op)
@@ -636,14 +636,14 @@ def verifiedConstructs[Def <: OpInputDef: Type](
   * @param opDef
   *   The OperationDef derived from the ADT.
   * @param op
-  *   The UnverifiedOp instance.
+  *   The UnstructuredOp instance.
   * @return
   *   The verified named arguments for the primary constructor of the ADT.
   */
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) =
   import quotes.reflect._
   (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
@@ -675,23 +675,24 @@ def constructorArgs(
           NamedArg(name, property.asTerm)
     }
 
-  /** Attempt to create an ADT from an UnverifiedO[ADT]
+  /** Attempt to create an ADT from an UnstructuredOp[ADT]
     *
     * @tparam T
     *   The ADT Type.
     * @param opDef
     *   The OperationDef derived from the ADT.
     * @param genExpr
-    *   The expression of the UnverifiedOp[ADT].
+    *   The expression of the UnstructuredOp[ADT].
     * @return
     *   The ADT instance.
     * @raises
-    *   Exception if the UnverifiedOp[ADT] is not valid to represent by the ADT.
+    *   Exception if the UnstructuredOp[ADT] is not valid to represent by the
+    *   ADT.
     */
 
-def fromUnverifiedOperationMacro[T: Type](
+def fromUnstructuredOperationMacro[T: Type](
     opDef: OperationDef,
-    genExpr: Expr[DerivedOperationCompanion[T]#UnverifiedOp]
+    genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp]
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
 
@@ -830,7 +831,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: DictType[String, Attribute] =
             DictType.empty[String, Attribute]
-      ): UnverifiedOp = UnverifiedOp(
+      ): UnstructuredOp = UnstructuredOp(
         operands = operands,
         successors = successors,
         results = results,
@@ -839,8 +840,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
         attributes = attributes
       )
 
-      def unverify(adtOp: T): UnverifiedOp =
-        UnverifiedOp(
+      def unstructure(adtOp: T): UnstructuredOp =
+        UnstructuredOp(
           operands = operands(adtOp),
           successors = successors(adtOp),
           results = results(adtOp),
@@ -849,16 +850,16 @@ def deriveOperationCompanion[T <: Operation: Type](using
           attributes = adtOp.attributes
         )
 
-      def structure(unverOp: UnverifiedOp): T =
+      def structure(unstrucOp: UnstructuredOp): T =
         ${
-          fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
+          fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match {
           case adt: DerivedOperation[_, T] =>
-            adt.attributes.addAll(unverOp.attributes)
+            adt.attributes.addAll(unstrucOp.attributes)
             adt
           case _ =>
             throw new Exception(
-              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
+              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unstrucOp}"
             )
         }
 

@@ -32,7 +32,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def properties(adtOp: T): Map[String, Attribute]
   def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
 
-  case class UnverifiedOp(
+  case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
       override val successors: Seq[Block] = Seq(),
       override val results: Seq[Result[Attribute]] = Seq(),
@@ -71,10 +71,10 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): UnverifiedOp
+  ): UnstructuredOp
 
-  def unverify(adtOp: T): UnverifiedOp
-  def structure(unverOp: UnverifiedOp): T
+  def unstructure(adtOp: T): UnstructuredOp
+  def structure(unstrucOp: UnstructuredOp): T
 
 }
 

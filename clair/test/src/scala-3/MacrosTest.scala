@@ -98,7 +98,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   object TestCases {
 
-    def unverOp = mulComp.UnverifiedOp(
+    def unstrucOp = mulComp.UnstructuredOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
@@ -128,7 +128,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       succ2 = scair.ir.Block()
     )
 
-    def unverMulSinVarOp = new mulSVComp.UnverifiedOp(
+    def unstructMulSinVarOp = new mulSVComp.UnstructuredOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
@@ -154,7 +154,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       randProp = StringData("what")
     )
 
-    def unverMulMulVarOp = mulMMVComp.UnverifiedOp(
+    def unstructMulMulVarOp = mulMMVComp.UnstructuredOp(
       operands = Seq(
         Value(typ = IntegerType(IntData(5), Unsigned)),
         Value(typ = IntegerType(IntData(5), Unsigned)),
@@ -236,7 +236,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       res = Result(IntegerType(IntData(25), Unsigned))
     )
 
-    def unverMulOptional = mulOptComp.UnverifiedOp(
+    def unstructMulOptional = mulOptComp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
@@ -251,7 +251,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       res = Result(IntegerType(IntData(25), Unsigned))
     )
 
-    def unverMulMultiOptional = mulMultiOptComp.UnverifiedOp(
+    def unstructMulMultiOptional = mulMultiOptComp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
@@ -270,7 +270,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       )
     )
 
-    def unverMulMultiMissingOptional = mulMultiOptComp.UnverifiedOp(
+    def unstructMulMultiMissingOptional = mulMultiOptComp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
@@ -294,7 +294,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       prop3 = Some(IntegerType(IntData(5), Unsigned))
     )
 
-    def unverMultiOptionalPropOp = multiOptPropOpComp.UnverifiedOp(
+    def unstructMultiOptionalPropOp = multiOptPropOpComp.UnstructuredOp(
       properties = Map(
         ("prop1" -> IntegerType(IntData(5), Unsigned)),
         ("prop2" -> IntegerType(IntData(5), Unsigned)),
@@ -309,7 +309,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       result = Some(Result(IntegerType(IntData(25), Unsigned)))
     )
 
-    def unverMultiCompOptional = multiOptCompOp.UnverifiedOp(
+    def unstructMultiCompOptional = multiOptCompOp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
       ),
@@ -322,10 +322,10 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   }
 
-  "Unverified instantiation" should "Correctly instantiates the UniverifiedOp" in {
+  "Unstructured instantiation" should "Correctly instantiates the UniverifiedOp" in {
     val opT = DerivedOperationCompanion.derived[Mul]
 
-    val unverMulOp = opT(
+    val unstructMulOp = opT(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
@@ -334,44 +334,44 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       properties = Map(("randProp" -> StringData("what")))
     )
 
-    unverMulOp.name should be("cmath.mul")
-    unverMulOp.operands should matchPattern {
+    unstructMulOp.name should be("cmath.mul")
+    unstructMulOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverMulOp.results should matchPattern {
+    unstructMulOp.results should matchPattern {
       case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
     }
-    unverMulOp.properties("randProp") should matchPattern {
+    unstructMulOp.properties("randProp") should matchPattern {
       case StringData("what") =>
     }
   }
 
-  "Conversion to Unverified" should "Correctly translate from ADT operation to Univerified Operation" in {
+  "Conversion to Unstructured" should "Correctly translate from ADT operation to Univerified Operation" in {
     val opT = summon[DerivedOperationCompanion[Mul]]
 
     val op = TestCases.adtMulOp
-    val unverMulOp = opT.unverify(op)
+    val unstructMulOp = opT.unstructure(op)
 
-    unverMulOp.name should be("cmath.mul")
-    unverMulOp.operands should matchPattern {
+    unstructMulOp.name should be("cmath.mul")
+    unstructMulOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverMulOp.results should matchPattern {
+    unstructMulOp.results should matchPattern {
       case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
     }
-    unverMulOp.properties("randProp") should matchPattern {
+    unstructMulOp.properties("randProp") should matchPattern {
       case StringData("what") =>
     }
   }
 
-  "Conversion to ADTOp" should "Correctly translate from Unverified operation to ADT Operation" in {
-    val op = TestCases.unverOp
+  "Conversion to ADTOp" should "Correctly translate from Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstrucOp
     val adtMulOp = mulComp.structure(op)
 
     adtMulOp.lhs should matchPattern {
@@ -392,27 +392,27 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val op = TestCases.adtMulOpAllFields
 
-    val unverMulOp = opT.unverify(op)
-    val adtMulOp = opT.structure(unverMulOp)
+    val unstructMulOp = opT.unstructure(op)
+    val adtMulOp = opT.structure(unstructMulOp)
 
-    adtMulOp.operand1 `eq` unverMulOp.operands(0) should be(true)
-    adtMulOp.operand2 `eq` unverMulOp.operands(1) should be(true)
-    adtMulOp.result1 `eq` unverMulOp.results(0) should be(true)
-    adtMulOp.result2 `eq` unverMulOp.results(1) should be(true)
-    adtMulOp.randProp1 `eq` unverMulOp.properties(
+    adtMulOp.operand1 `eq` unstructMulOp.operands(0) should be(true)
+    adtMulOp.operand2 `eq` unstructMulOp.operands(1) should be(true)
+    adtMulOp.result1 `eq` unstructMulOp.results(0) should be(true)
+    adtMulOp.result2 `eq` unstructMulOp.results(1) should be(true)
+    adtMulOp.randProp1 `eq` unstructMulOp.properties(
       "randProp1"
     ) should be(true)
-    adtMulOp.randProp2 `eq` unverMulOp.properties(
+    adtMulOp.randProp2 `eq` unstructMulOp.properties(
       "randProp2"
     ) should be(true)
-    adtMulOp.reg1 `eq` unverMulOp.regions(0) should be(true)
-    adtMulOp.reg2 `eq` unverMulOp.regions(1) should be(true)
-    adtMulOp.succ1 `eq` unverMulOp.successors(0) should be(true)
-    adtMulOp.succ2 `eq` unverMulOp.successors(1) should be(true)
+    adtMulOp.reg1 `eq` unstructMulOp.regions(0) should be(true)
+    adtMulOp.reg2 `eq` unstructMulOp.regions(1) should be(true)
+    adtMulOp.succ1 `eq` unstructMulOp.successors(0) should be(true)
+    adtMulOp.succ2 `eq` unstructMulOp.successors(1) should be(true)
   }
 
-  "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unverified operation to ADT Operation" in {
-    val op = TestCases.unverMulSinVarOp
+  "Single Variadic Conversion to ADTOp" should "Correctly translate from Single Variadic Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstructMulSinVarOp
     val adtMulSinVarOp = mulSVComp.structure(op)
 
     adtMulSinVarOp.lhs should matchPattern {
@@ -434,33 +434,33 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Single Variadic Conversion to Unverified" should "Correctly translate from Single Variadic ADT operation to Univerified Operation" in {
+  "Single Variadic Conversion to Unstructured" should "Correctly translate from Single Variadic ADT operation to Univerified Operation" in {
     val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
 
     val op = TestCases.adtMulSinVarOp
-    val unverMulSinVarOp = opT.unverify(op)
+    val unstructMulSinVarOp = opT.unstructure(op)
 
-    unverMulSinVarOp.name should be("cmath.mulsinglevariadic")
-    unverMulSinVarOp.operands should matchPattern {
+    unstructMulSinVarOp.name should be("cmath.mulsinglevariadic")
+    unstructMulSinVarOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverMulSinVarOp.results should matchPattern {
+    unstructMulSinVarOp.results should matchPattern {
       case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned))
           ) =>
     }
-    unverMulSinVarOp.properties("randProp") should matchPattern {
+    unstructMulSinVarOp.properties("randProp") should matchPattern {
       case StringData("what") =>
     }
   }
 
-  "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unverified operation to ADT Operation" in {
-    val op = TestCases.unverMulMulVarOp
+  "Multi Variadic Conversion to ADTOp" should "Correctly translate from Multi Variadic Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstructMulMulVarOp
     val adtMulMulVarOp = mulMMVComp.structure(op)
 
     adtMulMulVarOp.lhs should matchPattern {
@@ -497,14 +497,14 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Variadic Conversion to Unverified" should "Correctly translate from Multi Variadic ADT operation to Univerified Operation" in {
+  "Multi Variadic Conversion to Unstructured" should "Correctly translate from Multi Variadic ADT operation to Univerified Operation" in {
     val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
 
     val op = TestCases.adtMulMulVarOp
-    val unverMulSinVarOp = opT.unverify(op)
+    val unstructMulSinVarOp = opT.unstructure(op)
 
-    unverMulSinVarOp.name should be("cmath.mulmultivariadic")
-    unverMulSinVarOp.operands should matchPattern {
+    unstructMulSinVarOp.name should be("cmath.mulmultivariadic")
+    unstructMulSinVarOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
@@ -514,7 +514,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverMulSinVarOp.results should matchPattern {
+    unstructMulSinVarOp.results should matchPattern {
       case Seq(
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
@@ -529,10 +529,14 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   "Recursive conversion to ADTOp" should "do the thing \\o/" in {
     val comp = summon[DerivedOperationCompanion[RegionOp]]
     val op =
-      comp.UnverifiedOp(regions =
+      comp.UnstructuredOp(regions =
         Seq(
-          Region(Seq(Block(comp.UnverifiedOp()), Block(comp.UnverifiedOp()))),
-          Region(Seq(Block(comp.UnverifiedOp()), Block(comp.UnverifiedOp())))
+          Region(
+            Seq(Block(comp.UnstructuredOp()), Block(comp.UnstructuredOp()))
+          ),
+          Region(
+            Seq(Block(comp.UnstructuredOp()), Block(comp.UnstructuredOp()))
+          )
         )
       )
 
@@ -555,32 +559,32 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   "Incorrect Conversion to ADTOp" should "fail gracefully on verification" in {
-    def unverOp = mulComp.UnverifiedOp()
+    def unstrucOp = mulComp.UnstructuredOp()
 
-    val verified = unverOp.verify()
+    val verified = unstrucOp.verify()
     verified should matchPattern {
       case Left("java.lang.Exception: Expected 2 operands, got 0.") =>
     }
   }
 
-  "Single Optional Conversion to Unverified" should "Correctly translate from Single Optional ADT operation to Unverified Operation" in {
+  "Single Optional Conversion to Unstructured" should "Correctly translate from Single Optional ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMulOptional
-    val unverMulSinVarOp = mulOptComp.unverify(op)
+    val unstructMulSinVarOp = mulOptComp.unstructure(op)
 
-    unverMulSinVarOp.name should be("cmath.mulopt")
-    unverMulSinVarOp.operands should matchPattern {
+    unstructMulSinVarOp.name should be("cmath.mulopt")
+    unstructMulSinVarOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverMulSinVarOp.results should matchPattern {
+    unstructMulSinVarOp.results should matchPattern {
       case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
     }
   }
 
-  "Single Optional Conversion to ADTOp" should "Correctly translate from Single Optional Unverified operation to ADT Operation" in {
-    val op = TestCases.unverMulOptional
+  "Single Optional Conversion to ADTOp" should "Correctly translate from Single Optional Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstructMulOptional
     val adtMulOptional = mulOptComp.structure(op)
 
     adtMulOptional.lhs should matchPattern {
@@ -594,25 +598,25 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Optional Conversion to Unverified" should "Correctly translate from Multi Optional ADT operation to Unverified Operation" in {
+  "Multi Optional Conversion to Unstructured" should "Correctly translate from Multi Optional ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMulMultiOptional
-    val unverMulSinVarOp = mulMultiOptComp.unverify(op)
+    val unstructMulSinVarOp = mulMultiOptComp.unstructure(op)
 
-    unverMulSinVarOp.name should be("cmath.mulmultiopt")
-    unverMulSinVarOp.operands should matchPattern {
+    unstructMulSinVarOp.name should be("cmath.mulmultiopt")
+    unstructMulSinVarOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned))
           ) =>
     }
-    unverMulSinVarOp.results should matchPattern {
+    unstructMulSinVarOp.results should matchPattern {
       case Seq(Result(IntegerType(IntData(25), Unsigned))) =>
     }
   }
 
-  "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unverified operation to ADT Operation" in {
-    val op = TestCases.unverMulMultiOptional
+  "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstructMulMultiOptional
     val adtMulOptional = mulMultiOptComp.structure(op)
 
     adtMulOptional.lhs should matchPattern {
@@ -629,8 +633,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unverified operation to ADT Operation with missing middle Operand" in {
-    val op = TestCases.unverMulMultiMissingOptional
+  "Multi Optional Conversion to ADTOp" should "Correctly translate from Multi Optional Unstructured operation to ADT Operation with missing middle Operand" in {
+    val op = TestCases.unstructMulMultiMissingOptional
     val adtMulOptional = mulMultiOptComp.structure(op)
 
     adtMulOptional.lhs should matchPattern {
@@ -646,8 +650,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Optional Property Conversion to ADTOp" should "Correctly translate from Multi Optional Properties Unverified operation to ADT Operation" in {
-    val op = TestCases.unverMultiOptionalPropOp
+  "Multi Optional Property Conversion to ADTOp" should "Correctly translate from Multi Optional Properties Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstructMultiOptionalPropOp
     val mulPropOptional = multiOptPropOpComp.structure(op)
 
     mulPropOptional.prop1 should matchPattern {
@@ -663,25 +667,25 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Optional Property Conversion to Unverified" should "Correctly translate from Multi Optional Properties ADT operation to Unverified Operation" in {
+  "Multi Optional Property Conversion to Unstructured" should "Correctly translate from Multi Optional Properties ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMultiOptionalPropOp
-    val unverMulPropOptional = multiOptPropOpComp.unverify(op)
+    val unstructMulPropOptional = multiOptPropOpComp.unstructure(op)
 
-    unverMulPropOptional.properties("prop1") should matchPattern {
+    unstructMulPropOptional.properties("prop1") should matchPattern {
       case IntegerType(IntData(5), Unsigned) =>
     }
 
-    unverMulPropOptional.properties("prop2") should matchPattern {
+    unstructMulPropOptional.properties("prop2") should matchPattern {
       case IntegerType(IntData(5), Unsigned) =>
     }
 
-    unverMulPropOptional.properties("prop3") should matchPattern {
+    unstructMulPropOptional.properties("prop3") should matchPattern {
       case IntegerType(IntData(5), Unsigned) =>
     }
   }
 
-  "Multi Optional Composition Conversion to ADTOp" should "Correctly translate from Multi Optional Properties Unverified operation to ADT Operation" in {
-    val op = TestCases.unverMultiCompOptional
+  "Multi Optional Composition Conversion to ADTOp" should "Correctly translate from Multi Optional Properties Unstructured operation to ADT Operation" in {
+    val op = TestCases.unstructMultiCompOptional
     val adtPropOptionalComp = multiOptCompOp.structure(op)
 
     adtPropOptionalComp.operand should matchPattern {
@@ -701,23 +705,23 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Optional Composition Conversion to Unverified" should "Correctly translate from Multi Optional Properties ADT operation to Unverified Operation" in {
+  "Multi Optional Composition Conversion to Unstructured" should "Correctly translate from Multi Optional Properties ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMultiCompOptional
-    val unverMulPropOptional = multiOptCompOp.unverify(op)
+    val unstructMulPropOptional = multiOptCompOp.unstructure(op)
 
-    unverMulPropOptional.operands(0) should matchPattern {
+    unstructMulPropOptional.operands(0) should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>
     }
 
-    unverMulPropOptional.properties("prop1") should matchPattern {
+    unstructMulPropOptional.properties("prop1") should matchPattern {
       case IntegerType(IntData(5), Unsigned) =>
     }
 
-    unverMulPropOptional.properties("prop2") should matchPattern {
+    unstructMulPropOptional.properties("prop2") should matchPattern {
       case IntegerType(IntData(5), Unsigned) =>
     }
 
-    unverMulPropOptional.results(0) should matchPattern {
+    unstructMulPropOptional.results(0) should matchPattern {
       case Result(IntegerType(IntData(25), Unsigned)) =>
     }
   }
