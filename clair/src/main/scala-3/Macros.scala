@@ -535,9 +535,9 @@ def constructPartitioner[Def <: OpInputDef: Type](
     case 1 => univariadicConstructPartitioner(defs)
     case _ => multivariadicConstructPartitioner(defs)
 
-/* Return a verifier for a single-defined construct
+/* Return an extractor for a single-defined construct
  */
-def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
+def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
@@ -555,15 +555,15 @@ def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[DefinedInputOf[Def, t]]
   }
 
-/* Return a verifier for a variadic-defined construct
+/* Return an extractor for a variadic-defined construct
  */
-def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
+def variadicConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
     (c match
         case s: Seq[DefinedInput[Def]] =>
-          s.map(e => ${ singleConstructVerifier(d) }(e))
+          s.map(e => ${ singleConstructExtractor(d) }(e))
         case _ =>
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -574,13 +574,13 @@ def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
   }
 
-/* Return a verifier for an optional-defined construct
+/* Return an extractor for an optional-defined construct
  */
-def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
+def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
-    val cs = ${ variadicConstructVerifier(d) }(c)
+    val cs = ${ variadicConstructExtractor(d) }(c)
     if cs.length > 1 then
       throw new Exception(
         s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -592,25 +592,25 @@ def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
       .asInstanceOf[Option[DefinedInputOf[Def, t]]]
   }
 
-/** Returns a verifier expression for the passed construct definition.
+/** Returns an extractor expression for the passed construct definition.
   *
   * @param defs
   *   The constructs definitions.
   * @returns
   *   A function of a construct(s), returning the typed, verified vonstruct(s)
   */
-def constructVerifier[Def <: OpInputDef: Type](
+def constructExtractor[Def <: OpInputDef: Type](
     d: Def
 )(using Quotes) = {
   getConstructConstraint(d) match
     case '[type t <: Attribute; `t`] =>
       getConstructVariadicity(d): @switch match
         case Variadicity.Single =>
-          singleConstructVerifier[Def, t](d)
+          singleConstructExtractor[Def, t](d)
         case Variadicity.Variadic =>
-          variadicConstructVerifier[Def, t](d)
+          variadicConstructExtractor[Def, t](d)
         case Variadicity.Optional =>
-          optionalConstructVerifier[Def, t](d)
+          optionalConstructExtractor[Def, t](d)
 
 }
 
@@ -625,7 +625,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
 
   // Verify the constructs
   (partitioned zip defs).map { (c, d) =>
-    '{ ${ constructVerifier(d) }(${ c }) }
+    '{ ${ constructExtractor(d) }(${ c }) }
   }
 }
 
