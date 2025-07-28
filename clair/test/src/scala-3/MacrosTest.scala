@@ -322,7 +322,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   }
 
-  "Unstructured instantiation" should "Correctly instantiates the UniverifiedOp" in {
+  "Unstructured instantiation" should "Correctly instantiates the UnstructuredOp" in {
     val opT = DerivedOperationCompanion.derived[Mul]
 
     val unstructMulOp = opT(
@@ -349,7 +349,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Conversion to Unstructured" should "Correctly translate from ADT operation to Univerified Operation" in {
+  "Conversion to Unstructured" should "Correctly translate from ADT operation to Unstructured Operation" in {
     val opT = summon[DerivedOperationCompanion[Mul]]
 
     val op = TestCases.adtMulOp
@@ -434,7 +434,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Single Variadic Conversion to Unstructured" should "Correctly translate from Single Variadic ADT operation to Univerified Operation" in {
+  "Single Variadic Conversion to Unstructured" should "Correctly translate from Single Variadic ADT operation to Unstructured Operation" in {
     val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
 
     val op = TestCases.adtMulSinVarOp
@@ -497,7 +497,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Multi Variadic Conversion to Unstructured" should "Correctly translate from Multi Variadic ADT operation to Univerified Operation" in {
+  "Multi Variadic Conversion to Unstructured" should "Correctly translate from Multi Variadic ADT operation to Unstructured Operation" in {
     val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
 
     val op = TestCases.adtMulMulVarOp
@@ -540,8 +540,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         )
       )
 
-    val verified = op.structured
-    verified should matchPattern {
+    val structured = op.structured
+    structured should matchPattern {
       case Right(
             RegionOp(
               Seq(
@@ -558,11 +558,11 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
-  "Incorrect Conversion to ADTOp" should "fail gracefully on verification" in {
+  "Incorrect Conversion to ADTOp" should "fail gracefully on structuring" in {
     def unstrucOp = mulComp.UnstructuredOp()
 
-    val verified = unstrucOp.verify()
-    verified should matchPattern {
+    val structured = unstrucOp.structured
+    structured should matchPattern {
       case Left("java.lang.Exception: Expected 2 operands, got 0.") =>
     }
   }

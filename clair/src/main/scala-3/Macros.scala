@@ -215,7 +215,7 @@ def parseMacro(
 
 /*_____________*\
 \*-- HELPERS --*/
-/** Helper to verify a property argument.
+/** Helper to check a property argument.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
@@ -515,7 +515,7 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
         }
   }
 
-/** Partion constructs of a specified type. That is, verify that they are in a
+/** Partion constructs of a specified type. That is, check that they are in a
   * coherent quantity, and partition them into the provided definitions.
   *
   * @tparam Def
@@ -570,7 +570,7 @@ def variadicConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
                 Expr(Type.show[Seq[DefinedInputOf[Def, t]]])
               }}, got ${c}"
           )
-        // Idem, see `verifySingleConstruct`
+        // Idem, see `singleConstructExtractor`
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
   }
 
@@ -588,7 +588,7 @@ def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
           }}, got ${c}"
       )
     cs.headOption
-      // Idem, see `verifySingleConstruct`
+      // Idem, see `singleConstructExtractor`
       .asInstanceOf[Option[DefinedInputOf[Def, t]]]
   }
 
@@ -597,7 +597,7 @@ def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
   * @param defs
   *   The constructs definitions.
   * @returns
-  *   A function of a construct(s), returning the typed, verified vonstruct(s)
+  *   A function of a construct(s), returning the typed, extracted construct(s)
   */
 def constructExtractor[Def <: OpInputDef: Type](
     d: Def
@@ -614,7 +614,7 @@ def constructExtractor[Def <: OpInputDef: Type](
 
 }
 
-def verifiedConstructs[Def <: OpInputDef: Type](
+def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
     op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) = {
@@ -623,14 +623,14 @@ def verifiedConstructs[Def <: OpInputDef: Type](
   // partition the constructs according to their definitions
   val partitioned = constructPartitioner(defs).map(p => '{ ${ p }($op, $flat) })
 
-  // Verify the constructs
+  // extract the constructs
   (partitioned zip defs).map { (c, d) =>
     '{ ${ constructExtractor(d) }(${ c }) }
   }
 }
 
 /** Return all named arguments for the primary constructor of an ADT. Those are
-  * verified, in the sense that they are checked to be of the correct types and
+  * checked, in the sense that they are checked to be of the correct types and
   * numbers.
   *
   * @param opDef
@@ -638,7 +638,7 @@ def verifiedConstructs[Def <: OpInputDef: Type](
   * @param op
   *   The UnstructuredOp instance.
   * @return
-  *   The verified named arguments for the primary constructor of the ADT.
+  *   The checked named arguments for the primary constructor of the ADT.
   */
 
 def constructorArgs(
@@ -646,16 +646,16 @@ def constructorArgs(
     op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) =
   import quotes.reflect._
-  (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
+  (extractedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
     NamedArg(d.name, e.asTerm)
   ) ++
-    (verifiedConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
+    (extractedConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
       NamedArg(d.name, e.asTerm)
     ) ++
-    (verifiedConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
+    (extractedConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
       NamedArg(d.name, e.asTerm)
     ) ++
-    (verifiedConstructs(opDef.successors, op) zip opDef.successors).map(
+    (extractedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
@@ -728,7 +728,7 @@ def getAttrConstructor[T: Type](
 
   val defs = attrDef.attributes
 
-  val verifiedConstructs = (defs.zipWithIndex.map((d, i) =>
+  val extractedConstructs = (defs.zipWithIndex.map((d, i) =>
     '{ ${ attributes }(${ Expr(i) }) }
   ) zip defs)
     .map { (a, d) =>
@@ -747,7 +747,7 @@ def getAttrConstructor[T: Type](
           }
     }
 
-  val args = (verifiedConstructs zip attrDef.attributes)
+  val args = (extractedConstructs zip attrDef.attributes)
     .map((e, d) => NamedArg(d.name, e.asTerm))
 
   val constructorCall = Apply(
