@@ -53,7 +53,7 @@ case class Condition(
     condition: Operand[I1],
     args: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.condition", Condition]
-    derives DerivedOperationCompanion
+    with IsTerminator derives DerivedOperationCompanion
 
 case class ExecuteRegionOp(
     region: Region,
@@ -91,7 +91,7 @@ case class ForallOp(
 case class InParallelOp(
     region: Region
 ) extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
-    derives DerivedOperationCompanion
+    with IsTerminator derives DerivedOperationCompanion
 
 case class IfOp(
     condition: Operand[I1],
@@ -115,12 +115,12 @@ case class ReduceOp(
     // TODO: variadic regions
     reductions: Region
 ) extends DerivedOperation["scf.reduce", ReduceOp]
-    derives DerivedOperationCompanion
+    with IsTerminator derives DerivedOperationCompanion
 
 case class ReduceReturnOp(
     resultss: Result[Attribute]
 ) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
-    derives DerivedOperationCompanion
+    with IsTerminator derives DerivedOperationCompanion
 
 case class WhileOp(
     inits: Seq[Operand[Attribute]],
@@ -143,7 +143,7 @@ case class IndexSwitchOp(
 case class YieldOp(
     resultss: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.yield", YieldOp]
-    derives DerivedOperationCompanion
+    with IsTerminator derives DerivedOperationCompanion
 
 val SCFDialect =
   summonDialect[
