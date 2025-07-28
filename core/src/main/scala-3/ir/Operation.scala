@@ -62,6 +62,12 @@ trait Operation extends IRNode {
 
   def custom_verify(): Either[String, Operation] = Right(this)
 
+  def structured: Either[String, Operation] = regions
+    .foldLeft[Either[String, Unit]](Right(()))((res, reg) =>
+      res.flatMap(_ => reg.structured)
+    )
+    .map(_ => this)
+
   def verify(): Either[String, Operation] = {
     results
       .foldLeft[Either[String, Unit]](Right(()))((res, result) =>

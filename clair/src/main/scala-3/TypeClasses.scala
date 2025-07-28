@@ -32,7 +32,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def properties(adtOp: T): Map[String, Attribute]
   def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
 
-  case class UnverifiedOp(
+  case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
       override val successors: Seq[Block] = Seq(),
       override val results: Seq[Result[Attribute]] = Seq(),
@@ -52,17 +52,13 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         attributes
       ) {
 
+    override def structured = Try(companion.structure(this)) match {
+      case Failure(e)  => Left(e.toString())
+      case Success(op) => op.asInstanceOf[Operation].structured
+    }
+
     override def verify(): Either[String, Operation] = {
-      Try(companion.verify(this)) match {
-        case Success(op) =>
-          op match {
-            case adtOp: DerivedOperation[_, ?] =>
-              adtOp.verify()
-            case _ =>
-              Left("Internal Error: Operation is not a DerivedOperation")
-          }
-        case Failure(e) => Left(e.toString())
-      }
+      structured.flatMap(op => op.verify())
     }
 
   }
@@ -75,10 +71,10 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): UnverifiedOp
+  ): UnstructuredOp
 
-  def unverify(adtOp: T): UnverifiedOp
-  def verify(unverOp: UnverifiedOp): T
+  def destructure(adtOp: T): UnstructuredOp
+  def structure(unstrucOp: UnstructuredOp): T
 
 }
 

@@ -495,7 +495,7 @@ case class AssemblyFormatDirective(
     }
 
     // This pushes the constructor disptching to runtime just like with generic syntax.
-    // TODO: This should at least generate a call to the right Unverified[T] constructor.
+    // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
     '{
       $p.generateOperation(

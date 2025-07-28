@@ -27,7 +27,6 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
       results = Seq(Result(I32)),
       properties = Map("value" -> IntegerAttr(IntData(0), I32))
     )
-    //   val and =
     val module = ModuleOp(
       regions = Seq(
         Region(
@@ -80,7 +79,7 @@ builtin.module {
     RewriteMethods.erase_op(zero)
 
     out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module.verify().right.get)
+    Printer(p = PrintWriter(out)).print(module.structured.right.get)
     out.toString().trim() shouldEqual """
 builtin.module {
   "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({

@@ -21,6 +21,12 @@ case class Region(
 
   blocks.foreach(attach_block)
 
+  def structured = {
+    blocks.foldLeft[Either[String, Unit]](Right(()))((res, block) =>
+      res.flatMap(_ => block.structured)
+    )
+  }
+
   def verify(): Either[String, Unit] = {
     blocks.foldLeft[Either[String, Unit]](Right(()))((res, block) =>
       res.flatMap(_ => block.verify())

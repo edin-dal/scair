@@ -131,7 +131,8 @@ trait ScairOptBase {
       val processed_module: Either[String, Operation] =
         input_module.flatMap(input_module => {
           var module =
-            if (skip_verify) then Right(input_module) else input_module.verify()
+            if (skip_verify) then Right(input_module)
+            else input_module.structured.flatMap(_.verify())
           // verify parsed content
           module match {
             case Right(op) =>

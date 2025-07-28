@@ -282,26 +282,32 @@ case class Block private (
 
   }
 
+  def structured: Either[String, Unit] = {
+    operations.zipWithIndex.foldLeft[Either[String, Unit]](Right(()))(
+      (res, el) =>
+        val (op, i) = el
+        res.flatMap(_ =>
+          op.structured
+            .map(v =>
+              if !(v eq op) then
+                op.operands.foreach(
+                  _.uses.filterInPlace(_.operation != op)
+                )
+              operations(i) = v
+              v.container_block = Some(this)
+            )
+        )
+    )
+  }
+
   def verify(): Either[String, Unit] = {
     arguments
       .foldLeft[Either[String, Unit]](Right(()))((res, arg) =>
         res.flatMap(_ => arg.verify())
       )
       .flatMap(_ =>
-        operations.zipWithIndex.foldLeft[Either[String, Unit]](Right(()))(
-          (res, el) =>
-            val (op, i) = el
-            res.flatMap(_ =>
-              op.verify()
-                .map(v =>
-                  if !(v eq op) then
-                    op.operands.foreach(
-                      _.uses.filterInPlace(_.operation != op)
-                    )
-                  operations(i) = v
-                  v.container_block = Some(this)
-                )
-            )
+        operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
+          res.flatMap(_ => op.verify().map(_ => ()))
         )
       )
   }

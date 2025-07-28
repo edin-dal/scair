@@ -29,7 +29,7 @@ import scala.quoted.*
 // ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||  ADT to Unverified conversion Macro  ||
+||  ADT to Unstructured conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 /** Small helper to select a member of an expression.
@@ -210,12 +210,12 @@ def parseMacro(
       }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||  Unverified to ADT conversion Macro  ||
+|| Unstructured to ADT conversion Macro ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 /*_____________*\
 \*-- HELPERS --*/
-/** Helper to verify a property argument.
+/** Helper to check a property argument.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
@@ -275,11 +275,11 @@ type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
   */
 type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
 
-/** Helper to access the right sequence of constructs from an UnverifiedOp,
+/** Helper to access the right sequence of constructs from an UnstructuredOp,
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type as d](
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) =
   (d match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -321,7 +321,7 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
     case OpPropertyDef(name, tpe, _)        => Variadicity.Optional
 
 /*__________________*\
-\*-- VERIFICATION --*/
+\*-- STRUCTURING  --*/
 
 /** Expect a segmentSizes property of DenseArrayAttr type, and return it as a
   * list of integers.
@@ -329,11 +329,11 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   * @tparam Def
   *   The construct definition type.
   * @param op
-  *   The UnverifiedOp expression.
+  *   The UnstructuredOp expression.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
-  '{ (op: DerivedOperationCompanion[?]#UnverifiedOp) =>
+  '{ (op: DerivedOperationCompanion[?]#UnstructuredOp) =>
     val dense =
       op.properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
@@ -387,7 +387,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     val defLength = Expr(defs.length)
     '{
       (
-          op: DerivedOperationCompanion[?]#UnverifiedOp,
+          op: DerivedOperationCompanion[?]#UnstructuredOp,
           flat: Seq[DefinedInput[Def]]
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
@@ -424,7 +424,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       '{
 
         (
-            op: DerivedOperationCompanion[?]#UnverifiedOp,
+            op: DerivedOperationCompanion[?]#UnstructuredOp,
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(${ Expr(i) })
@@ -433,7 +433,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
 
   val variadic_expr = '{
     (
-        op: DerivedOperationCompanion[?]#UnverifiedOp,
+        op: DerivedOperationCompanion[?]#UnstructuredOp,
         flat: Seq[DefinedInput[Def]]
     ) =>
       flat
@@ -446,7 +446,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
     .map((d, i) =>
       '{
         (
-            op: DerivedOperationCompanion[?]#UnverifiedOp,
+            op: DerivedOperationCompanion[?]#UnstructuredOp,
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(flat.length - ${ Expr(following) } + ${
@@ -470,7 +470,7 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     // TODO: This does not really belong here. Bigger fishes to fry at the time of
     // writing thoug. Conceptually this should end up in some kind of header.
     (
-        op: DerivedOperationCompanion[?]#UnverifiedOp,
+        op: DerivedOperationCompanion[?]#UnstructuredOp,
         flat: Seq[DefinedInput[Def]]
     ) =>
       val sizes = ${ expectSegmentSizes[Def] }(op)
@@ -498,14 +498,14 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
       case Variadicity.Single =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnverifiedOp,
+              op: DerivedOperationCompanion[?]#UnstructuredOp,
               flat: Seq[DefinedInput[Def]]
           ) => flat(${ Expr(i) })
         }
       case Variadicity.Variadic | Variadicity.Optional =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnverifiedOp,
+              op: DerivedOperationCompanion[?]#UnstructuredOp,
               flat: Seq[DefinedInput[Def]]
           ) =>
             val sizes = ${ segmentSizes }(op, flat)
@@ -515,7 +515,7 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
         }
   }
 
-/** Partion constructs of a specified type. That is, verify that they are in a
+/** Partion constructs of a specified type. That is, check that they are in a
   * coherent quantity, and partition them into the provided definitions.
   *
   * @tparam Def
@@ -535,9 +535,9 @@ def constructPartitioner[Def <: OpInputDef: Type](
     case 1 => univariadicConstructPartitioner(defs)
     case _ => multivariadicConstructPartitioner(defs)
 
-/* Return a verifier for a single-defined construct
+/* Return an extractor for a single-defined construct
  */
-def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
+def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
@@ -555,32 +555,32 @@ def singleConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[DefinedInputOf[Def, t]]
   }
 
-/* Return a verifier for a variadic-defined construct
+/* Return an extractor for a variadic-defined construct
  */
-def variadicConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
+def variadicConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
     (c match
         case s: Seq[DefinedInput[Def]] =>
-          s.map(e => ${ singleConstructVerifier(d) }(e))
+          s.map(e => ${ singleConstructExtractor(d) }(e))
         case _ =>
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
                 Expr(Type.show[Seq[DefinedInputOf[Def, t]]])
               }}, got ${c}"
           )
-        // Idem, see `verifySingleConstruct`
+        // Idem, see `singleConstructExtractor`
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
   }
 
-/* Return a verifier for an optional-defined construct
+/* Return an extractor for an optional-defined construct
  */
-def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
+def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
-    val cs = ${ variadicConstructVerifier(d) }(c)
+    val cs = ${ variadicConstructExtractor(d) }(c)
     if cs.length > 1 then
       throw new Exception(
         s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -588,74 +588,74 @@ def optionalConstructVerifier[Def <: OpInputDef: Type, t <: Attribute: Type](
           }}, got ${c}"
       )
     cs.headOption
-      // Idem, see `verifySingleConstruct`
+      // Idem, see `singleConstructExtractor`
       .asInstanceOf[Option[DefinedInputOf[Def, t]]]
   }
 
-/** Returns a verifier expression for the passed construct definition.
+/** Returns an extractor expression for the passed construct definition.
   *
   * @param defs
   *   The constructs definitions.
   * @returns
-  *   A function of a construct(s), returning the typed, verified vonstruct(s)
+  *   A function of a construct(s), returning the typed, extracted construct(s)
   */
-def constructVerifier[Def <: OpInputDef: Type](
+def constructExtractor[Def <: OpInputDef: Type](
     d: Def
 )(using Quotes) = {
   getConstructConstraint(d) match
     case '[type t <: Attribute; `t`] =>
       getConstructVariadicity(d): @switch match
         case Variadicity.Single =>
-          singleConstructVerifier[Def, t](d)
+          singleConstructExtractor[Def, t](d)
         case Variadicity.Variadic =>
-          variadicConstructVerifier[Def, t](d)
+          variadicConstructExtractor[Def, t](d)
         case Variadicity.Optional =>
-          optionalConstructVerifier[Def, t](d)
+          optionalConstructExtractor[Def, t](d)
 
 }
 
-def verifiedConstructs[Def <: OpInputDef: Type](
+def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) = {
   // Get the flat sequence of these constructs
   val flat = getConstructSeq(op)
   // partition the constructs according to their definitions
   val partitioned = constructPartitioner(defs).map(p => '{ ${ p }($op, $flat) })
 
-  // Verify the constructs
+  // extract the constructs
   (partitioned zip defs).map { (c, d) =>
-    '{ ${ constructVerifier(d) }(${ c }) }
+    '{ ${ constructExtractor(d) }(${ c }) }
   }
 }
 
 /** Return all named arguments for the primary constructor of an ADT. Those are
-  * verified, in the sense that they are checked to be of the correct types and
+  * checked, in the sense that they are checked to be of the correct types and
   * numbers.
   *
   * @param opDef
   *   The OperationDef derived from the ADT.
   * @param op
-  *   The UnverifiedOp instance.
+  *   The UnstructuredOp instance.
   * @return
-  *   The verified named arguments for the primary constructor of the ADT.
+  *   The checked named arguments for the primary constructor of the ADT.
   */
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[DerivedOperationCompanion[?]#UnverifiedOp]
+    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) =
   import quotes.reflect._
-  (verifiedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
+  (extractedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
     NamedArg(d.name, e.asTerm)
   ) ++
-    (verifiedConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
+    (extractedConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
       NamedArg(d.name, e.asTerm)
     ) ++
-    (verifiedConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
+    (extractedConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
       NamedArg(d.name, e.asTerm)
     ) ++
-    (verifiedConstructs(opDef.successors, op) zip opDef.successors).map(
+    (extractedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
@@ -675,23 +675,24 @@ def constructorArgs(
           NamedArg(name, property.asTerm)
     }
 
-  /** Attempt to create an ADT from an UnverifiedO[ADT]
+  /** Attempt to create an ADT from an UnstructuredOp[ADT]
     *
     * @tparam T
     *   The ADT Type.
     * @param opDef
     *   The OperationDef derived from the ADT.
     * @param genExpr
-    *   The expression of the UnverifiedOp[ADT].
+    *   The expression of the UnstructuredOp[ADT].
     * @return
     *   The ADT instance.
     * @raises
-    *   Exception if the UnverifiedOp[ADT] is not valid to represent by the ADT.
+    *   Exception if the UnstructuredOp[ADT] is not valid to represent by the
+    *   ADT.
     */
 
-def fromUnverifiedOperationMacro[T: Type](
+def fromUnstructuredOperationMacro[T: Type](
     opDef: OperationDef,
-    genExpr: Expr[DerivedOperationCompanion[T]#UnverifiedOp]
+    genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp]
 )(using Quotes): Expr[T] =
   import quotes.reflect.*
 
@@ -727,7 +728,7 @@ def getAttrConstructor[T: Type](
 
   val defs = attrDef.attributes
 
-  val verifiedConstructs = (defs.zipWithIndex.map((d, i) =>
+  val extractedConstructs = (defs.zipWithIndex.map((d, i) =>
     '{ ${ attributes }(${ Expr(i) }) }
   ) zip defs)
     .map { (a, d) =>
@@ -746,7 +747,7 @@ def getAttrConstructor[T: Type](
           }
     }
 
-  val args = (verifiedConstructs zip attrDef.attributes)
+  val args = (extractedConstructs zip attrDef.attributes)
     .map((e, d) => NamedArg(d.name, e.asTerm))
 
   val constructorCall = Apply(
@@ -830,7 +831,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: DictType[String, Attribute] =
             DictType.empty[String, Attribute]
-      ): UnverifiedOp = UnverifiedOp(
+      ): UnstructuredOp = UnstructuredOp(
         operands = operands,
         successors = successors,
         results = results,
@@ -839,8 +840,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
         attributes = attributes
       )
 
-      def unverify(adtOp: T): UnverifiedOp =
-        UnverifiedOp(
+      def destructure(adtOp: T): UnstructuredOp =
+        UnstructuredOp(
           operands = operands(adtOp),
           successors = successors(adtOp),
           results = results(adtOp),
@@ -849,16 +850,16 @@ def deriveOperationCompanion[T <: Operation: Type](using
           attributes = adtOp.attributes
         )
 
-      def verify(unverOp: UnverifiedOp): T =
+      def structure(unstrucOp: UnstructuredOp): T =
         ${
-          fromUnverifiedOperationMacro[T](opDef, '{ unverOp })
+          fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match {
           case adt: DerivedOperation[_, T] =>
-            adt.attributes.addAll(unverOp.attributes)
+            adt.attributes.addAll(unstrucOp.attributes)
             adt
           case _ =>
             throw new Exception(
-              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unverOp}"
+              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unstrucOp}"
             )
         }
 
