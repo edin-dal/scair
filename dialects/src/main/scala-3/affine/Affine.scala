@@ -115,7 +115,7 @@ case class Min(
 case class Yield(
     arguments: Seq[Operand[Attribute]]
 ) extends DerivedOperation["affine.yield", Yield]
-    derives DerivedOperationCompanion
+    with IsTerminator derives DerivedOperationCompanion
 
 val AffineDialect = summonDialect[
   EmptyTuple,

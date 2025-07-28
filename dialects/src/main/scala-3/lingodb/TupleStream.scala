@@ -186,7 +186,8 @@ case class ReturnOp(
       regions,
       properties,
       attributes
-    ) {
+    )
+    with IsTerminator {
 
   override def custom_verify(): Either[String, Operation] = (
     operands.length,

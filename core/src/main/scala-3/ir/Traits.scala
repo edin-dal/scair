@@ -17,7 +17,7 @@ trait IsTerminator extends Operation {
     {
       this.container_block match {
         case Some(b) =>
-          if (this != b.operations.last) then
+          if this ne b.operations.last then
             Left(
               s"Operation '${name}' marked as a terminator, but is not the last operation within its container block"
             )
