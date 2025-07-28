@@ -353,7 +353,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val opT = summon[DerivedOperationCompanion[Mul]]
 
     val op = TestCases.adtMulOp
-    val unstructMulOp = opT.unstructure(op)
+    val unstructMulOp = opT.destructure(op)
 
     unstructMulOp.name should be("cmath.mul")
     unstructMulOp.operands should matchPattern {
@@ -392,7 +392,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
     val op = TestCases.adtMulOpAllFields
 
-    val unstructMulOp = opT.unstructure(op)
+    val unstructMulOp = opT.destructure(op)
     val adtMulOp = opT.structure(unstructMulOp)
 
     adtMulOp.operand1 `eq` unstructMulOp.operands(0) should be(true)
@@ -438,7 +438,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
 
     val op = TestCases.adtMulSinVarOp
-    val unstructMulSinVarOp = opT.unstructure(op)
+    val unstructMulSinVarOp = opT.destructure(op)
 
     unstructMulSinVarOp.name should be("cmath.mulsinglevariadic")
     unstructMulSinVarOp.operands should matchPattern {
@@ -501,7 +501,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
 
     val op = TestCases.adtMulMulVarOp
-    val unstructMulSinVarOp = opT.unstructure(op)
+    val unstructMulSinVarOp = opT.destructure(op)
 
     unstructMulSinVarOp.name should be("cmath.mulmultivariadic")
     unstructMulSinVarOp.operands should matchPattern {
@@ -569,7 +569,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Single Optional Conversion to Unstructured" should "Correctly translate from Single Optional ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMulOptional
-    val unstructMulSinVarOp = mulOptComp.unstructure(op)
+    val unstructMulSinVarOp = mulOptComp.destructure(op)
 
     unstructMulSinVarOp.name should be("cmath.mulopt")
     unstructMulSinVarOp.operands should matchPattern {
@@ -600,7 +600,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Conversion to Unstructured" should "Correctly translate from Multi Optional ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMulMultiOptional
-    val unstructMulSinVarOp = mulMultiOptComp.unstructure(op)
+    val unstructMulSinVarOp = mulMultiOptComp.destructure(op)
 
     unstructMulSinVarOp.name should be("cmath.mulmultiopt")
     unstructMulSinVarOp.operands should matchPattern {
@@ -669,7 +669,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Property Conversion to Unstructured" should "Correctly translate from Multi Optional Properties ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMultiOptionalPropOp
-    val unstructMulPropOptional = multiOptPropOpComp.unstructure(op)
+    val unstructMulPropOptional = multiOptPropOpComp.destructure(op)
 
     unstructMulPropOptional.properties("prop1") should matchPattern {
       case IntegerType(IntData(5), Unsigned) =>
@@ -707,7 +707,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
 
   "Multi Optional Composition Conversion to Unstructured" should "Correctly translate from Multi Optional Properties ADT operation to Unstructured Operation" in {
     val op = TestCases.adtMultiCompOptional
-    val unstructMulPropOptional = multiOptCompOp.unstructure(op)
+    val unstructMulPropOptional = multiOptCompOp.destructure(op)
 
     unstructMulPropOptional.operands(0) should matchPattern {
       case Value(IntegerType(IntData(5), Unsigned)) =>

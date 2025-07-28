@@ -840,7 +840,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
         attributes = attributes
       )
 
-      def unstructure(adtOp: T): UnstructuredOp =
+      def destructure(adtOp: T): UnstructuredOp =
         UnstructuredOp(
           operands = operands(adtOp),
           successors = successors(adtOp),

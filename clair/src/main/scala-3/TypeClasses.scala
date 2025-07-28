@@ -73,7 +73,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         DictType.empty[String, Attribute]
   ): UnstructuredOp
 
-  def unstructure(adtOp: T): UnstructuredOp
+  def destructure(adtOp: T): UnstructuredOp
   def structure(unstrucOp: UnstructuredOp): T
 
 }
