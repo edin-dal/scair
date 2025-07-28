@@ -305,7 +305,7 @@ case class Constant(
     val value: Attribute,
     val result: Result[Attribute]
 ) extends DerivedOperation["arith.constant", Constant]
-    with AllTypesMatch(value, result.typ) derives DerivedOperationCompanion
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class DivF(
     val lhs: Operand[FloatType],

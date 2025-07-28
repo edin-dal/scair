@@ -19,6 +19,7 @@ import scair.transformations.ModulePass
 import scair.transformations.cdt.DummyPass
 import scair.transformations.cdt.TestInsertionPass
 import scair.transformations.cdt.TestReplacementPass
+import scair.transformations.cse.CommonSubexpressionElimination
 import scair.transformations.reconcile.ReconcileUnrealizedCasts
 
 val allDialects: Seq[Dialect] =
@@ -42,6 +43,7 @@ val allDialects: Seq[Dialect] =
 
 val allPasses: Seq[ModulePass] =
   Seq(
+    CommonSubexpressionElimination,
     DummyPass,
     ReconcileUnrealizedCasts,
     TestInsertionPass,
