@@ -22,6 +22,6 @@ builtin.module {
 // CHECK-NEXT:    "func.func"() <{sym_name = "sameTypes", function_type = (i64) -> i64}> ({
 // CHECK-NEXT:    ^bb0(%0: i64):
 // CHECK-NEXT:      %1 = "test.op"() : () -> (i64)
-// CHECK-NEXT:      "func.return"(%1) : (i64) -> ()
+// CHECK-NEXT:      func.return %1 : i64
 // CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:  }
