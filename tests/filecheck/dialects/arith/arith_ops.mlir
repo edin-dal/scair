@@ -46,6 +46,6 @@
 // CHECK-NEXT:    %29 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<fast>}> : (f32, f32) -> (f32)
 %index = "arith.index_cast"(%lhsi32) : (i32) -> index
 // CHECK-NEXT:    %30 = "arith.index_cast"(%2) : (i32) -> (index)
-%i1hopefully = "arith.andi"(%lhsf32, %rhsf32) : (f32, f32) -> i1
-// CHECK-NEXT:    %31 = "arith.andi"(%8, %9) : (f32, f32) -> (i1)
+%andi = "arith.andi"(%lhsi32, %rhsi32) : (i32, i32) -> i32
+// CHECK-NEXT:    %31 = "arith.andi"(%2, %3) : (i32, i32) -> (i32)
 
