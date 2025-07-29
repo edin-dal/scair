@@ -23,7 +23,8 @@ case class Dim(
     memref: Operand[MemrefType],
     index: Operand[IndexType],
     result: Result[IndexType]
-) extends DerivedOperation["memref.dim", Dim] derives DerivedOperationCompanion
+) extends DerivedOperation["memref.dim", Dim]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Load(
     memref: Operand[MemrefType],

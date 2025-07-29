@@ -49,3 +49,5 @@ trait NoTerminator extends Operation {
   }
 
 }
+
+trait NoMemoryEffect extends Operation

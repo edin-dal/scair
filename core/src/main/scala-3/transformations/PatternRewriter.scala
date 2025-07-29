@@ -197,20 +197,23 @@ trait Rewriter {
   ): Unit = {
     if !(new_value eq value) then {
       for ((op, uses) <- value.uses.groupBy(_.operation)) {
-        val indices = Set.from(uses.map(_.index))
-        val new_operands = op.operands.zipWithIndex.map((v, i) =>
-          if indices.contains(i) then new_value else v
-        )
-        val new_op =
-          op.updated(
-            results = op.results,
-            operands = new_operands
+        // TODO: This should be enforced by a nicer design!
+        if op.container_block.nonEmpty then {
+          val indices = Set.from(uses.map(_.index))
+          val new_operands = op.operands.zipWithIndex.map((v, i) =>
+            if indices.contains(i) then new_value else v
           )
-        replace_op(
-          op = op,
-          new_ops = new_op,
-          new_results = Some(new_op.results)
-        )
+          val new_op =
+            op.updated(
+              results = op.results,
+              operands = new_operands
+            )
+          replace_op(
+            op = op,
+            new_ops = new_op,
+            new_results = Some(new_op.results)
+          )
+        }
       }
       value.uses.clear()
     }

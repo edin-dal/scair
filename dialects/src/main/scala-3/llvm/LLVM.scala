@@ -22,6 +22,6 @@ case class GetElementPtr(
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute
 ) extends DerivedOperation["llvm.getelementptr", GetElementPtr]
-    derives DerivedOperationCompanion
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 val LLVMDialect = summonDialect[Tuple1[Ptr], (Load, GetElementPtr)](Seq())
