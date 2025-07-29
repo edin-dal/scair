@@ -4,6 +4,7 @@ import scair.ir.*
 import scair.transformations.*
 
 import scala.collection.mutable.Map
+import scala.collection.mutable.Set
 
 case class OperationInfo(val op: Operation) {
 
@@ -29,7 +30,8 @@ given Conversion[Operation, OperationInfo] = OperationInfo.apply
 
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
-      Map[OperationInfo, Operation]()
+      Map[OperationInfo, Operation](),
+    val toErase: Set[Operation] = Set[Operation]()
 )(using rewriter: Rewriter) {
 
   def simplify(op: Operation): Unit =
@@ -37,17 +39,19 @@ case class CSE(
       case free: NoMemoryEffect =>
         knownOps.get(op) match
           case Some(known) =>
-            rewriter.replace_op(op, Seq(), Some(known.results))
+            (op.results zip known.results).foreach(rewriter.replace_value)
+            toErase.add(op)
           case None => knownOps(op) = op
       case _ => ()
 
   def simplify(block: Block): Unit =
-    Seq
-      .from(block.operations)
-      .foreach(op =>
-        op.regions.foreach(region => CSE().simplify(region))
-        simplify(op)
-      )
+    // To modify the block during iteration
+    0 until block.operations.size foreach { i =>
+      val op = block.operations(i)
+      op.regions.foreach(region => CSE().simplify(region))
+      simplify(op)
+    }
+    toErase.foreach(rewriter.erase_op(_, true))
 
   def simplify(region: Region): Unit =
     region.blocks match

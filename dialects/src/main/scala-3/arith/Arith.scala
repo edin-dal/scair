@@ -239,7 +239,8 @@ case class AddF(
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["arith.addf", AddF]
-    with SameOperandsAndResultTypes derives DerivedOperationCompanion
+    with SameOperandsAndResultTypes
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class AddI(
@@ -299,7 +300,8 @@ case class CmpI(
     val result: Result[I1],
     val predicate: IntegerPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.cmpi", CmpI] derives DerivedOperationCompanion
+) extends DerivedOperation["arith.cmpi", CmpI]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Constant(
     val value: Attribute,

@@ -28,8 +28,7 @@ case class Apply(
     res: Result[IndexType],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.apply", Apply]
-    with NoMemoryEffect
-    derives DerivedOperationCompanion
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||      FOR OP      ||

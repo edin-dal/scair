@@ -5,11 +5,13 @@
   %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
   func.return %0, %1 : i32, i32
 }) : () -> ()
+
 "func.func"() <{sym_name = "simple_float_constant", function_type = () -> (f32, f32)}> ({
   %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
   %1 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
   func.return %0, %1 : f32, f32
 }) : () -> ()
+
 "func.func"() <{sym_name = "basic", function_type = () -> (index, index)}> ({
   %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
   %1 = "arith.constant"() <{value = 0 : index}> : () -> (index)
@@ -17,6 +19,7 @@
   %3 = "affine.apply"(%1) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
   func.return %2, %3 : index, index
 }) : () -> ()
+
 "func.func"() <{sym_name = "many", function_type = (f32, f32) -> f32}> ({
 ^bb0(%0: f32, %1: f32):
   %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
@@ -31,24 +34,30 @@
   %11 = "arith.addf"(%9, %10) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
   func.return %11 : f32
 }) : () -> ()
+
 "func.func"() <{sym_name = "different_ops", function_type = () -> (i32, i32)}> ({
   %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
   %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
   func.return %0, %1 : i32, i32
 }) : () -> ()
+
+// TODO: Requires memref.cast 
 // "func.func"() <{sym_name = "different_results", function_type = (memref<*xf32>) -> (memref<?x?xf32>, memref<4x?xf32>)}> ({
 // ^0(%arg0 : memref<*xf32>):
 //   %0 = "memref.cast"(%arg0) : (memref<*xf32>) -> memref<?x?xf32>
 //   %1 = "memref.cast"(%arg0) : (memref<*xf32>) -> memref<4x?xf32>
 //   "func.return"(%0, %1) : (memref<?x?xf32>, memref<4x?xf32>) -> ()
 // }) : () -> ()
-// "func.func"() <{sym_name = "different_attributes", function_type = (index, index) -> (i1, i1, i1)}> ({
-// ^0(%arg0 : index, %arg1 : index):
-//   %0 = "arith.cmpi"(%arg0, %arg1) <{predicate = 2 : i64}> : (index, index) -> i1
-//   %1 = "arith.cmpi"(%arg0, %arg1) <{predicate = 1 : i64}> : (index, index) -> i1
-//   %2 = "arith.cmpi"(%arg0, %arg1) <{predicate = 1 : i64}> : (index, index) -> i1
-//   "func.return"(%0, %1, %2) : (i1, i1, i1) -> ()
-// }) : () -> ()
+
+"func.func"() <{sym_name = "different_attributes", function_type = (index, index) -> (i1, i1, i1)}> ({
+^0(%arg0 : index, %arg1 : index):
+  %0 = "arith.cmpi"(%arg0, %arg1) <{predicate = 2 : i64}> : (index, index) -> i1
+  %1 = "arith.cmpi"(%arg0, %arg1) <{predicate = 1 : i64}> : (index, index) -> i1
+  %2 = "arith.cmpi"(%arg0, %arg1) <{predicate = 1 : i64}> : (index, index) -> i1
+  "func.return"(%0, %1, %2) : (i1, i1, i1) -> ()
+}) : () -> ()
+
+// TODO: Requires more effects infrastructure
 // "func.func"() <{sym_name = "side_effect", function_type = () -> (memref<2x1xf32>, memref<2x1xf32>)}> ({
 //   %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
 //   %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
@@ -305,6 +314,36 @@
 // }) : () -> ()
 
 // CHECK:       builtin.module {
-// CHECK-NEXT:    %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
-// CHECK-NEXT:    %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:    "func.func"() <{sym_name = "simple_constant", function_type = () -> (i32, i32)}> ({
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      func.return %0, %0 : i32, i32
+// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "simple_float_constant", function_type = () -> (f32, f32)}> ({
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
+// CHECK-NEXT:      func.return %0, %0 : f32, f32
+// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "basic", function_type = () -> (index, index)}> ({
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
+// CHECK-NEXT:      %1 = "affine.apply"(%0) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
+// CHECK-NEXT:      func.return %1, %1 : index, index
+// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "many", function_type = (f32, f32) -> f32}> ({
+// CHECK-NEXT:    ^bb0(%0: f32, %1: f32):
+// CHECK-NEXT:      %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %3 = "arith.addf"(%2, %2) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %4 = "arith.addf"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %5 = "arith.addf"(%4, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      func.return %5 : f32
+// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "different_ops", function_type = () -> (i32, i32)}> ({
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
+// CHECK-NEXT:      %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      func.return %0, %1 : i32, i32
+// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "different_attributes", function_type = (index, index) -> (i1, i1, i1)}> ({
+// CHECK-NEXT:    ^bb0(%0: index, %1: index):
+// CHECK-NEXT:      %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> (i1)
+// CHECK-NEXT:      %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> (i1)
+// CHECK-NEXT:      func.return %2, %3, %3 : i1, i1, i1
+// CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:  }
