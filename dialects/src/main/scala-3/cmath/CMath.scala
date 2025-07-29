@@ -13,12 +13,14 @@ case class Complex(
 case class Norm(
     in: Operand[Complex],
     res: Result[FloatType]
-) extends DerivedOperation["cmath.norm", Norm] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.norm", Norm]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Mul(
     lhs: Operand[Complex],
     rhs: Operand[Complex],
     res: Result[Complex]
-) extends DerivedOperation["cmath.mul", Mul] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mul", Mul]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 val CMathDialect = summonDialect[Tuple1[Complex], (Norm, Mul)](Seq())

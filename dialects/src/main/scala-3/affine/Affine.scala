@@ -106,7 +106,8 @@ case class Min(
     arguments: Seq[Operand[IndexType]],
     result: Result[IndexType],
     map: AffineMapAttr
-) extends DerivedOperation["affine.min", Min] derives DerivedOperationCompanion
+) extends DerivedOperation["affine.min", Min]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||
@@ -115,7 +116,8 @@ case class Min(
 case class Yield(
     arguments: Seq[Operand[Attribute]]
 ) extends DerivedOperation["affine.yield", Yield]
-    with IsTerminator derives DerivedOperationCompanion
+    with IsTerminator
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 val AffineDialect = summonDialect[
   EmptyTuple,

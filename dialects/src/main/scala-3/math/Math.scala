@@ -48,7 +48,8 @@ case class AbsfOp(
       regions,
       properties,
       attributes
-    ) {
+    )
+    with NoMemoryEffect {
 
   override def custom_verify(): Either[String, Operation] = (
     operands.length,
@@ -111,7 +112,8 @@ case class FPowIOp(
       regions,
       properties,
       attributes
-    ) {
+    )
+    with NoMemoryEffect {
 
   override def custom_verify(): Either[String, Operation] = (
     operands.length,
