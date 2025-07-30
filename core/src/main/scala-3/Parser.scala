@@ -153,20 +153,30 @@ object Parser {
       ]] = mutable.Map.empty[Operation, Seq[(String, Attribute)]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var blockWaitlist: mutable.Map[Operation, Seq[String]] =
-        mutable.Map.empty[Operation, Seq[String]]
+      var forwardBlocks: mutable.Set[String] =
+        mutable.Set.empty[String]
   ) {
 
-    def defineValues(
+    def registerValues(
         valueIdAndTypeList: Seq[(String, Value[Attribute])]
-    ): Unit = {
+    ) = {
       valueIdAndTypeList.map((name, value) =>
         valueMap.contains(name) match {
           case true =>
             throw new Exception(s"SSA Value cannot be defined twice %${name}")
           case false =>
             valueMap(name) = value
+            value
         }
+      )
+    }
+
+    def defineValues(
+        valueIdAndTypeList: Seq[(String, Attribute)]
+    ) = {
+      registerValues(valueIdAndTypeList.map((name, tpe) =>
+        (name, Value(tpe))
+      )
       )
     }
 
@@ -267,89 +277,56 @@ object Parser {
       }
     }
 
+    def checkForwardedBlocks() =
+      forwardBlocks.headOption match
+        case Some(blockName) =>
+          throw new Exception(s"Successor ^$blockName not defined within Scope")
+        case None => ()
+
     def defineBlock(
-        blockName: String,
-        block: Block
-    ): Unit = blockMap.contains(blockName) match {
-      case true =>
-        throw new Exception(
-          s"Block cannot be defined twice within the same scope - ^${blockName}"
-        )
-      case false =>
-        blockMap(blockName) = block
-    }
-
-    def useBlocks(
-        successorList: Seq[String]
-    ) =
-      successorList.partitionMap(name =>
-        if blockMap.contains(name) then Right(blockMap(name))
-        else Left(name)
-      )
-
-    // check block waitlist once you exit the local scope of a region,
-    // as well as the global scope of the program at the end
-    def checkBlockWaitlist() = {
-
-      for ((operation, successors) <- blockWaitlist) {
-
-        val foundBlocks: ListType[String] = ListType()
-        val successorList: ListType[Block] = ListType()
-
-        for {
-          name <- successors
-        } yield blockMap
-          .contains(
-            name
-          ) match {
-          case true =>
-            foundBlocks += name
-            successorList += blockMap(name)
-          case false =>
-        }
-
-        blockWaitlist(operation) = blockWaitlist(operation) diff foundBlocks
-
-        if (blockWaitlist(operation).length == 0) {
-          blockWaitlist -= operation
-        }
-        val new_op =
-          operation.updated(
-            successors = operation.successors ++ successorList,
-            results = operation.results
+        blockName: String
+    ): Block =
+      if blockMap.contains(blockName) then {
+        if forwardBlocks.contains(blockName) then {
+          forwardBlocks -= blockName
+        } else {
+          throw new Exception(
+            s"Block cannot be defined twice within the same scope - ^${blockName}"
           )
-        RewriteMethods.replace_op(operation, new_op)
+        }
+        blockMap(blockName)
+      } else {
+        val newBlock = new Block()
+        blockMap(blockName) = newBlock
+        newBlock
       }
 
-      if (blockWaitlist.size > 0) {
-        parentScope match {
-          case Some(x) => x.blockWaitlist ++= blockWaitlist
-          case None    =>
-            throw new Exception(
-              s"Successor ^${blockWaitlist.head._2.head} not defined within Scope"
-            )
-        }
-      }
+
+    def forwardBlock(
+        blockName: String
+    ): Block = {
+      blockMap.getOrElseUpdate(blockName, {
+        forwardBlocks += blockName
+        new Block()
+        })
     }
 
     // child starts off from the parents context
     def createChild(): Scope = {
       return new Scope(
         valueMap = valueMap.clone,
-        blockMap = blockMap.clone,
         parentScope = Some(this)
       )
     }
 
-    def switchWithParent(scope: Scope): Scope = parentScope match {
-      case Some(x) =>
-        scope.checkValueWaitlist()
-        scope.checkBlockWaitlist()
-        x
-      case None =>
-        scope
-    }
-
+    def switchWithParent: Scope =
+      checkValueWaitlist()
+      checkForwardedBlocks()
+      parentScope match 
+        case Some(x) =>
+          x
+        case None =>
+          this
   }
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -493,10 +470,6 @@ object Parser {
   def OpResult[$: P] =
     P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
 
-  def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
-
-  def Successor[$: P] = P(CaretId) // possibly shortened version
-
   def TrailingLocation[$: P] = P(
     "loc" ~ "(" ~ "unknown" ~ ")"
   ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
@@ -510,7 +483,7 @@ object Parser {
 
   def BlockId[$: P] = P(CaretId)
 
-  def CaretId[$: P] = P("^" ~ SuffixId)
+  def CaretId[$: P] = P("^" ~/ SuffixId)
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||  DIALECT TYPES  ||
@@ -613,7 +586,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   }
 
   def enterParentRegion = {
-    currentScope = currentScope.switchWithParent(currentScope)
+    currentScope = currentScope.switchWithParent
   }
 
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -641,8 +614,7 @@ class Parser(val context: MLContext, val args: Args = Args())
 
     }
   ) ~ E({
-    currentScope.checkValueWaitlist()
-    currentScope.checkBlockWaitlist()
+    currentScope.switchWithParent
   })
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -686,7 +658,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   def generateOperation(
       opName: String,
       operandsNames: Seq[String] = Seq(),
-      successorsNames: Seq[String] = Seq(),
+      successors: Seq[Block] = Seq(),
       properties: Map[String, Attribute] = Map(),
       regions: Seq[Region] = Seq(),
       attributes: Map[String, Attribute] = Map(),
@@ -703,14 +675,11 @@ class Parser(val context: MLContext, val args: Args = Args())
     val useAndRefValueSeqs =
       currentScope.useValues(operandsNames zip operandsTypes)
 
-    val useAndRefBlockSeqs =
-      currentScope.useBlocks(successorsNames)
-
     val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
           operands = useAndRefValueSeqs._2,
-          successors = useAndRefBlockSeqs._2,
+          successors = successors,
           properties = properties,
           results = resultsTypes.map(Result(_)),
           attributes = DictType.from(attributes),
@@ -722,7 +691,7 @@ class Parser(val context: MLContext, val args: Args = Args())
           new UnregisteredOperation(
             name = opName,
             operands = useAndRefValueSeqs._2,
-            successors = useAndRefBlockSeqs._2,
+            successors = successors,
             properties = properties,
             results = resultsTypes.map(Result(_)),
             attributes = DictType.from(attributes),
@@ -735,9 +704,6 @@ class Parser(val context: MLContext, val args: Args = Args())
     }
     if (useAndRefValueSeqs._1.length > 0) {
       currentScope.valueWaitlist += op -> useAndRefValueSeqs._1
-    }
-    if (useAndRefBlockSeqs._1.length > 0) {
-      currentScope.blockWaitlist += op -> useAndRefBlockSeqs._1
     }
 
     return op
@@ -760,7 +726,7 @@ class Parser(val context: MLContext, val args: Args = Args())
         s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${op.results.length}) in \"${op.name}\"."
       )
     }
-    currentScope.defineValues(resNames zip op.results)
+    currentScope.registerValues(resNames zip op.results)
     for (region <- op.regions) region.container_operation = Some(op)
     op
   })
@@ -776,7 +742,7 @@ class Parser(val context: MLContext, val args: Args = Args())
             (
                 opName: String,
                 operandsNames: Seq[String],
-                successorsNames: Seq[String],
+                successors: Seq[Block],
                 properties: Map[String, Attribute],
                 regions: Seq[Region],
                 attributes: Map[String, Attribute],
@@ -785,7 +751,7 @@ class Parser(val context: MLContext, val args: Args = Args())
               generateOperation(
                 opName,
                 operandsNames,
-                successorsNames,
+                successors,
                 properties,
                 regions,
                 attributes,
@@ -820,26 +786,27 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - block           ::= block-label operation+
   // [x] - block-label     ::= block-id block-arg-list? `:`
 
-  def createBlock(
-      //            name    arguments       operations
-      uncutBlock: (String, Seq[(String, Attribute)], Seq[Operation])
+  def populateBlock(
+      //           block    arguments       operations
+      uncutBlock: (Block, Seq[Value[Attribute]], Seq[Operation])
   ): Block = {
-    val newBlock = new Block(
-      operations = uncutBlock._3,
-      arguments_types = ListType.from(uncutBlock._2.map(_._2))
-    )
-    for (op <- newBlock.operations) op.container_block = Some(newBlock)
-    currentScope.defineBlock(uncutBlock._1, newBlock)
-    currentScope.defineValues(uncutBlock._2.map(_._1) zip newBlock.arguments)
-    return newBlock
+    val (block, args, ops) = uncutBlock
+    block.arguments ++= args
+    block.operations ++= ops
+    for (op <- block.operations) op.container_block = Some(block)
+    return block
   }
 
   def Block[$: P] =
-    P(BlockLabel ~/ Operations(0)).mapTry(createBlock)
+    P(BlockLabel ~/ Operations(0)).mapTry(populateBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId ~/ BlockArgList.orElse(Seq()) ~ ":"
+    BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList.orElse(Seq()).mapTry(currentScope.defineValues) ~ ":"
   )
+
+  def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
+
+  def Successor[$: P] = P(CaretId).map(currentScope.forwardBlock) // possibly shortened version
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||      REGIONS      ||
@@ -871,10 +838,10 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   // EntryBlock might break - take out if it does...
   def Region[$: P] = P(
-    "{" ~ E(
+    "{" ~/ E(
       { enterLocalRegion }
-    ) ~ Operations(0) ~ Block.rep ~ "}"
-  ).map(defineRegion) ~ E(
+    ) ~/ Operations(0) ~/ Block.rep ~/ "}"
+  ).map(defineRegion) ~/ E(
     { enterParentRegion }
   )
 
