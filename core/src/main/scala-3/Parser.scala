@@ -153,8 +153,7 @@ object Parser {
       ]] = mutable.Map.empty[Operation, Seq[(String, Attribute)]],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var forwardBlocks: mutable.Set[String] =
-        mutable.Set.empty[String]
+      var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
   ) {
 
     def registerValues(
@@ -174,10 +173,7 @@ object Parser {
     def defineValues(
         valueIdAndTypeList: Seq[(String, Attribute)]
     ) = {
-      registerValues(valueIdAndTypeList.map((name, tpe) =>
-        (name, Value(tpe))
-      )
-      )
+      registerValues(valueIdAndTypeList.map((name, tpe) => (name, Value(tpe))))
     }
 
     def useValues(
@@ -301,14 +297,15 @@ object Parser {
         newBlock
       }
 
-
     def forwardBlock(
         blockName: String
     ): Block = {
-      blockMap.getOrElseUpdate(blockName, {
-        forwardBlocks += blockName
-        new Block()
-        })
+      blockMap.getOrElseUpdate(
+        blockName, {
+          forwardBlocks += blockName
+          new Block()
+        }
+      )
     }
 
     // child starts off from the parents context
@@ -322,11 +319,12 @@ object Parser {
     def switchWithParent: Scope =
       checkValueWaitlist()
       checkForwardedBlocks()
-      parentScope match 
+      parentScope match
         case Some(x) =>
           x
         case None =>
           this
+
   }
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -801,12 +799,15 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(BlockLabel ~/ Operations(0)).mapTry(populateBlock)
 
   def BlockLabel[$: P] = P(
-    BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList.orElse(Seq()).mapTry(currentScope.defineValues) ~ ":"
+    BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
+      .orElse(Seq())
+      .mapTry(currentScope.defineValues) ~ ":"
   )
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
 
-  def Successor[$: P] = P(CaretId).map(currentScope.forwardBlock) // possibly shortened version
+  def Successor[$: P] =
+    P(CaretId).map(currentScope.forwardBlock) // possibly shortened version
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||      REGIONS      ||

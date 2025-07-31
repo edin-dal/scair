@@ -321,8 +321,7 @@ class ParserTest
 
     withClue("Test 2: ") {
       parser.parseThis(
-        text =
-          """{
+        text = """{
 ^bb0(%5: i32):
   %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
   "test.op"(%1, %0) : (i64, i32) -> ()
