@@ -36,6 +36,7 @@ case class CSE(
 
   def simplify(op: Operation): Unit =
     op match
+      case _: IsTerminator      => ()
       case free: NoMemoryEffect =>
         knownOps.get(op) match
           case Some(known) =>
@@ -48,14 +49,22 @@ case class CSE(
     // To modify the block during iteration
     0 until block.operations.size foreach { i =>
       val op = block.operations(i)
-      op.regions.foreach(region => CSE().simplify(region))
+      val mightBeIsolated = op match
+        case _: IsolatedFromAbove     => true
+        case _: UnregisteredOperation => true
+        case _                        => false
+      val driver =
+        if mightBeIsolated then CSE()
+        else CSE(knownOps = knownOps.clone, toErase = toErase.clone)
+      op.regions.foreach(region => driver.simplify(region))
       simplify(op)
     }
-    toErase.foreach(rewriter.erase_op(_, true))
+    toErase.foreach(rewriter.erase_op(_))
+    toErase.clear()
 
   def simplify(region: Region): Unit =
     region.blocks match
-      case Seq(oneBlock) => CSE().simplify(oneBlock)
+      case Seq(oneBlock) => simplify(oneBlock)
 
 }
 

@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p cse | filecheck %s
+// RUN: scair-opt %s --allow-unregistered-dialect -p cse | filecheck %s
 
 // CHECK:       builtin.module {
 
@@ -91,22 +91,38 @@
 // CHECK-NEXT:      func.return %2, %3, %3 : i1, i1, i1
 // CHECK-NEXT:    }) : () -> ()
 
-// TODO: Requires more effects infrastructure
-// "func.func"() <{sym_name = "side_effect", function_type = () -> (memref<2x1xf32>, memref<2x1xf32>)}> ({
-//   %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
-//   %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
-//   "func.return"(%0, %1) : (memref<2x1xf32>, memref<2x1xf32>) -> ()
-// }) : () -> ()
-// "func.func"() <{sym_name = "down_propagate_for", function_type = () -> ()}> ({
-//   %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//   "affine.for"() <{lowerBoundMap = affine_map<() -> (0)>, operandSegmentSizes = array<i32: 0, 0, 0>, step = 1 : index, upperBoundMap = affine_map<() -> (4)>}> ({
-//   ^0(%arg0 : index):
-//     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//     "foo"(%0, %1) : (i32, i32) -> ()
-//     "affine.yield"() : () -> ()
-//   }) : () -> ()
-//   "func.return"() : () -> ()
-// }) : () -> ()
+"func.func"() <{sym_name = "side_effect", function_type = () -> (memref<2x1xf32>, memref<2x1xf32>)}> ({
+  %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>, alignment = 0}> : () -> memref<2x1xf32>
+  %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>, alignment = 0}> : () -> memref<2x1xf32>
+  "func.return"(%0, %1) : (memref<2x1xf32>, memref<2x1xf32>) -> ()
+}) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "side_effect", function_type = () -> (memref<2x1xf32>, memref<2x1xf32>)}> ({
+// CHECK-NEXT:      %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+// CHECK-NEXT:      %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+// CHECK-NEXT:      func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
+// CHECK-NEXT:    }) : () -> ()
+
+"func.func"() <{sym_name = "down_propagate_for", function_type = () -> ()}> ({
+  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+  "affine.for"() <{lowerBoundMap = affine_map<() -> (0)>, operandSegmentSizes = array<i32: 0, 0, 0>, step = 1 : index, upperBoundMap = affine_map<() -> (4)>}> ({
+  ^0(%arg0 : index):
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    "foo"(%0, %1) : (i32, i32) -> ()
+    "affine.yield"() : () -> ()
+  }) : () -> ()
+  "func.return"() : () -> ()
+}) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "down_propagate_for", function_type = () -> ()}> ({
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+// CHECK-NEXT:      ^bb0(%1: index):
+// CHECK-NEXT:        "foo"(%0, %0) : (i32, i32) -> ()
+// CHECK-NEXT:        "affine.yield"() : () -> ()
+// CHECK-NEXT:      }) : () -> ()
+// CHECK-NEXT:      func.return
+// CHECK-NEXT:    }) : () -> ()
+
+// TODO: This requires the notions of SSACFG regions and block dominance
 // "func.func"() <{sym_name = "down_propagate", function_type = () -> i32}> ({
 //   %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 //   %1 = "arith.constant"() <{value = true}> : () -> i1
@@ -117,16 +133,28 @@
 // ^1(%3 : i32):
 //   "func.return"(%3) : (i32) -> ()
 // }) : () -> ()
-// "func.func"() <{sym_name = "up_propagate_for", function_type = () -> i32}> ({
-//   "affine.for"() <{lowerBoundMap = affine_map<() -> (0)>, operandSegmentSizes = array<i32: 0, 0, 0>, step = 1 : index, upperBoundMap = affine_map<() -> (4)>}> ({
-//   ^0(%arg0 : index):
-//     %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//     "foo"(%0) : (i32) -> ()
-//     "affine.yield"() : () -> ()
-//   }) : () -> ()
-//   %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//   "func.return"(%1) : (i32) -> ()
-// }) : () -> ()
+"func.func"() <{sym_name = "up_propagate_for", function_type = () -> i32}> ({
+  "affine.for"() <{lowerBoundMap = affine_map<() -> (0)>, operandSegmentSizes = array<i32: 0, 0, 0>, step = 1 : index, upperBoundMap = affine_map<() -> (4)>}> ({
+  ^0(%arg0 : index):
+    %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    "foo"(%0) : (i32) -> ()
+    "affine.yield"() : () -> ()
+  }) : () -> ()
+  %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+  "func.return"(%1) : (i32) -> ()
+}) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "up_propagate_for", function_type = () -> i32}> ({
+// CHECK-NEXT:      "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+// CHECK-NEXT:      ^bb0(%0: index):
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo"(%1) : (i32) -> ()
+// CHECK-NEXT:        "affine.yield"() : () -> ()
+// CHECK-NEXT:      }) : () -> ()
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      func.return %0 : i32
+// CHECK-NEXT:    }) : () -> ()
+
+// TODO: Requires the notions of SSACFG regions and block dominance
 // "func.func"() <{sym_name = "up_propagate", function_type = () -> i32}> ({
 //   %0 = "arith.constant"() <{value = 0 : i32}> : () -> i32
 //   %1 = "arith.constant"() <{value = true}> : () -> i1
@@ -154,27 +182,61 @@
 //   }) : () -> i32
 //   "func.return"(%0) : (i32) -> ()
 // }) : () -> ()
-// "func.func"() <{sym_name = "nested_isolated", function_type = () -> i32}> ({
-//   %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//   "func.func"() <{sym_name = "nested_func", function_type = () -> ()}> ({
-//     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//     "foo.yield"(%1) : (i32) -> ()
-//   }) : () -> ()
-//   "foo.region"() ({
-//     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//     "foo.yield"(%1) : (i32) -> ()
-//   }) : () -> ()
-//   "func.return"(%0) : (i32) -> ()
-// }) : () -> ()
-// "func.func"() <{sym_name = "use_before_def", function_type = () -> ()}> ({
-//   "test.graph_region"() ({
-//     %0 = "arith.addi"(%1, %2) <{overflowFlags = #arith.overflow<none>}> : (i32, i32) -> i32
-//     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//     %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-//     "foo.yield"(%0) : (i32) -> ()
-//   }) : () -> ()
-//   "func.return"() : () -> ()
-// }) : () -> ()
+
+/// This test checks that nested regions that are isolated from above are
+/// properly handled.
+"func.func"() <{sym_name = "nested_isolated", function_type = () -> i32}> ({
+  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+  "func.func"() <{sym_name = "nested_func", function_type = () -> ()}> ({
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    "foo.yield"(%1) : (i32) -> ()
+  }) : () -> ()
+  "foo.region"() ({
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    "foo.yield"(%1) : (i32) -> ()
+  }) : () -> ()
+  "func.return"(%0) : (i32) -> ()
+}) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "nested_isolated", function_type = () -> i32}> ({
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      "func.func"() <{sym_name = "nested_func", function_type = () -> ()}> ({
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo.yield"(%1) : (i32) -> ()
+// CHECK-NEXT:      }) : () -> ()
+// CHECK-NEXT:      "foo.region"() ({
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo.yield"(%1) : (i32) -> ()
+// CHECK-NEXT:      }) : () -> ()
+// CHECK-NEXT:      func.return %0 : i32
+// CHECK-NEXT:    }) : () -> ()
+
+/// This test is checking that CSE gracefully handles values in graph regions
+/// where the use occurs before the def, and one of the defs could be CSE'd with
+/// the other.
+
+/// NB: Above is the verbatim comment from the original test in MLIR.
+/// Though, MLIR itself does not seem to CSE those constants...
+/// Mentionning in case there is a good reason, but I guess this might just work better
+/// here!
+"func.func"() <{sym_name = "use_before_def", function_type = () -> ()}> ({
+  "test.graph_region"() ({
+    %0 = "arith.addi"(%1, %2) : (i32, i32) -> i32
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    "foo.yield"(%0) : (i32) -> ()
+  }) : () -> ()
+  "func.return"() : () -> ()
+}) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "use_before_def", function_type = () -> ()}> ({
+// CHECK-NEXT:      "test.graph_region"() ({
+// CHECK-NEXT:        %0 = "arith.addi"(%1, %1) : (i32, i32) -> (i32)
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo.yield"(%0) : (i32) -> ()
+// CHECK-NEXT:      }) : () -> ()
+// CHECK-NEXT:      func.return
+// CHECK-NEXT:    }) : () -> ()
+
+// TODO: The following tests require more nuanced notions of side effects yet to be implemented in ScaIR
 // "func.func"() <{sym_name = "remove_direct_duplicated_read_op", function_type = () -> i32}> ({
 //   %0 = "test.op_with_memread"() : () -> i32
 //   %1 = "test.op_with_memread"() : () -> i32

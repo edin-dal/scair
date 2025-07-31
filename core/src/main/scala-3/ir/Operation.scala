@@ -35,6 +35,7 @@ trait Operation extends IRNode {
 
   regions.foreach(attach_region)
   operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
+
   results.foreach(r =>
     // if r.owner != None then
     //   throw new Exception(
@@ -43,7 +44,6 @@ trait Operation extends IRNode {
     // else
     r.owner = Some(this)
   )
-  
 
   def name: String
 
