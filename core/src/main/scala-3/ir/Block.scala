@@ -56,6 +56,14 @@ case class Block private (
 
   operations.foreach(attach_op)
 
+  arguments.foreach(a =>
+    if a.owner != None then
+      throw new Exception(
+        s"Block argument '${a.typ}' already has an owner: ${a.owner.get}"
+      )
+    else a.owner = Some(this)
+  )
+
   /** Constructs a Block instance with the given argument types and operations.
     *
     * @param arguments_types
