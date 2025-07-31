@@ -25,6 +25,7 @@ class Value[+T <: Attribute](
 ) {
 
   val uses: ListType[Use] = ListType()
+  var owner: Option[Operation | Block] = None
 
   def remove_use(use: Use): Unit = {
     val usesLengthBefore = uses.length

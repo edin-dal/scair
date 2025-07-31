@@ -16,7 +16,7 @@ case class Func(
     function_type: FunctionType,
     sym_visibility: Option[StringData],
     body: Region
-) extends DerivedOperation["func.func", Func] derives DerivedOperationCompanion
+) extends DerivedOperation["func.func", Func] with IsolatedFromAbove derives DerivedOperationCompanion
 
 case class Return(
     _operands: Seq[Operand[Attribute]]

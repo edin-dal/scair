@@ -1,5 +1,7 @@
 package scair.ir
 
+import scala.annotation.tailrec
+
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
 // ░░░██║░░░ ██████╔╝ ███████║ ██║ ░░░██║░░░ ╚█████╗░
@@ -51,3 +53,30 @@ trait NoTerminator extends Operation {
 }
 
 trait NoMemoryEffect extends Operation
+
+trait IsolatedFromAbove extends Operation {
+  final def verify_rec(regs: Seq[Region]): Either[String, Operation] =
+    val r = regs match
+      case region :: tail => 
+        region.blocks.foldLeft[Either[String, Operation]](Right(this))((r, block) =>
+          r.flatMap(_ => block.operations.foldLeft[Either[String, Operation]](r)((r, op) =>
+            op.operands.foldLeft(r)((r, o) =>
+              if !this.is_ancestor(o.owner.getOrElse(throw new Exception(s"${op.name}"))) then
+                Left(
+                  s"Operation '${name}' is not an ancestor of operand '${o.typ}'"
+                )
+              else r
+            ).flatMap(_ =>
+              verify_rec(tail ++ op.regions)
+            )
+          )
+        )
+        )
+      case Nil => Right(this)
+    r.flatMap(_ => super.trait_verify())
+
+    
+  override def trait_verify(): Either[String, Operation] = {
+    verify_rec(regions)
+  }
+}

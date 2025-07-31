@@ -35,6 +35,15 @@ trait Operation extends IRNode {
 
   regions.foreach(attach_region)
   operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
+  results.foreach(r =>
+    // if r.owner != None then
+    //   throw new Exception(
+    //     s"Result '${r.typ}' already has an owner: ${r.owner.get}"
+    //   )
+    // else
+    r.owner = Some(this)
+  )
+  
 
   def name: String
 

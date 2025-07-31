@@ -790,8 +790,9 @@ class Parser(val context: MLContext, val args: Args = Args())
   ): Block = {
     val (block, args, ops) = uncutBlock
     block.arguments ++= args
+    args.foreach(_.owner = Some(block))
     block.operations ++= ops
-    for (op <- block.operations) op.container_block = Some(block)
+    ops.foreach(_.container_block = Some(block))
     return block
   }
 
