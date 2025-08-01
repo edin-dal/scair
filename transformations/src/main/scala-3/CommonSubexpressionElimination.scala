@@ -55,7 +55,7 @@ case class CSE(
         case _                        => false
       val driver =
         if mightBeIsolated then CSE()
-        else CSE(knownOps = knownOps.clone, toErase = toErase.clone)
+        else CSE(knownOps = knownOps.clone)
       op.regions.foreach(region => driver.simplify(region))
       simplify(op)
     }
