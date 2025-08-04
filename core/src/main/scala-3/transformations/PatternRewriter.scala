@@ -262,6 +262,40 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
 
 }
 
+inline def pattern(
+    partial: PartialFunction[
+      Operation,
+      Unit | Operation | Seq[Operation] |
+        (Operation | Seq[Operation], Value[?] | Seq[Value[?]])
+    ]
+): RewritePattern =
+  val lifted = partial.lift
+
+  object pattern extends RewritePattern:
+    override def match_and_rewrite(
+        op: Operation,
+        rewriter: PatternRewriter
+    ): Unit =
+      lifted(op).map({ (output) =>
+        output match
+          case () =>
+            rewriter.erase_op(op)
+          case both: (Operation | Seq[Operation], Value[?] | Seq[Value[?]]) =>
+            rewriter.replace_op(
+              op,
+              both._1,
+              Some(both._2 match
+                case r: Value[?]       => Seq(r)
+                case rs: Seq[Value[?]] => rs)
+            )
+          case new_op: Operation =>
+            rewriter.replace_op(op, new_op, None)
+          case new_ops: Seq[Operation] =>
+            rewriter.replace_op(op, new_ops, None)
+      })
+
+  pattern
+
 //    OPERATION REWRITE WALKER    //
 class PatternRewriteWalker(
     val pattern: RewritePattern
