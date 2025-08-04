@@ -261,13 +261,17 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
     match_and_rewrite_rec(op, rewriter, patterns)
 
 }
-/** Defines a RewritePattern from a partial function. The partial function can return the following types:
-  *                - `Unit`: to erase the operation
-  *                - `Operation`: to replace the operation with a single new operation
-  *                - `Seq[Operation]`: to replace the operation with multiple new operations
-  *                - `(Operation | Seq[Operation], Value[?] | Seq[Value[?]])`: to replace the operation with new operations and new results
+
+/** Defines a RewritePattern from a partial function. The partial function can
+  * return the following types:
+  *   - `Unit`: to erase the operation
+  *   - `Operation`: to replace the operation with a single new operation
+  *   - `Seq[Operation]`: to replace the operation with multiple new operations
+  *   - `(Operation | Seq[Operation], Value[?] | Seq[Value[?]])`: to replace the
+  *     operation with new operations and new results
   *
-  * @return A RewritePattern to hook to the infrastructure.
+  * @return
+  *   A RewritePattern to hook to the infrastructure.
   */
 inline def pattern(
     partial: PartialFunction[
