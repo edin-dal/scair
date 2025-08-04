@@ -12,7 +12,17 @@ import scair.ir.*
 trait CallOpInterface
 trait MemRefsNormalizable
 trait SymbolUserOpInterface
-trait DeclareOpInterfaceMethods[T]
+trait DeclareOpInterfaceMethods[T <: Tuple]
+trait TypesMatchWith(tuples: (Seq[Attribute], Seq[Attribute])*)
+trait ConstantLike
+type Pure = NoMemoryEffect
+trait OpAsmOpInterface
+trait AffineScope
+trait AutomaticAllocationScope
+trait FunctionOpInterface
+trait IsolatedFromAbove
+trait HasParent[P <: Operation]
+trait ReturnLike
 
 /*≡=--==≡≡≡≡==--=≡*\
 ||   ATTRIBUTES   ||
@@ -25,41 +35,63 @@ type UnitAttr = Attribute
 \*≡=---==≡≡==---=≡*/
 
 case class Call(
-    _operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]],
-    callee: SymbolRefAttr,
-    arg_attrs: Option[ArrayAttribute[DictionaryAttr]],
-    res_attrs: Option[ArrayAttribute[DictionaryAttr]],
-    no_inline: UnitAttr
+    val _operands: Seq[Operand[Attribute]],
+    val _results: Seq[Result[Attribute]],
+    val callee: SymbolRefAttr,
+    val arg_attrs: Option[ArrayAttribute[DictionaryAttr]],
+    val res_attrs: Option[ArrayAttribute[DictionaryAttr]],
+    val no_inline: UnitAttr
 ) extends DerivedOperation["func.call", Call],
       CallOpInterface,
       MemRefsNormalizable,
-      DeclareOpInterfaceMethods[SymbolUserOpInterface]
+      DeclareOpInterfaceMethods[Tuple1[SymbolUserOpInterface]]
     derives DerivedOperationCompanion
 
 case class CallIndirect(
-    _operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]],
-    callee: FunctionType,
-    arg_attrs: Option[ArrayAttribute[DictionaryAttr]],
-    res_attrs: Option[ArrayAttribute[DictionaryAttr]],
-    no_inline: UnitAttr
+    val callee: Operand[FunctionType],
+    val callee_operands: Seq[Operand[Attribute]],
+    val _results: Seq[Result[Attribute]],
+    val arg_attrs: Option[ArrayAttribute[DictionaryAttr]],
+    val res_attrs: Option[ArrayAttribute[DictionaryAttr]]
 ) extends DerivedOperation["func.call_indirect", CallIndirect],
+      TypesMatchWith(
+        (callee.typ.inputs, callee_operands.map(_.typ)),
+        (callee.typ.outputs, _results.map(_.typ))
+      ),
       CallOpInterface derives DerivedOperationCompanion
 
+case class ConstantOp(
+    val value: SymbolRefAttr,
+    val _results: Result[TypeAttribute]
+) extends DerivedOperation["func.constant", ConstantOp],
+      ConstantLike,
+      Pure,
+      DeclareOpInterfaceMethods[(SymbolUserOpInterface, OpAsmOpInterface)]
+    derives DerivedOperationCompanion
+
 case class Func(
-    sym_name: StringData,
-    function_type: FunctionType,
-    sym_visibility: Option[StringData],
-    body: Region
-) extends DerivedOperation["func.func", Func]
-    with IsolatedFromAbove derives DerivedOperationCompanion
+    val sym_name: StringData,
+    val function_type: FunctionType,
+    val sym_visibility: Option[StringData],
+    val arg_attrs: Option[ArrayAttribute[DictionaryAttr]],
+    val res_attrs: Option[ArrayAttribute[DictionaryAttr]],
+    val body: Region,
+    val no_inline: UnitAttr
+) extends DerivedOperation["func.func", Func],
+      OpAsmOpInterface,
+      AffineScope,
+      AutomaticAllocationScope,
+      FunctionOpInterface,
+      IsolatedFromAbove derives DerivedOperationCompanion
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
-) extends DerivedOperation["func.return", Return]
-    with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
-    with NoMemoryEffect
-    with IsTerminator derives DerivedOperationCompanion
+) extends DerivedOperation["func.return", Return],
+      AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"],
+      Pure,
+      HasParent[Func],
+      MemRefsNormalizable,
+      ReturnLike,
+      IsTerminator derives DerivedOperationCompanion
 
 val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())
