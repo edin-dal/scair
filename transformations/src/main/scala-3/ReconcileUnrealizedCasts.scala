@@ -4,36 +4,16 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
 
-object SameType extends RewritePattern {
-
-  override def match_and_rewrite(
-      op: Operation,
-      rewriter: PatternRewriter
-  ): Unit = {
-    op match {
-      case cast: UnrealizedConversionCastOp
-          if cast.operands.size == 1 && cast.results.size == 1 && cast.operands.head.typ == cast.results.head.typ =>
-        rewriter.replace_op(op, Seq(), Some(Seq(cast.operands.head)))
-      case _ => ()
-    }
-  }
-
+val SameType = pattern {
+  case UnrealizedConversionCastOp(
+        operands = Seq(operand),
+        results = Seq(result)
+      ) if operand.typ == result.typ =>
+    (Seq(), Seq(operand))
 }
 
-object Unused extends RewritePattern {
-
-  override def match_and_rewrite(
-      op: Operation,
-      rewriter: PatternRewriter
-  ): Unit = {
-    op match {
-      case cast: UnrealizedConversionCastOp
-          if cast.results.forall(_.uses.isEmpty) =>
-        rewriter.erase_op(cast)
-      case _ => ()
-    }
-  }
-
+val Unused = pattern {
+  case UnrealizedConversionCastOp(results = r) if r.forall(_.uses.isEmpty) => ()
 }
 
 object ReconcileUnrealizedCasts extends ModulePass {
