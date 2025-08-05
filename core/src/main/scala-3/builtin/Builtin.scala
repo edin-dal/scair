@@ -114,6 +114,16 @@ case class IntegerAttr(
 
   def this(value: IntData) = this(value, I64)
 
+  infix def +(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value + that.value.value), this.typ)
+  }
+
   override def name: String = "builtin.integer_attr"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
 

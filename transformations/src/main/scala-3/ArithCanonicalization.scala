@@ -9,11 +9,8 @@ import scair.transformations.patterns.*
 // TODO: Generalize in terms of effects and out of dialect
 val RemoveUnusedOperations = pattern {
   case _: IsTerminator => PatternAction.Abort
-  case op: NoMemoryEffect if op.results.forall(_.uses.isEmpty) =>
-    PatternAction.Erase
-  case op: NoMemoryEffect =>
-    println(s"${op} Uses: ${op.results.map(_.uses.size).mkString(", ")}")
-    PatternAction.Abort
+  case op: NoMemoryEffect if op.results.forall(_.uses.isEmpty) => PatternAction.Erase
+  case op: NoMemoryEffect => PatternAction.Abort
 }
 
 // TODO: Generalize in Commutative/ConstantLike
@@ -33,7 +30,7 @@ val AddIAddConstant = pattern {
         _
       ) =>
     val cv = Result(tpe)
-    val c = Constant(IntegerAttr(c0.value.value + c1.value.value, tpe), cv)
+    val c = Constant(c0 + c1, cv)
     Seq(c, AddI(x, cv, Result(tpe)))
 }
 
