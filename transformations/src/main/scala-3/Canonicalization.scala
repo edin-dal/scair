@@ -68,7 +68,7 @@ object Canonicalize extends ModulePass {
           Commute,
           AddIAddConstant,
           AddISubConstantRHS,
-          AddISubConstantLHS,
+          AddISubConstantLHS
         )
       )
     )
