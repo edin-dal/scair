@@ -1,5 +1,7 @@
 package scair.ir
 
+// import block_operations.BlockOperations
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -49,7 +51,7 @@ object Block {
   */
 case class Block private (
     val arguments: ListType[Value[Attribute]],
-    val operations: ListType[Operation]
+    val operations: BlockOperations
 ) extends IRNode {
 
   final override def parent: Option[Region] = container_region
@@ -82,7 +84,7 @@ case class Block private (
         case single: Attribute     => Seq(single)
         case multiple: Iterable[_] => multiple.asInstanceOf[Iterable[Attribute]]
       }).map(Value(_))),
-      ListType.from((operations match {
+      BlockOperations.from((operations match {
         case single: Operation     => Seq(single)
         case multiple: Iterable[_] =>
           multiple.asInstanceOf[Iterable[Operation]]
@@ -108,7 +110,7 @@ case class Block private (
         case multiple: Iterable[_]    =>
           multiple.asInstanceOf[Iterable[Value[Attribute]]]
       }),
-      ListType.from(args._2 match {
+      BlockOperations.from(args._2 match {
         case single: Operation     => Seq(single)
         case multiple: Iterable[_] =>
           multiple.asInstanceOf[Iterable[Operation]]
@@ -192,7 +194,7 @@ case class Block private (
     for (op <- new_ops) {
       attach_op(op)
     }
-    operations.insertAll(oplen, ListType(new_ops*))
+    operations.insertAll(oplen, BlockOperations(new_ops*))
   }
 
   def insert_op_before(
@@ -220,7 +222,7 @@ case class Block private (
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(getIndexOf(existing_op), ListType(new_ops*))
+        operations.insertAll(getIndexOf(existing_op), BlockOperations(new_ops*))
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -236,7 +238,10 @@ case class Block private (
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
-        operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_op))
+        operations.insertAll(
+          getIndexOf(existing_op) + 1,
+          BlockOperations(new_op)
+        )
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -254,7 +259,10 @@ case class Block private (
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(getIndexOf(existing_op) + 1, ListType(new_ops*))
+        operations.insertAll(
+          getIndexOf(existing_op) + 1,
+          BlockOperations(new_ops*)
+        )
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -297,10 +305,6 @@ case class Block private (
         res.flatMap(_ =>
           op.structured
             .map(v =>
-              if !(v eq op) then
-                op.operands.foreach(
-                  _.uses.filterInPlace(_.operation != op)
-                )
               operations(i) = v
               v.container_block = Some(this)
             )

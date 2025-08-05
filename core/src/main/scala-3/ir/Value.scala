@@ -24,19 +24,11 @@ class Value[+T <: Attribute](
     val typ: T
 ) {
 
-  val uses: ListType[Use] = ListType()
+  val uses: collection.mutable.Set[Use] = collection.mutable.Set.empty[Use]
   var owner: Option[Operation | Block] = None
 
-  def remove_use(use: Use): Unit = {
-    val usesLengthBefore = uses.length
-    uses -= use
-    if (usesLengthBefore == uses.length) then {
-      throw new Exception("Use to be removed was not in the Use list.")
-    }
-  }
-
   def erase(): Unit = {
-    if (uses.length != 0) then
+    if (uses.nonEmpty) then
       throw new Exception(
         "Attempting to erase a Value that has uses in other operations."
       )
