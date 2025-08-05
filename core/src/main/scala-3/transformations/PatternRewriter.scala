@@ -365,7 +365,8 @@ class PatternRewriteWalker(
   }
 
   private def populate_worklist(op: Operation): Unit = {
-    worklist.push(op)
+    if (!worklist.contains(op))
+      worklist.push(op)
     op.regions.reverseIterator.foreach((x: Region) =>
       x.blocks.reverseIterator.foreach((y: Block) =>
         y.operations.reverseIterator.foreach(populate_worklist(_))
