@@ -74,7 +74,7 @@ builtin.module {
 
     val func = module.regions.head.blocks.head.operations.head
     val arg = func.regions.head.blocks.head.arguments.head
-    val ListType(_, add, ret) = func.regions.head.blocks.head.operations
+    val BlockOperations(_, add, ret) = func.regions.head.blocks.head.operations
     RewriteMethods.replace_op(add, Seq(), Some(Seq(arg)))
     RewriteMethods.erase_op(zero)
 

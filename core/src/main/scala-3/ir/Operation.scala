@@ -34,7 +34,6 @@ trait Operation extends IRNode {
   final override def parent = container_block
 
   regions.foreach(attach_region)
-  operands.zipWithIndex.foreach((o, i) => o.uses.addOne(Use(this, i)))
 
   results.foreach(r =>
     // if r.owner != None then
@@ -103,7 +102,6 @@ trait Operation extends IRNode {
 
   final def drop_all_references: Unit = {
     container_block = None
-    operands.foreach(_.uses.filterInPlace(_.operation != this))
   }
 
   final def erase(safe_erase: Boolean = true): Unit = {

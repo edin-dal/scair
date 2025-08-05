@@ -215,7 +215,6 @@ trait Rewriter {
           )
         }
       }
-      value.uses.clear()
     }
   }
 
