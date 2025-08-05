@@ -17,18 +17,33 @@
 // CHECK-NEXT:      func.return %2 : index
 // CHECK-NEXT:    }) : () -> ()
 
-  "func.func"() <{"sym_name" = "tripleAddSub0", "function_type" = (index) -> index}> ({
-  ^0(%arg0 : index):
-    %c17 = "arith.constant"() <{"value" = 17 : index}> : () -> index
-    %c42 = "arith.constant"() <{"value" = 42 : index}> : () -> index
-    %add1 = "arith.subi"(%c17, %arg0) : (index, index) -> index
-    %add2 = "arith.addi"(%c42, %add1) : (index, index) -> index
-    func.return %add2 : index
-  }) : () -> ()
+"func.func"() <{"sym_name" = "tripleAddSub0", "function_type" = (index) -> index}> ({
+^0(%arg0 : index):
+  %c17 = "arith.constant"() <{"value" = 17 : index}> : () -> index
+  %c42 = "arith.constant"() <{"value" = 42 : index}> : () -> index
+  %add1 = "arith.subi"(%c17, %arg0) : (index, index) -> index
+  %add2 = "arith.addi"(%c42, %add1) : (index, index) -> index
+  func.return %add2 : index
+}) : () -> ()
 // CHECK-NEXT:    "func.func"() <{sym_name = "tripleAddSub0", function_type = (index) -> index}> ({
 // CHECK-NEXT:    ^bb0(%0: index):
 // CHECK-NEXT:      %1 = "arith.constant"() <{value = 59 : index}> : () -> (index)
 // CHECK-NEXT:      %2 = "arith.subi"(%1, %0) : (index, index) -> (index)
+// CHECK-NEXT:      func.return %2 : index
+// CHECK-NEXT:    }) : () -> ()
+
+"func.func"() <{"sym_name" = "tripleAddSub1", "function_type" = (index) -> index}> ({
+^0(%arg0 : index):
+  %c17 = "arith.constant"() <{"value" = 17 : index}> : () -> index
+  %c42 = "arith.constant"() <{"value" = 42 : index}> : () -> index
+  %add1 = "arith.subi"(%arg0, %c17) : (index, index) -> index
+  %add2 = "arith.addi"(%c42, %add1) : (index, index) -> index
+  func.return %add2 : index
+}) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "tripleAddSub1", function_type = (index) -> index}> ({
+// CHECK-NEXT:    ^bb0(%0: index):
+// CHECK-NEXT:      %1 = "arith.constant"() <{value = -25 : index}> : () -> (index)
+// CHECK-NEXT:      %2 = "arith.addi"(%0, %1) : (index, index) -> (index)
 // CHECK-NEXT:      func.return %2 : index
 // CHECK-NEXT:    }) : () -> ()
 
