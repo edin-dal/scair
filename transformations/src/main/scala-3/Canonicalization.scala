@@ -1,4 +1,4 @@
-package scair.transformations.arith_canonicalization
+package scair.transformations.canonicalization
 
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
@@ -15,10 +15,13 @@ val RemoveUnusedOperations = pattern {
 }
 
 // TODO: Generalize in Commutative/ConstantLike
-val AddICommute = pattern {
-  case AddI(rhs = Owner(_: Constant))                   => PatternAction.Abort
-  case AddI(lhs @ Owner(_: Constant), rhs, Result(tpe)) =>
-    AddI(rhs, lhs, Result(tpe))
+val Commute = pattern { case c: Commutative =>
+  val (const, nconst) = c.operands.partition(_.owner match
+    case Some(_: ConstantLike) => true
+    case _                     => false)
+  val nops = nconst ++ const
+  if nops == c.operands then PatternAction.Abort
+  else c.updated(operands = nops)
 }
 
 // addi(addi(x, c0), c1) -> addi(x, c0 + c1)
@@ -32,15 +35,15 @@ val AddIAddConstant = pattern {
     Seq(Constant(c0 + c1, cv), AddI(x, cv, Result(x.typ)))
 }
 
-object ArithCanonicalize extends ModulePass {
-  override val name = "arith-canonicalize"
+object Canonicalize extends ModulePass {
+  override val name = "canonicalize"
 
   override def transform(op: Operation): Operation = {
     val prw = new PatternRewriteWalker(
       GreedyRewritePatternApplier(
         Seq(
           RemoveUnusedOperations,
-          AddICommute,
+          Commute,
           AddIAddConstant
         )
       )

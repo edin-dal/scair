@@ -84,3 +84,7 @@ trait IsolatedFromAbove extends Operation {
   }
 
 }
+
+trait Commutative extends Operation
+
+trait ConstantLike extends Operation
