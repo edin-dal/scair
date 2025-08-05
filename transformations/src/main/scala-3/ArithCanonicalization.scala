@@ -1,35 +1,41 @@
-package scair.transformations.cdt
+package scair.transformations.arith_canonicalization
 
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
+import scair.transformations.patterns.*
 
-import scala.PartialFunction
-
-object Owner {
-  def unapply(v: Value[Attribute]) = v.owner
+// TODO: Generalize in terms of effects and out of dialect
+val RemoveUnusedOperations = pattern {
+  case _: IsTerminator => PatternAction.Abort
+  case op: NoMemoryEffect if op.results.forall(_.uses.isEmpty) =>
+    PatternAction.Erase
+  case op: NoMemoryEffect =>
+    println(s"${op} Uses: ${op.results.map(_.uses.size).mkString(", ")}")
+    PatternAction.Abort
 }
 
-val AddIAddConstant = pattern { 
+// TODO: Generalize in Commutative/ConstantLike
+val AddICommute = pattern {
+  case AddI(rhs = Owner(_: Constant)) => PatternAction.Abort
+  case AddI(lhs @ Owner(Constant(value = c0: IntegerAttr)), rhs, Result(tpe)) =>
+    AddI(rhs, lhs, Result(tpe))
+}
+
+// addi(addi(x, c0), c1) -> addi(x, c0 + c1)
+val AddIAddConstant = pattern {
   case AddI(
-        lhs = Owner(Constant(lv: IntegerAttr, _)),
-        rhs = Owner(Constant(rv: IntegerAttr, _))
+        Owner(
+          AddI(x @ Value(tpe), Owner(Constant(c0: IntegerAttr, _)), _)
+        ),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
       ) =>
-    Constant(
-      IntegerAttr(lv.value.value + rv.value.value, lv.typ),
-      Result(lv.typ)
-    )
+    val cv = Result(tpe)
+    val c = Constant(IntegerAttr(c0.value.value + c1.value.value, tpe), cv)
+    Seq(c, AddI(x, cv, Result(tpe)))
 }
-
-def pattern(p: PartialFunction[Operation, Operation]) =
-  new RewritePattern {
-    override def match_and_rewrite(
-        op: Operation,
-        rewriter: PatternRewriter
-    ): Unit =
-      p.lift(op).map(rewriter.replace_op(op, _))
-  }
 
 object ArithCanonicalize extends ModulePass {
   override val name = "arith-canonicalize"
@@ -38,6 +44,8 @@ object ArithCanonicalize extends ModulePass {
     val prw = new PatternRewriteWalker(
       GreedyRewritePatternApplier(
         Seq(
+          RemoveUnusedOperations,
+          AddICommute,
           AddIAddConstant
         )
       )
