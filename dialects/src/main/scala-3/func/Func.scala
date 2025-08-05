@@ -23,6 +23,7 @@ trait FunctionOpInterface
 trait IsolatedFromAbove
 trait HasParent[P <: Operation]
 trait ReturnLike
+trait InferTypeOpAdaptor
 
 /*≡=--==≡≡≡≡==--=≡*\
 ||   ATTRIBUTES   ||
