@@ -16,7 +16,7 @@ import scair.dialects.scf.SCFDialect
 import scair.dialects.test.Test
 import scair.ir.Dialect
 import scair.transformations.ModulePass
-import scair.transformations.arith_canonicalization.ArithCanonicalize
+import scair.transformations.canonicalization.Canonicalize
 import scair.transformations.cdt.DummyPass
 import scair.transformations.cdt.TestInsertionPass
 import scair.transformations.cdt.TestReplacementPass
@@ -49,5 +49,5 @@ val allPasses: Seq[ModulePass] =
     ReconcileUnrealizedCasts,
     TestInsertionPass,
     TestReplacementPass,
-    ArithCanonicalize
+    Canonicalize
   )
