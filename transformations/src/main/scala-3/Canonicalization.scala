@@ -35,6 +35,28 @@ val AddIAddConstant = pattern {
     Seq(Constant(c0 + c1, cv), AddI(x, cv, Result(x.typ)))
 }
 
+// addi(subi(x, c0), c1) -> addi(x, c1 - c0)
+val AddISubConstantRHS = pattern {
+  case AddI(
+        Owner(SubI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    val cv = Result(x.typ)
+    Seq(Constant(c0 - c1, cv), AddI(x, cv, Result(x.typ)))
+}
+
+// addi(subi(c0, x), c1) -> subi(c0 + c1, x)
+val AddISubConstantLHS = pattern {
+  case AddI(
+        Owner(SubI(Owner(Constant(c0: IntegerAttr, _)), x, _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    val cv = Result(x.typ)
+    Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
+}
+
 object Canonicalize extends ModulePass {
   override val name = "canonicalize"
 
@@ -44,7 +66,9 @@ object Canonicalize extends ModulePass {
         Seq(
           RemoveUnusedOperations,
           Commute,
-          AddIAddConstant
+          AddIAddConstant,
+          AddISubConstantRHS,
+          AddISubConstantLHS,
         )
       )
     )
