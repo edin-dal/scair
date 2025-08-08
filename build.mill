@@ -1,22 +1,19 @@
-// Scalafix plugin
-import $ivy.`com.goyeau::mill-scalafix_mill0.11:0.5.0`
+//| mill-version: 1.0.3-native
+//| mill-opts: ["-DPATH={$PATH}"]
+//| mvnDeps:
+//|   - com.goyeau::mill-scalafix_mill1:0.6.0
+//|   - com.lihaoyi::mill-contrib-scoverage:1.0.3
+
 import com.goyeau.mill.scalafix.ScalafixModule
-
-// VSC version plugin
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
-import de.tobiasroeser.mill.vcs.version.VcsVersion
-
-// Scoverage plugin
-import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
+import mill.util.{VcsVersion, Tasks}
 import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
 
-import mill.{Agg, RootModule, T, Task, PathRef, TaskModule}
+import mill.api.{Task, PathRef, DefaultTaskModule, Module, ModuleRef, Evaluator}
+import mill.api.daemon.SelectMode
 import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
 import mill.scalalib.publish.{Developer, PomSettings, License, VersionControl}
-import mill.testrunner.TestResult
-import mill.resolve.{Resolve, SelectMode}
-import mill.define.{NamedTask, Command, ModuleRef, Module}
-import mill.main.Tasks
+import mill.javalib.testrunner.TestResult
+import mill.api.Task.{Named, Command}
 
 import scala.sys.process._
 import scala.language.postfixOps
@@ -24,25 +21,26 @@ import java.io.PrintWriter
 
 trait ScairSettings extends ScalaModule with UnidocModule {
 
-  def scoverageVersion = T{"2.3.0"}
+  def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
-  override def unidocVersion: T[Option[String]] = Some("0.5.0")
+  override def unidocVersion = Task{Some("0.5.0")}
+  override def unidocDocumentTitle = Task{"ScaIR Unidoc"}
 
-  override def unidocSourceFiles = Task {
-      (Seq(compile().classes) ++ T.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
+  override def unidocSourceFiles =
+      (Seq(compile().classes) ++ Task.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
         .filter(pr => os.exists(pr.path))
         .flatMap(pr => os.walk(pr.path))
         .filter(_.ext == "tasty")
         .map(PathRef(_))
     }
-}
+
 
 trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings {
 
-  override def artifactName = T { s"scair-${super.artifactName()}"}
+  override def artifactName = s"scair-${super.artifactName()}"
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -86,14 +84,14 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   
   override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
 
-  override def publishVersion: T[String] = VcsVersion.vcsState().format()
+  override def publishVersion = VcsVersion.vcsState().format()
 
   object test extends ScoverageTests with TestModule.ScalaTest {
-    def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.2.19")
+    override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
   }
 }
 
-object `package` extends RootModule with ScairSettings with ScoverageReport {
+object `package` extends ScairSettings with ScoverageReport {
 
   override def moduleDeps = Seq(tools)
 
@@ -101,9 +99,9 @@ object `package` extends RootModule with ScairSettings with ScoverageReport {
 
   object core extends ScairModule {
 
-    def ivyDeps = Agg(
-      ivy"com.lihaoyi::fastparse:3.1.0",
-      ivy"com.github.scopt::scopt:4.1.0"
+    override def mvnDeps = Seq(
+      mvn"com.lihaoyi::fastparse:3.1.0",
+      mvn"com.github.scopt::scopt:4.1.0"
     )
   }
 
@@ -126,50 +124,51 @@ object `package` extends RootModule with ScairSettings with ScoverageReport {
 
   // Top-level commands and helpers
 
-  def allScalaSources = Tasks(Resolve.Tasks.resolve(this, Seq("__.sources"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[Seq[PathRef]]]).map(_.asInstanceOf[NamedTask[Seq[PathRef]]])))
-  def runAllUnitTests = T{T.sequence(Resolve.Tasks.resolve(this, Seq("__.test"), SelectMode.Multi).fold(sys.error(_), (tasks : List[NamedTask[_]]) => tasks.filter(_.isInstanceOf[NamedTask[(String, Seq[TestResult])]]).map(_.asInstanceOf[NamedTask[(String, Seq[TestResult])]])))()}
+  def allScalaSources(evaluator: Evaluator) = Tasks(evaluator.resolveTasks(Seq("__.sources"), SelectMode.Multi).get.asInstanceOf[Seq[Named[Seq[PathRef]]]])
+
+  def runAllUnitTests(evaluator: Evaluator) = Task.sequence(evaluator.resolveTasks(Seq("__.test"), SelectMode.Multi).get.asInstanceOf[Seq[Named[Seq[TestResult]]]])
    
-  def allChildren = allChidrenRec(millModuleDirectChildren)
+  def allChildren = allChidrenRec(moduleDirectChildren)
   def allChidrenRec(children: Seq[Module]): Seq[Module] = {
-    children ++ children.flatMap(child => allChidrenRec(child.millModuleDirectChildren))
+    children ++ children.flatMap(child => allChidrenRec(child.moduleDirectChildren))
   }
 
-  def scalafixAll(args: String*)= T.command {
-    T.sequence(allChildren
-      .flatMap{case m : ScalafixModule => Some(m.fix(args:_*))
+  def scalafixAll(args: String*) = Command(exclusive = true) {
+    Task.sequence(allChildren
+      .flatMap{case m : ScalafixModule => Some(m.fix(args*))
       case _ => None})()
     }
 
   // Run all formatting on all sources in the framework
-  def formatAll() = T.command {
+  def formatAll(evaluator: Evaluator) = Command(exclusive = true) {
     scalafixAll()()
-    scalafmt.ScalafmtModule.reformatAll(allScalaSources)()
+    scalafmt.ScalafmtModule.reformatAll(allScalaSources(evaluator))()
   }
 
   // Run all formatting *checks* on all sources in the framework
-  def checkFormatAll() = T.command {
+  def checkFormatAll(evaluator: Evaluator) = Command(exclusive = true) {
     scalafixAll("--check")()
-    scalafmt.ScalafmtModule.checkFormatAll(allScalaSources)()
+    scalafmt.ScalafmtModule.checkFormatAll(allScalaSources(evaluator))()
   }
 
   // Define a testAll to run the full framework testing infrastructure
-  def testAll() = T.command {
-    runAllUnitTests()
+  def testAll(evaluator: Evaluator) = Command(exclusive = true) {
+    runAllUnitTests(evaluator)()
     filechecks.run()()
   }
 
 
-  object filechecks extends TaskModule {
+  object filechecks extends DefaultTaskModule {
 
     // Make filechecks runnable directly as ./mill filechecks
-    override def defaultCommandName(): String = "run"
+    override def defaultTask(): String = "run"
     // Define a Mill command to run filechecks
     def run() = Task.Command {
       // It depends on the runnable CLI
       tools.scoverage.launcher()
 
       // Get the directory root to use as lit's working directory
-      val rootPath = rootModule().millModuleBasePath.value
+      val rootPath = rootModule().moduleDir
       // Run lit
       val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit)
       if (litStatus.exitCode != 0) {
