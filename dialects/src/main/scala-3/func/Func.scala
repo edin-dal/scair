@@ -23,10 +23,12 @@ object Func {
     ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
 
   def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
-    ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap((args: Seq[(String, Attribute)]) =>
-        Pass(args.map(_._2)) ~ parseResultTypes(parser) ~ parser.Region(args))) | (
-            parser.ParenTypeList ~ parseResultTypes(parser) ~ Pass(new Region(Seq()))
-        )))
+    ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap(
+      (args: Seq[(String, Attribute)]) =>
+        Pass(args.map(_._2)) ~ parseResultTypes(parser) ~ parser.Region(args)
+    )) | (
+      parser.ParenTypeList ~ parseResultTypes(parser) ~ Pass(new Region(Seq()))
+    )))
       .map({
         case (visibility, symbol, (argTypes, resTypes, body)) =>
           Func(
