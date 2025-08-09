@@ -217,6 +217,7 @@ def getComp[T: Type](using quotes: Quotes) = {
   val tpeSym = TypeRepr.of[T].typeSymbol
   tpeSym.companionModule
 }
+
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
   import quotes.reflect._
 

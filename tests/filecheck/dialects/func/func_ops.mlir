@@ -14,10 +14,10 @@ func.func @call_void_attributes() {
   func.return
 }
 
-// func.func @arg_rec(%0 : index) -> index {
-//    %1 = "func.call"(%0) <{"callee" = @arg_rec}> : (index) -> index
-//   func.return %1 : index
-// }
+func.func @arg_rec(%0 : index) -> index {
+   %1 = "func.call"(%0) <{"callee" = @arg_rec}> : (index) -> index
+  func.return %1 : index
+}
 
 // func.func @arg_rec_block(%0 : index) -> index {
 //   %1 = "func.call"(%0) <{"callee" = @arg_rec_block}> : (index) -> index
@@ -26,7 +26,7 @@ func.func @call_void_attributes() {
 
 // func.func private @external_fn(i32) -> (i32, i32)
 
-func.func @multi_return_body(%a : i32) -> (i32, i32) {
+func.func @multi_return_body(%a : i32) -> (i32) {
   func.return %a, %a : i32, i32
 }
 

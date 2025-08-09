@@ -1,13 +1,13 @@
 package scair.dialects.func
 
+import fastparse.*
+import fastparse.ParsingRun
+import scair.Parser
+import scair.Parser.*
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.Parser
-import scair.Parser._
-import fastparse._
-import fastparse.ParsingRun
 
 case class Call(
     callee: SymbolRefAttr,
@@ -16,17 +16,27 @@ case class Call(
 ) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
 object Func {
-    def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
-        (("private".!).? ~/ parser.SymbolRefAttrP ~/ parser.BlockArgList.orElse(Seq()).map(parser.currentScope.defineValues) ~/ ("->" ~/ (parser.ParenTypeList) | parser.Type.map(Seq(_))).orElse(Seq()) ~/ parser.Region).map {
-            case (visibility: Option[String], sym : SymbolRefAttr, args: Seq[Value[Attribute]], resultTypes: Seq[Attribute], body: Region) =>
-                Func(
-                    sym_name = sym.rootRef,
-                    function_type = FunctionType(args.map(_.typ), resultTypes),
-                    sym_visibility = visibility.map(StringData(_)),
-                    body = body
-                )
-        }
+
+  def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
+    ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.orElse(Seq())
+      ~ ("->" ~ (parser.Type.map(Seq(_)) | parser.ParenTypeList)).orElse(Seq()))
+      .flatMap((args, resTypes) => (parser.Region(args).map((_, resTypes))))))
+      .map({
+        case (visibility, symbol, (body, resTypes)) =>
+          Func(
+            sym_name = symbol.rootRef,
+            function_type = FunctionType(
+              inputs = body.blocks.head.arguments.map(_.typ).toSeq,
+              outputs = resTypes
+            ),
+            sym_visibility = visibility.map(StringData(_)),
+            body = body
+          )
+        case _ => throw new Exception("sioadih")
+      })
+
 }
+
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
