@@ -4,11 +4,11 @@ import fastparse.*
 import fastparse.ParsingRun
 import scair.Parser
 import scair.Parser.*
+import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.Printer
 
 case class Call(
     callee: SymbolRefAttr,
@@ -26,9 +26,16 @@ object Func {
   def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
     ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
-        Pass(args.map(_._2)) ~ parseResultTypes(parser) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser.Region(args)
+        Pass(args.map(_._2)) ~ parseResultTypes(
+          parser
+        ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser
+          .Region(args)
     )) | (
-      parser.ParenTypeList ~ parseResultTypes(parser) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(new Region(Seq()))
+      parser.ParenTypeList ~ parseResultTypes(
+        parser
+      ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(
+        new Region(Seq())
+      )
     )))
       .map({
         case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
@@ -55,44 +62,43 @@ case class Func(
 ) extends DerivedOperation["func.func", Func]
     with IsolatedFromAbove derives DerivedOperationCompanion:
 
-    override def custom_print(printer: Printer)(using indentLevel: Int) =
-        val lprinter = printer.copy()
-        lprinter.print("func.func ")
-        sym_visibility match
-            case Some(visibility) => lprinter.print(visibility.data); lprinter.print(" ")
-            case None             => ()
-        lprinter.print("@")
-        lprinter.print(sym_name.data)
-        body.blocks match
-            case Seq() =>
-                lprinter.print(function_type.custom_print)
-            case entry :: _ =>
-                lprinter.printListF(entry.arguments, lprinter.printArgument, "(", ", ", ")")
-                
-                if function_type.outputs.nonEmpty then
-                    lprinter.print(" -> ")
-                    if function_type.outputs.size == 1 then
-                        lprinter.print(function_type.outputs.head.custom_print)
-                    else
-                        lprinter.printList(function_type.outputs, "(", ", ", ")")
+  override def custom_print(printer: Printer)(using indentLevel: Int) =
+    val lprinter = printer.copy()
+    lprinter.print("func.func ")
+    sym_visibility match
+      case Some(visibility) =>
+        lprinter.print(visibility.data); lprinter.print(" ")
+      case None => ()
+    lprinter.print("@")
+    lprinter.print(sym_name.data)
+    body.blocks match
+      case Seq() =>
+        lprinter.print(function_type.custom_print)
+      case entry :: _ =>
+        lprinter.printListF(
+          entry.arguments,
+          lprinter.printArgument,
+          "(",
+          ", ",
+          ")"
+        )
 
-        if attributes.nonEmpty then
-            lprinter.print(" attributes")
-            lprinter.printOptionalAttrDict(attributes.toMap)
-        body.blocks match
-            case Seq() => ()
-            case entry :: others =>
-                lprinter.print(" {\n")
-                entry.operations.foreach(lprinter.print(_)(using indentLevel + 1))
-                others.foreach(lprinter.print)    
-                print(lprinter.indent * indentLevel + "}")
-        
-        
-            
-                
-        
+        if function_type.outputs.nonEmpty then
+          lprinter.print(" -> ")
+          if function_type.outputs.size == 1 then
+            lprinter.print(function_type.outputs.head.custom_print)
+          else lprinter.printList(function_type.outputs, "(", ", ", ")")
 
-        
+    if attributes.nonEmpty then
+      lprinter.print(" attributes")
+      lprinter.printOptionalAttrDict(attributes.toMap)
+    body.blocks match
+      case Seq()           => ()
+      case entry :: others =>
+        lprinter.print(" {\n")
+        entry.operations.foreach(lprinter.print(_)(using indentLevel + 1))
+        others.foreach(lprinter.print)
+        print(lprinter.indent * indentLevel + "}")
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
