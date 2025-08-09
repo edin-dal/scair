@@ -25,13 +25,13 @@ object Func {
   def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
     ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
-        Pass(args.map(_._2)) ~ parseResultTypes(parser) ~ parser.Region(args)
+        Pass(args.map(_._2)) ~ parseResultTypes(parser) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser.Region(args)
     )) | (
-      parser.ParenTypeList ~ parseResultTypes(parser) ~ Pass(new Region(Seq()))
+      parser.ParenTypeList ~ parseResultTypes(parser) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(new Region(Seq()))
     )))
       .map({
-        case (visibility, symbol, (argTypes, resTypes, body)) =>
-          Func(
+        case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
+          val f = Func(
             sym_name = symbol.rootRef,
             function_type = FunctionType(
               inputs = argTypes,
@@ -40,7 +40,8 @@ object Func {
             sym_visibility = visibility.map(StringData(_)),
             body = body
           )
-        case _ => throw new Exception("sioadih")
+          f.attributes.addAll(attributes)
+          f
       })
 
 }

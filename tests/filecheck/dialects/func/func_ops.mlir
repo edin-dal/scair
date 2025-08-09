@@ -4,6 +4,10 @@ func.func @noarg_void() {
   func.return
 }
 
+func.func @noarg_attributes() attributes {hello = "world"} {
+  func.return
+}
+
 func.func @call_void() {
   "func.call"() <{"callee" = @call_void}> : () -> ()
   func.return
@@ -30,11 +34,13 @@ func.func @multi_return_body(%a : i32) -> (i32, i32) {
   func.return %a, %a : i32, i32
 }
 
-
 // CHECK: builtin.module {
 // CHECK-NEXT:    "func.func"() <{sym_name = "noarg_void", function_type = () -> ()}> ({
 // CHECK-NEXT:      func.return
 // CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    "func.func"() <{sym_name = "noarg_attributes", function_type = () -> ()}> ({
+// CHECK-NEXT:      func.return
+// CHECK-NEXT:    }) {hello = "world"} : () -> ()
 // CHECK-NEXT:    "func.func"() <{sym_name = "call_void", function_type = () -> ()}> ({
 // CHECK-NEXT:      "func.call"() <{callee = @call_void}> : () -> ()
 // CHECK-NEXT:      func.return
