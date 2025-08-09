@@ -212,6 +212,11 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         case _ => None
       opDef.copy(assembly_format = format)
 
+def getComp[T: Type](using quotes: Quotes) = {
+  import quotes.reflect._
+  val tpeSym = TypeRepr.of[T].typeSymbol
+  tpeSym.companionModule
+}
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
   import quotes.reflect._
 

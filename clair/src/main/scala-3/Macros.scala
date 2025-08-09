@@ -193,12 +193,35 @@ def customPrintMacro(
 
 def parseMacro(
     opDef: OperationDef,
+    opComp: Any,
     p: Expr[Parser]
 )(using
     ctx: Expr[P[Any]]
 )(using
     Quotes
 ): Expr[P[Operation]] =
+  import quotes.reflect._
+  val comp = opComp.asInstanceOf[Symbol]
+  val parseMethod = comp.declaredMethods.filter(_.name == "parse") match
+    case Seq(m) => 
+      val sig = TypeRepr.of[OperationCompanion].typeSymbol.declaredMethods.filter(_.name == "parse").head.signature
+      m.signature match
+        case s if s == sig =>
+          println(sig)
+          val callTerm = Select.unique(Ref(comp), m.name).appliedToType(TypeRepr.of[Any]).appliedTo(p.asTerm).appliedTo(ctx.asTerm) 
+          // println(callTerm.etaExpand(comp))
+          // Some(callTerm.etaExpand(comp).asExprOf[P[Operation]])
+          Some(callTerm.asExprOf[P[Operation]])
+        case _ => report.errorAndAbort(
+          s"Method 'parse' of companion ${opComp} does not match expected signature ${sig}.",
+        )
+    case Seq() => None
+    case d: Seq[?] => report.errorAndAbort(
+      s"Multiple companion parse methods not supported at this point."
+    )
+    case _ => None
+  
+  parseMethod.getOrElse(
   opDef.assembly_format match
     case Some(format) =>
       format.parse(opDef, p)
@@ -208,6 +231,7 @@ def parseMacro(
           s"No custom Parser implemented for Operation '${${ Expr(opDef.name) }}'"
         )
       }
+  )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
@@ -799,6 +823,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
     Quotes
 ): Expr[DerivedOperationCompanion[T]] =
   val opDef = getDefImpl[T]
+  val opComp = getComp[T]
 
   '{
 
@@ -821,7 +846,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
       override def parse[$: P as ctx](parser: Parser): P[Operation] =
-        ${ parseMacro(opDef, '{ parser })(using '{ ctx }) }
+        ${ parseMacro(opDef, opComp, '{ parser })(using '{ ctx }) }
 
       def apply(
           operands: Seq[Value[Attribute]] = Seq(),
