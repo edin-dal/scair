@@ -17,16 +17,22 @@ case class Call(
 
 object Func {
 
+  def parseResultTypes[$: ParsingRun](
+      parser: Parser
+  ): ParsingRun[Seq[Attribute]] =
+    ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
+
   def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
-    ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.orElse(Seq())
-      ~ ("->" ~ (parser.Type.map(Seq(_)) | parser.ParenTypeList)).orElse(Seq()))
-      .flatMap((args, resTypes) => (parser.Region(args).map((_, resTypes))))))
+    ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap((args: Seq[(String, Attribute)]) =>
+        Pass(args.map(_._2)) ~ parseResultTypes(parser) ~ parser.Region(args))) | (
+            parser.ParenTypeList ~ parseResultTypes(parser) ~ Pass(new Region(Seq()))
+        )))
       .map({
-        case (visibility, symbol, (body, resTypes)) =>
+        case (visibility, symbol, (argTypes, resTypes, body)) =>
           Func(
             sym_name = symbol.rootRef,
             function_type = FunctionType(
-              inputs = body.blocks.head.arguments.map(_.typ).toSeq,
+              inputs = argTypes,
               outputs = resTypes
             ),
             sym_visibility = visibility.map(StringData(_)),

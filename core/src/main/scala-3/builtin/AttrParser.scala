@@ -387,7 +387,7 @@ class AttrParser(val ctx: MLContext) {
   \*≡==---==≡≡≡==---==≡*/
 
   def ParenTypeList[$: P] = P(
-    "(" ~/ Type.rep(sep = ",") ~ ")"
+    "(" ~ Type.rep(sep = ",") ~ ")"
   )
 
   def FunctionType[$: P] = P(
