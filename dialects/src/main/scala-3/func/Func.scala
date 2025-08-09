@@ -8,6 +8,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.Printer
 
 case class Call(
     callee: SymbolRefAttr,
@@ -52,7 +53,46 @@ case class Func(
     sym_visibility: Option[StringData],
     body: Region
 ) extends DerivedOperation["func.func", Func]
-    with IsolatedFromAbove derives DerivedOperationCompanion
+    with IsolatedFromAbove derives DerivedOperationCompanion:
+
+    override def custom_print(printer: Printer)(using indentLevel: Int) =
+        val lprinter = printer.copy()
+        lprinter.print("func.func ")
+        sym_visibility match
+            case Some(visibility) => lprinter.print(visibility.data); lprinter.print(" ")
+            case None             => ()
+        lprinter.print("@")
+        lprinter.print(sym_name.data)
+        body.blocks match
+            case Seq() =>
+                lprinter.print(function_type.custom_print)
+            case entry :: _ =>
+                lprinter.printListF(entry.arguments, lprinter.printArgument, "(", ", ", ")")
+                
+                if function_type.outputs.nonEmpty then
+                    lprinter.print(" -> ")
+                    if function_type.outputs.size == 1 then
+                        lprinter.print(function_type.outputs.head.custom_print)
+                    else
+                        lprinter.printList(function_type.outputs, "(", ", ", ")")
+
+        if attributes.nonEmpty then
+            lprinter.print(" attributes")
+            lprinter.printOptionalAttrDict(attributes.toMap)
+        body.blocks match
+            case Seq() => ()
+            case entry :: others =>
+                lprinter.print(" {\n")
+                entry.operations.foreach(lprinter.print(_)(using indentLevel + 1))
+                others.foreach(lprinter.print)    
+                print(lprinter.indent * indentLevel + "}")
+        
+        
+            
+                
+        
+
+        
 
 case class Return(
     _operands: Seq[Operand[Attribute]]

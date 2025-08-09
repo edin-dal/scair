@@ -2,72 +2,70 @@
 
 // CHECK:       builtin.module {
 
-"func.func"() <{sym_name = "simple_constant", function_type = () -> (i32, i32)}> ({
+func.func @simple_constant() -> (i32, i32) {
   %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
   %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
   func.return %0, %1 : i32, i32
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "simple_constant", function_type = () -> (i32, i32)}> ({
+}
+// CHECK-NEXT:    func.func @simple_constant() -> (i32, i32) {
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
 // CHECK-NEXT:      func.return %0, %0 : i32, i32
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    }
 
-"func.func"() <{sym_name = "simple_float_constant", function_type = () -> (f32, f32)}> ({
-  %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
-  %1 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
-  func.return %0, %1 : f32, f32
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "simple_float_constant", function_type = () -> (f32, f32)}> ({
+func.func @simple_float_constant() -> (f32, f32) {
+  %2 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
+  %3 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
+  func.return %2, %3 : f32, f32
+}
+// CHECK-NEXT:    func.func @simple_float_constant() -> (f32, f32) {
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
 // CHECK-NEXT:      func.return %0, %0 : f32, f32
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    
 
-"func.func"() <{sym_name = "basic", function_type = () -> (index, index)}> ({
-  %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-  %1 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-  %2 = "affine.apply"(%0) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
-  %3 = "affine.apply"(%1) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
-  func.return %2, %3 : index, index
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "basic", function_type = () -> (index, index)}> ({
+func.func @basic() -> (index, index) {
+  %4 = "arith.constant"() <{value = 0 : index}> : () -> (index)
+  %5 = "arith.constant"() <{value = 0 : index}> : () -> (index)
+  %6 = "affine.apply"(%4) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
+  %7 = "affine.apply"(%5) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
+  func.return %6, %7 : index, index
+}
+// CHECK-NEXT:    func.func @basic() -> (index, index) {
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
 // CHECK-NEXT:      %1 = "affine.apply"(%0) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
 // CHECK-NEXT:      func.return %1, %1 : index, index
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    }
 
-"func.func"() <{sym_name = "many", function_type = (f32, f32) -> f32}> ({
-^bb0(%0: f32, %1: f32):
-  %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %3 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %4 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %5 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %6 = "arith.addf"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %7 = "arith.addf"(%4, %5) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %8 = "arith.addf"(%2, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %9 = "arith.addf"(%6, %7) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %10 = "arith.addf"(%7, %8) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %11 = "arith.addf"(%9, %10) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  func.return %11 : f32
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "many", function_type = (f32, f32) -> f32}> ({
-// CHECK-NEXT:    ^bb0(%0: f32, %1: f32):
-// CHECK-NEXT:      %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      %3 = "arith.addf"(%2, %2) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      %4 = "arith.addf"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      %5 = "arith.addf"(%4, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      func.return %5 : f32
-// CHECK-NEXT:    }) : () -> ()
+func.func @many(%8: f32, %9: f32) -> f32 {
+  %10 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %11 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %12 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %13 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %14 = "arith.addf"(%10, %11) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %15 = "arith.addf"(%12, %13) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %16 = "arith.addf"(%10, %12) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %17 = "arith.addf"(%14, %15) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %18 = "arith.addf"(%15, %16) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %19 = "arith.addf"(%17, %18) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  func.return %19 : f32
+}
+// CHECK-NEXT:    func.func @many(%4: f32, %5: f32) -> f32 {
+// CHECK-NEXT:      %6 = "arith.addf"(%4, %5) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %7 = "arith.addf"(%6, %6) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %8 = "arith.addf"(%7, %7) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %9 = "arith.addf"(%8, %8) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      func.return %9 : f32
+// CHECK-NEXT:    }
 
-"func.func"() <{sym_name = "different_ops", function_type = () -> (i32, i32)}> ({
-  %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
-  %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-  func.return %0, %1 : i32, i32
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "different_ops", function_type = () -> (i32, i32)}> ({
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
-// CHECK-NEXT:      %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:      func.return %0, %1 : i32, i32
-// CHECK-NEXT:    }) : () -> ()
+func.func @different_ops() -> (i32, i32) {
+  %20 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
+  %21 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  func.return %20, %21 : i32, i32
+}
+// CHECK-NEXT:    func.func @different_ops() -> (i32, i32) {
+// CHECK-NEXT:      %10 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
+// CHECK-NEXT:      %11 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      func.return %10, %11 : i32, i32
+// CHECK-NEXT:    }
 
 // TODO: Requires memref.cast 
 // "func.func"() <{sym_name = "different_results", function_type = (memref<*xf32>) -> (memref<?x?xf32>, memref<4x?xf32>)}> ({
@@ -77,50 +75,48 @@
 //   "func.return"(%0, %1) : (memref<?x?xf32>, memref<4x?xf32>) -> ()
 // }) : () -> ()
 
-"func.func"() <{sym_name = "different_attributes", function_type = (index, index) -> (i1, i1, i1)}> ({
-^0(%arg0 : index, %arg1 : index):
-  %0 = "arith.cmpi"(%arg0, %arg1) <{predicate = 2 : i64}> : (index, index) -> i1
-  %1 = "arith.cmpi"(%arg0, %arg1) <{predicate = 1 : i64}> : (index, index) -> i1
-  %2 = "arith.cmpi"(%arg0, %arg1) <{predicate = 1 : i64}> : (index, index) -> i1
-  "func.return"(%0, %1, %2) : (i1, i1, i1) -> ()
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "different_attributes", function_type = (index, index) -> (i1, i1, i1)}> ({
-// CHECK-NEXT:    ^bb0(%0: index, %1: index):
-// CHECK-NEXT:      %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> (i1)
-// CHECK-NEXT:      %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> (i1)
-// CHECK-NEXT:      func.return %2, %3, %3 : i1, i1, i1
-// CHECK-NEXT:    }) : () -> ()
+func.func @different_attributes(%22: index, %23: index) -> (i1, i1, i1) {
+  %24 = "arith.cmpi"(%22, %23) <{predicate = 2}> : (index, index) -> (i1)
+  %25 = "arith.cmpi"(%22, %23) <{predicate = 1}> : (index, index) -> (i1)
+  %26 = "arith.cmpi"(%22, %23) <{predicate = 1}> : (index, index) -> (i1)
+  func.return %24, %25, %26 : i1, i1, i1
+}
+// CHECK-NEXT:    func.func @different_attributes(%12: index, %13: index) -> (i1, i1, i1) {
+// CHECK-NEXT:      %14 = "arith.cmpi"(%12, %13) <{predicate = 2}> : (index, index) -> (i1)
+// CHECK-NEXT:      %15 = "arith.cmpi"(%12, %13) <{predicate = 1}> : (index, index) -> (i1)
+// CHECK-NEXT:      func.return %14, %15, %15 : i1, i1, i1
+// CHECK-NEXT:    }
 
-"func.func"() <{sym_name = "side_effect", function_type = () -> (memref<2x1xf32>, memref<2x1xf32>)}> ({
-  %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>, alignment = 0}> : () -> memref<2x1xf32>
-  %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>, alignment = 0}> : () -> memref<2x1xf32>
-  "func.return"(%0, %1) : (memref<2x1xf32>, memref<2x1xf32>) -> ()
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "side_effect", function_type = () -> (memref<2x1xf32>, memref<2x1xf32>)}> ({
-// CHECK-NEXT:      %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
-// CHECK-NEXT:      %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
-// CHECK-NEXT:      func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
-// CHECK-NEXT:    }) : () -> ()
+func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
+  %27 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+  %28 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+  func.return %27, %28 : memref<2x1xf32>, memref<2x1xf32>
+}
+// CHECK-NEXT:    func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
+// CHECK-NEXT:      %16 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+// CHECK-NEXT:      %17 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+// CHECK-NEXT:      func.return %16, %17 : memref<2x1xf32>, memref<2x1xf32>
+// CHECK-NEXT:    }
 
-"func.func"() <{sym_name = "down_propagate_for", function_type = () -> ()}> ({
-  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-  "affine.for"() <{lowerBoundMap = affine_map<() -> (0)>, operandSegmentSizes = array<i32: 0, 0, 0>, step = 1 : index, upperBoundMap = affine_map<() -> (4)>}> ({
-  ^0(%arg0 : index):
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    "foo"(%0, %1) : (i32, i32) -> ()
+func.func @down_propagate_for() {
+  %29 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+  ^bb0(%30: index):
+    %31 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    "foo"(%29, %31) : (i32, i32) -> ()
     "affine.yield"() : () -> ()
   }) : () -> ()
-  "func.return"() : () -> ()
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "down_propagate_for", function_type = () -> ()}> ({
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  func.return
+}
+// CHECK-NEXT:    func.func @down_propagate_for() {
+// CHECK-NEXT:      %18 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
 // CHECK-NEXT:      "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
-// CHECK-NEXT:      ^bb0(%1: index):
-// CHECK-NEXT:        "foo"(%0, %0) : (i32, i32) -> ()
+// CHECK-NEXT:      ^bb0(%19: index):
+// CHECK-NEXT:        "foo"(%18, %18) : (i32, i32) -> ()
 // CHECK-NEXT:        "affine.yield"() : () -> ()
 // CHECK-NEXT:      }) : () -> ()
 // CHECK-NEXT:      func.return
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    }
 
 // TODO: This requires the notions of SSACFG regions and block dominance
 // "func.func"() <{sym_name = "down_propagate", function_type = () -> i32}> ({
@@ -133,26 +129,26 @@
 // ^1(%3 : i32):
 //   "func.return"(%3) : (i32) -> ()
 // }) : () -> ()
-"func.func"() <{sym_name = "up_propagate_for", function_type = () -> i32}> ({
-  "affine.for"() <{lowerBoundMap = affine_map<() -> (0)>, operandSegmentSizes = array<i32: 0, 0, 0>, step = 1 : index, upperBoundMap = affine_map<() -> (4)>}> ({
-  ^0(%arg0 : index):
-    %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    "foo"(%0) : (i32) -> ()
+func.func @up_propagate_for() -> i32 {
+  "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+  ^bb0(%30: index):
+    %31 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    "foo"(%31) : (i32) -> ()
     "affine.yield"() : () -> ()
   }) : () -> ()
-  %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-  "func.return"(%1) : (i32) -> ()
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "up_propagate_for", function_type = () -> i32}> ({
+  %30 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  func.return %30 : i32
+}
+// CHECK-NEXT:    func.func @up_propagate_for() -> i32 {
 // CHECK-NEXT:      "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
-// CHECK-NEXT:      ^bb0(%0: index):
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:        "foo"(%1) : (i32) -> ()
+// CHECK-NEXT:      ^bb0(%19: index):
+// CHECK-NEXT:        %20 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo"(%20) : (i32) -> ()
 // CHECK-NEXT:        "affine.yield"() : () -> ()
 // CHECK-NEXT:      }) : () -> ()
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:      func.return %0 : i32
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:      %19 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      func.return %19 : i32
+// CHECK-NEXT:    }
 
 // TODO: Requires the notions of SSACFG regions and block dominance
 // "func.func"() <{sym_name = "up_propagate", function_type = () -> i32}> ({
@@ -185,30 +181,30 @@
 
 /// This test checks that nested regions that are isolated from above are
 /// properly handled.
-"func.func"() <{sym_name = "nested_isolated", function_type = () -> i32}> ({
-  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-  "func.func"() <{sym_name = "nested_func", function_type = () -> ()}> ({
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    "foo.yield"(%1) : (i32) -> ()
-  }) : () -> ()
+func.func @nested_isolated() -> i32 {
+  %31 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  func.func @nested_func() {
+    %32 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    "foo.yield"(%32) : (i32) -> ()
+  }
   "foo.region"() ({
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    "foo.yield"(%1) : (i32) -> ()
+    %33 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    "foo.yield"(%33) : (i32) -> ()
   }) : () -> ()
-  "func.return"(%0) : (i32) -> ()
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "nested_isolated", function_type = () -> i32}> ({
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:      "func.func"() <{sym_name = "nested_func", function_type = () -> ()}> ({
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:        "foo.yield"(%1) : (i32) -> ()
-// CHECK-NEXT:      }) : () -> ()
+  func.return %31 : i32
+}
+// CHECK-NEXT:    func.func @nested_isolated() -> i32 {
+// CHECK-NEXT:      %20 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      func.func @nested_func() {
+// CHECK-NEXT:        %21 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo.yield"(%21) : (i32) -> ()
+// CHECK-NEXT:      }
 // CHECK-NEXT:      "foo.region"() ({
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:        "foo.yield"(%1) : (i32) -> ()
+// CHECK-NEXT:        %22 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo.yield"(%22) : (i32) -> ()
 // CHECK-NEXT:      }) : () -> ()
-// CHECK-NEXT:      func.return %0 : i32
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:      func.return %20 : i32
+// CHECK-NEXT:    }
 
 /// This test is checking that CSE gracefully handles values in graph regions
 /// where the use occurs before the def, and one of the defs could be CSE'd with
@@ -218,23 +214,23 @@
 /// Though, MLIR itself does not seem to CSE those constants...
 /// Mentionning in case there is a good reason, but I guess this might just work better
 /// here!
-"func.func"() <{sym_name = "use_before_def", function_type = () -> ()}> ({
+func.func @use_before_def() {
   "test.graph_region"() ({
-    %0 = "arith.addi"(%1, %2) : (i32, i32) -> i32
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    "foo.yield"(%0) : (i32) -> ()
+    %33 = "arith.addi"(%34, %35) : (i32, i32) -> (i32)
+    %34 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    %35 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    "foo.yield"(%33) : (i32) -> ()
   }) : () -> ()
-  "func.return"() : () -> ()
-}) : () -> ()
-// CHECK-NEXT:    "func.func"() <{sym_name = "use_before_def", function_type = () -> ()}> ({
+  func.return
+}
+// CHECK-NEXT:    func.func @use_before_def() {
 // CHECK-NEXT:      "test.graph_region"() ({
-// CHECK-NEXT:        %0 = "arith.addi"(%1, %1) : (i32, i32) -> (i32)
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:        "foo.yield"(%0) : (i32) -> ()
+// CHECK-NEXT:        %22 = "arith.addi"(%23, %23) : (i32, i32) -> (i32)
+// CHECK-NEXT:        %23 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        "foo.yield"(%22) : (i32) -> ()
 // CHECK-NEXT:      }) : () -> ()
 // CHECK-NEXT:      func.return
-// CHECK-NEXT:    }) : () -> ()
+// CHECK-NEXT:    }
 
 // TODO: The following tests require more nuanced notions of side effects yet to be implemented in ScaIR
 // "func.func"() <{sym_name = "remove_direct_duplicated_read_op", function_type = () -> i32}> ({
