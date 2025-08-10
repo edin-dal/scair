@@ -237,7 +237,7 @@ def getCustomParse[T: Type](p: Expr[Parser])(using quotes: Quotes) =
         .appliedTo(p.asTerm)
         .etaExpand(comp)
         .asExprOf[P[Any] => P[Operation]]
-      Some('{(ctx: P[Any]) ?=> ${callTerm}(ctx)})
+      Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })
     case Seq() =>
       None
     case d: Seq[?] =>

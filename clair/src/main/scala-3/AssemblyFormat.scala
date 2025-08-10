@@ -522,8 +522,8 @@ case class AssemblyFormatDirective(
     *   Specialized code to parse an assembly format into an Operation.
     */
   def parse(opDef: OperationDef, p: Expr[Parser])(using quotes: Quotes) =
-     '{(ctx: P[Any]) ?=>
-      ${ parseTuple(p)(using '{ctx}) }.map(parsed =>
+    '{ (ctx: P[Any]) ?=>
+      ${ parseTuple(p)(using '{ ctx }) }.map(parsed =>
         ${ buildOperation(opDef, p, '{ parsed }) }
       )
     }

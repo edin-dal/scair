@@ -208,7 +208,6 @@ def parseMacro(
             }}'"
         )
       }
-  
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
