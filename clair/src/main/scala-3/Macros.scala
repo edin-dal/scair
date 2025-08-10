@@ -199,9 +199,8 @@ def parseMacro(
 )(using
     Quotes
 ): Expr[P[Operation]] =
-  import quotes.reflect._
-  val parseMethod = 
-  opDef.tpe.flatMap(tpe => getCustomParse(p)(using ctx)(using tpe))
+  val parseMethod =
+    opDef.tpe.flatMap(tpe => getCustomParse(p)(using ctx)(using tpe))
   parseMethod.getOrElse(
     opDef.assembly_format match
       case Some(format) =>

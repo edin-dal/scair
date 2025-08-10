@@ -1,14 +1,13 @@
 package scair.clair.mirrored
 
+import fastparse.*
+import scair.Parser
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.ir.*
 
 import scala.deriving.*
 import scala.quoted.*
-import fastparse._
-import scair.ir._
-import scair.Parser
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -221,7 +220,9 @@ def getCompanion[T: Type](using quotes: Quotes) = {
   TypeRepr.of[T].typeSymbol.companionModule
 }
 
-def getCustomParse[T: Type](p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes : Quotes) =
+def getCustomParse[T: Type](p: Expr[Parser])(using
+    ctx: Expr[P[Any]]
+)(using quotes: Quotes) =
   import quotes.reflect._
 
   val comp = getCompanion(using Type.of[T])
@@ -232,21 +233,21 @@ def getCustomParse[T: Type](p: Expr[Parser])(using ctx: Expr[P[Any]])(using quot
     .head
     .signature
   comp.memberMethod("parse").filter(_.signature == sig) match
-  case Seq(m) =>
-    val callTerm = Select
-      .unique(Ref(comp), m.name)
-      .appliedToType(TypeRepr.of[Any])
-      .appliedTo(p.asTerm)
-      .appliedTo(ctx.asTerm)
-      .etaExpand(comp)
-      .asExprOf[P[Operation]]
-    Some(callTerm)
-  case Seq()     =>
-    None
-  case d: Seq[?] =>
-    report.errorAndAbort(
-      s"Multiple companion parse methods not supported at this point."
-    )
+    case Seq(m) =>
+      val callTerm = Select
+        .unique(Ref(comp), m.name)
+        .appliedToType(TypeRepr.of[Any])
+        .appliedTo(p.asTerm)
+        .appliedTo(ctx.asTerm)
+        .etaExpand(comp)
+        .asExprOf[P[Operation]]
+      Some(callTerm)
+    case Seq() =>
+      None
+    case d: Seq[?] =>
+      report.errorAndAbort(
+        s"Multiple companion parse methods not supported at this point."
+      )
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
   import quotes.reflect._
