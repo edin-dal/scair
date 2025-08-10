@@ -195,10 +195,8 @@ def parseMacro(
     opDef: OperationDef,
     p: Expr[Parser]
 )(using
-    ctx: Expr[P[Any]]
-)(using
     Quotes
-): Expr[P[Operation]] =
+): Expr[P[Any] ?=> P[Operation]] =
   opDef.assembly_format match
     case Some(format) =>
       format.parse(opDef, p)
@@ -824,9 +822,9 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
       override def parse[$: P as ctx](p: Parser): P[Operation] =
-        ${ 
-          getCustomParse[T]('{ p })(using ' { ctx }).getOrElse(parseMacro(opDef, '{ p })(using '{ ctx }))
-        }
+        ${
+          (getCustomParse[T]('{ p }).getOrElse(parseMacro(opDef, '{ p })))
+        }(using ctx)
 
       def apply(
           operands: Seq[Value[Attribute]] = Seq(),

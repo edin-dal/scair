@@ -219,9 +219,7 @@ def getCompanion[T: Type](using quotes: Quotes) = {
   TypeRepr.of[T].typeSymbol.companionModule
 }
 
-def getCustomParse[T: Type](p: Expr[Parser])(using
-    ctx: Expr[P[Any]]
-)(using quotes: Quotes) =
+def getCustomParse[T: Type](p: Expr[Parser])(using quotes: Quotes) =
   import quotes.reflect._
 
   val comp = getCompanion(using Type.of[T])
@@ -237,10 +235,9 @@ def getCustomParse[T: Type](p: Expr[Parser])(using
         .unique(Ref(comp), m.name)
         .appliedToType(TypeRepr.of[Any])
         .appliedTo(p.asTerm)
-        .appliedTo(ctx.asTerm)
         .etaExpand(comp)
-        .asExprOf[P[Operation]]
-      Some(callTerm)
+        .asExprOf[P[Any] => P[Operation]]
+      Some('{(ctx: P[Any]) ?=> ${callTerm}(ctx)})
     case Seq() =>
       None
     case d: Seq[?] =>
