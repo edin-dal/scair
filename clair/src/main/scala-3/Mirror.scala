@@ -206,7 +206,6 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        tpe = Some(Type.of[T]),
         assembly_format = None
       )
       val format = Type.of[T] match

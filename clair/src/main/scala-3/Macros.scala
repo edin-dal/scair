@@ -199,21 +199,18 @@ def parseMacro(
 )(using
     Quotes
 ): Expr[P[Operation]] =
-  val parseMethod =
-    opDef.tpe.flatMap(tpe => getCustomParse(p)(using ctx)(using tpe))
-  parseMethod.getOrElse(
-    opDef.assembly_format match
-      case Some(format) =>
-        format.parse(opDef, p)
-      case None =>
-        '{
-          throw new Exception(
-            s"No custom Parser implemented for Operation '${${
-                Expr(opDef.name)
-              }}'"
-          )
-        }
-  )
+  opDef.assembly_format match
+    case Some(format) =>
+      format.parse(opDef, p)
+    case None =>
+      '{
+        throw new Exception(
+          s"No custom Parser implemented for Operation '${${
+              Expr(opDef.name)
+            }}'"
+        )
+      }
+  
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
@@ -826,8 +823,10 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
-      override def parse[$: P as ctx](parser: Parser): P[Operation] =
-        ${ parseMacro(opDef, '{ parser })(using '{ ctx }) }
+      override def parse[$: P as ctx](p: Parser): P[Operation] =
+        ${ 
+          getCustomParse[T]('{ p })(using ' { ctx }).getOrElse(parseMacro(opDef, '{ p })(using '{ ctx }))
+        }
 
       def apply(
           operands: Seq[Value[Attribute]] = Seq(),
