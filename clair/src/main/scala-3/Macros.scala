@@ -201,32 +201,7 @@ def parseMacro(
 ): Expr[P[Operation]] =
   import quotes.reflect._
   val parseMethod = 
-  opDef.tpe.flatMap(tpe => {
-    val comp = getCompanion(using tpe)
-    val sig = TypeRepr
-      .of[OperationCompanion]
-      .typeSymbol
-      .declaredMethods
-      .filter(_.name == "parse")
-      .head
-      .signature
-    comp.memberMethod("parse").filter(_.signature == sig) match
-    case Seq(m) =>
-      println(sig)
-      val callTerm = Select
-        .unique(Ref(comp), m.name)
-        .appliedToType(TypeRepr.of[Any])
-        .appliedTo(p.asTerm)
-        .appliedTo(ctx.asTerm)
-      Some(callTerm.asExprOf[P[Operation]])
-    case Seq()     => None
-    case d: Seq[?] =>
-      report.errorAndAbort(
-        s"Multiple companion parse methods not supported at this point."
-      )
-    case _ => None
-  }
-  )
+  opDef.tpe.flatMap(tpe => getCustomParse(p)(using ctx)(using tpe))
   parseMethod.getOrElse(
     opDef.assembly_format match
       case Some(format) =>
