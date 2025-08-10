@@ -104,6 +104,7 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
+    val tpe: Option[quoted.Type[? <: Any]] = None,
     val assembly_format: Option[AssemblyFormatDirective] = None
 ) {
 

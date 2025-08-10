@@ -204,6 +204,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
+        tpe = Some(Type.of[T]),
         assembly_format = None
       )
       val format = Type.of[T] match
@@ -212,10 +213,9 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         case _ => None
       opDef.copy(assembly_format = format)
 
-def getComp[T: Type](using quotes: Quotes) = {
+def getCompanion[T: Type](using quotes: Quotes) = {
   import quotes.reflect._
-  val tpeSym = TypeRepr.of[T].typeSymbol
-  tpeSym.companionModule
+  TypeRepr.of[T].typeSymbol.companionModule
 }
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
