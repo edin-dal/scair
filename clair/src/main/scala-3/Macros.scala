@@ -224,21 +224,20 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
   val typeName = Type.of[A].toString()
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
-
-    if (value.isEmpty) {
-      throw new IllegalArgumentException(
-        s"Missing required property \"${${ Expr(propName) }}\" of type ${${
-            Expr(typeName)
-          }}"
-      )
-    } else if (!value.get.isInstanceOf[A]) {
-      throw new IllegalArgumentException(
-        s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass.getSimpleName}"
-      )
-    }
-    value.get.asInstanceOf[A]
+    value match
+      case None =>
+        throw new IllegalArgumentException(
+          s"Missing required property \"${${ Expr(propName) }}\" of type ${${
+              Expr(typeName)
+            }}"
+        )
+      case Some(prop: A) => prop
+      case Some(_)       =>
+        throw new IllegalArgumentException(
+          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+            s"expected ${${ Expr(typeName) }}, " +
+            s"but found ${value.getClass.getSimpleName}"
+        )
   }
 
 def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
@@ -248,17 +247,15 @@ def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
   val typeName = Type.of[A].toString()
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
-
-    if (value.isEmpty) {
-      value.asInstanceOf[None.type]
-    } else if (value.get.isInstanceOf[A]) {
-      value.asInstanceOf[Option[A]]
-    } else
-      throw new IllegalArgumentException(
-        s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-          s"expected ${${ Expr(typeName) }}, " +
-          s"but found ${value.getClass}"
-      )
+    value.map {
+      case prop: A => prop
+      case _       =>
+        throw new IllegalArgumentException(
+          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+            s"expected ${${ Expr(typeName) }}, " +
+            s"but found ${value.getClass}"
+        )
+    }
   }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -366,7 +363,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
       )
     ).verify(dense, ConstraintContext())
 
-    for (s <- dense) yield s match {
+    for (s <- dense.data) yield s match {
       case right: IntegerAttr => right.value.data.toInt
       case _                  =>
         throw new Exception(
