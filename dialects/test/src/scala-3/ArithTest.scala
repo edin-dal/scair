@@ -63,12 +63,11 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
     Printer(p = PrintWriter(out)).print(module)
     out.toString().trim() shouldEqual """
 builtin.module {
-  "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({
-  ^bb0(%0: i32):
+  func.func @suchCompute(%0: i32) -> i32 {
     %1 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
     %2 = "arith.addi"(%0, %1) : (i32, i32) -> (i32)
     func.return %2 : i32
-  }) : () -> ()
+
 }
 """.trim()
 
@@ -82,10 +81,9 @@ builtin.module {
     Printer(p = PrintWriter(out)).print(module.structured.right.get)
     out.toString().trim() shouldEqual """
 builtin.module {
-  "func.func"() <{sym_name = "suchCompute", function_type = (i32) -> i32}> ({
-  ^bb0(%0: i32):
+  func.func @suchCompute(%0: i32) -> i32 {
     func.return %0 : i32
-  }) : () -> ()
+
 }
 """.trim()
   }

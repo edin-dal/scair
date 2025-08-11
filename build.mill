@@ -23,7 +23,7 @@ trait ScairSettings extends ScalaModule with UnidocModule {
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
-  override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports")
+  override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
   override def unidocVersion = Task{Some("0.5.0")}
@@ -84,7 +84,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   
   override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
 
-  override def publishVersion = VcsVersion.vcsState().format()
+  override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
   object test extends ScoverageTests with TestModule.ScalaTest {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
