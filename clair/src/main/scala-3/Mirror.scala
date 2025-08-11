@@ -3,7 +3,7 @@ package scair.clair.mirrored
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.ir.*
-import scair.core.constraints._
+import scair.core.constraints.{_, given}
 
 import scala.deriving.*
 import scala.quoted.*
@@ -31,7 +31,14 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
   val op = TypeRepr.of[!>]
   TypeRepr.of(using tpe) match
     case AppliedType(op, List(attr, constraint)) =>
-      Some(constraint.asType)
+      constraint.asType match
+        case '[type t <: Constraint; `t`] =>
+          Expr.summon[ConstraintImpl[t]] match
+            case Some(i) => Some(i)
+            case None => report.errorAndAbort(
+              s"Could not summon an implementation for constraint ${Type.show[t]}."
+            )
+          
     case _ =>
       None
   
@@ -77,7 +84,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   val constraint = getTypeConstraint(tpe)
   if constraint.isDefined then
     println(
-      s"Constraint found for ${Type.show[Label]}: ${Type.show(using constraint.get)}"
+      s"Constraint found for ${Type.show[Label]}: ${constraint}"
     )
   elem match
     case '[Result[t]] =>
