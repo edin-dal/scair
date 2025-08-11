@@ -310,12 +310,7 @@ def getConstructConstraint(_def: OpInputDef)(using Quotes) =
   */
 def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   _def match
-    case OperandDef(name, tpe, variadicity) => variadicity
-    case ResultDef(name, tpe, variadicity)  => variadicity
-    case RegionDef(name, variadicity)       => variadicity
-    case SuccessorDef(name, variadicity)    => variadicity
-    case OpPropertyDef(name, tpe, false)    => Variadicity.Single
-    case OpPropertyDef(name, tpe, _)        => Variadicity.Optional
+    case v: MayVariadicOpInputDef => v.variadicity
 
 /*__________________*\
 \*-- STRUCTURING  --*/
@@ -655,19 +650,23 @@ def constructorArgs(
     (extractedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
+    opDef.properties.map { case OpPropertyDef(name, tpe, variadicity) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
-          val property =
-            if optionality then
+          val property = variadicity match
+            case Variadicity.Optional =>
               generateOptionalCheckedPropertyArgument[t](
                 '{ $op.properties },
                 name
               )
-            else
+            case Variadicity.Single =>
               generateCheckedPropertyArgument[t](
                 '{ $op.properties },
                 name
+              )
+            case Variadicity.Variadic =>
+              report.errorAndAbort(
+                s"Properties cannot be variadic in an ADT."
               )
           NamedArg(name, property.asTerm)
     }

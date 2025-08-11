@@ -6,6 +6,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.core.constraints._
 
 import scala.collection.immutable.*
 
@@ -235,7 +236,7 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
 
 case class AddF(
     val lhs: Operand[FloatType],
-    val rhs: Operand[FloatType],
+    val rhs: Operand[FloatType !> Constraint],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["arith.addf", AddF]

@@ -3,6 +3,7 @@ package scair.clair.mirrored
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.ir.*
+import scair.core.constraints._
 
 import scala.deriving.*
 import scala.quoted.*
@@ -24,6 +25,29 @@ import scala.quoted.*
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
+
+def getTypeConstraint(tpe: Type[?])(using Quotes) =
+  import quotes.reflect._
+  val op = TypeRepr.of[!>]
+  TypeRepr.of(using tpe) match
+    case AppliedType(op, List(attr, constraint)) =>
+      Some(constraint.asType)
+    case _ =>
+      None
+  
+
+def getDefType(elem: Type[?])(using Quotes) = 
+  elem match
+    case '[Result[t]] =>
+      Type.of[t]
+    case '[Operand[t]] =>
+      Type.of[t]
+    case '[Region] =>
+      Type.of[Attribute]
+    case '[Successor] =>
+      Type.of[Attribute]
+    case t@'[Attribute] =>
+      t
 
 def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   Type.of[Elem] match
@@ -49,17 +73,23 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
   val (variadicity, elem) = getDefVariadicityAndType[Elem]
+  val (tpe) = getDefType(elem)
+  val constraint = getTypeConstraint(tpe)
+  if constraint.isDefined then
+    println(
+      s"Constraint found for ${Type.show[Label]}: ${Type.show(using constraint.get)}"
+    )
   elem match
     case '[Result[t]] =>
       ResultDef(
         name = name,
-        tpe = Type.of[t],
+        tpe = tpe,
         variadicity
       )
     case '[Operand[t]] =>
       OperandDef(
         name = name,
-        tpe = Type.of[t],
+        tpe = tpe,
         variadicity
       )
     case '[Region] =>
@@ -75,8 +105,8 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[Attribute] =>
       OpPropertyDef(
         name = name,
-        tpe = elem,
-        variadicity == Variadicity.Optional
+        tpe = tpe,
+        variadicity
       )
     case _: Type[?] =>
       report.errorAndAbort(

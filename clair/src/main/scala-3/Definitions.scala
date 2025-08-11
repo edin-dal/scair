@@ -84,8 +84,9 @@ case class SuccessorDef(
 case class OpPropertyDef(
     override val name: String,
     val tpe: Type[?],
-    val optional: Boolean = false
-) extends OpInputDef {}
+    override val variadicity: Variadicity = Variadicity.Single
+) extends OpInputDef
+    with MayVariadicOpInputDef {}
 
 case class AttributeParamDef(
     val name: String,
