@@ -69,7 +69,7 @@ class AttrParser(val ctx: MLContext) {
   def AttributeValueList[$: P] = AttributeValue.rep(sep = ",")
 
   def Type[$: P] = P(
-    (BuiltIn | DialectType | DialectAttribute)./
+    (BuiltIn | DialectType | DialectAttribute)
   ) // shortened definition TODO: finish...
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -415,7 +415,8 @@ class AttrParser(val ctx: MLContext) {
       FloatAttrP |
       IntegerAttrP |
       DenseIntOrFPElementsAttrP |
-      AffineMapAttrP | AffineSetAttrP
+      AffineMapAttrP |
+      AffineSetAttrP
   )
 
 }

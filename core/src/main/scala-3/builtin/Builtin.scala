@@ -515,7 +515,7 @@ object ModuleOp extends OperationCompanion {
       parser: Parser
   ): P[Operation] =
     P(
-      parser.Region
+      parser.Region()
     ).map((x: Region) => ModuleOp(regions = Seq(x)))
   // ==----------------------== //
 

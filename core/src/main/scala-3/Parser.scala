@@ -775,7 +775,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   )
 
   def RegionList[$: P] =
-    P("(" ~ Region.rep(sep = ",") ~ ")")
+    P("(" ~ Region().rep(sep = ",") ~ ")")
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||      BLOCKS      ||
@@ -784,25 +784,32 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - block           ::= block-label operation+
   // [x] - block-label     ::= block-id block-arg-list? `:`
 
-  def populateBlock(
-      //           block    arguments       operations
-      uncutBlock: (Block, Seq[Value[Attribute]], Seq[Operation])
+  def populateBlockOps(
+      block: Block,
+      ops: Seq[Operation]
   ): Block = {
-    val (block, args, ops) = uncutBlock
-    block.arguments ++= args
-    args.foreach(_.owner = Some(block))
     block.operations ++= ops
     ops.foreach(_.container_block = Some(block))
-    return block
+    block
   }
 
+  def populateBlockArgs(
+      block: Block,
+      args: Seq[(String, Attribute)]
+  ) =
+    block.arguments ++= currentScope.defineValues(args)
+    block.arguments.foreach(_.owner = Some(block))
+    block
+
+  def BlockBody[$: P](block: Block) =
+    Operations(0).mapTry(populateBlockOps(block, _))
+
   def Block[$: P] =
-    P(BlockLabel ~/ Operations(0)).mapTry(populateBlock)
+    P(BlockLabel.flatMap(BlockBody))
 
   def BlockLabel[$: P] = P(
-    BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
-      .orElse(Seq())
-      .mapTry(currentScope.defineValues) ~ ":"
+    (BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
+      .orElse(Seq())).map(populateBlockArgs) ~ ":"
   )
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
@@ -839,11 +846,15 @@ class Parser(val context: MLContext, val args: Args = Args())
   }
 
   // EntryBlock might break - take out if it does...
-  def Region[$: P] = P(
+  def Region[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
     "{" ~/ E(
       { enterLocalRegion }
-    ) ~/ Operations(0) ~/ Block.rep ~/ "}"
-  ).map(defineRegion) ~/ E(
+    ) ~/ (BlockBody(populateBlockArgs(new Block(), entryArgs)) ~/ Block.rep)
+      .map((entry: Block, blocks: Seq[Block]) =>
+        if (entry.operations.isEmpty && entry.arguments.isEmpty) then blocks
+        else entry +: blocks
+      ) ~/ "}"
+  ).map(new Region(_)) ~/ E(
     { enterParentRegion }
   )
 
@@ -884,7 +895,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
   def BlockArgList[$: P] =
-    P("(" ~/ ValueIdAndTypeList ~/ ")")
+    P("(" ~ ValueIdAndTypeList ~ ")")
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
