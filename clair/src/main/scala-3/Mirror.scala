@@ -27,86 +27,58 @@ import scala.quoted.*
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
 
+def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
+  Type.of[Elem] match
+    // This first case is to catch Attributes that would also implement Seq or Option.
+    case '[type t <: Attribute; `t`] =>
+      (Variadicity.Single, Type.of[t])
+    case '[Option[t]] =>
+      (Variadicity.Optional, Type.of[t])
+    case '[Seq[t]] =>
+      (Variadicity.Variadic, Type.of[t])
+    case t =>
+      (Variadicity.Single, t)
+
 /** Produces an OpInput to OperationDef given a definition of a Type.
   *
   * @return
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef
   */
-
 def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   import quotes.reflect._
   val name = Type.of[Label] match
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
-
-  Type.of[Elem] match
-    case '[type t <: Attribute; Option[`t`]] =>
-      OpPropertyDef(
-        name = name,
-        tpe = Type.of[t],
-        true
-      )
-    case '[Option[Result[t]]] =>
-      ResultDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Optional
-      )
-    case '[Option[Operand[t]]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Optional
-      )
-    case '[Seq[Result[t]]] =>
-      ResultDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Variadic
-      )
-    case '[Seq[Operand[t]]] =>
-      OperandDef(
-        name = name,
-        tpe = Type.of[t],
-        Variadicity.Variadic
-      )
-    case '[Seq[Region]] =>
-      RegionDef(
-        name = name,
-        Variadicity.Variadic
-      )
-    case '[Seq[Successor]] =>
-      SuccessorDef(
-        name = name,
-        Variadicity.Variadic
-      )
+  val (variadicity, elem) = getDefVariadicityAndType[Elem]
+  elem match
     case '[Result[t]] =>
       ResultDef(
         name = name,
         tpe = Type.of[t],
-        Variadicity.Single
+        variadicity
       )
     case '[Operand[t]] =>
       OperandDef(
         name = name,
         tpe = Type.of[t],
-        Variadicity.Single
+        variadicity
       )
     case '[Region] =>
       RegionDef(
         name = name,
-        Variadicity.Single
+        variadicity
       )
     case '[Successor] =>
       SuccessorDef(
         name = name,
-        Variadicity.Single
+        variadicity
       )
-    case '[type t <: Attribute; `t`] =>
+    case '[Attribute] =>
       OpPropertyDef(
         name = name,
-        tpe = Type.of[t]
+        tpe = elem,
+        variadicity == Variadicity.Optional
       )
     case _: Type[?] =>
       report.errorAndAbort(
