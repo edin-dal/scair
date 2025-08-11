@@ -21,13 +21,17 @@ Include in your project via:
 
 - SBT:
 ```scala
+// To consume -SNAPSHOT versions (recommended)
+resolvers += "Maven Central Snapshots" at "https://central.sonatype.com/repository/maven-snapshots"
 libraryDependencies += "io.github.edin-dal" % "scair-tools_3" % "<version>"
 ```
 - Mill:
 ```scala
-    def ivyDeps = Agg(
+    // To consume -SNAPSHOT versions (recommended)
+    override def repositories = Seq("https://central.sonatype.com/repository/maven-snapshots")
+    override def mvnDeps = Seq(
       ...,
-      ivy"io.github.edin-dal::scair-tools_3:<version>",
+      mvn"io.github.edin-dal::scair-tools_3:<version>",
       ...
     )
 ```
