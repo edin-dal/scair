@@ -365,7 +365,8 @@ case class SymbolRefAttr(
 case class DenseArrayAttr(
     val typ: IntegerType | FloatType,
     val data: Seq[IntegerAttr] | Seq[FloatAttr]
-) extends ParametrizedAttribute {
+) extends ParametrizedAttribute
+    with Seq[Attribute] {
 
   override def name: String = "builtin.dense_array"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)

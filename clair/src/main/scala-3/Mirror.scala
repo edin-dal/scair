@@ -27,6 +27,9 @@ import scala.quoted.*
 
 def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   Type.of[Elem] match
+    // This first case is to catch Attributes that would also implement Seq or Option.
+    case '[type t <: Attribute; `t`] =>
+      (Variadicity.Single, Type.of[t])
     case '[Option[t]] =>
       (Variadicity.Optional, Type.of[t])
     case '[Seq[t]] =>

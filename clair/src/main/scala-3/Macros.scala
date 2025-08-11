@@ -363,7 +363,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
       )
     ).verify(dense, ConstraintContext())
 
-    for (s <- dense.data) yield s match {
+    for (s <- dense) yield s match {
       case right: IntegerAttr => right.value.data.toInt
       case _                  =>
         throw new Exception(
