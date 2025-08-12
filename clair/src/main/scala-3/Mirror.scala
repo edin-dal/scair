@@ -7,6 +7,7 @@ import scair.core.constraints.{_, given}
 
 import scala.deriving.*
 import scala.quoted.*
+import scala.quoted.Type
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -35,10 +36,12 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
         case '[type t <: Constraint; `t`] =>
           Expr.summon[ConstraintImpl[t]] match
             case Some(i) => Some(i)
-            case None => report.errorAndAbort(
-              s"Could not summon an implementation for constraint ${Type.show[t]}."
+            case None =>
+              Implicits.search(TypeRepr.of[ConstraintImpl[t]]) match
+                case s: ImplicitSearchSuccess => Some(s.tree.asExprOf[ConstraintImpl[t]])
+                case f : ImplicitSearchFailure => report.errorAndAbort(
+              s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
             )
-          
     case _ =>
       None
   

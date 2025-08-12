@@ -5,10 +5,11 @@ import scair.ir._
 
 def eqAttrImpl[To <: Attribute: Type](using Quotes): Expr[ConstraintImpl[EqAttr[To]]] = {
   import quotes.reflect._
-  val ref = TypeRepr.of[To] match
+  val t = TypeRepr.of[To].simplified.widen.widenTermRefByName.widenByName.dealias
+  val ref = t match
     case tr : TermRef => Ref(tr.termSymbol).asExprOf[To]
     case _ => report.errorAndAbort(
-        s"TermRef only"
+        s"got ${t.show}:\n${t}"
     )
   '{
     new ConstraintImpl {
