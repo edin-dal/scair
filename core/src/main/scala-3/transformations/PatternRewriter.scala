@@ -261,51 +261,6 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
 
 }
 
-/** Defines a RewritePattern from a partial function. The partial function can
-  * return the following types:
-  *   - `Unit`: to erase the operation
-  *   - `Operation`: to replace the operation with a single new operation
-  *   - `Seq[Operation]`: to replace the operation with multiple new operations
-  *   - `(Operation | Seq[Operation], Value[?] | Seq[Value[?]])`: to replace the
-  *     operation with new operations and new results
-  *
-  * @return
-  *   A RewritePattern to hook to the infrastructure.
-  */
-inline def pattern(
-    partial: PartialFunction[
-      Operation,
-      Unit | Operation | Seq[Operation] |
-        (Operation | Seq[Operation], Value[?] | Seq[Value[?]])
-    ]
-): RewritePattern =
-  val lifted = partial.lift
-
-  object pattern extends RewritePattern:
-    override def match_and_rewrite(
-        op: Operation,
-        rewriter: PatternRewriter
-    ): Unit =
-      lifted(op).map({ (output) =>
-        output match
-          case () =>
-            rewriter.erase_op(op)
-          case both: (Operation | Seq[Operation], Value[?] | Seq[Value[?]]) =>
-            rewriter.replace_op(
-              op,
-              both._1,
-              Some(both._2 match
-                case r: Value[?]       => Seq(r)
-                case rs: Seq[Value[?]] => rs)
-            )
-          case new_op: Operation =>
-            rewriter.replace_op(op, new_op, None)
-          case new_ops: Seq[Operation] =>
-            rewriter.replace_op(op, new_ops, None)
-      })
-
-  pattern
-
 //    OPERATION REWRITE WALKER    //
 class PatternRewriteWalker(
     val pattern: RewritePattern
@@ -316,7 +271,14 @@ class PatternRewriteWalker(
   ) extends Rewriter {
     var has_done_action: Boolean = false
 
-    override def operation_removal_handler: Operation => Unit = clear_worklist
+    override def operation_removal_handler: Operation => Unit =
+      (op: Operation) =>
+        clear_worklist(op)
+        op.operands.foreach((o) =>
+          o.owner match
+            case Some(owner: Operation) => populate_worklist(owner)
+            case _                      => ()
+        )
 
     override def operation_insertion_handler: Operation => Unit =
       populate_worklist
@@ -403,7 +365,8 @@ class PatternRewriteWalker(
   }
 
   private def populate_worklist(op: Operation): Unit = {
-    worklist.push(op)
+    if (!worklist.contains(op))
+      worklist.push(op)
     op.regions.reverseIterator.foreach((x: Region) =>
       x.blocks.reverseIterator.foreach((y: Block) =>
         y.operations.reverseIterator.foreach(populate_worklist(_))
