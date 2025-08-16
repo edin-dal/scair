@@ -6,7 +6,7 @@ import scair.ir.*
 import scair.transformations.*
 import scair.transformations.patterns.*
 
-// TODO: Generalize in terms of effects and out of dialect
+// TODO: Move out
 val RemoveUnusedOperations = pattern {
   case _: IsTerminator => PatternAction.Abort
   case op: NoMemoryEffect if op.results.forall(_.uses.isEmpty) =>
@@ -14,7 +14,7 @@ val RemoveUnusedOperations = pattern {
   case op: NoMemoryEffect => PatternAction.Abort
 }
 
-// TODO: Generalize in Commutative/ConstantLike
+// TODO: Move out
 val Commute = pattern { case c: Commutative =>
   val (const, nconst) = c.operands.partition(_.owner match
     case Some(_: ConstantLike) => true
@@ -23,6 +23,37 @@ val Commute = pattern { case c: Commutative =>
   if nops == c.operands then PatternAction.Abort
   else c.updated(operands = nops)
 }
+
+// AddI folding patterns
+val AddIFold = pattern {
+  // addi(x, 0) -> x
+  case AddI(x, Owner(Constant(IntegerAttr(IntData(0), _), _)), _) =>
+    (Seq(), Seq(x))
+  // addi(subi(a, b), b) -> a
+  case AddI(
+        Owner(SubI(a, b, _)),
+        bb,
+        _
+      ) if b eq bb =>
+    (Seq(), Seq(a))
+  // addi(b, subi(a, b)) -> a
+  case AddI(
+        b,
+        Owner(SubI(a, bb, _)),
+        _
+      ) if b eq bb =>
+    (Seq(), Seq(a))
+  // addi(c0, c1) -> c0 + c1
+  case AddI(
+        Owner(Constant(c0: IntegerAttr, _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    Constant(c0 + c1, Result(c0.typ))
+}
+// addi(subi(a, b), b) -> a
+
+// AddI canonicalization patterns
 
 // addi(addi(x, c0), c1) -> addi(x, c0 + c1)
 val AddIAddConstant = pattern {
@@ -57,6 +88,38 @@ val AddISubConstantLHS = pattern {
     Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
 }
 
+// SubI folding patterns
+val SubIFold = pattern {
+  // subi(x,x) -> 0
+  case SubI(x, y, _) if x eq y =>
+    Constant(IntegerAttr(IntData(0), x.typ), Result(x.typ))
+  // subi(x,0) -> x
+  case SubI(x, Owner(Constant(IntegerAttr(IntData(0), _), _)), _) =>
+    (Seq(), Seq(x))
+  // subi(addi(a, b), b) -> a
+  case SubI(
+        Owner(AddI(a, b, _)),
+        bb,
+        _
+      ) if b eq bb =>
+    (Seq(), Seq(a))
+  // subi(addi(a, b), a) -> b
+  case SubI(
+        Owner(AddI(a, b, _)),
+        aa,
+        _
+      ) if a eq aa =>
+    (Seq(), Seq(b))
+  // subi(c0, c1) -> c0 - c1
+  case SubI(
+        Owner(Constant(c0: IntegerAttr, _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    Constant(c0 - c1, Result(c0.typ))
+}
+
+// SubI canonicalization patterns
 // subi(addi(x, c0), c1) -> addi(x, c0 - c1)
 val SubIRHSAddConstant = pattern {
   case SubI(
@@ -142,9 +205,11 @@ object Canonicalize extends ModulePass {
         Seq(
           RemoveUnusedOperations,
           Commute,
+          AddIFold,
           AddIAddConstant,
           AddISubConstantRHS,
           AddISubConstantLHS,
+          SubIFold,
           SubIRHSAddConstant,
           SubILHSAddConstant,
           SubIRHSSubConstantRHS,

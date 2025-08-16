@@ -130,4 +130,40 @@ func.func @tripleSubSub3(%0: index) -> index {
 // CHECK-NEXT:      func.return %2 : index
 // CHECK-NEXT:    }
 
+func.func @subAdd1(%0: index, %1: index) -> index {
+  %2 = "arith.addi"(%0, %1) : (index, index) -> (index)
+  %3 = "arith.subi"(%2, %1) : (index, index) -> (index)
+  func.return %3 : index
+}
+// CHECK-NEXT:    func.func @subAdd1(%0: index, %1: index) -> index {
+// CHECK-NEXT:      func.return %0 : index
+// CHECK-NEXT:    }
+
+func.func @subAdd2(%0: index, %1: index) -> index {
+  %2 = "arith.addi"(%0, %1) : (index, index) -> (index)
+  %3 = "arith.subi"(%2, %0) : (index, index) -> (index)
+  func.return %3 : index
+}
+// CHECK-NEXT:    func.func @subAdd2(%0: index, %1: index) -> index {
+// CHECK-NEXT:      func.return %1 : index
+// CHECK-NEXT:    }
+
+func.func @doubleAddSub1(%0: index, %1: index) -> index {
+  %2 = "arith.subi"(%0, %1) : (index, index) -> (index)
+  %3 = "arith.addi"(%2, %1) : (index, index) -> (index)
+  func.return %3 : index
+}
+// CHECK-NEXT:    func.func @doubleAddSub1(%0: index, %1: index) -> index {
+// CHECK-NEXT:      func.return %0 : index
+// CHECK-NEXT:    }
+
+func.func @doubleAddSub2(%0: index, %1: index) -> index {
+  %2 = "arith.subi"(%0, %1) : (index, index) -> (index)
+  %3 = "arith.addi"(%1, %2) : (index, index) -> (index)
+  func.return %3 : index
+}
+// CHECK-NEXT:    func.func @doubleAddSub2(%0: index, %1: index) -> index {
+// CHECK-NEXT:      func.return %0 : index
+// CHECK-NEXT:    }
+
 // CHECK-NEXT:  }
