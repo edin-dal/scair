@@ -8,7 +8,7 @@
 // CHECK: Parse error at [[FILE]]:3:49:
 // CHECK: "test.op"() {"invalid_type" = !cmath.complex<i8>} : () -> ()                  
 // CHECK:                                                 ^
-// CHECK: Expected typ to be of type scair.dialects.builtin.FloatType | scair.dialects.builtin.IndexType, got IntegerType(IntData(8),Signless)
+// CHECK: Expected typ to be of type scair.dialects.builtin.FloatType | scair.dialects.builtin.IndexType, got i8
 
 // -----
 

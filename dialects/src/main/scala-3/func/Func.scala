@@ -73,7 +73,7 @@ case class Func(
     lprinter.print(sym_name.data)
     body.blocks match
       case Seq() =>
-        lprinter.print(function_type.custom_print)
+        lprinter.print(function_type)
       case entry :: _ =>
         lprinter.printListF(
           entry.arguments,
@@ -82,16 +82,18 @@ case class Func(
           ", ",
           ")"
         )
-
         if function_type.outputs.nonEmpty then
           lprinter.print(" -> ")
-          if function_type.outputs.size == 1 then
-            lprinter.print(function_type.outputs.head.custom_print)
-          else lprinter.printList(function_type.outputs, "(", ", ", ")")
+          function_type.outputs match
+            case Seq(single) =>
+              lprinter.print(single)
+            case outputs =>
+              lprinter.printList(outputs, "(", ", ", ")")
 
     if attributes.nonEmpty then
       lprinter.print(" attributes")
       lprinter.printOptionalAttrDict(attributes.toMap)
+    // TODO: Should that simply be a region print?
     body.blocks match
       case Seq()           => ()
       case entry :: others =>

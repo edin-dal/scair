@@ -62,7 +62,7 @@ case class Printer(
   ||    ATTRIBUTE PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def print(attribute: Attribute): Unit = print(attribute.custom_print)
+  def print(attribute: Attribute): Unit = attribute.custom_print(this)
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
@@ -102,7 +102,7 @@ case class Printer(
       inline sep: String = ", ",
       inline end: String = ""
   )(using
-      indentLevel: Int
+      indentLevel: Int = 0
   ): Unit = {
     printListF(iterable, (x: Printable) => print(x), start, sep, end)
   }
@@ -114,7 +114,7 @@ case class Printer(
       inline sep: String = ", ",
       inline end: String = ""
   )(using
-      indentLevel: Int
+      indentLevel: Int = 0
   ): Unit = {
     inline if start != "" then print(start)
     inline if sep == "" then iterable.foreach(f)
@@ -165,11 +165,11 @@ case class Printer(
 
   def printAttrDict(
       attrs: Map[String, Attribute]
-  )(using indentLevel: Int): Unit = {
+  )(using indentLevel: Int = 0): Unit = {
     printListF(
       attrs,
       (k, v) => {
-        print(k, " = ", v.custom_print)
+        print(k, " = ", v)
       },
       " {",
       ", ",
@@ -193,7 +193,7 @@ case class Printer(
       printListF(
         op.properties,
         (k, v) => {
-          print(k, " = ", v.custom_print)
+          print(k, " = ", v)
         },
         " <{",
         ", ",
@@ -205,7 +205,7 @@ case class Printer(
     printListF(
       op.operands,
       o => {
-        print(o.typ.custom_print)
+        print(o.typ)
       },
       "(",
       ", ",
@@ -215,7 +215,7 @@ case class Printer(
     printListF(
       op.results,
       r => {
-        print(r.typ.custom_print)
+        print(r.typ)
       },
       "(",
       ", ",

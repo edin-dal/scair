@@ -172,7 +172,7 @@ case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
     if (this_attr != that_attr) {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
-          s"Got ${that_attr.custom_print}, expected ${this_attr.custom_print}"
+          s"Got $that_attr, expected $this_attr"
       throw new VerifyException(errstr)
     }
   }

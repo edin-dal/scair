@@ -2,6 +2,7 @@ package scair.dialects.arith
 
 import fastparse.*
 import scair.AttrParser
+import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
@@ -28,16 +29,16 @@ enum FastMathFlag:
 type FastMathFlags = HashSet[FastMathFlag]
 
 object FastMathFlags:
-  inline def none: FastMathFlags = HashSet.empty
-  inline def reassoc: FastMathFlags = HashSet(FastMathFlag.reassoc)
-  inline def nnan: FastMathFlags = HashSet(FastMathFlag.nnan)
-  inline def ninf: FastMathFlags = HashSet(FastMathFlag.ninf)
-  inline def nsz: FastMathFlags = HashSet(FastMathFlag.nsz)
-  inline def arcp: FastMathFlags = HashSet(FastMathFlag.arcp)
-  inline def contract: FastMathFlags = HashSet(FastMathFlag.contract)
-  inline def afn: FastMathFlags = HashSet(FastMathFlag.afn)
+  val none: FastMathFlags = HashSet.empty
+  val reassoc: FastMathFlags = HashSet(FastMathFlag.reassoc)
+  val nnan: FastMathFlags = HashSet(FastMathFlag.nnan)
+  val ninf: FastMathFlags = HashSet(FastMathFlag.ninf)
+  val nsz: FastMathFlags = HashSet(FastMathFlag.nsz)
+  val arcp: FastMathFlags = HashSet(FastMathFlag.arcp)
+  val contract: FastMathFlags = HashSet(FastMathFlag.contract)
+  val afn: FastMathFlags = HashSet(FastMathFlag.afn)
 
-  inline def fast: FastMathFlags =
+  val fast: FastMathFlags =
     reassoc | nnan | ninf | nsz | arcp | contract | afn
 
   def apply(flags: FastMathFlag*): FastMathFlags = HashSet(flags*)
@@ -79,23 +80,44 @@ object FastMathFlagsAttr extends AttributeCompanion {
 case class FastMathFlagsAttr(val flags: FastMathFlags)
     extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags):
 
-  override def custom_print: String =
-    val p =
-      if flags == FastMathFlags.fast then "fast"
-      else if flags == FastMathFlags.none then "none"
-      else
-        this.flags
-          .map {
-            case FastMathFlag.reassoc  => "reassoc"
-            case FastMathFlag.nnan     => "nnan"
-            case FastMathFlag.ninf     => "ninf"
-            case FastMathFlag.nsz      => "nsz"
-            case FastMathFlag.arcp     => "arcp"
-            case FastMathFlag.contract => "contract"
-            case FastMathFlag.afn      => "afn"
-          }
-          .mkString(",")
-    s"#arith.fastmath<$p>"
+  override def custom_print(p: Printer) =
+    p.print("#arith.fastmath<")
+    flags match
+      case FastMathFlags.none =>
+        p.print("none")
+      case FastMathFlags.fast =>
+        p.print("fast")
+      case _ =>
+        p.printListF(
+          flags,
+          f =>
+            p.print(f match
+              case FastMathFlag.reassoc  => "reassoc"
+              case FastMathFlag.nnan     => "nnan"
+              case FastMathFlag.ninf     => "ninf"
+              case FastMathFlag.nsz      => "nsz"
+              case FastMathFlag.arcp     => "arcp"
+              case FastMathFlag.contract => "contract"
+              case FastMathFlag.afn      => "afn"),
+          sep = ","
+        )
+    p.print(">")
+    // val p =
+    //   if flags == FastMathFlags.fast then "fast"
+    //   else if flags == FastMathFlags.none then "none"
+    //   else
+    //     this.flags
+    //       .map {
+    //         case FastMathFlag.reassoc  => "reassoc"
+    //         case FastMathFlag.nnan     => "nnan"
+    //         case FastMathFlag.ninf     => "ninf"
+    //         case FastMathFlag.nsz      => "nsz"
+    //         case FastMathFlag.arcp     => "arcp"
+    //         case FastMathFlag.contract => "contract"
+    //         case FastMathFlag.afn      => "afn"
+    //       }
+    //       .mkString(",")
+    // s"#arith.fastmath<$p>"
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  TYPES AND CONSTRAINTS  ||

@@ -11,6 +11,7 @@ import scair.Parser.ValueId
 import scair.Parser.mapTry
 import scair.Parser.orElse
 import scair.Parser.whitespace
+import scair.Printer
 import scair.dialects.LingoDB.SubOperatorOps.*
 import scair.dialects.LingoDB.TupleStream.*
 import scair.dialects.builtin.*
@@ -116,7 +117,10 @@ case class SortSpecificationAttr(
 ) extends ParametrizedAttribute {
   override def name: String = "db.interval"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(attr, sortSpec)
-  override def custom_print = s"(${attr.custom_print},${sortSpec.custom_print})"
+
+  override def custom_print(p: Printer) =
+    p.print("(", attr, ",", sortSpec, ")")(using indentLevel = 0)
+
 }
 
 ///////////

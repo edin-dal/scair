@@ -6,6 +6,7 @@ import scair.Parser
 import scair.Parser.ValueId
 import scair.Parser.orElse
 import scair.Parser.whitespace
+import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*
 
@@ -108,8 +109,8 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
   override def name: String = "tuples.column_def"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(refName, typ)
 
-  override def custom_print =
-    s"${refName.custom_print}({type = ${typ.custom_print}})"
+  override def custom_print(p: Printer) =
+    p.print(refName, "({type = ", typ, "})")(using indentLevel = 0)
 
 }
 
@@ -131,7 +132,7 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
     extends ParametrizedAttribute {
   override def name: String = "tuples.column_ref"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(refName)
-  override def custom_print = s"${refName.custom_print}"
+  override def custom_print(p: Printer) = p.print(refName)
 }
 
 ////////////////
