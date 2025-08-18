@@ -51,7 +51,6 @@ val AddIFold = pattern {
       ) =>
     Constant(c0 + c1, Result(c0.typ))
 }
-// addi(subi(a, b), b) -> a
 
 // AddI canonicalization patterns
 
@@ -75,6 +74,37 @@ val AddISubConstantRHS = pattern {
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 - c1, cv), AddI(x, cv, Result(x.typ)))
+}
+
+// addi(x, muli(y, -1)) -> subi(x, y)
+val AddIMulNegativeOneRhs = pattern {
+  case AddI(
+        x,
+        Owner(MulI(y, Owner(Constant(IntegerAttr(IntData(-1), _), _)), _)),
+        _
+      ) =>
+    Seq(SubI(x, y, Result(x.typ)))
+}
+
+// addi(muli(x, -1), y) -> subi(y, x)
+val AddIMulNegativeOneLhs = pattern {
+  case AddI(
+        Owner(MulI(x, Owner(Constant(IntegerAttr(IntData(-1), _), _)), _)),
+        y,
+        _
+      ) =>
+    Seq(SubI(y, x, Result(x.typ)))
+}
+
+// muli(muli(x, c0), c1) -> muli(x, c0 * c1)
+val MulIMulIConstant = pattern {
+  case MulI(
+        Owner(MulI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    val cv = Result(x.typ)
+    Seq(Constant(c0 * c1, cv), MulI(x, cv, Result(x.typ)))
 }
 
 // addi(subi(c0, x), c1) -> subi(c0 + c1, x)
@@ -196,6 +226,23 @@ val SubISubILHSRHSLHS = pattern {
     )
 }
 
+// MulI folding patterns
+val MulIFold = pattern {
+  // muli(x, 0) -> 0
+  case MulI(x, Owner(Constant(IntegerAttr(IntData(0), _), _)), _) =>
+    Constant(IntegerAttr(IntData(0), x.typ), Result(x.typ))
+  // muli(x, 1) -> x
+  case MulI(x, Owner(Constant(IntegerAttr(IntData(1), _), _)), _) =>
+    (Seq(), Seq(x))
+  // muli(c0, c1) -> c0 * c1
+  case MulI(
+        Owner(Constant(c0: IntegerAttr, _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    Constant(c0 * c1, Result(c0.typ))
+}
+
 object Canonicalize extends ModulePass {
   override val name = "canonicalize"
 
@@ -209,6 +256,9 @@ object Canonicalize extends ModulePass {
           AddIAddConstant,
           AddISubConstantRHS,
           AddISubConstantLHS,
+          AddIMulNegativeOneRhs,
+          AddIMulNegativeOneLhs,
+          MulIMulIConstant,
           SubIFold,
           SubIRHSAddConstant,
           SubILHSAddConstant,
@@ -216,7 +266,8 @@ object Canonicalize extends ModulePass {
           SubIRHSSubConstantLHS,
           SubILHSSubConstantRHS,
           SubILHSSubConstantLHS,
-          SubISubILHSRHSLHS
+          SubISubILHSRHSLHS,
+          MulIFold
         )
       )
     )
