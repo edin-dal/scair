@@ -537,8 +537,12 @@ object Parser {
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-class Parser(val context: MLContext, val args: Args = Args(), attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty, typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty)
-    extends AttrParser(context, attributeAliases, typeAliases) {
+class Parser(
+    val context: MLContext,
+    val args: Args = Args(),
+    attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
+    typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+) extends AttrParser(context, attributeAliases, typeAliases) {
 
   import Parser._
 
@@ -596,10 +600,11 @@ class Parser(val context: MLContext, val args: Args = Args(), attributeAliases: 
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef).rep().map(_.flatMap(_ match
-      case o : Operation => Seq(o)
-      case _ => Seq())
-      ) ~ End
+    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef)
+      .rep()
+      .map(_.flatMap(_ match
+        case o: Operation => Seq(o)
+        case _            => Seq())) ~ End
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
@@ -873,7 +878,9 @@ class Parser(val context: MLContext, val args: Args = Args(), attributeAliases: 
   )./.map((name: String, value: Attribute) =>
     typeAliases.get(name) match {
       case Some(t) =>
-        throw new Exception(s"""Type alias "${name}" already defined as ${t.custom_print}.""")
+        throw new Exception(
+          s"""Type alias "${name}" already defined as ${t.custom_print}."""
+        )
       case None =>
         typeAliases(name) = value
     }
@@ -889,9 +896,12 @@ class Parser(val context: MLContext, val args: Args = Args(), attributeAliases: 
 
   def AttributeAliasDef[$: P] = P(
     "#" ~~ AliasName ~ "=" ~ AttributeValue
-  )./.map((name: String, value: Attribute) => attributeAliases.get(name) match
+  )./.map((name: String, value: Attribute) =>
+    attributeAliases.get(name) match
       case Some(a) =>
-        throw new Exception(s"""Attribute alias "${name}" already defined as ${a.custom_print}.""")
+        throw new Exception(
+          s"""Attribute alias "${name}" already defined as ${a.custom_print}."""
+        )
       case None =>
         attributeAliases(name) = value
   )

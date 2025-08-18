@@ -3,7 +3,9 @@ package scair
 import scair.ir.*
 
 import java.io.*
+import scala.annotation.targetName
 import scala.collection.mutable
+import scala.collection.mutable.LinkedHashSet
 
 // ██████╗░ ██████╗░ ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
@@ -21,7 +23,9 @@ case class Printer(
       mutable.Map.empty[Value[? <: Attribute], String],
     val blockNameMap: mutable.Map[Block, String] =
       mutable.Map.empty[Block, String],
-    private val p: PrintWriter = new PrintWriter(System.out)
+    private val p: PrintWriter = new PrintWriter(System.out),
+    private var aliasesMap: Map[Attribute, String] =
+      Map.empty[Attribute, String]
 ) {
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -62,7 +66,9 @@ case class Printer(
   ||    ATTRIBUTE PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def print(attribute: Attribute): Unit = print(attribute.custom_print)
+  def print(attribute: Attribute): Unit = print(
+    aliasesMap.getOrElse(attribute, attribute.custom_print)
+  )
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
@@ -159,6 +165,66 @@ case class Printer(
     print(indent * indentLevel + "}")
   }
 
+  @targetName("aliasesOps")
+  def aliases(ops: Seq[Operation]): LinkedHashSet[AliasedAttribute] =
+    ops.flatMap(aliases).to(LinkedHashSet)
+
+  def aliases(op: Operation): LinkedHashSet[AliasedAttribute] =
+    (op.properties.values ++ op.attributes.values ++ op.operands.typ ++ op.results.typ)
+      .flatMap(aliases)
+      .to(LinkedHashSet) ++ op.regions.flatMap(aliases).to(LinkedHashSet)
+
+  def aliases(reg: Region): LinkedHashSet[AliasedAttribute] =
+    reg.blocks.flatMap(aliases).to(LinkedHashSet)
+
+  def aliases(block: Block): LinkedHashSet[AliasedAttribute] =
+    block.arguments
+      .map(_.typ)
+      .flatMap(aliases)
+      .to(LinkedHashSet) ++ (block.operations
+      .flatMap(aliases))
+      .to(LinkedHashSet)
+
+  @targetName("aliasesAttrs")
+  def aliases(attr: Seq[Attribute]): LinkedHashSet[AliasedAttribute] =
+    attr.flatMap(aliases).to(LinkedHashSet)
+
+  def aliases(attr: Attribute): LinkedHashSet[AliasedAttribute] =
+    val p = attr match
+      case p: ParametrizedAttribute =>
+        p.parameters
+          .flatMap(_ match
+            case a: Attribute        => aliases(a)
+            case seq: Seq[Attribute] => aliases(seq))
+          .to(LinkedHashSet)
+      case _ => LinkedHashSet.empty[AliasedAttribute]
+    attr match
+      case a: AliasedAttribute => p + a
+      case _                   => p
+
+  def printAliases(ops: Seq[Operation]) =
+    val toAlias = aliases(ops)
+    val aliasesMap = mutable.Map.empty[Attribute, String]
+    val aliasesCounters = mutable.Map.empty[String, Int]
+    toAlias.foreach(attr =>
+      aliasesMap.getOrElseUpdate(
+        attr, {
+          val alias = attr.alias
+          val counter = aliasesCounters.getOrElseUpdate(alias, 0)
+          aliasesCounters(alias) = counter + 1
+          val aliasName = attr.prefix + alias + (counter match
+            case 0 => ""
+            case c => c.toString)
+          print(aliasName)
+          print(" = ")
+          print(attr.custom_print)
+          print("\n")
+          aliasName
+        }
+      )
+    )
+    this.aliasesMap = aliasesMap.toMap
+
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    OPERATION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -169,7 +235,7 @@ case class Printer(
     printListF(
       attrs,
       (k, v) => {
-        print(k, " = ", v.custom_print)
+        print(k, " = ", v)
       },
       " {",
       ", ",
@@ -237,5 +303,13 @@ case class Printer(
     print("\n")
     flush()
   }
+
+  def printTopLevel(op: Operation | Seq[Operation]): Unit =
+    val ops = op match
+      case o: Operation        => Seq(o)
+      case seq: Seq[Operation] => seq
+    var i: Int = 0
+    printAliases(ops)
+    print(ops)(using indentLevel = 0)
 
 }

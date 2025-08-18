@@ -482,7 +482,7 @@ case class DenseIntOrFPElementsAttr(
 
 case class AffineMapAttr(val affine_map: AffineMap)
     extends DataAttribute[AffineMap]("builtin.affine_map", affine_map)
-    derives TransparentData {
+    with AliasedAttribute("map") derives TransparentData {
 
   override def custom_print = s"affine_map<${affine_map}>"
 }
@@ -494,7 +494,7 @@ case class AffineMapAttr(val affine_map: AffineMap)
 
 case class AffineSetAttr(val affine_set: AffineSet)
     extends DataAttribute[AffineSet]("builtin.affine_set", affine_set)
-    derives TransparentData {
+    with AliasedAttribute("set") derives TransparentData {
 
   override def custom_print = s"affine_set<${affine_set}>"
 }
