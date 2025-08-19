@@ -26,22 +26,24 @@ enum FastMathFlag:
   case afn
   // case fast
 
-type FastMathFlags = HashSet[FastMathFlag]
+given Ordering[FastMathFlag] = Ordering.by(_.ordinal)
+
+type FastMathFlags = SortedSet[FastMathFlag]
 
 object FastMathFlags:
-  val none: FastMathFlags = HashSet.empty
-  val reassoc: FastMathFlags = HashSet(FastMathFlag.reassoc)
-  val nnan: FastMathFlags = HashSet(FastMathFlag.nnan)
-  val ninf: FastMathFlags = HashSet(FastMathFlag.ninf)
-  val nsz: FastMathFlags = HashSet(FastMathFlag.nsz)
-  val arcp: FastMathFlags = HashSet(FastMathFlag.arcp)
-  val contract: FastMathFlags = HashSet(FastMathFlag.contract)
-  val afn: FastMathFlags = HashSet(FastMathFlag.afn)
+  val none: FastMathFlags = SortedSet.empty
+  val reassoc: FastMathFlags = SortedSet(FastMathFlag.reassoc)
+  val nnan: FastMathFlags = SortedSet(FastMathFlag.nnan)
+  val ninf: FastMathFlags = SortedSet(FastMathFlag.ninf)
+  val nsz: FastMathFlags = SortedSet(FastMathFlag.nsz)
+  val arcp: FastMathFlags = SortedSet(FastMathFlag.arcp)
+  val contract: FastMathFlags = SortedSet(FastMathFlag.contract)
+  val afn: FastMathFlags = SortedSet(FastMathFlag.afn)
 
   val fast: FastMathFlags =
     reassoc | nnan | ninf | nsz | arcp | contract | afn
 
-  def apply(flags: FastMathFlag*): FastMathFlags = HashSet(flags*)
+  def apply(flags: FastMathFlag*): FastMathFlags = SortedSet(flags*)
 
 object FastMathFlagsAttr extends AttributeCompanion {
   override def name: String = "arith.fastmath"
