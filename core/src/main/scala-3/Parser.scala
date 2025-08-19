@@ -879,7 +879,7 @@ class Parser(
     typeAliases.get(name) match {
       case Some(t) =>
         throw new Exception(
-          s"""Type alias "${name}" already defined as ${t.custom_print}."""
+          s"""Type alias "$name" already defined as $t."""
         )
       case None =>
         typeAliases(name) = value
@@ -900,7 +900,7 @@ class Parser(
     attributeAliases.get(name) match
       case Some(a) =>
         throw new Exception(
-          s"""Attribute alias "${name}" already defined as ${a.custom_print}."""
+          s"""Attribute alias "$name" already defined as $a."""
         )
       case None =>
         attributeAliases(name) = value

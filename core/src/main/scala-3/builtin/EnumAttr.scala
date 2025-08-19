@@ -1,6 +1,7 @@
 package scair.EnumAttr
 
 import fastparse.*
+import scair.Printer
 import scair.dialects.builtin.I32
 import scair.dialects.builtin.I64
 import scair.dialects.builtin.IntegerType
@@ -34,7 +35,7 @@ abstract class EnumAttrCase[T <: Attribute](
     Seq(typ)
 
   def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
-  override def custom_print = symbol
+  override def custom_print(p: Printer) = p.print(symbol)
 }
 
 abstract class EnumAttr[T <: Attribute](

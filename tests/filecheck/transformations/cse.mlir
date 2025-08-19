@@ -1,7 +1,13 @@
 // RUN: scair-opt %s --allow-unregistered-dialect -p cse | filecheck %s
 
-// CHECK:       builtin.module {
+// CHECK:       #map = affine_map<(d0)[] -> (d0 mod 2)>
+// CHECK-NEXT:  #map1 = affine_map<()[] -> (0)>
+// CHECK-NEXT:  #map2 = affine_map<()[] -> (4)>
+// CHECK-NEXT:  builtin.module {
 
+#map = affine_map<(d0)[] -> (d0 mod 2)>
+#map1 = affine_map<()[] -> (0)>
+#map2 = affine_map<()[] -> (4)>
 func.func @simple_constant() -> (i32, i32) {
   %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
   %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
@@ -25,13 +31,13 @@ func.func @simple_float_constant() -> (f32, f32) {
 func.func @basic() -> (index, index) {
   %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
   %1 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-  %2 = "affine.apply"(%0) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
-  %3 = "affine.apply"(%1) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
+  %2 = "affine.apply"(%0) <{map = #map}> : (index) -> (index)
+  %3 = "affine.apply"(%1) <{map = #map}> : (index) -> (index)
   func.return %2, %3 : index, index
 }
 // CHECK-NEXT:    func.func @basic() -> (index, index) {
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-// CHECK-NEXT:      %1 = "affine.apply"(%0) <{map = affine_map<(d0)[] -> (d0 mod 2)>}> : (index) -> (index)
+// CHECK-NEXT:      %1 = "affine.apply"(%0) <{map = #map}> : (index) -> (index)
 // CHECK-NEXT:      func.return %1, %1 : index, index
 // CHECK-NEXT:    }
 
@@ -100,7 +106,7 @@ func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
 
 func.func @down_propagate_for() {
   %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-  "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+  "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
   ^bb0(%1: index):
     %2 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
     "foo"(%0, %2) : (i32, i32) -> ()
@@ -110,7 +116,7 @@ func.func @down_propagate_for() {
 }
 // CHECK-NEXT:    func.func @down_propagate_for() {
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-// CHECK-NEXT:      "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+// CHECK-NEXT:      "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
 // CHECK-NEXT:      ^bb0(%1: index):
 // CHECK-NEXT:        "foo"(%0, %0) : (i32, i32) -> ()
 // CHECK-NEXT:        "affine.yield"() : () -> ()
@@ -130,7 +136,7 @@ func.func @down_propagate_for() {
 //   "func.return"(%3) : (i32) -> ()
 // }) : () -> ()
 func.func @up_propagate_for() -> i32 {
-  "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+  "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
   ^bb0(%0: index):
     %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
     "foo"(%1) : (i32) -> ()
@@ -140,7 +146,7 @@ func.func @up_propagate_for() -> i32 {
   func.return %0 : i32
 }
 // CHECK-NEXT:    func.func @up_propagate_for() -> i32 {
-// CHECK-NEXT:      "affine.for"() <{lowerBoundMap = affine_map<()[] -> (0)>, upperBoundMap = affine_map<()[] -> (4)>, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
+// CHECK-NEXT:      "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
 // CHECK-NEXT:      ^bb0(%0: index):
 // CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
 // CHECK-NEXT:        "foo"(%1) : (i32) -> ()
