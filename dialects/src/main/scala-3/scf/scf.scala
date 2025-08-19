@@ -135,7 +135,7 @@ case class WhileOp(
 
 case class IndexSwitchOp(
     arg: Operand[Index],
-    cases: Operand[DenseArrayAttr],
+    cases: DenseArrayAttr,
     defaultRegion: Region,
     // TODO: variadic regions
     caseRegions: Region,

@@ -81,7 +81,8 @@ object DB_CharType extends AttributeCompanion {
   override def name: String = "db.char"
 
   override def parse[$: P](p: AttrParser) =
-    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_CharType(_))
+    P(("<" ~/ p.Attribute.rep(sep = ",") ~ ">").orElse(Seq()))
+      .map(DB_CharType(_))
 
 }
 
@@ -185,7 +186,8 @@ object DB_DecimalType extends AttributeCompanion {
   override def name: String = "db.decimal"
 
   override def parse[$: P](p: AttrParser) =
-    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_DecimalType(_))
+    P(("<" ~/ p.Attribute.rep(sep = ",") ~ ">").orElse(Seq()))
+      .map(DB_DecimalType(_))
 
 }
 
@@ -285,7 +287,7 @@ object DB_ConstantOp extends OperationCompanion {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
+    "(" ~ parser.Attribute ~ ")" ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
     (
