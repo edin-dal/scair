@@ -8,6 +8,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 import java.lang.Float.intBitsToFloat
+import scala.collection.mutable
 
 // ░█████╗░ ████████╗ ████████╗ ██████╗░
 // ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔══██╗
@@ -25,7 +26,11 @@ import java.lang.Float.intBitsToFloat
 //
 // IE THE PARSER FOR BUILTIN DIALECT ATTRIBUTES
 
-class AttrParser(val ctx: MLContext) {
+class AttrParser(
+    val ctx: MLContext,
+    val attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
+    val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+) {
 
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
@@ -63,13 +68,27 @@ class AttrParser(val ctx: MLContext) {
   )
 
   def AttributeValue[$: P] = P(
-    Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
+    Type | AttributeAlias // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
+  )
+
+  def AttributeAlias[$: P] = P("#" ~~ AliasName).map((name: String) =>
+    attributeAliases.getOrElse(
+      name,
+      throw new Exception(s"Attribute alias ${name} not defined.")
+    )
+  )
+
+  def TypeAlias[$: P] = P("!" ~~ AliasName).map((name: String) =>
+    typeAliases.getOrElse(
+      name,
+      throw new Exception(s"Type alias ${name} not defined.")
+    )
   )
 
   def AttributeValueList[$: P] = AttributeValue.rep(sep = ",")
 
   def Type[$: P] = P(
-    (BuiltIn | DialectType | DialectAttribute)
+    (BuiltIn | DialectType | DialectAttribute | TypeAlias)
   ) // shortened definition TODO: finish...
 
   /*≡==--==≡≡≡≡==--=≡≡*\

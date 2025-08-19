@@ -410,7 +410,10 @@ object Parser {
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
-  def AliasName[$: P] = P(BareId)
+  // Alias can't have dots in their names for ambiguity with dialect names.
+  def AliasName[$: P] = P(
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX ~~ !"."
+  ).!
 
   def SuffixId[$: P] = P(
     DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
@@ -441,8 +444,6 @@ object Parser {
   // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
 
   // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
-
-  def AttributeAlias[$: P] = P("#" ~~ AliasName)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    OPERATIONS    ||
@@ -536,8 +537,12 @@ object Parser {
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-class Parser(val context: MLContext, val args: Args = Args())
-    extends AttrParser(context) {
+class Parser(
+    val context: MLContext,
+    val args: Args = Args(),
+    attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
+    typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+) extends AttrParser(context, attributeAliases, typeAliases) {
 
   import Parser._
 
@@ -595,7 +600,11 @@ class Parser(val context: MLContext, val args: Args = Args())
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (Operations(0)) ~ End
+    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef)
+      .rep()
+      .map(_.flatMap(_ match
+        case o: Operation => Seq(o)
+        case _            => Seq())) ~ End
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
@@ -866,9 +875,16 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def TypeAliasDef[$: P] = P(
     "!" ~~ AliasName ~ "=" ~ Type
+  )./.map((name: String, value: Attribute) =>
+    typeAliases.get(name) match {
+      case Some(t) =>
+        throw new Exception(
+          s"""Type alias "${name}" already defined as ${t.custom_print}."""
+        )
+      case None =>
+        typeAliases(name) = value
+    }
   )
-
-  def TypeAlias[$: P] = P("!" ~~ AliasName)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTES    ||
@@ -880,6 +896,14 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def AttributeAliasDef[$: P] = P(
     "#" ~~ AliasName ~ "=" ~ AttributeValue
+  )./.map((name: String, value: Attribute) =>
+    attributeAliases.get(name) match
+      case Some(a) =>
+        throw new Exception(
+          s"""Attribute alias "${name}" already defined as ${a.custom_print}."""
+        )
+      case None =>
+        attributeAliases(name) = value
   )
 
   // [x] - value-id-and-type ::= value-id `:` type
