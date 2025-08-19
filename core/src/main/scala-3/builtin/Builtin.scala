@@ -361,7 +361,6 @@ case class SymbolRefAttr(
       ref => p.print("@", ref.data)(using indentLevel = 0),
       sep = "::"
     )
-    (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
 
 }
 
