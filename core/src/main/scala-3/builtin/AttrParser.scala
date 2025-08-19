@@ -64,11 +64,11 @@ class AttrParser(
   // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
   def AttributeEntry[$: P] = P(
-    (BareId | StringLiteral) ~ "=" ~/ AttributeValue
+    (BareId | StringLiteral) ~ "=" ~/ (Attribute | Type)
   )
 
-  def AttributeValue[$: P] = P(
-    Type | AttributeAlias // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
+  def Attribute[$: P] = P(
+    Type | BuiltinAttr | DialectAttribute | AttributeAlias // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
   )
 
   def AttributeAlias[$: P] = P("#" ~~ AliasName).map((name: String) =>
@@ -85,11 +85,13 @@ class AttrParser(
     )
   )
 
-  def AttributeValueList[$: P] = AttributeValue.rep(sep = ",")
+  def AttributeList[$: P] = Attribute.rep(sep = ",")
 
   def Type[$: P] = P(
-    (BuiltIn | DialectType | DialectAttribute | TypeAlias)
-  ) // shortened definition TODO: finish...
+    (BuiltinType | DialectType | TypeAlias)
+  )
+
+  def TypeList[$: P] = Type.rep(sep = ",")
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    FLOAT TYPE    ||
@@ -204,7 +206,7 @@ class AttrParser(
   // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
   def ArrayAttributeP[$: P]: P[ArrayAttribute[Attribute]] = P(
-    "[" ~ AttributeValueList
+    "[" ~ AttributeList
       .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
 
@@ -281,7 +283,7 @@ class AttrParser(
   def Dimension[$: P]: P[IntData] =
     P("?".map(_ => -1: BigInt) | DecimalLiteral).map(x => IntData(x))
 
-  def Encoding[$: P] = P(AttributeValue)
+  def Encoding[$: P] = P(Attribute)
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||    MEMREF TYPE    ||
@@ -434,7 +436,7 @@ class AttrParser(
   )
 
   def BuiltinAttr[$: P]: P[Attribute] = P(
-      ArrayAttributeP |
+    ArrayAttributeP |
       DenseArrayAttributeP |
       StringAttributeP |
       SymbolRefAttrP |
@@ -443,10 +445,6 @@ class AttrParser(
       DenseIntOrFPElementsAttrP |
       AffineMapAttrP |
       AffineSetAttrP
-  )
-
-  def BuiltIn[$: P]: P[Attribute] = P(
-    BuiltinAttr | BuiltinType
   )
 
 }

@@ -895,7 +895,7 @@ class Parser(
   // [x] - attribute-alias ::= `#` alias-name
 
   def AttributeAliasDef[$: P] = P(
-    "#" ~~ AliasName ~ "=" ~ AttributeValue
+    "#" ~~ AliasName ~ "=" ~ Attribute
   )./.map((name: String, value: Attribute) =>
     attributeAliases.get(name) match
       case Some(a) =>

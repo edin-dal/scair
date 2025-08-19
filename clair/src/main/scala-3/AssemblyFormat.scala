@@ -240,12 +240,12 @@ case class TypeDirective(
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
     construct match {
       case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.AttributeValue(using $ctx) }
+        '{ $p.Type(using $ctx) }
       case MayVariadicOpInputDef(
             name = n,
             variadicity = Variadicity.Variadic
           ) =>
-        '{ $p.AttributeValueList(using $ctx) }
+        '{ $p.TypeList(using $ctx) }
     }
 
 }

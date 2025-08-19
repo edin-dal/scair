@@ -95,7 +95,7 @@ object SetResultOp extends OperationCompanion {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    parser.Type ~ ValueId ~ ":" ~ parser.Type
+    parser.Attribute ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
     (
