@@ -69,7 +69,7 @@ case class Printer(
   def print(attribute: Attribute): Unit =
     aliasesMap.get(attribute) match
       case Some(alias) => print(alias)
-      case None => attribute.custom_print(this)
+      case None        => attribute.custom_print(this)
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
