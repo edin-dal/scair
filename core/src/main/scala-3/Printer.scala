@@ -3,7 +3,6 @@ package scair
 import scair.ir.*
 
 import java.io.*
-import scala.annotation.targetName
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashSet
 
