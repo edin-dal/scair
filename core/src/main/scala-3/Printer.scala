@@ -308,7 +308,6 @@ case class Printer(
     val ops = op match
       case o: Operation        => Seq(o)
       case seq: Seq[Operation] => seq
-    var i: Int = 0
     printAliases(ops)
     print(ops)(using indentLevel = 0)
 
