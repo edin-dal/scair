@@ -10,8 +10,6 @@ import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*
 
-import scala.math.max
-
 // ==---== //
 //  Enums
 // ==---== //
@@ -618,11 +616,11 @@ object DB_DivOp extends OperationCompanion {
                   new IntegerAttr(
                     IntData(
                       opLeft0 - opLeft1 + opRight1
-                        + max(opLeft1 + opRight0, 6)
+                        + (opLeft1 + opRight0).max(6)
                     )
                   ),
                   new IntegerAttr(
-                    IntData(max(opLeft1 + opRight0, 6))
+                    IntData((opLeft1 + opRight0).max(6))
                   )
                 )
               )

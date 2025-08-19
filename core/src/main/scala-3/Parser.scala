@@ -357,11 +357,11 @@ object Parser {
 
   def DecimalLiteral[$: P] =
     P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
-      parseLong(sign + literal)
+      BigInt(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => parseLong(hex, 16))
+    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => BigInt(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -398,7 +398,7 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[Long])): String =
+  def simplifyValueName(valueUse: (String, Option[BigInt])): String =
     valueUse match {
       case (name, Some(number)) => s"$name#$number"
       case (name, None)         => name
@@ -410,7 +410,10 @@ object Parser {
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
-  def AliasName[$: P] = P(BareId)
+  // Alias can't have dots in their names for ambiguity with dialect names.
+  def AliasName[$: P] = P(
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX ~~ !"."
+  ).!
 
   def SuffixId[$: P] = P(
     DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
@@ -442,8 +445,6 @@ object Parser {
 
   // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
-  def AttributeAlias[$: P] = P("#" ~~ AliasName)
-
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    OPERATIONS    ||
   \*≡==---==≡≡==---==≡*/
@@ -458,7 +459,7 @@ object Parser {
     OpResult.rep(1, sep = ",") ~ "="
   ).map((results: Seq[Seq[String]]) => results.flatten)
 
-  def sequenceValues(value: (String, Option[Long])): Seq[String] =
+  def sequenceValues(value: (String, Option[BigInt])): Seq[String] =
     value match {
       case (name, Some(totalNo)) =>
         (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
@@ -536,8 +537,12 @@ object Parser {
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-class Parser(val context: MLContext, val args: Args = Args())
-    extends AttrParser(context) {
+class Parser(
+    val context: MLContext,
+    val args: Args = Args(),
+    attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
+    typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+) extends AttrParser(context, attributeAliases, typeAliases) {
 
   import Parser._
 
@@ -595,7 +600,11 @@ class Parser(val context: MLContext, val args: Args = Args())
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (Operations(0)) ~ End
+    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef)
+      .rep()
+      .map(_.flatMap(_ match
+        case o: Operation => Seq(o)
+        case _            => Seq())) ~ End
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
@@ -866,9 +875,16 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def TypeAliasDef[$: P] = P(
     "!" ~~ AliasName ~ "=" ~ Type
+  )./.map((name: String, value: Attribute) =>
+    typeAliases.get(name) match {
+      case Some(t) =>
+        throw new Exception(
+          s"""Type alias "$name" already defined as $t."""
+        )
+      case None =>
+        typeAliases(name) = value
+    }
   )
-
-  def TypeAlias[$: P] = P("!" ~~ AliasName)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTES    ||
@@ -880,6 +896,14 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def AttributeAliasDef[$: P] = P(
     "#" ~~ AliasName ~ "=" ~ AttributeValue
+  )./.map((name: String, value: Attribute) =>
+    attributeAliases.get(name) match
+      case Some(a) =>
+        throw new Exception(
+          s"""Attribute alias "$name" already defined as $a."""
+        )
+      case None =>
+        attributeAliases(name) = value
   )
 
   // [x] - value-id-and-type ::= value-id `:` type

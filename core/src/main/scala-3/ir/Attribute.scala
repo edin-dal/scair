@@ -116,3 +116,5 @@ trait AttributeCompanion {
 trait AttributeCompanionI[T] extends AttributeCompanion {
   extension (op: T) def AttributeTrait = this
 }
+
+trait AliasedAttribute(val alias: String) extends Attribute
