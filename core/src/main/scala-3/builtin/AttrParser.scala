@@ -423,23 +423,30 @@ class AttrParser(
     )
   )
 
-  def BuiltIn[$: P]: P[Attribute] = P(
+  def BuiltinType[$: P]: P[Attribute] = P(
     FloatTypeP |
       IntegerTypeP |
       IndexTypeP |
-      ArrayAttributeP |
-      DenseArrayAttributeP |
       FunctionTypeP |
-      StringAttributeP |
       TensorTypeP |
       MemrefTypeP |
-      VectorTypeP |
+      VectorTypeP
+  )
+
+  def BuiltinAttr[$: P]: P[Attribute] = P(
+      ArrayAttributeP |
+      DenseArrayAttributeP |
+      StringAttributeP |
       SymbolRefAttrP |
       FloatAttrP |
       IntegerAttrP |
       DenseIntOrFPElementsAttrP |
       AffineMapAttrP |
       AffineSetAttrP
+  )
+
+  def BuiltIn[$: P]: P[Attribute] = P(
+    BuiltinAttr | BuiltinType
   )
 
 }
