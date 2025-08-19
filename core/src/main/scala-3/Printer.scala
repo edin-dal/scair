@@ -3,7 +3,6 @@ package scair
 import scair.ir.*
 
 import java.io.*
-import scala.annotation.targetName
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashSet
 
@@ -20,12 +19,10 @@ case class Printer(
     var valueNextID: Int = 0,
     var blockNextID: Int = 0,
     val valueNameMap: mutable.Map[Value[? <: Attribute], String] =
-      mutable.Map.empty[Value[? <: Attribute], String],
-    val blockNameMap: mutable.Map[Block, String] =
-      mutable.Map.empty[Block, String],
+      mutable.Map.empty,
+    val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
     private val p: PrintWriter = new PrintWriter(System.out),
-    private var aliasesMap: Map[Attribute, String] =
-      Map.empty[Attribute, String]
+    private var aliasesMap: Map[Attribute, String] = Map.empty
 ) {
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -70,6 +67,15 @@ case class Printer(
     aliasesMap.get(attribute) match
       case Some(alias) => print(alias)
       case None        => attribute.custom_print(this)
+
+  def print(attributes: Seq[Attribute]): Unit =
+    printList(attributes, "[", ", ", "]")
+
+  def print(parameter: Attribute | Seq[Attribute]): Unit =
+    parameter match {
+      case seq: Seq[_]     => printList(seq.asInstanceOf[Seq[Attribute]])
+      case attr: Attribute => print(attr)
+    }
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
@@ -166,48 +172,12 @@ case class Printer(
     print(indent * indentLevel + "}")
   }
 
-  @targetName("aliasesOps")
-  def aliases(ops: Seq[Operation]): LinkedHashSet[AliasedAttribute] =
-    ops.flatMap(aliases).to(LinkedHashSet)
-
-  def aliases(op: Operation): LinkedHashSet[AliasedAttribute] =
-    (op.properties.values ++ op.attributes.values ++ op.operands.typ ++ op.results.typ)
-      .flatMap(aliases)
-      .to(LinkedHashSet) ++ op.regions.flatMap(aliases).to(LinkedHashSet)
-
-  def aliases(reg: Region): LinkedHashSet[AliasedAttribute] =
-    reg.blocks.flatMap(aliases).to(LinkedHashSet)
-
-  def aliases(block: Block): LinkedHashSet[AliasedAttribute] =
-    block.arguments
-      .map(_.typ)
-      .flatMap(aliases)
-      .to(LinkedHashSet) ++ (block.operations
-      .flatMap(aliases))
-      .to(LinkedHashSet)
-
-  @targetName("aliasesAttrs")
-  def aliases(attr: Seq[Attribute]): LinkedHashSet[AliasedAttribute] =
-    attr.flatMap(aliases).to(LinkedHashSet)
-
-  def aliases(attr: Attribute): LinkedHashSet[AliasedAttribute] =
-    val p = attr match
-      case p: ParametrizedAttribute =>
-        p.parameters
-          .flatMap(_ match
-            case a: Attribute        => aliases(a)
-            case seq: Seq[Attribute] => aliases(seq))
-          .to(LinkedHashSet)
-      case _ => LinkedHashSet.empty[AliasedAttribute]
-    attr match
-      case a: AliasedAttribute => p + a
-      case _                   => p
-
   def printAliases(ops: Seq[Operation]) =
-    val toAlias = aliases(ops)
+    val printer = AliasPrinter(strictly_generic = strictly_generic, p = p)
+    printer.print(ops)(using indentLevel = 0)
     val aliasesMap = mutable.Map.empty[Attribute, String]
     val aliasesCounters = mutable.Map.empty[String, Int]
-    toAlias.foreach(attr =>
+    printer.toAlias.foreach(attr =>
       aliasesMap.getOrElseUpdate(
         attr, {
           val alias = attr.alias
@@ -311,5 +281,40 @@ case class Printer(
       case seq: Seq[Operation] => seq
     printAliases(ops)
     print(ops)(using indentLevel = 0)
+
+}
+
+class AliasPrinter(
+    strictly_generic: Boolean = false,
+    private val p: PrintWriter = new PrintWriter(System.out),
+    val toAlias: mutable.LinkedHashSet[AliasedAttribute] =
+      mutable.LinkedHashSet.empty
+) extends Printer(strictly_generic = strictly_generic, p = p) {
+
+  override def copy(
+      strictly_generic: Boolean = false,
+      indent: String = "  ",
+      valueNextID: Int = 0,
+      blockNextID: Int = 0,
+      valueNameMap: mutable.Map[Value[? <: Attribute], String] =
+        mutable.Map.empty,
+      blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
+      p: PrintWriter = new PrintWriter(System.out),
+      aliasesMap: Map[Attribute, String] = Map.empty
+  ): AliasPrinter =
+    new AliasPrinter(
+      strictly_generic = strictly_generic,
+      p = p,
+      toAlias = toAlias
+    )
+
+  override def print(string: String) = ()
+
+  override def print(attribute: Attribute): Unit = {
+    attribute.custom_print(this)
+    attribute match
+      case aliased: AliasedAttribute => toAlias.add(aliased)
+      case _                         => ()
+  }
 
 }

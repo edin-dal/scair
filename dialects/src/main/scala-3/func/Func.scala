@@ -100,7 +100,7 @@ case class Func(
         lprinter.print(" {\n")
         entry.operations.foreach(lprinter.print(_)(using indentLevel + 1))
         others.foreach(lprinter.print)
-        print(lprinter.indent * indentLevel + "}")
+        lprinter.print(lprinter.indent * indentLevel + "}")
 
 case class Return(
     _operands: Seq[Operand[Attribute]]

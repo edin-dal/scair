@@ -37,33 +37,17 @@ trait TypeAttribute extends Attribute {
   override def prefix: String = "!"
 }
 
-// TODO: Think about this; probably not the best design
-extension (x: Seq[Attribute] | Attribute)
-
-  def custom_print(p: Printer): Unit = x match {
-    case attr: Attribute => attr.custom_print(p)
-    case x: Seq[_]       =>
-      p.printList(
-        x.asInstanceOf[Seq[Attribute]],
-        "[",
-        ", ",
-        "]"
-      )
-      x.asInstanceOf[Seq[Attribute]]
-        .map(_.custom_print(p))
-        .mkString("[", ", ", "]")
-  }
-
 abstract class ParametrizedAttribute() extends Attribute {
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
   override def custom_print(p: Printer) =
-    p.print(prefix, name)(using indentLevel = 0)
+    given indentLevel: Int = 0
+    p.print(prefix, name)
     if parameters.size > 0 then
       p.printListF(
         parameters,
-        (x: Attribute | Seq[Attribute]) => x.custom_print(p),
+        p.print,
         "<",
         ", ",
         ">"

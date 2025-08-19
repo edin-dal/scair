@@ -67,7 +67,7 @@ builtin.module {
     %1 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
     %2 = "arith.addi"(%0, %1) : (i32, i32) -> (i32)
     func.return %2 : i32
-
+  }
 }
 """.trim()
 
@@ -83,7 +83,7 @@ builtin.module {
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {
     func.return %0 : i32
-
+  }
 }
 """.trim()
   }
