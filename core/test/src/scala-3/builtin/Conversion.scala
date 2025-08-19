@@ -11,10 +11,10 @@ class ConversionTest extends AnyFlatSpec {
   val strAttr: StringData = "AsAnAttr"
   strAttr shouldEqual StringData("AsAnAttr")
 
-  val int: Long = IntData(42)
+  val int: BigInt = IntData(42)
   int shouldEqual 42
 
-  val intAttr: IntData = 24.toLong
+  val intAttr: IntData = BigInt(24)
   intAttr shouldEqual IntData(24)
 
   val float: Double = FloatData(42.0)

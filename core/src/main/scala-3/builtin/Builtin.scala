@@ -78,8 +78,8 @@ case class Float128Type() extends FloatType("builtin.f128") with TypeAttribute {
 ||     INT DATA     ||
 \*≡==---==≡≡==---==≡*/
 
-case class IntData(val value: Long)
-    extends DataAttribute[Long]("builtin.int_attr", value)
+case class IntData(val value: BigInt)
+    extends DataAttribute[BigInt]("builtin.int_attr", value)
     derives TransparentData {
   override def custom_print = value.toString
 }
@@ -113,6 +113,36 @@ case class IntegerAttr(
 ) extends ParametrizedAttribute {
 
   def this(value: IntData) = this(value, I64)
+
+  infix def +(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value + that.value.value), this.typ)
+  }
+
+  infix def -(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value - that.value.value), this.typ)
+  }
+
+  infix def *(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot multiply IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
+  }
 
   override def name: String = "builtin.integer_attr"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
@@ -230,7 +260,7 @@ case class RankedTensorType(
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data)
+  override def getShape = shape.attrValues.map(_.data.toLong)
 
   override def custom_print: String = {
     val shapeString =
@@ -280,7 +310,7 @@ case class RankedMemrefType(
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data)
+  override def getShape = shape.attrValues.map(_.data.toLong)
 
   override def custom_print: String = {
 
@@ -323,7 +353,7 @@ case class VectorType(
     Seq(shape, elementType, scalableDims)
 
   override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data)
+  override def getShape = shape.attrValues.map(_.data.toLong)
 
   override def custom_print: String = {
 
