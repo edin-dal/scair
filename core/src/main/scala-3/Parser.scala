@@ -357,11 +357,11 @@ object Parser {
 
   def DecimalLiteral[$: P] =
     P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
-      parseLong(sign + literal)
+      BigInt(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => parseLong(hex, 16))
+    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => BigInt(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -398,7 +398,7 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[Long])): String =
+  def simplifyValueName(valueUse: (String, Option[BigInt])): String =
     valueUse match {
       case (name, Some(number)) => s"$name#$number"
       case (name, None)         => name
@@ -458,7 +458,7 @@ object Parser {
     OpResult.rep(1, sep = ",") ~ "="
   ).map((results: Seq[Seq[String]]) => results.flatten)
 
-  def sequenceValues(value: (String, Option[Long])): Seq[String] =
+  def sequenceValues(value: (String, Option[BigInt])): Seq[String] =
     value match {
       case (name, Some(totalNo)) =>
         (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
