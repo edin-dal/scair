@@ -102,22 +102,6 @@ case class FastMathFlagsAttr(val flags: FastMathFlags)
           sep = ","
         )
     p.print(">")
-    // val p =
-    //   if flags == FastMathFlags.fast then "fast"
-    //   else if flags == FastMathFlags.none then "none"
-    //   else
-    //     this.flags
-    //       .map {
-    //         case FastMathFlag.reassoc  => "reassoc"
-    //         case FastMathFlag.nnan     => "nnan"
-    //         case FastMathFlag.ninf     => "ninf"
-    //         case FastMathFlag.nsz      => "nsz"
-    //         case FastMathFlag.arcp     => "arcp"
-    //         case FastMathFlag.contract => "contract"
-    //         case FastMathFlag.afn      => "afn"
-    //       }
-    //       .mkString(",")
-    // s"#arith.fastmath<$p>"
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  TYPES AND CONSTRAINTS  ||
