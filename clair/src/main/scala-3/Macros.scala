@@ -783,7 +783,7 @@ def derivedAttributeCompanion[T: Type](using
     new DerivedAttributeCompanion[T] {
       override def name: String = ${ Expr(attrDef.name) }
       override def parse[$: P](p: AttrParser): P[T] = P(
-        ("<" ~/ p.Type.rep(sep = ",") ~ ">")
+        ("<" ~/ p.AttributeValue.rep(sep = ",") ~ ">")
       ).orElse(Seq())
         .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
       def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
