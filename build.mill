@@ -119,7 +119,7 @@ object `package` extends ScairSettings with ScoverageReport {
 
   object tools extends ScairModule  {
     def moduleDeps = Seq(dialects, transformations)
-    def mainClass = Some("ScairOpt")
+    def mainClass = Some("scair.tools.ScairOpt")
   }
 
   // Top-level commands and helpers

@@ -40,6 +40,8 @@ class Value[+T <: Attribute](
     return this eq o.asInstanceOf[AnyRef]
   }
 
+  override def hashCode(): Int = System.identityHashCode(this)
+
 }
 
 extension (seq: Seq[Value[Attribute]]) def typ: Seq[Attribute] = seq.map(_.typ)
