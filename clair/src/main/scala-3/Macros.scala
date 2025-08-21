@@ -773,7 +773,7 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-def derivedAttributeCompanion[T: Type](using
+def derivedAttributeCompanion[T <: Attribute: Type](using
     Quotes
 ): Expr[DerivedAttributeCompanion[T]] =
 
@@ -782,10 +782,16 @@ def derivedAttributeCompanion[T: Type](using
   '{
     new DerivedAttributeCompanion[T] {
       override def name: String = ${ Expr(attrDef.name) }
-      override def parse[$: P](p: AttrParser): P[T] = P(
-        ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
-      ).orElse(Seq())
-        .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+      override def parse[$: P as ctx](p: AttrParser): P[T] = ${
+        getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
+          '{
+            P(
+              ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
+            ).orElse(Seq())
+              .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+          }
+        )
+      }
       def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
         parametersMacro(attrDef, '{ attr })
       }
@@ -819,7 +825,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       override def parse[$: P as ctx](p: Parser): P[Operation] =
         ${
-          (getCustomParse[T]('{ p }).getOrElse(parseMacro(opDef, '{ p })))
+          (getOpCustomParse[T]('{ p }).getOrElse(parseMacro(opDef, '{ p })))
         }(using ctx)
 
       def apply(

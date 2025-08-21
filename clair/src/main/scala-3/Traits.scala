@@ -5,7 +5,8 @@ import scair.ir.*
 
 import scala.compiletime.deferred
 
-trait DerivedAttribute[name <: String, T] extends ParametrizedAttribute {
+trait DerivedAttribute[name <: String, T <: Attribute]
+    extends ParametrizedAttribute {
 
   this: T =>
 

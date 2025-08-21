@@ -1,5 +1,7 @@
 package scair.clair.macros
 
+import fastparse.ParsingRun
+import scair.AttrParser
 import scair.Printer
 import scair.ir.*
 
@@ -8,14 +10,16 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-trait DerivedAttributeCompanion[T] extends AttributeCompanionI[T] {
+trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanionI[T] {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   extension (op: T) override def AttributeTrait = this
+
+  override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
 }
 
 object DerivedAttributeCompanion {
 
-  inline def derived[T]: DerivedAttributeCompanion[T] = ${
+  inline def derived[T <: Attribute]: DerivedAttributeCompanion[T] = ${
     derivedAttributeCompanion[T]
   }
 
@@ -114,7 +118,7 @@ def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
 ): Seq[Expr[DerivedAttributeCompanion[?]]] =
   import quotes.reflect.*
   Type.of[T] match
-    case '[t *: ts] =>
+    case '[type t <: Attribute; `t` *: ts] =>
       val dat = Expr
         .summon[DerivedAttributeCompanion[t]]
         .getOrElse(
