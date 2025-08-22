@@ -4,7 +4,7 @@ import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
 import scala.annotation.tailrec
-import scala.collection.mutable.Stack
+import scala.collection.mutable.LinkedHashSet
 
 // ██████╗░ ░█████╗░ ████████╗ ████████╗ ███████╗ ██████╗░ ███╗░░██╗
 // ██╔══██╗ ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔════╝ ██╔══██╗ ████╗░██║
@@ -351,7 +351,7 @@ class PatternRewriteWalker(
 
   }
 
-  private var worklist = Stack[Operation]()
+  private val worklist: LinkedHashSet[Operation] = LinkedHashSet.empty
 
   def rewrite_module(module: ModuleOp): Unit = {
     return rewrite_op(module)
@@ -364,22 +364,22 @@ class PatternRewriteWalker(
     return op_was_modified
   }
 
+  private def pop_worklist: Operation =
+    val op = worklist.head
+    worklist.remove(op)
+    op
+
   private def populate_worklist(op: Operation): Unit = {
-    if (!worklist.contains(op))
-      worklist.push(op)
-    op.regions.reverseIterator.foreach((x: Region) =>
-      x.blocks.reverseIterator.foreach((y: Block) =>
-        y.operations.reverseIterator.foreach(populate_worklist(_))
-      )
+    worklist += op
+    op.regions.foreach((x: Region) =>
+      x.blocks.foreach((y: Block) => y.operations.foreach(populate_worklist(_)))
     )
   }
 
   private def clear_worklist(op: Operation): Unit = {
     worklist -= op
-    op.regions.reverseIterator.foreach((x: Region) =>
-      x.blocks.reverseIterator.foreach((y: Block) =>
-        y.operations.reverseIterator.foreach(clear_worklist(_))
-      )
+    op.regions.foreach((x: Region) =>
+      x.blocks.foreach((y: Block) => y.operations.foreach(clear_worklist(_)))
     )
   }
 
@@ -387,9 +387,9 @@ class PatternRewriteWalker(
 
     var rewriter_done_action = false
 
-    if (worklist.length == 0) return rewriter_done_action
+    if (worklist.isEmpty) return rewriter_done_action
 
-    var op = worklist.pop()
+    var op = pop_worklist
     val rewriter = PatternRewriter(op)
 
     while (true) {
@@ -404,8 +404,9 @@ class PatternRewriteWalker(
 
       rewriter_done_action |= rewriter.has_done_action
 
-      if (worklist.length == 0) return rewriter_done_action
-      op = worklist.pop()
+      if (worklist.isEmpty) return rewriter_done_action
+
+      op = pop_worklist
     }
     return rewriter_done_action
   }

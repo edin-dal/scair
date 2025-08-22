@@ -137,6 +137,9 @@ trait Operation extends IRNode {
         }
     }
 
+  final override def hashCode(): Int = System.identityHashCode(this)
+  final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
+
 }
 
 abstract class BaseOperation(
@@ -177,19 +180,6 @@ abstract class BaseOperation(
       properties = properties,
       attributes = attributes
     )
-  }
-
-  override def hashCode(): Int = {
-    return 7 * 41 +
-      this.operands.hashCode() +
-      this.results.hashCode() +
-      this.regions.hashCode() +
-      this.properties.hashCode() +
-      this.attributes.hashCode()
-  }
-
-  override def equals(o: Any): Boolean = {
-    return this eq o.asInstanceOf[AnyRef]
   }
 
 }
