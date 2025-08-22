@@ -22,6 +22,7 @@ import scair.transformations.cdt.TestInsertionPass
 import scair.transformations.cdt.TestReplacementPass
 import scair.transformations.cse.CommonSubexpressionElimination
 import scair.transformations.reconcile.ReconcileUnrealizedCasts
+import scair.transformations.benchmark_constant_folding.BenchmarkConstantFolding
 
 val allDialects: Seq[Dialect] =
   Seq(
@@ -44,6 +45,7 @@ val allDialects: Seq[Dialect] =
 
 val allPasses: Seq[ModulePass] =
   Seq(
+    BenchmarkConstantFolding,
     CommonSubexpressionElimination,
     DummyPass,
     ReconcileUnrealizedCasts,
