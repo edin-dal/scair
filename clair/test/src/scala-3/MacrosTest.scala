@@ -547,8 +547,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
               Seq(
                 Region(
                   Seq(
-                    Block(_, ListType(RegionOp(_))),
-                    Block(_, ListType(RegionOp(_)))
+                    Block(_, BlockOperations(RegionOp(_))),
+                    Block(_, BlockOperations(RegionOp(_)))
                   )
                 ),
                 Region(_)

@@ -194,7 +194,7 @@ case class Block private (
     for (op <- new_ops) {
       attach_op(op)
     }
-    operations.insertAll(oplen, BlockOperations(new_ops*))
+    operations.insertAll(oplen, new_ops)
   }
 
   def insert_op_before(
@@ -204,7 +204,7 @@ case class Block private (
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
-        operations.insertAll(getIndexOf(existing_op), ListType(new_op))
+        operations.insert(existing_op, new_op)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -222,7 +222,7 @@ case class Block private (
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(getIndexOf(existing_op), BlockOperations(new_ops*))
+        operations.insertAll(existing_op, new_ops)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -238,10 +238,8 @@ case class Block private (
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
-        operations.insertAll(
-          getIndexOf(existing_op) + 1,
-          BlockOperations(new_op)
-        )
+        operations.insert(getIndexOf(existing_op) + 1, new_op)
+
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -261,7 +259,7 @@ case class Block private (
         }
         operations.insertAll(
           getIndexOf(existing_op) + 1,
-          BlockOperations(new_ops*)
+          new_ops
         )
       case false =>
         throw new Exception(

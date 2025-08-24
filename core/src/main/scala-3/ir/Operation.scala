@@ -3,6 +3,7 @@ package scair.ir
 import fastparse.P
 import scair.Parser
 import scair.Printer
+import scair.utils.IntrusiveNode
 // import scala.reflect.ClassTag
 
 // ██╗ ██████╗░
@@ -29,7 +30,7 @@ trait IRNode {
 
 }
 
-trait Operation extends IRNode {
+trait Operation extends IRNode with IntrusiveNode[Operation] {
 
   final override def parent = container_block
 

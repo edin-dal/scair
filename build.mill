@@ -97,7 +97,11 @@ object `package` extends ScairSettings with ScoverageReport {
 
   def rootModule = ModuleRef(this)
 
+  object utils extends ScairModule
+
   object core extends ScairModule {
+
+    override def moduleDeps = Seq(utils)
 
     override def mvnDeps = Seq(
       mvn"com.lihaoyi::fastparse:3.1.0",

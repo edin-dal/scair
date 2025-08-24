@@ -182,7 +182,7 @@ trait Rewriter {
       )
     }
 
-    insert_ops_after(op, ops)
+    insert_ops_before(op, ops)
 
     for ((old_res, new_res) <- (op.results zip results)) {
       replace_value(old_res, new_res)
