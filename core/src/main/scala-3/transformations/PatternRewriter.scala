@@ -26,69 +26,33 @@ import scala.collection.mutable.LinkedHashSet
 
 object InsertPoint {
 
-  def before(op: Operation): InsertPoint = {
-    (op.container_block == None) match {
-      case true =>
+  def before(op: Operation) =
+    op.container_block match
+      case None =>
         throw new Exception(
           "Operation insertion point must have a parent block."
         )
-      case false =>
-        val block = op.container_block.get
-        InsertPoint(block, Some(op))
-    }
-  }
+      case Some(block) => InsertPoint(block, Some(op))
 
-  def after(op: Operation): InsertPoint = {
-    (op.container_block == None) match {
-      case true =>
+  def after(op: Operation) =
+    op.container_block match
+      case None =>
         throw new Exception(
           "Operation insertion point must have a parent block."
         )
-      case false =>
-        val block = op.container_block.get
-        val opIdx = block.getIndexOf(op)
-        (opIdx == block.operations.length - 1) match {
-          case true  => new InsertPoint(block)
-          case false =>
-            InsertPoint(block, Some(block.operations(opIdx + 1)))
-        }
-    }
-  }
+      case Some(block) =>
+        InsertPoint(block, op.next)
 
-  def at_start_of(block: Block): InsertPoint = {
-    val ops = block.operations
-    ops.length match {
-      case 0 => new InsertPoint(block)
-      case _ => InsertPoint(block, Some(ops(0)))
-    }
-  }
+  def at_start_of(block: Block) =
+    InsertPoint(block, block.operations.headOption)
 
-  def at_end_of(block: Block): InsertPoint = {
-    new InsertPoint(block)
-  }
-
+  def at_end_of(block: Block) = InsertPoint(block)
 }
 
 case class InsertPoint(
     val block: Block,
-    val insert_before: Option[Operation]
-) {
-
-  // custom constructor
-  def this(block: Block) = {
-    this(block, None)
-  }
-
-  if (insert_before != None) then {
-    if !(insert_before.get.container_block `equals` Some(block)) then {
-      throw new Error(
-        "Given operation's container and given block do not match: " +
-          "InsertPoint must be an operation inside a given block."
-      )
-    }
-  }
-
-}
+    val insert_before: Option[Operation] = None
+)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   Static realm   ||
@@ -232,8 +196,7 @@ type PatternRewriter = PatternRewriteWalker#PatternRewriter
 
 abstract class RewritePattern {
 
-  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
-    ???
+  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit
 
 }
 
