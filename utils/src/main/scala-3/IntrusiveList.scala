@@ -7,22 +7,22 @@ import scala.collection.*
 trait IntrusiveNode[A]:
   this: A =>
 
-  private[utils] final var _prev: Option[IntrusiveNode[A]] = None
-  private[utils] final var _next: Option[IntrusiveNode[A]] = None
+  private[utils] final var _prev: Option[A] = None
+  private[utils] final var _next: Option[A] = None
 
-  inline final def prev: Option[IntrusiveNode[A]] = _prev
-  inline final def next: Option[IntrusiveNode[A]] = _next
+  inline final def prev: Option[A] = _prev
+  inline final def next: Option[A] = _next
 
-  inline private[utils] def prev_=(p: Option[IntrusiveNode[A]]) =
+  inline final private[utils] def prev_=(p: Option[A]) =
     _prev = p
 
-  inline private[utils] def next_=(n: Option[IntrusiveNode[A]]) =
+  inline final private[utils] def next_=(n: Option[A]) =
     _next = n
 
-class IntrusiveList[A] extends mutable.Buffer[A]:
+class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
 
-  private var _head: Option[IntrusiveNode[A]] = None
-  private var _last: Option[IntrusiveNode[A]] = None
+  private final var _head: Option[A] = None
+  private final var _last: Option[A] = None
 
   override def iterator: Iterator[A] = new AbstractIterator[A]:
     private var current = _head
@@ -30,11 +30,12 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
     def next(): A =
       val res = current.get
       current = res.next
-      res.asInstanceOf[A]
+      res
 
-  private def applyRec(idx: Int, current: IntrusiveNode[A]): A =
+  @tailrec
+  private def applyRec(idx: Int, current: A): A =
     idx: @switch match
-      case 0 => current.asInstanceOf[A]
+      case 0 => current
       case _ =>
         current.next match
           case Some(n) => applyRec(idx - 1, n)
@@ -55,28 +56,23 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
     v
 
   override def subtractOne(x: A): this.type =
-    val v = x.asInstanceOf[IntrusiveNode[A]]
-    v.prev match
-      case Some(p) => p.next = v.next
-      case None    => _head = v.next
-    v.next match
-      case Some(n) => n.prev = v.prev
-      case None    => _last = v.prev
-    v.asInstanceOf[A]
+    x.prev match
+      case Some(p) => p.next = x.next
+      case None    => _head = x.next
+    x.next match
+      case Some(n) => n.prev = x.prev
+      case None    => _last = x.prev
     this
 
-  def update(c: A, elem: A): Unit =
-    val e = elem.asInstanceOf[IntrusiveNode[A]]
-    val current = c.asInstanceOf[IntrusiveNode[A]]
-
+  def update(c: A, e: A): Unit =
     // TODO: how should we deal with that
-    if current.eq(e) then return
+    if c.eq(e) then return
 
-    if _head.isDefined && _head.get.eq(current) then _head = Some(e)
-    if _last.isDefined && _last.get.eq(current) then _last = Some(e)
+    if _head.isDefined && _head.get.eq(c) then _head = Some(e)
+    if _last.isDefined && _last.get.eq(c) then _last = Some(e)
 
-    val p = current.prev.asInstanceOf[Option[IntrusiveNode[A]]]
-    val n = current.next.asInstanceOf[Option[IntrusiveNode[A]]]
+    val p = c.prev
+    val n = c.next
 
     if p.isDefined then p.get.next = Some(e)
     if n.isDefined then n.get.prev = Some(e)
@@ -84,14 +80,14 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
     e.prev = p
     e.next = n
 
-    current.prev = None
-    current.next = None
+    c.prev = None
+    c.next = None
 
   override def update(idx: Int, elem: A): Unit =
     update(apply(idx), elem)
 
   @tailrec
-  private def lengthRec(current: Option[IntrusiveNode[A]], acc: Int): Int =
+  private def lengthRec(current: Option[A], acc: Int): Int =
     current match
       case Some(n) => lengthRec(n.next, acc + 1)
       case None    => acc
@@ -102,34 +98,32 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
   override def addOne(elem: A): this.type =
     _last match
       case None =>
-        _head = Some(elem.asInstanceOf[IntrusiveNode[A]])
+        _head = Some(elem)
         _last = _head
       case Some(last) =>
-        last.next = Some(elem.asInstanceOf[IntrusiveNode[A]])
-        elem.asInstanceOf[IntrusiveNode[A]].prev = Some(last)
-        _last = Some(elem.asInstanceOf[IntrusiveNode[A]])
+        last.next = Some(elem)
+        elem.prev = Some(last)
+        _last = Some(elem)
     this
 
   override def prepend(elem: A): this.type =
     _head match
       case None =>
-        _head = Some(elem.asInstanceOf[IntrusiveNode[A]])
+        _head = Some(elem)
         _last = _head
       case Some(head) =>
-        head.prev = Some(elem.asInstanceOf[IntrusiveNode[A]])
-        elem.asInstanceOf[IntrusiveNode[A]].next = Some(head)
-        _head = Some(elem.asInstanceOf[IntrusiveNode[A]])
+        head.prev = Some(elem)
+        elem.next = Some(head)
+        _head = Some(elem)
     this
 
   override def insert(idx: Int, elem: A): Unit =
     if idx == length then addOne(elem)
     else insert(apply(idx), elem)
 
-  def insert(current: A, elem: A): Unit =
-    val c = current.asInstanceOf[IntrusiveNode[A]]
-    if _head.isDefined && _head.get.eq(c) then prepend(elem)
+  def insert(c: A, e: A): Unit =
+    if _head.isDefined && _head.get.eq(c) then prepend(e)
     else
-      val e = elem.asInstanceOf[IntrusiveNode[A]]
       val prev = c.prev.get
       prev.next = Some(e)
       e.prev = Some(prev)

@@ -66,6 +66,7 @@ case class CSE(
       case Seq(oneBlock) => simplify(oneBlock)
       // Just mimicing MLIR here
       case _ => ()
+
 }
 
 object CommonSubexpressionElimination extends ModulePass {
