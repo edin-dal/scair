@@ -70,7 +70,7 @@ tuples.return
 // CHECK-NEXT:    ^bb0(%2: !tuples.tuple):
 // CHECK-NEXT:      %3 = db.constant("1998-09-02") : !db.date<day>
 // CHECK-NEXT:      %4 = "tuples.getcol"(%2) {attr = @lineitem::@l_shipdate} : (!tuples.tuple) -> (!db.date<day>)
-// CHECK-NEXT:      %5 = db.compare lte %4 : !db.date<day>, %3 : !db.date<day> : i1
+// CHECK-NEXT:      %5 = db.compare lte %4: !db.date<day>, %3: !db.date<day> : i1
 // CHECK-NEXT:      "tuples.return"(%5) : (i1) -> ()
 // CHECK-NEXT:    }) {cost = 5930888.5 : f64, evaluationCost = 2.0 : f64, rows = 5930888.5 : f64, selectivity = 0.98828125 : f64} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %2 = "relalg.map"(%1) ({
@@ -78,11 +78,11 @@ tuples.return
 // CHECK-NEXT:      %4 = db.constant(1 : i32) : !db.decimal<12, 2>
 // CHECK-NEXT:      %5 = "tuples.getcol"(%3) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %6 = "tuples.getcol"(%3) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %7 = db.sub %4 : !db.decimal<12, 2>, %6 : !db.decimal<12, 2> : !db.decimal<12, 2>
-// CHECK-NEXT:      %8 = db.mul %5 : !db.decimal<12, 2>, %7 : !db.decimal<12, 2> : !db.decimal<24, 4>
+// CHECK-NEXT:      %7 = db.sub %4: !db.decimal<12, 2>, %6: !db.decimal<12, 2> : !db.decimal<12, 2>
+// CHECK-NEXT:      %8 = db.mul %5: !db.decimal<12, 2>, %7: !db.decimal<12, 2> : !db.decimal<24, 4>
 // CHECK-NEXT:      %9 = "tuples.getcol"(%3) {attr = @lineitem::@l_tax} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %10 = db.add %4 : !db.decimal<12, 2>, %9 : !db.decimal<12, 2> : !db.decimal<12, 2>
-// CHECK-NEXT:      %11 = db.mul %8 : !db.decimal<24, 4>, %10 : !db.decimal<12, 2> : !db.decimal<36, 6>
+// CHECK-NEXT:      %10 = db.add %4: !db.decimal<12, 2>, %9: !db.decimal<12, 2> : !db.decimal<12, 2>
+// CHECK-NEXT:      %11 = db.mul %8: !db.decimal<24, 4>, %10: !db.decimal<12, 2> : !db.decimal<36, 6>
 // CHECK-NEXT:      "tuples.return"(%11) : (!db.decimal<36, 6>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5 : f64, computed_cols = [@map0::@tmp_attr5({type = !db.decimal<36, 6>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %3 = "relalg.map"(%2) ({
@@ -90,8 +90,8 @@ tuples.return
 // CHECK-NEXT:      %5 = db.constant(1 : i32) : !db.decimal<12, 2>
 // CHECK-NEXT:      %6 = "tuples.getcol"(%4) {attr = @lineitem::@l_extendedprice} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %7 = "tuples.getcol"(%4) {attr = @lineitem::@l_discount} : (!tuples.tuple) -> (!db.decimal<12, 2>)
-// CHECK-NEXT:      %8 = db.sub %5 : !db.decimal<12, 2>, %7 : !db.decimal<12, 2> : !db.decimal<12, 2>
-// CHECK-NEXT:      %9 = db.mul %6 : !db.decimal<12, 2>, %8 : !db.decimal<12, 2> : !db.decimal<24, 4>
+// CHECK-NEXT:      %8 = db.sub %5: !db.decimal<12, 2>, %7: !db.decimal<12, 2> : !db.decimal<12, 2>
+// CHECK-NEXT:      %9 = db.mul %6: !db.decimal<12, 2>, %8: !db.decimal<12, 2> : !db.decimal<24, 4>
 // CHECK-NEXT:      "tuples.return"(%9) : (!db.decimal<24, 4>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5 : f64, computed_cols = [@map0::@tmp_attr3({type = !db.decimal<24, 4>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %4 = "relalg.aggregation"(%3) ({
@@ -111,24 +111,24 @@ tuples.return
 // CHECK-NEXT:    ^bb0(%6: !tuples.tuple):
 // CHECK-NEXT:      %7 = "tuples.getcol"(%6) {attr = @aggr_rw::@rw0} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %8 = "tuples.getcol"(%6) {attr = @aggr_rw::@rw1} : (!tuples.tuple) -> (i64)
-// CHECK-NEXT:      %9 = db.cast %8 : i64 -> !db.decimal<19, 0>
-// CHECK-NEXT:      %10 = db.div %7 : !db.decimal<12, 2>, %9 : !db.decimal<19, 0> : !db.decimal<31, 21>
+// CHECK-NEXT:      %9 = db.cast %8: i64 -> !db.decimal<19, 0>
+// CHECK-NEXT:      %10 = db.div %7: !db.decimal<12, 2>, %9: !db.decimal<19, 0> : !db.decimal<31, 21>
 // CHECK-NEXT:      "tuples.return"(%10) : (!db.decimal<31, 21>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5 : f64, computed_cols = [@aggr0::@tmp_attr8({type = !db.decimal<31, 21>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %6 = "relalg.map"(%5) ({
 // CHECK-NEXT:    ^bb0(%7: !tuples.tuple):
 // CHECK-NEXT:      %8 = "tuples.getcol"(%7) {attr = @aggr_rw::@rw2} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %9 = "tuples.getcol"(%7) {attr = @aggr_rw::@rw3} : (!tuples.tuple) -> (i64)
-// CHECK-NEXT:      %10 = db.cast %9 : i64 -> !db.decimal<19, 0>
-// CHECK-NEXT:      %11 = db.div %8 : !db.decimal<12, 2>, %10 : !db.decimal<19, 0> : !db.decimal<31, 21>
+// CHECK-NEXT:      %10 = db.cast %9: i64 -> !db.decimal<19, 0>
+// CHECK-NEXT:      %11 = db.div %8: !db.decimal<12, 2>, %10: !db.decimal<19, 0> : !db.decimal<31, 21>
 // CHECK-NEXT:      "tuples.return"(%11) : (!db.decimal<31, 21>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5 : f64, computed_cols = [@aggr0::@tmp_attr6({type = !db.decimal<31, 21>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %7 = "relalg.map"(%6) ({
 // CHECK-NEXT:    ^bb0(%8: !tuples.tuple):
 // CHECK-NEXT:      %9 = "tuples.getcol"(%8) {attr = @aggr_rw::@rw4} : (!tuples.tuple) -> (!db.decimal<12, 2>)
 // CHECK-NEXT:      %10 = "tuples.getcol"(%8) {attr = @aggr_rw::@rw5} : (!tuples.tuple) -> (i64)
-// CHECK-NEXT:      %11 = db.cast %10 : i64 -> !db.decimal<19, 0>
-// CHECK-NEXT:      %12 = db.div %9 : !db.decimal<12, 2>, %11 : !db.decimal<19, 0> : !db.decimal<31, 21>
+// CHECK-NEXT:      %11 = db.cast %10: i64 -> !db.decimal<19, 0>
+// CHECK-NEXT:      %12 = db.div %9: !db.decimal<12, 2>, %11: !db.decimal<19, 0> : !db.decimal<31, 21>
 // CHECK-NEXT:      "tuples.return"(%12) : (!db.decimal<31, 21>) -> ()
 // CHECK-NEXT:    }) {rows = 5930888.5 : f64, computed_cols = [@aggr0::@tmp_attr7({type = !db.decimal<31, 21>})]} : (!tuples.tuplestream) -> (!tuples.tuplestream)
 // CHECK-NEXT:    %8 = "relalg.sort"(%7) {rows = 5930888.5 : f64, sortspecs = [(@lineitem::@l_returnflag,asc), (@lineitem::@l_linestatus,asc)]} : (!tuples.tuplestream) -> (!tuples.tuplestream)

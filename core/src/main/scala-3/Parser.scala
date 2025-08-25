@@ -357,11 +357,11 @@ object Parser {
 
   def DecimalLiteral[$: P] =
     P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
-      parseLong(sign + literal)
+      BigInt(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => parseLong(hex, 16))
+    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => BigInt(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -398,7 +398,7 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[Long])): String =
+  def simplifyValueName(valueUse: (String, Option[BigInt])): String =
     valueUse match {
       case (name, Some(number)) => s"$name#$number"
       case (name, None)         => name
@@ -410,7 +410,10 @@ object Parser {
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
-  def AliasName[$: P] = P(BareId)
+  // Alias can't have dots in their names for ambiguity with dialect names.
+  def AliasName[$: P] = P(
+    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX ~~ !"."
+  ).!
 
   def SuffixId[$: P] = P(
     DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
@@ -442,8 +445,6 @@ object Parser {
 
   // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
-  def AttributeAlias[$: P] = P("#" ~~ AliasName)
-
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    OPERATIONS    ||
   \*≡==---==≡≡==---==≡*/
@@ -458,7 +459,7 @@ object Parser {
     OpResult.rep(1, sep = ",") ~ "="
   ).map((results: Seq[Seq[String]]) => results.flatten)
 
-  def sequenceValues(value: (String, Option[Long])): Seq[String] =
+  def sequenceValues(value: (String, Option[BigInt])): Seq[String] =
     value match {
       case (name, Some(totalNo)) =>
         (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
@@ -536,8 +537,12 @@ object Parser {
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-class Parser(val context: MLContext, val args: Args = Args())
-    extends AttrParser(context) {
+class Parser(
+    val context: MLContext,
+    val args: Args = Args(),
+    attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
+    typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+) extends AttrParser(context, attributeAliases, typeAliases) {
 
   import Parser._
 
@@ -595,7 +600,11 @@ class Parser(val context: MLContext, val args: Args = Args())
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (Operations(0)) ~ End
+    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef)
+      .rep()
+      .map(_.flatMap(_ match
+        case o: Operation => Seq(o)
+        case _            => Seq())) ~ End
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
@@ -775,7 +784,7 @@ class Parser(val context: MLContext, val args: Args = Args())
   )
 
   def RegionList[$: P] =
-    P("(" ~ Region.rep(sep = ",") ~ ")")
+    P("(" ~ Region().rep(sep = ",") ~ ")")
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||      BLOCKS      ||
@@ -784,25 +793,32 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - block           ::= block-label operation+
   // [x] - block-label     ::= block-id block-arg-list? `:`
 
-  def populateBlock(
-      //           block    arguments       operations
-      uncutBlock: (Block, Seq[Value[Attribute]], Seq[Operation])
+  def populateBlockOps(
+      block: Block,
+      ops: Seq[Operation]
   ): Block = {
-    val (block, args, ops) = uncutBlock
-    block.arguments ++= args
-    args.foreach(_.owner = Some(block))
     block.operations ++= ops
     ops.foreach(_.container_block = Some(block))
-    return block
+    block
   }
 
+  def populateBlockArgs(
+      block: Block,
+      args: Seq[(String, Attribute)]
+  ) =
+    block.arguments ++= currentScope.defineValues(args)
+    block.arguments.foreach(_.owner = Some(block))
+    block
+
+  def BlockBody[$: P](block: Block) =
+    Operations(0).mapTry(populateBlockOps(block, _))
+
   def Block[$: P] =
-    P(BlockLabel ~/ Operations(0)).mapTry(populateBlock)
+    P(BlockLabel.flatMap(BlockBody))
 
   def BlockLabel[$: P] = P(
-    BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
-      .orElse(Seq())
-      .mapTry(currentScope.defineValues) ~ ":"
+    (BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
+      .orElse(Seq())).map(populateBlockArgs) ~ ":"
   )
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
@@ -839,11 +855,15 @@ class Parser(val context: MLContext, val args: Args = Args())
   }
 
   // EntryBlock might break - take out if it does...
-  def Region[$: P] = P(
+  def Region[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
     "{" ~/ E(
       { enterLocalRegion }
-    ) ~/ Operations(0) ~/ Block.rep ~/ "}"
-  ).map(defineRegion) ~/ E(
+    ) ~/ (BlockBody(populateBlockArgs(new Block(), entryArgs)) ~/ Block.rep)
+      .map((entry: Block, blocks: Seq[Block]) =>
+        if (entry.operations.isEmpty && entry.arguments.isEmpty) then blocks
+        else entry +: blocks
+      ) ~/ "}"
+  ).map(new Region(_)) ~/ E(
     { enterParentRegion }
   )
 
@@ -855,9 +875,16 @@ class Parser(val context: MLContext, val args: Args = Args())
 
   def TypeAliasDef[$: P] = P(
     "!" ~~ AliasName ~ "=" ~ Type
+  )./.map((name: String, value: Attribute) =>
+    typeAliases.get(name) match {
+      case Some(t) =>
+        throw new Exception(
+          s"""Type alias "$name" already defined as $t."""
+        )
+      case None =>
+        typeAliases(name) = value
+    }
   )
-
-  def TypeAlias[$: P] = P("!" ~~ AliasName)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTES    ||
@@ -868,7 +895,15 @@ class Parser(val context: MLContext, val args: Args = Args())
   // [x] - attribute-alias ::= `#` alias-name
 
   def AttributeAliasDef[$: P] = P(
-    "#" ~~ AliasName ~ "=" ~ AttributeValue
+    "#" ~~ AliasName ~ "=" ~ Attribute
+  )./.map((name: String, value: Attribute) =>
+    attributeAliases.get(name) match
+      case Some(a) =>
+        throw new Exception(
+          s"""Attribute alias "$name" already defined as $a."""
+        )
+      case None =>
+        attributeAliases(name) = value
   )
 
   // [x] - value-id-and-type ::= value-id `:` type
@@ -884,7 +919,7 @@ class Parser(val context: MLContext, val args: Args = Args())
     P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
   def BlockArgList[$: P] =
-    P("(" ~/ ValueIdAndTypeList ~/ ")")
+    P("(" ~ ValueIdAndTypeList ~ ")")
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`

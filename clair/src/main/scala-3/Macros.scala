@@ -195,17 +195,17 @@ def parseMacro(
     opDef: OperationDef,
     p: Expr[Parser]
 )(using
-    ctx: Expr[P[Any]]
-)(using
     Quotes
-): Expr[P[Operation]] =
+): Expr[P[Any] ?=> P[Operation]] =
   opDef.assembly_format match
     case Some(format) =>
       format.parse(opDef, p)
     case None =>
       '{
         throw new Exception(
-          s"No custom Parser implemented for Operation '${${ Expr(opDef.name) }}'"
+          s"No custom Parser implemented for Operation '${${
+              Expr(opDef.name)
+            }}'"
         )
       }
 
@@ -772,7 +772,7 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-def derivedAttributeCompanion[T: Type](using
+def derivedAttributeCompanion[T <: Attribute: Type](using
     Quotes
 ): Expr[DerivedAttributeCompanion[T]] =
 
@@ -781,10 +781,16 @@ def derivedAttributeCompanion[T: Type](using
   '{
     new DerivedAttributeCompanion[T] {
       override def name: String = ${ Expr(attrDef.name) }
-      override def parse[$: P](p: AttrParser): P[T] = P(
-        ("<" ~/ p.Type.rep(sep = ",") ~ ">")
-      ).orElse(Seq())
-        .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+      override def parse[$: P as ctx](p: AttrParser): P[T] = ${
+        getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
+          '{
+            P(
+              ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
+            ).orElse(Seq())
+              .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+          }
+        )
+      }
       def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
         parametersMacro(attrDef, '{ attr })
       }
@@ -816,8 +822,10 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
-      override def parse[$: P as ctx](parser: Parser): P[Operation] =
-        ${ parseMacro(opDef, '{ parser })(using '{ ctx }) }
+      override def parse[$: P as ctx](p: Parser): P[Operation] =
+        ${
+          (getOpCustomParse[T]('{ p }).getOrElse(parseMacro(opDef, '{ p })))
+        }(using ctx)
 
       def apply(
           operands: Seq[Value[Attribute]] = Seq(),

@@ -38,7 +38,7 @@ val I64 = IntegerType(IntData(64), Signless)
 
 sealed abstract class Signedness(override val name: String, val dat: String)
     extends DataAttribute[String](name, dat) {
-  override def custom_print = dat
+  override def custom_print(p: Printer) = p.print(dat)
 }
 
 case object Signed extends Signedness("signed", "si")
@@ -55,33 +55,33 @@ abstract class FloatType(override val name: String)
 }
 
 case class Float16Type() extends FloatType("builtin.f16") with TypeAttribute {
-  override def custom_print = "f16"
+  override def custom_print(p: Printer) = p.print("f16")
 }
 
 case class Float32Type() extends FloatType("builtin.f32") with TypeAttribute {
-  override def custom_print = "f32"
+  override def custom_print(p: Printer) = p.print("f32")
 }
 
 case class Float64Type() extends FloatType("builtin.f64") with TypeAttribute {
-  override def custom_print = "f64"
+  override def custom_print(p: Printer) = p.print("f64")
 }
 
 case class Float80Type() extends FloatType("builtin.f80") with TypeAttribute {
-  override def custom_print = "f80"
+  override def custom_print(p: Printer) = p.print("f80")
 }
 
 case class Float128Type() extends FloatType("builtin.f128") with TypeAttribute {
-  override def custom_print = "f128"
+  override def custom_print(p: Printer) = p.print("f128")
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||     INT DATA     ||
 \*≡==---==≡≡==---==≡*/
 
-case class IntData(val value: Long)
-    extends DataAttribute[Long]("builtin.int_attr", value)
+case class IntData(val value: BigInt)
+    extends DataAttribute[BigInt]("builtin.int_attr", value)
     derives TransparentData {
-  override def custom_print = value.toString
+  override def custom_print(p: Printer) = p.print(value.toString)
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -95,11 +95,9 @@ case class IntegerType(val width: IntData, val sign: Signedness)
   override def name: String = "builtin.int_type"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(width, sign)
 
-  override def custom_print = sign match {
-    case Signless => s"${sign.custom_print}${width.custom_print}"
-    case Signed   => s"${sign.custom_print}${width.custom_print}"
-    case Unsigned => s"${sign.custom_print}${width.custom_print}"
-  }
+  override def custom_print(p: Printer) =
+    p.print(sign)
+    p.print(width)
 
 }
 
@@ -114,14 +112,44 @@ case class IntegerAttr(
 
   def this(value: IntData) = this(value, I64)
 
+  infix def +(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value + that.value.value), this.typ)
+  }
+
+  infix def -(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value - that.value.value), this.typ)
+  }
+
+  infix def *(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot multiply IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
+  }
+
   override def name: String = "builtin.integer_attr"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
 
-  override def custom_print = (value, typ) match {
-    case (IntData(1), IntegerType(IntData(1), Signless)) => "true"
-    case (IntData(0), IntegerType(IntData(1), Signless)) => "false"
-    case (_, IntegerType(IntData(64), Signless)) => s"${value.custom_print}"
-    case (_, _) => s"${value.custom_print} : ${typ.custom_print}"
+  override def custom_print(p: Printer) = (value, typ) match {
+    case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
+    case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")
+    case (_, IntegerType(IntData(64), Signless))         => p.print(value)
+    case (_, _) => p.print(value, " : ", typ)(using 0)
   }
 
 }
@@ -133,7 +161,7 @@ case class IntegerAttr(
 case class FloatData(val value: Double)
     extends DataAttribute[Double]("builtin.float_data", value)
     derives TransparentData {
-  override def custom_print = value.toString
+  override def custom_print(p: Printer) = p.print(value.toString)
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -146,10 +174,9 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
   override def name: String = "builtin.float_attr"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
 
-  override def custom_print = (value, typ) match {
-    case (_, Float64Type) => s"${value.custom_print}"
-    case (_, _)           => s"${value.custom_print} : ${typ.custom_print}"
-  }
+  override def custom_print(p: Printer) = typ match
+    case Float64Type => p.print(value)
+    case _           => p.print(value, " : ", typ)(using 0)
 
 }
 
@@ -159,7 +186,7 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 
 case class IndexType() extends ParametrizedAttribute with TypeAttribute {
   override def name: String = "builtin.index"
-  override def custom_print = "index"
+  override def custom_print(p: Printer) = p.print("index")
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 }
 
@@ -170,8 +197,8 @@ case class IndexType() extends ParametrizedAttribute with TypeAttribute {
 case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
 
-  override def custom_print =
-    "[" + attrValues.map(x => x.custom_print).mkString(", ") + "]"
+  override def custom_print(p: Printer) =
+    p.printList(attrValues, "[", ", ", "]")
 
 }
 
@@ -185,8 +212,8 @@ case class DictionaryAttr(val entries: Map[String, Attribute])
       entries
     ) {
 
-  override def custom_print =
-    "{" + entries.map((name, attr) => s"$name = $attr").mkString(", ") + "}"
+  override def custom_print(p: Printer) =
+    p.printAttrDict(entries)
 
 }
 
@@ -196,7 +223,10 @@ case class DictionaryAttr(val entries: Map[String, Attribute])
 case class StringData(val stringLiteral: String)
     extends DataAttribute("builtin.string", stringLiteral)
     derives TransparentData {
-  override def custom_print = "\"" + stringLiteral + "\""
+
+  override def custom_print(p: Printer) =
+    p.print("\"", stringLiteral, "\"")(using 0)
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -230,22 +260,19 @@ case class RankedTensorType(
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data)
+  override def getShape = shape.attrValues.map(_.data.toLong)
 
-  override def custom_print: String = {
-    val shapeString =
-      (shape.data.map(x =>
-        if (x.data == -1) "?" else x.custom_print
-      ) :+ elementType.custom_print)
-        .mkString("x")
-
-    val encodingString = encoding match {
-      case Some(x) => x.custom_print
-      case None    => ""
-    }
-
-    return s"tensor<${shapeString}${encodingString}>"
-  }
+  override def custom_print(p: Printer) =
+    p.print("tensor<")
+    shape.attrValues.foreach(s =>
+      s match
+        case IntData(-1) => p.print("?")
+        case d           => p.print(d)
+      p.print("x")
+    )
+    p.print(elementType)
+    if encoding.isDefined then p.print(", ", encoding)(using indentLevel = 0)
+    p.print(">")
 
 }
 
@@ -256,7 +283,9 @@ case class UnrankedTensorType(override val elementType: Attribute)
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(elementType)
 
-  override def custom_print = s"tensor<*x${elementType.custom_print}>"
+  override def custom_print(p: Printer) =
+    p.print("tensor<*x", elementType, ">")(using indentLevel = 0)
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -280,18 +309,18 @@ case class RankedMemrefType(
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data)
+  override def getShape = shape.attrValues.map(_.data.toLong)
 
-  override def custom_print: String = {
+  override def custom_print(p: Printer) =
+    p.print("memref<")
+    shape.attrValues.foreach(s =>
+      s match
+        case IntData(-1) => p.print("?")
+        case d           => p.print(d)
+      p.print("x")
+    )
 
-    val shapeString =
-      (shape.map(x =>
-        if (x.data == -1) "?" else x.custom_print
-      ) :+ elementType.custom_print)
-        .mkString("x")
-
-    return s"memref<${shapeString}>"
-  }
+    p.print(elementType, ">")(using indentLevel = 0)
 
 }
 
@@ -303,7 +332,9 @@ case class UnrankedMemrefType(override val elementType: Attribute)
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(elementType)
 
-  override def custom_print = s"tensor<*x${elementType.custom_print}>"
+  override def custom_print(p: Printer) =
+    p.print("tensor<*x", elementType, ">")(using indentLevel = 0)
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -323,19 +354,20 @@ case class VectorType(
     Seq(shape, elementType, scalableDims)
 
   override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data)
+  override def getShape = shape.attrValues.map(_.data.toLong)
 
-  override def custom_print: String = {
+  override def custom_print(p: Printer): Unit =
 
-    val shapeString =
-      ((shape, scalableDims).zipped
-        .map((size, scalable) =>
-          if scalable.data != 0 then s"[${size.data}]" else s"${size.data}"
-        ) :+ elementType.custom_print)
-        .mkString("x")
-
-    return s"vector<${shapeString}>"
-  }
+    p.print("vector<")
+    p.printListF(
+      shape zip scalableDims,
+      (size, scalable) =>
+        if scalable.data != 0 then
+          p.print("[", size, "]")(using indentLevel = 0)
+        else p.print(size),
+      sep = "x"
+    )
+    p.print("x", elementType, ">")(using indentLevel = 0)
 
 }
 
@@ -353,8 +385,12 @@ case class SymbolRefAttr(
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(rootRef, nestedRefs)
 
-  override def custom_print =
-    (rootRef +: nestedRefs).map(_.data).map("@" + _).mkString("::")
+  override def custom_print(p: Printer) =
+    p.printListF(
+      rootRef +: nestedRefs,
+      ref => p.print("@", ref.data)(using indentLevel = 0),
+      sep = "::"
+    )
 
 }
 
@@ -379,15 +415,17 @@ case class DenseArrayAttr(
     then Left("Element types do not match the dense array type")
     else Right(())
 
-  override def custom_print = {
-
-    return s"array<${typ.custom_print}${if data.isEmpty then "" else ": "}${data
-        .map(_ match {
-          case IntegerAttr(value, _) => value.custom_print
-          case FloatAttr(value, _)   => value.custom_print
-        })
-        .mkString(", ")}>"
-  }
+  override def custom_print(p: Printer) =
+    p.print("array<", typ)(using indentLevel = 0)
+    if data.nonEmpty then p.print(": ")
+    p.printListF(
+      data,
+      {
+        case IntegerAttr(value, _) => p.print(value)
+        case FloatAttr(value, _)   => p.print(value)
+      }
+    )
+    p.print(">")
 
   // Seq methods
   def apply(idx: Int): Attribute = data.apply(idx)
@@ -412,14 +450,13 @@ case class FunctionType(
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(inputs, outputs)
 
-  override def custom_print = {
-    val inputsString = inputs.map(_.custom_print).mkString(", ")
-    val outputsString = outputs.map(_.custom_print).mkString(", ")
-    outputs.length match {
-      case 1 => s"(${inputsString}) -> ${outputsString}"
-      case _ => s"(${inputsString}) -> (${outputsString})"
-    }
-  }
+  override def custom_print(p: Printer) =
+    p.print("(")
+    p.printList(inputs)
+    p.print(") -> ")
+    outputs match
+      case Seq(single) => p.print(single)
+      case s           => p.printList(s, "(", ", ", ")")
 
 }
 
@@ -459,20 +496,19 @@ case class DenseIntOrFPElementsAttr(
       case Failure(e) => Left(e.getMessage)
     }
 
-  override def custom_print = {
-
+  override def custom_print(p: Printer) =
     val values = data.attrValues(0) match {
       case x: IntegerAttr =>
         for (a <- data.attrValues) yield a.asInstanceOf[IntegerAttr].value
       case y: FloatAttr =>
         for (a <- data.attrValues) yield a.asInstanceOf[FloatAttr].value
     }
-
-    return s"dense<${
-        if (values.size == 1) { values(0).custom_print }
-        else { values.map(_.custom_print).mkString("[", ", ", "]") }
-      }> : ${typ.custom_print}"
-  }
+    p.print("dense<")
+    values match
+      case Seq(single) => p.print(single)
+      case s           => p.printList(s, "[", ", ", "]")
+    p.print("> : ")
+    p.print(typ)
 
 }
 
@@ -482,9 +518,11 @@ case class DenseIntOrFPElementsAttr(
 
 case class AffineMapAttr(val affine_map: AffineMap)
     extends DataAttribute[AffineMap]("builtin.affine_map", affine_map)
-    derives TransparentData {
+    with AliasedAttribute("map") derives TransparentData {
 
-  override def custom_print = s"affine_map<${affine_map}>"
+  override def custom_print(p: Printer) =
+    p.print("affine_map<", affine_map.toString, ">")(using indentLevel = 0)
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -494,9 +532,11 @@ case class AffineMapAttr(val affine_map: AffineMap)
 
 case class AffineSetAttr(val affine_set: AffineSet)
     extends DataAttribute[AffineSet]("builtin.affine_set", affine_set)
-    derives TransparentData {
+    with AliasedAttribute("set") derives TransparentData {
 
-  override def custom_print = s"affine_set<${affine_set}>"
+  override def custom_print(p: Printer) =
+    p.print("affine_set<", affine_set.toString, ">")(using indentLevel = 0)
+
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -515,7 +555,7 @@ object ModuleOp extends OperationCompanion {
       parser: Parser
   ): P[Operation] =
     P(
-      parser.Region
+      parser.Region()
     ).map((x: Region) => ModuleOp(regions = Seq(x)))
   // ==----------------------== //
 

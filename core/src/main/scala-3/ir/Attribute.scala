@@ -2,6 +2,10 @@ package scair.ir
 
 import fastparse.*
 import scair.AttrParser
+import scair.Printer
+
+import java.io.PrintWriter
+import java.io.StringWriter
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -18,34 +22,36 @@ sealed trait Attribute {
   def name: String
   def prefix: String = "#"
   def custom_verify(): Either[String, Unit] = Right(())
-  def custom_print: String
+  def custom_print(p: Printer): Unit
+
+  override def toString(): String =
+    val out = StringWriter()
+    val p = Printer(p = PrintWriter(out))
+    custom_print(p)
+    p.flush()
+    out.toString()
+
 }
 
 trait TypeAttribute extends Attribute {
   override def prefix: String = "!"
 }
 
-// TODO: Think about this; probably not the best design
-extension (x: Seq[Attribute] | Attribute)
-
-  def custom_print: String = x match {
-    case x: Seq[_] =>
-      x.asInstanceOf[Seq[Attribute]]
-        .map(_.custom_print)
-        .mkString("[", ", ", "]")
-    case attr: Attribute => attr.custom_print
-  }
-
 abstract class ParametrizedAttribute() extends Attribute {
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
-  override def custom_print =
-    s"${prefix}${name}${
-        if parameters.size > 0
-        then parameters.map(x => x.custom_print).mkString("<", ", ", ">")
-        else ""
-      }"
+  override def custom_print(p: Printer) =
+    given indentLevel: Int = 0
+    p.print(prefix, name)
+    if parameters.size > 0 then
+      p.printListF(
+        parameters,
+        p.print,
+        "<",
+        ", ",
+        ">"
+      )
 
   override def equals(attr: Any): Boolean = {
     attr match {
@@ -70,7 +76,9 @@ abstract class DataAttribute[D](
     override val name: String,
     val data: D
 ) extends Attribute {
-  override def custom_print = s"$prefix$name<$data>"
+
+  override def custom_print(p: Printer) =
+    p.print(prefix, name, "<", data.toString, ">")(using indentLevel = 0)
 
   override def equals(attr: Any): Boolean = {
     attr match {
@@ -92,3 +100,5 @@ trait AttributeCompanion {
 trait AttributeCompanionI[T] extends AttributeCompanion {
   extension (op: T) def AttributeTrait = this
 }
+
+trait AliasedAttribute(val alias: String) extends Attribute

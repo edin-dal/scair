@@ -10,8 +10,6 @@ import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*
 
-import scala.math.max
-
 // ==---== //
 //  Enums
 // ==---== //
@@ -83,7 +81,8 @@ object DB_CharType extends AttributeCompanion {
   override def name: String = "db.char"
 
   override def parse[$: P](p: AttrParser) =
-    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_CharType(_))
+    P(("<" ~/ p.Attribute.rep(sep = ",") ~ ">").orElse(Seq()))
+      .map(DB_CharType(_))
 
 }
 
@@ -104,9 +103,15 @@ case class DB_CharType(val typ: Seq[Attribute])
       }
   }
 
-  override def custom_print: String = {
-    if (typ.isEmpty) name
-    else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
+  override def custom_print(p: Printer) = {
+    p.print("!", name)(using indentLevel = 0)
+    if typ.nonEmpty then
+      p.printList(
+        typ,
+        "<",
+        ", ",
+        ">"
+      )
   }
 
 }
@@ -161,10 +166,15 @@ case class DB_IntervalType(val unit: Attribute)
   //     }
   // }
 
-  override def custom_print: String = {
-    if (parameters.isEmpty) name
-    else s"!$name<${parameters.map(_.custom_print).mkString(", ")}>"
-  }
+  override def custom_print(p: Printer) =
+    p.print("!", name)(using indentLevel = 0)
+    if parameters.nonEmpty then
+      p.printList(
+        Seq(unit),
+        "<",
+        ", ",
+        ">"
+      )
 
 }
 
@@ -176,7 +186,8 @@ object DB_DecimalType extends AttributeCompanion {
   override def name: String = "db.decimal"
 
   override def parse[$: P](p: AttrParser) =
-    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_DecimalType(_))
+    P(("<" ~/ p.Attribute.rep(sep = ",") ~ ">").orElse(Seq()))
+      .map(DB_DecimalType(_))
 
 }
 
@@ -204,10 +215,15 @@ case class DB_DecimalType(val typ: Seq[Attribute])
     }
   }
 
-  override def custom_print: String = {
-    if (typ.isEmpty) name
-    else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
-  }
+  override def custom_print(p: Printer) =
+    p.print("!", name)(using indentLevel = 0)
+    if typ.nonEmpty then
+      p.printList(
+        typ,
+        "<",
+        ", ",
+        ">"
+      )
 
 }
 
@@ -244,10 +260,15 @@ case class DB_StringType(val typ: Seq[Attribute])
     else Right(())
   }
 
-  override def custom_print: String = {
-    if (typ.isEmpty) s"!$name"
-    else s"!$name<${typ.map(_.custom_print).mkString(", ")}>"
-  }
+  override def custom_print(p: Printer) =
+    p.print("!", name)(using indentLevel = 0)
+    if typ.nonEmpty then
+      p.printList(
+        typ,
+        "<",
+        ", ",
+        ">"
+      )
 
 }
 
@@ -266,7 +287,7 @@ object DB_ConstantOp extends OperationCompanion {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    "(" ~ parser.Type ~ ")" ~ ":" ~ parser.Type
+    "(" ~ parser.Attribute ~ ")" ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
     (
@@ -317,9 +338,9 @@ case class DB_ConstantOp(
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
     val value =
-      attributes.get("value").map(_.custom_print).getOrElse("")
+      attributes.get("value").map(_.toString).getOrElse("")
     val resultType = results.head.typ
-    printer.print(s"$name($value) : ${resultType.custom_print}")
+    printer.print(s"$name($value) : $resultType")
   }
 
 }
@@ -398,16 +419,13 @@ case class DB_CmpOp(
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.print(name)
-    printer.print(s" ${attributes("predicate").custom_print} ")
-    printer.print(operands.head)
+    printer.print(s" ${attributes("predicate")} ")
+    printer.printListF(
+      operands,
+      printer.printArgument
+    )
     printer.print(" : ")
-    printer.print(operands.head.typ.custom_print)
-    printer.print(", ")
-    printer.print(operands(1))
-    printer.print(" : ")
-    printer.print(operands(1).typ.custom_print)
-    printer.print(" : ")
-    printer.print(results.head.typ.custom_print)
+    printer.print(results.head.typ)
   }
 
 }
@@ -543,14 +561,10 @@ case class DB_MulOp(
   // added code for custom printing
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
-    printer.print(name, " ", operands.head, " : ")
-    printer.print(operands.head.typ.custom_print)
-    printer.print(", ")
-    printer.print(operands(1))
+    printer.print(name, " ")
+    printer.printListF(operands, printer.printArgument)
     printer.print(" : ")
-    printer.print(operands(1).typ.custom_print)
-    printer.print(" : ")
-    printer.print(results.head.typ.custom_print)
+    printer.print(results.head.typ)
   }
 
 }
@@ -604,11 +618,11 @@ object DB_DivOp extends OperationCompanion {
                   new IntegerAttr(
                     IntData(
                       opLeft0 - opLeft1 + opRight1
-                        + max(opLeft1 + opRight0, 6)
+                        + (opLeft1 + opRight0).max(6)
                     )
                   ),
                   new IntegerAttr(
-                    IntData(max(opLeft1 + opRight0, 6))
+                    IntData((opLeft1 + opRight0).max(6))
                   )
                 )
               )
@@ -688,15 +702,12 @@ case class DB_DivOp(
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.print(s"$name ")
-    printer.print(operands.head)
+    printer.printListF(
+      operands,
+      printer.printArgument
+    )
     printer.print(" : ")
-    printer.print(operands.head.typ.custom_print)
-    printer.print(", ")
-    printer.print(operands(1))
-    printer.print(" : ")
-    printer.print(operands(1).typ.custom_print)
-    printer.print(" : ")
-    printer.print(results.head.typ.custom_print)
+    printer.print(results.head.typ)
   }
 
 }
@@ -776,15 +787,12 @@ case class DB_AddOp(
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.print(s"$name ")
-    printer.print(operands.head)
+    printer.printListF(
+      operands,
+      printer.printArgument
+    )
     printer.print(" : ")
-    printer.print(operands.head.typ.custom_print)
-    printer.print(", ")
-    printer.print(operands(1))
-    printer.print(" : ")
-    printer.print(operands(1).typ.custom_print)
-    printer.print(" : ")
-    printer.print(results.head.typ.custom_print)
+    printer.print(results.head.typ)
   }
 
 }
@@ -862,15 +870,12 @@ case class DB_SubOp(
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.print(s"$name ")
-    printer.print(operands.head)
+    printer.printListF(
+      operands,
+      printer.printArgument
+    )
     printer.print(" : ")
-    printer.print(operands.head.typ.custom_print)
-    printer.print(", ")
-    printer.print(operands(1))
-    printer.print(" : ")
-    printer.print(operands(1).typ.custom_print)
-    printer.print(" : ")
-    printer.print(results.head.typ.custom_print)
+    printer.print(results.head.typ)
   }
 
 }
@@ -940,11 +945,9 @@ case class CastOp(
 
   override def custom_print(printer: Printer)(using indentLevel: Int) = {
     printer.print(s"$name ")
-    printer.print(operands.head)
-    printer.print(" : ")
-    printer.print(operands.head.typ.custom_print)
+    printer.printArgument(operands.head)
     printer.print(" -> ")
-    printer.print(results.head.typ.custom_print)
+    printer.print(results.head.typ)
   }
 
 }

@@ -8,6 +8,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 import java.lang.Float.intBitsToFloat
+import scala.collection.mutable
 
 // ░█████╗░ ████████╗ ████████╗ ██████╗░
 // ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔══██╗
@@ -25,7 +26,11 @@ import java.lang.Float.intBitsToFloat
 //
 // IE THE PARSER FOR BUILTIN DIALECT ATTRIBUTES
 
-class AttrParser(val ctx: MLContext) {
+class AttrParser(
+    val ctx: MLContext,
+    val attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
+    val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+) {
 
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
@@ -59,18 +64,34 @@ class AttrParser(val ctx: MLContext) {
   // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
   def AttributeEntry[$: P] = P(
-    (BareId | StringLiteral) ~ "=" ~/ AttributeValue
+    (BareId | StringLiteral) ~ "=" ~/ (Attribute | Type)
   )
 
-  def AttributeValue[$: P] = P(
-    Type // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
+  def Attribute[$: P] = P(
+    Type | BuiltinAttr | DialectAttribute | AttributeAlias // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
   )
 
-  def AttributeValueList[$: P] = AttributeValue.rep(sep = ",")
+  def AttributeAlias[$: P] = P("#" ~~ AliasName).map((name: String) =>
+    attributeAliases.getOrElse(
+      name,
+      throw new Exception(s"Attribute alias ${name} not defined.")
+    )
+  )
+
+  def TypeAlias[$: P] = P("!" ~~ AliasName).map((name: String) =>
+    typeAliases.getOrElse(
+      name,
+      throw new Exception(s"Type alias ${name} not defined.")
+    )
+  )
+
+  def AttributeList[$: P] = Attribute.rep(sep = ",")
 
   def Type[$: P] = P(
-    (BuiltIn | DialectType | DialectAttribute)./
-  ) // shortened definition TODO: finish...
+    (BuiltinType | DialectType | TypeAlias)
+  )
+
+  def TypeList[$: P] = Type.rep(sep = ",")
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    FLOAT TYPE    ||
@@ -102,15 +123,19 @@ class AttrParser(val ctx: MLContext) {
   // integer-type           ::=  signed-integer-type | unsigned-integer-type | signless-integer-type
 
   def SignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("si" ~~ DecimalLiteral).map((x: Long) => IntegerType(IntData(x), Signed))
+    P("si" ~~ DecimalLiteral).map((x: BigInt) =>
+      IntegerType(IntData(x), Signed)
+    )
 
   def UnsignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("ui" ~~ DecimalLiteral).map((x: Long) =>
+    P("ui" ~~ DecimalLiteral).map((x: BigInt) =>
       IntegerType(IntData(x), Unsigned)
     )
 
   def SignlessIntegerTypeP[$: P]: P[IntegerType] =
-    P("i" ~~ DecimalLiteral).map((x: Long) => IntegerType(IntData(x), Signless))
+    P("i" ~~ DecimalLiteral).map((x: BigInt) =>
+      IntegerType(IntData(x), Signless)
+    )
 
   def IntegerTypeP[$: P]: P[IntegerType] = P(
     SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
@@ -181,7 +206,7 @@ class AttrParser(val ctx: MLContext) {
   // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
   def ArrayAttributeP[$: P]: P[ArrayAttribute[Attribute]] = P(
-    "[" ~ AttributeValueList
+    "[" ~ AttributeList
       .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
   )
 
@@ -256,9 +281,9 @@ class AttrParser(val ctx: MLContext) {
     P((Dimension ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
 
   def Dimension[$: P]: P[IntData] =
-    P("?".map(_ => -1: Long) | DecimalLiteral).map(x => IntData(x))
+    P("?".map(_ => -1: BigInt) | DecimalLiteral).map(x => IntData(x))
 
-  def Encoding[$: P] = P(AttributeValue)
+  def Encoding[$: P] = P(Attribute)
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||    MEMREF TYPE    ||
@@ -400,22 +425,26 @@ class AttrParser(val ctx: MLContext) {
     )
   )
 
-  def BuiltIn[$: P]: P[Attribute] = P(
+  def BuiltinType[$: P]: P[Attribute] = P(
     FloatTypeP |
       IntegerTypeP |
       IndexTypeP |
-      ArrayAttributeP |
-      DenseArrayAttributeP |
       FunctionTypeP |
-      StringAttributeP |
       TensorTypeP |
       MemrefTypeP |
-      VectorTypeP |
+      VectorTypeP
+  )
+
+  def BuiltinAttr[$: P]: P[Attribute] = P(
+    ArrayAttributeP |
+      DenseArrayAttributeP |
+      StringAttributeP |
       SymbolRefAttrP |
       FloatAttrP |
       IntegerAttrP |
       DenseIntOrFPElementsAttrP |
-      AffineMapAttrP | AffineSetAttrP
+      AffineMapAttrP |
+      AffineSetAttrP
   )
 
 }

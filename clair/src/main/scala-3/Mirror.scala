@@ -1,5 +1,8 @@
 package scair.clair.mirrored
 
+import fastparse.*
+import scair.AttrParser
+import scair.Parser
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.ir.*
@@ -106,12 +109,15 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
       RegionDef(
         name = name,
         variadicity
+        variadicity
       )
     case '[Successor] =>
       SuccessorDef(
         name = name,
         variadicity
+        variadicity
       )
+    case '[Attribute] =>
     case '[Attribute] =>
       OpPropertyDef(
         name = name,
@@ -223,6 +229,66 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
           Some(parseAssemblyFormat(Type.valueOfConstant[format].get, opDef))
         case _ => None
       opDef.copy(assembly_format = format)
+
+def getCompanion[T: Type](using quotes: Quotes) = {
+  import quotes.reflect._
+  TypeRepr.of[T].typeSymbol.companionModule
+}
+
+def getOpCustomParse[T: Type](p: Expr[Parser])(using quotes: Quotes) =
+  import quotes.reflect._
+
+  val comp = getCompanion(using Type.of[T])
+  val sig = TypeRepr
+    .of[OperationCompanion]
+    .typeSymbol
+    .declaredMethod("parse")
+    .head
+    .signature
+  comp.memberMethod("parse").filter(_.signature == sig) match
+    case Seq(m) =>
+      val callTerm = Select
+        .unique(Ref(comp), m.name)
+        .appliedToType(TypeRepr.of[Any])
+        .appliedTo(p.asTerm)
+        .etaExpand(comp)
+        .asExprOf[P[Any] => P[Operation]]
+      Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })
+    case Seq() =>
+      None
+    case d: Seq[?] =>
+      report.errorAndAbort(
+        s"Multiple companion parse methods not supported at this point."
+      )
+
+def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
+    quotes: Quotes
+) =
+  import quotes.reflect._
+
+  val comp = getCompanion(using Type.of[T])
+  val sig = TypeRepr
+    .of[AttributeCompanion]
+    .typeSymbol
+    .declaredMethod("parse")
+    .head
+    .signature
+  comp.memberMethod("parse").filter(_.signature == sig) match
+    case Seq(m) =>
+      val callTerm = Select
+        .unique(Ref(comp), m.name)
+        .appliedToType(TypeRepr.of[Any])
+        .appliedTo(p.asTerm)
+        .appliedTo(ctx.asTerm)
+        .etaExpand(comp)
+        .asExprOf[P[T]]
+      Some(callTerm)
+    case Seq() =>
+      None
+    case d: Seq[?] =>
+      report.errorAndAbort(
+        s"Multiple companion parse methods not supported at this point."
+      )
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
   import quotes.reflect._

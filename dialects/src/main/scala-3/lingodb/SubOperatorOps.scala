@@ -6,6 +6,7 @@ import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.ValueId
 import scair.Parser.whitespace
+import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*
 
@@ -40,8 +41,16 @@ case class StateMembers(
   override def parameters: Seq[Attribute | Seq[Attribute]] =
     names :++ types
 
-  override def custom_print =
-    s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
+  override def custom_print(p: Printer) =
+    p.printListF(
+      names zip types,
+      (n, t) => p.print(n.data, " : ", t)(using indentLevel = 0),
+      "[",
+      ", ",
+      "]"
+    )
+
+    // s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
 
 }
 
@@ -86,7 +95,7 @@ object SetResultOp extends OperationCompanion {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    parser.Type ~ ValueId ~ ":" ~ parser.Type
+    parser.Attribute ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
   ).map(
     (

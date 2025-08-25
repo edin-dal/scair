@@ -56,7 +56,7 @@ case class AffineSymExpr(val position: String) extends AffineExpr {
   override def toString = position
 }
 
-case class AffineConstantExpr(val value: Long) extends AffineExpr {
+case class AffineConstantExpr(val value: BigInt) extends AffineExpr {
 
   override def toString = s"${value}"
 }
