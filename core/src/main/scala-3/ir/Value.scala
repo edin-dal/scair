@@ -36,11 +36,11 @@ class Value[+T <: Attribute](
 
   def verify(): Either[String, Unit] = typ.custom_verify()
 
-  override def equals(o: Any): Boolean = {
+  override final def equals(o: Any): Boolean = {
     return this eq o.asInstanceOf[AnyRef]
   }
 
-  override def hashCode(): Int = System.identityHashCode(this)
+  override final def hashCode(): Int = System.identityHashCode(this)
 
 }
 

@@ -3,6 +3,7 @@ package scair.ir
 import fastparse.P
 import scair.Parser
 import scair.Printer
+import scair.utils.IntrusiveNode
 // import scala.reflect.ClassTag
 
 // ██╗ ██████╗░
@@ -29,7 +30,7 @@ trait IRNode {
 
 }
 
-trait Operation extends IRNode {
+trait Operation extends IRNode with IntrusiveNode[Operation] {
 
   final override def parent = container_block
 
@@ -137,6 +138,9 @@ trait Operation extends IRNode {
         }
     }
 
+  final override def hashCode(): Int = System.identityHashCode(this)
+  final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
+
 }
 
 abstract class BaseOperation(
@@ -177,19 +181,6 @@ abstract class BaseOperation(
       properties = properties,
       attributes = attributes
     )
-  }
-
-  override def hashCode(): Int = {
-    return 7 * 41 +
-      this.operands.hashCode() +
-      this.results.hashCode() +
-      this.regions.hashCode() +
-      this.properties.hashCode() +
-      this.attributes.hashCode()
-  }
-
-  override def equals(o: Any): Boolean = {
-    return this eq o.asInstanceOf[AnyRef]
   }
 
 }

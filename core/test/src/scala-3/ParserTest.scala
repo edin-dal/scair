@@ -208,7 +208,7 @@ class ParserTest
         case Parsed.Success(
               Block(
                 ListType(Value(I32)),
-                ListType(
+                BlockOperations(
                   UnregisteredOperation(
                     "test.op",
                     Seq(),
@@ -254,7 +254,7 @@ class ParserTest
                 Seq(
                   Block(
                     ListType(Value(I32)),
-                    ListType(
+                    BlockOperations(
                       UnregisteredOperation(
                         "test.op",
                         Seq(),
@@ -281,7 +281,7 @@ class ParserTest
                   ),
                   Block(
                     ListType(Value(I32)),
-                    ListType(
+                    BlockOperations(
                       UnregisteredOperation(
                         "test.op",
                         Seq(),
@@ -407,7 +407,7 @@ class ParserTest
                     Seq(
                       Block(
                         ListType(),
-                        ListType(
+                        BlockOperations(
                           UnregisteredOperation(
                             "test.op",
                             Seq(),
