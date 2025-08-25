@@ -10,8 +10,8 @@ trait IntrusiveNode[A]:
   private[utils] final var _prev: Option[IntrusiveNode[A]] = None
   private[utils] final var _next: Option[IntrusiveNode[A]] = None
 
-  final def prev: Option[IntrusiveNode[A]] = _prev
-  final def next: Option[IntrusiveNode[A]] = _next
+  inline final def prev: Option[IntrusiveNode[A]] = _prev
+  inline final def next: Option[IntrusiveNode[A]] = _next
 
   inline private[utils] def prev_=(p: Option[IntrusiveNode[A]]) =
     _prev = p
@@ -65,9 +65,9 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
     v.asInstanceOf[A]
     this
 
-  override def update(idx: Int, elem: A): Unit =
+  def update(c: A, elem: A): Unit =
     val e = elem.asInstanceOf[IntrusiveNode[A]]
-    val current = apply(idx).asInstanceOf[IntrusiveNode[A]]
+    val current = c.asInstanceOf[IntrusiveNode[A]]
 
     // TODO: how should we deal with that
     if current.eq(e) then return
@@ -86,6 +86,9 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
 
     current.prev = None
     current.next = None
+
+  override def update(idx: Int, elem: A): Unit =
+    update(apply(idx), elem)
 
   @tailrec
   private def lengthRec(current: Option[IntrusiveNode[A]], acc: Int): Int =
@@ -120,49 +123,25 @@ class IntrusiveList[A] extends mutable.Buffer[A]:
 
   override def insert(idx: Int, elem: A): Unit =
     if idx == length then addOne(elem)
-    else if idx == 0 then prepend(elem)
-    else
-      val current = apply(idx)
-      val prev = current.asInstanceOf[IntrusiveNode[A]].prev
-      elem.asInstanceOf[IntrusiveNode[A]].next = Some(
-        current.asInstanceOf[IntrusiveNode[A]]
-      )
-      current.asInstanceOf[IntrusiveNode[A]].prev = Some(
-        elem.asInstanceOf[IntrusiveNode[A]]
-      )
-      elem.asInstanceOf[IntrusiveNode[A]].prev = prev
-      prev match
-        case Some(p) => p.next = Some(elem.asInstanceOf[IntrusiveNode[A]])
-        case None    => _head = Some(elem.asInstanceOf[IntrusiveNode[A]])
+    else insert(apply(idx), elem)
 
-  def insert(c: A, elem: A): Unit =
-    if _last.isDefined && _last.get.eq(c.asInstanceOf[IntrusiveNode[A]]) then
-      addOne(elem)
-    else if _head.isDefined && _head.get.eq(c.asInstanceOf[IntrusiveNode[A]])
-    then prepend(elem)
+  def insert(current: A, elem: A): Unit =
+    val c = current.asInstanceOf[IntrusiveNode[A]]
+    if _head.isDefined && _head.get.eq(c) then prepend(elem)
     else
-      val current = c.asInstanceOf[IntrusiveNode[A]]
-      val next = current.next
-      elem.asInstanceOf[IntrusiveNode[A]].prev = Some(current)
-      current.next = Some(elem.asInstanceOf[IntrusiveNode[A]])
-      elem.asInstanceOf[IntrusiveNode[A]].next = next
-      next match
-        case Some(n) => n.prev = Some(elem.asInstanceOf[IntrusiveNode[A]])
-        case None    => _last = Some(elem.asInstanceOf[IntrusiveNode[A]])
+      val e = elem.asInstanceOf[IntrusiveNode[A]]
+      val prev = c.prev.get
+      prev.next = Some(e)
+      e.prev = Some(prev)
+      e.next = Some(c)
+      c.prev = Some(e)
 
   override def insertAll(idx: Int, elems: IterableOnce[A]): Unit =
-    var i = 0
-    elems.foreach(e =>
-      insert(idx + i, e)
-      i += 1
-    )
+    if idx == length then addAll(elems)
+    else insertAll(apply(idx), elems)
 
   def insertAll(at: A, elems: IterableOnce[A]): Unit =
-    var a = at
-    elems.foreach(e =>
-      insert(a, e)
-      a = e
-    )
+    elems.foreach(e => insert(at, e))
 
   override def patchInPlace(
       from: Int,

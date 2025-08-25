@@ -297,16 +297,14 @@ case class Block private (
   }
 
   def structured: Either[String, Unit] = {
-    operations.zipWithIndex.foldLeft[Either[String, Unit]](Right(()))(
-      (res, el) =>
-        val (op, i) = el
-        res.flatMap(_ =>
-          op.structured
-            .map(v =>
-              operations(i) = v
-              v.container_block = Some(this)
-            )
-        )
+    operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
+      res.flatMap(_ =>
+        op.structured
+          .map(v =>
+            operations(op) = v
+            v.container_block = Some(this)
+          )
+      )
     )
   }
 

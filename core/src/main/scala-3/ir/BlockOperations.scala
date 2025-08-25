@@ -37,16 +37,8 @@ class BlockOperations extends IntrusiveList[Operation]:
     handleOperationInsertion(elem)
     this
 
-  override final def insert(idx: Int, elem: Operation): Unit =
-    super.insert(idx, elem)
-    handleOperationInsertion(elem)
-
-  override final def insertAll(idx: Int, elems: IterableOnce[Operation]): Unit =
-    super.insertAll(idx, elems)
-    elems.foreach(handleOperationInsertion)
-
-  override final def insert(idx: Operation, elem: Operation): Unit =
-    super.insert(idx, elem)
+  override final def insert(v: Operation, elem: Operation): Unit =
+    super.insert(v, elem)
     handleOperationInsertion(elem)
 
   override final def insertAll(
@@ -66,8 +58,7 @@ class BlockOperations extends IntrusiveList[Operation]:
     handleOperationRemoval(elem)
     this
 
-  override final def update(idx: Int, elem: Operation): Unit =
-    val old = apply(idx)
-    handleOperationRemoval(old)
-    super.update(idx, elem)
+  override final def update(v: Operation, elem: Operation): Unit =
+    handleOperationRemoval(v)
+    super.update(v, elem)
     handleOperationInsertion(elem)
