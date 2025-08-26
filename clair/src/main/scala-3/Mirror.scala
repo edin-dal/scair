@@ -109,15 +109,12 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
       RegionDef(
         name = name,
         variadicity
-        variadicity
       )
     case '[Successor] =>
       SuccessorDef(
         name = name,
         variadicity
-        variadicity
       )
-    case '[Attribute] =>
     case '[Attribute] =>
       OpPropertyDef(
         name = name,
