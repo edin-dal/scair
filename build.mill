@@ -67,7 +67,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
   // dependencies. This enforces that everything ScaIR is transitively compiled with
   // coverage when compiling a module with coverage.
-  trait ScairScoverageData extends ScoverageData {
+  trait ScairScoverageData extends ScoverageData with ScairSettings {
     override def transitiveModuleRunModuleDeps = {
       super .transitiveModuleRunModuleDeps.map {
         case m: ScairModule => m.scoverage
@@ -87,7 +87,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
-  object test extends ScoverageTests with TestModule.ScalaTest {
+  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
     // This was necessary to cooperate with graalvm at time of writing.
     // Please remove if unit tests work fine without it in the future.
@@ -173,7 +173,7 @@ object `package` extends ScairSettings with ScoverageReport {
     // Define a Mill command to run filechecks
     def run() = Task.Command {
       // It depends on the runnable CLI
-      tools.scoverage.launcher()
+      tools.scoverage.nativeImage()
 
       // Get the directory root to use as lit's working directory
       val rootPath = rootModule().moduleDir
