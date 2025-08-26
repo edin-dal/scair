@@ -18,12 +18,11 @@ import mill.api.Task.{Named, Command}
 import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
-
 trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule {
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
-  override def jvmId = "graalvm-community:23.0.1"
+  override def jvmId = "graalvm-community:24.0.1"
   override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
@@ -90,6 +89,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   object test extends ScoverageTests with TestModule.ScalaTest {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
+    override def testParallelism = false
   }
 }
 
