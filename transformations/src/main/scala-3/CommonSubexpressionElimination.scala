@@ -46,9 +46,7 @@ case class CSE(
       case _ => ()
 
   def simplify(block: Block): Unit =
-    // To modify the block during iteration
-    0 until block.operations.size foreach { i =>
-      val op = block.operations(i)
+    block.operations foreach { op =>
       val mightBeIsolated = op match
         case _: IsolatedFromAbove     => true
         case _: UnregisteredOperation => true
@@ -65,6 +63,8 @@ case class CSE(
   def simplify(region: Region): Unit =
     region.blocks match
       case Seq(oneBlock) => simplify(oneBlock)
+      // Just mimicing MLIR here
+      case _ => ()
 
 }
 

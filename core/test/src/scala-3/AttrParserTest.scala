@@ -339,7 +339,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                   Seq(
                     Block(
                       ListType(Value(F128)),
-                      ListType(
+                      BlockOperations(
                         UnregisteredOperation(
                           "test.op",
                           Seq(),

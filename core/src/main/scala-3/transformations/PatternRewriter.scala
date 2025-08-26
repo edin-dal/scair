@@ -4,7 +4,7 @@ import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
 import scala.annotation.tailrec
-import scala.collection.mutable.Stack
+import scala.collection.mutable.LinkedHashSet
 
 // ██████╗░ ░█████╗░ ████████╗ ████████╗ ███████╗ ██████╗░ ███╗░░██╗
 // ██╔══██╗ ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔════╝ ██╔══██╗ ████╗░██║
@@ -26,69 +26,33 @@ import scala.collection.mutable.Stack
 
 object InsertPoint {
 
-  def before(op: Operation): InsertPoint = {
-    (op.container_block == None) match {
-      case true =>
+  def before(op: Operation) =
+    op.container_block match
+      case None =>
         throw new Exception(
           "Operation insertion point must have a parent block."
         )
-      case false =>
-        val block = op.container_block.get
-        InsertPoint(block, Some(op))
-    }
-  }
+      case Some(block) => InsertPoint(block, Some(op))
 
-  def after(op: Operation): InsertPoint = {
-    (op.container_block == None) match {
-      case true =>
+  def after(op: Operation) =
+    op.container_block match
+      case None =>
         throw new Exception(
           "Operation insertion point must have a parent block."
         )
-      case false =>
-        val block = op.container_block.get
-        val opIdx = block.getIndexOf(op)
-        (opIdx == block.operations.length - 1) match {
-          case true  => new InsertPoint(block)
-          case false =>
-            InsertPoint(block, Some(block.operations(opIdx + 1)))
-        }
-    }
-  }
+      case Some(block) =>
+        InsertPoint(block, op.next)
 
-  def at_start_of(block: Block): InsertPoint = {
-    val ops = block.operations
-    ops.length match {
-      case 0 => new InsertPoint(block)
-      case _ => InsertPoint(block, Some(ops(0)))
-    }
-  }
+  def at_start_of(block: Block) =
+    InsertPoint(block, block.operations.headOption)
 
-  def at_end_of(block: Block): InsertPoint = {
-    new InsertPoint(block)
-  }
-
+  def at_end_of(block: Block) = InsertPoint(block)
 }
 
 case class InsertPoint(
     val block: Block,
-    val insert_before: Option[Operation]
-) {
-
-  // custom constructor
-  def this(block: Block) = {
-    this(block, None)
-  }
-
-  if (insert_before != None) then {
-    if !(insert_before.get.container_block `equals` Some(block)) then {
-      throw new Error(
-        "Given operation's container and given block do not match: " +
-          "InsertPoint must be an operation inside a given block."
-      )
-    }
-  }
-
-}
+    val insert_before: Option[Operation] = None
+)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   Static realm   ||
@@ -182,7 +146,7 @@ trait Rewriter {
       )
     }
 
-    insert_ops_after(op, ops)
+    insert_ops_before(op, ops)
 
     for ((old_res, new_res) <- (op.results zip results)) {
       replace_value(old_res, new_res)
@@ -232,8 +196,7 @@ type PatternRewriter = PatternRewriteWalker#PatternRewriter
 
 abstract class RewritePattern {
 
-  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit =
-    ???
+  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit
 
 }
 
@@ -351,7 +314,7 @@ class PatternRewriteWalker(
 
   }
 
-  private var worklist = Stack[Operation]()
+  private val worklist: LinkedHashSet[Operation] = LinkedHashSet.empty
 
   def rewrite_module(module: ModuleOp): Unit = {
     return rewrite_op(module)
@@ -364,22 +327,22 @@ class PatternRewriteWalker(
     return op_was_modified
   }
 
+  private def pop_worklist: Operation =
+    val op = worklist.head
+    worklist.remove(op)
+    op
+
   private def populate_worklist(op: Operation): Unit = {
-    if (!worklist.contains(op))
-      worklist.push(op)
-    op.regions.reverseIterator.foreach((x: Region) =>
-      x.blocks.reverseIterator.foreach((y: Block) =>
-        y.operations.reverseIterator.foreach(populate_worklist(_))
-      )
+    worklist += op
+    op.regions.foreach((x: Region) =>
+      x.blocks.foreach((y: Block) => y.operations.foreach(populate_worklist(_)))
     )
   }
 
   private def clear_worklist(op: Operation): Unit = {
     worklist -= op
-    op.regions.reverseIterator.foreach((x: Region) =>
-      x.blocks.reverseIterator.foreach((y: Block) =>
-        y.operations.reverseIterator.foreach(clear_worklist(_))
-      )
+    op.regions.foreach((x: Region) =>
+      x.blocks.foreach((y: Block) => y.operations.foreach(clear_worklist(_)))
     )
   }
 
@@ -387,9 +350,9 @@ class PatternRewriteWalker(
 
     var rewriter_done_action = false
 
-    if (worklist.length == 0) return rewriter_done_action
+    if (worklist.isEmpty) return rewriter_done_action
 
-    var op = worklist.pop()
+    var op = pop_worklist
     val rewriter = PatternRewriter(op)
 
     while (true) {
@@ -404,8 +367,9 @@ class PatternRewriteWalker(
 
       rewriter_done_action |= rewriter.has_done_action
 
-      if (worklist.length == 0) return rewriter_done_action
-      op = worklist.pop()
+      if (worklist.isEmpty) return rewriter_done_action
+
+      op = pop_worklist
     }
     return rewriter_done_action
   }

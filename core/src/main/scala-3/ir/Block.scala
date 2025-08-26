@@ -194,7 +194,7 @@ case class Block private (
     for (op <- new_ops) {
       attach_op(op)
     }
-    operations.insertAll(oplen, BlockOperations(new_ops*))
+    operations.insertAll(oplen, new_ops)
   }
 
   def insert_op_before(
@@ -204,7 +204,7 @@ case class Block private (
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
-        operations.insertAll(getIndexOf(existing_op), ListType(new_op))
+        operations.insert(existing_op, new_op)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -222,7 +222,7 @@ case class Block private (
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(getIndexOf(existing_op), BlockOperations(new_ops*))
+        operations.insertAll(existing_op, new_ops)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -238,10 +238,9 @@ case class Block private (
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
         attach_op(new_op)
-        operations.insertAll(
-          getIndexOf(existing_op) + 1,
-          BlockOperations(new_op)
-        )
+        existing_op.next match
+          case Some(n) => operations.insert(n, new_op)
+          case None    => operations.addOne(new_op)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -259,10 +258,9 @@ case class Block private (
         for (op <- new_ops) {
           attach_op(op)
         }
-        operations.insertAll(
-          getIndexOf(existing_op) + 1,
-          BlockOperations(new_ops*)
-        )
+        existing_op.next match
+          case Some(n) => operations.insertAll(n, new_ops)
+          case None    => operations.addAll(new_ops)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
@@ -289,26 +287,15 @@ case class Block private (
     op.erase(safe_erase)
   }
 
-  def getIndexOf(op: Operation): Int = {
-    operations.lastIndexOf(op) match {
-      case -1 =>
-        throw new Exception(s"Operation ${op.name} not present in the block.")
-      case x => x
-    }
-
-  }
-
   def structured: Either[String, Unit] = {
-    operations.zipWithIndex.foldLeft[Either[String, Unit]](Right(()))(
-      (res, el) =>
-        val (op, i) = el
-        res.flatMap(_ =>
-          op.structured
-            .map(v =>
-              operations(i) = v
-              v.container_block = Some(this)
-            )
-        )
+    operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
+      res.flatMap(_ =>
+        op.structured
+          .map(v =>
+            operations(op) = v
+            v.container_block = Some(this)
+          )
+      )
     )
   }
 
