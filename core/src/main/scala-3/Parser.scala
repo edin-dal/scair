@@ -148,130 +148,39 @@ object Parser {
       var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[Operation, Seq[
-        (String, Attribute)
-      ]] = mutable.Map.empty[Operation, Seq[(String, Attribute)]],
+      val forwardValues: mutable.Set[String] = mutable.Set.empty[String],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
       var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
   ) {
 
-    def registerValues(
-        valueIdAndTypeList: Seq[(String, Value[Attribute])]
-    ) = {
-      valueIdAndTypeList.map((name, value) =>
-        valueMap.contains(name) match {
-          case true =>
-            throw new Exception(s"SSA Value cannot be defined twice %${name}")
-          case false =>
-            valueMap(name) = value
-            value
+    def useValue(name: String, typ: Attribute): Value[Attribute] =
+      valueMap.getOrElseUpdate(
+        name,
+        {
+          forwardValues += name
+          Value[Attribute](typ)
         }
       )
-    }
 
-    def defineValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    ) = {
-      registerValues(valueIdAndTypeList.map((name, tpe) => (name, Value(tpe))))
-    }
+    def checkForwardedValues() =
+      forwardValues.headOption match
+        case Some(valueName) =>
+          throw new Exception(s"Value %${valueName} not defined within Scope")
+        case None => ()
 
-    def useValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    ) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
-
-      valueIdAndTypeList.partitionMap((name, typ) =>
-        if valueMap.contains(name) then
-          if valueMap(name).typ != typ then
-            throw new Exception(
-              s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
-            )
-          else Right(valueMap(name))
-        else Left((name, typ))
-      )
-    }
-
-    def useValue(
-        name: String,
-        typ: Attribute
-    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
-      !valueMap.contains(name) match {
-        case true =>
-          val tuple = (name, typ)
-          forwardRefSeq += tuple
-        case false =>
-          valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
-              )
-            case false =>
-              useValSeq += valueMap(name)
-          }
-      }
-      return (useValSeq, forwardRefSeq)
-    }
-
-    def checkValueWaitlist() = {
-
-      for ((operation, operands) <- valueWaitlist) {
-
-        val foundOperands: ListType[(String, Attribute)] = ListType()
-        val operandList: ListType[Value[Attribute]] = ListType()
-
-        for {
-          (name, typ) <- operands
-        } yield valueMap
-          .contains(
-            name
-          ) match {
-          case true =>
-            val tuple = (name, typ)
-            val value = valueMap(name)
-            if value.typ != typ then
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${value.typ}"
-              )
-            foundOperands += tuple
-            operandList += value
-          case false =>
-        }
-
-        valueWaitlist(operation) = valueWaitlist(operation) diff foundOperands
-
-        if (valueWaitlist(operation).length == 0) {
-          valueWaitlist -= operation
-        }
-
-        val new_op =
-          operation.updated(
-            operands = operation.operands ++ operandList,
-            results = operation.results
+    def defineValue(name: String, typ: Attribute): Value[Attribute] =
+      if valueMap.contains(name) then {
+        if !forwardValues.remove(name) then
+          throw new Exception(
+            s"Value cannot be defined twice within the same scope - %${name}"
           )
-        RewriteMethods.replace_op(operation, new_op)
+        valueMap(name)
+      } else {
+        val v = Value[Attribute](typ)
+        valueMap(name) = v
+        v
       }
-
-      if (valueWaitlist.size > 0) {
-        parentScope match {
-          case Some(x) => x.valueWaitlist ++= valueWaitlist
-          case None    =>
-            val opName = valueWaitlist.head._1.name
-            val operandName = valueWaitlist.head._2(0)._1
-            val operandTyp = valueWaitlist.head._2(0)._2
-            throw new Exception(
-              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}'\n${valueMap}"
-            )
-        }
-      }
-    }
 
     def checkForwardedBlocks() =
       forwardBlocks.headOption match
@@ -317,7 +226,7 @@ object Parser {
     }
 
     def switchWithParent: Scope =
-      checkValueWaitlist()
+      checkForwardedValues()
       checkForwardedBlocks()
       parentScope match
         case Some(x) =>
@@ -664,6 +573,7 @@ class Parser(
     */
   def generateOperation(
       opName: String,
+      resultNames: Seq[String] = Seq(),
       operandsNames: Seq[String] = Seq(),
       successors: Seq[Block] = Seq(),
       properties: Map[String, Attribute] = Map(),
@@ -679,16 +589,19 @@ class Parser(
       )
     }
 
-    val useAndRefValueSeqs =
-      currentScope.useValues(operandsNames zip operandsTypes)
+    val operands =
+      (operandsNames zip operandsTypes) map currentScope.useValue
+
+    val results = 
+      (operandsNames zip operandsTypes) map currentScope.defineValue
 
     val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
-          operands = useAndRefValueSeqs._2,
+          operands = operands,
           successors = successors,
           properties = properties,
-          results = resultsTypes.map(Result(_)),
+          results = results,
           attributes = DictType.from(attributes),
           regions = regions
         )
@@ -697,10 +610,10 @@ class Parser(
         if args.allow_unregistered then
           new UnregisteredOperation(
             name = opName,
-            operands = useAndRefValueSeqs._2,
+            operands = operands,
             successors = successors,
             properties = properties,
-            results = resultsTypes.map(Result(_)),
+            results = results,
             attributes = DictType.from(attributes),
             regions = regions
           )
@@ -708,9 +621,6 @@ class Parser(
           throw new Exception(
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
-    }
-    if (useAndRefValueSeqs._1.length > 0) {
-      currentScope.valueWaitlist += op -> useAndRefValueSeqs._1
     }
 
     return op
@@ -733,7 +643,6 @@ class Parser(
         s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${op.results.length}) in \"${op.name}\"."
       )
     }
-    currentScope.registerValues(resNames zip op.results)
     for (region <- op.regions) region.container_operation = Some(op)
     op
   })
@@ -757,6 +666,7 @@ class Parser(
             ) =>
               generateOperation(
                 opName,
+                resNames,
                 operandsNames,
                 successors,
                 properties,
@@ -774,7 +684,7 @@ class Parser(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
-          Pass ~ y.parse(this)
+          y.parse(this)
         case None =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
