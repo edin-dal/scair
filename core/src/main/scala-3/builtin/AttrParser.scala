@@ -1,5 +1,7 @@
 package scair
 
+import scala.annotation.switch
+
 import fastparse.*
 import scair.Parser.*
 import scair.dialects.affine.AffineMapP
@@ -138,7 +140,12 @@ class AttrParser(
     )
 
   def IntegerTypeP[$: P]: P[IntegerType] = P(
-    SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
+    (StringIn("i", "ui", "si").! ~~ DecimalLiteral).map((prefix: String, x: BigInt) =>
+      prefix.head: @switch match
+        case 'i'  => IntegerType(IntData(x), Signless)
+        case 'u' => IntegerType(IntData(x), Unsigned)
+        case 's' => IntegerType(IntData(x), Signed)
+      )
   )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -426,8 +433,8 @@ class AttrParser(
   )
 
   def BuiltinType[$: P]: P[Attribute] = P(
-    FloatTypeP |
       IntegerTypeP |
+      FloatTypeP |
       IndexTypeP |
       FunctionTypeP |
       TensorTypeP |

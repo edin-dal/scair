@@ -345,20 +345,21 @@ object Parser {
   val excludedCharacters: Set[Char] = Set('\"', '\n', '\f', '\u000B',
     '\r') // \u000B represents \v escape character
 
-  def Digit[$: P] = P(CharIn("0-9").!)
+  inline val DigitChars = "0-9"
+  inline val Letters = "a-zA-Z"
+
+  def Digit[$: P] = P(CharIn(DigitChars).!)
 
   def HexDigit[$: P] = P(CharIn("0-9a-fA-F").!)
 
-  def Letter[$: P] = P(CharIn("a-zA-Z").!)
+  def Letter[$: P] = P(CharIn(Letters).!)
 
   def IdPunct[$: P] = P(CharIn("$._\\-").!)
 
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
-      BigInt(sign + literal)
-    )
+    P(CharIn("\\+\\-").? ~ CharsWhileIn("0-9")).!.map(BigInt.apply)
 
   def HexadecimalLiteral[$: P] =
     P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => BigInt(hex, 16))
@@ -510,7 +511,7 @@ object Parser {
   )
 
   def DialectBareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX
+    (CharIn(Letters + "_") ~~  CharsWhileIn(Letters + DigitChars + "_$"))
   ).!
 
   def DialectNamespace[$: P] = P(DialectBareId)
@@ -601,7 +602,7 @@ class Parser(
 
   def TopLevel[$: P]: P[Operation] = P(
     Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef)
-      .rep()
+      .rep(sep=""./)
       .map(_.flatMap(_ match
         case o: Operation => Seq(o)
         case _            => Seq())) ~ End
@@ -745,7 +746,6 @@ class Parser(
       ~/ RegionList.orElse(Seq())
       ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .mapTry(
-        (
             (
                 opName: String,
                 operandsNames: Seq[String],
@@ -765,7 +765,6 @@ class Parser(
                 operandsAndResultsTypes._2,
                 operandsAndResultsTypes._1
               )
-        ).tupled
       )
       ./
   )
