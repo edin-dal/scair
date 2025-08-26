@@ -65,7 +65,7 @@ case class TupleStream(val tuples: Seq[Attribute])
 
   override def custom_verify(): Either[String, Unit] = {
 
-    def verifyTuples(i: Int): Either[String, Unit] = {
+    lazy val verifyTuples: Int => Either[String, Unit] = { (i: Int) =>
       if (i == tuples.length) then Right(())
 
       tuples(i) match {
