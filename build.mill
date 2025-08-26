@@ -89,6 +89,8 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   object test extends ScoverageTests with TestModule.ScalaTest {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
+    // This was necessary to cooperate with graalvm at time of writing.
+    // Please remove if unit tests work fine without it in the future.
     override def testParallelism = false
   }
 }
