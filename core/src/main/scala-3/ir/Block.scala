@@ -240,7 +240,7 @@ case class Block private (
         attach_op(new_op)
         existing_op.next match
           case Some(n) => operations.insert(n, new_op)
-          case None => operations.addOne(new_op)
+          case None    => operations.addOne(new_op)
       case false =>
         throw new Exception(
           "Can't insert the new operation into the block, as the operation that was " +
