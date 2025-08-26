@@ -46,7 +46,6 @@ case class CSE(
       case _ => ()
 
   def simplify(block: Block): Unit =
-    // To modify the block during iteration
     block.operations foreach { op =>
       val mightBeIsolated = op match
         case _: IsolatedFromAbove     => true
