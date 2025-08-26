@@ -10,7 +10,7 @@ import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
 
 import mill.api.{Task, PathRef, DefaultTaskModule, Module, ModuleRef, Evaluator}
 import mill.api.daemon.SelectMode
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
+import mill.scalalib.{ScalaModule, NativeImageModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
 import mill.scalalib.publish.{Developer, PomSettings, License, VersionControl}
 import mill.javalib.testrunner.TestResult
 import mill.api.Task.{Named, Command}
@@ -19,10 +19,12 @@ import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
 
-trait ScairSettings extends ScalaModule with UnidocModule {
+trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule {
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
+  override def jvmId = "graalvm-community:17.0.7"
+  override def nativeImageOptions = Seq("--no-fallback")
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
