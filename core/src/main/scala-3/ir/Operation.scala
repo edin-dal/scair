@@ -229,7 +229,7 @@ case class UnregisteredOperation(
 trait OperationCompanion {
   def name: String
 
-  def parse[$: P](parser: Parser): P[Operation] =
+  def parse[$: P](parser: Parser, resNames: Seq[String]): P[Operation] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )

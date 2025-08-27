@@ -552,7 +552,8 @@ object ModuleOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] =
     P(
       parser.Region()

@@ -193,13 +193,14 @@ def customPrintMacro(
 
 def parseMacro(
     opDef: OperationDef,
-    p: Expr[Parser]
+    p: Expr[Parser],
+    resNames: Expr[Seq[String]]
 )(using
     Quotes
 ): Expr[P[Any] ?=> P[Operation]] =
   opDef.assembly_format match
     case Some(format) =>
-      format.parse(opDef, p)
+      format.parse(opDef, p, resNames)
     case None =>
       '{
         throw new Exception(
@@ -823,9 +824,13 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
-      override def parse[$: P as ctx](p: Parser): P[Operation] =
+      override def parse[$: P as ctx](
+          p: Parser,
+          resNames: Seq[String]
+      ): P[Operation] =
         ${
-          (getOpCustomParse[T]('{ p }).getOrElse(parseMacro(opDef, '{ p })))
+          (getOpCustomParse[T]('{ p }, '{ resNames })
+            .getOrElse(parseMacro(opDef, '{ p }, '{ resNames })))
         }(using ctx)
 
       def apply(

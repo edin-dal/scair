@@ -7,7 +7,6 @@ import fastparse.internal.Util
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.transformations.RewriteMethods
 
 import java.lang.Float.parseFloat
 import java.lang.Long.parseLong
@@ -148,7 +147,7 @@ object Parser {
       var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
-      val forwardValues: mutable.Set[String] = mutable.Set.empty[String],
+      var forwardValues: mutable.Set[String] = mutable.Set.empty[String],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
       var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
@@ -156,8 +155,7 @@ object Parser {
 
     def useValue(name: String, typ: Attribute): Value[Attribute] =
       valueMap.getOrElseUpdate(
-        name,
-        {
+        name, {
           forwardValues += name
           Value[Attribute](typ)
         }
@@ -169,7 +167,7 @@ object Parser {
           throw new Exception(s"Value %${valueName} not defined within Scope")
         case None => ()
 
-    def defineValue(name: String, typ: Attribute): Value[Attribute] =
+    private def defineValue(name: String, typ: Attribute): Value[Attribute] =
       if valueMap.contains(name) then {
         if !forwardValues.remove(name) then
           throw new Exception(
@@ -182,6 +180,15 @@ object Parser {
         v
       }
 
+    inline def defineResult(name: String, typ: Attribute): Result[Attribute] =
+      defineValue(name, typ)
+
+    inline def defineBlockArgument(
+        name: String,
+        typ: Attribute
+    ): BlockArgument[Attribute] =
+      defineValue(name, typ)
+
     def checkForwardedBlocks() =
       forwardBlocks.headOption match
         case Some(blockName) =>
@@ -192,9 +199,7 @@ object Parser {
         blockName: String
     ): Block =
       if blockMap.contains(blockName) then {
-        if forwardBlocks.contains(blockName) then {
-          forwardBlocks -= blockName
-        } else {
+        if !forwardBlocks.remove(blockName) then {
           throw new Exception(
             s"Block cannot be defined twice within the same scope - ^${blockName}"
           )
@@ -573,7 +578,7 @@ class Parser(
     */
   def generateOperation(
       opName: String,
-      resultNames: Seq[String] = Seq(),
+      resultsNames: Seq[String] = Seq(),
       operandsNames: Seq[String] = Seq(),
       successors: Seq[Block] = Seq(),
       properties: Map[String, Attribute] = Map(),
@@ -585,15 +590,18 @@ class Parser(
 
     if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
-        s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
+        s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"${opName}\"."
       )
     }
 
-    val operands =
-      (operandsNames zip operandsTypes) map currentScope.useValue
+    if (resultsNames.length != resultsTypes.length) {
+      throw new Exception(
+        s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
+      )
+    }
 
-    val results = 
-      (operandsNames zip operandsTypes) map currentScope.defineValue
+    val operands = operandsNames zip operandsTypes map currentScope.useValue
+    val results = resultsNames zip resultsTypes map currentScope.defineResult
 
     val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
@@ -637,12 +645,7 @@ class Parser(
 
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
-  ).mapTry(op => {
-    if (resNames.length != op.results.length) {
-      throw new Exception(
-        s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${op.results.length}) in \"${op.name}\"."
-      )
-    }
+  ).map(op => {
     for (region <- op.regions) region.container_operation = Some(op)
     op
   })
@@ -684,7 +687,7 @@ class Parser(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
-          y.parse(this)
+          Pass ~ y.parse(this, resNames)
         case None =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
@@ -716,7 +719,7 @@ class Parser(
       block: Block,
       args: Seq[(String, Attribute)]
   ) =
-    block.arguments ++= currentScope.defineValues(args)
+    block.arguments ++= args map currentScope.defineResult
     block.arguments.foreach(_.owner = Some(block))
     block
 

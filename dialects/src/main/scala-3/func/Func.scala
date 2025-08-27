@@ -23,7 +23,10 @@ object Func {
   ): ParsingRun[Seq[Attribute]] =
     ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
 
-  def parse[$: ParsingRun](parser: Parser): ParsingRun[Operation] =
+  def parse[$: ParsingRun](
+      parser: Parser,
+      resNames: Seq[String]
+  ): ParsingRun[Operation] =
     ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
         Pass(args.map(_._2)) ~ parseResultTypes(

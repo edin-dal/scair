@@ -155,7 +155,8 @@ object ReturnOp extends OperationCompanion {
   }
 
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     parser.OptionalAttributes ~ (ValueId.rep(sep = ",")
       ~ ":" ~
@@ -165,6 +166,7 @@ object ReturnOp extends OperationCompanion {
       opName = name,
       operandsNames = y._1,
       operandsTypes = y._2,
+      resultsNames = resNames,
       attributes = x
     )
   )
@@ -214,7 +216,8 @@ object GetColumnOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
       parser.Type ~ parser.OptionalAttributes
@@ -230,6 +233,7 @@ object GetColumnOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = Seq(z),
         attributes = w + ("attr" -> y)
       )
