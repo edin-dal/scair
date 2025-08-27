@@ -22,11 +22,6 @@ import scala.collection.mutable.ListBuffer
 \*≡==---==≡≡≡≡≡==---==≡*/
 // for ClairV2
 
-type Operand[+T <: Attribute] = Value[T]
-
-case class Result[+T <: Attribute](override val typ: T)
-    extends Value[T](typ = typ)
-
 type Successor = Block
 
 /*≡==--==≡≡≡==--=≡≡*\
