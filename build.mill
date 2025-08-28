@@ -109,12 +109,8 @@ object `package` extends ScairSettings with ScoverageReport {
     )
   }
 
-  object clair extends ScairModule {
-    def moduleDeps = Seq(core)
-  }
-
   object dialects extends ScairModule {
-    def moduleDeps = Seq(clair)
+    def moduleDeps = Seq(core)
   }
 
   object transformations extends ScairModule {
