@@ -7,14 +7,14 @@ import scair.transformations.patterns.*
 
 val SameType = pattern {
   case UnrealizedConversionCastOp(
-        operands = Seq(operand),
-        results = Seq(result)
+        inputs = Seq(operand),
+        outputs = Seq(result)
       ) if operand.typ == result.typ =>
     (Seq(), Seq(operand))
 }
 
 val Unused = pattern {
-  case UnrealizedConversionCastOp(results = r) if r.forall(_.uses.isEmpty) =>
+  case UnrealizedConversionCastOp(outputs = o) if o.forall(_.uses.isEmpty) =>
     PatternAction.Erase
 }
 

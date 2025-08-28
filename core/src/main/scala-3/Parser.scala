@@ -611,7 +611,7 @@ class Parser(
       case _                       =>
         val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
-        val moduleOp = new ModuleOp(regions = Seq(region))
+        val moduleOp = ModuleOp(region)
 
         for (op <- toplevel) op.container_block = Some(block)
         block.container_region = Some(region)

@@ -533,38 +533,23 @@ final case class AffineSetAttr(affine_set: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-object ModuleOp extends OperationCompanion {
-  override def name = "builtin.module"
+object ModuleOp {
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
+  def parse[$: P](
       parser: Parser
   ): P[Operation] =
     P(
       parser.Region()
-    ).map((x: Region) => ModuleOp(regions = Seq(x)))
+    ).map(ModuleOp.apply)
   // ==----------------------== //
 
 }
 
 case class ModuleOp(
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = "builtin.module",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    ) {
+    body: Region
+) extends DerivedOperation["builtin.module", ModuleOp]
+    derives DerivedOperationCompanion {
 
   override def custom_print(
       p: Printer
@@ -573,27 +558,13 @@ case class ModuleOp(
 
 }
 
-object UnrealizedConversionCastOp extends OperationCompanion {
-  override def name = "builtin.unrealized_conversion_cast"
-}
-
 case class UnrealizedConversionCastOp(
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = "builtin.unrealized_conversion_cast",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    )
+    inputs: Seq[Value[Attribute]] = Seq(),
+    outputs: Seq[Result[Attribute]] = Seq()
+) extends DerivedOperation[
+      "builtin.unrealized_conversion_cast",
+      UnrealizedConversionCastOp
+    ] derives DerivedOperationCompanion
 
-val BuiltinDialect = Dialect(Seq(ModuleOp, UnrealizedConversionCastOp), Seq())
+val BuiltinDialect =
+  summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)](Seq())
