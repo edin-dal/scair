@@ -97,8 +97,4 @@ trait AttributeCompanion {
   def parse[$: P](p: AttrParser): P[Attribute]
 }
 
-trait AttributeCompanionI[T] extends AttributeCompanion {
-  extension (op: T) def AttributeTrait = this
-}
-
 trait AliasedAttribute(val alias: String) extends Attribute
