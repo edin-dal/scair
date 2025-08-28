@@ -114,11 +114,6 @@ def getAttrDef[Label: Type, Elem: Type](using
         name = name,
         tpe = Type.of[Elem]
       )
-    case '[Seq[Attribute]] =>
-      AttributeParamDef(
-        name = name,
-        tpe = Type.of[Elem]
-      )
     case _ =>
       throw new Exception(
         "Expected this type to be an Attribute"

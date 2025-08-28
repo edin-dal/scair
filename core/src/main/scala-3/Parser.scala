@@ -15,6 +15,7 @@ import java.lang.Math.pow
 import scala.annotation.switch
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scair.clair.macros.DerivedOperationCompanion
 
 // ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
@@ -608,6 +609,7 @@ class Parser(
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
+      case (head: DerivedOperationCompanion[ModuleOp]#UnstructuredOp) :: Nil => head
       case _                       =>
         val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
