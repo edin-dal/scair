@@ -13,7 +13,7 @@ import scala.util.Try
 trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
 
-  override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
+  override def parse_parameters[$: ParsingRun](p: AttrParser): ParsingRun[T]
 }
 
 object DerivedAttributeCompanion {

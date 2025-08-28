@@ -782,7 +782,7 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
   '{
     new DerivedAttributeCompanion[T] {
       override def name: String = ${ Expr(attrDef.name) }
-      override def parse[$: P as ctx](p: AttrParser): P[T] = ${
+      override def parse_parameters[$: P as ctx](p: AttrParser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
           '{
             P(

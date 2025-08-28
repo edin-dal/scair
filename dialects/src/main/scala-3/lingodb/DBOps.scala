@@ -80,7 +80,7 @@ object DB_CmpPredicateAttr
 object DB_CharType extends AttributeCompanion {
   override def name: String = "db.char"
 
-  override def parse[$: P](p: AttrParser) =
+  override def parse_parameters[$: P](p: AttrParser) =
     P(("<" ~/ p.Attribute.rep(sep = ",") ~ ">").orElse(Seq()))
       .map(DB_CharType(_))
 
@@ -123,7 +123,7 @@ case class DB_CharType(val typ: Seq[Attribute])
 object DB_DateType extends AttributeCompanion {
   override def name: String = "db.date"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] =
+  override def parse_parameters[$: P](parser: AttrParser): P[Attribute] =
     P("<" ~ DB_DateUnitAttr.caseParser ~ ">")
       .map((x: Attribute) => DB_DateType(x.asInstanceOf[DB_DateUnit_Case]))
 
@@ -143,7 +143,7 @@ case class DB_DateType(val unit: DB_DateUnit_Case)
 object DB_IntervalType extends AttributeCompanion {
   override def name: String = "db.interval"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] =
+  override def parse_parameters[$: P](parser: AttrParser): P[Attribute] =
     P("<" ~ DB_IntervalUnitAttr.caseParser ~ ">").map(DB_IntervalType(_))
 
 }
@@ -185,7 +185,7 @@ case class DB_IntervalType(val unit: Attribute)
 object DB_DecimalType extends AttributeCompanion {
   override def name: String = "db.decimal"
 
-  override def parse[$: P](p: AttrParser) =
+  override def parse_parameters[$: P](p: AttrParser) =
     P(("<" ~/ p.Attribute.rep(sep = ",") ~ ">").orElse(Seq()))
       .map(DB_DecimalType(_))
 
@@ -234,7 +234,7 @@ case class DB_DecimalType(val typ: Seq[Attribute])
 object DB_StringType extends AttributeCompanion {
   override def name: String = "db.string"
 
-  override def parse[$: P](p: AttrParser) =
+  override def parse_parameters[$: P](p: AttrParser) =
     P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(DB_StringType(_))
 
 }

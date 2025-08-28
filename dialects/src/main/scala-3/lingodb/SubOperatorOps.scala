@@ -21,7 +21,7 @@ import scair.ir.*
 object StateMembers extends AttributeCompanion {
   override def name: String = "subop.state_members"
 
-  override def parse[$: P](parser: AttrParser) = P(
+  override def parse_parameters[$: P](parser: AttrParser) = P(
     "[" ~ (BareId.map(StringData(_)) ~ ":" ~ parser.Type)
       .rep(0, sep = ",") ~ "]"
   ).map((x: Seq[(StringData, Attribute)]) => {
@@ -65,8 +65,8 @@ case class StateMembers(
 object ResultTable extends AttributeCompanion {
   override def name: String = "subop.result_table"
 
-  override def parse[$: P](parser: AttrParser) = P(
-    "<" ~ StateMembers.parse(parser) ~ ">"
+  override def parse_parameters[$: P](parser: AttrParser) = P(
+    "<" ~ StateMembers.parse_parameters(parser) ~ ">"
   ).map(x => ResultTable(x.asInstanceOf[StateMembers]))
 
 }

@@ -98,9 +98,9 @@ object RelAlg_SetSemantic
 object SortSpecificationAttr extends AttributeCompanion {
   override def name: String = "db.sortspec"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] =
+  override def parse_parameters[$: P](parser: AttrParser): P[Attribute] =
     P(
-      "(" ~ ColumnRefAttr.parse(parser) ~ "," ~ RelAlg_SortSpec.caseParser ~ ")"
+      "(" ~ ColumnRefAttr.parse_parameters(parser) ~ "," ~ RelAlg_SortSpec.caseParser ~ ")"
     )
       .map((x, y) =>
         SortSpecificationAttr(
@@ -164,7 +164,7 @@ object BaseTableOp extends OperationCompanion {
       parser: Parser
   ) = P(
     parser.OptionalAttributes ~
-      "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse(parser))
+      "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse_parameters(parser))
         .rep(0, sep = ",")
         .map(Map(_*)) ~ "}"
   ).map(
@@ -327,7 +327,7 @@ object MapOp extends OperationCompanion {
   ): P[Operation] = P(
     ValueId
       ~ "computes" ~ ":"
-      ~ "[" ~ ColumnDefAttr.parse(parser).rep.map(ArrayAttribute(_)) ~ "]"
+      ~ "[" ~ ColumnDefAttr.parse_parameters(parser).rep.map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
       ~ parser.OptionalKeywordAttributes
   ).map(
@@ -428,12 +428,12 @@ object AggregationOp extends OperationCompanion {
   ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
-        .parse(parser)
+        .parse_parameters(parser)
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ "computes" ~ ":"
       ~ "[" ~ ColumnDefAttr
-        .parse(parser)
+        .parse_parameters(parser)
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ DialectRegion(parser)
@@ -628,7 +628,7 @@ object AggrFuncOp extends OperationCompanion {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
+    RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse_parameters(parser)
       ~ ValueId ~ ":" ~ parser.Type.rep(1)
       ~ parser.OptionalAttributes
   ).map(
@@ -736,7 +736,7 @@ object SortOp extends OperationCompanion {
   ): P[Operation] = P(
     ValueId
       ~ "[" ~ (SortSpecificationAttr
-        .parse(parser))
+        .parse_parameters(parser))
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ parser.OptionalAttributes
@@ -836,7 +836,7 @@ object MaterializeOp extends OperationCompanion {
   ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
-        .parse(parser)
+        .parse_parameters(parser)
         .rep(sep = ",")
         .map(ArrayAttribute(_)) ~ "]"
       ~ "=" ~ ">"

@@ -227,7 +227,7 @@ def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
   val sig = TypeRepr
     .of[AttributeCompanion]
     .typeSymbol
-    .declaredMethod("parse")
+    .declaredMethod("parse_parameters")
     .head
     .signature
   comp.memberMethod("parse").filter(_.signature == sig) match

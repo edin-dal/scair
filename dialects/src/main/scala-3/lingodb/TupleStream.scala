@@ -21,7 +21,7 @@ import scair.ir.*
 object TupleStreamTuple extends AttributeCompanion {
   override def name: String = "tuples.tuple"
 
-  override def parse[$: P](p: AttrParser) =
+  override def parse_parameters[$: P](p: AttrParser) =
     P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
       .map(TupleStreamTuple(_))
 
@@ -51,7 +51,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 object TupleStream extends AttributeCompanion {
   override def name: String = "tuples.tuplestream"
 
-  override def parse[$: P](p: AttrParser) =
+  override def parse_parameters[$: P](p: AttrParser) =
     P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(TupleStream(_))
 
 }
@@ -97,7 +97,7 @@ case class TupleStream(val tuples: Seq[Attribute])
 object ColumnDefAttr extends AttributeCompanion {
   override def name: String = "tuples.column_def"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] = P(
+  override def parse_parameters[$: P](parser: AttrParser): P[Attribute] = P(
     parser.SymbolRefAttrP ~ "(" ~ "{" ~ parser.AttributeEntry ~ "}" ~ ")"
   ).map((x, y) => ColumnDefAttr(x.asInstanceOf[SymbolRefAttr], y._2))
 
@@ -121,7 +121,7 @@ case class ColumnDefAttr(val refName: SymbolRefAttr, val typ: Attribute)
 object ColumnRefAttr extends AttributeCompanion {
   override def name: String = "tuples.column_ref"
 
-  override def parse[$: P](parser: AttrParser): P[Attribute] =
+  override def parse_parameters[$: P](parser: AttrParser): P[Attribute] =
     P(parser.SymbolRefAttrP).map(x =>
       ColumnRefAttr(x.asInstanceOf[SymbolRefAttr])
     )
@@ -216,7 +216,7 @@ object GetColumnOp extends OperationCompanion {
   override def parse[$: P](
       parser: Parser
   ): P[Operation] = P(
-    ValueId ~ ColumnRefAttr.parse(parser) ~ ":" ~
+    ValueId ~ ColumnRefAttr.parse_parameters(parser) ~ ":" ~
       parser.Type ~ parser.OptionalAttributes
   ).map(
     (

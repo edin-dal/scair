@@ -37,7 +37,7 @@ class AttrParser(
       (dialect: String, attrName: String) =>
         ctx.getAttribute(s"${dialect}.${attrName}") match {
           case Some(attr) =>
-            attr.parse(this)
+            attr.parse_parameters(this)
           case None =>
             throw new Exception(
               s"Attribute $dialect.$attrName is not defined in any supported Dialect."
@@ -51,7 +51,7 @@ class AttrParser(
       (dialect: String, attrName: String) =>
         ctx.getAttribute(s"${dialect}.${attrName}") match {
           case Some(attr) =>
-            attr.parse(this)
+            attr.parse_parameters(this)
           case None =>
             throw new Exception(
               s"Type $dialect.$attrName is not defined in any supported Dialect."
