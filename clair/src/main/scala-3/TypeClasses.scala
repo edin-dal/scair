@@ -10,9 +10,8 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanionI[T] {
+trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
-  extension (op: T) override def AttributeTrait = this
 
   override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
 }
