@@ -3,6 +3,7 @@ package scair.dialects.builtin
 import fastparse.*
 import scair.Parser
 import scair.Printer
+import scair.clair.macros.*
 import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
@@ -49,36 +50,39 @@ case object Signless extends Signedness("signless", "i")
 ||    FLOAT TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class FloatType(override val name: String)
-    extends ParametrizedAttribute {
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
-}
+sealed abstract class FloatType extends TypeAttribute
 
-case class Float16Type() extends FloatType("builtin.f16") with TypeAttribute {
-  override def custom_print(p: Printer) = p.print("f16")
-}
+final case class Float16Type()
+    extends FloatType
+    with DerivedAttribute["f16", Float16Type] derives DerivedAttributeCompanion:
+  override def custom_print(p: Printer) = p.print(name)
 
-case class Float32Type() extends FloatType("builtin.f32") with TypeAttribute {
-  override def custom_print(p: Printer) = p.print("f32")
-}
+final case class Float32Type()
+    extends FloatType
+    with DerivedAttribute["f32", Float32Type] derives DerivedAttributeCompanion:
+  override def custom_print(p: Printer) = p.print(name)
 
-case class Float64Type() extends FloatType("builtin.f64") with TypeAttribute {
-  override def custom_print(p: Printer) = p.print("f64")
-}
+final case class Float64Type()
+    extends FloatType
+    with DerivedAttribute["f64", Float64Type] derives DerivedAttributeCompanion:
+  override def custom_print(p: Printer) = p.print(name)
 
-case class Float80Type() extends FloatType("builtin.f80") with TypeAttribute {
-  override def custom_print(p: Printer) = p.print("f80")
-}
+final case class Float80Type()
+    extends FloatType
+    with DerivedAttribute["f80", Float80Type] derives DerivedAttributeCompanion:
+  override def custom_print(p: Printer) = p.print(name)
 
-case class Float128Type() extends FloatType("builtin.f128") with TypeAttribute {
-  override def custom_print(p: Printer) = p.print("f128")
-}
+final case class Float128Type()
+    extends FloatType
+    with DerivedAttribute["f128", Float128Type]
+    derives DerivedAttributeCompanion:
+  override def custom_print(p: Printer) = p.print(name)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||     INT DATA     ||
 \*≡==---==≡≡==---==≡*/
 
-case class IntData(val value: BigInt)
+final case class IntData(value: BigInt)
     extends DataAttribute[BigInt]("builtin.int_attr", value)
     derives TransparentData {
   override def custom_print(p: Printer) = p.print(value.toString)
@@ -88,12 +92,9 @@ case class IntData(val value: BigInt)
 ||  INTEGER TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-case class IntegerType(val width: IntData, val sign: Signedness)
-    extends ParametrizedAttribute
-    with TypeAttribute {
-
-  override def name: String = "builtin.int_type"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(width, sign)
+final case class IntegerType(width: IntData, sign: Signedness)
+    extends DerivedAttribute["builtin.int_type", IntegerType]
+    derives DerivedAttributeCompanion {
 
   override def custom_print(p: Printer) =
     p.print(sign)
@@ -105,12 +106,11 @@ case class IntegerType(val width: IntData, val sign: Signedness)
 || INTEGER ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
 
-case class IntegerAttr(
-    val value: IntData,
-    val typ: IntegerType | IndexType
-) extends ParametrizedAttribute {
-
-  def this(value: IntData) = this(value, I64)
+final case class IntegerAttr(
+    value: IntData,
+    typ: IntegerType | IndexType = I64
+) extends DerivedAttribute["builtin.integer_attr", IntegerAttr]
+    derives DerivedAttributeCompanion {
 
   infix def +(that: IntegerAttr): IntegerAttr = {
     if (this.typ != that.typ) {
@@ -142,9 +142,6 @@ case class IntegerAttr(
     IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
   }
 
-  override def name: String = "builtin.integer_attr"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
-
   override def custom_print(p: Printer) = (value, typ) match {
     case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
     case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")
@@ -158,7 +155,7 @@ case class IntegerAttr(
 ||    FLOAT DATA    ||
 \*≡==---==≡≡==---==≡*/
 
-case class FloatData(val value: Double)
+final case class FloatData(value: Double)
     extends DataAttribute[Double]("builtin.float_data", value)
     derives TransparentData {
   override def custom_print(p: Printer) = p.print(value.toString)
@@ -168,15 +165,12 @@ case class FloatData(val value: Double)
 ||  FLOAT ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
 
-case class FloatAttr(val value: FloatData, val typ: FloatType)
-    extends ParametrizedAttribute {
+final case class FloatAttr(value: FloatData, typ: FloatType)
+    extends DerivedAttribute["builtin.float_attr", FloatAttr]
+    derives DerivedAttributeCompanion {
 
-  override def name: String = "builtin.float_attr"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(value, typ)
-
-  override def custom_print(p: Printer) = typ match
-    case Float64Type => p.print(value)
-    case _           => p.print(value, " : ", typ)(using 0)
+  override def custom_print(p: Printer) =
+    p.print(value, " : ", typ)(using 0)
 
 }
 
@@ -184,17 +178,17 @@ case class FloatAttr(val value: FloatData, val typ: FloatType)
 ||   INDEX TYPE     ||
 \*≡==---==≡≡==---==≡*/
 
-case class IndexType() extends ParametrizedAttribute with TypeAttribute {
-  override def name: String = "builtin.index"
+final case class IndexType()
+    extends DerivedAttribute["builtin.index", IndexType]
+    with TypeAttribute derives DerivedAttributeCompanion {
   override def custom_print(p: Printer) = p.print("index")
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq()
 }
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 || ARRAY ATTRIBUTE  ||
 \*≡==---==≡≡==---==≡*/
 
-case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
+final case class ArrayAttribute[D <: Attribute](attrValues: Seq[D])
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues) {
 
   override def custom_print(p: Printer) =
@@ -206,7 +200,7 @@ case class ArrayAttribute[D <: Attribute](val attrValues: Seq[D])
 || DICTIONARY ATTRIBUTE  ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-case class DictionaryAttr(val entries: Map[String, Attribute])
+final case class DictionaryAttr(entries: Map[String, Attribute])
     extends DataAttribute[Map[String, Attribute]](
       "builtin.dict_attr",
       entries
@@ -220,7 +214,7 @@ case class DictionaryAttr(val entries: Map[String, Attribute])
 /*≡==--==≡≡≡≡==--=≡≡*\
 || STRING ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
-case class StringData(val stringLiteral: String)
+final case class StringData(stringLiteral: String)
     extends DataAttribute("builtin.string", stringLiteral)
     derives TransparentData {
 
@@ -242,15 +236,16 @@ trait ShapedType extends TypeAttribute {
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   TENSOR TYPE    ||
 \*≡==---==≡≡==---==≡*/
-
-abstract class TensorType extends ParametrizedAttribute, TypeAttribute {
+trait ContainerType extends ParametrizedAttribute, TypeAttribute {
   def elementType: Attribute
 }
 
+sealed trait TensorType extends ContainerType
+
 case class RankedTensorType(
-    override val elementType: Attribute,
-    val shape: ArrayAttribute[IntData],
-    val encoding: Option[Attribute] = None
+    elementType: Attribute,
+    shape: ArrayAttribute[IntData],
+    encoding: Option[Attribute] = None
 ) extends TensorType,
       ShapedType {
 
@@ -276,12 +271,10 @@ case class RankedTensorType(
 
 }
 
-case class UnrankedTensorType(override val elementType: Attribute)
-    extends TensorType {
-  override def name: String = "builtin.unranked_tensor"
-
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    Seq(elementType)
+final case class UnrankedTensorType(elementType: Attribute)
+    extends TensorType
+    with DerivedAttribute["builtin.unranked_tensor", UnrankedTensorType]
+    derives DerivedAttributeCompanion {
 
   override def custom_print(p: Printer) =
     p.print("tensor<*x", elementType, ">")(using indentLevel = 0)
@@ -292,14 +285,15 @@ case class UnrankedTensorType(override val elementType: Attribute)
 ||   MEMREF TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-abstract class MemrefType extends ParametrizedAttribute, TypeAttribute {
-  def elementType: Attribute
-}
+sealed trait MemrefType
+    extends ParametrizedAttribute,
+      TypeAttribute,
+      ContainerType
 
-case class RankedMemrefType(
-    override val elementType: Attribute,
-    val shape: ArrayAttribute[IntData],
-    val encoding: Option[Attribute] = None
+final case class RankedMemrefType(
+    elementType: Attribute,
+    shape: ArrayAttribute[IntData],
+    encoding: Option[Attribute] = None
 ) extends MemrefType,
       ShapedType {
 
@@ -324,13 +318,10 @@ case class RankedMemrefType(
 
 }
 
-case class UnrankedMemrefType(override val elementType: Attribute)
-    extends MemrefType {
-
-  override def name: String = "builtin.unranked_memref"
-
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    Seq(elementType)
+final case class UnrankedMemrefType(elementType: Attribute)
+    extends MemrefType,
+      DerivedAttribute["builtin.unranked_memref", UnrankedMemrefType]
+    derives DerivedAttributeCompanion {
 
   override def custom_print(p: Printer) =
     p.print("tensor<*x", elementType, ">")(using indentLevel = 0)
@@ -341,17 +332,14 @@ case class UnrankedMemrefType(override val elementType: Attribute)
 ||   VECTOR TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-case class VectorType(
-    val elementType: Attribute,
-    val shape: ArrayAttribute[IntData],
-    val scalableDims: ArrayAttribute[IntData]
-) extends ParametrizedAttribute,
-      ShapedType {
-
-  override def name: String = "builtin.vector_type"
-
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
-    Seq(shape, elementType, scalableDims)
+final case class VectorType(
+    elementType: Attribute,
+    shape: ArrayAttribute[IntData],
+    scalableDims: ArrayAttribute[IntData]
+) extends ShapedType,
+      ContainerType,
+      DerivedAttribute["builtin.vector_type", VectorType]
+    derives DerivedAttributeCompanion {
 
   override def getNumDims = shape.attrValues.length
   override def getShape = shape.attrValues.map(_.data.toLong)
@@ -375,9 +363,9 @@ case class VectorType(
 || SYMBOL REF ATTR  ||
 \*≡==---==≡≡==---==≡*/
 
-case class SymbolRefAttr(
-    val rootRef: StringData,
-    val nestedRefs: Seq[StringData] = Seq()
+final case class SymbolRefAttr(
+    rootRef: StringData,
+    nestedRefs: Seq[StringData] = Seq()
 ) extends ParametrizedAttribute {
 
   override def name: String = "builtin.symbol_ref"
@@ -398,9 +386,9 @@ case class SymbolRefAttr(
 || DenseArrayAttr   ||
 \*≡==---==≡≡==---==≡*/
 
-case class DenseArrayAttr(
-    val typ: IntegerType | FloatType,
-    val data: Seq[IntegerAttr] | Seq[FloatAttr]
+final case class DenseArrayAttr(
+    typ: IntegerType | FloatType,
+    data: Seq[IntegerAttr] | Seq[FloatAttr]
 ) extends ParametrizedAttribute
     with Seq[Attribute] {
 
@@ -439,9 +427,9 @@ case class DenseArrayAttr(
 ||  FunctionType    ||
 \*≡==---==≡≡==---==≡*/
 
-case class FunctionType(
-    val inputs: Seq[Attribute],
-    val outputs: Seq[Attribute]
+final case class FunctionType(
+    inputs: Seq[Attribute],
+    outputs: Seq[Attribute]
 ) extends ParametrizedAttribute
     with TypeAttribute {
 
@@ -467,18 +455,16 @@ case class FunctionType(
 type TensorLiteralArray =
   ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
 
-case class DenseIntOrFPElementsAttr(
-    val typ: TensorType | MemrefType | VectorType,
-    val data: TensorLiteralArray
-) extends ParametrizedAttribute {
-
-  override def name: String = "builtin.dense"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
+final case class DenseIntOrFPElementsAttr(
+    typ: ContainerType | MemrefType | VectorType,
+    data: TensorLiteralArray
+) extends DerivedAttribute["builtin.dense", DenseIntOrFPElementsAttr]
+    derives DerivedAttributeCompanion {
 
   def elementType = typ match {
-    case x: TensorType => x.elementType
-    case x: MemrefType => x.elementType
-    case x: VectorType => x.elementType
+    case x: ContainerType => x.elementType
+    case x: MemrefType    => x.elementType
+    case x: VectorType    => x.elementType
   }
 
   val int_or_float = BaseAttr[IntegerType | FloatType]()
@@ -516,7 +502,7 @@ case class DenseIntOrFPElementsAttr(
 ||  AFFINE MAP ATTR ||
 \*≡==---==≡≡==---==≡*/
 
-case class AffineMapAttr(val affine_map: AffineMap)
+final case class AffineMapAttr(affine_map: AffineMap)
     extends DataAttribute[AffineMap]("builtin.affine_map", affine_map)
     with AliasedAttribute("map") derives TransparentData {
 
@@ -530,7 +516,7 @@ case class AffineMapAttr(val affine_map: AffineMap)
 \*≡==---==≡≡==---==≡*/
 // note: in mlir terms this is called an IntegerSetAttr
 
-case class AffineSetAttr(val affine_set: AffineSet)
+final case class AffineSetAttr(affine_set: AffineSet)
     extends DataAttribute[AffineSet]("builtin.affine_set", affine_set)
     with AliasedAttribute("set") derives TransparentData {
 

@@ -258,7 +258,7 @@ class AttrParser(
   // dimension             ::=   `?` | decimal-literal
   // encoding              ::=   attribute-value
 
-  def TensorTypeP[$: P]: P[TensorType] = P(
+  def TensorTypeP[$: P]: P[ContainerType] = P(
     "tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
   )
 
@@ -272,7 +272,7 @@ class AttrParser(
     )
   )
 
-  def UnrankedTensorTypeP[$: P]: P[TensorType] =
+  def UnrankedTensorTypeP[$: P]: P[ContainerType] =
     P("*" ~ "x" ~ Type).map((x: Attribute) =>
       UnrankedTensorType(elementType = x)
     )
@@ -356,7 +356,7 @@ class AttrParser(
       "dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~ (TensorTypeP | MemrefTypeP | VectorTypeP)
     ).map((x, y) =>
       y match {
-        case yy: (TensorType | MemrefType | VectorType) =>
+        case yy: (ContainerType | MemrefType | VectorType) =>
           DenseIntOrFPElementsAttr(yy, x.asInstanceOf[TensorLiteralArray])
       }
       // DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])

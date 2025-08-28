@@ -37,7 +37,7 @@ trait TypeAttribute extends Attribute {
   override def prefix: String = "!"
 }
 
-abstract class ParametrizedAttribute() extends Attribute {
+abstract trait ParametrizedAttribute() extends Attribute {
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 

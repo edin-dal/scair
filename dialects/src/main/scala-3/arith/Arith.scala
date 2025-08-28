@@ -126,11 +126,11 @@ type I64 = IntegerType
 type IntegerPredicate = IntegerAttr
 // TODO: again, this should be constrained to be i1 specifically,
 //       or vector or tensor of I1 (ie, bools)
-type BoolLike = I1 | VectorType | TensorType
+type BoolLike = I1 | VectorType | ContainerType
 // TODO: same old same old
 type SignlessIntegerOrFloatLike = IntegerType | FloatType
 // TODO: this should be constrained to be a signless integer, or vector or tensor of a signless integer
-type SignlessFixedWidthIntegerLike = IntegerType | VectorType | TensorType
+type SignlessFixedWidthIntegerLike = IntegerType | VectorType | ContainerType
 // TODO: MemrefType here should be looked at more closely to how it is actually implemented in MLIR
 type BitcastType = SignlessIntegerOrFloatLike | MemrefType
 // TODO: this is specifically a memref type of anysignless integer or index
