@@ -475,7 +475,13 @@ final case class DenseIntOrFPElementsAttr(
       case Success(_) =>
         Try(
           for (x <- data.attrValues)
-            int_or_float.verify(x, new ConstraintContext())
+            int_or_float.verify(
+              x match
+                case IntegerAttr(_, t) => t
+                case FloatAttr(_, t)   => t
+              ,
+              new ConstraintContext()
+            )
         ) match {
           case Success(_) => Right(())
           case Failure(e) => Left(e.getMessage)
