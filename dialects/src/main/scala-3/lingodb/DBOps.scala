@@ -285,7 +285,8 @@ object DB_ConstantOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     "(" ~ parser.Attribute ~ ")" ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -297,6 +298,7 @@ object DB_ConstantOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = Seq(y),
         attributes = z + ("value" -> x)
       )
@@ -354,7 +356,8 @@ object DB_CmpOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     DB_CmpPredicateAttr.caseParser ~ ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -369,6 +372,7 @@ object DB_CmpOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = Seq(I1),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -496,7 +500,8 @@ object DB_MulOp extends OperationCompanion {
   }
 
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -510,6 +515,7 @@ object DB_MulOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = inferRetType(leftType, rightType),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -638,7 +644,8 @@ object DB_DivOp extends OperationCompanion {
   }
 
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -654,6 +661,7 @@ object DB_DivOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
+        resultsNames = resNames,
         resultsTypes = inferRetType(leftType, rightType),
         attributes = z
       )
@@ -721,7 +729,8 @@ object DB_AddOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -735,6 +744,7 @@ object DB_AddOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = Seq(leftType),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -806,7 +816,8 @@ object DB_SubOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "," ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -820,6 +831,7 @@ object DB_SubOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = Seq(leftType),
         operandsNames = Seq(left, right),
         operandsTypes = Seq(leftType, rightType),
@@ -889,7 +901,8 @@ object CastOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ ":" ~ parser.Type ~ "->" ~ parser.Type.rep
       ~ parser.OptionalAttributes
@@ -902,6 +915,7 @@ object CastOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = resTypes,
         operandsNames = Seq(operand),
         operandsTypes = Seq(opType),

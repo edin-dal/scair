@@ -93,7 +93,8 @@ object SetResultOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     parser.Attribute ~ ValueId ~ ":" ~ parser.Type
       ~ parser.OptionalAttributes
@@ -108,7 +109,8 @@ object SetResultOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(y),
         operandsTypes = Seq(z),
-        attributes = w + ("result_id" -> x)
+        attributes = w + ("result_id" -> x),
+        resultsNames = resNames
       )
   )
   // ==----------------------== //
