@@ -50,8 +50,8 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[Map[String, Attribute]] = {
-  val name = Expr(s"${getConstructName[T]}SegmentSizes")
+)(using Quotes): Option[(String, Expr[Attribute])] = {
+  val name = s"${getConstructName[T]}SegmentSizes"
   hasMultiVariadic match {
     case true =>
       val arrayAttr: Expr[Seq[Int]] =
@@ -66,9 +66,9 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
             }
           )
         )
-      '{
-        Map(
-          $name -> DenseArrayAttr(
+      Some(
+        name -> '{
+          DenseArrayAttr(
             IntegerType(IntData(32), Signless),
             ${ arrayAttr }.map(x =>
               IntegerAttr(
@@ -77,9 +77,9 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
               )
             )
           )
-        )
-      }
-    case false => '{ Map.empty[String, Attribute] }
+        }
+      )
+    case false => None
   }
 }
 
@@ -95,23 +95,18 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[?]
 )(using Quotes): Expr[Seq[DefinedInput[Def]]] = {
-  val stuff = Expr.ofList(
+  val stuff =
     opInputDefs.map((d: Def) =>
-      getConstructVariadicity(d) match
-        case Variadicity.Optional =>
-          selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
-        case Variadicity.Variadic =>
-          selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
-        case Variadicity.Single =>
-          '{
-            Seq(${
-              selectMember[DefinedInput[Def]](adtOpExpr, d.name)
-
-            })
-          }
+      selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
+        adtOpExpr,
+        d.name
+      )
     )
+  stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
+    next match
+      case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
+      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
   )
-  '{ ${ stuff }.flatten }
 }
 
 def operandsMacro(
@@ -142,8 +137,6 @@ def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
 )(using Quotes): Expr[Map[String, Attribute]] =
-  // extracting property instances from the ADT
-  val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
   val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands,
@@ -166,13 +159,22 @@ def propertiesMacro(
     adtOpExpr
   )
   // Populating a Dictionarty with the properties
-  val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-  '{
-    Map.from(${ propertyNames } zip ${ propertyExprs })
-      ++ ${ opSegSizeProp }
-      ++ ${ resSegSizeProp }
-      ++ ${ regSegSizeProp }
-      ++ ${ succSegSizeProp }
+  val definedProps =
+    if opDef.properties.isEmpty then '{ Map.empty[String, Attribute] }
+    else
+      // extracting property instances from the ADT
+      val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
+      val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
+      '{
+        Map.from(${ propertyNames } zip ${ propertyExprs })
+      }
+
+  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(
+    definedProps
+  ) {
+    case (map, Some((name, segSize))) =>
+      '{ $map + (${ Expr(name) } -> $segSize) }
+    case (map, None) => map
   }
 
 def customPrintMacro(
