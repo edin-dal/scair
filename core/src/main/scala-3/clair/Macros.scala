@@ -104,8 +104,8 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     )
   stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
     next match
-      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
       case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
+      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
   )
 
 }
