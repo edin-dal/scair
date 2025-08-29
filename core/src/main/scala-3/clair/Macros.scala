@@ -50,8 +50,8 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[Map[String, Attribute]] = {
-  val name = Expr(s"${getConstructName[T]}SegmentSizes")
+)(using Quotes): Option[(String, Expr[Attribute])] = {
+  val name = s"${getConstructName[T]}SegmentSizes"
   hasMultiVariadic match {
     case true =>
       val arrayAttr: Expr[Seq[Int]] =
@@ -66,20 +66,18 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
             }
           )
         )
-      '{
-        Map(
-          $name -> DenseArrayAttr(
-            IntegerType(IntData(32), Signless),
-            ${ arrayAttr }.map(x =>
-              IntegerAttr(
-                IntData(x),
-                IntegerType(IntData(32), Signless)
-              )
+      Some(
+        name -> '{DenseArrayAttr(
+          IntegerType(IntData(32), Signless),
+          ${ arrayAttr }.map(x =>
+            IntegerAttr(
+              IntData(x),
+              IntegerType(IntData(32), Signless)
             )
           )
-        )
-      }
-    case false => '{ Map.empty[String, Attribute] }
+        )}
+      )
+    case false => None
   }
 }
 
@@ -137,8 +135,6 @@ def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
 )(using Quotes): Expr[Map[String, Attribute]] =
-  // extracting property instances from the ADT
-  val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
 
   val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands,
@@ -161,14 +157,20 @@ def propertiesMacro(
     adtOpExpr
   )
   // Populating a Dictionarty with the properties
-  val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-  '{
-    Map.from(${ propertyNames } zip ${ propertyExprs })
-      ++ ${ opSegSizeProp }
-      ++ ${ resSegSizeProp }
-      ++ ${ regSegSizeProp }
-      ++ ${ succSegSizeProp }
-  }
+  val definedProps = if opDef.properties.isEmpty then
+    '{ Map.empty[String, Attribute] }
+  else
+    // extracting property instances from the ADT
+    val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
+    val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
+    '{
+      Map.from(${ propertyNames } zip ${ propertyExprs })
+    }
+
+  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(definedProps){
+    case (map, Some((name, segSize))) => '{ $map + (${Expr(name)} -> $segSize) }
+    case (map, None)                  => map
+   }
 
 def customPrintMacro(
     opDef: OperationDef,
