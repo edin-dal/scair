@@ -165,23 +165,33 @@ object `package` extends ScairSettings with ScoverageReport {
     filechecks.run()()
   }
 
+  def coverage(evaluator: Evaluator) = Command(exclusive = true) {
+    runAllUnitTests(evaluator)()
+    filechecks.coverage.run()()
+    xmlReportAll(evaluator)()
+  }
 
-  object filechecks extends DefaultTaskModule {
+  trait filechecks extends DefaultTaskModule {
+
+    def scairOpt : Task[PathRef]
 
     // Make filechecks runnable directly as ./mill filechecks
     override def defaultTask(): String = "run"
     // Define a Mill command to run filechecks
     def run() = Task.Command {
-      // It depends on the runnable CLI
-      tools.scoverage.nativeImage()
-
       // Get the directory root to use as lit's working directory
       val rootPath = rootModule().moduleDir
-      // Run lit
-      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit)
+      // Run lit, forwarding it the relevant scair-opt through the env var
+      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit, env = Map(("SCAIR_OPT" -> scairOpt().path.toString)))
       if (litStatus.exitCode != 0) {
         sys.error(f"Filechecks failed")
       }
     }
   }
+  object filechecks extends filechecks:
+    override def scairOpt = tools.launcher
+    object coverage extends filechecks:
+      override def scairOpt = tools.scoverage.launcher
+    object native extends filechecks:
+      override def scairOpt = tools.nativeImage
 }
