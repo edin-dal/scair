@@ -10,7 +10,7 @@ import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
 
 import mill.api.{Task, PathRef, DefaultTaskModule, Module, ModuleRef, Evaluator}
 import mill.api.daemon.SelectMode
-import mill.scalalib.{ScalaModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
+import mill.scalalib.{ScalaModule, NativeImageModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
 import mill.scalalib.publish.{Developer, PomSettings, License, VersionControl}
 import mill.javalib.testrunner.TestResult
 import mill.api.Task.{Named, Command}
@@ -18,11 +18,12 @@ import mill.api.Task.{Named, Command}
 import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
-
-trait ScairSettings extends ScalaModule with UnidocModule {
+trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule {
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
+  override def jvmId = "graalvm-community:24.0.1"
+  override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
@@ -66,7 +67,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
   // dependencies. This enforces that everything ScaIR is transitively compiled with
   // coverage when compiling a module with coverage.
-  trait ScairScoverageData extends ScoverageData {
+  trait ScairScoverageData extends ScoverageData with ScairSettings {
     override def transitiveModuleRunModuleDeps = {
       super .transitiveModuleRunModuleDeps.map {
         case m: ScairModule => m.scoverage
@@ -86,8 +87,11 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
-  object test extends ScoverageTests with TestModule.ScalaTest {
+  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
+    // This was necessary to cooperate with graalvm at time of writing.
+    // Please remove if unit tests work fine without it in the future.
+    override def testParallelism = false
   }
 }
 
@@ -161,23 +165,33 @@ object `package` extends ScairSettings with ScoverageReport {
     filechecks.run()()
   }
 
+  def coverage(evaluator: Evaluator) = Command(exclusive = true) {
+    runAllUnitTests(evaluator)()
+    filechecks.coverage.run()()
+    xmlReportAll(evaluator)()
+  }
 
-  object filechecks extends DefaultTaskModule {
+  trait filechecks extends DefaultTaskModule {
+
+    def scairOpt : Task[PathRef]
 
     // Make filechecks runnable directly as ./mill filechecks
     override def defaultTask(): String = "run"
     // Define a Mill command to run filechecks
     def run() = Task.Command {
-      // It depends on the runnable CLI
-      tools.scoverage.launcher()
-
       // Get the directory root to use as lit's working directory
       val rootPath = rootModule().moduleDir
-      // Run lit
-      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit)
+      // Run lit, forwarding it the relevant scair-opt through the env var
+      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit, env = Map(("SCAIR_OPT" -> scairOpt().path.toString)))
       if (litStatus.exitCode != 0) {
         sys.error(f"Filechecks failed")
       }
     }
   }
+  object filechecks extends filechecks:
+    override def scairOpt = tools.launcher
+    object coverage extends filechecks:
+      override def scairOpt = tools.scoverage.launcher
+    object native extends filechecks:
+      override def scairOpt = tools.nativeImage
 }
