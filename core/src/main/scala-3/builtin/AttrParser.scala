@@ -258,7 +258,7 @@ class AttrParser(
   // dimension             ::=   `?` | decimal-literal
   // encoding              ::=   attribute-value
 
-  def TensorTypeP[$: P]: P[TensorType] = P(
+  def TensorTypeP[$: P]: P[ContainerType] = P(
     "tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
   )
 

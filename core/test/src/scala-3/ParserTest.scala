@@ -399,35 +399,28 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
-                Seq(),
-                Seq(),
-                Seq(),
-                Seq(
-                  Region(
-                    Seq(
-                      Block(
-                        ListType(),
-                        BlockOperations(
-                          UnregisteredOperation(
-                            "test.op",
-                            Seq(),
-                            Seq(),
-                            Seq(
-                              Result(I32),
-                              Result(I64),
-                              Result(I32)
-                            ),
-                            Seq(),
-                            _,
-                            _
-                          )
+                Region(
+                  Seq(
+                    Block(
+                      ListType(),
+                      BlockOperations(
+                        UnregisteredOperation(
+                          "test.op",
+                          Seq(),
+                          Seq(),
+                          Seq(
+                            Result(I32),
+                            Result(I64),
+                            Result(I32)
+                          ),
+                          Seq(),
+                          _,
+                          _
                         )
                       )
                     )
                   )
-                ),
-                _,
-                _
+                )
               ),
               48
             ) =>

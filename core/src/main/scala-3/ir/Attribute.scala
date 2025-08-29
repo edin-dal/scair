@@ -37,7 +37,7 @@ trait TypeAttribute extends Attribute {
   override def prefix: String = "!"
 }
 
-abstract class ParametrizedAttribute() extends Attribute {
+abstract trait ParametrizedAttribute() extends Attribute {
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
@@ -95,10 +95,6 @@ abstract class DataAttribute[D](
 trait AttributeCompanion {
   def name: String
   def parse[$: P](p: AttrParser): P[Attribute]
-}
-
-trait AttributeCompanionI[T] extends AttributeCompanion {
-  extension (op: T) def AttributeTrait = this
 }
 
 trait AliasedAttribute(val alias: String) extends Attribute

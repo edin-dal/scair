@@ -4,6 +4,7 @@ import fastparse.*
 import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
+import scair.clair.macros.DerivedOperationCompanion
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
@@ -522,10 +523,12 @@ class Parser(
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
-      case _                       =>
+      case (head: DerivedOperationCompanion[ModuleOp]#UnstructuredOp) :: Nil =>
+        head
+      case _ =>
         val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
-        val moduleOp = new ModuleOp(regions = Seq(region))
+        val moduleOp = ModuleOp(region)
 
         for (op <- toplevel) op.container_block = Some(block)
         block.container_region = Some(region)

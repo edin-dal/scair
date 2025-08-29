@@ -3,6 +3,7 @@
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
 //|   - com.lihaoyi::mill-contrib-scoverage:1.0.3
+//| mill-jvm-opts: ["-Xss10m"]
 
 import com.goyeau.mill.scalafix.ScalafixModule
 import mill.util.{VcsVersion, Tasks}
@@ -113,12 +114,8 @@ object `package` extends ScairSettings with ScoverageReport {
     )
   }
 
-  object clair extends ScairModule {
-    def moduleDeps = Seq(core)
-  }
-
   object dialects extends ScairModule {
-    def moduleDeps = Seq(clair)
+    def moduleDeps = Seq(core)
   }
 
   object transformations extends ScairModule {

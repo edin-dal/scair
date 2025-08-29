@@ -28,28 +28,26 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter {
       properties = Map("value" -> IntegerAttr(IntData(0), I32))
     )
     val module = ModuleOp(
-      regions = Seq(
-        Region(
-          Seq(
-            Block(
-              operations = Seq(
-                Func(
-                  "suchCompute",
-                  FunctionType(Seq(I32), Seq(I32)),
-                  None,
-                  Region(
-                    Seq(
-                      Block(
-                        I32,
-                        (arg: Value[?]) =>
-                          val addres = Result(I32)
-                          val lhs = arg.asInstanceOf[Value[IntegerType]]
-                          val rhs =
-                            zero.results.head.asInstanceOf[Result[IntegerType]]
-                          val add = AddI(lhs, rhs, addres)
-                          val ret = Return(Seq(addres))
-                          Seq(zero, add, ret)
-                      )
+      Region(
+        Seq(
+          Block(
+            operations = Seq(
+              Func(
+                "suchCompute",
+                FunctionType(Seq(I32), Seq(I32)),
+                None,
+                Region(
+                  Seq(
+                    Block(
+                      I32,
+                      (arg: Value[?]) =>
+                        val addres = Result(I32)
+                        val lhs = arg.asInstanceOf[Value[IntegerType]]
+                        val rhs =
+                          zero.results.head.asInstanceOf[Result[IntegerType]]
+                        val add = AddI(lhs, rhs, addres)
+                        val ret = Return(Seq(addres))
+                        Seq(zero, add, ret)
                     )
                   )
                 )
