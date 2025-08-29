@@ -140,8 +140,9 @@ private def DialectRegion[$: P](parser: Parser) = P(
     ~ (parser.BlockArgList
       .orElse(Seq())
       .mapTry((x: Seq[(String, Attribute)]) => {
-        val b = new Block(Seq.from(x.map(_._2)), Seq.empty)
-        parser.currentScope.registerValues(x.map(_._1) zip b.arguments)
+
+        val b = new Block()
+        b.arguments ++= x map parser.currentScope.defineBlockArgument
         b
       })
       ~ "{"
@@ -161,7 +162,8 @@ object BaseTableOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ) = P(
     parser.OptionalAttributes ~
       "columns" ~ ":" ~ "{" ~ (BareId ~ "=>" ~ ColumnDefAttr.parse(parser))
@@ -174,6 +176,7 @@ object BaseTableOp extends OperationCompanion {
     ) =>
       parser.generateOperation(
         opName = name,
+        resultsNames = resNames,
         resultsTypes = Seq(TupleStream(Seq())),
         attributes = x,
         properties = y
@@ -244,7 +247,8 @@ object SelectionOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ DialectRegion(parser) ~
       parser.OptionalKeywordAttributes
@@ -260,6 +264,7 @@ object SelectionOp extends OperationCompanion {
           opName = name,
           operandsNames = Seq(x),
           operandsTypes = Seq(operand_type),
+          resultsNames = resNames,
           resultsTypes = Seq(TupleStream(Seq())),
           regions = Seq(y),
           attributes = z
@@ -323,7 +328,8 @@ object MapOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId
       ~ "computes" ~ ":"
@@ -342,6 +348,7 @@ object MapOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
         attributes = w + ("computed_cols" -> z)
@@ -424,7 +431,8 @@ object AggregationOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
@@ -451,6 +459,7 @@ object AggregationOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
         attributes = w + ("group_by_cols" -> reff, "computed_cols" -> deff)
@@ -547,7 +556,8 @@ object CountRowsOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId ~ parser.OptionalAttributes
   ).map(
@@ -560,6 +570,7 @@ object CountRowsOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = Seq(I64),
         attributes = y
       )
@@ -626,7 +637,8 @@ object AggrFuncOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     RelAlg_AggrFunc.caseParser ~ ColumnRefAttr.parse(parser)
       ~ ValueId ~ ":" ~ parser.Type.rep(1)
@@ -644,6 +656,7 @@ object AggrFuncOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = resTypes,
         attributes = y + ("fn" -> aggrfunc, "attr" -> attr)
       )
@@ -732,7 +745,8 @@ object SortOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId
       ~ "[" ~ (SortSpecificationAttr
@@ -751,6 +765,7 @@ object SortOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(x),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = Seq(TupleStream(Seq())),
         attributes = y + ("sortspecs" -> attr)
       )
@@ -832,7 +847,8 @@ object MaterializeOp extends OperationCompanion {
 
   // ==--- Custom Parsing ---== //
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = P(
     ValueId
       ~ "[" ~ ColumnRefAttr
@@ -857,6 +873,7 @@ object MaterializeOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(operand),
         operandsTypes = Seq(operand_type),
+        resultsNames = resNames,
         resultsTypes = resTypes,
         attributes = y + ("cols" -> cols, "columns" -> columns)
       )

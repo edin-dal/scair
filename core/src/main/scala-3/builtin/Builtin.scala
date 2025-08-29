@@ -544,7 +544,8 @@ object ModuleOp {
 
   // ==--- Custom Parsing ---== //
   def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] =
     P(
       parser.Region()
