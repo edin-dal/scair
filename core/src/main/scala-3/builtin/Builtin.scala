@@ -93,7 +93,8 @@ final case class IntData(value: BigInt)
 \*≡==---==≡≡==---==≡*/
 
 final case class IntegerType(width: IntData, sign: Signedness)
-    extends DerivedAttribute["builtin.int_type", IntegerType]
+    extends TypeAttribute
+    with DerivedAttribute["builtin.int_type", IntegerType]
     derives DerivedAttributeCompanion {
 
   override def custom_print(p: Printer) =
