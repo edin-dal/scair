@@ -107,7 +107,6 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
       case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
       case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
   )
-
 }
 
 def operandsMacro(
