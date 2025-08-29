@@ -95,14 +95,19 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[?]
 )(using Quotes): Expr[Seq[DefinedInput[Def]]] = {
-  val stuff = 
-    opInputDefs.map((d: Def) => selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](adtOpExpr, d.name)
+  val stuff =
+    opInputDefs.map((d: Def) =>
+      selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
+        adtOpExpr,
+        d.name
+      )
     )
-  stuff.foldLeft('{Seq.empty[DefinedInput[Def]]})((seq, next) => next match
-    case '{$ns : IterableOnce[DefinedInput[Def]]} => '{$seq :++ $ns}
-    case '{$ne : DefinedInput[Def]} => '{$seq :+ $ne}
+  stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
+    next match
+      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
+      case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
   )
-  
+
 }
 
 def operandsMacro(
