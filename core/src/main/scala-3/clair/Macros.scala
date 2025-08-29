@@ -67,15 +67,17 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
           )
         )
       Some(
-        name -> '{DenseArrayAttr(
-          IntegerType(IntData(32), Signless),
-          ${ arrayAttr }.map(x =>
-            IntegerAttr(
-              IntData(x),
-              IntegerType(IntData(32), Signless)
+        name -> '{
+          DenseArrayAttr(
+            IntegerType(IntData(32), Signless),
+            ${ arrayAttr }.map(x =>
+              IntegerAttr(
+                IntData(x),
+                IntegerType(IntData(32), Signless)
+              )
             )
           )
-        )}
+        }
       )
     case false => None
   }
@@ -157,20 +159,23 @@ def propertiesMacro(
     adtOpExpr
   )
   // Populating a Dictionarty with the properties
-  val definedProps = if opDef.properties.isEmpty then
-    '{ Map.empty[String, Attribute] }
-  else
-    // extracting property instances from the ADT
-    val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
-    val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-    '{
-      Map.from(${ propertyNames } zip ${ propertyExprs })
-    }
+  val definedProps =
+    if opDef.properties.isEmpty then '{ Map.empty[String, Attribute] }
+    else
+      // extracting property instances from the ADT
+      val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
+      val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
+      '{
+        Map.from(${ propertyNames } zip ${ propertyExprs })
+      }
 
-  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(definedProps){
-    case (map, Some((name, segSize))) => '{ $map + (${Expr(name)} -> $segSize) }
-    case (map, None)                  => map
-   }
+  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(
+    definedProps
+  ) {
+    case (map, Some((name, segSize))) =>
+      '{ $map + (${ Expr(name) } -> $segSize) }
+    case (map, None) => map
+  }
 
 def customPrintMacro(
     opDef: OperationDef,
