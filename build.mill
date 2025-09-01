@@ -21,28 +21,21 @@ import scala.language.postfixOps
 import java.io.PrintWriter
 import os.Path
 import mill.api.Task.Simple
-trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule {
 
+trait ScairSettings extends ScalaModule {
   def scoverageVersion = Task{"2.3.0"}
+
   override def scalaVersion = "3.7.1"
+
+  override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
+
+}
+
+
+trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings with NativeImageModule {
+
   override def jvmId = "graalvm-community:24.0.1"
   override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
-  override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
-  override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
-
-  override def unidocVersion = Task{Some("0.5.0")}
-  override def unidocDocumentTitle = Task{"ScaIR Unidoc"}
-
-  override def unidocSourceFiles =
-      (Seq(compile().classes) ++ Task.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
-        .filter(pr => os.exists(pr.path))
-        .flatMap(pr => os.walk(pr.path))
-        .filter(_.ext == "tasty")
-        .map(PathRef(_))
-    }
-
-
-trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings {
 
   def outer = ModuleRef(this)
 
@@ -112,7 +105,17 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   }
 }
 
-object `package` extends ScairSettings with ScoverageReport {
+object `package` extends ScairSettings with ScoverageReport with UnidocModule {
+
+  override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
+  override def unidocVersion = Task{Some("0.5.0")}
+  override def unidocDocumentTitle = Task{"ScaIR Unidoc"}
+  override def unidocSourceFiles =
+      (Seq(compile().classes) ++ Task.traverse(transitiveModuleDeps)(_.compile)().map(_.classes))
+        .filter(pr => os.exists(pr.path))
+        .flatMap(pr => os.walk(pr.path))
+        .filter(_.ext == "tasty")
+        .map(PathRef(_))
 
   override def moduleDeps = Seq(tools)
 
