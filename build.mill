@@ -28,11 +28,17 @@ trait ScairSettings extends ScalaModule {
   override def scalaVersion = "3.7.1"
 
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
-
 }
 
 
 trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings with NativeImageModule {
+
+  trait ScairTests extends ScalaTests with TestModule.ScalaTest {
+    override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
+    // This was necessary to cooperate with graalvm at time of writing.
+    // Please remove if unit tests work fine without it in the future.
+    override def testParallelism = false
+  }
 
   override def jvmId = "graalvm-community:24.0.1"
   override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
@@ -80,13 +86,8 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
       }
     }
 
-    object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings {
+    object test extends ScoverageTests with ScairTests {
       override def moduleDir: Path = outer().test.moduleDir
-      override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
-
-      // This was necessary to cooperate with graalvm at time of writing.
-      // Please remove if unit tests work fine without it in the future.
-      override def testParallelism = false
     }
   }
   
@@ -94,15 +95,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
-  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings{
-    // Revert that it is a ScoverageTests
-    override def runClasspath: Simple[Seq[PathRef]] = super[ScairSettings].runClasspath()
-
-    override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
-    // This was necessary to cooperate with graalvm at time of writing.
-    // Please remove if unit tests work fine without it in the future.
-    override def testParallelism = false
-  }
+  object test extends ScairTests
 }
 
 object `package` extends ScairSettings with ScoverageReport with UnidocModule {
