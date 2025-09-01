@@ -19,17 +19,12 @@ import mill.api.Task.{Named, Command}
 import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
-<<<<<<< HEAD
 import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
-import mill.api.Task.Simple
 import mill.scalanativelib.api.ReleaseMode
-trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule with ScalaNativeModule {
-=======
 import os.Path
 import mill.api.Task.Simple
-trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule {
->>>>>>> main
+trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule with ScalaNativeModule {
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
