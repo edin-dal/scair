@@ -111,7 +111,7 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
-  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings{
+  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings with ScalaNativeTests {
     // Revert that it is a ScoverageTests
     override def runClasspath: Simple[Seq[PathRef]] = super[ScairSettings].runClasspath()
 
