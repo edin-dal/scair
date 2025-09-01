@@ -28,12 +28,15 @@ trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
+
   override def jvmId = "graalvm-community:24.0.1"
+
   override def scalaNativeVersion = "0.5.8"
   override def nativeLTO: Simple[LTO] = LTO.Full
   override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
-  override def nativeGC = "commix"
+
   override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
+  
   override def scalacOptions = super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
   override def unidocOptions = super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
