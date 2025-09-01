@@ -19,11 +19,17 @@ import mill.api.Task.{Named, Command}
 import scala.sys.process._
 import scala.language.postfixOps
 import java.io.PrintWriter
+<<<<<<< HEAD
 import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
 import mill.api.Task.Simple
 import mill.scalanativelib.api.ReleaseMode
 trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule with ScalaNativeModule {
+=======
+import os.Path
+import mill.api.Task.Simple
+trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule {
+>>>>>>> main
 
   def scoverageVersion = Task{"2.3.0"}
   override def scalaVersion = "3.7.1"
@@ -49,6 +55,8 @@ trait ScairSettings extends ScalaModule with NativeImageModule with UnidocModule
 
 
 trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings {
+
+  def outer = ModuleRef(this)
 
   override def artifactName = s"scair-${super.artifactName()}"
 
@@ -78,17 +86,26 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   // coverage when compiling a module with coverage.
   trait ScairScoverageData extends ScoverageData with ScairSettings {
     override def transitiveModuleRunModuleDeps = {
-      super .transitiveModuleRunModuleDeps.map {
+      super.transitiveModuleRunModuleDeps.map {
         case m: ScairModule => m.scoverage
         case m => m
       }
     }
 
     override def transitiveModuleCompileModuleDeps = {
-      super .transitiveModuleCompileModuleDeps.map {
+      super.transitiveModuleCompileModuleDeps.map {
         case m: ScairModule => m.scoverage
         case m => m
       }
+    }
+
+    object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings {
+      override def moduleDir: Path = outer().test.moduleDir
+      override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
+
+      // This was necessary to cooperate with graalvm at time of writing.
+      // Please remove if unit tests work fine without it in the future.
+      override def testParallelism = false
     }
   }
   
@@ -96,7 +113,10 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
-  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings {
+  object test extends ScoverageTests with TestModule.ScalaTest with ScairSettings{
+    // Revert that it is a ScoverageTests
+    override def runClasspath: Simple[Seq[PathRef]] = super[ScairSettings].runClasspath()
+
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.19")
     // This was necessary to cooperate with graalvm at time of writing.
     // Please remove if unit tests work fine without it in the future.
@@ -139,7 +159,7 @@ object `package` extends ScairSettings with ScoverageReport {
 
   def allScalaSources(evaluator: Evaluator) = Tasks(evaluator.resolveTasks(Seq("__.sources"), SelectMode.Multi).get.asInstanceOf[Seq[Named[Seq[PathRef]]]])
 
-  def runAllUnitTests(evaluator: Evaluator) = Task.sequence(evaluator.resolveTasks(Seq("__.test"), SelectMode.Multi).get.asInstanceOf[Seq[Named[Seq[TestResult]]]])
+  def runAll(query: String, evaluator: Evaluator) = Task.sequence(evaluator.resolveTasks(Seq(query), SelectMode.Multi).get.asInstanceOf[Seq[Named[Seq[TestResult]]]])
    
   def allChildren = allChidrenRec(moduleDirectChildren)
   def allChidrenRec(children: Seq[Module]): Seq[Module] = {
@@ -166,13 +186,13 @@ object `package` extends ScairSettings with ScoverageReport {
 
   // Define a testAll to run the full framework testing infrastructure
   def testAll(evaluator: Evaluator) = Command(exclusive = true) {
-    runAllUnitTests(evaluator)()
+    runAll("_.test", evaluator)()
     filechecks.run()()
   }
 
-  def coverage(evaluator: Evaluator) = Command(exclusive = true) {
-    runAllUnitTests(evaluator)()
-    filechecks.coverage.run()()
+  def scoverage(evaluator: Evaluator) = Command(exclusive = true) {
+    runAll("__.scoverage.test", evaluator)()
+    filechecks.scoverage.run()()
     xmlReportAll(evaluator)()
   }
 
@@ -183,7 +203,7 @@ object `package` extends ScairSettings with ScoverageReport {
     // Make filechecks runnable directly as ./mill filechecks
     override def defaultTask(): String = "run"
     // Define a Mill command to run filechecks
-    def run() = Task.Command {
+    def run() = Task.Command(exclusive = true) {
       // Get the directory root to use as lit's working directory
       val rootPath = rootModule().moduleDir
       // Run lit, forwarding it the relevant scair-opt through the env var
@@ -195,8 +215,10 @@ object `package` extends ScairSettings with ScoverageReport {
   }
   object filechecks extends filechecks:
     override def scairOpt = tools.launcher
-    object coverage extends filechecks:
+    object scoverage extends filechecks:
       override def scairOpt = tools.scoverage.launcher
-    object native extends filechecks:
+    object nativeLink extends filechecks:
       override def scairOpt = tools.nativeLink
+    object nativeImage extends filechecks:
+      override def scairOpt = tools.nativeImage
 }
