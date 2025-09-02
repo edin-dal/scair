@@ -28,7 +28,7 @@ case class Apply(
     res: Result[IndexType],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.apply", Apply]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||      FOR OP      ||
@@ -43,7 +43,7 @@ case class For(
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region
-) extends DerivedOperation["affine.for", For] derives DerivedOperationCompanion
+) extends DerivedOperation["affine.for", For]
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -60,7 +60,6 @@ case class Parallel(
     res: Seq[Result[Attribute]],
     body: Region
 ) extends DerivedOperation["affine.parallel", Parallel]
-    derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡=--=≡≡*\
 ||     IF OP     ||
@@ -72,7 +71,7 @@ case class If(
     condition: AffineSetAttr,
     then_region: Region,
     else_region: Region
-) extends DerivedOperation["affine.if", If] derives DerivedOperationCompanion
+) extends DerivedOperation["affine.if", If]
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -84,7 +83,6 @@ case class Store(
     indices: Seq[Operand[IndexType]],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.store", Store]
-    derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡=---=≡≡*\
 ||     LOAD OP     ||
@@ -96,7 +94,6 @@ case class Load(
     result: Result[Attribute],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.load", Load]
-    derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||     MIN OP     ||
@@ -107,7 +104,7 @@ case class Min(
     result: Result[IndexType],
     map: AffineMapAttr
 ) extends DerivedOperation["affine.min", Min]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||
@@ -117,7 +114,7 @@ case class Yield(
     arguments: Seq[Operand[Attribute]]
 ) extends DerivedOperation["affine.yield", Yield]
     with IsTerminator
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect
 
 val AffineDialect = summonDialect[
   EmptyTuple,
