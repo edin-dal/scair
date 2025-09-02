@@ -664,27 +664,25 @@ final class Parser(
       ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .mapTry(
         (
-            (
-                opName: String,
-                operandsNames: Seq[String],
-                successors: Seq[Block],
-                properties: Map[String, Attribute],
-                regions: Seq[Region],
-                attributes: Map[String, Attribute],
-                operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
-            ) =>
-              generateOperation(
-                opName,
-                resNames,
-                operandsNames,
-                successors,
-                properties,
-                regions,
-                attributes,
-                operandsAndResultsTypes._2,
-                operandsAndResultsTypes._1
-              )
-        ).tupled
+            opName: String,
+            operandsNames: Seq[String],
+            successors: Seq[Block],
+            properties: Map[String, Attribute],
+            regions: Seq[Region],
+            attributes: Map[String, Attribute],
+            operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
+        ) =>
+          generateOperation(
+            opName,
+            resNames,
+            operandsNames,
+            successors,
+            properties,
+            regions,
+            attributes,
+            operandsAndResultsTypes._2,
+            operandsAndResultsTypes._1
+          )
       )
       ./
   )
