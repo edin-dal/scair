@@ -21,6 +21,7 @@ import scala.language.postfixOps
 import java.io.PrintWriter
 import os.Path
 import mill.api.Task.Simple
+import mill.scalalib.PlatformScalaModule
 
 trait ScairSettings extends ScalaModule {
   def scoverageVersion = Task{"2.3.0"}
@@ -31,7 +32,7 @@ trait ScairSettings extends ScalaModule {
 }
 
 
-trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings with NativeImageModule {
+trait JvmScairModule extends ScalafixModule with PlatformScalaModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings with NativeImageModule {
 
   trait ScairTests extends ScalaTests with TestModule.ScalaTest {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
@@ -74,14 +75,14 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   trait ScairScoverageData extends ScoverageData with ScairSettings {
     override def transitiveModuleRunModuleDeps = {
       super.transitiveModuleRunModuleDeps.map {
-        case m: ScairModule => m.scoverage
+        case m: ScairModule => m.jvm.scoverage
         case m => m
       }
     }
 
     override def transitiveModuleCompileModuleDeps = {
       super.transitiveModuleCompileModuleDeps.map {
-        case m: ScairModule => m.scoverage
+        case m: ScairModule => m.jvm.scoverage
         case m => m
       }
     }
@@ -96,6 +97,15 @@ trait ScairModule extends ScalafixModule with SonatypeCentralPublishModule with 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
   object test extends ScairTests
+}
+
+trait ScairModule extends ScairSettings {
+  def agnosticModule = ModuleRef(this)
+  def moduleDeps: Seq[ScairModule] = Seq()
+  lazy val jvm: JvmScairModule = new JvmScairModule {
+    override def moduleDeps = agnosticModule().moduleDeps.map(_.jvm)
+    override def mvnDeps = agnosticModule().mvnDeps
+  }
 }
 
 object `package` extends ScairSettings with ScoverageReport with UnidocModule {
@@ -170,12 +180,12 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
 
   // Define a testAll to run the full framework testing infrastructure
   def testAll(evaluator: Evaluator) = Command(exclusive = true) {
-    runAll("_.test", evaluator)()
+    runAll("_.jvm.test", evaluator)()
     filechecks.run()()
   }
 
   def scoverage(evaluator: Evaluator) = Command(exclusive = true) {
-    runAll("__.scoverage.test", evaluator)()
+    runAll("_.jvm.scoverage.test", evaluator)()
     filechecks.scoverage.run()()
     xmlReportAll(evaluator)()
   }
@@ -200,7 +210,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
   object filechecks extends filechecks:
     override def scairOpt = tools.launcher
     object scoverage extends filechecks:
-      override def scairOpt = tools.scoverage.launcher
+      override def scairOpt = tools.jvm.scoverage.launcher
     object nativeImage extends filechecks:
-      override def scairOpt = tools.nativeImage
+      override def scairOpt = tools.jvm.nativeImage
 }
