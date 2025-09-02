@@ -87,16 +87,18 @@ trait JvmScairModule extends ScalafixModule with PlatformScalaModule with Sonaty
       }
     }
 
-    object test extends ScoverageTests with ScairTests {
+    trait ScairScoverageTests extends ScoverageTests with ScairTests {
       override def moduleDir: Path = outer().test.moduleDir
     }
+
+    lazy val test = new ScairScoverageTests {}
   }
   
   override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
-  object test extends ScairTests
+  lazy val test = new ScairTests {}
 }
 
 trait GraalScairModule extends JvmScairModule with NativeImageModule {
@@ -107,6 +109,10 @@ trait NativeScairModule extends JvmScairModule with ScalaNativeModule {
   override def scalaNativeVersion = "0.5.8"
   override def nativeLTO: Simple[LTO] = LTO.Full
   override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
+  override object scoverage extends ScairScoverageData {
+    override object test extends ScairScoverageTests with ScalaNativeTests {}
+  }
+  override object test extends ScairTests with ScalaNativeTests
 }
 
 trait ScairModule extends ScairSettings {
