@@ -316,12 +316,6 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[BigInt])): String =
-    valueUse match {
-      case (name, Some(number)) => s"$name#$number"
-      case (name, None)         => name
-    }
-
   def BareId[$: P] = P(
     CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
   ).!
@@ -340,7 +334,7 @@ object Parser {
   def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
   def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~~ DecimalLiteral).?).map(simplifyValueName)
+    P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
 
   def ValueUseList[$: P] =
     P(ValueUse.rep(sep = ","))
