@@ -106,7 +106,7 @@ jobs:
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
         # I can't get it to work with just cleaning the coverage data, for some reason
         # ./mill clean
-        ./mill scoverage + filechecks.nativeImage
+        ./mill scoverage + filechecks.graal + filechecks.native
     - name: Upload coverage report to Codecov
       uses: codecov/codecov-action@v5
       with:
