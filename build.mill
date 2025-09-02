@@ -32,7 +32,7 @@ trait ScairSettings extends ScalaModule {
 }
 
 
-trait JvmScairModule extends ScalafixModule with PlatformScalaModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings with NativeImageModule {
+trait JvmScairModule extends ScalafixModule with PlatformScalaModule with SonatypeCentralPublishModule with ScoverageModule with ScairSettings {
 
   trait ScairTests extends ScalaTests with TestModule.ScalaTest {
     override def mvnDeps = Seq(mvn"org.scalatest::scalatest:3.2.19")
@@ -40,9 +40,6 @@ trait JvmScairModule extends ScalafixModule with PlatformScalaModule with Sonaty
     // Please remove if unit tests work fine without it in the future.
     override def testParallelism = false
   }
-
-  override def jvmId = "graalvm-community:24.0.1"
-  override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
 
   def outer = ModuleRef(this)
 
@@ -99,11 +96,21 @@ trait JvmScairModule extends ScalafixModule with PlatformScalaModule with Sonaty
   object test extends ScairTests
 }
 
+trait GraalScairModule extends JvmScairModule with NativeImageModule {
+  override def jvmId = "graalvm-community:24.0.1"
+  override def nativeImageOptions = Seq("--no-fallback", "--initialize-at-build-time")
+}
+
 trait ScairModule extends ScairSettings {
   def agnosticModule = ModuleRef(this)
   def moduleDeps: Seq[ScairModule] = Seq()
   lazy val jvm: JvmScairModule = new JvmScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.jvm)
+    override def mvnDeps = agnosticModule().mvnDeps
+  }
+
+  lazy val graal: GraalScairModule = new GraalScairModule {
+    override def moduleDeps = agnosticModule().moduleDeps.map(_.graal)
     override def mvnDeps = agnosticModule().mvnDeps
   }
 }
@@ -212,5 +219,5 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
     object scoverage extends filechecks:
       override def scairOpt = tools.jvm.scoverage.launcher
     object nativeImage extends filechecks:
-      override def scairOpt = tools.jvm.nativeImage
+      override def scairOpt = tools.graal.nativeImage
 }
