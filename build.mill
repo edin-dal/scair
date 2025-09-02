@@ -210,7 +210,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
     filechecks.run()()
   }
 
-  def scoverage(evaluator: Evaluator) = Command {
+  def scoverage(evaluator: Evaluator) = Command(exclusive = true) {
     runAll("_.jvm.scoverage.test", evaluator)()
     filechecks.scoverage.run()()
     xmlReportAll(evaluator)()
