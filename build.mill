@@ -188,7 +188,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
 
   def scalafixAll(args: String*) = Command {
     Task.sequence(allChildren
-      .flatMap{case m : ScalafixModule => Some(m.fix(args*))
+      .flatMap{case m : ScairModule => Some(m.jvm.fix(args*))
       case _ => None})()
     }
 
