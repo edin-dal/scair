@@ -54,13 +54,12 @@ case class Condition(
     args: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.condition", Condition]
     with NoMemoryEffect
-    with IsTerminator derives DerivedOperationCompanion
+    with IsTerminator
 
 case class ExecuteRegionOp(
     region: Region,
     result: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
-    derives DerivedOperationCompanion
 
 // TODO: this should also contain a SingleBlockImplicitTerminator<"scf::YieldOp">,
 case class ForOp(
@@ -72,7 +71,6 @@ case class ForOp(
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.for", ForOp]
     with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
-    derives DerivedOperationCompanion
 
 case class ForallOp(
     dynamicLowerBound: Seq[Operand[Index]],
@@ -87,20 +85,19 @@ case class ForallOp(
     region: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.forall", ForallOp]
-    derives DerivedOperationCompanion
 
 case class InParallelOp(
     region: Region
 ) extends DerivedOperation["scf.forall.in_parallel", InParallelOp]
     with IsTerminator
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect
 
 case class IfOp(
     condition: Operand[I1],
     thenRegion: Region,
     elseRegion: Region,
     resultss: Seq[Result[Attribute]]
-) extends DerivedOperation["scf.if", IfOp] derives DerivedOperationCompanion
+) extends DerivedOperation["scf.if", IfOp]
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]],
@@ -110,20 +107,19 @@ case class ParallelOp(
     region: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.parallel", ParallelOp]
-    derives DerivedOperationCompanion
 
 case class ReduceOp(
     operandss: Seq[Operand[Attribute]],
     // TODO: variadic regions
     reductions: Region
 ) extends DerivedOperation["scf.reduce", ReduceOp]
-    with IsTerminator derives DerivedOperationCompanion
+    with IsTerminator
 
 case class ReduceReturnOp(
     resultss: Result[Attribute]
 ) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
     with IsTerminator
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect
 
 case class WhileOp(
     inits: Seq[Operand[Attribute]],
@@ -131,7 +127,6 @@ case class WhileOp(
     after: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.while", WhileOp]
-    derives DerivedOperationCompanion
 
 case class IndexSwitchOp(
     arg: Operand[Index],
@@ -141,13 +136,12 @@ case class IndexSwitchOp(
     caseRegions: Region,
     resultss: Seq[Result[Attribute]]
 ) extends DerivedOperation["scf.index_switch", IndexSwitchOp]
-    derives DerivedOperationCompanion
 
 case class YieldOp(
     resultss: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.yield", YieldOp]
     with IsTerminator
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect
 
 val SCFDialect =
   summonDialect[
