@@ -336,7 +336,7 @@ class AttrParser(
   \*≡==---==≡≡≡≡≡==---==≡*/
 
   def SymbolRefAttrP[$: P]: P[SymbolRefAttr] = P(
-    SymbolRefId ~~ ("::" ~~ SymbolRefId).rep
+    SymbolRefId ~~ ("::" ~~ SymbolRefId).repX
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringData(x),
