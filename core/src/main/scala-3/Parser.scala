@@ -262,7 +262,7 @@ object Parser {
 
   inline def DecDigits[$: P] = CharsWhileIn(DecDigit)
 
-  inline  def HexDigits[$: P] = CharsWhileIn(HexDigit)
+  inline def HexDigits[$: P] = CharsWhileIn(HexDigit)
 
   inline val Letter = "a-zA-Z"
   inline val IdPunct = "$._\\-"
@@ -292,7 +292,7 @@ object Parser {
   inline def nonExcludedCharacter(c: Char): Boolean =
     c: @switch match
       case '\"' | '\n' | '\f' | '\u000B' | '\r' => false
-      case _ => true
+      case _                                    => true
 
   inline def notExcluded[$: P] =
     CharsWhile(nonExcludedCharacter)
@@ -324,11 +324,17 @@ object Parser {
 
   // Alias can't have dots in their names for ambiguity with dialect names.
   def AliasName[$: P] = P(
-    CharIn(Letter + "_") ~~ (CharsWhileIn(Letter + DecDigit + "_$", min = 0)) ~~ !"."
+    CharIn(Letter + "_") ~~ (CharsWhileIn(
+      Letter + DecDigit + "_$",
+      min = 0
+    )) ~~ !"."
   ).!
 
   def SuffixId[$: P] = P(
-    DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(Letter + IdPunct + DecDigit, min = 0)
+    DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+      Letter + IdPunct + DecDigit,
+      min = 0
+    )
   ).!
 
   def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))

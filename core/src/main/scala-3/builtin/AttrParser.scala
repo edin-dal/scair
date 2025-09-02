@@ -122,23 +122,12 @@ class AttrParser(
   // signless-integer-type  ::=  `i`  [1-9][0-9]*
   // integer-type           ::=  signed-integer-type | unsigned-integer-type | signless-integer-type
 
-  def SignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("si" ~~ DecimalLiteral).map((x: BigInt) =>
-      IntegerType(IntData(x), Signed)
-    )
-
-  def UnsignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("ui" ~~ DecimalLiteral).map((x: BigInt) =>
-      IntegerType(IntData(x), Unsigned)
-    )
-
-  def SignlessIntegerTypeP[$: P]: P[IntegerType] =
-    P("i" ~~ DecimalLiteral).map((x: BigInt) =>
-      IntegerType(IntData(x), Signless)
-    )
-
   def IntegerTypeP[$: P]: P[IntegerType] = P(
-    SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
+    (("i".map(_ => Signless) | "si".map(_ => Signed) | "ui".map(_ =>
+      Unsigned
+    )) ~~ DecimalLiteral.map(IntData.apply)).map((sign, bits) =>
+      IntegerType.apply(bits, sign)
+    )
   )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -147,23 +136,9 @@ class AttrParser(
 
   def IntegerAttrP[$: P]: P[IntegerAttr] =
     P(
-      (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)).?).map((x, y) =>
-        IntegerAttr(
-          x,
-          y match {
-            case yy: Some[_] =>
-              yy.get match
-                case i: IntegerType => i
-                case i: IndexType   => i
-                case _              =>
-                  throw new Exception(
-                    s"Unreachable, fastparse's | is simply weakly typed."
-                  )
-
-            case None => I64
-          }
-        )
-      )
+      (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)
+        .asInstanceOf[P[IntegerType | IndexType]]).orElse(I64))
+        .map(IntegerAttr.apply)
         | "true".map(_ => IntegerAttr(IntData(1), I1))
         | "false".map(_ => IntegerAttr(IntData(0), I1))
     )
@@ -197,7 +172,7 @@ class AttrParser(
   ||    INDEX TYPE    ||
   \*≡==---==≡≡==---==≡*/
 
-  def IndexTypeP[$: P]: P[IndexType] = P("index").map(_ => IndexType())
+  inline def IndexTypeP[$: P]: P[IndexType] = "index".map(_ => IndexType())
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||  ARRAY ATTRIBUTE  ||
