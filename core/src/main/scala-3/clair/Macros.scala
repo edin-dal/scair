@@ -616,13 +616,12 @@ def constructExtractor[Def <: OpInputDef: Type](
 
 def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
+    flat: Expr[Seq[DefinedInput[Def]]],
+    properties: Expr[Map[String, Attribute]]
 )(using Quotes) = {
-  // Get the flat sequence of these constructs
-  val flat = getConstructSeq(op)
   // partition the constructs according to their definitions
   val partitioned =
-    constructPartitioner(defs).map(p => '{ ${ p }($op.properties, $flat) })
+    constructPartitioner(defs).map(p => '{ ${ p }($properties, $flat) })
 
   // extract the constructs
   (partitioned zip defs).map { (c, d) =>
@@ -647,18 +646,26 @@ def constructorArgs(
     op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
 )(using Quotes) =
   import quotes.reflect._
-  (extractedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
-    NamedArg(d.name, e.asTerm)
-  ) ++
-    (extractedConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
-      NamedArg(d.name, e.asTerm)
-    ) ++
-    (extractedConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
-      NamedArg(d.name, e.asTerm)
-    ) ++
-    (extractedConstructs(opDef.successors, op) zip opDef.successors).map(
-      (e, d) => NamedArg(d.name, e.asTerm)
-    ) ++
+  (extractedConstructs(
+    opDef.operands,
+    '{ $op.operands },
+    '{ $op.properties }
+  ) zip opDef.operands).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+    (extractedConstructs(
+      opDef.results,
+      '{ $op.results },
+      '{ $op.properties }
+    ) zip opDef.results).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+    (extractedConstructs(
+      opDef.regions,
+      '{ $op.regions },
+      '{ $op.properties }
+    ) zip opDef.regions).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+    (extractedConstructs(
+      opDef.successors,
+      '{ $op.successors },
+      '{ $op.properties }
+    ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
