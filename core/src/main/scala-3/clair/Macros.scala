@@ -859,14 +859,30 @@ def deriveOperationCompanion[T <: Operation: Type](using
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: DictType[String, Attribute] =
             DictType.empty[String, Attribute]
-      ): UnstructuredOp = UnstructuredOp(
-        operands = operands,
-        successors = successors,
-        results = results,
-        regions = regions,
-        properties = properties,
-        attributes = attributes
-      )
+      ): UnstructuredOp | T & Operation =
+        try {
+          val structured = ${
+            tryConstruct(
+              opDef,
+              '{ operands },
+              '{ results },
+              '{ regions },
+              '{ successors },
+              '{ properties }
+            )
+          }
+          structured.attributes.addAll(attributes)
+          structured
+        } catch { _ =>
+          UnstructuredOp(
+            operands = operands,
+            successors = successors,
+            results = results,
+            regions = regions,
+            properties = properties,
+            attributes = attributes
+          )
+        }
 
       def destructure(adtOp: T): UnstructuredOp =
         UnstructuredOp(
