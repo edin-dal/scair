@@ -641,7 +641,7 @@ def extractedConstructs[Def <: OpInputDef: Type](
   *   The checked named arguments for the primary constructor of the ADT.
   */
 
-def constructorArgs(
+def tryConstruct[T: Type](
     opDef: OperationDef,
     operands: Expr[Seq[Operand[Attribute]]],
     results: Expr[Seq[Result[Attribute]]],
@@ -650,7 +650,11 @@ def constructorArgs(
     properties: Expr[Map[String, Attribute]]
 )(using Quotes) =
   import quotes.reflect._
-  (extractedConstructs(opDef.operands, operands, properties) zip opDef.operands)
+  val args = (extractedConstructs(
+    opDef.operands,
+    operands,
+    properties
+  ) zip opDef.operands)
     .map((e, d) => NamedArg(d.name, e.asTerm)) ++
     (extractedConstructs(opDef.results, results, properties) zip opDef.results)
       .map((e, d) => NamedArg(d.name, e.asTerm)) ++ (extractedConstructs(
@@ -681,6 +685,11 @@ def constructorArgs(
               )
           NamedArg(name, property.asTerm)
     }
+  // Return a call to the primary constructor of the ADT.
+  Apply(
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
+    List.from(args)
+  ).asExprOf[T]
 
   /** Attempt to create an ADT from an UnstructuredOp[ADT]
     *
@@ -701,10 +710,9 @@ def fromUnstructuredOperationMacro[T: Type](
     opDef: OperationDef,
     genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp]
 )(using Quotes): Expr[T] =
-  import quotes.reflect.*
 
   // Create named arguments for all of the ADT's constructor arguments.
-  val args = constructorArgs(
+  tryConstruct(
     opDef,
     '{ $genExpr.operands },
     '{ $genExpr.results },
@@ -712,12 +720,6 @@ def fromUnstructuredOperationMacro[T: Type](
     '{ $genExpr.successors },
     '{ $genExpr.properties }
   )
-
-  // Return a call to the primary constructor of the ADT.
-  Apply(
-    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args)
-  ).asExprOf[T]
 
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
