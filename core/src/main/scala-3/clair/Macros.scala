@@ -333,9 +333,9 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
-  '{ (op: DerivedOperationCompanion[?]#UnstructuredOp) =>
+  '{ (properties: Map[String, Attribute]) =>
     val dense =
-      op.properties.get(s"${${ Expr(segmentSizesName) }}") match
+      properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
@@ -387,7 +387,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     val defLength = Expr(defs.length)
     '{
       (
-          op: DerivedOperationCompanion[?]#UnstructuredOp,
+          properties: Map[String, Attribute],
           flat: Seq[DefinedInput[Def]]
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
@@ -424,7 +424,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       '{
 
         (
-            op: DerivedOperationCompanion[?]#UnstructuredOp,
+            properties: Map[String, Attribute],
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(${ Expr(i) })
@@ -433,7 +433,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
 
   val variadic_expr = '{
     (
-        op: DerivedOperationCompanion[?]#UnstructuredOp,
+        properties: Map[String, Attribute],
         flat: Seq[DefinedInput[Def]]
     ) =>
       flat
@@ -446,7 +446,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
     .map((d, i) =>
       '{
         (
-            op: DerivedOperationCompanion[?]#UnstructuredOp,
+            properties: Map[String, Attribute],
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(flat.length - ${ Expr(following) } + ${
@@ -470,10 +470,10 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     // TODO: This does not really belong here. Bigger fishes to fry at the time of
     // writing thoug. Conceptually this should end up in some kind of header.
     (
-        op: DerivedOperationCompanion[?]#UnstructuredOp,
+        properties: Map[String, Attribute],
         flat: Seq[DefinedInput[Def]]
     ) =>
-      val sizes = ${ expectSegmentSizes[Def] }(op)
+      val sizes = ${ expectSegmentSizes[Def] }(properties)
       val segments = sizes.length
       val total = sizes.sum
       // Check the segmentSizes define a segment for each definition
@@ -498,17 +498,17 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
       case Variadicity.Single =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnstructuredOp,
+              properties: Map[String, Attribute],
               flat: Seq[DefinedInput[Def]]
           ) => flat(${ Expr(i) })
         }
       case Variadicity.Variadic | Variadicity.Optional =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnstructuredOp,
+              properties: Map[String, Attribute],
               flat: Seq[DefinedInput[Def]]
           ) =>
-            val sizes = ${ segmentSizes }(op, flat)
+            val sizes = ${ segmentSizes }(properties, flat)
             val start = sizes.slice(0, ${ Expr(i) }).sum
             val end = start + sizes(${ Expr(i) })
             flat.slice(start, end)
@@ -621,7 +621,8 @@ def extractedConstructs[Def <: OpInputDef: Type](
   // Get the flat sequence of these constructs
   val flat = getConstructSeq(op)
   // partition the constructs according to their definitions
-  val partitioned = constructPartitioner(defs).map(p => '{ ${ p }($op, $flat) })
+  val partitioned =
+    constructPartitioner(defs).map(p => '{ ${ p }($op.properties, $flat) })
 
   // extract the constructs
   (partitioned zip defs).map { (c, d) =>
