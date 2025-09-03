@@ -643,41 +643,40 @@ def extractedConstructs[Def <: OpInputDef: Type](
 
 def constructorArgs(
     opDef: OperationDef,
-    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
+    operands: Expr[Seq[Operand[Attribute]]],
+    results: Expr[Seq[Result[Attribute]]],
+    regions: Expr[Seq[Region]],
+    successors: Expr[Seq[Successor]],
+    properties: Expr[Map[String, Attribute]]
 )(using Quotes) =
   import quotes.reflect._
-  (extractedConstructs(
-    opDef.operands,
-    '{ $op.operands },
-    '{ $op.properties }
-  ) zip opDef.operands).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-    (extractedConstructs(
-      opDef.results,
-      '{ $op.results },
-      '{ $op.properties }
-    ) zip opDef.results).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-    (extractedConstructs(
+  (extractedConstructs(opDef.operands, operands, properties) zip opDef.operands)
+    .map((e, d) => NamedArg(d.name, e.asTerm)) ++
+    (extractedConstructs(opDef.results, results, properties) zip opDef.results)
+      .map((e, d) => NamedArg(d.name, e.asTerm)) ++ (extractedConstructs(
       opDef.regions,
-      '{ $op.regions },
-      '{ $op.properties }
-    ) zip opDef.regions).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-    (extractedConstructs(
+      regions,
+      properties
+    ) zip opDef.regions).map((e, d) =>
+      NamedArg(d.name, e.asTerm)
+    ) ++ (extractedConstructs(
       opDef.successors,
-      '{ $op.successors },
-      '{ $op.properties }
-    ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
+      successors,
+      properties
+    ) zip opDef.successors).map((e, d) =>
+      NamedArg(d.name, e.asTerm)
+    ) ++ opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
           val property =
             if optionality then
               generateOptionalCheckedPropertyArgument[t](
-                '{ $op.properties },
+                properties,
                 name
               )
             else
               generateCheckedPropertyArgument[t](
-                '{ $op.properties },
+                properties,
                 name
               )
           NamedArg(name, property.asTerm)
@@ -705,7 +704,14 @@ def fromUnstructuredOperationMacro[T: Type](
   import quotes.reflect.*
 
   // Create named arguments for all of the ADT's constructor arguments.
-  val args = constructorArgs(opDef, genExpr)
+  val args = constructorArgs(
+    opDef,
+    '{ $genExpr.operands },
+    '{ $genExpr.results },
+    '{ $genExpr.regions },
+    '{ $genExpr.successors },
+    '{ $genExpr.properties }
+  )
 
   // Return a call to the primary constructor of the ADT.
   Apply(
