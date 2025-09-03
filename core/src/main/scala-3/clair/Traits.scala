@@ -44,7 +44,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
   ) =
-    val u = companion(
+    companion(
       operands = operands,
       successors = successors,
       results = results,
@@ -52,10 +52,6 @@ trait DerivedOperation[name <: String, T] extends Operation {
       properties = properties,
       attributes = attributes
     )
-
-    u.structured match
-      case Right(structuredOp) => structuredOp
-      case Left(err)           => u
 
   def name: String = companion.name
   def operands: Seq[Value[Attribute]] = companion.operands(this)
