@@ -708,7 +708,7 @@ def fromUnstructuredOperationMacro[T: Type](
     opDef,
     '{ $genExpr.operands },
     '{ $genExpr.results },
-    '{ $genExpr.regions },
+    '{ $genExpr.detached_regions },
     '{ $genExpr.successors },
     '{ $genExpr.properties }
   )
