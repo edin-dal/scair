@@ -122,23 +122,12 @@ class AttrParser(
   // signless-integer-type  ::=  `i`  [1-9][0-9]*
   // integer-type           ::=  signed-integer-type | unsigned-integer-type | signless-integer-type
 
-  def SignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("si" ~~ DecimalLiteral).map((x: BigInt) =>
-      IntegerType(IntData(x), Signed)
-    )
-
-  def UnsignedIntegerTypeP[$: P]: P[IntegerType] =
-    P("ui" ~~ DecimalLiteral).map((x: BigInt) =>
-      IntegerType(IntData(x), Unsigned)
-    )
-
-  def SignlessIntegerTypeP[$: P]: P[IntegerType] =
-    P("i" ~~ DecimalLiteral).map((x: BigInt) =>
-      IntegerType(IntData(x), Signless)
-    )
-
   def IntegerTypeP[$: P]: P[IntegerType] = P(
-    SignedIntegerTypeP | UnsignedIntegerTypeP | SignlessIntegerTypeP
+    (("i".map(_ => Signless) | "si".map(_ => Signed) | "ui".map(_ =>
+      Unsigned
+    )) ~~ DecimalLiteral.map(IntData.apply)).map((sign, bits) =>
+      IntegerType.apply(bits, sign)
+    )
   )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -147,23 +136,9 @@ class AttrParser(
 
   def IntegerAttrP[$: P]: P[IntegerAttr] =
     P(
-      (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)).?).map((x, y) =>
-        IntegerAttr(
-          x,
-          y match {
-            case yy: Some[_] =>
-              yy.get match
-                case i: IntegerType => i
-                case i: IndexType   => i
-                case _              =>
-                  throw new Exception(
-                    s"Unreachable, fastparse's | is simply weakly typed."
-                  )
-
-            case None => I64
-          }
-        )
-      )
+      (IntDataP ~ (":" ~ (IntegerTypeP | IndexTypeP)
+        .asInstanceOf[P[IntegerType | IndexType]]).orElse(I64))
+        .map(IntegerAttr.apply)
         | "true".map(_ => IntegerAttr(IntData(1), I1))
         | "false".map(_ => IntegerAttr(IntData(0), I1))
     )
@@ -180,13 +155,10 @@ class AttrParser(
 
   def FloatAttrP[$: P]: P[FloatAttr] =
     P(
-      (FloatDataP ~ (":" ~ FloatTypeP).?).map((x, y) =>
+      (FloatDataP ~ (":" ~ FloatTypeP).orElse(Float64Type())).map((x, y) =>
         FloatAttr(
           x,
-          y match {
-            case Some(a) => a
-            case None    => Float64Type()
-          }
+          y
         )
       ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP).map((x, y) =>
         FloatAttr(FloatData(intBitsToFloat(x.intValue())), y)
@@ -197,7 +169,7 @@ class AttrParser(
   ||    INDEX TYPE    ||
   \*≡==---==≡≡==---==≡*/
 
-  def IndexTypeP[$: P]: P[IndexType] = P("index").map(_ => IndexType())
+  inline def IndexTypeP[$: P]: P[IndexType] = "index".map(_ => IndexType())
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||  ARRAY ATTRIBUTE  ||
@@ -336,7 +308,7 @@ class AttrParser(
   \*≡==---==≡≡≡≡≡==---==≡*/
 
   def SymbolRefAttrP[$: P]: P[SymbolRefAttr] = P(
-    SymbolRefId ~~ ("::" ~~ SymbolRefId).rep
+    SymbolRefId ~~ ("::" ~~ SymbolRefId).repX
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringData(x),
@@ -354,13 +326,7 @@ class AttrParser(
   def DenseIntOrFPElementsAttrP[$: P]: P[DenseIntOrFPElementsAttr] =
     P(
       "dense" ~ "<" ~ TensorLiteral ~ ">" ~ ":" ~ (TensorTypeP | MemrefTypeP | VectorTypeP)
-    ).map((x, y) =>
-      y match {
-        case yy: (TensorType | MemrefType | VectorType) =>
-          DenseIntOrFPElementsAttr(yy, x.asInstanceOf[TensorLiteralArray])
-      }
-      // DenseIntOrFPElementsAttr(y, x.asInstanceOf[TensorLiteralArray])
-    )
+    ).map((x, y) => DenseIntOrFPElementsAttr(y, x))
 
   def TensorLiteral[$: P]: P[TensorLiteralArray] =
     P(SingleTensorLiteral | EmptyTensorLiteral | MultipleTensorLiteral)
@@ -398,14 +364,14 @@ class AttrParser(
   \*≡==---==≡≡≡≡≡==---==≡*/
 
   def AffineMapAttrP[$: P]: P[AffineMapAttr] =
-    P("affine_map" ~ "<" ~ AffineMapP ~ ">").map(AffineMapAttr(_))
+    P("affine_map<" ~ AffineMapP ~ ">").map(AffineMapAttr(_))
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||   AFFINE SET ATTR   ||
   \*≡==---==≡≡≡≡≡==---==≡*/
 
   def AffineSetAttrP[$: P]: P[AffineSetAttr] =
-    P("affine_set" ~ "<" ~ AffineSetP ~ ">").map(AffineSetAttr(_))
+    P("affine_set<" ~ AffineSetP ~ ">").map(AffineSetAttr(_))
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||   FUNCTION TYPE   ||

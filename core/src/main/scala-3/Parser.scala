@@ -257,26 +257,25 @@ object Parser {
   // [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
   // [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
 
-  val excludedCharacters: Set[Char] = Set('\"', '\n', '\f', '\u000B',
-    '\r') // \u000B represents \v escape character
+  inline val DecDigit = "0-9"
+  inline val HexDigit = "0-9a-fA-F"
 
-  def Digit[$: P] = P(CharIn("0-9").!)
+  inline def DecDigits[$: P] = CharsWhileIn(DecDigit)
 
-  def HexDigit[$: P] = P(CharIn("0-9a-fA-F").!)
+  inline def HexDigits[$: P] = CharsWhileIn(HexDigit)
 
-  def Letter[$: P] = P(CharIn("a-zA-Z").!)
-
-  def IdPunct[$: P] = P(CharIn("$._\\-").!)
+  inline val Letter = "a-zA-Z"
+  inline val IdPunct = "$._\\-"
 
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
+    P(("-" | "+").?.! ~ DecDigits.!).map((sign: String, literal: String) =>
       BigInt(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => BigInt(hex, 16))
+    P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -285,16 +284,20 @@ object Parser {
   }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).!
+    CharIn("\\-\\+").? ~~ (DecDigits ~~ "." ~~ DecDigits).!
       ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).orElse("0")
+        ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
-  def notExcluded[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
-  )
+  inline def nonExcludedCharacter(c: Char): Boolean =
+    c: @switch match
+      case '\"' | '\n' | '\f' | '\u000B' | '\r' => false
+      case _                                    => true
 
-  def StringLiteral[$: P] = P("\"" ~~ notExcluded.rep.! ~~ "\"")
+  inline def notExcluded[$: P] =
+    CharsWhile(nonExcludedCharacter)
+
+  def StringLiteral[$: P] = P("\"" ~~ notExcluded.! ~~ "\"")
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||   IDENTIFIERS   ||
@@ -313,31 +316,31 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[BigInt])): String =
-    valueUse match {
-      case (name, Some(number)) => s"$name#$number"
-      case (name, None)         => name
-    }
-
   def BareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).repX
+    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
   ).!
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
   // Alias can't have dots in their names for ambiguity with dialect names.
   def AliasName[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX ~~ !"."
+    CharIn(Letter + "_") ~~ (CharsWhileIn(
+      Letter + DecDigit + "_$",
+      min = 0
+    )) ~~ !"."
   ).!
 
   def SuffixId[$: P] = P(
-    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
+    DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+      Letter + IdPunct + DecDigit,
+      min = 0
+    )
   ).!
 
   def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
   def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~~ DecimalLiteral).?).map(simplifyValueName)
+    P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
 
   def ValueUseList[$: P] =
     P(ValueUse.rep(sep = ","))
@@ -397,7 +400,7 @@ object Parser {
 
   def BlockId[$: P] = P(CaretId)
 
-  def CaretId[$: P] = P("^" ~/ SuffixId)
+  def CaretId[$: P] = P("^" ~~/ SuffixId)
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||  DIALECT TYPES  ||
@@ -421,11 +424,11 @@ object Parser {
     Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
 
   def notExcludedDTC[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
+    CharPred(char => !excludedCharactersDTC.contains(char))
   )
 
   def DialectBareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX
+    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$", min = 0)
   ).!
 
   def DialectNamespace[$: P] = P(DialectBareId)
@@ -452,7 +455,7 @@ object Parser {
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-class Parser(
+final class Parser(
     val context: MLContext,
     val args: Args = Args(),
     attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
@@ -661,27 +664,25 @@ class Parser(
       ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .mapTry(
         (
-            (
-                opName: String,
-                operandsNames: Seq[String],
-                successors: Seq[Block],
-                properties: Map[String, Attribute],
-                regions: Seq[Region],
-                attributes: Map[String, Attribute],
-                operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
-            ) =>
-              generateOperation(
-                opName,
-                resNames,
-                operandsNames,
-                successors,
-                properties,
-                regions,
-                attributes,
-                operandsAndResultsTypes._2,
-                operandsAndResultsTypes._1
-              )
-        ).tupled
+            opName: String,
+            operandsNames: Seq[String],
+            successors: Seq[Block],
+            properties: Map[String, Attribute],
+            regions: Seq[Region],
+            attributes: Map[String, Attribute],
+            operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
+        ) =>
+          generateOperation(
+            opName,
+            resNames,
+            operandsNames,
+            successors,
+            properties,
+            regions,
+            attributes,
+            operandsAndResultsTypes._2,
+            operandsAndResultsTypes._1
+          )
       )
       ./
   )

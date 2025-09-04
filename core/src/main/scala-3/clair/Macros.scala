@@ -333,9 +333,9 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
-  '{ (op: DerivedOperationCompanion[?]#UnstructuredOp) =>
+  '{ (properties: Map[String, Attribute]) =>
     val dense =
-      op.properties.get(s"${${ Expr(segmentSizesName) }}") match
+      properties.get(s"${${ Expr(segmentSizesName) }}") match
         case Some(segmentSizes) =>
           segmentSizes match
             case dense: DenseArrayAttr => dense
@@ -387,7 +387,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     val defLength = Expr(defs.length)
     '{
       (
-          op: DerivedOperationCompanion[?]#UnstructuredOp,
+          properties: Map[String, Attribute],
           flat: Seq[DefinedInput[Def]]
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
@@ -424,7 +424,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       '{
 
         (
-            op: DerivedOperationCompanion[?]#UnstructuredOp,
+            properties: Map[String, Attribute],
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(${ Expr(i) })
@@ -433,7 +433,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
 
   val variadic_expr = '{
     (
-        op: DerivedOperationCompanion[?]#UnstructuredOp,
+        properties: Map[String, Attribute],
         flat: Seq[DefinedInput[Def]]
     ) =>
       flat
@@ -446,7 +446,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
     .map((d, i) =>
       '{
         (
-            op: DerivedOperationCompanion[?]#UnstructuredOp,
+            properties: Map[String, Attribute],
             flat: Seq[DefinedInput[Def]]
         ) =>
           flat.apply(flat.length - ${ Expr(following) } + ${
@@ -470,10 +470,10 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     // TODO: This does not really belong here. Bigger fishes to fry at the time of
     // writing thoug. Conceptually this should end up in some kind of header.
     (
-        op: DerivedOperationCompanion[?]#UnstructuredOp,
+        properties: Map[String, Attribute],
         flat: Seq[DefinedInput[Def]]
     ) =>
-      val sizes = ${ expectSegmentSizes[Def] }(op)
+      val sizes = ${ expectSegmentSizes[Def] }(properties)
       val segments = sizes.length
       val total = sizes.sum
       // Check the segmentSizes define a segment for each definition
@@ -498,17 +498,17 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
       case Variadicity.Single =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnstructuredOp,
+              properties: Map[String, Attribute],
               flat: Seq[DefinedInput[Def]]
           ) => flat(${ Expr(i) })
         }
       case Variadicity.Variadic | Variadicity.Optional =>
         '{
           (
-              op: DerivedOperationCompanion[?]#UnstructuredOp,
+              properties: Map[String, Attribute],
               flat: Seq[DefinedInput[Def]]
           ) =>
-            val sizes = ${ segmentSizes }(op, flat)
+            val sizes = ${ segmentSizes }(properties, flat)
             val start = sizes.slice(0, ${ Expr(i) }).sum
             val end = start + sizes(${ Expr(i) })
             flat.slice(start, end)
@@ -616,12 +616,12 @@ def constructExtractor[Def <: OpInputDef: Type](
 
 def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
-    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
+    flat: Expr[Seq[DefinedInput[Def]]],
+    properties: Expr[Map[String, Attribute]]
 )(using Quotes) = {
-  // Get the flat sequence of these constructs
-  val flat = getConstructSeq(op)
   // partition the constructs according to their definitions
-  val partitioned = constructPartitioner(defs).map(p => '{ ${ p }($op, $flat) })
+  val partitioned =
+    constructPartitioner(defs).map(p => '{ ${ p }($properties, $flat) })
 
   // extract the constructs
   (partitioned zip defs).map { (c, d) =>
@@ -641,39 +641,55 @@ def extractedConstructs[Def <: OpInputDef: Type](
   *   The checked named arguments for the primary constructor of the ADT.
   */
 
-def constructorArgs(
+def tryConstruct[T: Type](
     opDef: OperationDef,
-    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
+    operands: Expr[Seq[Operand[Attribute]]],
+    results: Expr[Seq[Result[Attribute]]],
+    regions: Expr[Seq[Region]],
+    successors: Expr[Seq[Successor]],
+    properties: Expr[Map[String, Attribute]]
 )(using Quotes) =
   import quotes.reflect._
-  (extractedConstructs(opDef.operands, op) zip opDef.operands).map((e, d) =>
-    NamedArg(d.name, e.asTerm)
-  ) ++
-    (extractedConstructs(opDef.results, op) zip opDef.results).map((e, d) =>
+  val args = (extractedConstructs(
+    opDef.operands,
+    operands,
+    properties
+  ) zip opDef.operands)
+    .map((e, d) => NamedArg(d.name, e.asTerm)) ++
+    (extractedConstructs(opDef.results, results, properties) zip opDef.results)
+      .map((e, d) => NamedArg(d.name, e.asTerm)) ++ (extractedConstructs(
+      opDef.regions,
+      regions,
+      properties
+    ) zip opDef.regions).map((e, d) =>
       NamedArg(d.name, e.asTerm)
-    ) ++
-    (extractedConstructs(opDef.regions, op) zip opDef.regions).map((e, d) =>
+    ) ++ (extractedConstructs(
+      opDef.successors,
+      successors,
+      properties
+    ) zip opDef.successors).map((e, d) =>
       NamedArg(d.name, e.asTerm)
-    ) ++
-    (extractedConstructs(opDef.successors, op) zip opDef.successors).map(
-      (e, d) => NamedArg(d.name, e.asTerm)
-    ) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
+    ) ++ opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
           val property =
             if optionality then
               generateOptionalCheckedPropertyArgument[t](
-                '{ $op.properties },
+                properties,
                 name
               )
             else
               generateCheckedPropertyArgument[t](
-                '{ $op.properties },
+                properties,
                 name
               )
           NamedArg(name, property.asTerm)
     }
+  // Return a call to the primary constructor of the ADT.
+  Apply(
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
+    List.from(args)
+  ).asExprOf[T]
 
   /** Attempt to create an ADT from an UnstructuredOp[ADT]
     *
@@ -694,16 +710,16 @@ def fromUnstructuredOperationMacro[T: Type](
     opDef: OperationDef,
     genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp]
 )(using Quotes): Expr[T] =
-  import quotes.reflect.*
 
   // Create named arguments for all of the ADT's constructor arguments.
-  val args = constructorArgs(opDef, genExpr)
-
-  // Return a call to the primary constructor of the ADT.
-  Apply(
-    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args)
-  ).asExprOf[T]
+  tryConstruct(
+    opDef,
+    '{ $genExpr.operands },
+    '{ $genExpr.results },
+    '{ $genExpr.detached_regions },
+    '{ $genExpr.successors },
+    '{ $genExpr.properties }
+  )
 
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
@@ -843,14 +859,30 @@ def deriveOperationCompanion[T <: Operation: Type](using
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: DictType[String, Attribute] =
             DictType.empty[String, Attribute]
-      ): UnstructuredOp = UnstructuredOp(
-        operands = operands,
-        successors = successors,
-        results = results,
-        regions = regions,
-        properties = properties,
-        attributes = attributes
-      )
+      ): UnstructuredOp | T & Operation =
+        try {
+          val structured = ${
+            tryConstruct(
+              opDef,
+              '{ operands },
+              '{ results },
+              '{ regions },
+              '{ successors },
+              '{ properties }
+            )
+          }
+          structured.attributes.addAll(attributes)
+          structured
+        } catch { _ =>
+          UnstructuredOp(
+            operands = operands,
+            successors = successors,
+            results = results,
+            regions = regions,
+            properties = properties,
+            attributes = attributes
+          )
+        }
 
       def destructure(adtOp: T): UnstructuredOp =
         UnstructuredOp(
