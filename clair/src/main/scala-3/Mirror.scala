@@ -89,21 +89,27 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   val (tpe) = getDefType(elem)
   val constraint = getTypeConstraint(tpe)
   if constraint.isDefined then
+    println("=========CONSTRAINT FOUND=========")
     println(
       s"Constraint found for ${Type.show[Label]}: ${constraint}"
     )
+    println(Type.show(using tpe))
+    println("==================================")
+
   elem match
     case '[Result[t]] =>
       ResultDef(
         name = name,
         tpe = tpe,
-        variadicity
+        variadicity,
+        constraint
       )
     case '[Operand[t]] =>
       OperandDef(
         name = name,
         tpe = tpe,
-        variadicity
+        variadicity,
+        constraint
       )
     case '[Region] =>
       RegionDef(
@@ -119,7 +125,8 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
       OpPropertyDef(
         name = name,
         tpe = tpe,
-        variadicity
+        variadicity,
+        constraint
       )
     case _: Type[?] =>
       report.errorAndAbort(

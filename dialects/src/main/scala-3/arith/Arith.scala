@@ -242,9 +242,11 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
 ||  OPERATION DEFINTION  ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
+val f32 = Float32Type()
+
 case class AddF(
-    val lhs: Operand[FloatType],
-    val rhs: Operand[FloatType !> EqAttr[lhs.typ.type]],
+    val lhs: Operand[FloatType !> EqAttr[f32.type]],
+    val rhs: Operand[FloatType !> EqAttr[f32.type]],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["arith.addf", AddF]

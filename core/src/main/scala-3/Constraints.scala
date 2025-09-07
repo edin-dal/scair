@@ -9,7 +9,9 @@ infix type !>[A <: Attribute, C <: Constraint] = A
 
 trait EqAttr[To <: Attribute] extends Constraint
 
-trait ConstraintImpl[c <: Constraint]
+trait ConstraintImpl[c <: Constraint] {
+  def verify(attr: Attribute): Either[String, Attribute]
+}
 
 inline def eqAttr[To <: Attribute]: To =
   ${ eqAttrImpl[To] }

@@ -300,11 +300,11 @@ def getConstructName[Def <: OpInputDef: Type as d](using Quotes) =
   */
 def getConstructConstraint(_def: OpInputDef)(using Quotes) =
   _def match
-    case OperandDef(name, tpe, variadicity) => tpe
-    case ResultDef(name, tpe, variadicity)  => tpe
+    case OperandDef(name, tpe, variadicity, _) => tpe
+    case ResultDef(name, tpe, variadicity, _)  => tpe
     case RegionDef(name, variadicity)       => Type.of[Attribute]
     case SuccessorDef(name, variadicity)    => Type.of[Attribute]
-    case OpPropertyDef(name, tpe, _)        => tpe
+    case OpPropertyDef(name, tpe, _, _)        => tpe
 
 /** Helper to get the variadicity of a construct definition's construct.
   */
@@ -534,7 +534,7 @@ def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
     (c match
-        case v: DefinedInputOf[Def, t] => v
+        case v: DefinedInputOf[Def, t] => v 
         case _                         =>
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -650,7 +650,7 @@ def constructorArgs(
     (extractedConstructs(opDef.successors, op) zip opDef.successors).map(
       (e, d) => NamedArg(d.name, e.asTerm)
     ) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, variadicity) =>
+    opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
           val property = variadicity match
