@@ -311,8 +311,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
                      |  }) : () -> ()""".stripMargin
 
     parser.parseThis(
-      text = input,
-      pattern = parser.TopLevel(using _)
+      text = input
     ) should matchPattern { case Parsed.Success(program, _) => }
   }
 
