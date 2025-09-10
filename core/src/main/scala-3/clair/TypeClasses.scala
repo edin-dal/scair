@@ -140,7 +140,7 @@ inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   ${ summonMLIRTraitsMacro[T] }
 
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
-    attributes: Seq[AttributeCompanion]
+    attributes: Seq[AttributeCompanion] = Seq()
 ): Dialect =
   new Dialect(
     summonMLIRTraits[Operations],
