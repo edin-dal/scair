@@ -1,7 +1,8 @@
 package scair.core.constraints
 
-import scala.quoted._
-import scair.ir._
+import scair.ir.*
+
+import scala.quoted.*
 
 def eqAttrImpl[To <: Attribute: Type](using Quotes) = {
   import quotes.reflect._

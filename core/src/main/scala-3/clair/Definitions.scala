@@ -1,10 +1,10 @@
 package scair.clair.codegen
 
 import scair.clair.macros.AssemblyFormatDirective
+import scair.core.constraints.ConstraintImpl
 
 import scala.quoted.*
 import scala.reflect.*
-import scair.core.constraints.ConstraintImpl
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗

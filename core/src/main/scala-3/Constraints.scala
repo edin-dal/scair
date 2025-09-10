@@ -16,13 +16,12 @@ trait ConstraintImpl[c <: Constraint] {
 inline def eqAttr[To <: Attribute]: To =
   ${ eqAttrImpl[To] }
 
-inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] = 
+inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
   val ref = eqAttr[To]
   new ConstraintImpl {
     def verify(attr: Attribute): Either[String, Attribute] =
-        attr match {
-            case a: To if a == ref => Right(ref)
-            case _ => Left(s"Expected ${ref}, got ${attr}")
-        }
+      attr match {
+        case a: To if a == ref => Right(ref)
+        case _                 => Left(s"Expected ${ref}, got ${attr}")
+      }
   }
-

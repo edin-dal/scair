@@ -63,5 +63,8 @@ trait DerivedOperation[name <: String, T] extends Operation {
   override def custom_print(p: Printer)(using indentLevel: Int): Unit =
     companion.custom_print(this, p)
 
-  def constraint_verify(): Either[String, Operation] = Right(this)
+  override def verify(): Either[String, Operation] =
+    constraint_verify().orElse(trait_verify())
+
+  def constraint_verify(): Either[String, Operation] = companion.verify(this)
 }

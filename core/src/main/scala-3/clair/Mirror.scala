@@ -39,17 +39,18 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
         case '[type t <: Constraint; `t`] =>
           Expr.summon[ConstraintImpl[t]] match
             case Some(i) => Some(i)
-            case None =>
+            case None    =>
               Implicits.search(TypeRepr.of[ConstraintImpl[t]]) match
-                case s: ImplicitSearchSuccess => Some(s.tree.asExprOf[ConstraintImpl[t]])
-                case f : ImplicitSearchFailure => report.errorAndAbort(
-              s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
-            )
+                case s: ImplicitSearchSuccess =>
+                  Some(s.tree.asExprOf[ConstraintImpl[t]])
+                case f: ImplicitSearchFailure =>
+                  report.errorAndAbort(
+                    s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
+                  )
     case _ =>
       None
-  
 
-def getDefType(elem: Type[?])(using Quotes) = 
+def getDefType(elem: Type[?])(using Quotes) =
   elem match
     case '[Result[t]] =>
       Type.of[t]
@@ -59,7 +60,7 @@ def getDefType(elem: Type[?])(using Quotes) =
       Type.of[Attribute]
     case '[Successor] =>
       Type.of[Attribute]
-    case t@'[Attribute] =>
+    case t @ '[Attribute] =>
       t
 
 def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =

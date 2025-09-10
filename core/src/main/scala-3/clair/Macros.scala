@@ -212,6 +212,14 @@ def parseMacro(
         )
       }
 
+def verifyMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Either[String, Operation]] =
+  '{
+    Right($adtOpExpr.asInstanceOf[Operation])
+  }
+
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -305,8 +313,8 @@ def getConstructConstraint(_def: OpInputDef)(using Quotes) =
   _def match
     case OperandDef(name, tpe, variadicity, _) => tpe
     case ResultDef(name, tpe, variadicity, _)  => tpe
-    case RegionDef(name, variadicity)       => Type.of[Attribute]
-    case SuccessorDef(name, variadicity)    => Type.of[Attribute]
+    case RegionDef(name, variadicity)          => Type.of[Attribute]
+    case SuccessorDef(name, variadicity)       => Type.of[Attribute]
     case OpPropertyDef(name, tpe, _, _)        => tpe
 
 /** Helper to get the variadicity of a construct definition's construct.
@@ -537,7 +545,7 @@ def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
 )(using Quotes) =
   '{ (c: DefinedInput[Def] | Seq[DefinedInput[Def]]) =>
     (c match
-        case v: DefinedInputOf[Def, t] => v 
+        case v: DefinedInputOf[Def, t] => v
         case _                         =>
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
@@ -662,9 +670,7 @@ def tryConstruct[T: Type](
       opDef.successors,
       successors,
       properties
-    ) zip opDef.successors).map((e, d) =>
-      NamedArg(d.name, e.asTerm)
-    ) ++
+    ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
@@ -841,6 +847,11 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+
+      def verify(adtOp: T): Either[String, Operation] =
+        ${
+          verifyMacro(opDef, '{ adtOp })
+        }
 
       override def parse[$: P as ctx](
           p: Parser,
