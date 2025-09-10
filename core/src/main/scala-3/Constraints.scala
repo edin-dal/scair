@@ -10,7 +10,7 @@ infix type !>[A <: Attribute, C <: Constraint] = A
 trait EqAttr[To <: Attribute] extends Constraint
 
 trait ConstraintImpl[c <: Constraint] {
-  def verify(attr: Attribute): Either[String, Attribute]
+  def verify(attr: Expr[Attribute])(using Quotes): Expr[Either[String, Attribute]]
 }
 
 inline def eqAttr[To <: Attribute]: To =
@@ -19,9 +19,10 @@ inline def eqAttr[To <: Attribute]: To =
 inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
   val ref = eqAttr[To]
   new ConstraintImpl {
-    def verify(attr: Attribute): Either[String, Attribute] =
-      attr match {
+    def verify(attr: Expr[Attribute])(using Quotes): Expr[Either[String, Attribute]] =
+      '{
+      $attr match {
         case a: To if a == ref => Right(ref)
         case _                 => Left(s"Expected ${ref}, got ${attr}")
-      }
+      }}
   }
