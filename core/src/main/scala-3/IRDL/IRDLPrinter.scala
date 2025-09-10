@@ -1,7 +1,12 @@
 package scair.core.irdl_printer
 
+import fastparse.Parsed
 import scair.ir.Value
 import scair.dialects.irdl._
+import scair.Parser
+import scair.MLContext
+import scair.dialects.irdl.IRDL
+import scala.io.Source
 import java.io.PrintWriter
 
 extension (operands: Operands)
@@ -41,127 +46,147 @@ extension (t: Type)
     case p: Parameters => p
   }.head
 
-def printIRDL(dialect: Dialect)(using p: PrintWriter): Unit =
+object IRDLPrinter:
 
-  given dialectName: String = dialect.sym_name.data
-  p.print("package scair.dialects.")
-  p.println(dialectName)
-  p.println()
-  p.println("import scair.dialects.builtin._")
-  p.println("import scair.ir._")
-  p.println()
-  dialect.body.blocks.head.operations.foreach({
-    case op: Operation   => printOperation(op)
-    case attr: Attribute => printAttribute(attr)
-    case t: Type         => printType(t)
-  })
-  p.print("val ")
-  p.print(dialect.sym_name.data)
-  p.print(" = ")
-  p.print("summonDialect[")
-  dialect.body.blocks.head.operations.foreach({
-    case attr: Attribute =>
-      p.print(attr.sym_name.data)
-      p.print(" *: ")
-    case t: Type =>
-      t.sym_name.data
-      p.print(t.sym_name.data)
-      p.print(" *: ")
-    case _ =>
-  })
-  p.print("EmptyTuple, ")
+  def IRDLFileToScalaFile(irdl: String, scala: String): Unit =
 
-  dialect.body.blocks.head.operations.foreach({
-    case o: Operation =>
-      p.print(o.sym_name.data)
-      p.print(" *: ")
-    case _ =>
-  })
+    val input = Source.fromFile(irdl)
 
-  p.println("EmptyTuple]")
+    val ctx = MLContext()
+    ctx.registerDialect(IRDL)
+    val parser = Parser(ctx)
+    val dialect = parser.parseThis(
+      input.mkString,
+      pattern = parser.OperationPat(using _)
+    ) match
+      case Parsed.Success(dialect: Dialect, _) => dialect
+    val printer = PrintWriter(scala)
+    printIRDL(dialect)(using printer)
+    printer.flush()
+    printer.close()
 
-def printOperation(
-    op: Operation
-)(using p: PrintWriter, dialectName: String): Unit =
+  def printIRDL(dialect: Dialect)(using p: PrintWriter): Unit =
 
-  val className = op.sym_name.data
-  val name = s"$dialectName.$className"
+    given dialectName: String = dialect.sym_name.data
+    p.print("package scair.dialects.")
+    p.println(dialectName)
+    p.println()
+    p.println("import scair.dialects.builtin._")
+    p.println("import scair.ir._")
+    p.println("import scair.clair.macros._")
+    p.println()
+    dialect.body.blocks.head.operations.foreach({
+      case op: Operation   => printOperation(op)
+      case attr: Attribute => printAttribute(attr)
+      case t: Type         => printType(t)
+    })
+    p.print("val ")
+    p.print(dialect.sym_name.data)
+    p.print(" = ")
+    p.print("summonDialect[")
+    dialect.body.blocks.head.operations.foreach({
+      case attr: Attribute =>
+        p.print(attr.sym_name.data)
+        p.print(" *: ")
+      case t: Type =>
+        t.sym_name.data
+        p.print(t.sym_name.data)
+        p.print(" *: ")
+      case _ =>
+    })
+    p.print("EmptyTuple, ")
 
-  p.print("final case class ")
-  p.print(className)
-  p.println("(")
+    dialect.body.blocks.head.operations.foreach({
+      case o: Operation =>
+        p.print(o.sym_name.data)
+        p.print(" *: ")
+      case _ =>
+    })
 
-  op.operandDefs.info.foreach((name, tpe) =>
-    p.print("  ")
+    p.println("EmptyTuple]")
+
+  def printOperation(
+      op: Operation
+  )(using p: PrintWriter, dialectName: String): Unit =
+
+    val className = op.sym_name.data
+    val name = s"$dialectName.$className"
+
+    p.print("final case class ")
+    p.print(className)
+    p.println("(")
+
+    op.operandDefs.info.foreach((name, tpe) =>
+      p.print("  ")
+      p.print(name)
+      p.print(": Operand[")
+      printConstraint(tpe)
+      p.println("],")
+    )
+
+    op.resultDefs.info.foreach((name, tpe) =>
+      p.print("  ")
+      p.print(name)
+      p.print(": Result[")
+      printConstraint(tpe)
+      p.println("],")
+    )
+
+    p.print(") extends DerivedOperation[\"")
     p.print(name)
-    p.print(": Operand[")
-    printConstraint(tpe)
-    p.println("],")
-  )
+    p.print("\", ")
+    p.print(className)
+    p.println("]")
+    p.println()
 
-  op.resultDefs.info.foreach((name, tpe) =>
-    p.print("  ")
+  def printConstraint(tpe: Value[AttributeType])(using p: PrintWriter): Unit =
+    tpe.owner.get match
+      case _: Any => p.print("Attribute")
+
+  def printType(typ: Type)(using p: PrintWriter, dialectName: String): Unit =
+    val className = typ.sym_name.data
+    val name = s"$dialectName.$className"
+
+    p.print("final case class ")
+    p.print(className)
+    p.println("(")
+
+    typ.parameterDefs.info.foreach((name, tpe) =>
+      p.print("  ")
+      p.print(name)
+      p.print(": ")
+      printConstraint(tpe)
+      p.println(",")
+    )
+
+    p.print(") extends DerivedAttribute[\"")
     p.print(name)
-    p.print(": Result[")
-    printConstraint(tpe)
-    p.println("],")
-  )
+    p.print("\", ")
+    p.print(className)
+    p.println("] with TypeAttribute")
+    p.println()
 
-  p.print(") extends DerivedOperation[\"")
-  p.print(name)
-  p.print("\", ")
-  p.print(className)
-  p.println("]")
-  p.println()
+  def printAttribute(
+      attr: Attribute
+  )(using p: PrintWriter, dialectName: String): Unit =
+    val className = attr.sym_name.data
+    val name = s"$dialectName.$className"
 
-def printConstraint(tpe: Value[AttributeType])(using p: PrintWriter): Unit =
-  tpe.owner.get match
-    case _: Any => p.print("Attribute")
+    p.print("final case class ")
+    p.print(className)
+    p.println("(")
 
-def printType(typ: Type)(using p: PrintWriter, dialectName: String): Unit =
-  val className = typ.sym_name.data
-  val name = s"$dialectName.$className"
+    attr.parameterDefs.info.foreach((name, tpe) =>
+      p.print("  ")
+      p.print(name)
+      p.print(": ")
+      printConstraint(tpe)
+      p.println(",")
+    )
 
-  p.print("final case class ")
-  p.print(className)
-  p.println("(")
-
-  typ.parameterDefs.info.foreach((name, tpe) =>
-    p.print("  ")
+    p.print(") extends DerivedAttribute[\"")
     p.print(name)
-    p.print(": ")
-    printConstraint(tpe)
-    p.println(",")
-  )
-
-  p.print(") extends DerivedAttribute[\"")
-  p.print(name)
-  p.print("\", ")
-  p.print(className)
-  p.println("] with TypeAttribute")
-  p.println()
-
-def printAttribute(
-    attr: Attribute
-)(using p: PrintWriter, dialectName: String): Unit =
-  val className = attr.sym_name.data
-  val name = s"$dialectName.$className"
-
-  p.print("final case class ")
-  p.print(className)
-  p.println("(")
-
-  attr.parameterDefs.info.foreach((name, tpe) =>
-    p.print("  ")
-    p.print(name)
-    p.print(": ")
-    printConstraint(tpe)
-    p.println(",")
-  )
-
-  p.print(") extends DerivedAttribute[\"")
-  p.print(name)
-  p.print("\", ")
-  p.print(className)
-  p.println("]")
-  p.println()
+    p.print("\", ")
+    p.print(className)
+    p.println("]")
+    p.println()
