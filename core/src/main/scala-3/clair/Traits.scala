@@ -5,6 +5,11 @@ import scair.ir.*
 
 import scala.compiletime.deferred
 
+object DerivedAttribute:
+
+  inline given [T <: DerivedAttribute[?, ?]]: DerivedAttributeCompanion[T] =
+    DerivedAttributeCompanion.derived[T]
+
 trait DerivedAttribute[name <: String, T <: Attribute]
     extends ParametrizedAttribute {
 
@@ -20,6 +25,11 @@ trait DerivedAttribute[name <: String, T <: Attribute]
 
 trait AssemblyFormat[format <: String]
 
+object DerivedOperation:
+
+  inline given [T <: DerivedOperation[?, ?]]: DerivedOperationCompanion[T] =
+    DerivedOperationCompanion.derived[T]
+
 trait DerivedOperation[name <: String, T] extends Operation {
 
   this: T =>
@@ -34,7 +44,7 @@ trait DerivedOperation[name <: String, T] extends Operation {
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
   ) =
-    val u = companion(
+    companion(
       operands = operands,
       successors = successors,
       results = results,
@@ -42,10 +52,6 @@ trait DerivedOperation[name <: String, T] extends Operation {
       properties = properties,
       attributes = attributes
     )
-
-    u.structured match
-      case Right(structuredOp) => structuredOp
-      case Left(err)           => u
 
   def name: String = companion.name
   def operands: Seq[Value[Attribute]] = companion.operands(this)

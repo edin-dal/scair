@@ -156,9 +156,13 @@ case class VariableDirective(
     val space = printSpace(p, state)
     val printVar = construct match {
       case OperandDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.print(${ selectMember[Operand[?]](op, n) }) }
+        '{ $p.print(${ selectMember[Operand[Attribute]](op, n) }) }
       case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
-        '{ $p.printList(${ selectMember[Seq[Operand[?]]](op, n) })(using 0) }
+        '{
+          $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })(using
+            0
+          )
+        }
     }
     Expr.block(List(space), printVar)
   }
@@ -417,7 +421,8 @@ case class AssemblyFormatDirective(
   def buildOperation(
       opDef: OperationDef,
       p: Expr[Parser],
-      parsed: Expr[Tuple]
+      parsed: Expr[Tuple],
+      resNames: Expr[Seq[String]]
   )(using Quotes) =
     import quotes.reflect.report
 
@@ -502,6 +507,7 @@ case class AssemblyFormatDirective(
         opName = ${ Expr(opDef.name) },
         operandsNames = $flatOperandNames,
         operandsTypes = $flatOperandTypes,
+        resultsNames = $resNames,
         resultsTypes = $flatResultTypes,
         attributes = $attrDict
       )
@@ -521,10 +527,12 @@ case class AssemblyFormatDirective(
     * @return
     *   Specialized code to parse an assembly format into an Operation.
     */
-  def parse(opDef: OperationDef, p: Expr[Parser])(using quotes: Quotes) =
+  def parse(opDef: OperationDef, p: Expr[Parser], resNames: Expr[Seq[String]])(
+      using quotes: Quotes
+  ) =
     '{ (ctx: P[Any]) ?=>
       ${ parseTuple(p)(using '{ ctx }) }.map(parsed =>
-        ${ buildOperation(opDef, p, '{ parsed }) }
+        ${ buildOperation(opDef, p, '{ parsed }, resNames) }
       )
     }
 

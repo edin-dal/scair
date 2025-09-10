@@ -1,51 +1,49 @@
 package scair.ir
 
-// import scair.ir.*
-
-opaque type BlockOperations <: collection.Seq[Operation] = ListType[Operation]
-
-private def handleOperationInsertion(op: Operation) =
-  op.operands.zipWithIndex.foreach((o, i) => o.uses += Use(op, i))
-
-private def handleOperationRemoval(op: Operation) =
-  op.operands.zipWithIndex.foreach((o, i) =>
-    o.uses.filterInPlace(_.operation != op)
-  )
-
-extension (b: BlockOperations)
-
-//   def foreach(f: Operation => Unit) = b.foreach(f)
-//   def lastIndexOf(op: Operation): Int = b.lastIndexOf(op)
-  def insertAll(index: Int, ops: IterableOnce[Operation]): Unit =
-    b.insertAll(index, ops)
-    ops.foreach(handleOperationInsertion)
-
-//   def length: Int = b.length
-//   def zipWithIndex: ListType[(Operation, Int)] = b.zipWithIndex
-//   def foldLeft[A](z: A)(op: (A, Operation) => A): A =
-//     b.foldLeft(z)(op)
-  def update(i: Int, op: Operation): Unit =
-    handleOperationRemoval(b(i))
-    b.update(i, op)
-    handleOperationInsertion(op)
-
-  def -=(op: Operation): Unit =
-    b -= op
-    handleOperationRemoval(op)
-
-  def ++=(ops: IterableOnce[Operation]): Unit =
-    b ++= ops
-    ops.foreach(handleOperationInsertion)
+import scair.ir.*
+import scair.utils.IntrusiveList
 
 object BlockOperations:
-  def unapplySeq(x: BlockOperations) = ListType.unapplySeq(x)
 
-  def apply(ops: Operation*): BlockOperations =
-    ops.foreach(handleOperationInsertion)
-    ListType(ops*)
+  def apply(elems: Operation*): BlockOperations =
+    from(elems)
 
-  def from(coll: collection.IterableOnce[Operation]): BlockOperations =
-    coll.foreach(handleOperationInsertion)
-    ListType.from(coll)
+  def empty: BlockOperations = new BlockOperations
 
-  def empty: BlockOperations = ListType.empty[Operation]
+  def from(i: IterableOnce[Operation]) =
+    val list = new BlockOperations
+    list.addAll(i)
+
+  def unapplySeq(list: BlockOperations): Some[Seq[Operation]] =
+    Some(list.toSeq)
+
+class BlockOperations extends IntrusiveList[Operation]:
+
+  private inline def handleOperationInsertion(op: Operation) =
+    op.operands.zipWithIndex.foreach((o, i) => o.uses += Use(op, i))
+
+  private inline def handleOperationRemoval(op: Operation) =
+    op.operands.zipWithIndex.foreach((o, i) =>
+      o.uses.filterInPlace(_.operation != op)
+    )
+
+  override final def addOne(elem: Operation): this.type =
+    handleOperationInsertion(elem)
+    super.addOne(elem)
+
+  override final def prepend(elem: Operation): this.type =
+    handleOperationInsertion(elem)
+    super.prepend(elem)
+
+  override final def insert(v: Operation, elem: Operation): Unit =
+    super.insert(v, elem)
+    handleOperationInsertion(elem)
+
+  override final def subtractOne(elem: Operation): this.type =
+    handleOperationRemoval(elem)
+    super.subtractOne(elem)
+
+  override final def update(v: Operation, elem: Operation): Unit =
+    handleOperationRemoval(v)
+    super.update(v, elem)
+    handleOperationInsertion(elem)

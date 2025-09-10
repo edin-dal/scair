@@ -97,14 +97,14 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     println("==================================")
 
   elem match
-    case '[Result[t]] =>
+    case '[Value[t]] if TypeRepr.of[Result[t]] =:= TypeRepr.of(using elem) =>
       ResultDef(
         name = name,
         tpe = tpe,
         variadicity,
         constraint
       )
-    case '[Operand[t]] =>
+    case '[Value[t]] =>
       OperandDef(
         name = name,
         tpe = tpe,
@@ -239,7 +239,9 @@ def getCompanion[T: Type](using quotes: Quotes) = {
   TypeRepr.of[T].typeSymbol.companionModule
 }
 
-def getOpCustomParse[T: Type](p: Expr[Parser])(using quotes: Quotes) =
+def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
+    using quotes: Quotes
+) =
   import quotes.reflect._
 
   val comp = getCompanion(using Type.of[T])
@@ -254,7 +256,7 @@ def getOpCustomParse[T: Type](p: Expr[Parser])(using quotes: Quotes) =
       val callTerm = Select
         .unique(Ref(comp), m.name)
         .appliedToType(TypeRepr.of[Any])
-        .appliedTo(p.asTerm)
+        .appliedTo(p.asTerm, resNames.asTerm)
         .etaExpand(comp)
         .asExprOf[P[Any] => P[Operation]]
       Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })

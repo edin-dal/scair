@@ -47,25 +47,6 @@ class ParserTest
     ("g", "Failure", "")
   )
 
-  val letterTests = Table(
-    ("input", "result", "expected"),
-    ("a", "Success", "a"),
-    ("G", "Success", "G"),
-    ("4", "Failure", "")
-  )
-
-  val idPunctTests = Table(
-    ("input", "result", "expected"),
-    ("$", "Success", "$"),
-    (".", "Success", "."),
-    ("_", "Success", "_"),
-    ("-", "Success", "-"),
-    ("%", "Failure", ""),
-    ("£", "Failure", ""),
-    ("dfd", "Failure", ""),
-    ("0", "Failure", "")
-  )
-
   val intLiteralTests = Table(
     ("input", "result", "expected"),
     ("123456789", "Success", "123456789"),
@@ -129,23 +110,13 @@ class ParserTest
     ("name", "pattern", "tests"),
     (
       "Digit",
-      ((x: fastparse.P[?]) => Parser.Digit(using x)),
+      ((x: fastparse.P[?]) => Parser.DecDigits(using x)),
       digitTests
     ),
     (
       "HexDigit",
-      ((x: fastparse.P[?]) => Parser.HexDigit(using x)),
+      ((x: fastparse.P[?]) => Parser.HexDigits(using x)),
       hexTests
-    ),
-    (
-      "Letter",
-      ((x: fastparse.P[?]) => Parser.Letter(using x)),
-      letterTests
-    ),
-    (
-      "IdPunct",
-      ((x: fastparse.P[?]) => Parser.IdPunct(using x)),
-      idPunctTests
     ),
     (
       "IntegerLiteral",
@@ -208,7 +179,7 @@ class ParserTest
         case Parsed.Success(
               Block(
                 ListType(Value(I32)),
-                ListType(
+                BlockOperations(
                   UnregisteredOperation(
                     "test.op",
                     Seq(),
@@ -254,7 +225,7 @@ class ParserTest
                 Seq(
                   Block(
                     ListType(Value(I32)),
-                    ListType(
+                    BlockOperations(
                       UnregisteredOperation(
                         "test.op",
                         Seq(),
@@ -281,7 +252,7 @@ class ParserTest
                   ),
                   Block(
                     ListType(Value(I32)),
-                    ListType(
+                    BlockOperations(
                       UnregisteredOperation(
                         "test.op",
                         Seq(),
@@ -399,35 +370,28 @@ class ParserTest
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
-                Seq(),
-                Seq(),
-                Seq(),
-                Seq(
-                  Region(
-                    Seq(
-                      Block(
-                        ListType(),
-                        ListType(
-                          UnregisteredOperation(
-                            "test.op",
-                            Seq(),
-                            Seq(),
-                            Seq(
-                              Result(I32),
-                              Result(I64),
-                              Result(I32)
-                            ),
-                            Seq(),
-                            _,
-                            _
-                          )
+                Region(
+                  Seq(
+                    Block(
+                      ListType(),
+                      BlockOperations(
+                        UnregisteredOperation(
+                          "test.op",
+                          Seq(),
+                          Seq(),
+                          Seq(
+                            Result(I32),
+                            Result(I64),
+                            Result(I32)
+                          ),
+                          Seq(),
+                          _,
+                          _
                         )
                       )
                     )
                   )
-                ),
-                _,
-                _
+                )
               ),
               48
             ) =>

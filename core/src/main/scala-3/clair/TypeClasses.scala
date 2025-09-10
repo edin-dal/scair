@@ -10,10 +10,8 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanionI[T] {
+trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion {
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
-  extension (op: T) override def AttributeTrait = this
-
   override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
 }
 
@@ -75,7 +73,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ): UnstructuredOp
+  ): UnstructuredOp | T & Operation
 
   def destructure(adtOp: T): UnstructuredOp
   def structure(unstrucOp: UnstructuredOp): T

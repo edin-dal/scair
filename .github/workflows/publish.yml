@@ -21,4 +21,4 @@ jobs:
             MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
             MILL_SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
             MILL_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          run: ./mill _.publishSonatypeCentral
+          run: ./mill _.jvm.publishSonatypeCentral

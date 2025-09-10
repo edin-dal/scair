@@ -4,10 +4,10 @@ import fastparse.*
 import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
+import scair.clair.macros.DerivedOperationCompanion
 import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
-import scair.transformations.RewriteMethods
 
 import java.lang.Float.parseFloat
 import java.lang.Long.parseLong
@@ -148,130 +148,47 @@ object Parser {
       var parentScope: Option[Scope] = None,
       var valueMap: mutable.Map[String, Value[Attribute]] =
         mutable.Map.empty[String, Value[Attribute]],
-      var valueWaitlist: mutable.Map[Operation, Seq[
-        (String, Attribute)
-      ]] = mutable.Map.empty[Operation, Seq[(String, Attribute)]],
+      var forwardValues: mutable.Set[String] = mutable.Set.empty[String],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
       var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
   ) {
 
-    def registerValues(
-        valueIdAndTypeList: Seq[(String, Value[Attribute])]
-    ) = {
-      valueIdAndTypeList.map((name, value) =>
-        valueMap.contains(name) match {
-          case true =>
-            throw new Exception(s"SSA Value cannot be defined twice %${name}")
-          case false =>
-            valueMap(name) = value
-            value
+    def useValue(name: String, typ: Attribute): Value[Attribute] =
+      valueMap.getOrElseUpdate(
+        name, {
+          forwardValues += name
+          Value[Attribute](typ)
         }
       )
-    }
 
-    def defineValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    ) = {
-      registerValues(valueIdAndTypeList.map((name, tpe) => (name, Value(tpe))))
-    }
+    def checkForwardedValues() =
+      forwardValues.headOption match
+        case Some(valueName) =>
+          throw new Exception(s"Value %${valueName} not defined within Scope")
+        case None => ()
 
-    def useValues(
-        valueIdAndTypeList: Seq[(String, Attribute)]
-    ) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
+    private def defineValue(name: String, typ: Attribute): Value[Attribute] =
+      if valueMap.contains(name) then {
+        if !forwardValues.remove(name) then
+          throw new Exception(
+            s"Value cannot be defined twice within the same scope - %${name}"
+          )
+        valueMap(name)
+      } else {
+        val v = Value[Attribute](typ)
+        valueMap(name) = v
+        v
+      }
 
-      valueIdAndTypeList.partitionMap((name, typ) =>
-        if valueMap.contains(name) then
-          if valueMap(name).typ != typ then
-            throw new Exception(
-              s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
-            )
-          else Right(valueMap(name))
-        else Left((name, typ))
-      )
-    }
+    inline def defineResult(name: String, typ: Attribute): Result[Attribute] =
+      defineValue(name, typ)
 
-    def useValue(
+    inline def defineBlockArgument(
         name: String,
         typ: Attribute
-    ): (ListType[Value[Attribute]], ListType[(String, Attribute)]) = {
-      var forwardRefSeq: ListType[(String, Attribute)] =
-        ListType()
-      var useValSeq: ListType[Value[Attribute]] =
-        ListType()
-      !valueMap.contains(name) match {
-        case true =>
-          val tuple = (name, typ)
-          forwardRefSeq += tuple
-        case false =>
-          valueMap(name).typ != typ match {
-            case true =>
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${valueMap(name).typ}"
-              )
-            case false =>
-              useValSeq += valueMap(name)
-          }
-      }
-      return (useValSeq, forwardRefSeq)
-    }
-
-    def checkValueWaitlist() = {
-
-      for ((operation, operands) <- valueWaitlist) {
-
-        val foundOperands: ListType[(String, Attribute)] = ListType()
-        val operandList: ListType[Value[Attribute]] = ListType()
-
-        for {
-          (name, typ) <- operands
-        } yield valueMap
-          .contains(
-            name
-          ) match {
-          case true =>
-            val tuple = (name, typ)
-            val value = valueMap(name)
-            if value.typ != typ then
-              throw new Exception(
-                s"%$name use with type ${typ} but defined with type ${value.typ}"
-              )
-            foundOperands += tuple
-            operandList += value
-          case false =>
-        }
-
-        valueWaitlist(operation) = valueWaitlist(operation) diff foundOperands
-
-        if (valueWaitlist(operation).length == 0) {
-          valueWaitlist -= operation
-        }
-
-        val new_op =
-          operation.updated(
-            operands = operation.operands ++ operandList,
-            results = operation.results
-          )
-        RewriteMethods.replace_op(operation, new_op)
-      }
-
-      if (valueWaitlist.size > 0) {
-        parentScope match {
-          case Some(x) => x.valueWaitlist ++= valueWaitlist
-          case None    =>
-            val opName = valueWaitlist.head._1.name
-            val operandName = valueWaitlist.head._2(0)._1
-            val operandTyp = valueWaitlist.head._2(0)._2
-            throw new Exception(
-              s"Operand '${operandName}: ${operandTyp}' not defined within Scope in Operation '${opName}'\n${valueMap}"
-            )
-        }
-      }
-    }
+    ): BlockArgument[Attribute] =
+      defineValue(name, typ)
 
     def checkForwardedBlocks() =
       forwardBlocks.headOption match
@@ -283,9 +200,7 @@ object Parser {
         blockName: String
     ): Block =
       if blockMap.contains(blockName) then {
-        if forwardBlocks.contains(blockName) then {
-          forwardBlocks -= blockName
-        } else {
+        if !forwardBlocks.remove(blockName) then {
           throw new Exception(
             s"Block cannot be defined twice within the same scope - ^${blockName}"
           )
@@ -317,7 +232,7 @@ object Parser {
     }
 
     def switchWithParent: Scope =
-      checkValueWaitlist()
+      checkForwardedValues()
       checkForwardedBlocks()
       parentScope match
         case Some(x) =>
@@ -342,26 +257,25 @@ object Parser {
   // [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
   // [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
 
-  val excludedCharacters: Set[Char] = Set('\"', '\n', '\f', '\u000B',
-    '\r') // \u000B represents \v escape character
+  inline val DecDigit = "0-9"
+  inline val HexDigit = "0-9a-fA-F"
 
-  def Digit[$: P] = P(CharIn("0-9").!)
+  inline def DecDigits[$: P] = CharsWhileIn(DecDigit)
 
-  def HexDigit[$: P] = P(CharIn("0-9a-fA-F").!)
+  inline def HexDigits[$: P] = CharsWhileIn(HexDigit)
 
-  def Letter[$: P] = P(CharIn("a-zA-Z").!)
-
-  def IdPunct[$: P] = P(CharIn("$._\\-").!)
+  inline val Letter = "a-zA-Z"
+  inline val IdPunct = "$._\\-"
 
   def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
   def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ Digit.repX(1).!).map((sign: String, literal: String) =>
+    P(("-" | "+").?.! ~ DecDigits.!).map((sign: String, literal: String) =>
       BigInt(sign + literal)
     )
 
   def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigit.repX(1).!).map((hex: String) => BigInt(hex, 16))
+    P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double = {
     val number = parseFloat(float._1)
@@ -370,16 +284,20 @@ object Parser {
   }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (Digit.repX(1) ~~ "." ~~ Digit.repX(1)).!
+    CharIn("\\-\\+").? ~~ (DecDigits ~~ "." ~~ DecDigits).!
       ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ Digit.repX(1)).!).orElse("0")
+        ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
-  def notExcluded[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
-  )
+  inline def nonExcludedCharacter(c: Char): Boolean =
+    c: @switch match
+      case '\"' | '\n' | '\f' | '\u000B' | '\r' => false
+      case _                                    => true
 
-  def StringLiteral[$: P] = P("\"" ~~ notExcluded.rep.! ~~ "\"")
+  inline def notExcluded[$: P] =
+    CharsWhile(nonExcludedCharacter)
+
+  def StringLiteral[$: P] = P("\"" ~~ notExcluded.! ~~ "\"")
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||   IDENTIFIERS   ||
@@ -398,31 +316,31 @@ object Parser {
   // [x] value-use ::= value-id (`#` decimal-literal)?
   // [x] value-use-list ::= value-use (`,` value-use)*
 
-  def simplifyValueName(valueUse: (String, Option[BigInt])): String =
-    valueUse match {
-      case (name, Some(number)) => s"$name#$number"
-      case (name, None)         => name
-    }
-
   def BareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$.")).repX
+    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
   ).!
 
   def ValueId[$: P] = P("%" ~~ SuffixId)
 
   // Alias can't have dots in their names for ambiguity with dialect names.
   def AliasName[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX ~~ !"."
+    CharIn(Letter + "_") ~~ (CharsWhileIn(
+      Letter + DecDigit + "_$",
+      min = 0
+    )) ~~ !"."
   ).!
 
   def SuffixId[$: P] = P(
-    DecimalLiteral | (Letter | IdPunct) ~~ (Letter | IdPunct | Digit).repX
+    DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+      Letter + IdPunct + DecDigit,
+      min = 0
+    )
   ).!
 
   def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
   def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~~ DecimalLiteral).?).map(simplifyValueName)
+    P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
 
   def ValueUseList[$: P] =
     P(ValueUse.rep(sep = ","))
@@ -482,7 +400,7 @@ object Parser {
 
   def BlockId[$: P] = P(CaretId)
 
-  def CaretId[$: P] = P("^" ~/ SuffixId)
+  def CaretId[$: P] = P("^" ~~/ SuffixId)
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||  DIALECT TYPES  ||
@@ -506,11 +424,11 @@ object Parser {
     Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
 
   def notExcludedDTC[$: P] = P(
-    CharPred(char => !excludedCharacters.contains(char))
+    CharPred(char => !excludedCharactersDTC.contains(char))
   )
 
   def DialectBareId[$: P] = P(
-    (Letter | "_") ~~ (Letter | Digit | CharIn("_$")).repX
+    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$", min = 0)
   ).!
 
   def DialectNamespace[$: P] = P(DialectBareId)
@@ -537,7 +455,7 @@ object Parser {
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-class Parser(
+final class Parser(
     val context: MLContext,
     val args: Args = Args(),
     attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
@@ -608,10 +526,12 @@ class Parser(
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match {
       case (head: ModuleOp) :: Nil => head
-      case _                       =>
+      case (head: DerivedOperationCompanion[ModuleOp]#UnstructuredOp) :: Nil =>
+        head
+      case _ =>
         val block = new Block(operations = toplevel)
         val region = new Region(blocks = Seq(block))
-        val moduleOp = new ModuleOp(regions = Seq(region))
+        val moduleOp = ModuleOp(region)
 
         for (op <- toplevel) op.container_block = Some(block)
         block.container_region = Some(region)
@@ -664,6 +584,7 @@ class Parser(
     */
   def generateOperation(
       opName: String,
+      resultsNames: Seq[String] = Seq(),
       operandsNames: Seq[String] = Seq(),
       successors: Seq[Block] = Seq(),
       properties: Map[String, Attribute] = Map(),
@@ -675,20 +596,26 @@ class Parser(
 
     if (operandsNames.length != operandsTypes.length) {
       throw new Exception(
-        s"Number of operands does not match the number of the corresponding operand types in \"${opName}\"."
+        s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"${opName}\"."
       )
     }
 
-    val useAndRefValueSeqs =
-      currentScope.useValues(operandsNames zip operandsTypes)
+    if (resultsNames.length != resultsTypes.length) {
+      throw new Exception(
+        s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
+      )
+    }
+
+    val operands = operandsNames zip operandsTypes map currentScope.useValue
+    val results = resultsNames zip resultsTypes map currentScope.defineResult
 
     val op: Operation = ctx.getOperation(opName) match {
       case Some(x) =>
         x(
-          operands = useAndRefValueSeqs._2,
+          operands = operands,
           successors = successors,
           properties = properties,
-          results = resultsTypes.map(Result(_)),
+          results = results,
           attributes = DictType.from(attributes),
           regions = regions
         )
@@ -697,10 +624,10 @@ class Parser(
         if args.allow_unregistered then
           new UnregisteredOperation(
             name = opName,
-            operands = useAndRefValueSeqs._2,
+            operands = operands,
             successors = successors,
             properties = properties,
-            results = resultsTypes.map(Result(_)),
+            results = results,
             attributes = DictType.from(attributes),
             regions = regions
           )
@@ -708,9 +635,6 @@ class Parser(
           throw new Exception(
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
-    }
-    if (useAndRefValueSeqs._1.length > 0) {
-      currentScope.valueWaitlist += op -> useAndRefValueSeqs._1
     }
 
     return op
@@ -727,13 +651,7 @@ class Parser(
 
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
-  ).mapTry(op => {
-    if (resNames.length != op.results.length) {
-      throw new Exception(
-        s"Number of results (${resNames.length}) does not match the number of the corresponding result types (${op.results.length}) in \"${op.name}\"."
-      )
-    }
-    currentScope.registerValues(resNames zip op.results)
+  ).map(op => {
     for (region <- op.regions) region.container_operation = Some(op)
     op
   })
@@ -746,26 +664,25 @@ class Parser(
       ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .mapTry(
         (
-            (
-                opName: String,
-                operandsNames: Seq[String],
-                successors: Seq[Block],
-                properties: Map[String, Attribute],
-                regions: Seq[Region],
-                attributes: Map[String, Attribute],
-                operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
-            ) =>
-              generateOperation(
-                opName,
-                operandsNames,
-                successors,
-                properties,
-                regions,
-                attributes,
-                operandsAndResultsTypes._2,
-                operandsAndResultsTypes._1
-              )
-        ).tupled
+            opName: String,
+            operandsNames: Seq[String],
+            successors: Seq[Block],
+            properties: Map[String, Attribute],
+            regions: Seq[Region],
+            attributes: Map[String, Attribute],
+            operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
+        ) =>
+          generateOperation(
+            opName,
+            resNames,
+            operandsNames,
+            successors,
+            properties,
+            regions,
+            attributes,
+            operandsAndResultsTypes._2,
+            operandsAndResultsTypes._1
+          )
       )
       ./
   )
@@ -774,7 +691,7 @@ class Parser(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
       ctx.getOperation(s"${x}.${y}") match {
         case Some(y) =>
-          Pass ~ y.parse(this)
+          Pass ~ y.parse(this, resNames)
         case None =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
@@ -806,7 +723,7 @@ class Parser(
       block: Block,
       args: Seq[(String, Attribute)]
   ) =
-    block.arguments ++= currentScope.defineValues(args)
+    block.arguments ++= args map currentScope.defineResult
     block.arguments.foreach(_.owner = Some(block))
     block
 

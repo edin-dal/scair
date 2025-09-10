@@ -33,7 +33,6 @@ package scair
   * case class SampleAttr(
   *     val value: FloatType
   * ) extends DerivedAttribute["sample.sample_attr", SampleAttr]
-  *     derives DerivedAttributeCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom type attribute   ||
@@ -42,7 +41,7 @@ package scair
   * case class SampleType(
   *     val value: FloatType
   * ) extends DerivedAttribute["sample.sample_type", SampleType]
-  *     with TypeAttribute derives DerivedAttributeCompanion
+  *     with TypeAttribute
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining custom operations   ||
@@ -53,13 +52,11 @@ package scair
   *     e2: Result[Attribute],
   *     e3: Region
   * ) extends DerivedOperation["sample.sampop1", SampOp1]
-  *     derives DerivedOperationCompanion
   *
   * case class SampOp2(
   *     e1: Seq[Operand[Complex]],
   *     e2: Result[Attribute]
   * ) extends DerivedOperation["sample.sampop2", SampOp2]
-  *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   packaging into a dialect   ||

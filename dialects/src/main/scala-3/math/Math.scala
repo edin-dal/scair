@@ -17,7 +17,8 @@ object AbsfOp extends OperationCompanion {
   override def name: String = "math.absf"
 
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = {
     P(
       "" ~ Parser.ValueUse ~ ":" ~ parser.Type
@@ -26,6 +27,7 @@ object AbsfOp extends OperationCompanion {
         opName = name,
         operandsNames = Seq(operandName),
         operandsTypes = Seq(type_),
+        resultsNames = resNames,
         resultsTypes = Seq(type_)
       )
     }
@@ -75,7 +77,8 @@ object FPowIOp extends OperationCompanion {
   override def name: String = "math.fpowi"
 
   override def parse[$: P](
-      parser: Parser
+      parser: Parser,
+      resNames: Seq[String]
   ): P[Operation] = {
     P(
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
@@ -90,6 +93,7 @@ object FPowIOp extends OperationCompanion {
           opName = name,
           operandsNames = Seq(operand1Name, operand2Name),
           operandsTypes = Seq(operand1Type, operand2Type),
+          resultsNames = resNames,
           resultsTypes = Seq(operand1Type)
         )
     }

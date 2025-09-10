@@ -9,14 +9,13 @@ import scala.collection.mutable.LinkedHashMap
 case class RegionOp(
     wowregions: Seq[Region]
 ) extends DerivedOperation["test.region", RegionOp]
-    derives DerivedOperationCompanion
 
 case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: StringData
-) extends DerivedOperation["cmath.mul", Mul] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mul", Mul]
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
@@ -24,7 +23,6 @@ case class MulSingleVariadic(
     result: Seq[Result[IntegerType]],
     randProp: StringData
 ) extends DerivedOperation["cmath.mulsinglevariadic", MulSingleVariadic]
-    derives DerivedOperationCompanion
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
@@ -36,7 +34,6 @@ case class MulMultiVariadic(
     operandSegmentSizes: DenseArrayAttr,
     resultSegmentSizes: DenseArrayAttr
 ) extends DerivedOperation["cmath.mulmultivariadic", MulMultiVariadic]
-    derives DerivedOperationCompanion
 
 case class MulFull(
     operand1: Operand[IntegerType],
@@ -50,14 +47,12 @@ case class MulFull(
     succ1: Successor,
     succ2: Successor
 ) extends DerivedOperation["cmath.mulfull", MulFull]
-    derives DerivedOperationCompanion
 
 case class MulOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Operand[IntegerType],
     res: Result[IntegerType]
 ) extends DerivedOperation["cmath.mulopt", MulOptional]
-    derives DerivedOperationCompanion
 
 case class MulMultiOptional(
     lhs: Option[Operand[IntegerType]],
@@ -65,14 +60,12 @@ case class MulMultiOptional(
     additional: Option[Operand[IntegerType]],
     res: Result[IntegerType]
 ) extends DerivedOperation["cmath.mulmultiopt", MulMultiOptional]
-    derives DerivedOperationCompanion
 
 case class MultiOptionalPropertyOp(
     prop1: Option[IntegerType],
     prop2: Option[IntegerType],
     prop3: Option[IntegerType]
 ) extends DerivedOperation["cmath.multpropop", MultiOptionalPropertyOp]
-    derives DerivedOperationCompanion
 
 case class MultiOptionalCompositionOp(
     operand: Option[Operand[IntegerType]],
@@ -80,7 +73,6 @@ case class MultiOptionalCompositionOp(
     prop2: IntegerType,
     result: Option[Result[IntegerType]]
 ) extends DerivedOperation["cmath.multpropcompop", MultiOptionalCompositionOp]
-    derives DerivedOperationCompanion
 
 val mulComp = summon[DerivedOperationCompanion[Mul]]
 val mulSVComp = summon[DerivedOperationCompanion[MulSingleVariadic]]
@@ -547,8 +539,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
               Seq(
                 Region(
                   Seq(
-                    Block(_, ListType(RegionOp(_))),
-                    Block(_, ListType(RegionOp(_)))
+                    Block(_, BlockOperations(RegionOp(_))),
+                    Block(_, BlockOperations(RegionOp(_)))
                   )
                 ),
                 Region(_)
