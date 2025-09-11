@@ -17,13 +17,14 @@ case class MulF(
 ) extends DerivedOperation["cmath.mul", MulF]
 
 class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
-  val a = Value[FloatType](Float64Type())
-  val b = Value[FloatType](Float64Type())
-  val c = Value[FloatType](Float64Type())
-
-  val x = MulF(a, b, c)
 
   "A derived operation with constraints" should "fail verification if constraints are not met" in {
+    val x = MulF(
+      Value[FloatType](Float64Type()),
+      Value[FloatType](Float64Type()),
+      Value[FloatType](Float64Type())
+    )
+
     val res = x.verify()
     assert(res.isLeft)
     assert(
@@ -31,6 +32,17 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
         s"Expected ${f32}, got ${Float64Type()}"
       )
     )
+  }
+
+  "A derived operation with constraints" should "verify if constraints are met" in {
+    val x = MulF(
+      Value[FloatType](Float32Type()),
+      Value[FloatType](Float32Type()),
+      Value[FloatType](Float32Type())
+    )
+
+    val res = x.verify()
+    assert(res.isRight)
   }
 
 }

@@ -241,8 +241,6 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
 ||  OPERATION DEFINTION  ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-val f32 = Float32Type()
-
 case class AddF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
