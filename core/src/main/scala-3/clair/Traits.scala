@@ -64,7 +64,11 @@ trait DerivedOperation[name <: String, T] extends Operation {
     companion.custom_print(this, p)
 
   override def verify(): Either[String, Operation] =
-    constraint_verify().orElse(trait_verify())
+    super
+      .verify()
+      .flatMap(_ => constraint_verify())
 
-  def constraint_verify(): Either[String, Operation] = companion.verify(this)
+  def constraint_verify(): Either[String, Operation] =
+    companion.constraint_verify(this)
+
 }

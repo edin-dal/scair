@@ -33,7 +33,7 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
   def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
-  def verify(adtOp: T): Either[String, Operation]
+  def constraint_verify(adtOp: T): Either[String, Operation]
 
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),

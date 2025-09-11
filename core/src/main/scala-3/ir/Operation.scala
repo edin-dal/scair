@@ -97,8 +97,8 @@ trait Operation extends IRNode with IntrusiveNode[Operation] {
           (res, attr) => res.flatMap(_ => attr.custom_verify())
         )
       )
-      .flatMap(_ => custom_verify())
       .flatMap(_ => trait_verify())
+      .flatMap(_ => custom_verify())
   }
 
   final def drop_all_references: Unit = {

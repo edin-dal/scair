@@ -5,8 +5,8 @@ import scair.AttrParser
 import scair.Parser
 import scair.clair.codegen.*
 import scair.clair.macros.*
+import scair.core.constraints.*
 import scair.ir.*
-import scair.core.constraints.{_, given}
 
 import scala.deriving.*
 import scala.quoted.*
@@ -89,13 +89,6 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   val (variadicity, elem) = getDefVariadicityAndType[Elem]
   val (tpe) = getDefType(elem)
   val constraint = getTypeConstraint(tpe)
-  if constraint.isDefined then
-    println("=========CONSTRAINT FOUND=========")
-    println(
-      s"Constraint found for ${Type.show[Label]}: ${constraint}"
-    )
-    println(Type.show(using tpe))
-    println("==================================")
 
   elem match
     case '[Value[t]] if TypeRepr.of[Result[t]] =:= TypeRepr.of(using elem) =>

@@ -7,6 +7,7 @@ import scair.Parser.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
+import scair.core.constraints.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
@@ -212,13 +213,29 @@ def parseMacro(
         )
       }
 
+def extractConstraintVerify(
+    constraintExpr: Expr[ConstraintImpl[?]],
+    attr: Expr[Attribute]
+)(using Quotes): Expr[Either[String, Unit]] = '{
+  $constraintExpr.verify($attr)
+}
+
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
 )(using Quotes): Expr[Either[String, Operation]] =
-  '{
-    Right($adtOpExpr.asInstanceOf[Operation])
-  }
+  val xyz: Seq[Expr[Either[String, Unit]]] = opDef.operands
+    .filter(_.variadicity == Variadicity.Single)
+    .collect(_ match
+      case OperandDef(name, _, _, Some(constraint)) =>
+        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
+        extractConstraintVerify(constraint, '{ $mem.typ }))
+
+  val chain = xyz.foldLeft[Expr[Either[String, Unit]]](
+    '{ Right(()) }
+  )((res, result) => '{ $res.flatMap(_ => $result) })
+
+  '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
@@ -848,7 +865,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
-      def verify(adtOp: T): Either[String, Operation] =
+      def constraint_verify(adtOp: T): Either[String, Operation] =
         ${
           verifyMacro(opDef, '{ adtOp })
         }
