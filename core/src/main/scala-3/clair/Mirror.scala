@@ -5,10 +5,12 @@ import scair.AttrParser
 import scair.Parser
 import scair.clair.codegen.*
 import scair.clair.macros.*
+import scair.core.constraints.*
 import scair.ir.*
 
 import scala.deriving.*
 import scala.quoted.*
+import scala.quoted.Type
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
 // ██╔══██╗ ██║░░░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚════██╗
@@ -27,6 +29,39 @@ import scala.quoted.*
 /*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
+
+def getTypeConstraint(tpe: Type[?])(using Quotes) =
+  import quotes.reflect._
+  val op = TypeRepr.of[!>]
+  TypeRepr.of(using tpe) match
+    case AppliedType(op, List(attr, constraint)) =>
+      constraint.asType match
+        case '[type t <: Constraint; `t`] =>
+          Expr.summon[ConstraintImpl[t]] match
+            case Some(i) => Some(i)
+            case None    =>
+              Implicits.search(TypeRepr.of[ConstraintImpl[t]]) match
+                case s: ImplicitSearchSuccess =>
+                  Some(s.tree.asExprOf[ConstraintImpl[t]])
+                case f: ImplicitSearchFailure =>
+                  report.errorAndAbort(
+                    s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
+                  )
+    case _ =>
+      None
+
+def getDefType(elem: Type[?])(using Quotes) =
+  elem match
+    case '[Result[t]] =>
+      Type.of[t]
+    case '[Operand[t]] =>
+      Type.of[t]
+    case '[Region] =>
+      Type.of[Attribute]
+    case '[Successor] =>
+      Type.of[Attribute]
+    case t @ '[Attribute] =>
+      t
 
 def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   Type.of[Elem] match
@@ -52,18 +87,23 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
   val (variadicity, elem) = getDefVariadicityAndType[Elem]
+  val (tpe) = getDefType(elem)
+  val constraint = getTypeConstraint(tpe)
+
   elem match
     case '[Value[t]] if TypeRepr.of[Result[t]] =:= TypeRepr.of(using elem) =>
       ResultDef(
         name = name,
-        tpe = Type.of[t],
-        variadicity
+        tpe = tpe,
+        variadicity,
+        constraint
       )
     case '[Value[t]] =>
       OperandDef(
         name = name,
-        tpe = Type.of[t],
-        variadicity
+        tpe = tpe,
+        variadicity,
+        constraint
       )
     case '[Region] =>
       RegionDef(
@@ -78,8 +118,9 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
     case '[Attribute] =>
       OpPropertyDef(
         name = name,
-        tpe = elem,
-        variadicity == Variadicity.Optional
+        tpe = tpe,
+        variadicity,
+        constraint
       )
     case _: Type[?] =>
       report.errorAndAbort(

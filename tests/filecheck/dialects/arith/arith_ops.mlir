@@ -27,8 +27,8 @@
 // CHECK-NEXT:    %20 = "arith.cmpi"(%6, %7) <{predicate = 2}> : (index, index) -> (i1)
 %addi = "arith.addi"(%lhsi32, %rhsi32) {"hello" = "world"} : (i32, i32) -> i32
 // CHECK-NEXT:    %21 = "arith.addi"(%2, %3) {hello = "world"} : (i32, i32) -> (i32)
-%addf = "arith.addf"(%lhsf32, %rhsf32) <{"fastmath" = #arith.fastmath<none>}> : (f32, f32) -> f32
-// CHECK-NEXT:    %22 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+%addf = "arith.addf"(%lhsf64, %rhsf64) <{"fastmath" = #arith.fastmath<none>}> : (f64, f64) -> f64
+// CHECK-NEXT:    %22 = "arith.addf"(%10, %11) <{fastmath = #arith.fastmath<none>}> : (f64, f64) -> (f64)
 
 %addf_vector = "arith.addf"(%lhsf32, %rhsf32) <{"fastmath" = #arith.fastmath<none>}> : (f32, f32) -> f32
 // CHECK-NEXT:    %23 = "arith.addf"(%8, %9) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)

@@ -7,6 +7,7 @@ import scair.Parser.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
+import scair.core.constraints.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
@@ -212,6 +213,30 @@ def parseMacro(
         )
       }
 
+def extractConstraintVerify(
+    constraintExpr: Expr[ConstraintImpl[?]],
+    attr: Expr[Attribute]
+)(using Quotes): Expr[Either[String, Unit]] = '{
+  $constraintExpr.verify($attr)
+}
+
+def verifyMacro(
+    opDef: OperationDef,
+    adtOpExpr: Expr[?]
+)(using Quotes): Expr[Either[String, Operation]] =
+  val xyz: Seq[Expr[Either[String, Unit]]] = opDef.operands
+    .filter(_.variadicity == Variadicity.Single)
+    .collect(_ match
+      case OperandDef(name, _, _, Some(constraint)) =>
+        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
+        extractConstraintVerify(constraint, '{ $mem.typ }))
+
+  val chain = xyz.foldLeft[Expr[Either[String, Unit]]](
+    '{ Right(()) }
+  )((res, result) => '{ $res.flatMap(_ => $result) })
+
+  '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
+
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -303,22 +328,17 @@ def getConstructName[Def <: OpInputDef: Type as d](using Quotes) =
   */
 def getConstructConstraint(_def: OpInputDef)(using Quotes) =
   _def match
-    case OperandDef(name, tpe, variadicity) => tpe
-    case ResultDef(name, tpe, variadicity)  => tpe
-    case RegionDef(name, variadicity)       => Type.of[Attribute]
-    case SuccessorDef(name, variadicity)    => Type.of[Attribute]
-    case OpPropertyDef(name, tpe, _)        => tpe
+    case OperandDef(name, tpe, variadicity, _) => tpe
+    case ResultDef(name, tpe, variadicity, _)  => tpe
+    case RegionDef(name, variadicity)          => Type.of[Attribute]
+    case SuccessorDef(name, variadicity)       => Type.of[Attribute]
+    case OpPropertyDef(name, tpe, _, _)        => tpe
 
 /** Helper to get the variadicity of a construct definition's construct.
   */
 def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   _def match
-    case OperandDef(name, tpe, variadicity) => variadicity
-    case ResultDef(name, tpe, variadicity)  => variadicity
-    case RegionDef(name, variadicity)       => variadicity
-    case SuccessorDef(name, variadicity)    => variadicity
-    case OpPropertyDef(name, tpe, false)    => Variadicity.Single
-    case OpPropertyDef(name, tpe, _)        => Variadicity.Optional
+    case v: MayVariadicOpInputDef => v.variadicity
 
 /*__________________*\
 \*-- STRUCTURING  --*/
@@ -667,21 +687,24 @@ def tryConstruct[T: Type](
       opDef.successors,
       successors,
       properties
-    ) zip opDef.successors).map((e, d) =>
-      NamedArg(d.name, e.asTerm)
-    ) ++ opDef.properties.map { case OpPropertyDef(name, tpe, optionality) =>
+    ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+    opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
       tpe match
         case '[type t <: Attribute; `t`] =>
-          val property =
-            if optionality then
+          val property = variadicity match
+            case Variadicity.Optional =>
               generateOptionalCheckedPropertyArgument[t](
                 properties,
                 name
               )
-            else
+            case Variadicity.Single =>
               generateCheckedPropertyArgument[t](
                 properties,
                 name
+              )
+            case Variadicity.Variadic =>
+              report.errorAndAbort(
+                s"Properties cannot be variadic in an ADT."
               )
           NamedArg(name, property.asTerm)
     }
@@ -841,6 +864,11 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+
+      def constraint_verify(adtOp: T): Either[String, Operation] =
+        ${
+          verifyMacro(opDef, '{ adtOp })
+        }
 
       override def parse[$: P as ctx](
           p: Parser,
