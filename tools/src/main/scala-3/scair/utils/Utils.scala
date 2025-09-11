@@ -7,7 +7,7 @@ import scair.dialects.LingoDB.TupleStream.TupleStreamDialect
 import scair.dialects.affine.AffineDialect
 import scair.dialects.arith.ArithDialect
 import scair.dialects.builtin.BuiltinDialect
-import scair.dialects.cmath.CMathDialect
+import scair.dialects.cmath.cmath
 import scair.dialects.func.FuncDialect
 import scair.dialects.irdl.IRDL
 import scair.dialects.llvm.LLVMDialect
@@ -38,7 +38,7 @@ val allDialects: Seq[Dialect] =
     IRDL,
     ArithDialect,
     MemrefDialect,
-    CMathDialect,
+    cmath,
     AffineDialect,
     FuncDialect,
     LLVMDialect,

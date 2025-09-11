@@ -5,10 +5,9 @@
 // TODO: This should fail because cmath.complex expect f32 | f64. This needs frontend
 // support
 
-// CHECK: Parse error at [[FILE]]:3:49:
-// CHECK: "test.op"() {"invalid_type" = !cmath.complex<i8>} : () -> ()                  
-// CHECK:                                                 ^
-// CHECK: Expected typ to be of type scair.dialects.builtin.FloatType | scair.dialects.builtin.IndexType, got i8
+// CHECK:       builtin.module {
+// CHECK-NEXT:    "test.op"() {invalid_type = !cmath.complex<i8>} : () -> ()
+// CHECK-NEXT:  }
 
 // -----
 

@@ -6,7 +6,7 @@
 //| mill-jvm-opts: ["-Xss10m"]
 
 import com.goyeau.mill.scalafix.ScalafixModule
-import mill.util.{VcsVersion, Tasks}
+import mill.util.{VcsVersion, Tasks, Jvm}
 import mill.contrib.scoverage.{ScoverageModule, ScoverageReport}
 
 import mill.api.{Task, PathRef, DefaultTaskModule, Module, ModuleRef, Evaluator}
@@ -14,6 +14,7 @@ import mill.api.daemon.SelectMode
 import mill.scalalib.{ScalaModule, NativeImageModule, DepSyntax, scalafmt, UnidocModule, TestModule, JavaModule, SonatypeCentralPublishModule}
 import mill.scalalib.publish.{Developer, PomSettings, License, VersionControl}
 import mill.javalib.testrunner.TestResult
+import mill.javalib.Lib
 import mill.api.Task.{Named, Command}
 
 import scala.sys.process._
@@ -25,6 +26,7 @@ import mill.scalalib.PlatformScalaModule
 import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
 import mill.scalanativelib.api.ReleaseMode
+import java.lang.reflect.InvocationTargetException
 
 trait ScairSettings extends ScalaModule {
   def scoverageVersion = Task{"2.3.0"}
@@ -121,16 +123,22 @@ trait ScairModule extends ScairSettings {
   lazy val jvm: JvmScairModule = new JvmScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.jvm)
     override def mvnDeps = agnosticModule().mvnDeps
+
+    override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
   }
 
   lazy val graal: GraalScairModule = new GraalScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.graal)
     override def mvnDeps = agnosticModule().mvnDeps
+
+    override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
   }
 
   lazy val native: NativeScairModule = new NativeScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.native)
     override def mvnDeps = agnosticModule().mvnDeps
+
+    override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
   }
 
   override def sources: Simple[Seq[PathRef]] = super.sources() :+ PathRef(moduleDir / "build")
@@ -165,6 +173,26 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
   }
 
   object dialects extends ScairModule {
+
+    def irdlSources = Task {
+      Lib.findSourceFiles(sources(), Seq("irdl")).map(PathRef(_))
+    }
+
+    def scalaFiles = Task { 
+      irdlSources().map(s =>
+        Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) { classLoader =>
+          val printerMethod = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter").getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
+          try {
+            printerMethod.invoke(null, s.path.toString, Task.dest.toString)
+          } catch {
+            case e: InvocationTargetException => throw Exception("Error during IRDL to Scala generation:\n" + e.getTargetException().getMessage())
+          }
+      }
+        PathRef(Task.dest)
+      )
+    }
+
+    override def generatedSources = scalaFiles()
     def moduleDeps = Seq(core)
   }
 
