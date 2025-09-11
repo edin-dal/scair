@@ -132,6 +132,8 @@ trait ScairModule extends ScairSettings {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.native)
     override def mvnDeps = agnosticModule().mvnDeps
   }
+
+  override def sources: Simple[Seq[PathRef]] = super.sources() :+ PathRef(moduleDir / "build")
 }
 
 object `package` extends ScairSettings with ScoverageReport with UnidocModule {
