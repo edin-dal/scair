@@ -10,6 +10,8 @@ import scair.core.constraints.{_, given}
 
 val f32 = Float32Type()
 
+type T = Var["T"]
+
 case class MulFEq(
     lhs: Operand[FloatType !> EqAttr[f32.type]],
     rhs: Operand[FloatType !> EqAttr[f32.type]],
@@ -17,8 +19,8 @@ case class MulFEq(
 ) extends DerivedOperation["cmath.mul", MulFEq]
 
 case class MulFVar(
-    lhs: Operand[FloatType !> Var["T"]],
-    rhs: Operand[FloatType !> Var["T"]],
+    lhs: Operand[FloatType !> T],
+    rhs: Operand[FloatType !> T],
     result: Result[FloatType]
 ) extends DerivedOperation["cmath.mul", MulFVar]
 
