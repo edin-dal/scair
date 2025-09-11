@@ -54,7 +54,7 @@ package scair
   * ) extends DerivedOperation["sample.sampop1", SampOp1]
   *
   * case class SampOp2(
-  *     e1: Seq[Operand[Complex]],
+  *     e1: Seq[Operand[complex]],
   *     e2: Result[Attribute]
   * ) extends DerivedOperation["sample.sampop2", SampOp2]
   *
