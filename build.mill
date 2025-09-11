@@ -26,6 +26,7 @@ import mill.scalalib.PlatformScalaModule
 import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
 import mill.scalanativelib.api.ReleaseMode
+import java.lang.reflect.InvocationTargetException
 
 trait ScairSettings extends ScalaModule {
   def scoverageVersion = Task{"2.3.0"}
@@ -122,16 +123,22 @@ trait ScairModule extends ScairSettings {
   lazy val jvm: JvmScairModule = new JvmScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.jvm)
     override def mvnDeps = agnosticModule().mvnDeps
+
+    override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
   }
 
   lazy val graal: GraalScairModule = new GraalScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.graal)
     override def mvnDeps = agnosticModule().mvnDeps
+
+    override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
   }
 
   lazy val native: NativeScairModule = new NativeScairModule {
     override def moduleDeps = agnosticModule().moduleDeps.map(_.native)
     override def mvnDeps = agnosticModule().mvnDeps
+
+    override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
   }
 
   override def sources: Simple[Seq[PathRef]] = super.sources() :+ PathRef(moduleDir / "build")
@@ -166,25 +173,34 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
   }
 
   object dialects extends ScairModule {
+
     def irdlSources = Task {
       Lib.findSourceFiles(sources(), Seq("irdl")).map(PathRef(_))
     }
 
     def scalaFiles = Task { 
       irdlSources().map(s =>
-        val gen = Task.dest / "hello.scala"
         Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) { classLoader =>
           val IRDLPrinterClass = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter")
+          println("class:\n")
+          println(IRDLPrinterClass)
           val printerMethod = IRDLPrinterClass.getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
+          println("method:\n")
+          println(printerMethod)
           val instance = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter$").getField("MODULE$")
-            printerMethod.invoke(instance, s.path.toString, gen.toString)
-        }
-        PathRef(gen)
+          println("instance:\n")
+          println(instance)
+          try {
+            printerMethod.invoke(null, s.path.toString, Task.dest.toString)
+          } catch {
+            case e: InvocationTargetException => throw Exception("Error during IRDL to Scala generation:\n" + e.getTargetException().getMessage())
+          }
+      }
+        PathRef(Task.dest)
       )
     }
 
     override def generatedSources = scalaFiles()
-
     def moduleDeps = Seq(core)
   }
 

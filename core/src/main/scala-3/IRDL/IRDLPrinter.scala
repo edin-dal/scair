@@ -1,13 +1,14 @@
 package scair.core.irdl_printer
 
 import fastparse.Parsed
-import scair.ir.Value
-import scair.dialects.irdl._
-import scair.Parser
 import scair.MLContext
+import scair.Parser
+import scair.dialects.irdl.*
 import scair.dialects.irdl.IRDL
-import scala.io.Source
+import scair.ir.Value
+
 import java.io.PrintWriter
+import scala.io.Source
 
 extension (operands: Operands)
 
@@ -48,7 +49,7 @@ extension (t: Type)
 
 object IRDLPrinter:
 
-  def IRDLFileToScalaFile(irdl: String, scala: String): Unit =
+  def IRDLFileToScalaFile(irdl: String, dir: String): Unit =
 
     val input = Source.fromFile(irdl)
 
@@ -60,7 +61,9 @@ object IRDLPrinter:
       pattern = parser.OperationPat(using _)
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
-    val printer = PrintWriter(scala)
+
+    val scalafile = s"$dir/${dialect.sym_name.data}.scala"
+    val printer = PrintWriter(scalafile)
     printIRDL(dialect)(using printer)
     printer.flush()
     printer.close()
@@ -103,7 +106,7 @@ object IRDLPrinter:
       case _ =>
     })
 
-    p.println("EmptyTuple]")
+    p.println("EmptyTuple]()")
 
   def printOperation(
       op: Operation

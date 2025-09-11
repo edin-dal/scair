@@ -2,7 +2,7 @@ package scair
 
 import scair.dialects.irdl._
 import scair.dialects.builtin._
-import scair.core.irdl_printer.printIRDL
+import scair.core.irdl_printer.IRDLPrinter.printIRDL
 
 import fastparse._
 import org.scalatest._
@@ -51,6 +51,7 @@ class IRDLPrinterTest extends AnyFlatSpec {
 
 import scair.dialects.builtin._
 import scair.ir._
+import scair.clair.macros._
 
 final case class complex(
   elem: Attribute,
@@ -67,7 +68,7 @@ final case class mul(
   res: Result[Attribute],
 ) extends DerivedOperation["cmath.mul", mul]
 
-val cmath = summonDialect[complex *: EmptyTuple, norm *: mul *: EmptyTuple]
+val cmath = summonDialect[complex *: EmptyTuple, norm *: mul *: EmptyTuple]()
 """.stripMargin
 
 }
