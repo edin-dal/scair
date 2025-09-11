@@ -181,15 +181,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
     def scalaFiles = Task { 
       irdlSources().map(s =>
         Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) { classLoader =>
-          val IRDLPrinterClass = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter")
-          println("class:\n")
-          println(IRDLPrinterClass)
-          val printerMethod = IRDLPrinterClass.getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
-          println("method:\n")
-          println(printerMethod)
-          val instance = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter$").getField("MODULE$")
-          println("instance:\n")
-          println(instance)
+          val printerMethod = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter").getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
           try {
             printerMethod.invoke(null, s.path.toString, Task.dest.toString)
           } catch {
