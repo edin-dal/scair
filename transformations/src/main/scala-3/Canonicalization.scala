@@ -6,12 +6,16 @@ import scair.ir.*
 import scair.transformations.*
 import scair.transformations.patterns.*
 
+def mightBeTerminator(op: Operation): Boolean =
+  op match
+    case _: IsTerminator | UnregisteredOperation => true 
+    case _                                       => false
+  
+
 // TODO: Move out
 val RemoveUnusedOperations = pattern {
-  case _: IsTerminator => PatternAction.Abort
-  case op: NoMemoryEffect if op.results.forall(_.uses.isEmpty) =>
+  case op: NoMemoryEffect if!mightBeTerminator(op) && op.results.forall(_.uses.isEmpty) =>
     PatternAction.Erase
-  case op: NoMemoryEffect => PatternAction.Abort
 }
 
 // TODO: Move out
