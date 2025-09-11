@@ -7,7 +7,6 @@ import scair.Parser.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
-import scair.core.constraints.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
@@ -213,29 +212,30 @@ def parseMacro(
         )
       }
 
-def extractConstraintVerify(
-    constraintExpr: Expr[ConstraintImpl[?]],
-    attr: Expr[Attribute]
-)(using Quotes): Expr[Either[String, Unit]] = '{
-  $constraintExpr.verify($attr)
-}
-
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?]
 )(using Quotes): Expr[Either[String, Operation]] =
-  val xyz: Seq[Expr[Either[String, Unit]]] = opDef.operands
+
+  val a = opDef.operands // val xyz: Seq[Expr[Either[String, Unit]]] =
     .filter(_.variadicity == Variadicity.Single)
     .collect(_ match
       case OperandDef(name, _, _, Some(constraint)) =>
         val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        extractConstraintVerify(constraint, '{ $mem.typ }))
+        '{ (ctx: scair.core.constraints.ConstraintContext) =>
+          $constraint.verify($mem.typ)(using ctx)
+        })
 
-  val chain = xyz.foldLeft[Expr[Either[String, Unit]]](
-    '{ Right(()) }
-  )((res, result) => '{ $res.flatMap(_ => $result) })
-
-  '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
+  '{
+    given ctx: scair.core.constraints.ConstraintContext =
+      scair.core.constraints.ConstraintContext()
+    ${
+      val chain = a.foldLeft[Expr[Either[String, Unit]]](
+        '{ Right(()) }
+      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
+      '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
+    }
+  }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
@@ -384,7 +384,7 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
           )
         )
       )
-    ).verify(dense, ConstraintContext())
+    ).verify(dense, scair.scairdl.constraints.ConstraintContext())
 
     for (s <- dense) yield s match {
       case right: IntegerAttr => right.value.data.toInt
