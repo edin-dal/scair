@@ -178,18 +178,43 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
       Lib.findSourceFiles(sources(), Seq("irdl")).map(PathRef(_))
     }
 
-    def scalaFiles = Task { 
-      irdlSources().map(s =>
+    // def scalaFiles = Task { 
+    //   irdlSources().map(s =>
+    //     Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) { classLoader =>
+    //       val printerMethod = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter").getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
+    //       try {
+    //         printerMethod.invoke(null, s.path.toString, Task.dest.toString)
+    //       } catch {
+    //         case e: InvocationTargetException => throw Exception("Error during IRDL to Scala generation:\n" + e.getTargetException().getMessage())
+    //       }
+    //   }
+    //     PathRef(Task.dest)
+    //   )
+    // }
+
+    def scalaFiles = Task {
+      val irdlFiles = irdlSources()
+      
+      irdlFiles.zipWithIndex.map { case (sourceFile, index) =>
+        // Create a unique subdirectory for each IRDL file
+        val destDir = Task.dest / s"irdl_$index"
+        os.makeDir.all(destDir)
+        
         Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) { classLoader =>
-          val printerMethod = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter").getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
+          val printerMethod = classLoader.loadClass("scair.core.irdl_printer.IRDLPrinter")
+            .getMethod("IRDLFileToScalaFile", classOf[String], classOf[String])
+          
           try {
-            printerMethod.invoke(null, s.path.toString, Task.dest.toString)
+            printerMethod.invoke(null, sourceFile.path.toString, destDir.toString)
           } catch {
-            case e: InvocationTargetException => throw Exception("Error during IRDL to Scala generation:\n" + e.getTargetException().getMessage())
+            case e: InvocationTargetException => 
+              throw Exception(s"Error during IRDL to Scala generation for ${sourceFile.path}:\n" + 
+                            e.getTargetException().getMessage())
           }
+        }
+        
+        PathRef(destDir)
       }
-        PathRef(Task.dest)
-      )
     }
 
     override def generatedSources = scalaFiles()

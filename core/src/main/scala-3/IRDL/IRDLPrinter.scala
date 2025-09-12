@@ -6,6 +6,7 @@ import scair.Parser
 import scair.dialects.irdl.*
 import scair.dialects.irdl.IRDL
 import scair.ir.Value
+import scair.dialects.builtin.ArrayAttribute
 
 import java.io.PrintWriter
 import scala.io.Source
@@ -20,6 +21,11 @@ extension (results: Results)
   def info: Seq[(String, Value[AttributeType])] =
     results.names.map(_.data) zip results.args
 
+extension (attributes: Attributes)
+
+  def info: Seq[(String, Value[AttributeType])] =
+    attributes.attribute_value_names.map(_.data) zip attributes.args
+
 extension (parameters: Parameters)
 
   def info: Seq[(String, Value[AttributeType])] =
@@ -27,13 +33,29 @@ extension (parameters: Parameters)
 
 extension (operation: Operation)
 
-  def operandDefs = operation.body.blocks.head.operations.collect {
-    case o: Operands => o
-  }.head
+  def operandDefs = {
+    val x = operation.body.blocks.head.operations.collect { case o: Operands =>
+      o
+    }
+    if x.isEmpty then Operands(Seq(), ArrayAttribute(Seq()))
+    else x.head
+  }
 
-  def resultDefs = operation.body.blocks.head.operations.collect {
-    case r: Results => r
-  }.head
+  def resultDefs = {
+    val x = operation.body.blocks.head.operations.collect { case r: Results =>
+      r
+    }
+    if x.isEmpty then Results(Seq(), ArrayAttribute(Seq()))
+    else x.head
+  }
+
+  def attributeDefs = {
+    val x = operation.body.blocks.head.operations.collect {
+      case r: Attributes => r
+    }
+    if x.isEmpty then Attributes(Seq(), ArrayAttribute(Seq()))
+    else x.head
+  }
 
 extension (attribute: Attribute)
 
@@ -101,7 +123,7 @@ object IRDLPrinter:
 
     dialect.body.blocks.head.operations.foreach({
       case o: Operation =>
-        p.print(o.sym_name.data)
+        p.print(o.sym_name.data.capitalize)
         p.print(" *: ")
       case _ =>
     })
@@ -115,8 +137,8 @@ object IRDLPrinter:
     val className = op.sym_name.data
     val name = s"$dialectName.$className"
 
-    p.print("final case class ")
-    p.print(className)
+    p.print("case class ")
+    p.print(className.capitalize)
     p.println("(")
 
     op.operandDefs.info.foreach((name, tpe) =>
@@ -125,6 +147,14 @@ object IRDLPrinter:
       p.print(": Operand[")
       printConstraint(tpe)
       p.println("],")
+    )
+
+    op.attributeDefs.info.foreach((name, tpe) =>
+      p.print("  ")
+      p.print(name)
+      p.print(": ")
+      printConstraint(tpe)
+      p.println(",")
     )
 
     op.resultDefs.info.foreach((name, tpe) =>
@@ -138,7 +168,7 @@ object IRDLPrinter:
     p.print(") extends DerivedOperation[\"")
     p.print(name)
     p.print("\", ")
-    p.print(className)
+    p.print(className.capitalize)
     p.println("]")
     p.println()
 

@@ -1,13 +1,8 @@
-"irdl.dialect"() <{sym_name = "cmath"}> ({
-  
-  "irdl.type"() <{sym_name = "complex"}> ({
-    %2 = "irdl.any"() : () -> !irdl.attribute<>
-    "irdl.parameters"(%2) <{names = ["elem"]}> : (!irdl.attribute<>) -> ()
-  }) : () -> ()
+"irdl.dialect"() <{sym_name = "samplemath"}> ({
 
-  "irdl.operation"() <{sym_name = "norm"}> ({
+  "irdl.operation"() <{sym_name = "constant"}> ({
     %3 = "irdl.any"() : () -> !irdl.attribute<>
-    "irdl.operands"(%3) <{names = ["in"]}> : (!irdl.attribute<>) -> ()
+    "irdl.attributes"(%3) <{attribute_value_names = ["in"]}> : (!irdl.attribute<>) -> ()
     "irdl.results"(%3) <{names = ["out"]}> : (!irdl.attribute<>) -> ()
   }) : () -> ()
 
