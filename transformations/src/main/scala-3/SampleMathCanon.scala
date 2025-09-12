@@ -17,12 +17,16 @@ val MulMulConstant = pattern {
     Seq(Constant(c0 * c1, cv))
 }
 
+val DeadConstant = pattern {
+  case Constant(_, value) if value.uses.isEmpty => PatternAction.Erase
+}
+
 object SampleMathCanon extends ModulePass {
   override val name = "sample-math-canon"
 
   override def transform(op: Operation): Operation = {
     val prw = new PatternRewriteWalker(
-      GreedyRewritePatternApplier(Seq(MulMulConstant))
+      GreedyRewritePatternApplier(Seq(MulMulConstant, DeadConstant))
     )
     prw.rewrite_op(op)
     return op
