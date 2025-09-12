@@ -5,7 +5,6 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
 import scair.transformations.patterns.*
-import scair.transformations.canonicalization.RemoveUnusedOperations
 
 // c0 * c1 => c0 * c1 :sunglasses:
 val MulMulConstant = pattern {
@@ -23,7 +22,7 @@ object SampleMathCanon extends ModulePass {
 
   override def transform(op: Operation): Operation = {
     val prw = new PatternRewriteWalker(
-      GreedyRewritePatternApplier(Seq(MulMulConstant, RemoveUnusedOperations))
+      GreedyRewritePatternApplier(Seq(MulMulConstant))
     )
     prw.rewrite_op(op)
     return op
