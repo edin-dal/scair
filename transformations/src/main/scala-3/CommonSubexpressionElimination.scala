@@ -6,7 +6,7 @@ import scair.transformations.*
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set
 
-case class OperationInfo(val op: Operation) {
+final case class OperationInfo(val op: Operation) {
 
   override def hashCode(): Int =
     (op.name, op.attributes, op.properties, op.results.typ, op.operands)
