@@ -146,13 +146,15 @@ trait Rewriter {
       )
     }
 
-    insert_ops_before(op, ops)
+    RewriteMethods.insert_ops_before(op, ops)
 
     for ((old_res, new_res) <- (op.results zip results)) {
       replace_value(old_res, new_res)
     }
 
-    erase_op(op, safe_erase = false)
+    RewriteMethods.erase_op(op, safe_erase = false)
+    operation_removal_handler(op)
+    ops.foreach(operation_insertion_handler)
   }
 
   def replace_value(
