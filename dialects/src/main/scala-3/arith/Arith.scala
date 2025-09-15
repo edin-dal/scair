@@ -282,7 +282,7 @@ case class AndI(
 
 case class BitCast(
     val in: Operand[BitcastType],
-    val out: Operand[BitcastType]
+    val out: Result[BitcastType]
 ) extends DerivedOperation["arith.bitcast", BitCast]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -356,7 +356,7 @@ case class DivUI(
 
 case class ExtF(
     val in: Operand[FloatType],
-    val out: Operand[FloatType],
+    val out: Result[FloatType],
     val fastmath: Option[FastMathFlagsAttr] = None
 ) extends DerivedOperation["arith.extf", ExtF]
     with SameOperandsAndResultShape
@@ -365,7 +365,7 @@ case class ExtF(
 
 case class ExtSI(
     val in: Operand[SignlessFixedWidthIntegerLike],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.extsi", ExtSI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -373,7 +373,7 @@ case class ExtSI(
 
 case class ExtUI(
     val in: Operand[SignlessFixedWidthIntegerLike],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.extui", ExtUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -389,14 +389,14 @@ case class FloorDivSI(
 
 case class FPToSI(
     val in: Operand[FloatType],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.fptosi", FPToSI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
 
 case class FPToUI(
     val in: Operand[FloatType],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.fptoui", FPToUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
