@@ -125,6 +125,8 @@ trait ScairModule extends ScairSettings {
     override def mvnDeps = agnosticModule().mvnDeps
 
     override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
+    
+    override def mainClass: Simple[Option[String]] = agnosticModule().mainClass()
   }
 
   lazy val graal: GraalScairModule = new GraalScairModule {
@@ -132,6 +134,8 @@ trait ScairModule extends ScairSettings {
     override def mvnDeps = agnosticModule().mvnDeps
 
     override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
+    
+    override def mainClass: Simple[Option[String]] = agnosticModule().mainClass()
   }
 
   lazy val native: NativeScairModule = new NativeScairModule {
@@ -139,6 +143,8 @@ trait ScairModule extends ScairSettings {
     override def mvnDeps = agnosticModule().mvnDeps
 
     override def generatedSources: Simple[Seq[PathRef]] = agnosticModule().generatedSources
+    
+    override def mainClass: Simple[Option[String]] = agnosticModule().mainClass()
   }
 
   override def sources: Simple[Seq[PathRef]] = super.sources() :+ PathRef(moduleDir / "build")
@@ -200,9 +206,26 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
     def moduleDeps = Seq(dialects)
   }
 
-  object tools extends ScairModule  {
+  object opt extends ScairModule {
+
+    override def moduleDir: Path = tools.moduleDir
     def moduleDeps = Seq(dialects, transformations)
-    def mainClass = Some("scair.tools.ScairOpt")
+
+    override def mainClass = Some("scair.tools.ScairOpt")
+    
+  }
+
+  object runTool extends ScairModule {
+
+    override def moduleDir: Path = tools.moduleDir
+    def moduleDeps = Seq(dialects, transformations)
+
+    override def mainClass = Some("scair.tools.ScairRun")
+    
+  }
+
+  object tools extends ScairModule  {
+    def moduleDeps = Seq(opt, runTool)
   }
 
   // Top-level commands and helpers
@@ -249,6 +272,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
   trait filechecks extends DefaultTaskModule {
 
     def scairOpt : Task[PathRef]
+    def scairRun : Task[PathRef]
 
     // Make filechecks runnable directly as ./mill filechecks
     override def defaultTask(): String = "run"
@@ -257,21 +281,25 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
       // Get the directory root to use as lit's working directory
       val rootPath = rootModule().moduleDir
       // Run lit, forwarding it the relevant scair-opt through the env var
-      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit, env = Map(("SCAIR_OPT" -> scairOpt().path.toString)))
+      val litStatus = os.proc("lit", "tests/filecheck", "-v").call(cwd = rootPath, propagateEnv = true, stdout = os.Inherit, stderr = os.Inherit, env = Map(("SCAIR_OPT" -> scairOpt().path.toString), ("SCAIR_RUN" -> scairRun().path.toString)))
       if (litStatus.exitCode != 0) {
         sys.error(f"Filechecks failed")
       }
     }
   }
   object filechecks extends filechecks:
-    override def scairOpt = tools.jvm.launcher
+    override def scairOpt = opt.jvm.launcher
+    override def scairRun = runTool.jvm.launcher
 
     object scoverage extends filechecks:
-      override def scairOpt = tools.jvm.scoverage.launcher
+      override def scairOpt = opt.jvm.scoverage.launcher
+      override def scairRun = runTool.jvm.launcher
 
     object graal extends filechecks:
-      override def scairOpt = tools.graal.nativeImage
+      override def scairOpt = opt.graal.nativeImage
+      override def scairRun = runTool.jvm.launcher
 
     object native extends filechecks:
-      override def scairOpt = tools.native.nativeLink
+      override def scairOpt = opt.native.nativeLink
+      override def scairRun = runTool.jvm.launcher
 }
