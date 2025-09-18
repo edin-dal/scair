@@ -36,7 +36,7 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
   TypeRepr.of(using tpe) match
     case AppliedType(op, List(attr, constraint)) =>
       constraint.asType match
-        case '[type t <: Constraint; `t`] =>
+        case '[type t <: Constraint[?]; `t`] =>
           Expr.summon[ConstraintImpl[t]] match
             case Some(i) => Some(i)
             case None    =>

@@ -16,7 +16,7 @@ import scala.quoted.*
 ||     TOP LEVEL TRAITS     ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-trait Constraint
+trait Constraint[+A <: Attribute]
 
 class ConstraintContext() {
 
@@ -25,7 +25,7 @@ class ConstraintContext() {
 
 }
 
-trait ConstraintImpl[c <: Constraint] {
+trait ConstraintImpl[c <: Constraint[?]] {
 
   def verify(attr: Attribute)(using
       ctx: ConstraintContext
@@ -33,15 +33,18 @@ trait ConstraintImpl[c <: Constraint] {
 
 }
 
-infix type !>[A <: Attribute, C <: Constraint] = A
+infix type !>[A <: Attribute, C <: Constraint[A]] = A
+
+type @>[C <: Constraint[?]] = C match 
+  case Constraint[of] => of
 
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||    CONSTRAINTS    ||
 \*≡==---==≡≡≡==---==≡*/
 
-trait EqAttr[To <: Attribute] extends Constraint
+trait EqAttr[To <: Attribute] extends Constraint[To]
 
-trait Var[To <: String] extends Constraint
+trait Var[To <: String] extends Constraint[Attribute]
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||    CONSTRAINTIMPL GIVENS    ||
