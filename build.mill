@@ -96,7 +96,9 @@ trait JvmScairModule extends ScalafixModule with PlatformScalaModule with Sonaty
     lazy val test = new ScairScoverageTests {}
   }
   
-  override lazy val scoverage : ScairScoverageData = new ScairScoverageData {}
+  override lazy val scoverage : ScairScoverageData = new ScairScoverageData {
+    override def mainClass = outer().mainClass
+  }
 
   override def publishVersion = VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
@@ -293,7 +295,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule {
 
     object scoverage extends filechecks:
       override def scairOpt = opt.jvm.scoverage.launcher
-      override def scairRun = runTool.jvm.launcher
+      override def scairRun = runTool.jvm.scoverage.launcher
 
     object graal extends filechecks:
       override def scairOpt = opt.graal.nativeImage
