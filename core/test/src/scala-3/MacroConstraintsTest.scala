@@ -19,8 +19,8 @@ case class MulFEq(
 ) extends DerivedOperation["cmath.mul", MulFEq]
 
 case class MulFVar(
-    lhs: Operand[FloatType !> T],
-    rhs: Operand[FloatType !> T],
+    lhs: Operand[FloatType !> (FloatType && T)],
+    rhs: Operand[FloatType !> (FloatType && T)],
     result: Result[FloatType]
 ) extends DerivedOperation["cmath.mul", MulFVar]
 
