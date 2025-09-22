@@ -62,6 +62,7 @@ trait ScairRunBase {
     }
 
     // Parse content
+    // ONE CHUNK ONLY
 
     val input_module = {
       val parser = new scair.Parser(ctx, parsed_args)
@@ -76,9 +77,27 @@ trait ScairRunBase {
       }
     }
 
-    // Here goes the magic
+    if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
+        throw new Exception(input_module.left.get)
 
+    // Here goes the magic
     println("Such interpretation, much wow")
+
+    /*
+     * NOTES:
+     * needs interpreter class
+     * some sort of table/dictionary for operations
+     * main call_operation function (op, args) to kickstart interpretation
+     *   
+     * FLOW:
+     * instantiate interpreter
+     * register implementations
+     * parsing already done
+     * getting args already done?
+     * interpreter call op function
+     * get result
+     */
+
   }
 
 }
