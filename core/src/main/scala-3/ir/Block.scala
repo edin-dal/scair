@@ -1,5 +1,7 @@
 package scair.ir
 
+import scala.collection.mutable
+
 // import block_operations.BlockOperations
 
 // ██╗ ██████╗░
@@ -53,6 +55,18 @@ case class Block private (
     val arguments: ListType[Value[Attribute]],
     val operations: BlockOperations
 ) extends IRNode {
+
+  final override def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
+        mutable.Map.empty
+  ): Block =
+    Block(
+      arguments_types = arguments.map(_.typ),
+      (args) =>
+        valueMapper addAll (arguments zip args)
+        operations.map(_.deepCopy)
+    )
 
   final override def parent: Option[Region] = container_region
 
