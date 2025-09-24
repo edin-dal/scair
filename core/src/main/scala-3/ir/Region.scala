@@ -1,5 +1,7 @@
 package scair.ir
 
+import scala.collection.mutable
+
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
 // ██║ ██████╔╝
@@ -14,6 +16,13 @@ package scair.ir
 case class Region(
     blocks: Seq[Block]
 ) extends IRNode {
+
+  final override def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
+        mutable.Map.empty
+  ): Region =
+    Region(blocks.map(_.deepCopy))
 
   final override def parent = container_operation
 
