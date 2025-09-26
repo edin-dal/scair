@@ -22,12 +22,15 @@ case class Add(
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.add", Add]
     with NoMemoryEffect
+    // TODO: Should probably handle fastmath flags!
+    with Commutative
 
 case class Constant(
     value: ArrayAttribute[IntegerAttr | FloatAttr],
     complex: Result[ComplexType]
 ) extends DerivedOperation["complex.constant", Constant]
     with NoMemoryEffect
+    with ConstantLike
 
 case class Create(
     real: Operand[IndexType | IntegerType | FloatType],
@@ -57,6 +60,7 @@ case class Mul(
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.mul", Mul]
     with NoMemoryEffect
+    with Commutative
 
 case class Neg(
     complex: Operand[ComplexType],

@@ -144,6 +144,25 @@ val MulOne = pattern {
     (Seq(), Seq(a))
 }
 
+// complex.mul(a, complex.constant<0.0, 0.0>) -> complex.constant<0.0, 0.0>
+val MulZero = pattern {
+  case Mul(
+        a,
+        zero @ Owner(
+          Constant(
+            ArrayAttribute(
+              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+            ),
+            _
+          )
+        ),
+        _,
+        _
+      ) if r == 0.0 && i == 0.0 =>
+    (Seq(), Seq(zero))
+
+}
+
 val complexCanonicalizationPatterns = Seq(
   CreateReIm,
   ReConstant,
@@ -158,5 +177,6 @@ val complexCanonicalizationPatterns = Seq(
   NegNeg,
   ReNegCreate,
   ImNegCreate,
-  MulOne
+  MulOne,
+  MulZero
 )
