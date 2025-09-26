@@ -284,7 +284,7 @@ object Parser {
   }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (DecDigits ~~ "." ~~ DecDigits).!
+    (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).!
       ~~ (CharIn("eE")
         ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
