@@ -1,6 +1,5 @@
 package scair.transformations
 
-import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
 import scala.annotation.tailrec
@@ -318,27 +317,32 @@ class PatternRewriteWalker(
 
   private val worklist: LinkedHashSet[Operation] = LinkedHashSet.empty
 
-  def rewrite_module(module: ModuleOp): Unit = {
-    return rewrite_op(module)
-  }
-
-  def rewrite_op(op: Operation): Unit = {
+  def rewrite(op: Operation): Unit =
     populate_worklist(op)
-    var op_was_modified = process_worklist()
+    return process_worklist()
 
-    return op_was_modified
-  }
+  def rewrite(block: Block): Unit =
+    populate_worklist(block)
+    return process_worklist()
+
+  def rewrite(region: Region): Unit =
+    populate_worklist(region)
+    return process_worklist()
 
   private def pop_worklist: Operation =
     val op = worklist.head
     worklist.remove(op)
     op
 
+  inline private def populate_worklist(region: Region): Unit =
+    region.blocks.foreach(populate_worklist)
+
+  inline private def populate_worklist(block: Block): Unit =
+    block.operations.foreach(populate_worklist)
+
   private def populate_worklist(op: Operation): Unit = {
     worklist += op
-    op.regions.foreach((x: Region) =>
-      x.blocks.foreach((y: Block) => y.operations.foreach(populate_worklist(_)))
-    )
+    op.regions.foreach(populate_worklist)
   }
 
   private def clear_worklist(op: Operation): Unit = {

@@ -50,16 +50,11 @@ val InputFuse = pattern { case matched: UnrealizedConversionCastOp =>
     case _ => PatternAction.Abort
 }
 
-object ReconcileUnrealizedCasts extends ModulePass {
+object ReconcileUnrealizedCasts extends WalkerPass {
   override val name = "reconcile-unrealized-casts"
 
-  override def transform(op: Operation): Operation = {
-    val prw = new PatternRewriteWalker(
-      GreedyRewritePatternApplier(Seq(SameType, Unused, InputFuse))
-    )
-    prw.rewrite_op(op)
-
-    return op
-  }
+  override final val walker = PatternRewriteWalker(
+    GreedyRewritePatternApplier(Seq(SameType, Unused, InputFuse))
+  )
 
 }

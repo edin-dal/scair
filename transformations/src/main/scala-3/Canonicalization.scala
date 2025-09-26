@@ -243,37 +243,32 @@ val MulIFold = pattern {
     Constant(c0 * c1, Result(c0.typ))
 }
 
-object Canonicalize extends ModulePass {
+object Canonicalize extends WalkerPass {
   override val name = "canonicalize"
 
-  override def transform(op: Operation): Operation = {
-    val prw = new PatternRewriteWalker(
-      GreedyRewritePatternApplier(
-        Seq(
-          RemoveUnusedOperations,
-          Commute,
-          AddIFold,
-          AddIAddConstant,
-          AddISubConstantRHS,
-          AddISubConstantLHS,
-          AddIMulNegativeOneRhs,
-          AddIMulNegativeOneLhs,
-          MulIMulIConstant,
-          SubIFold,
-          SubIRHSAddConstant,
-          SubILHSAddConstant,
-          SubIRHSSubConstantRHS,
-          SubIRHSSubConstantLHS,
-          SubILHSSubConstantRHS,
-          SubILHSSubConstantLHS,
-          SubISubILHSRHSLHS,
-          MulIFold
-        )
+  override final val walker = PatternRewriteWalker(
+    GreedyRewritePatternApplier(
+      Seq(
+        RemoveUnusedOperations,
+        Commute,
+        AddIFold,
+        AddIAddConstant,
+        AddISubConstantRHS,
+        AddISubConstantLHS,
+        AddIMulNegativeOneRhs,
+        AddIMulNegativeOneLhs,
+        MulIMulIConstant,
+        SubIFold,
+        SubIRHSAddConstant,
+        SubILHSAddConstant,
+        SubIRHSSubConstantRHS,
+        SubIRHSSubConstantLHS,
+        SubILHSSubConstantRHS,
+        SubILHSSubConstantLHS,
+        SubISubILHSRHSLHS,
+        MulIFold
       )
     )
-    prw.rewrite_op(op)
-
-    return op
-  }
+  )
 
 }

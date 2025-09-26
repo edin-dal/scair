@@ -40,7 +40,7 @@ class PatternRewriterTest extends AnyFlatSpec {
     // Apply the pattern
     val walker = PatternRewriteWalker(TestPattern)
 
-    walker.rewrite_op(input)
+    walker.rewrite(input)
     val baos = ByteArrayOutputStream()
     Printer(p = new PrintWriter(baos)).print(input)
     baos.toString() shouldEqual
