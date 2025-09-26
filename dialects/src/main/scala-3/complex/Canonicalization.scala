@@ -6,8 +6,6 @@ import scair.dialects.complex.*
 import scair.ir.*
 import scair.transformations.patterns.*
 
-// NOTES: All patterns here are "fold"
-
 // complex.create(complex.re(op), complex.im(op)) -> op
 val CreateReIm = pattern {
   case Create(Owner(Re(op, _)), Owner(Im(oq, _)), _) if op eq oq =>
