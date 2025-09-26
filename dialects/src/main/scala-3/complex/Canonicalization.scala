@@ -1,0 +1,164 @@
+package scair.dialects.complex.canonicalization
+
+import scair.dialects.arith
+import scair.dialects.builtin.*
+import scair.dialects.complex.*
+import scair.ir.*
+import scair.transformations.patterns.*
+
+// NOTES: All patterns here are "fold"
+
+// complex.create(complex.re(op), complex.im(op)) -> op
+val CreateReIm = pattern {
+  case Create(Owner(Re(op, _)), Owner(Im(oq, _)), _) if op eq oq =>
+    (Seq(), Seq(op))
+}
+
+// complex.re(complex.constant(a, b)) -> a
+val ReConstant = pattern {
+  case op @ Re(Owner(Constant(ArrayAttribute(Seq(r, _)), _)), _) =>
+    arith.Constant(r, op.results.head.copy())
+}
+
+// complex.re(complex.create(a, b)) -> a
+val ReCreate = pattern { case Re(Owner(Create(a, b, _)), _) =>
+  (Seq(), Seq(a))
+}
+
+// complex.im(complex.constant(a, b)) -> b
+val ImConstant = pattern {
+  case op @ Im(Owner(Constant(ArrayAttribute(Seq(_, i)), _)), _) =>
+    arith.Constant(i, op.results.head.copy())
+}
+
+// complex.im(complex.create(a, b)) -> b
+val ImCreate = pattern { case Im(Owner(Create(a, b, _)), _) =>
+  (Seq(), Seq(b))
+}
+
+// complex.add(complex.sub(a, b), b) -> a
+val AddSub = pattern {
+  case Add(
+        Owner(Sub(a, b, _, _)),
+        bb,
+        _,
+        _
+      ) if b eq bb =>
+    (Seq(), Seq(a))
+}
+
+// complex.add(b, complex.sub(a, b)) -> a
+val AddSubRHS = pattern {
+  case Add(
+        b,
+        Owner(Sub(a, bb, _, _)),
+        _,
+        _
+      ) if b eq bb =>
+    (Seq(), Seq(a))
+}
+
+// complex.add(a, complex.constant<0.0, 0.0>) -> a
+val AddZero = pattern {
+  case Add(
+        a,
+        Owner(
+          Constant(
+            ArrayAttribute(
+              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+            ),
+            _
+          )
+        ),
+        _,
+        _
+      ) if r == 0.0 && i == 0.0 =>
+    (Seq(), Seq(a))
+}
+
+// complex.sub(complex.add(a, b), b) -> a
+val SubAdd = pattern {
+  case Sub(
+        Owner(Add(a, b, _, _)),
+        bb,
+        _,
+        _
+      ) if b eq bb =>
+    (Seq(), Seq(a))
+}
+
+// complex.sub(a, complex.constant<0.0, 0.0>) -> a
+val SubZero = pattern {
+  case Sub(
+        a,
+        Owner(
+          Constant(
+            ArrayAttribute(
+              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+            ),
+            _
+          )
+        ),
+        _,
+        _
+      ) if r == 0.0 && i == 0.0 =>
+    (Seq(), Seq(a))
+}
+
+// complex.neg(complex.neg(a)) -> a
+val NegNeg = pattern { case Neg(Owner(Neg(a, _, _)), _, _) =>
+  (Seq(), Seq(a))
+}
+
+// complex.re(complex.neg(complex.create(a, b))) -> -a
+val ReNegCreate = pattern {
+  case Re(
+        Owner(Neg(Owner(Create(a @ Value(at: FloatType), _, _)), _, fastmath)),
+        _
+      ) =>
+    arith.NegF(a.asInstanceOf[Value[FloatType]], Result(at), fastmath)
+}
+
+// complex.im(complex.neg(complex.create(a, b))) -> -b
+val ImNegCreate = pattern {
+  case Im(
+        Owner(Neg(Owner(Create(_, b @ Value(bt: FloatType), _)), _, fastmath)),
+        _
+      ) =>
+    arith.NegF(b.asInstanceOf[Value[FloatType]], Result(bt), fastmath)
+}
+
+// complex.mul(a, complex.constant<1.0, 0.0>) -> a
+val MulOne = pattern {
+  case Mul(
+        a,
+        Owner(
+          Constant(
+            ArrayAttribute(
+              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+            ),
+            _
+          )
+        ),
+        _,
+        _
+      ) if r == 1.0 && i == 0.0 =>
+    (Seq(), Seq(a))
+}
+
+val complexCanonicalizationPatterns = Seq(
+  CreateReIm,
+  ReConstant,
+  ReCreate,
+  ImConstant,
+  ImCreate,
+  AddSub,
+  AddSubRHS,
+  AddZero,
+  SubAdd,
+  SubZero,
+  NegNeg,
+  ReNegCreate,
+  ImNegCreate,
+  MulOne
+)

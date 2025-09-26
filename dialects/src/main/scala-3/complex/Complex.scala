@@ -13,6 +13,7 @@ case class Abs(
     complex: Operand[ComplexType],
     result: Result[FloatType]
 ) extends DerivedOperation["complex.abs", Abs]
+    with NoMemoryEffect
 
 case class Add(
     lhs: Operand[ComplexType],
@@ -20,17 +21,20 @@ case class Add(
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.add", Add]
+    with NoMemoryEffect
 
 case class Constant(
-    value: ArrayAttribute[IndexType | IntegerType | FloatType],
+    value: ArrayAttribute[IntegerAttr | FloatAttr],
     complex: Result[ComplexType]
 ) extends DerivedOperation["complex.constant", Constant]
+    with NoMemoryEffect
 
 case class Create(
     real: Operand[IndexType | IntegerType | FloatType],
     imaginary: Operand[IndexType | IntegerType | FloatType],
     complex: Result[ComplexType]
 ) extends DerivedOperation["complex.create", Create]
+    with NoMemoryEffect
 
 case class Div(
     lhs: Operand[ComplexType],
@@ -38,11 +42,13 @@ case class Div(
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.div", Div]
+    with NoMemoryEffect
 
 case class Im(
     complex: Operand[ComplexType],
     imaginary: Result[IndexType | IntegerType | FloatType]
 ) extends DerivedOperation["complex.im", Im]
+    with NoMemoryEffect
 
 case class Mul(
     lhs: Operand[ComplexType],
@@ -50,17 +56,20 @@ case class Mul(
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.mul", Mul]
+    with NoMemoryEffect
 
 case class Neg(
     complex: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.neg", Neg]
+    with NoMemoryEffect
 
 case class Re(
     complex: Operand[ComplexType],
     real: Result[IndexType | IntegerType | FloatType]
 ) extends DerivedOperation["complex.re", Re]
+    with NoMemoryEffect
 
 case class Sub(
     lhs: Operand[ComplexType],
@@ -68,6 +77,7 @@ case class Sub(
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
 ) extends DerivedOperation["complex.sub", Sub]
+    with NoMemoryEffect
 
 object ComplexAttr:
 
