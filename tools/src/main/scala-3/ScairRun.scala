@@ -7,6 +7,9 @@ import scair.ir.*
 import scopt.OParser
 
 import scala.io.Source
+import scair.dialects.builtin.ModuleOp
+import scair.dialects.func
+import scair.dialects.arith
 
 trait ScairRunBase {
   val ctx = MLContext()
@@ -80,8 +83,17 @@ trait ScairRunBase {
     if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
         throw new Exception(input_module.left.get)
 
-    // Here goes the magic
-    println("Such interpretation, much wow")
+    val module = input_module.right.get.asInstanceOf[ModuleOp]
+    val main_op = module.body.blocks.head.operations(0).asInstanceOf[func.Func]
+
+    // assuming main function only for now
+    val main_body = main_op.body
+    val return_val = main_body.blocks.head.operations.last.asInstanceOf[func.Return].operands.head.owner.getOrElse(0)
+    val constant = return_val.asInstanceOf[arith.Constant].value
+    println(constant)
+
+
+    
 
     /*
      * NOTES:
@@ -97,6 +109,8 @@ trait ScairRunBase {
      * interpreter call op function
      * get result
      */
+
+
 
   }
 
