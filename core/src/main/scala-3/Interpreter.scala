@@ -1,7 +1,10 @@
 package scair
 
 import scair.ir.*
+import scair.dialects.builtin.ModuleOp
 
-object Interpreter {
-  
+class Interpreter {
+  def interpret_module(module: ModuleOp): Operation = {
+    return module
+  }
 }

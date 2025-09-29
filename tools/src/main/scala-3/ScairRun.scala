@@ -1,6 +1,8 @@
 package scair.tools
 
 import scair.MLContext
+import scair.AttrParser
+import scair.Interpreter
 import scair.TransformContext
 import scair.core.utils.Args
 import scair.ir.*
@@ -36,6 +38,15 @@ trait ScairRunBase {
     for (pass <- allPasses) {
       transformCtx.registerPass(pass)
     }
+  }
+
+  def interpret(op: Operation): Attribute = {
+    var returnVal: Attribute = null
+    op match {
+      case constant: arith.Constant =>
+        returnVal = constant.value
+    }
+    return returnVal
   }
 
   def run(args: Array[String]): Unit = {
@@ -84,13 +95,19 @@ trait ScairRunBase {
         throw new Exception(input_module.left.get)
 
     val module = input_module.right.get.asInstanceOf[ModuleOp]
+
+    // main function
     val main_op = module.body.blocks.head.operations(0).asInstanceOf[func.Func]
 
     // assuming main function only for now
-    val main_body = main_op.body
-    val return_val = main_body.blocks.head.operations.last.asInstanceOf[func.Return].operands.head.owner.getOrElse(0)
-    val constant = return_val.asInstanceOf[arith.Constant].value
-    println(constant)
+    // very basic return constant implementation
+    // extend to evaluate other ops instead of just constant
+    val main_return_op = main_op.body.blocks.head.operations.last.asInstanceOf[func.Return]
+    val main_return_parent = main_return_op.operands.head.owner.getOrElse(0).asInstanceOf[Operation]
+    println(main_return_parent)
+
+    val output = interpret(main_return_parent)
+    println(output)
 
 
     
