@@ -8,6 +8,7 @@ import scair.dialects.affine.AffineDialect
 import scair.dialects.arith.ArithDialect
 import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.cmath.cmath
+import scair.dialects.complex.Complex
 import scair.dialects.func.FuncDialect
 import scair.dialects.irdl.IRDL
 import scair.dialects.llvm.LLVMDialect
@@ -28,6 +29,7 @@ import scair.transformations.reconcile.ReconcileUnrealizedCasts
 val allDialects: Seq[Dialect] =
   Seq(
     BuiltinDialect,
+    Complex,
     MathDialect,
     TupleStreamDialect,
     DBOps,

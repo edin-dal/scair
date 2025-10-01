@@ -181,6 +181,12 @@ final case class IndexType()
   override def custom_print(p: Printer) = p.print("index")
 }
 
+final case class ComplexType(
+    tpe: IntegerType | IndexType | FloatType
+) extends DerivedAttribute["builtin.complex", ComplexType]:
+
+  override def custom_print(p: Printer) = p.print("complex<", tpe, ">")(using 0)
+
 /*≡==--==≡≡≡≡==--=≡≡*\
 || ARRAY ATTRIBUTE  ||
 \*≡==---==≡≡==---==≡*/
