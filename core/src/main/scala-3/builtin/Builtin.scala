@@ -140,6 +140,34 @@ final case class IntegerAttr(
     IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
   }
 
+  def divSI(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot divide (signed) IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+    
+    // TODO: Make it correct
+    IntegerAttr(IntData(this.value.value / that.value.value), this.typ)
+  }
+
+  def divUI(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot divide (unsigned) IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    // TODO: Handle index type correctly maybe...
+    val intWidth = this.typ.asInstanceOf[IntegerType].width.value
+    val mask = (BigInt(1) << intWidth.toInt) - 1
+    val lhs = this.value.value & mask
+    val rhs = that.value.value & mask
+
+    // TODO: Make it correct
+    IntegerAttr(IntData(lhs / rhs), this.typ)
+  }
+
   override def custom_print(p: Printer) = (value, typ) match {
     case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
     case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")

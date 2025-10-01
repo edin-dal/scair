@@ -10,6 +10,7 @@ import scopt.OParser
 
 import scala.io.Source
 import scair.dialects.builtin.ModuleOp
+import scair.dialects.builtin.IntegerAttr
 import scair.dialects.func
 import scair.dialects.arith
 
@@ -41,12 +42,94 @@ trait ScairRunBase {
   }
 
   def interpret(op: Operation): Attribute = {
-    var returnVal: Attribute = null
+    var interpretedVal: Attribute = null
     op match {
       case constant: arith.Constant =>
-        returnVal = constant.value
+        interpretedVal = constant.value
+      // TODO: handling block arguments for all arithmetic operations
+      case addIOp: arith.AddI =>
+        val lhs = addIOp.lhs.owner.get
+        val rhs = addIOp.rhs.owner.get
+        (lhs, rhs) match {
+          case (l: Operation, r: Operation) =>
+            val interpretedL = interpret(l)
+            val interpretedR = interpret(r)
+            (interpretedL, interpretedR) match {
+              case (l: IntegerAttr, r: IntegerAttr) =>
+                interpretedVal = l + r
+              case _ =>
+                  throw new Exception("Unsupported operand types for AddI")
+            }
+          case _ =>
+            throw new Exception("Expected operations as operands for AddI")
+        }
+      case subIOp: arith.SubI =>
+        val lhs = subIOp.lhs.owner.get
+        val rhs = subIOp.rhs.owner.get
+        (lhs, rhs) match {
+          case (l: Operation, r: Operation) =>
+            val interpretedL = interpret(l)
+            val interpretedR = interpret(r)
+            (interpretedL, interpretedR) match {
+              case (l: IntegerAttr, r: IntegerAttr) =>
+                interpretedVal = l - r
+              case _ =>
+                  throw new Exception("Unsupported operand types for SubI")
+            }
+          case _ =>
+            throw new Exception("Expected operations as operands for SubI")
+        }
+      case mulIOp: arith.MulI =>
+        val lhs = mulIOp.lhs.owner.get
+        val rhs = mulIOp.rhs.owner.get
+        (lhs, rhs) match {
+          case (l: Operation, r: Operation) =>
+            val interpretedL = interpret(l)
+            val interpretedR = interpret(r)
+            (interpretedL, interpretedR) match {
+              case (l: IntegerAttr, r: IntegerAttr) =>
+                interpretedVal = l * r
+              case _ =>
+                  throw new Exception("Unsupported operand types for MulI")
+            }
+          case _ =>
+            throw new Exception("Expected operations as operands for MulI")
+        }
+      // TODO: treating signed and unsigned division separately
+      case divUIOp: arith.DivUI =>
+        val lhs = divUIOp.lhs.owner.get
+        val rhs = divUIOp.rhs.owner.get
+        (lhs, rhs) match {
+          case (l: Operation, r: Operation) =>
+            val interpretedL = interpret(l)
+            val interpretedR = interpret(r)
+            (interpretedL, interpretedR) match {
+              case (l: IntegerAttr, r: IntegerAttr) =>
+                interpretedVal = l.divUI(r)
+              case _ =>
+                  throw new Exception("Unsupported operand types for DivUI")
+            }
+          case _ =>
+            throw new Exception("Expected operations as operands for DivUI")
+        }
+      case divSIOp: arith.DivSI =>
+        val lhs = divSIOp.lhs.owner.get
+        val rhs = divSIOp.rhs.owner.get
+        (lhs, rhs) match {
+          case (l: Operation, r: Operation) =>
+            val interpretedL = interpret(l)
+            val interpretedR = interpret(r)
+            (interpretedL, interpretedR) match {
+              case (l: IntegerAttr, r: IntegerAttr) =>
+                interpretedVal = l.divSI(r)
+              case _ =>
+                  throw new Exception("Unsupported operand types for DivSI")
+            }
+          case _ =>
+            throw new Exception("Expected operations as operands for DivSI")
+        }
     }
-    return returnVal
+    return interpretedVal
   }
 
   def run(args: Array[String]): Unit = {
@@ -104,13 +187,9 @@ trait ScairRunBase {
     // extend to evaluate other ops instead of just constant
     val main_return_op = main_op.body.blocks.head.operations.last.asInstanceOf[func.Return]
     val main_return_parent = main_return_op.operands.head.owner.getOrElse(0).asInstanceOf[Operation]
-    println(main_return_parent)
 
     val output = interpret(main_return_parent)
     println(output)
-
-
-    
 
     /*
      * NOTES:
