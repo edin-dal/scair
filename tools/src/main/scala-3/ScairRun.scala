@@ -93,6 +93,7 @@ trait ScairRunBase {
     // assuming main function only for now
     // very basic return constant implementation
     // extend to evaluate other ops instead of just constant
+    // TODO: this is not tidy
     val main_return_op = main_op.body.blocks.head.operations.last.asInstanceOf[func.Return]
     val main_return_parent = main_return_op.operands.head.owner.getOrElse(0).asInstanceOf[Operation]
 
