@@ -22,11 +22,18 @@ class Interpreter {
         interpretBinOp(divSIOp.lhs, divSIOp.rhs, "DivSI")(_.divSI(_))
       case divUIOp: arith.DivUI => 
         interpretBinOp(divUIOp.lhs, divUIOp.rhs, "DivUI")(_.divUI(_))
+      case andIOp: arith.AndI =>
+        interpretBinOp(andIOp.lhs, andIOp.rhs, "AndI")(_ & _)
+      case orIOp: arith.OrI =>
+        interpretBinOp(orIOp.lhs, orIOp.rhs, "OrI")(_ | _)
+      case xorIOp: arith.XOrI =>
+        interpretBinOp(xorIOp.lhs, xorIOp.rhs, "XorI")(_ ^ _)
       case _ => throw new Exception("Unsupported operation")
     }
   }
 
-  def interpretBinOp(lhs: Value[Attribute], rhs: Value[Attribute], name: String)(combine: (IntegerAttr, IntegerAttr) => IntegerAttr): Attribute = {
+  def interpretBinOp(lhs: Value[Attribute], rhs: Value[Attribute], name: String)
+  (combine: (IntegerAttr, IntegerAttr) => IntegerAttr): Attribute = {
     (lhs.owner.get, rhs.owner.get) match {
       case (l: Operation, r: Operation) =>
         (interpret(l), interpret(r)) match {

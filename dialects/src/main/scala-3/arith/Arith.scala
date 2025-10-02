@@ -540,11 +540,11 @@ case class NegF(
     with NoMemoryEffect
     with SameOperandsAndResultTypes
 
-case class Ori(
+case class OrI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[I1]
-) extends DerivedOperation["arith.ori", Ori]
+) extends DerivedOperation["arith.ori", OrI]
     with NoMemoryEffect
     with Commutative
 
@@ -726,7 +726,7 @@ val ArithDialect =
         MulSIExtended,
         MulUIExtended,
         NegF,
-        Ori,
+        OrI,
         RemF,
         RemSI,
         RemUI,

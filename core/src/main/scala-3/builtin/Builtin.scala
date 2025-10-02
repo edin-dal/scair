@@ -168,6 +168,36 @@ final case class IntegerAttr(
     IntegerAttr(IntData(lhs / rhs), this.typ)
   }
 
+  infix def &(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot AND IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    IntegerAttr(IntData(this.value.value & that.value.value), this.typ)
+  }
+
+  infix def |(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot OR IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    IntegerAttr(IntData(this.value.value | that.value.value), this.typ)
+  }
+
+  infix def ^(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot XOR IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    IntegerAttr(IntData(this.value.value ^ that.value.value), this.typ)
+  }
+
   override def custom_print(p: Printer) = (value, typ) match {
     case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
     case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")
