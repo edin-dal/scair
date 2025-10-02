@@ -41,10 +41,12 @@ trait ScairRunBase {
     }
   }
 
+  // TODO: BinOp helper
   def interpret(op: Operation): Attribute = {
     var interpretedVal: Attribute = null
     op match {
       case constant: arith.Constant =>
+        // TODO: vectors?
         interpretedVal = constant.value
       // TODO: handling block arguments for all arithmetic operations
       case addIOp: arith.AddI =>
@@ -64,48 +66,24 @@ trait ScairRunBase {
             throw new Exception("Expected operations as operands for AddI")
         }
       case subIOp: arith.SubI =>
-        val lhs = subIOp.lhs.owner.get
-        val rhs = subIOp.rhs.owner.get
-        (lhs, rhs) match {
+        (subIOp.lhs.owner.get, subIOp.rhs.owner.get) match {
           case (l: Operation, r: Operation) =>
-            val interpretedL = interpret(l)
-            val interpretedR = interpret(r)
-            (interpretedL, interpretedR) match {
-              case (l: IntegerAttr, r: IntegerAttr) =>
-                interpretedVal = l - r
+            (interpret(l), interpret(r)) match {
+              case (interpretedL: IntegerAttr, interpretedR: IntegerAttr) =>
+                interpretedVal = interpretedL - interpretedR
               case _ =>
-                  throw new Exception("Unsupported operand types for SubI")
+                  throw new Exception("Unsupported operand types for DivSI")
             }
           case _ =>
-            throw new Exception("Expected operations as operands for SubI")
+            throw new Exception("Expected operations as operands for DivSI")
         }
-      case mulIOp: arith.MulI =>
-        val lhs = mulIOp.lhs.owner.get
-        val rhs = mulIOp.rhs.owner.get
-        (lhs, rhs) match {
-          case (l: Operation, r: Operation) =>
-            val interpretedL = interpret(l)
-            val interpretedR = interpret(r)
-            (interpretedL, interpretedR) match {
-              case (l: IntegerAttr, r: IntegerAttr) =>
-                interpretedVal = l * r
-              case _ =>
-                  throw new Exception("Unsupported operand types for MulI")
-            }
-          case _ =>
-            throw new Exception("Expected operations as operands for MulI")
-        }
-      // TODO: treating signed and unsigned division separately
+      case mulIOp: arith.MulI => interpretedVal = interpretBinOp(mulIOp.lhs, mulIOp.rhs, "MulI")(_ * _)
       case divUIOp: arith.DivUI =>
-        val lhs = divUIOp.lhs.owner.get
-        val rhs = divUIOp.rhs.owner.get
-        (lhs, rhs) match {
+        (divUIOp.lhs.owner.get, divUIOp.rhs.owner.get) match {
           case (l: Operation, r: Operation) =>
-            val interpretedL = interpret(l)
-            val interpretedR = interpret(r)
-            (interpretedL, interpretedR) match {
-              case (l: IntegerAttr, r: IntegerAttr) =>
-                interpretedVal = l.divUI(r)
+            (interpret(l), interpret(r)) match {
+              case (interpretedL: IntegerAttr, interpretedR: IntegerAttr) =>
+                interpretedVal = interpretedL.divUI(interpretedR)
               case _ =>
                   throw new Exception("Unsupported operand types for DivUI")
             }
@@ -113,15 +91,11 @@ trait ScairRunBase {
             throw new Exception("Expected operations as operands for DivUI")
         }
       case divSIOp: arith.DivSI =>
-        val lhs = divSIOp.lhs.owner.get
-        val rhs = divSIOp.rhs.owner.get
-        (lhs, rhs) match {
+        (divSIOp.lhs.owner.get, divSIOp.rhs.owner.get) match {
           case (l: Operation, r: Operation) =>
-            val interpretedL = interpret(l)
-            val interpretedR = interpret(r)
-            (interpretedL, interpretedR) match {
-              case (l: IntegerAttr, r: IntegerAttr) =>
-                interpretedVal = l.divSI(r)
+            (interpret(l), interpret(r)) match {
+              case (interpretedL: IntegerAttr, interpretedR: IntegerAttr) =>
+                interpretedVal = interpretedL.divSI(interpretedR)
               case _ =>
                   throw new Exception("Unsupported operand types for DivSI")
             }
@@ -131,6 +105,20 @@ trait ScairRunBase {
     }
     return interpretedVal
   }
+
+  def interpretBinOp(lhs: Value[Attribute], rhs: Value[Attribute], name: String)(combine: (IntegerAttr, IntegerAttr) => IntegerAttr): Attribute = {
+      (lhs.owner.get, rhs.owner.get) match {
+        case (l: Operation, r: Operation) =>
+          (interpret(l), interpret(r)) match {
+            case (li: IntegerAttr, ri: IntegerAttr) =>
+              combine(li, ri)
+            case other => throw new Exception("Unsupported operand types for $name, got: $other")
+          }
+        case other => throw new Exception("Expected operations as operands for $name, got: $other")
+      }
+    }
+  }
+
 
   def run(args: Array[String]): Unit = {
 
