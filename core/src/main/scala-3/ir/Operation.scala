@@ -4,6 +4,9 @@ import fastparse.P
 import scair.Parser
 import scair.Printer
 import scair.utils.IntrusiveNode
+
+import scala.collection.mutable
+import scala.collection.mutable.LinkedHashMap
 // import scala.reflect.ClassTag
 
 // ██╗ ██████╗░
@@ -28,11 +31,32 @@ trait IRNode {
     }
   }
 
+  def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
+        mutable.Map.empty
+  ): IRNode
+
 }
 
 trait Operation extends IRNode with IntrusiveNode[Operation] {
 
   final override def parent = container_block
+
+  final override def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
+        mutable.Map.empty
+  ): Operation =
+    val newResults = results.map(_.copy())
+    valueMapper addAll (results zip newResults)
+    updated(
+      results = newResults.asInstanceOf[Seq[Result[Attribute]]],
+      operands = operands.map(o => valueMapper.getOrElse(o, o)),
+      successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
+      regions = regions.map(_.deepCopy),
+      attributes = LinkedHashMap.from(attributes)
+    )
 
   regions.foreach(attach_region)
 

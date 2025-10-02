@@ -170,6 +170,15 @@ class AttrParser(
   \*≡==---==≡≡==---==≡*/
 
   inline def IndexTypeP[$: P]: P[IndexType] = "index".map(_ => IndexType())
+  /*≡==--==≡≡≡≡≡≡==--=≡≡*\
+  ||    COMPLEX TYPE    ||
+  \*≡==---==≡≡≡≡==---==≡*/
+
+  inline def ComplexTypeP[$: P]: P[ComplexType] =
+    ("complex<" ~ (IndexTypeP | IntegerTypeP | FloatTypeP) ~ ">").map(
+      (tpe: TypeAttribute) =>
+        ComplexType(tpe.asInstanceOf[IntegerType | IndexType | FloatType])
+    )
 
   /*≡==--==≡≡≡≡≡==--=≡≡*\
   ||  ARRAY ATTRIBUTE  ||
@@ -395,6 +404,7 @@ class AttrParser(
     FloatTypeP |
       IntegerTypeP |
       IndexTypeP |
+      ComplexTypeP |
       FunctionTypeP |
       TensorTypeP |
       MemrefTypeP |
