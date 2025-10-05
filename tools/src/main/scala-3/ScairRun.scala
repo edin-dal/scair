@@ -88,37 +88,12 @@ trait ScairRunBase {
     val module = input_module.right.get.asInstanceOf[ModuleOp]
 
     // main function
-    val main_op = module.body.blocks.head.operations(0).asInstanceOf[func.Func]
-
-    // assuming main function only for now
-    // very basic return constant implementation
-    // extend to evaluate other ops instead of just constant
-    // TODO: this is not tidy
-    val main_return_op = main_op.body.blocks.head.operations.last.asInstanceOf[func.Return]
-    val main_return_parent = main_return_op.operands.head.owner.getOrElse(0).asInstanceOf[Operation]
+     // TODO: do actual flow analysis to find correct return op
+    val main_func = module.body.blocks.head.operations(0).asInstanceOf[func.Func]
 
     val interpreter = new Interpreter()
-
-    val output = interpreter.interpret(main_return_parent)
+    val output = interpreter.interpret(main_func)
     println(output)
-
-    /*
-     * NOTES:
-     * needs interpreter class
-     * some sort of table/dictionary for operations
-     * main call_operation function (op, args) to kickstart interpretation
-     *   
-     * FLOW:
-     * instantiate interpreter
-     * register implementations
-     * parsing already done
-     * getting args already done?
-     * interpreter call op function
-     * get result
-     */
-
-
-
   }
 
 }
