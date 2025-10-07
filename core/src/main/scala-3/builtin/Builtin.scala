@@ -159,8 +159,8 @@ final case class IntegerAttr(
     }
 
     // TODO: Handle index type correctly maybe...
-    val intWidth = this.typ.asInstanceOf[IntegerType].width.value
-    val mask = (BigInt(1) << intWidth.toInt) - 1
+    val intWidth = this.typ.asInstanceOf[IntegerType].width.value.toInt
+    val mask = (BigInt(1) << intWidth) - 1
     val lhs = this.value.value & mask
     val rhs = that.value.value & mask
 
@@ -196,6 +196,36 @@ final case class IntegerAttr(
     }
 
     IntegerAttr(IntData(this.value.value ^ that.value.value), this.typ)
+  }
+
+  infix def <<(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot left-shift IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    IntegerAttr(IntData(this.value.value << that.value.value.toInt), this.typ)
+  }
+
+  infix def >>>(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot left-shift IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    IntegerAttr(IntData(this.value.value.toInt >>> that.value.value), this.typ)
+  }
+
+  infix def >>(that: IntegerAttr): IntegerAttr = {
+    if (this.typ != that.typ) {
+      throw new Exception(
+        s"Cannot left-shift IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+      )
+    }
+
+    IntegerAttr(IntData(this.value.value >> that.value.value.toInt), this.typ)
   }
 
   override def custom_print(p: Printer) = (value, typ) match {

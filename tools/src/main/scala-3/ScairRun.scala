@@ -10,6 +10,7 @@ import scopt.OParser
 import scala.io.Source
 import scair.dialects.builtin.ModuleOp
 import scair.dialects.builtin.IntegerAttr
+import scair.dialects.builtin.IntegerType
 import scair.dialects.func
 import scair.dialects.arith
 
@@ -94,6 +95,7 @@ trait ScairRunBase {
     val interpreter = new Interpreter()
     val output = interpreter.interpret(main_func)
     println(output)
+    println(output.asInstanceOf[IntegerAttr].typ.asInstanceOf[IntegerType].sign)
   }
 
 }

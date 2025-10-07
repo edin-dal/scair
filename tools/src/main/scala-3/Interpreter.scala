@@ -1,10 +1,9 @@
 package scair.tools
 
-import scair.dialects.builtin.IntegerAttr
 import scair.ir.*
 import scair.dialects.arith
 import scair.dialects.func
-import scair.dialects.builtin.IntData
+import scair.dialects.builtin
 
 
 // TODO: do flow analysis to find correct return op
@@ -25,11 +24,14 @@ class Interpreter {
 
   def interpret_op(op: Operation): Attribute = {
     op match {
+
+      // Function Return
+      // TODO: multiple return vals, environments
       case funcReturnOp: func.Return =>
-        // assuming single return value for now
         val return_root = funcReturnOp.operands.head.owner.getOrElse(0).asInstanceOf[Operation]
         interpret_op(return_root)
 
+      // Constants
       // TODO: vectors?
       case constant: arith.Constant => constant.value
 
@@ -52,10 +54,21 @@ class Interpreter {
       case xorIOp: arith.XOrI =>
         interpret_bin_op(xorIOp.lhs, xorIOp.rhs, "XorI")(_ ^ _)
 
-      // Comparison Operations
+        // Shift Operations
+        // TODO: convert to unsigned?
+      case shliOp: arith.ShLI =>
+        interpret_bin_op(shliOp.lhs, shliOp.rhs, "ShLI")(_ << _)
+      case shrsiOp: arith.ShRSI =>
+        interpret_bin_op(shrsiOp.lhs, shrsiOp.rhs, "ShRSI")(_ >> _)
+      case shruiOp: arith.ShRUI =>
+        interpret_bin_op(shruiOp.lhs, shruiOp.rhs, "ShRUI")(_ >>> _)
+
+      // Comparison Operation
       case cmpiOp: arith.CmpI =>
         interpret_cmp_op(cmpiOp.lhs, cmpiOp.rhs, cmpiOp.predicate.value.toInt)
       case _ => throw new Exception("Unsupported operation")
+
+      // Select Operation
     }
   }
 
@@ -82,6 +95,8 @@ class Interpreter {
                 if (li.value == ri.value) IntegerAttr(IntData(1), li.typ) else IntegerAttr(IntData(0), li.typ)
               case 1 => // NE
                 if (li.value != ri.value) IntegerAttr(IntData(1), li.typ) else IntegerAttr(IntData(0), li.typ)
+              // case 2 => // SLT
+
               case _ => throw new Exception("Unknown comparison predicate")
             }
           case other => throw new Exception("Unsupported operand types for cmpi, got: $other")
@@ -89,4 +104,12 @@ class Interpreter {
       case other => throw new Exception("Expected operations as operands for cmpi, got: $other")
     }
   }
+
+//  def convert_sign(intAttr: IntegerAttr, sign: Signedness): IntegerAttr = {
+//    (intAttr.typ.asInstanceOf[IntegerType].sign, sign) match {
+//      case (Signed, Signed) | (Unsigned, Unsigned) | (Signless, Signless) => intAttr
+//      case (Signed, Unsigned) =>
+//        val intValue = intAttr.value.value.toUInt
+//    }
+//  } 
 }
