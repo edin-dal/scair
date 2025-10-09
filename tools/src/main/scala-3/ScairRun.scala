@@ -89,13 +89,12 @@ trait ScairRunBase {
     val module = input_module.right.get.asInstanceOf[ModuleOp]
 
     // main function
-     // TODO: do actual flow analysis to find correct return op
+    // TODO: do actual flow analysis to find correct return op
     val main_func = module.body.blocks.head.operations(0).asInstanceOf[func.Func]
 
     val interpreter = new Interpreter()
     val output = interpreter.interpret(main_func)
     println(output)
-    println(output.asInstanceOf[IntegerAttr].typ.asInstanceOf[IntegerType].sign)
   }
 
 }
