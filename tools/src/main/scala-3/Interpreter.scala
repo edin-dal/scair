@@ -9,22 +9,18 @@ import scair.dialects.builtin.*
 // TODO: do flow analysis to find correct return op
 class Interpreter {
 
-  // TODO: generic interpret op, probably will become block/function evaluator soon
-  def interpret(op: Operation): Attribute = {
-    // presuming main function for now
-    val interpreterCtx = new InterpreterCtx(Map(), None, Map())
-    op match {
-      case func_op: func.Func =>
-        val return_op = func_op.body.blocks.head.operations.last
-        interpret_op(return_op, interpreterCtx)
-      case other => throw new Exception("Expecting function")
-    }
-
-    
+  // TODO: only passing in block for now, may need to generalise for list of blocks later
+  // keeping buffer function for extensibility
+  def interpret(block: Block, ctx: InterpreterCtx): Any = {
+    interpret_block(block, ctx)
   }
 
   def interpret_op(op: Operation, ctx: InterpreterCtx): Attribute = {
     op match {
+
+      case func_op: func.Func =>
+        interpret_function(func_op, ctx)
+        
 
       // Function Return
       // TODO: multiple return vals, environments
@@ -82,7 +78,14 @@ class Interpreter {
         }
       case _ => throw new Exception("Unsupported operation")
     }
-}
+  }
+
+  // interpret block by iterating and evaluating each operation in it 
+  def interpret_block(block: Block, ctx: InterpreterCtx): Any = {
+    for (op <- block.operations) {
+      interpret_op(op, ctx)
+    }
+  }
 
   // TODO: maybe make sure bitwidth is ok?
   def interpret_bin_op(lhs: Value[Attribute], rhs: Value[Attribute], name: String, ctx: InterpreterCtx)
@@ -128,15 +131,28 @@ class Interpreter {
     }
   }
 
-  def interpret_block_or_op(value: Operation | Block, ctx: InterpreterCtx): Attribute = {
+  def interpret_block_or_op(value: Operation | Block, ctx: InterpreterCtx): Any = {
     value match {
       case op: Operation => interpret_op(op, ctx)
       case block: Block => interpret_block(block, ctx)
     }
   }
 
-  // TODO: implement block evaluation with envs
-  def interpret_block(block: Block, ctx: InterpreterCtx): Attribute = {
-    IntegerAttr(IntData(0), I32)
+  def interpret_function(func: func.Func, ctx: InterpreterCtx): Any = {
+    // create new function context
+    val func_ctx = FunctionCtx(
+      name = func.name,
+      operands = Map(),
+      parent = None,
+      body = func
+    )
+    // create new interpreter context with function context added
+    val new_ctx = new InterpreterCtx(
+      vars = ctx.vars,
+      memory = ctx.memory,
+      funcs = func_ctx :: ctx.funcs
+    )
+    // interpret function body
+    interpret_block(func.regions.head.blocks.head, new_ctx)
   }
 }

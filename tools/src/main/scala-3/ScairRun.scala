@@ -86,14 +86,21 @@ trait ScairRunBase {
     if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
         throw new Exception(input_module.left.get)
 
+    // casted as moduleOp
     val module = input_module.right.get.asInstanceOf[ModuleOp]
 
-    // main function
-    // TODO: do actual flow analysis to find correct return op
-    val main_func = module.body.blocks.head.operations(0).asInstanceOf[func.Func]
+    // main block
+    // TODO: handling multiple blocks, assuming only one for now
+    val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    val output = interpreter.interpret(main_func)
+    var interpreterCtx = new InterpreterCtx(Map(), Map(), List())
+
+    //val interpreted_output = interpreter.interpret(main_block)
+    //println(module_block.operations)
+
+    // TODO: assumed one block only for now
+    val output = interpreter.interpret(module_block, interpreterCtx)
     println(output)
   }
 
