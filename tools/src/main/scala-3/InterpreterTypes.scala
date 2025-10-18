@@ -9,10 +9,10 @@ import scala.collection.mutable.ListBuffer
 // when interpreting variable, look up in current context, if not found look up in parent context
 // when finished interpreting function definition, add function context to that level of ctx
 class InterpreterCtx (
-    val vars: mutable.Map[Attribute, Value[Attribute]],
+    val vars: mutable.Map[Operation, Attribute],
     val memory: mutable.Map[Int, Attribute],
     val funcs: ListBuffer[FunctionCtx],
-    var result: Option[Value[Attribute]] = None
+    var result: Option[Attribute] = None
 )
 
 case class FunctionCtx(

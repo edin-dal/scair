@@ -11,9 +11,10 @@ class Interpreter {
 
   // TODO: only passing in block for now, may need to generalise for list of blocks later
   // keeping buffer function for extensibility
-  def interpret(block: Block, ctx: InterpreterCtx): Unit = {
+  def interpret(block: Block, ctx: InterpreterCtx): Attribute = {
     interpret_main(block, ctx)
     // then find main and return whatever value it is
+    ctx.result.get
   }
 
   def interpret_main(block: Block, ctx: InterpreterCtx): Unit = {
@@ -51,14 +52,13 @@ class Interpreter {
         interpret_function(func_op, ctx)
 
       // Function Return
-      // TODO: multiple return vals, environments
       case return_op: func.Return =>
         // TODO: multiple return values
-        
+        ctx.result = find_evaluation(return_op.operands.head.owner.get, ctx)
+
 
       // Constants
-      // TODO: vectors?
-      case constant: arith.Constant => println("reached")
+      case constant: arith.Constant => ctx.vars.put(constant, constant.value)
 
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
