@@ -6,6 +6,8 @@ import scair.TransformContext
 import scair.core.utils.Args
 import scair.ir.*
 import scopt.OParser
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 import scala.io.Source
 import scair.dialects.builtin.ModuleOp
@@ -94,7 +96,7 @@ trait ScairRunBase {
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var interpreterCtx = new InterpreterCtx(Map(), Map(), List())
+    var interpreterCtx = new InterpreterCtx(mutable.Map(), mutable.Map(), ListBuffer(), None)
 
     //val interpreted_output = interpreter.interpret(main_block)
     //println(module_block.operations)

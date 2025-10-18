@@ -1,23 +1,24 @@
 package scair.tools
 
 import scair.ir.*
-import scair.dialects.func
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 // note: arguments in function treated like variables in an environment
 // when interpreting function, create new nested context with args as vars
 // when interpreting variable, look up in current context, if not found look up in parent context
+// when finished interpreting function definition, add function context to that level of ctx
 class InterpreterCtx (
-    vars: Map[Int, Attribute],
-    memory: Map[Int, Attribute],
-    funcs: List[FunctionCtx]
+    val vars: mutable.Map[Attribute, Value[Attribute]],
+    val memory: mutable.Map[Int, Attribute],
+    val funcs: ListBuffer[FunctionCtx],
+    var result: Option[Value[Attribute]] = None
 )
 
 case class FunctionCtx(
   name: String,
-  operands: Map[Int, Attribute],
-  parent: Option[FunctionCtx],
-  body: func.Func,
-  result: Option[Attribute] = None
+  func_ctx: InterpreterCtx,
+  body: Block
 )
 
 
