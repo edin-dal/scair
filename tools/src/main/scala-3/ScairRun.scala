@@ -15,6 +15,9 @@ import scair.dialects.builtin.IntegerAttr
 import scair.dialects.builtin.IntegerType
 import scair.dialects.func
 import scair.dialects.arith
+import scair.dialects.builtin.IntData
+import scair.dialects.builtin.I1
+
 
 trait ScairRunBase {
   val ctx = MLContext()
@@ -96,7 +99,7 @@ trait ScairRunBase {
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var interpreterCtx = new InterpreterCtx(mutable.Map(), mutable.Map(), ListBuffer(), None)
+    var interpreterCtx = new InterpreterCtx(mutable.Map(), mutable.Map(), ListBuffer(), IntegerAttr(IntData(0), I1))
 
     //val interpreted_output = interpreter.interpret(main_block)
     //println(module_block.operations)

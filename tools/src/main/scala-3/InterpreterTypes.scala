@@ -12,7 +12,7 @@ class InterpreterCtx (
     val vars: mutable.Map[Operation, Attribute],
     val memory: mutable.Map[Int, Attribute],
     val funcs: ListBuffer[FunctionCtx],
-    var result: Option[Attribute] = None
+    var result: Attribute
 )
 
 case class FunctionCtx(

@@ -13,8 +13,7 @@ class Interpreter {
   // keeping buffer function for extensibility
   def interpret(block: Block, ctx: InterpreterCtx): Attribute = {
     interpret_main(block, ctx)
-    // then find main and return whatever value it is
-    ctx.result.get
+    ctx.result
   }
 
   def interpret_main(block: Block, ctx: InterpreterCtx): Unit = {
@@ -63,31 +62,31 @@ class Interpreter {
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
       case addIOp: arith.AddI => 
-        interpret_bin_op(addIOp.lhs, addIOp.rhs, "AddI", ctx)(_ + _)
+        interpret_bin_op(addIOp, addIOp.lhs, addIOp.rhs, "AddI", ctx)(_ + _)
       case subIOp: arith.SubI => 
-        interpret_bin_op(subIOp.lhs, subIOp.rhs, "SubI", ctx)(_ - _)
+        interpret_bin_op(subIOp, subIOp.lhs, subIOp.rhs, "SubI", ctx)(_ - _)
       case mulIOp: arith.MulI => 
-        interpret_bin_op(mulIOp.lhs, mulIOp.rhs, "MulI", ctx)(_ * _)
+        interpret_bin_op(mulIOp, mulIOp.lhs, mulIOp.rhs, "MulI", ctx)(_ * _)
       case divOp: arith.DivSI => 
-        interpret_bin_op(divOp.lhs, divOp.rhs, "DivSI", ctx)(_ / _)
+        interpret_bin_op(divOp, divOp.lhs, divOp.rhs, "DivSI", ctx)(_ / _)
       case divOp: arith.DivUI =>
-        interpret_bin_op(divOp.lhs, divOp.rhs, "DivUI", ctx)(_ / _)
+        interpret_bin_op(divOp, divOp.lhs, divOp.rhs, "DivUI", ctx)(_ / _)
       case andIOp: arith.AndI =>
-        interpret_bin_op(andIOp.lhs, andIOp.rhs, "AndI", ctx)(_ & _)
+        interpret_bin_op(andIOp, andIOp.lhs, andIOp.rhs, "AndI", ctx)(_ & _)
       case orIOp: arith.OrI =>
-        interpret_bin_op(orIOp.lhs, orIOp.rhs, "OrI", ctx)(_ | _)
+        interpret_bin_op(orIOp, orIOp.lhs, orIOp.rhs, "OrI", ctx)(_ | _)
       case xorIOp: arith.XOrI =>
-        interpret_bin_op(xorIOp.lhs, xorIOp.rhs, "XorI", ctx)(_ ^ _)
+        interpret_bin_op(xorIOp, xorIOp.lhs, xorIOp.rhs, "XorI", ctx)(_ ^ _)
 
       // Unary Operations 
 
       // Shift Operations
       case shliOp: arith.ShLI =>
-        interpret_bin_op(shliOp.lhs, shliOp.rhs, "ShLI", ctx)(_ << _)
+        interpret_bin_op(shliOp, shliOp.lhs, shliOp.rhs, "ShLI", ctx)(_ << _)
       case shrsiOp: arith.ShRSI =>
-        interpret_bin_op(shrsiOp.lhs, shrsiOp.rhs, "ShRSI", ctx)(_ >> _)
+        interpret_bin_op(shrsiOp, shrsiOp.lhs, shrsiOp.rhs, "ShRSI", ctx)(_ >> _)
       case shruiOp: arith.ShRUI =>
-        interpret_bin_op(shruiOp.lhs, shruiOp.rhs, "ShRUI", ctx)(_ >>> _)
+        interpret_bin_op(shruiOp, shruiOp.lhs, shruiOp.rhs, "ShRUI", ctx)(_ >>> _)
 
       // Comparison Operation
       case cmpiOp: arith.CmpI =>
@@ -120,19 +119,16 @@ class Interpreter {
   }
 
   // TODO: maybe make sure bitwidth is ok?
-  def interpret_bin_op(lhs: Value[Attribute], rhs: Value[Attribute], name: String, ctx: InterpreterCtx)
+  def interpret_bin_op(op: Operation, lhs: Value[Attribute], rhs: Value[Attribute], name: String, ctx: InterpreterCtx)
   (combine: (Int, Int) => Int): Unit = {
-    // (lhs.owner.get, rhs.owner.get) match {
-    //   case (l: Operation, r: Operation) =>
-    //     (interpret_op(l, ctx), interpret_op(r, ctx)) match {
-    //       case (li: IntegerAttr, ri: IntegerAttr) =>
-    //         val lval = li.value.value.toInt
-    //         val rval = ri.value.value.toInt
-    //         IntegerAttr(IntData(combine(lval, rval)), li.typ)
-    //       case other => throw new Exception("Unsupported operand types for $name, got: $other")
-    //     }
-    //   case other => throw new Exception("Expected operations as operands for $name, got: $other")
-    // }
+    val lval = find_evaluation(lhs.owner.get, ctx)
+    val rval = find_evaluation(rhs.owner.get, ctx)
+    (lval, rval) match {
+      case (li: IntegerAttr, ri: IntegerAttr) =>
+        val result = IntegerAttr(IntData(combine(li.value.value.toInt, ri.value.value.toInt)), li.typ)
+        ctx.vars.put(op, result)
+      case _ => throw new Exception(s"Unsupported operand types for $name")
+    }
   }
 
   def interpret_cmp_op(lhs: Value[Attribute], rhs: Value[Attribute], predicate: Int, ctx: InterpreterCtx): Unit = {
