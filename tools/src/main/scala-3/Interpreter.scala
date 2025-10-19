@@ -21,7 +21,7 @@ class Interpreter {
   def interpret_call(call_op: func.Call, ctx: InterpreterCtx): Unit = {
     for (func_ctx <- ctx.funcs) {
       if (func_ctx.name == call_op.callee.rootRef.stringLiteral) {
-        interpret_block(func_ctx.body, ctx)
+        interpret_block(func_ctx.body, func_ctx.saved_ctx)
       }
     }
   }
@@ -40,7 +40,7 @@ class Interpreter {
 
       // Constants
       case constant: arith.Constant =>
-        ctx.vars.put(constant, constant.value)
+        ctx.vars.put(op, constant.value)
 
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
@@ -77,15 +77,17 @@ class Interpreter {
 
       // Select Operation
       case selectOp: arith.SelectOp =>
-        // (interpret_block_or_op(selectOp.condition.owner.get, ctx)) match {
-        //   case condOp: IntegerAttr => 
-        //     condOp.value.value.toInt match {
-        //       case 0 => interpret_block_or_op(selectOp.falseValue.owner.get, ctx)
-        //       case 1 => interpret_block_or_op(selectOp.trueValue.owner.get, ctx)
-        //       case _ => throw new Exception("Select condition must be 0 or 1")
-        //     }
-        //   case _ => throw new Exception("Select condition must be an integer attribute")
-        //   }
+        interpret_block_or_op(selectOp.condition.owner.get, ctx)
+        val lookup = lookup_op(selectOp.condition.owner.get, ctx)
+        lookup match {
+          case condOp: IntegerAttr => 
+            condOp.value.value.toInt match {
+              case 0 => ctx.vars.put(op, lookup_op(selectOp.falseValue.owner.get, ctx))
+              case 1 => ctx.vars.put(op, lookup_op(selectOp.trueValue.owner.get, ctx))
+              case _ => throw new Exception("Select condition must be 0 or 1")
+            }
+          case _ => throw new Exception("Select condition must be an integer attribute")
+          }
       case _ => throw new Exception("Unsupported operation")
     }
   }
@@ -111,31 +113,29 @@ class Interpreter {
   }
 
   def interpret_cmp_op(lhs: Value[Attribute], rhs: Value[Attribute], predicate: Int, ctx: InterpreterCtx): Unit = {
-    // (lhs.owner.get, rhs.owner.get) match {
-    //   case (l: Operation, r: Operation) =>
-    //     (interpret_op(l, ctx), interpret_op(r, ctx)) match {
-    //       case (li: IntegerAttr, ri: IntegerAttr) =>
-    //         val lval = li.value.value
-    //         val rval = ri.value.value
-    //         predicate match {
-    //           case 0 => // EQ
-    //             if (lval == rval) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-    //           case 1 => // NE
-    //             if (lval != rval) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-    //           case 2 | 6 => // SLT and ULT, assume both numbers are already converted accoringly
-    //             if (lval < rval) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-    //           case 3 | 7 => // SLE and ULE
-    //             if (lval <= rval) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-    //           case 4 | 8 => // SGT and UGT
-    //             if (lval > rval) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-    //           case 5 | 9 => // SGE and UGE
-    //             if (lval >= rval) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-    //           case _ => throw new Exception("Unknown comparison predicate")
-    //         }
-    //       case other => throw new Exception("Unsupported operand types for cmpi, got: $other")
-    //     }
-    //   case other => throw new Exception("Expected operations as operands for cmpi, got: $other")
-    // }
+    val lval = lookup_op(lhs.owner.get, ctx)
+    val rval = lookup_op(rhs.owner.get, ctx)
+    (lval, rval) match {
+      case (li: IntegerAttr, ri: IntegerAttr) =>
+        val lcmp = li.value.value
+        val rcmp = ri.value.value
+        predicate match {
+          case 0 => // EQ
+            if (lcmp == rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
+          case 1 => // NE
+            if (lcmp != rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
+          case 2 | 6 => // SLT and ULT, assume both numbers are already converted accoringly
+            if (lcmp < rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
+          case 3 | 7 => // SLE and ULE
+            if (lcmp <= rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
+          case 4 | 8 => // SGT and UGT
+            if (lcmp > rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
+          case 5 | 9 => // SGE and UGE
+            if (lcmp >= rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
+          case _ => throw new Exception("Unknown comparison predicate")
+        }
+      case other => throw new Exception("Unsupported operand types for cmpi, got: $other")
+    }
   }
 
   def interpret_block_or_op(value: Operation | Block, ctx: InterpreterCtx): Unit = {
