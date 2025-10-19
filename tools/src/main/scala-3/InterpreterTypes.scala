@@ -3,6 +3,7 @@ package scair.tools
 import scair.ir.*
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scair.dialects.func
 
 // note: arguments in function treated like variables in an environment
 // when interpreting function, create new nested context with args as vars
@@ -12,12 +13,30 @@ class InterpreterCtx (
     val vars: mutable.Map[Operation, Attribute],
     val memory: mutable.Map[Int, Attribute],
     val funcs: ListBuffer[FunctionCtx],
-    var result: Attribute
-)
+    var result: Option[Attribute] = None
+) {
+    def clone_ctx(): InterpreterCtx = {
+        InterpreterCtx(
+            mutable.Map() ++ this.vars,
+            mutable.Map() ++ this.memory,
+            ListBuffer() ++ this.funcs,
+            None
+        )
+    }
+
+    def add_func_ctx(function: func.Func): Unit = {
+        val func_ctx = FunctionCtx(
+            name = function.sym_name,
+            saved_ctx = this.clone_ctx(), // create indepedent context
+            body = function.body.blocks.head
+        )
+        this.funcs.append(func_ctx)
+    }
+}
 
 case class FunctionCtx(
   name: String,
-  func_ctx: InterpreterCtx,
+  saved_ctx: InterpreterCtx,
   body: Block
 )
 

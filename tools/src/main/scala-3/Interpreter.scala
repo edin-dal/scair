@@ -11,29 +11,11 @@ class Interpreter {
 
   // TODO: only passing in block for now, may need to generalise for list of blocks later
   // keeping buffer function for extensibility
-  def interpret(block: Block, ctx: InterpreterCtx): Attribute = {
-    interpret_main(block, ctx)
-    ctx.result
-  }
-
-  def interpret_main(block: Block, ctx: InterpreterCtx): Unit = {
-    block.operations.head match {
-      case main_func: func.Func if main_func.sym_name.stringLiteral == "main" =>
-        // create call operation to main function
-        val main_ctx = FunctionCtx(
-          name = main_func.sym_name,
-          body = main_func.body.blocks.head,
-          func_ctx = ctx,
-        )
-        ctx.funcs.append(main_ctx)
-        val new_call = func.Call(
-          callee = SymbolRefAttr(main_func.sym_name),
-          _operands = Seq(),
-          _results = main_func.function_type.outputs.map(res => Result(res))
-        )
-        interpret_call(new_call, ctx)
-      case _ => throw new Exception("Expected main function")
+  def interpret(block: Block, ctx: InterpreterCtx): Option[Attribute] = {
+    for (op <- block.operations) {
+      interpret_op(op, ctx)
     }
+    ctx.result
   }
 
   def interpret_call(call_op: func.Call, ctx: InterpreterCtx): Unit = {
@@ -53,11 +35,12 @@ class Interpreter {
       // Function Return
       case return_op: func.Return =>
         // TODO: multiple return values
-        ctx.result = find_evaluation(return_op.operands.head.owner.get, ctx)
+        ctx.result = Some(lookup_op(return_op.operands.head.owner.get, ctx))
 
 
       // Constants
-      case constant: arith.Constant => ctx.vars.put(constant, constant.value)
+      case constant: arith.Constant =>
+        ctx.vars.put(constant, constant.value)
 
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
@@ -114,15 +97,11 @@ class Interpreter {
     }
   }
 
-  def retrieve_value(): Unit = {
-
-  }
-
   // TODO: maybe make sure bitwidth is ok?
   def interpret_bin_op(op: Operation, lhs: Value[Attribute], rhs: Value[Attribute], name: String, ctx: InterpreterCtx)
   (combine: (Int, Int) => Int): Unit = {
-    val lval = find_evaluation(lhs.owner.get, ctx)
-    val rval = find_evaluation(rhs.owner.get, ctx)
+    val lval = lookup_op(lhs.owner.get, ctx)
+    val rval = lookup_op(rhs.owner.get, ctx)
     (lval, rval) match {
       case (li: IntegerAttr, ri: IntegerAttr) =>
         val result = IntegerAttr(IntData(combine(li.value.value.toInt, ri.value.value.toInt)), li.typ)
@@ -166,13 +145,24 @@ class Interpreter {
     }
   }
 
-  // skip over, add function to context
   def interpret_function(function: func.Func, ctx: InterpreterCtx): Unit = {
-    val func_ctx = FunctionCtx(
-      name = function.sym_name,
-      body = function.body.blocks.head,
-      func_ctx = ctx
-    )
-    ctx.funcs.append(func_ctx)
+    // if main, interpret it immediately by creating a call operation and evaluating it
+    if (function.sym_name.stringLiteral == "main") {
+      val main_ctx = FunctionCtx(
+          name = function.sym_name,
+          body = function.body.blocks.head,
+          saved_ctx = ctx
+        )
+        ctx.funcs.append(main_ctx)
+        val new_call = func.Call(
+          callee = SymbolRefAttr(function.sym_name),
+          _operands = Seq(),
+          _results = function.function_type.outputs.map(res => Result(res))
+        )
+        interpret_call(new_call, ctx)
+    } else {
+      // function definition; no call, add function and current running context functionCtx to interpreter context
+      ctx.add_func_ctx(function)
+    }
   }
 }

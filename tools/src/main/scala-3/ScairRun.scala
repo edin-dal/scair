@@ -1,7 +1,6 @@
 package scair.tools
 
 import scair.MLContext
-import scair.AttrParser
 import scair.TransformContext
 import scair.core.utils.Args
 import scair.ir.*
@@ -11,12 +10,6 @@ import scala.collection.mutable.ListBuffer
 
 import scala.io.Source
 import scair.dialects.builtin.ModuleOp
-import scair.dialects.builtin.IntegerAttr
-import scair.dialects.builtin.IntegerType
-import scair.dialects.func
-import scair.dialects.arith
-import scair.dialects.builtin.IntData
-import scair.dialects.builtin.I1
 
 
 trait ScairRunBase {
@@ -99,14 +92,17 @@ trait ScairRunBase {
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var interpreterCtx = new InterpreterCtx(mutable.Map(), mutable.Map(), ListBuffer(), IntegerAttr(IntData(0), I1))
+    var interpreterCtx = new InterpreterCtx(mutable.Map(), mutable.Map(), ListBuffer(), None)
 
     //val interpreted_output = interpreter.interpret(main_block)
     //println(module_block.operations)
 
     // TODO: assumed one block only for now
     val output = interpreter.interpret(module_block, interpreterCtx)
-    println(output)
+    if (output.isDefined) {
+      println(output.get)
+    }
+    
   }
 
 }
