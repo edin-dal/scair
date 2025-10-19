@@ -160,7 +160,39 @@ val MulZero = pattern {
         _
       ) if r == 0.0 && i == 0.0 =>
     (Seq(), Seq(zero))
+}
 
+// (ai + b) * (ci + d) = (bd - ac) + (ad + bc)i
+val MulConstant = pattern {
+  case Mul(
+        Owner(
+          Constant(
+            ArrayAttribute(
+              Seq(FloatAttr(FloatData(b), t), FloatAttr(FloatData(a), _))
+            ),
+            _
+          )
+        ),
+        Owner(
+          Constant(
+            ArrayAttribute(
+              Seq(FloatAttr(FloatData(d), _), FloatAttr(FloatData(c), _))
+            ),
+            _
+          )
+        ),
+        Result(tpe),
+        _
+      ) =>
+    Constant(
+      ArrayAttribute(
+        Seq(
+          FloatAttr(FloatData(b * d - a * c), t),
+          FloatAttr((FloatData(a * d + b * c)), t)
+        )
+      ),
+      Result(tpe)
+    )
 }
 
 val complexCanonicalizationPatterns = Seq(
@@ -178,5 +210,6 @@ val complexCanonicalizationPatterns = Seq(
   ReNegCreate,
   ImNegCreate,
   MulOne,
-  MulZero
+  MulZero,
+  MulConstant
 )
