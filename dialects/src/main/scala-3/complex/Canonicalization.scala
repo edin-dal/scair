@@ -187,8 +187,8 @@ val MulConstant = pattern {
     Constant(
       ArrayAttribute(
         Seq(
-          FloatAttr(FloatData(a*c-b*d), t),
-          FloatAttr((FloatData(a*d +b*c)), t)
+          FloatAttr(FloatData(a * c - b * d), t),
+          FloatAttr((FloatData(a * d + b * c)), t)
         )
       ),
       Result(tpe)
