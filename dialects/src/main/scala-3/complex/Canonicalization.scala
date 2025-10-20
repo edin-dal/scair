@@ -162,13 +162,13 @@ val MulZero = pattern {
     (Seq(), Seq(zero))
 }
 
-// (ai + b) * (ci + d) = (bd - ac) + (ad + bc)i
+// (a + bi) * (c + di) = (ac-bd) + (ad+bc)i
 val MulConstant = pattern {
   case Mul(
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(b), t), FloatAttr(FloatData(a), _))
+              Seq(FloatAttr(FloatData(a), t), FloatAttr(FloatData(b), _))
             ),
             _
           )
@@ -176,7 +176,7 @@ val MulConstant = pattern {
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(d), _), FloatAttr(FloatData(c), _))
+              Seq(FloatAttr(FloatData(c), _), FloatAttr(FloatData(d), _))
             ),
             _
           )
@@ -187,8 +187,8 @@ val MulConstant = pattern {
     Constant(
       ArrayAttribute(
         Seq(
-          FloatAttr(FloatData(b * d - a * c), t),
-          FloatAttr((FloatData(a * d + b * c)), t)
+          FloatAttr(FloatData(a*c-b*d), t),
+          FloatAttr((FloatData(a*d +b*c)), t)
         )
       ),
       Result(tpe)
