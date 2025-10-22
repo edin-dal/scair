@@ -15,6 +15,7 @@ class InterpreterCtx (
     val funcs: ListBuffer[FunctionCtx],
     var result: Option[Attribute] = None
 ) {
+    // creates independent context
     def clone_ctx(): InterpreterCtx = {
         InterpreterCtx(
             mutable.Map() ++ this.vars,
@@ -27,7 +28,7 @@ class InterpreterCtx (
     def add_func_ctx(function: func.Func): Unit = {
         val func_ctx = FunctionCtx(
             name = function.sym_name,
-            saved_ctx = this.clone_ctx(), // create indepedent context
+            saved_ctx = this.clone_ctx(),
             body = function.body.blocks.head
         )
         this.funcs.append(func_ctx)

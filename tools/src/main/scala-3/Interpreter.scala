@@ -7,7 +7,7 @@ import scair.dialects.builtin.*
 
 
 // TODO: do flow analysis to find correct return op
-class Interpreter {
+class Interpreter extends ArithmeticEvaluator {
 
   // TODO: only passing in block for now, may need to generalise for list of blocks later
   // keeping buffer function for extensibility
@@ -16,14 +16,6 @@ class Interpreter {
       interpret_op(op, ctx)
     }
     ctx.result
-  }
-
-  def interpret_call(call_op: func.Call, ctx: InterpreterCtx): Unit = {
-    for (func_ctx <- ctx.funcs) {
-      if (func_ctx.name == call_op.callee.rootRef.stringLiteral) {
-        interpret_block(func_ctx.body, func_ctx.saved_ctx)
-      }
-    }
   }
 
   def interpret_op(op: Operation, ctx: InterpreterCtx): Unit = {
@@ -44,46 +36,50 @@ class Interpreter {
 
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
-      case addIOp: arith.AddI => 
-        interpret_bin_op(addIOp, addIOp.lhs, addIOp.rhs, "AddI", ctx)(_ + _)
-      case subIOp: arith.SubI => 
-        interpret_bin_op(subIOp, subIOp.lhs, subIOp.rhs, "SubI", ctx)(_ - _)
-      case mulIOp: arith.MulI => 
-        interpret_bin_op(mulIOp, mulIOp.lhs, mulIOp.rhs, "MulI", ctx)(_ * _)
-      case divOp: arith.DivSI => 
-        interpret_bin_op(divOp, divOp.lhs, divOp.rhs, "DivSI", ctx)(_ / _)
-      case divOp: arith.DivUI =>
-        interpret_bin_op(divOp, divOp.lhs, divOp.rhs, "DivUI", ctx)(_ / _)
-      case andIOp: arith.AndI =>
-        interpret_bin_op(andIOp, andIOp.lhs, andIOp.rhs, "AndI", ctx)(_ & _)
-      case orIOp: arith.OrI =>
-        interpret_bin_op(orIOp, orIOp.lhs, orIOp.rhs, "OrI", ctx)(_ | _)
-      case xorIOp: arith.XOrI =>
-        interpret_bin_op(xorIOp, xorIOp.lhs, xorIOp.rhs, "XorI", ctx)(_ ^ _)
+      case addI_op: arith.AddI => 
+        ctx.vars.put(addI_op, interpret_bin_op(addI_op.lhs, addI_op.rhs, ctx)(_ + _))
+      case subI_op: arith.SubI => 
+        ctx.vars.put(subI_op, interpret_bin_op(subI_op.lhs, subI_op.rhs, ctx)(_ - _))
+      case mulI_op: arith.MulI => 
+        ctx.vars.put(mulI_op, interpret_bin_op(mulI_op.lhs, mulI_op.rhs, ctx)(_ * _))
+      case div_op: arith.DivSI => 
+        ctx.vars.put(div_op, interpret_bin_op(div_op.lhs, div_op.rhs, ctx)(_ / _))
+      case div_op: arith.DivUI =>
+        ctx.vars.put(div_op, interpret_bin_op(div_op.lhs, div_op.rhs, ctx)(_ / _))
+      case andI_op: arith.AndI =>
+        ctx.vars.put(andI_op, interpret_bin_op(andI_op.lhs, andI_op.rhs, ctx)(_ & _))
+      case orI_op: arith.OrI =>
+        ctx.vars.put(orI_op, interpret_bin_op(orI_op.lhs, orI_op.rhs, ctx)(_ | _))
+      case xorI_op: arith.XOrI =>
+        ctx.vars.put(xorI_op, interpret_bin_op(xorI_op.lhs, xorI_op.rhs, ctx)(_ ^ _))
 
       // Unary Operations 
 
       // Shift Operations
-      case shliOp: arith.ShLI =>
-        interpret_bin_op(shliOp, shliOp.lhs, shliOp.rhs, "ShLI", ctx)(_ << _)
-      case shrsiOp: arith.ShRSI =>
-        interpret_bin_op(shrsiOp, shrsiOp.lhs, shrsiOp.rhs, "ShRSI", ctx)(_ >> _)
-      case shruiOp: arith.ShRUI =>
-        interpret_bin_op(shruiOp, shruiOp.lhs, shruiOp.rhs, "ShRUI", ctx)(_ >>> _)
+      case shli_op: arith.ShLI =>
+        ctx.vars.put(shli_op, interpret_bin_op(shli_op.lhs, shli_op.rhs, ctx)(_ << _))
+      case shrsi_op: arith.ShRSI =>
+        ctx.vars.put(shrsi_op, interpret_bin_op(shrsi_op.lhs, shrsi_op.rhs, ctx)(_ >> _))
+      case shrui_op: arith.ShRUI =>
+        ctx.vars.put(shrui_op, interpret_bin_op(shrui_op.lhs, shrui_op.rhs, ctx)(_ >>> _))
+
+      // Ceiling and Floor Operations
+      case ceildiv_op: arith.CeilDivSi =>
+      //  interpret_bin_op(ceildiv_op, )
 
       // Comparison Operation
-      case cmpiOp: arith.CmpI =>
-        interpret_cmp_op(cmpiOp.lhs, cmpiOp.rhs, cmpiOp.predicate.value.toInt, ctx)
+      case cmpi_op: arith.CmpI =>
+        ctx.vars.put(cmpi_op, interpret_cmp_op(cmpi_op.lhs, cmpi_op.rhs, cmpi_op.predicate.value.toInt, ctx))
 
       // Select Operation
-      case selectOp: arith.SelectOp =>
-        interpret_block_or_op(selectOp.condition.owner.get, ctx)
-        val lookup = lookup_op(selectOp.condition.owner.get, ctx)
+      case select_op: arith.SelectOp =>
+        interpret_block_or_op(select_op.condition.owner.get, ctx)
+        val lookup = lookup_op(select_op.condition.owner.get, ctx)
         lookup match {
           case condOp: IntegerAttr => 
             condOp.value.value.toInt match {
-              case 0 => ctx.vars.put(op, lookup_op(selectOp.falseValue.owner.get, ctx))
-              case 1 => ctx.vars.put(op, lookup_op(selectOp.trueValue.owner.get, ctx))
+              case 0 => ctx.vars.put(op, lookup_op(select_op.falseValue.owner.get, ctx))
+              case 1 => ctx.vars.put(op, lookup_op(select_op.trueValue.owner.get, ctx))
               case _ => throw new Exception("Select condition must be 0 or 1")
             }
           case _ => throw new Exception("Select condition must be an integer attribute")
@@ -92,56 +88,13 @@ class Interpreter {
     }
   }
 
-  // interpret block by iterating and evaluating each operation in it 
-  def interpret_block(block: Block, ctx: InterpreterCtx): Unit = {
-    for (op <- block.operations) {
-      interpret_op(op, ctx)
-    }
-  }
-
-  // TODO: maybe make sure bitwidth is ok?
-  def interpret_bin_op(op: Operation, lhs: Value[Attribute], rhs: Value[Attribute], name: String, ctx: InterpreterCtx)
-  (combine: (Int, Int) => Int): Unit = {
-    val lval = lookup_op(lhs.owner.get, ctx)
-    val rval = lookup_op(rhs.owner.get, ctx)
-    (lval, rval) match {
-      case (li: IntegerAttr, ri: IntegerAttr) =>
-        val result = IntegerAttr(IntData(combine(li.value.value.toInt, ri.value.value.toInt)), li.typ)
-        ctx.vars.put(op, result)
-      case _ => throw new Exception(s"Unsupported operand types for $name")
-    }
-  }
-
-  def interpret_cmp_op(lhs: Value[Attribute], rhs: Value[Attribute], predicate: Int, ctx: InterpreterCtx): Unit = {
-    val lval = lookup_op(lhs.owner.get, ctx)
-    val rval = lookup_op(rhs.owner.get, ctx)
-    (lval, rval) match {
-      case (li: IntegerAttr, ri: IntegerAttr) =>
-        val lcmp = li.value.value
-        val rcmp = ri.value.value
-        predicate match {
-          case 0 => // EQ
-            if (lcmp == rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-          case 1 => // NE
-            if (lcmp != rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-          case 2 | 6 => // SLT and ULT, assume both numbers are already converted accoringly
-            if (lcmp < rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-          case 3 | 7 => // SLE and ULE
-            if (lcmp <= rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-          case 4 | 8 => // SGT and UGT
-            if (lcmp > rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-          case 5 | 9 => // SGE and UGE
-            if (lcmp >= rcmp) IntegerAttr(IntData(1), I1) else IntegerAttr(IntData(0), I1)
-          case _ => throw new Exception("Unknown comparison predicate")
-        }
-      case other => throw new Exception("Unsupported operand types for cmpi, got: $other")
-    }
-  }
-
   def interpret_block_or_op(value: Operation | Block, ctx: InterpreterCtx): Unit = {
     value match {
       case op: Operation => interpret_op(op, ctx)
-      case block: Block => interpret_block(block, ctx)
+      case block: Block =>
+        for (op <- block.operations) {
+          interpret_op(op, ctx)
+        }
     }
   }
 
@@ -163,6 +116,14 @@ class Interpreter {
     } else {
       // function definition; no call, add function and current running context functionCtx to interpreter context
       ctx.add_func_ctx(function)
+    }
+  }
+
+  def interpret_call(call_op: func.Call, ctx: InterpreterCtx): Unit = {
+    for (func_ctx <- ctx.funcs) {
+      if (func_ctx.name == call_op.callee.rootRef.stringLiteral) {
+        interpret_block_or_op(func_ctx.body, func_ctx.saved_ctx)
+      }
     }
   }
 }
