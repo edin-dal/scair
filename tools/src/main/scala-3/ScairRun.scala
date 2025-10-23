@@ -92,7 +92,7 @@ trait ScairRunBase {
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var interpreterCtx = new InterpreterCtx(mutable.Map(), mutable.Map(), ListBuffer(), None)
+    var interpreterCtx = new InterpreterCtx(mutable.Map(), ListBuffer(), ListBuffer(), None)
 
     //val interpreted_output = interpreter.interpret(main_block)
     //println(module_block.operations)

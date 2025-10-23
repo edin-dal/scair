@@ -3,11 +3,12 @@ package scair.tools
 import scair.ir.*
 import scair.dialects.arith
 import scair.dialects.func
+import scair.dialects.memref
 import scair.dialects.builtin.*
 
 
 // TODO: do flow analysis to find correct return op
-class Interpreter extends ArithmeticEvaluator {
+class Interpreter extends ArithmeticEvaluator with MemoryHandler {
 
   // TODO: only passing in block for now, may need to generalise for list of blocks later
   // keeping buffer function for extensibility
@@ -63,10 +64,6 @@ class Interpreter extends ArithmeticEvaluator {
       case shrui_op: arith.ShRUI =>
         ctx.vars.put(shrui_op, interpret_bin_op(shrui_op.lhs, shrui_op.rhs, ctx)(_ >>> _))
 
-      // Ceiling and Floor Operations
-      case ceildiv_op: arith.CeilDivSi =>
-      //  interpret_bin_op(ceildiv_op, )
-
       // Comparison Operation
       case cmpi_op: arith.CmpI =>
         ctx.vars.put(cmpi_op, interpret_cmp_op(cmpi_op.lhs, cmpi_op.rhs, cmpi_op.predicate.value.toInt, ctx))
@@ -84,7 +81,15 @@ class Interpreter extends ArithmeticEvaluator {
             }
           case _ => throw new Exception("Select condition must be an integer attribute")
           }
-      case _ => throw new Exception("Unsupported operation")
+
+      // Memory operations
+      case alloc_op: memref.Alloc =>
+        allocate_memory(alloc_op, ctx)
+      case load_op: memref.Load =>
+        load_memory(load_op, ctx)
+      case store_op: memref.Store =>
+        store_memory(store_op, ctx)
+      case _ => throw new Exception("Unsupported operation when interpreting")
     }
   }
 

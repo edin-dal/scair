@@ -10,8 +10,8 @@ import scair.dialects.func
 // when interpreting variable, look up in current context, if not found look up in parent context
 // when finished interpreting function definition, add function context to that level of ctx
 class InterpreterCtx (
-    val vars: mutable.Map[Operation, Attribute],
-    val memory: mutable.Map[Int, Attribute],
+    val vars: mutable.Map[Operation, Attribute], //| MemrefType],
+    val memory: ListBuffer[Attribute],
     val funcs: ListBuffer[FunctionCtx],
     var result: Option[Attribute] = None
 ) {
@@ -19,7 +19,7 @@ class InterpreterCtx (
     def clone_ctx(): InterpreterCtx = {
         InterpreterCtx(
             mutable.Map() ++ this.vars,
-            mutable.Map() ++ this.memory,
+            ListBuffer() ++ this.memory,
             ListBuffer() ++ this.funcs,
             None
         )
