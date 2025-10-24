@@ -235,6 +235,18 @@ builtin.module {
   // CHECK-NEXT:      func.return %2 : complex<f128>
   // CHECK-NEXT:    }
 
+
+  func.func @mul_cst() -> complex<f128> {
+    %0 = "complex.constant"() <{value = [1.0 : f128, 2.0 : f128]}> : () -> (complex<f128>)
+    %1 = "complex.constant"() <{value = [3.0 : f128, 4.0 : f128]}> : () -> (complex<f128>)
+    %2 = "complex.mul"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f128>, complex<f128>) -> (complex<f128>)
+    func.return %2 : complex<f128>
+  }
+  // CHECK-NEXT:    func.func @mul_cst() -> complex<f128> {
+  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [-5.0 : f128, 10.0 : f128]}> : () -> (complex<f128>)
+  // CHECK-NEXT:      func.return %0 : complex<f128>
+  // CHECK-NEXT:    }
+
 //   func.func @fold_between_complex(%0: complex<f32>) -> complex<f32> {
 //     %1 = "complex.bitcast"(%0) : (complex<f32>) -> (i64)
 //     %2 = "complex.bitcast"(%1) : (i64) -> (complex<f32>)
