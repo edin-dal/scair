@@ -87,4 +87,12 @@ trait IsolatedFromAbove extends Operation {
 
 trait Commutative extends Operation
 
-trait ConstantLike extends Operation
+trait ConstantLike(_value: Attribute) extends Operation:
+  def getValue: Attribute = _value
+
+object ConstantLike:
+
+  def unapply(op: Operation): Option[(value: Attribute)] =
+    op match
+      case c: ConstantLike => Some((value = c.getValue))
+      case _               => None

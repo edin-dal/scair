@@ -30,7 +30,7 @@ case class Constant(
     complex: Result[ComplexType]
 ) extends DerivedOperation["complex.constant", Constant]
     with NoMemoryEffect
-    with ConstantLike
+    with ConstantLike(value)
 
 case class Create(
     real: Operand[IndexType | IntegerType | FloatType],
