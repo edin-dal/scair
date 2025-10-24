@@ -327,7 +327,7 @@ case class Constant(
     val result: Result[Attribute]
 ) extends DerivedOperation["arith.constant", Constant]
     with NoMemoryEffect
-    with ConstantLike
+    with ConstantLike(value)
 
 case class DivF(
     val lhs: Operand[FloatType],
