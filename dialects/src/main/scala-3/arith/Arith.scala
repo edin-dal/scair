@@ -140,10 +140,10 @@ trait SameOperandsAndResultTypes extends Operation {
 
   override def trait_verify(): Either[String, Operation] = {
     val params = this.operands.typ ++ this.results.typ
-    if (params.isEmpty) Right(this)
+    if params.isEmpty then Right(this)
     else {
       val first = params.head
-      if (params.tail.forall(_ == first)) Right(this)
+      if params.tail.forall(_ == first) then Right(this)
       else
         Left(
           "All parameters of TypeConstraint must be of the same type in operation " + this.name
@@ -160,11 +160,11 @@ trait SameOperandsAndResultShape extends Operation {
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
-    if (params.isEmpty) Right(this)
+    if params.isEmpty then Right(this)
     else {
       val firstDim = params.head.getNumDims
       // check ranks of all parameters
-      if (params.map(_.getNumDims == firstDim).reduceLeft(_ && _)) then
+      if params.map(_.getNumDims == firstDim).reduceLeft(_ && _) then
         Right(this)
       else
         Left(
@@ -182,11 +182,11 @@ trait SameInputOutputTensorDims extends Operation {
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
-    if (params.isEmpty) Right(this)
+    if params.isEmpty then Right(this)
     else {
       val firstShape = params.head.getShape
       // checks if all parameters have the same shape
-      if (params.map(_.getShape == firstShape).reduceLeft(_ && _)) then
+      if params.map(_.getShape == firstShape).reduceLeft(_ && _) then
         Right(this)
       else
         Left(
@@ -200,10 +200,10 @@ trait SameInputOutputTensorDims extends Operation {
 trait AllTypesMatch(values: Attribute*) extends Operation {
 
   override def trait_verify(): Either[String, Operation] = {
-    if (values.isEmpty) Right(this)
+    if values.isEmpty then Right(this)
     else {
       val first = values.head
-      if (values.tail.forall(_ == first)) Right(this)
+      if values.tail.forall(_ == first) then Right(this)
       else
         Left(
           "All parameters of AllTypesMatch must be of the same type in operation " + this.name
@@ -222,7 +222,7 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
       case x: ShapedType                     =>
         result match {
           case y: ShapedType =>
-            if (x.getShape == y.getShape) then Right(this)
+            if x.getShape == y.getShape then Right(this)
             else
               Left(
                 s"Condition must be a I1 boolean, or the result of operation '${this.name}' must have the same shape as the condition, but got ${x.getShape} and ${y.getShape}"

@@ -5,7 +5,7 @@ import scair.ir.*
 import scala.quoted.*
 
 def eqAttrImpl[To <: Attribute: Type](using Quotes) = {
-  import quotes.reflect._
+  import quotes.reflect.*
   val t = TypeRepr.of[To].simplified
   val ref = t match
     case tr: TermRef => Ref(tr.termSymbol).asExprOf[To]

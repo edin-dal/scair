@@ -24,13 +24,13 @@ trait ScairRunBase {
   }
 
   final def register_all_dialects(): Unit = {
-    for (dialect <- allDialects) {
+    for dialect <- allDialects do {
       ctx.registerDialect(dialect)
     }
   }
 
   final def register_all_passes(): Unit = {
-    for (pass <- allPasses) {
+    for pass <- allPasses do {
       transformCtx.registerPass(pass)
     }
   }
@@ -40,7 +40,7 @@ trait ScairRunBase {
     // Define CLI args
     val argbuilder = OParser.builder[Args]
     val argparser = {
-      import argbuilder._
+      import argbuilder.*
       OParser.sequence(
         programName("scair-run"),
         head("scair-run", "0"),

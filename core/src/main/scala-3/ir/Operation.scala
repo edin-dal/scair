@@ -130,14 +130,14 @@ trait Operation extends IRNode with IntrusiveNode[Operation] {
   }
 
   final def erase(safe_erase: Boolean = true): Unit = {
-    if (container_block != None) then {
+    if container_block != None then {
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
       )
     }
     drop_all_references
-    if (safe_erase) then {
-      for (result <- results) {
+    if safe_erase then {
+      for result <- results do {
         result.erase()
       }
     }

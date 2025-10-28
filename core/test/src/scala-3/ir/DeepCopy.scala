@@ -7,11 +7,11 @@ import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.Printer
-import scair.dialects.builtin._
+import scair.dialects.builtin.*
 import java.io.StringWriter
 import java.io.PrintWriter
 import scair.clair.macros.DerivedOperation
-import scala.collection.mutable.{LinkedHashMap}
+import scala.collection.mutable.LinkedHashMap
 
 class DeepCopyTest extends AnyFlatSpec {
 

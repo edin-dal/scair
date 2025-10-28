@@ -22,7 +22,7 @@ object TransparentData {
   inline def derived[T <: DataAttribute[?]] = ${ derivedImpl[T] }
 
   def derivedImpl[T <: DataAttribute[?]: Type](using Quotes) =
-    import quotes.reflect._
+    import quotes.reflect.*
 
     Type.of[T] match
       case '[DataAttribute[t]] =>

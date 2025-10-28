@@ -73,7 +73,7 @@ case class Printer(
 
   def print(parameter: Attribute | Seq[Attribute]): Unit =
     parameter match {
-      case seq: Seq[_]     => printList(seq.asInstanceOf[Seq[Attribute]])
+      case seq: Seq[?]     => printList(seq.asInstanceOf[Seq[Attribute]])
       case attr: Attribute => print(attr)
     }
 
@@ -164,7 +164,7 @@ case class Printer(
       case entry +: blocks =>
         // If the entry block has no arguments, we can avoid printing the header
         // Unless it is empty, which would make the next block read as the entry!
-        if (entry.arguments.nonEmpty || entry.operations.isEmpty) then
+        if entry.arguments.nonEmpty || entry.operations.isEmpty then
           print(entry)
         else printList(entry.operations, sep = "")(using indentLevel + 1)
         blocks.foreach(block => print(block))

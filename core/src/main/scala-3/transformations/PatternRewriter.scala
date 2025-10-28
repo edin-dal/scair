@@ -86,7 +86,7 @@ trait Rewriter {
 
     val operations = ops match {
       case x: Operation => Seq(x)
-      case y: Seq[_]    => y.asInstanceOf[Seq[Operation]]
+      case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
     }
 
     insertion_point.insert_before match {
@@ -130,16 +130,16 @@ trait Rewriter {
 
     val ops = new_ops match {
       case x: Operation => Seq(x)
-      case y: Seq[_]    => y.asInstanceOf[Seq[Operation]]
+      case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
     }
 
     val results = new_results match {
       case Some(x) => x
       case None    =>
-        if (ops.length == 0) then ListType() else ops.last.results
+        if ops.length == 0 then ListType() else ops.last.results
     }
 
-    if (op.results.length != results.length) then {
+    if op.results.length != results.length then {
       throw new Exception(
         s"Expected ${op.results.length} new results but got ${results.length}"
       )
@@ -147,7 +147,7 @@ trait Rewriter {
 
     RewriteMethods.insert_ops_before(op, ops)
 
-    for ((old_res, new_res) <- (op.results zip results)) {
+    for (old_res, new_res) <- (op.results zip results) do {
       replace_value(old_res, new_res)
     }
 
@@ -161,7 +161,7 @@ trait Rewriter {
       new_value: Value[Attribute]
   ): Unit = {
     if !(new_value eq value) then {
-      for ((op, uses) <- value.uses.groupBy(_.operation)) {
+      for (op, uses) <- value.uses.groupBy(_.operation) do {
         // TODO: This should be enforced by a nicer design!
         if op.container_block.nonEmpty then {
           val indices = Set.from(uses.map(_.index))
@@ -356,12 +356,12 @@ class PatternRewriteWalker(
 
     var rewriter_done_action = false
 
-    if (worklist.isEmpty) return rewriter_done_action
+    if worklist.isEmpty then return rewriter_done_action
 
     var op = pop_worklist
     val rewriter = PatternRewriter(op)
 
-    while (true) {
+    while true do {
       rewriter.has_done_action = false
       rewriter.current_op = op
 
@@ -373,7 +373,7 @@ class PatternRewriteWalker(
 
       rewriter_done_action |= rewriter.has_done_action
 
-      if (worklist.isEmpty) return rewriter_done_action
+      if worklist.isEmpty then return rewriter_done_action
 
       op = pop_worklist
     }

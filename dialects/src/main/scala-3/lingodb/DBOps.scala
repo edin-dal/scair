@@ -95,7 +95,7 @@ case class DB_CharType(val typ: Seq[Attribute])
   override def parameters: Seq[Attribute] = typ
 
   override def custom_verify(): Either[String, Unit] = {
-    if (typ.length != 1) {
+    if typ.length != 1 then {
       Left("TupleStream Tuple must contain 1 elements only.")
     } else
       typ(0) match {
@@ -200,7 +200,7 @@ case class DB_DecimalType(val typ: Seq[Attribute])
   override def parameters: Seq[Attribute | Seq[Attribute]] = typ
 
   override def custom_verify(): Either[String, Unit] = {
-    if (typ.length != 2) {
+    if typ.length != 2 then {
       Left("TupleStream Tuple must contain exactly 2 elements.")
     } else {
       typ(0) match {
@@ -248,11 +248,11 @@ case class DB_StringType(val typ: Seq[Attribute])
   override def parameters: Seq[Attribute | Seq[Attribute]] = typ
 
   override def custom_verify(): Either[String, Unit] = {
-    if (typ.length > 1) {
+    if typ.length > 1 then {
       Left(
         "TupleStream Tuple must contain at most 1 element."
       )
-    } else if (typ.length == 1)
+    } else if typ.length == 1 then
       typ(0) match {
         case _: StringData => Right(())
         case _             =>

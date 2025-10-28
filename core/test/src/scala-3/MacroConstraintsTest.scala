@@ -6,7 +6,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.core.constraints.{_, given}
+import scair.core.constraints.{*, given}
 
 val f32 = Float32Type()
 

@@ -23,7 +23,7 @@ final case class Value[+T <: Attribute](
   var owner: Option[Operation | Block] = None
 
   def erase(): Unit = {
-    if (uses.nonEmpty) then
+    if uses.nonEmpty then
       throw new Exception(
         "Attempting to erase a Value that has uses in other operations."
       )

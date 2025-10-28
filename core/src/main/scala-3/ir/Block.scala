@@ -96,11 +96,11 @@ case class Block private (
     this(
       ListType.from((arguments_types match {
         case single: Attribute     => Seq(single)
-        case multiple: Iterable[_] => multiple.asInstanceOf[Iterable[Attribute]]
+        case multiple: Iterable[?] => multiple.asInstanceOf[Iterable[Attribute]]
       }).map(Value(_))),
       BlockOperations.from((operations match {
         case single: Operation     => Seq(single)
-        case multiple: Iterable[_] =>
+        case multiple: Iterable[?] =>
           multiple.asInstanceOf[Iterable[Operation]]
       }))
     )
@@ -121,12 +121,12 @@ case class Block private (
     this(
       ListType.from(args._1 match {
         case single: Value[Attribute] => Seq(single)
-        case multiple: Iterable[_]    =>
+        case multiple: Iterable[?]    =>
           multiple.asInstanceOf[Iterable[Value[Attribute]]]
       }),
       BlockOperations.from(args._2 match {
         case single: Operation     => Seq(single)
-        case multiple: Iterable[_] =>
+        case multiple: Iterable[?] =>
           multiple.asInstanceOf[Iterable[Operation]]
       })
     )
@@ -205,7 +205,7 @@ case class Block private (
 
   def add_ops(new_ops: Seq[Operation]): Unit = {
     val oplen = operations.length
-    for (op <- new_ops) {
+    for op <- new_ops do {
       attach_op(op)
     }
     operations.insertAll(oplen, new_ops)
@@ -233,7 +233,7 @@ case class Block private (
   ): Unit = {
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
-        for (op <- new_ops) {
+        for op <- new_ops do {
           attach_op(op)
         }
         operations.insertAll(existing_op, new_ops)
@@ -269,7 +269,7 @@ case class Block private (
   ): Unit = {
     (existing_op.container_block `equals` Some(this)) match {
       case true =>
-        for (op <- new_ops) {
+        for op <- new_ops do {
           attach_op(op)
         }
         existing_op.next match

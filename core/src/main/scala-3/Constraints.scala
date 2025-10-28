@@ -56,7 +56,7 @@ inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
     override def verify(attr: Attribute)(using
         ctx: ConstraintContext
     ): Either[String, Unit] =
-      if (attr == ref) Right(())
+      if attr == ref then Right(())
       else Left(s"Expected ${ref}, got ${attr}")
   }
 
@@ -66,8 +66,8 @@ inline given [To <: String] => ConstraintImpl[Var[To]] =
     override def verify(attr: Attribute)(using
         ctx: ConstraintContext
     ): Either[String, Unit] = {
-      if (ctx.var_constraints.contains(name)) {
-        if (ctx.var_constraints.apply(name) != attr) then
+      if ctx.var_constraints.contains(name) then {
+        if ctx.var_constraints.apply(name) != attr then
           Left(s"Expected ${ctx.var_constraints.apply(name)}, got ${attr}")
         else Right(())
       } else {

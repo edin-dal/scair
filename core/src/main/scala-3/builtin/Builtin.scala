@@ -111,7 +111,7 @@ final case class IntegerAttr(
 ) extends DerivedAttribute["builtin.integer_attr", IntegerAttr] {
 
   infix def +(that: IntegerAttr): IntegerAttr = {
-    if (this.typ != that.typ) {
+    if this.typ != that.typ then {
       throw new Exception(
         s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
       )
@@ -121,7 +121,7 @@ final case class IntegerAttr(
   }
 
   infix def -(that: IntegerAttr): IntegerAttr = {
-    if (this.typ != that.typ) {
+    if this.typ != that.typ then {
       throw new Exception(
         s"Cannot add IntegerAttrs of different types: ${this.typ} and ${that.typ}"
       )
@@ -131,7 +131,7 @@ final case class IntegerAttr(
   }
 
   infix def *(that: IntegerAttr): IntegerAttr = {
-    if (this.typ != that.typ) {
+    if this.typ != that.typ then {
       throw new Exception(
         s"Cannot multiply IntegerAttrs of different types: ${this.typ} and ${that.typ}"
       )
@@ -472,7 +472,7 @@ final case class DenseIntOrFPElementsAttr(
     Try(int_or_float.verify(elementType, new ConstraintContext())) match {
       case Success(_) =>
         Try(
-          for (x <- data.attrValues)
+          for x <- data.attrValues do
             int_or_float.verify(
               x match
                 case IntegerAttr(_, t) => t

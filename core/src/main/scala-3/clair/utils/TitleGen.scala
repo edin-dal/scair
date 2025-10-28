@@ -53,14 +53,14 @@ object TitleGen {
 
     generated_title(0) += '\n'
 
-    for (word <- lower_title) {
-      for (letter <- word) {
+    for word <- lower_title do {
+      for letter <- word do {
         val letter_tup = charMap(letter)
-        for (i <- 0 to letter_size - 1) {
+        for i <- 0 to letter_size - 1 do {
           generated_title(i + (index * letter_size) + 1) ++= letter_tup(i) + " "
         }
       }
-      for (i <- 0 to letter_size - 1) {
+      for i <- 0 to letter_size - 1 do {
         generated_title(i + (index * letter_size) + 1) += '\n'
       }
       index += 1
@@ -85,7 +85,7 @@ object TitleGen {
     * @param args
     */
   def main(args: Array[String]): Unit = {
-    if (args.length == 0) {
+    if args.length == 0 then {
       print(generate("title generator and whatnot"))
     } else {
       print(generate(args.mkString(" ")))

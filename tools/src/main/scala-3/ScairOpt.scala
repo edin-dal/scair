@@ -26,13 +26,13 @@ trait ScairOptBase {
   }
 
   final def register_all_dialects(): Unit = {
-    for (dialect <- allDialects) {
+    for dialect <- allDialects do {
       ctx.registerDialect(dialect)
     }
   }
 
   final def register_all_passes(): Unit = {
-    for (pass <- allPasses) {
+    for pass <- allPasses do {
       transformCtx.registerPass(pass)
     }
   }
@@ -42,7 +42,7 @@ trait ScairOptBase {
     // Define CLI args
     val argbuilder = OParser.builder[Args]
     val argparser = {
-      import argbuilder._
+      import argbuilder.*
       OParser.sequence(
         programName("scair-opt"),
         head("scair-opt", "0"),
@@ -105,7 +105,7 @@ trait ScairOptBase {
 
     // TODO: more robust separator splitting
     val input_chunks =
-      if (parsed_args.split_input_file) input.mkString.split("\n// -----\n")
+      if parsed_args.split_input_file then input.mkString.split("\n// -----\n")
       else Array(input.mkString)
 
     // Parse content
@@ -125,13 +125,13 @@ trait ScairOptBase {
         }
       }
 
-      if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
+      if !parsed_args.parsing_diagnostics && input_module.isLeft then
         throw new Exception(input_module.left.get)
 
       val processed_module: Either[String, Operation] =
         input_module.flatMap(input_module => {
           var module =
-            if (skip_verify) then Right(input_module)
+            if skip_verify then Right(input_module)
             else input_module.structured.flatMap(_.verify())
           // verify parsed content
           module match {
@@ -143,7 +143,7 @@ trait ScairOptBase {
                   module.map(pass.transform)
                 })
             case Left(errorMsg) =>
-              if (parsed_args.verify_diagnostics) {
+              if parsed_args.verify_diagnostics then {
                 Left(errorMsg)
               } else {
                 throw new VerifyException(errorMsg)

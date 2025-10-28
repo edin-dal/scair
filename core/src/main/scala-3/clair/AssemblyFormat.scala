@@ -20,7 +20,7 @@ private inline def isalpha(c: Char): Boolean =
 private def printSpace(p: Expr[Printer], state: PrintingState)(using Quotes) =
 
   val print =
-    if (state.shouldEmitSpace || !state.lastWasPunctuation)
+    if state.shouldEmitSpace || !state.lastWasPunctuation then
       '{ $p.print(" ") }
     else '{}
 
@@ -88,23 +88,19 @@ case class LiteralDirective(
   private inline def shouldEmitSpaceBefore(
       inline lastWasPunctuation: Boolean
   ): Boolean =
-    if (literal.size != 1 && literal != "->")
-      true
-    else if (lastWasPunctuation)
-      !">)}],".contains(literal.head)
-    else
-      !"<>(){}[],".contains(literal.head)
+    if literal.size != 1 && literal != "->" then true
+    else if lastWasPunctuation then !">)}],".contains(literal.head)
+    else !"<>(){}[],".contains(literal.head)
 
   def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] = {
     val toPrint =
-      if (
-        state.shouldEmitSpace && shouldEmitSpaceBefore(state.lastWasPunctuation)
-      )
-        " " + literal
-      else
-        literal
+      if state.shouldEmitSpace && shouldEmitSpaceBefore(
+          state.lastWasPunctuation
+        )
+      then " " + literal
+      else literal
 
     state.shouldEmitSpace = literal.size != 1 || !"<({[".contains(literal.head)
     state.lastWasPunctuation = literal.head != '_' && !isalpha(literal.head)

@@ -30,7 +30,7 @@ import scair.Parser.*
 \*≡==----=≡=----==≡*/
 
 def checkDistinct(name: String, list: Seq[String]): Seq[String] = {
-  if (list.distinct.size != list.size) {
+  if list.distinct.size != list.size then {
     throw new Exception(
       s"Number of ${name} in Affine Map/Set must be unique! ;)"
     )
@@ -43,7 +43,7 @@ def validateAffineExpr(
     dimsym: String,
     list: Seq[String]
 ): String = {
-  if (!list.contains(dimsym)) {
+  if !list.contains(dimsym) then {
     println(list.contains(dimsym))
     println(list)
     println(dimsym)

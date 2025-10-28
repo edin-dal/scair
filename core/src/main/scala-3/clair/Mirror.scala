@@ -31,7 +31,7 @@ import scala.quoted.Type
 \*≡==----=≡≡≡≡=----==≡*/
 
 def getTypeConstraint(tpe: Type[?])(using Quotes) =
-  import quotes.reflect._
+  import quotes.reflect.*
   val op = TypeRepr.of[!>]
   TypeRepr.of(using tpe) match
     case AppliedType(op, List(attr, constraint)) =>
@@ -82,7 +82,7 @@ def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   *   SuccessorDef, OpPropertyDef
   */
 def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
-  import quotes.reflect._
+  import quotes.reflect.*
   val name = Type.of[Label] match
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
@@ -188,7 +188,7 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] = {
 }
 
 def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
-  import quotes.reflect._
+  import quotes.reflect.*
 
   val m = Expr.summon[Mirror.ProductOf[T]].get
   m match
@@ -202,7 +202,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
-        case '[DerivedOperation[name, _]] =>
+        case '[DerivedOperation[name, ?]] =>
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(
@@ -229,14 +229,14 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
       opDef.copy(assembly_format = format)
 
 def getCompanion[T: Type](using quotes: Quotes) = {
-  import quotes.reflect._
+  import quotes.reflect.*
   TypeRepr.of[T].typeSymbol.companionModule
 }
 
 def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
     using quotes: Quotes
 ) =
-  import quotes.reflect._
+  import quotes.reflect.*
 
   val comp = getCompanion(using Type.of[T])
   val sig = TypeRepr
@@ -264,7 +264,7 @@ def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
 def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
     quotes: Quotes
 ) =
-  import quotes.reflect._
+  import quotes.reflect.*
 
   val comp = getCompanion(using Type.of[T])
   val sig = TypeRepr
@@ -291,7 +291,7 @@ def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
       )
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
-  import quotes.reflect._
+  import quotes.reflect.*
 
   val m = Expr.summon[Mirror.ProductOf[T]].get
   m match
@@ -306,7 +306,7 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
       val paramLabels = stringifyLabels[elemLabels]
 
       val name = Type.of[T] match
-        case '[DerivedAttribute[name, _]] =>
+        case '[DerivedAttribute[name, ?]] =>
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(

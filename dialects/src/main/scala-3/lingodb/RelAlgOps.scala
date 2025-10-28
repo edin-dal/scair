@@ -402,7 +402,7 @@ case class MapOp(
         attributes.get("computed_cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Right(this)
+              case _: ArrayAttribute[?] => Right(this)
               case _                    =>
                 Left(
                   "MapOp Operation must contain a ArrayAttribute named 'computed_cols'."
@@ -512,7 +512,7 @@ case class AggregationOp(
         attributes.get("computed_cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Right(this)
+              case _: ArrayAttribute[?] => Right(this)
               case _                    =>
                 Left(
                   "AggregationOp Operation must contain an ArrayAttribute named 'computed_cols'."
@@ -527,7 +527,7 @@ case class AggregationOp(
         attributes.get("group_by_cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Right(this)
+              case _: ArrayAttribute[?] => Right(this)
               case _                    =>
                 Left(
                   "AggregationOp Operation must contain an ArrayAttribute named 'group_by_cols'."
@@ -818,7 +818,7 @@ case class SortOp(
         attributes.get("sortspecs") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Right(this)
+              case _: ArrayAttribute[?] => Right(this)
               case _                    =>
                 Left(
                   "SortOp Operation must contain an ArrayAttribute enum named 'sortspecs'."
@@ -926,7 +926,7 @@ case class MaterializeOp(
         attributes.get("cols") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Right(this)
+              case _: ArrayAttribute[?] => Right(this)
               case _                    =>
                 Left(
                   "MaterializeOp Operation must contain an ArrayAttribute enum named 'cols'."
@@ -941,7 +941,7 @@ case class MaterializeOp(
         attributes.get("columns") match {
           case Some(x) =>
             x match {
-              case _: ArrayAttribute[_] => Right(this)
+              case _: ArrayAttribute[?] => Right(this)
               case _                    =>
                 Left(
                   "MaterializeOp Operation must contain an ArrayAttribute named 'columns'."

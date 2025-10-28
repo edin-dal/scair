@@ -82,7 +82,7 @@ abstract class DataAttribute[D](
 
   override def equals(attr: Any): Boolean = {
     attr match {
-      case x: DataAttribute[_] =>
+      case x: DataAttribute[?] =>
         x.name == this.name &&
         x.getClass == this.getClass &&
         x.data == this.data

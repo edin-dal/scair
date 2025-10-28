@@ -427,7 +427,7 @@ final class Parser(
     typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
 ) extends AttrParser(context, attributeAliases, typeAliases) {
 
-  import Parser._
+  import Parser.*
   import AttrParser.whitespace
 
   def error(failure: Failure) =
@@ -497,7 +497,7 @@ final class Parser(
         val region = new Region(blocks = Seq(block))
         val moduleOp = ModuleOp(region)
 
-        for (op <- toplevel) op.container_block = Some(block)
+        for op <- toplevel do op.container_block = Some(block)
         block.container_region = Some(region)
         region.container_operation = Some(moduleOp)
 
@@ -558,13 +558,13 @@ final class Parser(
       operandsTypes: Seq[Attribute] = Seq()
   ): Operation = {
 
-    if (operandsNames.length != operandsTypes.length) {
+    if operandsNames.length != operandsTypes.length then {
       throw new Exception(
         s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"${opName}\"."
       )
     }
 
-    if (resultsNames.length != resultsTypes.length) {
+    if resultsNames.length != resultsTypes.length then {
       throw new Exception(
         s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
@@ -616,7 +616,7 @@ final class Parser(
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
   ).map(op => {
-    for (region <- op.regions) region.container_operation = Some(op)
+    for region <- op.regions do region.container_operation = Some(op)
     op
   })
 
@@ -724,13 +724,13 @@ final class Parser(
     return parseResult._1.length match {
       case 0 =>
         val region = new Region(blocks = parseResult._2)
-        for (block <- region.blocks) block.container_region = Some(region)
+        for block <- region.blocks do block.container_region = Some(region)
         region
       case _ =>
         val startblock =
           new Block(operations = parseResult._1, arguments_types = ListType())
         val region = new Region(blocks = startblock +: parseResult._2)
-        for (block <- region.blocks) block.container_region = Some(region)
+        for block <- region.blocks do block.container_region = Some(region)
         region
     }
   }
@@ -741,7 +741,7 @@ final class Parser(
       { enterLocalRegion }
     ) ~/ (BlockBody(populateBlockArgs(new Block(), entryArgs)) ~/ Block.rep)
       .map((entry: Block, blocks: Seq[Block]) =>
-        if (entry.operations.isEmpty && entry.arguments.isEmpty) then blocks
+        if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
         else entry +: blocks
       ) ~/ "}"
   ).map(new Region(_)) ~/ E(

@@ -35,7 +35,7 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
   override def parameters: Seq[Attribute | Seq[Attribute]] = tupleVals
 
   override def custom_verify(): Either[String, Unit] = {
-    if (tupleVals.length != 0 && tupleVals.length != 2) {
+    if tupleVals.length != 0 && tupleVals.length != 2 then {
       Left("TupleStream Tuple must contain 2 elements only.")
     } else {
       Right(())
@@ -66,7 +66,7 @@ case class TupleStream(val tuples: Seq[Attribute])
   override def custom_verify(): Either[String, Unit] = {
 
     lazy val verifyTuples: Int => Either[String, Unit] = { (i: Int) =>
-      if (i == tuples.length) then Right(())
+      if i == tuples.length then Right(())
 
       tuples(i) match {
         case x: TupleStreamTuple =>

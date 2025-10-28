@@ -40,8 +40,8 @@ object AttrParser {
       val input = ctx.input
       val startIndex = ctx.index
       @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
-        if (!input.isReachable(current)) {
-          if (state == 0 || state == 1) ctx.freshSuccessUnit(current)
+        if !input.isReachable(current) then {
+          if state == 0 || state == 1 then ctx.freshSuccessUnit(current)
           else ctx.freshSuccessUnit(current - 1)
         } else {
           val currentChar = input(current)
@@ -53,7 +53,7 @@ object AttrParser {
                 case _                        => ctx.freshSuccessUnit(current)
               }
             case 1 =>
-              rec(current + 1, state = if (currentChar == '\n') 0 else state)
+              rec(current + 1, state = if currentChar == '\n' then 0 else state)
             case 2 =>
               (currentChar: @switch) match {
                 case '/' => rec(current + 1, state = 1)

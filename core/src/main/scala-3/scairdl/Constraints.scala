@@ -91,7 +91,7 @@ abstract class IRDLConstraint {
       those_attrs: Seq[Attribute],
       constraint_ctx: ConstraintContext
   ): Unit =
-    for (attr <- those_attrs) verify(attr, constraint_ctx)
+    for attr <- those_attrs do verify(attr, constraint_ctx)
 
   /** Combines this constraint with another constraint using logical AND.
     *
@@ -169,7 +169,7 @@ case class EqualAttr(val this_attr: Attribute) extends IRDLConstraint {
       constraint_ctx: ConstraintContext
   ): Unit = {
 
-    if (this_attr != that_attr) {
+    if this_attr != that_attr then {
       val errstr =
         s"${that_attr.name} does not equal ${this_attr.name}:\n" +
           s"Got $that_attr, expected $this_attr"
@@ -265,8 +265,7 @@ case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
   ): Unit = {
 
     val that_attr_class = that_attr.getClass
-    if (
-      !constraints.exists(entry => {
+    if !constraints.exists(entry => {
         Try {
           entry.verify(that_attr, constraint_ctx)
           true
@@ -275,7 +274,7 @@ case class AnyOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
           case Failure(s) => false
         }
       })
-    ) {
+    then {
       val errstr =
         s"${that_attr.name} does not match $toString\n"
       throw new VerifyException(errstr)
@@ -318,7 +317,7 @@ case class AllOf(constraints_in: Seq[IRDLConstraint]) extends IRDLConstraint {
       that_attr: Attribute,
       constraint_ctx: ConstraintContext
   ): Unit =
-    for (c <- constraints) c.verify(that_attr, constraint_ctx)
+    for c <- constraints do c.verify(that_attr, constraint_ctx)
 
   /** Returns a string representation of the constraint.
     */
@@ -360,15 +359,15 @@ case class ParametrizedAttrConstraint[T <: Attribute: ClassTag](
       case true =>
         that_attr match {
           case x: ParametrizedAttribute =>
-            if (!(x.parameters.length == constraints.length)) {
+            if !(x.parameters.length == constraints.length) then {
               throw new VerifyException(
                 s"Expected ${constraints.length} parameters, got ${x.parameters.length}\n"
               )
             }
-            for ((p, c) <- x.parameters zip constraints)
+            for (p, c) <- x.parameters zip constraints do
               p match {
                 case p: Attribute => c.verify(p, constraint_ctx)
-                case p: Seq[_]    =>
+                case p: Seq[?]    =>
                   c.verify(p.asInstanceOf[Seq[Attribute]], constraint_ctx)
               }
 
@@ -427,7 +426,7 @@ case class VarConstraint(val name: String, val constraint: IRDLConstraint)
 
     var_consts.contains(name) match {
       case true =>
-        if (var_consts.apply(name) != that_attr) {
+        if var_consts.apply(name) != that_attr then {
           throw new VerifyException("oh mah gawd")
         }
       case false =>

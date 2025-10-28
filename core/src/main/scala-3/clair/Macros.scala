@@ -413,7 +413,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
         // writing though. Conceptually this should end up in some kind of header.
-        if (flat.length != $defLength) then
+        if flat.length != $defLength then
           throw new Exception(
             s"Expected ${${ Expr(defs.length) }} ${${
                 Expr(getConstructName[Def])
@@ -498,14 +498,14 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
       val segments = sizes.length
       val total = sizes.sum
       // Check the segmentSizes define a segment for each definition
-      if (segments != ${ Expr(defs.length) }) then
+      if segments != ${ Expr(defs.length) } then
         throw new Exception(
           s"Expected ${${ Expr(defs.length) }} entries in ${${
               Expr(getConstructName[Def])
             }}SegmentSizes, got ${segments}."
         )
       // Check the segmentSizes' sum is coherent with the number of constructs
-      if (total != flat.length) then
+      if total != flat.length then
         throw new Exception(
           s"${${ Expr(getConstructName[Def]) }}'s sum does not match the op's ${flat}.length} ${${
               Expr(getConstructName[Def])
@@ -670,7 +670,7 @@ def tryConstruct[T: Type](
     successors: Expr[Seq[Successor]],
     properties: Expr[Map[String, Attribute]]
 )(using Quotes) =
-  import quotes.reflect._
+  import quotes.reflect.*
   val args = (extractedConstructs(
     opDef.operands,
     operands,
@@ -777,7 +777,7 @@ def getAttrConstructor[T: Type](
       tpe match
         case '[t] =>
           '{
-            if (!${ a }.isInstanceOf[t]) then
+            if !${ a }.isInstanceOf[t] then
               throw Exception(
                 s"Expected ${${ Expr(d.name) }} to be of type ${${
                     Expr(Type.show[t])
@@ -927,7 +927,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match {
-          case adt: DerivedOperation[_, T] =>
+          case adt: DerivedOperation[?, T] =>
             adt.attributes.addAll(unstrucOp.attributes)
             adt
           case _ =>

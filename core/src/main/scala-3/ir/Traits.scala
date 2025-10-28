@@ -40,7 +40,7 @@ trait NoTerminator extends Operation {
 
   override def trait_verify(): Either[String, Operation] = {
     {
-      if (regions.filter(x => x.blocks.length != 1).length != 0) then
+      if regions.filter(x => x.blocks.length != 1).length != 0 then
         Left(
           s"NoTerminator Operation '${name}' requires single-block regions"
         )

@@ -1,6 +1,6 @@
 package scair
 
-import scair.dialects.builtin._
+import scair.dialects.builtin.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 
