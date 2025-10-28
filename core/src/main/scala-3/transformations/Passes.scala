@@ -9,12 +9,11 @@ import scair.ir.*
 // ██║░░░░░ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
-abstract class ModulePass {
+abstract class ModulePass:
   val name: String
   def transform(op: Operation): Operation = ???
-}
 
-abstract class WalkerPass extends ModulePass {
+abstract class WalkerPass extends ModulePass:
   def walker: PatternRewriteWalker
 
   final override def transform(op: Operation): Operation =
@@ -28,5 +27,3 @@ abstract class WalkerPass extends ModulePass {
   final def transform(region: Region): Region =
     walker.rewrite(region)
     return region
-
-}

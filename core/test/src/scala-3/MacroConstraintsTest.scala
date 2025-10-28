@@ -24,7 +24,7 @@ case class MulFVar(
     result: Result[FloatType]
 ) extends DerivedOperation["cmath.mul", MulFVar]
 
-class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
+class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
   "A derived operation with eq-attr constraints" should "fail verification if constraints are not met" in {
     val x = MulFEq(
@@ -111,5 +111,3 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     val res = x.verify()
     assert(res.isRight)
   }
-
-}

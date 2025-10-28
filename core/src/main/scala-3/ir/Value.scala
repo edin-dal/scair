@@ -17,27 +17,23 @@ final case class Use(val operation: Operation, val index: Int)
 
 final case class Value[+T <: Attribute](
     val typ: T
-) {
+):
 
   val uses: collection.mutable.Set[Use] = collection.mutable.Set.empty[Use]
   var owner: Option[Operation | Block] = None
 
-  def erase(): Unit = {
+  def erase(): Unit =
     if uses.nonEmpty then
       throw new Exception(
         "Attempting to erase a Value that has uses in other operations."
       )
-  }
 
   def verify(): Either[String, Unit] = typ.custom_verify()
 
-  override final def equals(o: Any): Boolean = {
+  override final def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]
-  }
 
   override final def hashCode(): Int = System.identityHashCode(this)
-
-}
 
 type Operand[+T <: Attribute] = Value[T]
 

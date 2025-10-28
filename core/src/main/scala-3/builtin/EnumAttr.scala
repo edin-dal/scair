@@ -28,7 +28,7 @@ import scair.ir.*
 abstract class EnumAttrCase[T <: Attribute](
     val symbol: String,
     val typ: T
-) extends ParametrizedAttribute {
+) extends ParametrizedAttribute:
   override def name: String = symbol
 
   override def parameters: Seq[Attribute | Seq[Attribute]] =
@@ -36,20 +36,18 @@ abstract class EnumAttrCase[T <: Attribute](
 
   def parse[$: P]: P[Attribute] = P(symbol.!).map(_ => this)
   override def custom_print(p: Printer) = p.print(symbol)
-}
 
 abstract class EnumAttr[T <: Attribute](
     val name: String,
     val cases: Seq[EnumAttrCase[T]],
     val typ: T
-) {
+):
 
-  def parser[$: P](seq: Seq[EnumAttrCase[T]]): P[Attribute] = seq match {
+  def parser[$: P](seq: Seq[EnumAttrCase[T]]): P[Attribute] = seq match
     case x +: xs => P(x.parse | parser(xs))
     case Nil     => P(Fail)
-  }
 
-  def caseParser[$: P]: P[Attribute] = {
+  def caseParser[$: P]: P[Attribute] =
     // we want to order here by length in descending order to ensure
     // we hit all cases:
     //  if "v = P("asc" | "ascc")"
@@ -57,9 +55,6 @@ abstract class EnumAttr[T <: Attribute](
     //  returns "Success("asc")"
     //  but we need "Success("ascc")"
     parser(cases.sortBy(_.symbol.length)(using Ordering[Int].reverse))
-  }
-
-}
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || SPECIALIZED CASE INHERITANCE ||

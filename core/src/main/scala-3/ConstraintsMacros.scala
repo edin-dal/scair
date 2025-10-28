@@ -4,7 +4,7 @@ import scair.ir.*
 
 import scala.quoted.*
 
-def eqAttrImpl[To <: Attribute: Type](using Quotes) = {
+def eqAttrImpl[To <: Attribute: Type](using Quotes) =
   import quotes.reflect.*
   val t = TypeRepr.of[To].simplified
   val ref = t match
@@ -14,4 +14,3 @@ def eqAttrImpl[To <: Attribute: Type](using Quotes) = {
         s"got ${t.show}:\n${t}"
       )
   ref
-}

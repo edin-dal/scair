@@ -16,9 +16,9 @@ import scair.ir.ListType
 // ╚██████╔╝ ███████╗ ██║░╚███║ ███████╗ ██║░░██║ ██║░░██║ ░░░██║░░░ ╚█████╔╝ ██║░░██║
 // ░╚═════╝░ ╚══════╝ ╚═╝░░╚══╝ ╚══════╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ░╚════╝░ ╚═╝░░╚═╝
 
-object SubTitleGen {
+object SubTitleGen:
 
-  def generate_sub(subtitle: String): String = {
+  def generate_sub(subtitle: String): String =
     val len = subtitle.length
     assert(len > 0)
 
@@ -27,11 +27,8 @@ object SubTitleGen {
     val bot = s"\\*≡==---=${"≡" * len}=---==≡*/\n"
 
     return top + mid + bot
-  }
 
-}
-
-object TitleGen {
+object TitleGen:
 
   /** Generate a title in ascii art.
     *
@@ -39,7 +36,7 @@ object TitleGen {
     * @return
     *   ascii art title
     */
-  def generate(title: String): String = {
+  def generate(title: String): String =
 
     val lower_title = title.toLowerCase().split("\\s+")
     val title_size = lower_title.size
@@ -53,27 +50,21 @@ object TitleGen {
 
     generated_title(0) += '\n'
 
-    for word <- lower_title do {
-      for letter <- word do {
+    for word <- lower_title do
+      for letter <- word do
         val letter_tup = charMap(letter)
-        for i <- 0 to letter_size - 1 do {
+        for i <- 0 to letter_size - 1 do
           generated_title(i + (index * letter_size) + 1) ++= letter_tup(i) + " "
-        }
-      }
-      for i <- 0 to letter_size - 1 do {
+      for i <- 0 to letter_size - 1 do
         generated_title(i + (index * letter_size) + 1) += '\n'
-      }
       index += 1
       generated_title(index * letter_size + 1) += '\n'
-    }
 
-    val final_string = {
+    val final_string =
       val finale = new StringBuilder("")
       generated_title.map((x: StringBuilder) => finale ++= x)
       finale.result()
-    }
     final_string
-  }
 
   /** CLI hook for generating a title in ascii art. Takes in string arguments
     * and generates a title. If no arguments are given, generates a default
@@ -84,17 +75,11 @@ object TitleGen {
     *
     * @param args
     */
-  def main(args: Array[String]): Unit = {
-    if args.length == 0 then {
-      print(generate("title generator and whatnot"))
-    } else {
-      print(generate(args.mkString(" ")))
-    }
-  }
+  def main(args: Array[String]): Unit =
+    if args.length == 0 then print(generate("title generator and whatnot"))
+    else print(generate(args.mkString(" ")))
 
-}
-
-object Letters {
+object Letters:
 
   val tuple_length = 6
 
@@ -303,5 +288,3 @@ object Letters {
     ('8' -> number8),
     ('9' -> number9)
   )
-
-}

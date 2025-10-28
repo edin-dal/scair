@@ -21,9 +21,8 @@ case class TestOp(
       attributes
     )
 
-object TestOp extends OperationCompanion {
+object TestOp extends OperationCompanion:
   override def name = "test.op"
-}
 
 val Test: Dialect =
   new Dialect(

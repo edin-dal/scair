@@ -8,7 +8,7 @@ import scair.ir.*
 import scair.scairdl.constraints.*
 import scair.scairdl.constraints.attr2constraint
 
-class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
+class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
   var constraint_ctx = new ConstraintContext()
 
@@ -292,5 +292,3 @@ class ConstraintsTest extends AnyFlatSpec with BeforeAndAfter {
     ).getMessage shouldBe
       "builtin.float_data does not equal builtin.float_data:\nGot 1.6, expected 1.5"
   }
-
-}

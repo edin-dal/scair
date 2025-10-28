@@ -27,7 +27,7 @@ import scala.collection.mutable
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 //
 // IE THE PARSER FOR BUILTIN DIALECT ATTRIBUTES
-object AttrParser {
+object AttrParser:
 
   /** Whitespace syntax that supports // line-comments, *without* /* */
     * comments, as is the case in the MLIR Language Spec.
@@ -35,72 +35,61 @@ object AttrParser {
     * It's litteraly fastparse's JavaWhitespace with the /* */ states just
     * erased :)
     */
-  given whitespace: Whitespace = new Whitespace {
-    def apply(ctx: P[?]) = {
+  given whitespace: Whitespace = new Whitespace:
+    def apply(ctx: P[?]) =
       val input = ctx.input
       val startIndex = ctx.index
-      @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
-        if !input.isReachable(current) then {
+      @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] =
+        if !input.isReachable(current) then
           if state == 0 || state == 1 then ctx.freshSuccessUnit(current)
           else ctx.freshSuccessUnit(current - 1)
-        } else {
+        else
           val currentChar = input(current)
-          (state: @switch) match {
+          (state: @switch) match
             case 0 =>
-              (currentChar: @switch) match {
+              (currentChar: @switch) match
                 case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
                 case '/'                      => rec(current + 1, state = 2)
                 case _                        => ctx.freshSuccessUnit(current)
-              }
             case 1 =>
               rec(current + 1, state = if currentChar == '\n' then 0 else state)
             case 2 =>
-              (currentChar: @switch) match {
+              (currentChar: @switch) match
                 case '/' => rec(current + 1, state = 1)
                 case _   => ctx.freshSuccessUnit(current - 1)
-              }
-          }
-        }
-      }
       rec(current = ctx.index, state = 0)
-    }
-  }
-
-}
 
 class AttrParser(
     val ctx: MLContext,
     val attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
     val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
-) {
+):
 
   import AttrParser.whitespace
 
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match {
+        ctx.getAttribute(s"${dialect}.${attrName}") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
             throw new Exception(
               s"Attribute $dialect.$attrName is not defined in any supported Dialect."
             )
-        }
     }
   )
 
   def DialectType[$: P]: P[Attribute] = P(
     "!" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match {
+        ctx.getAttribute(s"${dialect}.${attrName}") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
             throw new Exception(
               s"Type $dialect.$attrName is not defined in any supported Dialect."
             )
-        }
     }
   )
 
@@ -385,12 +374,11 @@ class AttrParser(
     P(SingleTensorLiteral | EmptyTensorLiteral | MultipleTensorLiteral)
 
   def SingleTensorLiteral[$: P]: P[TensorLiteralArray] =
-    P(FloatDataP | IntDataP).map(_ match {
+    P(FloatDataP | IntDataP).map(_ match
       case (x: IntData) =>
         ArrayAttribute[IntegerAttr](Seq(IntegerAttr(x, I32)))
       case (y: FloatData) =>
-        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type())))
-    })
+        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type()))))
 
   def MultipleTensorLiteral[$: P]: P[TensorLiteralArray] =
     P(MultipleFloatTensorLiteral | MultipleIntTensorLiteral)
@@ -466,5 +454,3 @@ class AttrParser(
       AffineMapAttrP |
       AffineSetAttrP
   )
-
-}

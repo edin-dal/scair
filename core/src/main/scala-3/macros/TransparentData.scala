@@ -13,12 +13,11 @@ type DataTypeOf[T] = T match
   * datatype.
   */
 trait TransparentData[T <: DataAttribute[?]]
-    extends Conversion[DataTypeOf[T], T] {
+    extends Conversion[DataTypeOf[T], T]:
   def apply(data: DataTypeOf[T]): T = attrConversion(data)
   def attrConversion(data: DataTypeOf[T]): T
-}
 
-object TransparentData {
+object TransparentData:
   inline def derived[T <: DataAttribute[?]] = ${ derivedImpl[T] }
 
   def derivedImpl[T <: DataAttribute[?]: Type](using Quotes) =
@@ -40,5 +39,3 @@ object TransparentData {
               ).asExprOf[T]
             }
         }
-
-}

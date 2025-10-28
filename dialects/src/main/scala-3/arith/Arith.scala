@@ -45,10 +45,10 @@ object FastMathFlags:
 
   def apply(flags: FastMathFlag*): FastMathFlags = SortedSet(flags*)
 
-object FastMathFlagsAttr extends AttributeCompanion {
+object FastMathFlagsAttr extends AttributeCompanion:
   override def name: String = "arith.fastmath"
 
-  override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] = {
+  override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
 
     import scair.AttrParser.whitespace
     P(
@@ -59,7 +59,7 @@ object FastMathFlagsAttr extends AttributeCompanion {
       if parsed_flags.isEmpty then
         throw new Exception("FastMathFlagsAttr requires at least one flag")
       val flags = parsed_flags
-        .map(_ match {
+        .map(_ match
           case "none"     => FastMathFlags.none
           case "reassoc"  => FastMathFlags.reassoc
           case "nnan"     => FastMathFlags.nnan
@@ -69,15 +69,10 @@ object FastMathFlagsAttr extends AttributeCompanion {
           case "contract" => FastMathFlags.contract
           case "afn"      => FastMathFlags.afn
           case "fast"     => FastMathFlags.fast
-          case f          => throw new Exception(s"Invalid fastmath flag '$f'")
-        })
+          case f          => throw new Exception(s"Invalid fastmath flag '$f'"))
         .reduce(_ | _)
       FastMathFlagsAttr(flags)
     }
-
-  }
-
-}
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
     extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags):
@@ -136,32 +131,28 @@ type BitcastType = SignlessIntegerOrFloatLike | MemrefType
 // TODO: this is specifically a memref type of anysignless integer or index
 type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 
-trait SameOperandsAndResultTypes extends Operation {
+trait SameOperandsAndResultTypes extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     val params = this.operands.typ ++ this.results.typ
     if params.isEmpty then Right(this)
-    else {
+    else
       val first = params.head
       if params.tail.forall(_ == first) then Right(this)
       else
         Left(
           "All parameters of TypeConstraint must be of the same type in operation " + this.name
         )
-    }
-  }
 
-}
+trait SameOperandsAndResultShape extends Operation:
 
-trait SameOperandsAndResultShape extends Operation {
-
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
     if params.isEmpty then Right(this)
-    else {
+    else
       val firstDim = params.head.getNumDims
       // check ranks of all parameters
       if params.map(_.getNumDims == firstDim).reduceLeft(_ && _) then
@@ -170,20 +161,16 @@ trait SameOperandsAndResultShape extends Operation {
         Left(
           s"All parameters of operation '${this.name}' must have the same rank"
         )
-    }
-  }
 
-}
+trait SameInputOutputTensorDims extends Operation:
 
-trait SameInputOutputTensorDims extends Operation {
-
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
     if params.isEmpty then Right(this)
-    else {
+    else
       val firstShape = params.head.getShape
       // checks if all parameters have the same shape
       if params.map(_.getShape == firstShape).reduceLeft(_ && _) then
@@ -192,35 +179,27 @@ trait SameInputOutputTensorDims extends Operation {
         Left(
           s"All parameters of operation '${this.name}' must have compatible shape"
         )
-    }
-  }
 
-}
+trait AllTypesMatch(values: Attribute*) extends Operation:
 
-trait AllTypesMatch(values: Attribute*) extends Operation {
-
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     if values.isEmpty then Right(this)
-    else {
+    else
       val first = values.head
       if values.tail.forall(_ == first) then Right(this)
       else
         Left(
           "All parameters of AllTypesMatch must be of the same type in operation " + this.name
         )
-    }
-  }
-
-}
 
 trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
-    extends Operation {
+    extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
-    condition match {
+  override def trait_verify(): Either[String, Operation] =
+    condition match
       case IntegerType(IntData(1), Signless) => Right(this)
       case x: ShapedType                     =>
-        result match {
+        result match
           case y: ShapedType =>
             if x.getShape == y.getShape then Right(this)
             else
@@ -231,11 +210,6 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
             Left(
               s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
             )
-        }
-    }
-  }
-
-}
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  OPERATION DEFINTION  ||

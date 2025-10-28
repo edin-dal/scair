@@ -10,38 +10,30 @@ import scopt.OParser
 
 import scala.io.Source
 
-trait ScairOptBase {
+trait ScairOptBase:
   val ctx = MLContext()
   val transformCtx = TransformContext()
 
   register_all_dialects()
   register_all_passes()
 
-  def allDialects = {
+  def allDialects =
     scair.utils.allDialects
-  }
 
-  def allPasses = {
+  def allPasses =
     scair.utils.allPasses
-  }
 
-  final def register_all_dialects(): Unit = {
-    for dialect <- allDialects do {
-      ctx.registerDialect(dialect)
-    }
-  }
+  final def register_all_dialects(): Unit =
+    for dialect <- allDialects do ctx.registerDialect(dialect)
 
-  final def register_all_passes(): Unit = {
-    for pass <- allPasses do {
-      transformCtx.registerPass(pass)
-    }
-  }
+  final def register_all_passes(): Unit =
+    for pass <- allPasses do transformCtx.registerPass(pass)
 
-  def run(args: Array[String]): Unit = {
+  def run(args: Array[String]): Unit =
 
     // Define CLI args
     val argbuilder = OParser.builder[Args]
-    val argparser = {
+    val argparser =
       import argbuilder.*
       OParser.sequence(
         programName("scair-opt"),
@@ -86,16 +78,14 @@ trait ScairOptBase {
           )
           .action((_, c) => c.copy(verify_diagnostics = true))
       )
-    }
 
     // Parse the CLI args
     val parsed_args = OParser.parse(argparser, args, Args()).get
 
     // Open the input file or stdin
-    val input = parsed_args.input match {
+    val input = parsed_args.input match
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
-    }
 
     val skip_verify = parsed_args.skip_verify
 
@@ -110,46 +100,38 @@ trait ScairOptBase {
 
     // Parse content
 
-    input_chunks.foreach(chunk => {
+    input_chunks.foreach(chunk =>
 
-      val input_module = {
+      val input_module =
         val parser = new scair.Parser(ctx, parsed_args)
         parser.parseThis(
           chunk,
           pattern = parser.TopLevel(using _)
-        ) match {
+        ) match
           case fastparse.Parsed.Success(input_module, _) =>
             Right(input_module)
           case failure: fastparse.Parsed.Failure =>
             Left(parser.error(failure))
-        }
-      }
 
       if !parsed_args.parsing_diagnostics && input_module.isLeft then
         throw new Exception(input_module.left.get)
 
       val processed_module: Either[String, Operation] =
-        input_module.flatMap(input_module => {
+        input_module.flatMap(input_module =>
           var module =
             if skip_verify then Right(input_module)
             else input_module.structured.flatMap(_.verify())
           // verify parsed content
-          module match {
+          module match
             case Right(op) =>
               // apply the specified passes
               passes
                 .map(transformCtx.getPass(_).get)
-                .foldLeft(module)((module, pass) => {
-                  module.map(pass.transform)
-                })
+                .foldLeft(module)((module, pass) => module.map(pass.transform))
             case Left(errorMsg) =>
-              if parsed_args.verify_diagnostics then {
-                Left(errorMsg)
-              } else {
-                throw new VerifyException(errorMsg)
-              }
-          }
-        })
+              if parsed_args.verify_diagnostics then Left(errorMsg)
+              else throw new VerifyException(errorMsg)
+        )
 
       {
         val printer = new Printer(print_generic)
@@ -160,10 +142,7 @@ trait ScairOptBase {
         if chunk != input_chunks.last then printer.print("// -----\n")
         printer.flush()
       }
-    })
-  }
-
-}
+    )
 
 object ScairOpt extends ScairOptBase:
   def main(args: Array[String]): Unit = run(args)

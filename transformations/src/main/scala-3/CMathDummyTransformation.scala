@@ -52,22 +52,17 @@ val TestReplacingDummyOperation = pattern {
     op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
 }
 
-object DummyPass extends WalkerPass {
+object DummyPass extends WalkerPass:
   override val name = "dummy-pass"
 
   override final val walker = PatternRewriteWalker(AddDummyAttributeToDict)
 
-}
-
-object TestInsertionPass extends WalkerPass {
+object TestInsertionPass extends WalkerPass:
   override val name = "test-ins-pass"
 
   override final val walker = PatternRewriteWalker(TestInsertingDummyOperation)
-}
 
-object TestReplacementPass extends WalkerPass {
+object TestReplacementPass extends WalkerPass:
   override val name = "test-rep-pass"
 
   override final val walker = PatternRewriteWalker(TestReplacingDummyOperation)
-
-}

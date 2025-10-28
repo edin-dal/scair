@@ -4,7 +4,7 @@ import scair.dialects.builtin.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 
-class ConversionTest extends AnyFlatSpec {
+class ConversionTest extends AnyFlatSpec:
   val str: String = StringData("AsAString")
   str shouldEqual "AsAString"
 
@@ -22,4 +22,3 @@ class ConversionTest extends AnyFlatSpec {
 
   val floatAttr: FloatData = 24.0
   floatAttr shouldEqual FloatData(24.0)
-}

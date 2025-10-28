@@ -41,30 +41,28 @@ import scala.quoted.*
   */
 def selectMember[T: Type](obj: Expr[?], name: String)(using
     Quotes
-): Expr[T] = {
+): Expr[T] =
   import quotes.reflect.*
 
   Select.unique(obj.asTerm, name).asExprOf[T]
-}
 
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?]
-)(using Quotes): Option[(String, Expr[Attribute])] = {
+)(using Quotes): Option[(String, Expr[Attribute])] =
   val name = s"${getConstructName[T]}SegmentSizes"
-  hasMultiVariadic match {
+  hasMultiVariadic match
     case true =>
       val arrayAttr: Expr[Seq[Int]] =
         Expr.ofList(
           defs.map((d) =>
-            d.variadicity match {
+            d.variadicity match
               case Variadicity.Single                          => Expr(1)
               case Variadicity.Variadic | Variadicity.Optional =>
                 '{
                   ${ selectMember[Seq[?]](adtOpExpr, d.name) }.length
                 }
-            }
           )
         )
       Some(
@@ -81,8 +79,6 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
         }
       )
     case false => None
-  }
-}
 
 /** Get all constructs of the specified type flattened from the ADT expression.
   * @tparam Def
@@ -95,7 +91,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
 def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[DefinedInput[Def]]] = {
+)(using Quotes): Expr[Seq[DefinedInput[Def]]] =
   val stuff =
     opInputDefs.map((d: Def) =>
       selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
@@ -108,7 +104,6 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
       case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
       case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
   )
-}
 
 def operandsMacro(
     opDef: OperationDef,
@@ -289,13 +284,12 @@ def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
 
 /** Type helper to get the defined input type of a construct definition.
   */
-type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match {
+type DefinedInputOf[T <: OpInputDef, A <: Attribute] = T match
   case OperandDef    => Operand[A]
   case ResultDef     => Result[A]
   case RegionDef     => Region
   case SuccessorDef  => Successor
   case OpPropertyDef => A
-}
 
 /** Type helper to get the defined input type of a construct definition.
   */
@@ -387,13 +381,12 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
       )
     ).verify(dense, scair.scairdl.constraints.ConstraintContext())
 
-    for (s <- dense) yield s match {
+    for (s <- dense) yield s match
       case right: IntegerAttr => right.value.data.toInt
       case _                  =>
         throw new Exception(
           "Unreachable exception as per above constraint check."
         )
-    }
   }
 
 /** Partition a construct sequence, in the case of no variadic defintion.
@@ -622,7 +615,7 @@ def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
   */
 def constructExtractor[Def <: OpInputDef: Type](
     d: Def
-)(using Quotes) = {
+)(using Quotes) =
   getConstructConstraint(d) match
     case '[type t <: Attribute; `t`] =>
       getConstructVariadicity(d): @switch match
@@ -633,13 +626,11 @@ def constructExtractor[Def <: OpInputDef: Type](
         case Variadicity.Optional =>
           optionalConstructExtractor[Def, t](d)
 
-}
-
 def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
     flat: Expr[Seq[DefinedInput[Def]]],
     properties: Expr[Map[String, Attribute]]
-)(using Quotes) = {
+)(using Quotes) =
   // partition the constructs according to their definitions
   val partitioned =
     constructPartitioner(defs).map(p => '{ ${ p }($properties, $flat) })
@@ -648,7 +639,6 @@ def extractedConstructs[Def <: OpInputDef: Type](
   (partitioned zip defs).map { (c, d) =>
     '{ ${ constructExtractor(d) }(${ c }) }
   }
-}
 
 /** Return all named arguments for the primary constructor of an ADT. Those are
   * checked, in the sense that they are checked to be of the correct types and
@@ -750,7 +740,7 @@ def getAttrConstructor[T: Type](
     attributes: Expr[Seq[Attribute]]
 )(using
     Quotes
-): Expr[T] = {
+): Expr[T] =
   import quotes.reflect.*
 
   val lengthCheck = Type.of[T] match
@@ -799,16 +789,14 @@ def getAttrConstructor[T: Type](
     $lengthCheck
     $constructorCall
   }
-}
 
 def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     attrInputDefs: Seq[AttributeParamDef],
     adtAttrExpr: Expr[?]
-)(using Quotes): Expr[Seq[Attribute]] = {
+)(using Quotes): Expr[Seq[Attribute]] =
   Expr.ofList(
     attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
   )
-}
 
 def parametersMacro(
     attrDef: AttributeDef,
@@ -823,7 +811,7 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
   val attrDef = getAttrDefImpl[T]
 
   '{
-    new DerivedAttributeCompanion[T] {
+    new DerivedAttributeCompanion[T]:
       override def name: String = ${ Expr(attrDef.name) }
       override def parse[$: P as ctx](p: AttrParser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
@@ -838,7 +826,6 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
       def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
         parametersMacro(attrDef, '{ attr })
       }
-    }
   }
 
 def deriveOperationCompanion[T <: Operation: Type](using
@@ -926,7 +913,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def structure(unstrucOp: UnstructuredOp): T =
         ${
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
-        } match {
+        } match
           case adt: DerivedOperation[?, T] =>
             adt.attributes.addAll(unstrucOp.attributes)
             adt
@@ -934,6 +921,5 @@ def deriveOperationCompanion[T <: Operation: Type](using
             throw new Exception(
               s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unstrucOp}"
             )
-        }
 
   }

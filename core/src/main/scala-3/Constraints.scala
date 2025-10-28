@@ -18,20 +18,16 @@ import scala.quoted.*
 
 trait Constraint
 
-class ConstraintContext() {
+class ConstraintContext():
 
   val var_constraints: DictType[String, Attribute] =
     DictType.empty[String, Attribute]
 
-}
-
-trait ConstraintImpl[c <: Constraint] {
+trait ConstraintImpl[c <: Constraint]:
 
   def verify(attr: Attribute)(using
       ctx: ConstraintContext
   ): Either[String, Unit]
-
-}
 
 infix type !>[A <: Attribute, C <: Constraint] = A
 
@@ -52,28 +48,23 @@ inline def eqAttr[To <: Attribute]: To =
 
 inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
   val ref = eqAttr[To]
-  new ConstraintImpl {
+  new ConstraintImpl:
     override def verify(attr: Attribute)(using
         ctx: ConstraintContext
     ): Either[String, Unit] =
       if attr == ref then Right(())
       else Left(s"Expected ${ref}, got ${attr}")
-  }
 
 inline given [To <: String] => ConstraintImpl[Var[To]] =
   val name: String = constValue[To]
-  new ConstraintImpl {
+  new ConstraintImpl:
     override def verify(attr: Attribute)(using
         ctx: ConstraintContext
-    ): Either[String, Unit] = {
-      if ctx.var_constraints.contains(name) then {
+    ): Either[String, Unit] =
+      if ctx.var_constraints.contains(name) then
         if ctx.var_constraints.apply(name) != attr then
           Left(s"Expected ${ctx.var_constraints.apply(name)}, got ${attr}")
         else Right(())
-      } else {
+      else
         ctx.var_constraints += ((name, attr))
         Right(())
-      }
-    }
-
-  }

@@ -24,7 +24,7 @@ val Commute = pattern { case c: Commutative =>
   else c.updated(operands = nops)
 }
 
-object Canonicalize extends WalkerPass {
+object Canonicalize extends WalkerPass:
   override val name = "canonicalize"
 
   override final val walker = PatternRewriteWalker(
@@ -35,5 +35,3 @@ object Canonicalize extends WalkerPass {
       ) ++ arithCanonicalizationPatterns ++ complexCanonicalizationPatterns
     )
   )
-
-}

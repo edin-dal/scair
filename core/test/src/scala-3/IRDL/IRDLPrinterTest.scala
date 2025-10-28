@@ -12,7 +12,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import java.io.*
 
-class IRDLPrinterTest extends AnyFlatSpec {
+class IRDLPrinterTest extends AnyFlatSpec:
 
   val ctx = MLContext()
   ctx.registerDialect(BuiltinDialect)
@@ -70,5 +70,3 @@ final case class mul(
 
 val cmath = summonDialect[complex *: EmptyTuple, norm *: mul *: EmptyTuple]()
 """.stripMargin
-
-}

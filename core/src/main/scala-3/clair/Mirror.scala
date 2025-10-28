@@ -81,7 +81,7 @@ def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef
   */
-def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
+def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
   import quotes.reflect.*
   val name = Type.of[Label] match
     case '[String] =>
@@ -126,7 +126,6 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
       report.errorAndAbort(
         s"Field ${Type.show[Label]} : ${Type.show[Elem]} is unsupported for MLIR derivation."
       )
-}
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
   * OperationDef.
@@ -134,17 +133,16 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef = {
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] = {
+def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] =
 
   Type.of[(Labels, Elems)] match
     case '[(label *: labels, elem *: elems)] =>
       getDefInput[label, elem] :: summonInput[labels, elems]
     case '[(EmptyTuple, EmptyTuple)] => Nil
-}
 
 def getAttrDef[Label: Type, Elem: Type](using
     Quotes
-): AttributeParamDef = {
+): AttributeParamDef =
   val name = Type.of[Label] match
     case '[String] =>
       Type.valueOfConstant[Label].get.asInstanceOf[String]
@@ -159,24 +157,22 @@ def getAttrDef[Label: Type, Elem: Type](using
       throw new Exception(
         "Expected this type to be an Attribute"
       )
-}
 
 def summonAttrDefs[Labels: Type, Elems: Type](using
     Quotes
-): List[AttributeParamDef] = {
+): List[AttributeParamDef] =
 
   Type.of[(Labels, Elems)] match
     case '[(label *: labels, elem *: elems)] =>
       getAttrDef[label, elem] :: summonAttrDefs[labels, elems]
     case '[(EmptyTuple, EmptyTuple)] => Nil
-}
 
 /** Translates a Tuple of string types into a list of strings.
   *
   * @return
   *   Tuple of String types
   */
-def stringifyLabels[Elems: Type](using Quotes): List[String] = {
+def stringifyLabels[Elems: Type](using Quotes): List[String] =
 
   Type.of[Elems] match
     case '[elem *: elems] =>
@@ -185,7 +181,6 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] = {
         .get
         .asInstanceOf[String] :: stringifyLabels[elems]
     case '[EmptyTuple] => Nil
-}
 
 def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
   import quotes.reflect.*
@@ -228,10 +223,9 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
         case _ => None
       opDef.copy(assembly_format = format)
 
-def getCompanion[T: Type](using quotes: Quotes) = {
+def getCompanion[T: Type](using quotes: Quotes) =
   import quotes.reflect.*
   TypeRepr.of[T].typeSymbol.companionModule
-}
 
 def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
     using quotes: Quotes
@@ -290,7 +284,7 @@ def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
         s"Multiple companion parse methods not supported at this point."
       )
 
-def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
+def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
   import quotes.reflect.*
 
   val m = Expr.summon[Mirror.ProductOf[T]].get
@@ -320,4 +314,3 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef = {
         name = name,
         attributes = attributeDefs
       )
-}

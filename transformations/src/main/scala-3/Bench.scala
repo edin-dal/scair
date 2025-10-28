@@ -20,11 +20,9 @@ val AddIfold = pattern {
     Constant(c0 + c1, Result(c0.typ))
 }
 
-object BenchmarkConstantFolding extends WalkerPass {
+object BenchmarkConstantFolding extends WalkerPass:
   override val name = "benchmark-constant-folding"
 
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(Seq(AddIfold, RemoveUnusedOperations))
   )
-
-}

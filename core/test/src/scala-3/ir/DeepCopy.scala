@@ -13,7 +13,7 @@ import java.io.PrintWriter
 import scair.clair.macros.DerivedOperation
 import scala.collection.mutable.LinkedHashMap
 
-class DeepCopyTest extends AnyFlatSpec {
+class DeepCopyTest extends AnyFlatSpec:
 
   "Operation.deepCopy" should "deep copy a simple operation" in:
     val a = TestOp(
@@ -96,5 +96,3 @@ class DeepCopyTest extends AnyFlatSpec {
           if !(a eq ca0) && !(b eq ca1) && !(a.results.head eq ca0.results.head) && !(b.results.head eq ca1.results.head) =>
         ()
     }
-
-}

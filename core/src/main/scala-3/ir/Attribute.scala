@@ -18,7 +18,7 @@ import java.io.StringWriter
 ||    ATTRIBUTES    ||
 \*≡==---==≡≡==---==≡*/
 
-sealed trait Attribute {
+sealed trait Attribute:
   def name: String
   def prefix: String = "#"
   def custom_verify(): Either[String, Unit] = Right(())
@@ -31,13 +31,10 @@ sealed trait Attribute {
     p.flush()
     out.toString()
 
-}
-
-trait TypeAttribute extends Attribute {
+trait TypeAttribute extends Attribute:
   override def prefix: String = "!"
-}
 
-abstract trait ParametrizedAttribute() extends Attribute {
+abstract trait ParametrizedAttribute() extends Attribute:
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
@@ -53,8 +50,8 @@ abstract trait ParametrizedAttribute() extends Attribute {
         ">"
       )
 
-  override def equals(attr: Any): Boolean = {
-    attr match {
+  override def equals(attr: Any): Boolean =
+    attr match
       case x: ParametrizedAttribute =>
         x.name == this.name &&
         x.getClass == this.getClass &&
@@ -62,39 +59,29 @@ abstract trait ParametrizedAttribute() extends Attribute {
         (for ((i, j) <- x.parameters zip this.parameters)
           yield i == j).foldLeft(true)((i, j) => i && j)
       case _ => false
-    }
-  }
 
-}
-
-object DataAttribute {
+object DataAttribute:
   // Make all DataAttributes implicitely convertible to their held data.
   given [D]: Conversion[DataAttribute[D], D] = _.data
-}
 
 abstract class DataAttribute[D](
     override val name: String,
     val data: D
-) extends Attribute {
+) extends Attribute:
 
   override def custom_print(p: Printer) =
     p.print(prefix, name, "<", data.toString, ">")(using indentLevel = 0)
 
-  override def equals(attr: Any): Boolean = {
-    attr match {
+  override def equals(attr: Any): Boolean =
+    attr match
       case x: DataAttribute[?] =>
         x.name == this.name &&
         x.getClass == this.getClass &&
         x.data == this.data
       case _ => false
-    }
-  }
 
-}
-
-trait AttributeCompanion {
+trait AttributeCompanion:
   def name: String
   def parse[$: P](p: AttrParser): P[Attribute]
-}
 
 trait AliasedAttribute(val alias: String) extends Attribute

@@ -6,7 +6,7 @@ import scair.transformations.*
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set
 
-final case class OperationInfo(val op: Operation) {
+final case class OperationInfo(val op: Operation):
 
   override def hashCode(): Int =
     (op.name, op.attributes, op.properties, op.results.typ, op.operands)
@@ -24,15 +24,13 @@ final case class OperationInfo(val op: Operation) {
       a.regions == b.regions
     case _ => false
 
-}
-
 given Conversion[Operation, OperationInfo] = OperationInfo.apply
 
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
       Map[OperationInfo, Operation](),
     val toErase: Set[Operation] = Set[Operation]()
-)(using rewriter: Rewriter) {
+)(using rewriter: Rewriter):
 
   def simplify(op: Operation): Unit =
     op match
@@ -66,9 +64,7 @@ case class CSE(
       // Just mimicing MLIR here
       case _ => ()
 
-}
-
-object CommonSubexpressionElimination extends ModulePass {
+object CommonSubexpressionElimination extends ModulePass:
   override val name = "cse"
 
   override def transform(op: Operation): Operation =
@@ -76,5 +72,3 @@ object CommonSubexpressionElimination extends ModulePass {
     val c = CSE()
     op.regions.foreach(c.simplify)
     op
-
-}
