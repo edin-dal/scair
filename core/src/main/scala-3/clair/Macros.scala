@@ -2,6 +2,7 @@ package scair.clair.macros
 
 import fastparse.*
 import scair.AttrParser
+import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.*
 import scair.Printer

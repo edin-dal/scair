@@ -1,8 +1,8 @@
 package scair.dialects.math
 
 import fastparse.*
+import scair.AttrParser.whitespace
 import scair.Parser
-import scair.Parser.whitespace
 import scair.ir.*
 
 ////////////////

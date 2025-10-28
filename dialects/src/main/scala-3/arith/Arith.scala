@@ -50,7 +50,7 @@ object FastMathFlagsAttr extends AttributeCompanion {
 
   override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] = {
 
-    import scair.Parser.whitespace
+    import scair.AttrParser.whitespace
     P(
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","

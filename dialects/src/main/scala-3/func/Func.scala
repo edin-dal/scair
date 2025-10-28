@@ -2,6 +2,7 @@ package scair.dialects.func
 
 import fastparse.*
 import fastparse.ParsingRun
+import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.*
 import scair.Printer
