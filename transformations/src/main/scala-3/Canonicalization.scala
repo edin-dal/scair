@@ -27,12 +27,15 @@ val Commute = pattern { case c: Commutative =>
 object Canonicalize extends WalkerPass {
   override val name = "canonicalize"
 
+  lazy val canonicalizationPatterns =
+    arithCanonicalizationPatterns ++ complexCanonicalizationPatterns
+
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(
       Seq(
         RemoveUnusedOperations,
         Commute
-      ) ++ arithCanonicalizationPatterns ++ complexCanonicalizationPatterns
+      ) ++ canonicalizationPatterns
     )
   )
 
