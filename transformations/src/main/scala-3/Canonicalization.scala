@@ -1,5 +1,6 @@
 package scair.transformations.canonicalization
 
+import scair.MLContext
 import scair.dialects.arith.canonicalization.arithCanonicalizationPatterns
 import scair.dialects.complex.canonicalization.complexCanonicalizationPatterns
 import scair.ir.*
@@ -24,7 +25,7 @@ val Commute = pattern { case c: Commutative =>
   else c.updated(operands = nops)
 }
 
-object Canonicalize extends WalkerPass {
+final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx) {
   override val name = "canonicalize"
 
   lazy val canonicalizationPatterns =
