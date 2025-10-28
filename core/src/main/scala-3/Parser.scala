@@ -464,7 +464,7 @@ final class Parser(
       sys.exit(1)
     }
 
-  implicit var currentScope: Scope = new Scope()
+  var currentScope: Scope = new Scope()
 
   def enterLocalRegion = {
     currentScope = currentScope.createChild()
