@@ -30,7 +30,16 @@ case class Constant(
     complex: Result[ComplexType]
 ) extends DerivedOperation["complex.constant", Constant]
     with NoMemoryEffect
-    with ConstantLike(value)
+    with ConstantLike(value):
+
+  // The complex dialect is really acting weird with that.
+  // 1. The attribute in the constant op is not the general "complex value" attribute
+  // 2. The general "complex value" attribute is restricted to float, the constant is not.
+  // (Is that why the mismatch? Either way, here's a hacky workaround for now.)
+  override def getValue: ComplexAttr =
+    val real = value(0).asInstanceOf[FloatAttr].value
+    val imaginary = value(1).asInstanceOf[FloatAttr].value
+    ComplexAttr(real, imaginary, complex.typ)
 
 case class Create(
     real: Operand[IndexType | IntegerType | FloatType],
