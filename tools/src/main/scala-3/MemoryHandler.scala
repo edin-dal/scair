@@ -28,7 +28,7 @@ trait MemoryHandler { self: Interpreter =>
         val valueToStore = lookup_op(valueOperand, ctx)
         val memoryOperand = store_op.memref.owner.getOrElse(throw new Exception("memref operand for store operation not found"))
 
-        // TODO: overwriting memory
+        // lookup operand of memory to find value needed for address
         val addr = lookup_op(memoryOperand, ctx)
         addr match {
             case integerAddr: IntegerAttr =>
@@ -42,6 +42,7 @@ trait MemoryHandler { self: Interpreter =>
         }
     }
 
+    // TODO: index accesses
     def load_memory(load_op: memref.Load, ctx: InterpreterCtx): Unit = {
         val memoryOperand = load_op.memref.owner.getOrElse(throw new Exception("memref operand for store operation not found"))
         val addr = lookup_op(memoryOperand, ctx)

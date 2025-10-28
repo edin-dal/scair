@@ -4,6 +4,7 @@ import scair.ir.*
 import scair.dialects.arith
 import scair.dialects.func
 import scair.dialects.memref
+import scair.dialects.builtin
 import scair.dialects.builtin.*
 
 
@@ -31,7 +32,7 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler {
         ctx.result = Some(lookup_op(return_op.operands.head.owner.get, ctx))
 
 
-      // Constants
+      // Literals
       case constant: arith.Constant =>
         ctx.vars.put(op, constant.value)
 
@@ -53,8 +54,6 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler {
         ctx.vars.put(orI_op, interpret_bin_op(orI_op.lhs, orI_op.rhs, ctx)(_ | _))
       case xorI_op: arith.XOrI =>
         ctx.vars.put(xorI_op, interpret_bin_op(xorI_op.lhs, xorI_op.rhs, ctx)(_ ^ _))
-
-      // Unary Operations 
 
       // Shift Operations
       case shli_op: arith.ShLI =>
