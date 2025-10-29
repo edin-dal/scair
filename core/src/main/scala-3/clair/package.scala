@@ -19,9 +19,8 @@ package scair
   * ||   defining a custom data attribute   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * object SampleData extends AttributeCompanion {
+  * object SampleData extends AttributeCompanion:
   *   override def name: String = "sample"
-  * }
   *
   * case class SampleData(val d: String)
   *     extends DataAttribute[String]("sample", d)

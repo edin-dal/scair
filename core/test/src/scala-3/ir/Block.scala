@@ -29,7 +29,7 @@ case class TestOp(
       attributes
     )
 
-class BlockTest extends AnyFlatSpec with BeforeAndAfter {
+class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 
   var printer = new Printer(true);
 
@@ -91,5 +91,3 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter {
     out.toString() shouldEqual ir
 
   }
-
-}

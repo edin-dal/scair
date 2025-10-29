@@ -12,16 +12,15 @@ import scala.collection.mutable
 // ██║░╚═╝░██║ ███████╗ ╚█████╔╝ ╚█████╔╝ ██║░╚███║ ░░░██║░░░ ███████╗ ██╔╝╚██╗ ░░░██║░░░
 // ╚═╝░░░░░╚═╝ ╚══════╝ ░╚════╝░ ░╚════╝░ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝ ░░░╚═╝░░░
 
-class MLContext() {
+class MLContext():
 
   val passContext: mutable.Map[String, ModulePass] = mutable.Map()
 
   def getPass(name: String) = passContext.get(name)
 
-  def registerPass(passFactory: MLContext => ModulePass) = {
+  def registerPass(passFactory: MLContext => ModulePass) =
     val pass = passFactory(this)
     passContext += pass.name -> pass
-  }
 
   val dialectOpContext: mutable.Map[String, OperationCompanion] = mutable.Map()
 
@@ -32,18 +31,12 @@ class MLContext() {
 
   def getAttribute(name: String) = dialectAttrContext.get(name)
 
-  def registerDialect(dialect: Dialect) = {
+  def registerDialect(dialect: Dialect) =
     dialectOpContext ++= {
-      for { dialectOp <- dialect.operations } yield {
-        dialectOp.name -> dialectOp
-      }
+      for dialectOp <- dialect.operations yield dialectOp.name -> dialectOp
     }
 
     dialectAttrContext ++= {
-      for { dialectAttr <- dialect.attributes } yield {
-        dialectAttr.name -> dialectAttr
-      }
+      for dialectAttr <- dialect.attributes
+      yield dialectAttr.name -> dialectAttr
     }
-  }
-
-}

@@ -23,7 +23,7 @@ val Commute = pattern { case c: Commutative =>
   else c.updated(operands = nops)
 }
 
-final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx) {
+final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "canonicalize"
 
   lazy val canonicalizationPatterns = ctx.dialectOpContext.valuesIterator
@@ -38,5 +38,3 @@ final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx) {
       ) ++ canonicalizationPatterns
     )
   )
-
-}

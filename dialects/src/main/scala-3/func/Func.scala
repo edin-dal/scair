@@ -17,7 +17,7 @@ case class Call(
     _results: Seq[Result[Attribute]]
 ) extends DerivedOperation["func.call", Call]
 
-object Func {
+object Func:
 
   def parseResultTypes[$: ParsingRun](
       parser: Parser
@@ -55,8 +55,6 @@ object Func {
           f.attributes.addAll(attributes)
           f
       })
-
-}
 
 case class Func(
     sym_name: StringData,

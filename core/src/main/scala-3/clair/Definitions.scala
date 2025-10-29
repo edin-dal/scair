@@ -24,37 +24,30 @@ import scala.reflect.*
 ||  CONTAINERS  ||
 \*≡=--==≡≡==--=≡*/
 
-object OpInputDef {
+object OpInputDef:
 
   def unapply(d: Any) = d match
     case d: OpInputDef => Some((name = d.name))
     case _             => None
 
-}
-
-sealed trait OpInputDef {
+sealed trait OpInputDef:
   def name: String
-}
 
-object MayVariadicOpInputDef {
+object MayVariadicOpInputDef:
 
   def unapply(d: Any) = d match
     case d: MayVariadicOpInputDef =>
       Some((name = d.name, variadicity = d.variadicity))
     case _ => None
 
-}
-
-sealed trait MayVariadicOpInputDef extends OpInputDef {
+sealed trait MayVariadicOpInputDef extends OpInputDef:
   def variadicity: Variadicity
-}
 
 // TODO: Add support for optionals AFTER variadic support is laid out
 // It really just adds cognitive noise otherwise IMO. The broader structure and logic is exactly the same.
 // (An Optional structurally is just a Variadic capped at one.)
-enum Variadicity {
+enum Variadicity:
   case Single, Variadic, Optional
-}
 
 case class OperandDef(
     override val name: String,
@@ -110,7 +103,7 @@ case class OperationDef(
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
     val assembly_format: Option[AssemblyFormatDirective] = None
-) {
+):
 
   def allDefs =
     operands ++ results ++ regions ++ successors ++ properties
@@ -130,8 +123,6 @@ case class OperationDef(
   def hasMultiVariadicSuccessors =
     successors.count(_.variadicity == Variadicity.Variadic) > 1
 
-}
-
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   ATTRIBUTE DEF   ||
 \*≡==----=≡≡≡=----==≡*/
@@ -139,9 +130,7 @@ case class OperationDef(
 case class AttributeDef(
     val name: String,
     val attributes: Seq[AttributeParamDef] = Seq()
-) {
+):
 
   def allDefsWithIndex =
     attributes.zipWithIndex
-
-}

@@ -21,11 +21,9 @@ val AddIfold = pattern {
     Constant(c0 + c1, Result(c0.typ))
 }
 
-final class BenchmarkConstantFolding(ctx: MLContext) extends WalkerPass(ctx) {
+final class BenchmarkConstantFolding(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "benchmark-constant-folding"
 
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(Seq(AddIfold, RemoveUnusedOperations))
   )
-
-}

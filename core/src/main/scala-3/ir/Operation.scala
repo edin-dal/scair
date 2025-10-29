@@ -20,17 +20,15 @@ import scala.collection.mutable.LinkedHashMap
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||    MLIR OPERATIONS    ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
-trait IRNode {
+trait IRNode:
   def parent: Option[IRNode]
 
-  final def is_ancestor(other: IRNode): Boolean = {
-    other.parent match {
+  final def is_ancestor(other: IRNode): Boolean =
+    other.parent match
       case Some(parent) if parent == this => true
       case Some(parent)                   => is_ancestor(parent)
       case None                           => false
       case null                           => false
-    }
-  }
 
   def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
@@ -38,9 +36,7 @@ trait IRNode {
         mutable.Map.empty
   ): IRNode
 
-}
-
-trait Operation extends IRNode with IntrusiveNode[Operation] {
+trait Operation extends IRNode with IntrusiveNode[Operation]:
 
   final override def parent = container_block
 
@@ -102,7 +98,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation] {
     )
     .map(_ => this)
 
-  def verify(): Either[String, Operation] = {
+  def verify(): Either[String, Operation] =
     results
       .foldLeft[Either[String, Unit]](Right(()))((res, result) =>
         res.flatMap(_ => result.verify())
@@ -124,49 +120,36 @@ trait Operation extends IRNode with IntrusiveNode[Operation] {
       )
       .flatMap(_ => trait_verify())
       .flatMap(_ => custom_verify())
-  }
 
-  final def drop_all_references: Unit = {
+  final def drop_all_references: Unit =
     container_block = None
-  }
 
-  final def erase(safe_erase: Boolean = true): Unit = {
-    if (container_block != None) then {
+  final def erase(safe_erase: Boolean = true): Unit =
+    if container_block != None then
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
       )
-    }
     drop_all_references
-    if (safe_erase) then {
-      for (result <- results) {
-        result.erase()
-      }
-    }
-
-  }
+    if safe_erase then for result <- results do result.erase()
 
   final def attach_region(region: Region) =
-    region.container_operation match {
+    region.container_operation match
       case Some(x) =>
         throw new Exception(
           s"""Can't attach a region already attached to an operation:
               ${Printer().print(region)(using 0)}"""
         )
       case None =>
-        region.is_ancestor(this) match {
+        region.is_ancestor(this) match
           case true =>
             throw new Exception(
               "Can't add a region to an operation that is contained within that region"
             )
           case false =>
             region.container_operation = Some(this)
-        }
-    }
 
   final override def hashCode(): Int = System.identityHashCode(this)
   final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
-
-}
 
 abstract class BaseOperation(
     val name: String,
@@ -177,7 +160,7 @@ abstract class BaseOperation(
     val properties: Map[String, Attribute] = Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends Operation {
+) extends Operation:
 
   // def companion : OperationCompanion
 
@@ -197,7 +180,7 @@ abstract class BaseOperation(
       regions: Seq[Region] = detached_regions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
-  ) = {
+  ) =
     copy(
       operands = operands,
       successors = successors,
@@ -206,9 +189,6 @@ abstract class BaseOperation(
       properties = properties,
       attributes = attributes
     )
-  }
-
-}
 
 case class UnregisteredOperation(
     override val name: String,
@@ -228,7 +208,7 @@ case class UnregisteredOperation(
       regions = regions,
       properties = properties,
       attributes = attributes
-    ) {
+    ):
 
   override def copy(
       operands: Seq[Value[Attribute]],
@@ -237,7 +217,7 @@ case class UnregisteredOperation(
       regions: Seq[Region],
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
-  ) = {
+  ) =
     UnregisteredOperation(
       name = name,
       operands = operands,
@@ -247,11 +227,8 @@ case class UnregisteredOperation(
       properties = properties,
       attributes = attributes
     )
-  }
 
-}
-
-trait OperationCompanion {
+trait OperationCompanion:
   def name: String
 
   def parse[$: P](parser: Parser, resNames: Seq[String]): P[Operation] =
@@ -270,5 +247,3 @@ trait OperationCompanion {
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()
-
-}

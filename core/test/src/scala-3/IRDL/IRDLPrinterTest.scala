@@ -1,18 +1,18 @@
 package scair
 
-import scair.dialects.irdl._
-import scair.dialects.builtin._
+import scair.dialects.irdl.*
+import scair.dialects.builtin.*
 import scair.core.irdl_printer.IRDLPrinter.printIRDL
 
-import fastparse._
-import org.scalatest._
-import org.scalatest.flatspec._
-import org.scalatest.matchers.should.Matchers._
+import fastparse.*
+import org.scalatest.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
-import java.io._
+import java.io.*
 
-class IRDLPrinterTest extends AnyFlatSpec {
+class IRDLPrinterTest extends AnyFlatSpec:
 
   val ctx = MLContext()
   ctx.registerDialect(BuiltinDialect)
@@ -70,5 +70,3 @@ final case class mul(
 
 val cmath = summonDialect[complex *: EmptyTuple, norm *: mul *: EmptyTuple]()
 """.stripMargin
-
-}

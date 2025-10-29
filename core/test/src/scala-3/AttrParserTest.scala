@@ -10,7 +10,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import java.io.*
 
-class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
+class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
 
   val ctx = MLContext()
   val args = scair.core.utils.Args(allow_unregistered = true)
@@ -25,10 +25,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   def getResult[A](result: String, expected: A) =
-    result match {
+    result match
       case "Success" => ((x: Int) => Parsed.Success(expected, x))
       case "Failure" => Parsed.Failure(_, _, _)
-    }
 
   val F16 = Float16Type()
   val F32 = Float32Type()
@@ -364,5 +363,3 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter {
           ) =>
     }
   }
-
-}

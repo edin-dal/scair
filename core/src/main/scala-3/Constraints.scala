@@ -18,20 +18,16 @@ import scala.quoted.*
 
 trait Constraint
 
-class ConstraintContext() {
+class ConstraintContext():
 
   val var_constraints: DictType[String, Attribute] =
     DictType.empty[String, Attribute]
 
-}
-
-trait ConstraintImpl[c <: Constraint] {
+trait ConstraintImpl[c <: Constraint]:
 
   def verify(attr: Attribute)(using
       ctx: ConstraintContext
   ): Either[String, Unit]
-
-}
 
 infix type !>[A <: Attribute, C <: Constraint] = A
 
@@ -50,11 +46,13 @@ trait Var[To <: String] extends Constraint
 inline def eqAttr[To <: Attribute]: To =
   ${ eqAttrImpl[To] }
 
-class ConstraintImplEqAttr[To <: Attribute](ref: To) extends ConstraintImpl[EqAttr[To]]:
+class ConstraintImplEqAttr[To <: Attribute](ref: To)
+    extends ConstraintImpl[EqAttr[To]]:
+
   override def verify(attr: Attribute)(using
       ctx: ConstraintContext
   ): Either[String, Unit] =
-    if (attr == ref) Right(())
+    if attr == ref then Right(())
     else Left(s"Expected ${ref}, got ${attr}")
 
 inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
@@ -62,18 +60,18 @@ inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
   new ConstraintImplEqAttr(ref)
 
 class ConstraintImplVar[To <: String](name: To) extends ConstraintImpl[Var[To]]:
+
   override def verify(attr: Attribute)(using
       ctx: ConstraintContext
   ): Either[String, Unit] =
-    if (ctx.var_constraints.contains(name)) {
-      if (ctx.var_constraints.apply(name) != attr) then
+    if ctx.var_constraints.contains(name) then
+      if ctx.var_constraints.apply(name) != attr then
         Left(s"Expected ${ctx.var_constraints.apply(name)}, got ${attr}")
       else Right(())
-    } else {
+    else
       ctx.var_constraints += ((name, attr))
       Right(())
-    }
-  
+
 inline given [To <: String] => ConstraintImpl[Var[To]] =
   val name = constValue[To]
   new ConstraintImplVar(name)
