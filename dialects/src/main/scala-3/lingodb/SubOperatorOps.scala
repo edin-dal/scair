@@ -2,10 +2,10 @@ package scair.dialects.LingoDB.SubOperatorOps
 
 import fastparse.*
 import scair.AttrParser
+import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.ValueId
-import scair.Parser.whitespace
 import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*

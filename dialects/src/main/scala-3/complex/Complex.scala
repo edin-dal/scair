@@ -96,7 +96,7 @@ case class Sub(
 object ComplexAttr:
 
   def parse[$: P](parser: AttrParser): P[ComplexAttr] =
-    given Whitespace = scair.Parser.whitespace
+    given Whitespace = scair.AttrParser.whitespace
     ("<:" ~ parser.FloatTypeP ~ parser.FloatDataP ~ "," ~ parser.FloatDataP ~ ">" ~ (":" ~ parser.ComplexTypeP).?)
       .map(
         (

@@ -2,6 +2,7 @@ package scair.dialects.LingoDB.DBOps
 
 import fastparse.*
 import scair.AttrParser
+import scair.AttrParser.whitespace
 import scair.EnumAttr.I64EnumAttr
 import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser

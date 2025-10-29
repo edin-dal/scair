@@ -25,40 +25,7 @@ import scala.collection.mutable
 
 object Parser {
 
-  /** Whitespace syntax that supports // line-comments, *without* /* */
-    * comments, as is the case in the MLIR Language Spec.
-    *
-    * It's litteraly fastparse's JavaWhitespace with the /* */ states just
-    * erased :)
-    */
-  implicit val whitespace: Whitespace = { implicit ctx: P[?] =>
-    val input = ctx.input
-    val startIndex = ctx.index
-    @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
-      if (!input.isReachable(current)) {
-        if (state == 0 || state == 1) ctx.freshSuccessUnit(current)
-        else ctx.freshSuccessUnit(current - 1)
-      } else {
-        val currentChar = input(current)
-        (state: @switch) match {
-          case 0 =>
-            (currentChar: @switch) match {
-              case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
-              case '/'                      => rec(current + 1, state = 2)
-              case _                        => ctx.freshSuccessUnit(current)
-            }
-          case 1 =>
-            rec(current + 1, state = if (currentChar == '\n') 0 else state)
-          case 2 =>
-            (currentChar: @switch) match {
-              case '/' => rec(current + 1, state = 1)
-              case _   => ctx.freshSuccessUnit(current - 1)
-            }
-        }
-      }
-    }
-    rec(current = ctx.index, state = 0)
-  }
+  import AttrParser.whitespace
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   || COMMON FUNCTIONS ||
@@ -141,8 +108,6 @@ object Parser {
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||
   \*≡==---==≡==---==≡*/
-
-  object Scope {}
 
   class Scope(
       var parentScope: Option[Scope] = None,
@@ -463,8 +428,7 @@ final class Parser(
 ) extends AttrParser(context, attributeAliases, typeAliases) {
 
   import Parser._
-
-  implicit val whitespace: Whitespace = Parser.whitespace
+  import AttrParser.whitespace
 
   def error(failure: Failure) =
     // .trace() below reparses from the start with more bookkeeping to provide helpful
@@ -500,7 +464,7 @@ final class Parser(
       sys.exit(1)
     }
 
-  implicit var currentScope: Scope = new Scope()
+  var currentScope: Scope = new Scope()
 
   def enterLocalRegion = {
     currentScope = currentScope.createChild()

@@ -2,6 +2,7 @@ package scair.dialects.LingoDB.RelAlgOps
 
 import fastparse.*
 import scair.AttrParser
+import scair.AttrParser.whitespace
 import scair.EnumAttr.I64EnumAttr
 import scair.EnumAttr.I64EnumAttrCase
 import scair.Parser
@@ -10,7 +11,6 @@ import scair.Parser.E
 import scair.Parser.ValueId
 import scair.Parser.mapTry
 import scair.Parser.orElse
-import scair.Parser.whitespace
 import scair.Printer
 import scair.dialects.LingoDB.SubOperatorOps.*
 import scair.dialects.LingoDB.TupleStream.*
