@@ -1,5 +1,6 @@
 package scair.transformations.cse
 
+import scair.MLContext
 import scair.ir.*
 import scair.transformations.*
 
@@ -64,7 +65,8 @@ case class CSE(
       // Just mimicing MLIR here
       case _ => ()
 
-object CommonSubexpressionElimination extends ModulePass:
+final class CommonSubexpressionElimination(ctx: MLContext)
+    extends ModulePass(ctx):
   override val name = "cse"
 
   override def transform(op: Operation): Operation =

@@ -3,6 +3,7 @@ package scair.ir
 import fastparse.P
 import scair.Parser
 import scair.Printer
+import scair.transformations.RewritePattern
 import scair.utils.IntrusiveNode
 
 import scala.collection.mutable
@@ -244,3 +245,5 @@ trait OperationCompanion:
       attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
   ): Operation
+
+  def canonicalizationPatterns: Seq[RewritePattern] = Seq()

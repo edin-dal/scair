@@ -5,6 +5,7 @@ import scair.AttrParser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
+import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.ir.*
 

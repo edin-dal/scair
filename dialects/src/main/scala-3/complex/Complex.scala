@@ -7,6 +7,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
+import scair.dialects.complex.canonicalization.given
 import scair.ir.*
 
 case class Abs(

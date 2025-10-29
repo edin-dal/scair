@@ -2,7 +2,6 @@ package scair.tools
 
 import scair.MLContext
 import scair.Printer
-import scair.TransformContext
 import scair.core.utils.Args
 import scair.exceptions.VerifyException
 import scair.ir.*
@@ -12,7 +11,6 @@ import scala.io.Source
 
 trait ScairOptBase:
   val ctx = MLContext()
-  val transformCtx = TransformContext()
 
   register_all_dialects()
   register_all_passes()
@@ -27,7 +25,7 @@ trait ScairOptBase:
     for dialect <- allDialects do ctx.registerDialect(dialect)
 
   final def register_all_passes(): Unit =
-    for pass <- allPasses do transformCtx.registerPass(pass)
+    for pass <- allPasses do ctx.registerPass(pass)
 
   def run(args: Array[String]): Unit =
 
@@ -126,7 +124,7 @@ trait ScairOptBase:
             case Right(op) =>
               // apply the specified passes
               passes
-                .map(transformCtx.getPass(_).get)
+                .map(ctx.getPass(_).get)
                 .foldLeft(module)((module, pass) => module.map(pass.transform))
             case Left(errorMsg) =>
               if parsed_args.verify_diagnostics then Left(errorMsg)

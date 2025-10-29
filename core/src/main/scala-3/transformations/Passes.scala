@@ -1,5 +1,6 @@
 package scair.transformations
 
+import scair.MLContext
 import scair.ir.*
 
 // ██████╗░ ░█████╗░ ░██████╗ ░██████╗ ███████╗ ░██████╗
@@ -9,11 +10,11 @@ import scair.ir.*
 // ██║░░░░░ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
-abstract class ModulePass:
+abstract class ModulePass(ctx: MLContext):
   val name: String
   def transform(op: Operation): Operation = ???
 
-abstract class WalkerPass extends ModulePass:
+abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx):
   def walker: PatternRewriteWalker
 
   final override def transform(op: Operation): Operation =
