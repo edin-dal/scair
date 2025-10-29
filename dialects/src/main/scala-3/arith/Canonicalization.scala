@@ -3,6 +3,7 @@ package scair.dialects.arith.canonicalization
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.transformations.CanonicalizationPatterns
 import scair.transformations.patterns.*
 
 // AddI folding patterns
@@ -77,6 +78,26 @@ val AddIMulNegativeOneLhs = pattern {
     Seq(SubI(y, x, Result(x.typ)))
 }
 
+// addi(subi(c0, x), c1) -> subi(c0 + c1, x)
+val AddISubConstantLHS = pattern {
+  case AddI(
+        Owner(SubI(Owner(Constant(c0: IntegerAttr, _)), x, _)),
+        Owner(Constant(c1: IntegerAttr, _)),
+        _
+      ) =>
+    val cv = Result(x.typ)
+    Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
+}
+
+given CanonicalizationPatterns[AddI](
+  AddIFold,
+  AddIAddConstant,
+  AddISubConstantRHS,
+  AddIMulNegativeOneRhs,
+  AddIMulNegativeOneLhs,
+  AddISubConstantLHS
+)
+
 // muli(muli(x, c0), c1) -> muli(x, c0 * c1)
 val MulIMulIConstant = pattern {
   case MulI(
@@ -88,16 +109,27 @@ val MulIMulIConstant = pattern {
     Seq(Constant(c0 * c1, cv), MulI(x, cv, Result(x.typ)))
 }
 
-// addi(subi(c0, x), c1) -> subi(c0 + c1, x)
-val AddISubConstantLHS = pattern {
-  case AddI(
-        Owner(SubI(Owner(Constant(c0: IntegerAttr, _)), x, _)),
+// MulI folding patterns
+val MulIFold = pattern {
+  // muli(x, 0) -> 0
+  case MulI(x, Owner(Constant(IntegerAttr(IntData(0), _), _)), _) =>
+    Constant(IntegerAttr(IntData(0), x.typ), Result(x.typ))
+  // muli(x, 1) -> x
+  case MulI(x, Owner(Constant(IntegerAttr(IntData(1), _), _)), _) =>
+    (Seq(), Seq(x))
+  // muli(c0, c1) -> c0 * c1
+  case MulI(
+        Owner(Constant(c0: IntegerAttr, _)),
         Owner(Constant(c1: IntegerAttr, _)),
         _
       ) =>
-    val cv = Result(x.typ)
-    Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
+    Constant(c0 * c1, Result(c0.typ))
 }
+
+given CanonicalizationPatterns[MulI](
+  MulIMulIConstant,
+  MulIFold
+)
 
 // SubI folding patterns
 val SubIFold = pattern {
@@ -207,31 +239,7 @@ val SubISubILHSRHSLHS = pattern {
     )
 }
 
-// MulI folding patterns
-val MulIFold = pattern {
-  // muli(x, 0) -> 0
-  case MulI(x, Owner(Constant(IntegerAttr(IntData(0), _), _)), _) =>
-    Constant(IntegerAttr(IntData(0), x.typ), Result(x.typ))
-  // muli(x, 1) -> x
-  case MulI(x, Owner(Constant(IntegerAttr(IntData(1), _), _)), _) =>
-    (Seq(), Seq(x))
-  // muli(c0, c1) -> c0 * c1
-  case MulI(
-        Owner(Constant(c0: IntegerAttr, _)),
-        Owner(Constant(c1: IntegerAttr, _)),
-        _
-      ) =>
-    Constant(c0 * c1, Result(c0.typ))
-}
-
-val arithCanonicalizationPatterns = Seq(
-  AddIFold,
-  AddIAddConstant,
-  AddISubConstantRHS,
-  AddISubConstantLHS,
-  AddIMulNegativeOneRhs,
-  AddIMulNegativeOneLhs,
-  MulIMulIConstant,
+given CanonicalizationPatterns[SubI](
   SubIFold,
   SubIRHSAddConstant,
   SubILHSAddConstant,
@@ -239,6 +247,5 @@ val arithCanonicalizationPatterns = Seq(
   SubIRHSSubConstantLHS,
   SubILHSSubConstantRHS,
   SubILHSSubConstantLHS,
-  SubISubILHSRHSLHS,
-  MulIFold
+  SubISubILHSRHSLHS
 )

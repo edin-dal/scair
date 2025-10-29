@@ -10,6 +10,8 @@ import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
+import scair.transformations.CanonicalizationPatterns
+import scair.transformations.RewritePattern
 
 import scala.annotation.switch
 import scala.quoted.*
@@ -845,9 +847,17 @@ def deriveOperationCompanion[T <: Operation: Type](using
 ): Expr[DerivedOperationCompanion[T]] =
   val opDef = getDefImpl[T]
 
+  val summonedPatterns = Expr.summon[CanonicalizationPatterns[T]] match
+    case Some(canonicalizationPatterns) =>
+      '{ $canonicalizationPatterns.patterns }
+    case None => '{ Seq() }
+
   '{
 
     new DerivedOperationCompanion[T]:
+
+      override def canonicalizationPatterns: Seq[RewritePattern] =
+        $summonedPatterns
 
       def operands(adtOp: T): Seq[Value[Attribute]] =
         ${ operandsMacro(opDef, '{ adtOp }) }
