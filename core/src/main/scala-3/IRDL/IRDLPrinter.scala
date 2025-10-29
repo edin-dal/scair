@@ -61,6 +61,12 @@ object IRDLPrinter:
       pattern = parser.OperationPat(using _)
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
+      case Parsed.Success(_, _) => throw Exception(
+          s"Parsed IRDL file did not yield a Dialect operation"
+      )
+
+      case Parsed.Failure(str, _, _) =>
+        throw Exception(s"Failed to parse IRDL file:\n $str")
 
     val scalafile = s"$dir/${dialect.sym_name.data}.scala"
     val printer = PrintWriter(scalafile)
@@ -92,7 +98,6 @@ object IRDLPrinter:
         p.print(attr.sym_name.data)
         p.print(" *: ")
       case t: Type =>
-        t.sym_name.data
         p.print(t.sym_name.data)
         p.print(" *: ")
       case _ =>
@@ -145,6 +150,9 @@ object IRDLPrinter:
   def printConstraint(tpe: Value[AttributeType])(using p: PrintWriter): Unit =
     tpe.owner.get match
       case _: Any => p.print("Attribute")
+      case owner => throw Exception(
+          s"Unsupported constraint:\n$owner"
+      )
 
   def printType(typ: Type)(using p: PrintWriter, dialectName: String): Unit =
     val className = typ.sym_name.data

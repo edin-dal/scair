@@ -11,6 +11,7 @@ import java.lang.Float.intBitsToFloat
 import scala.annotation.switch
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scair.dialects.builtin.VectorType
 
 // ░█████╗░ ████████╗ ████████╗ ██████╗░
 // ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔══██╗
@@ -283,7 +284,7 @@ class AttrParser(
   // dimension             ::=   `?` | decimal-literal
   // encoding              ::=   attribute-value
 
-  def TensorTypeP[$: P]: P[ContainerType] = P(
+  def TensorTypeP[$: P]: P[TensorType] = P(
     "tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
   )
 

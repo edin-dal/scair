@@ -456,15 +456,11 @@ type TensorLiteralArray =
   ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
 
 final case class DenseIntOrFPElementsAttr(
-    typ: ContainerType | MemrefType | VectorType,
+    typ: ContainerType,
     data: TensorLiteralArray
 ) extends DerivedAttribute["builtin.dense", DenseIntOrFPElementsAttr] {
 
-  def elementType = typ match {
-    case x: ContainerType => x.elementType
-    case x: MemrefType    => x.elementType
-    case x: VectorType    => x.elementType
-  }
+  def elementType = typ.elementType
 
   val int_or_float = BaseAttr[IntegerType | FloatType]()
 

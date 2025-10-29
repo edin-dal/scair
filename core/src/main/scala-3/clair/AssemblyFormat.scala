@@ -433,11 +433,10 @@ case class AssemblyFormatDirective(
       .from(
         parsedDirectives.zipWithIndex.flatMap((d, i) =>
           d match
-            case VariableDirective(OperandDef(name = name)) => Some(name -> i)
+            case VariableDirective(OperandDef(name = name)) => Some(name -> '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
             case _                                          => None
         )
       )
-      .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val operandNamesArg =
       Expr.ofList(opDef.operands.map(od => (operandNames(od.name))))
     val flatOperandNames = '{
@@ -452,11 +451,10 @@ case class AssemblyFormatDirective(
       .from(
         parsedDirectives.zipWithIndex.flatMap((d, i) =>
           d match
-            case TypeDirective(OperandDef(name = name)) => Some(name -> i)
+            case TypeDirective(OperandDef(name = name)) => Some(name -> '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
             case _                                      => None
         )
       )
-      .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val operandTypesArg =
       Expr.ofList(opDef.operands.map(od => (operandTypes(od.name))))
     val flatOperandTypes = '{
@@ -471,11 +469,10 @@ case class AssemblyFormatDirective(
       .from(
         parsedDirectives.zipWithIndex.flatMap((d, i) =>
           d match
-            case TypeDirective(ResultDef(name = name)) => Some(name -> i)
+            case TypeDirective(ResultDef(name = name)) => Some(name -> '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
             case _                                     => None
         )
       )
-      .mapValues(i => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
     val resultTypesArg =
       Expr.ofList(opDef.results.map(od => (resultTypes(od.name))))
     val flatResultTypes = '{
@@ -490,7 +487,7 @@ case class AssemblyFormatDirective(
       case _: AttrDictDirective => true
       case _                    => false) match
       case Some((AttrDictDirective(), i)) => i
-      case None                           =>
+      case _                           =>
         report.errorAndAbort(
           "Assembly format directive must contain an `attr-dict` directive"
         )

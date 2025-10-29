@@ -33,7 +33,7 @@ class ClairCustomException(name: String, message: String)
 object ClairExceptionMethods {
 
   def throwParseError(input: String, failure: Parsed.Failure) = {
-    val traced = failure.extra.traced
+    val traced = failure.extra.trace
     val msg =
       s"Parse error at ${input}:${failure.extra.input
           .prettyIndex(failure.index)}:\n\n${failure.extra.trace().aggregateMsg}"
