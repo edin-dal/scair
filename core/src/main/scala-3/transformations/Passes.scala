@@ -10,12 +10,11 @@ import scair.ir.*
 // ██║░░░░░ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
-abstract class ModulePass(ctx: MLContext) {
+abstract class ModulePass(ctx: MLContext):
   val name: String
   def transform(op: Operation): Operation = ???
-}
 
-abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx) {
+abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx):
   def walker: PatternRewriteWalker
 
   final override def transform(op: Operation): Operation =
@@ -29,5 +28,3 @@ abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx) {
   final def transform(region: Region): Region =
     walker.rewrite(region)
     return region
-
-}

@@ -10,7 +10,7 @@ import scair.MLContext
 import scair.core.utils.Args
 import java.io.*
 
-class PatternRewriterTest extends AnyFlatSpec {
+class PatternRewriterTest extends AnyFlatSpec:
 
   "PatternRewriterWalker" should "not trigger on removed operations" in {
     // Create a simple module with an operation
@@ -25,7 +25,7 @@ class PatternRewriterTest extends AnyFlatSpec {
 """).get
       .value
 
-    object TestPattern extends RewritePattern {
+    object TestPattern extends RewritePattern:
       override def match_and_rewrite(
           op: Operation,
           rewriter: PatternRewriter
@@ -35,7 +35,6 @@ class PatternRewriterTest extends AnyFlatSpec {
           case r           => r)
         if newRes != op.results then
           rewriter.replace_op(op, op.updated(results = newRes))
-    }
 
     // Apply the pattern
     val walker = PatternRewriteWalker(TestPattern)
@@ -51,5 +50,3 @@ class PatternRewriterTest extends AnyFlatSpec {
 }
 """
   }
-
-}

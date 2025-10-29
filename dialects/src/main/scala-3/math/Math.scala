@@ -13,13 +13,13 @@ import scair.ir.*
 //   AbsfOp   //
 // ==--------== //
 
-object AbsfOp extends OperationCompanion {
+object AbsfOp extends OperationCompanion:
   override def name: String = "math.absf"
 
   override def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
-  ): P[Operation] = {
+  ): P[Operation] =
     P(
       "" ~ Parser.ValueUse ~ ":" ~ parser.Type
     ).map { case (operandName, type_) =>
@@ -31,9 +31,6 @@ object AbsfOp extends OperationCompanion {
         resultsTypes = Seq(type_)
       )
     }
-  }
-
-}
 
 case class AbsfOp(
     override val operands: Seq[Value[Attribute]],
@@ -51,7 +48,7 @@ case class AbsfOp(
       properties,
       attributes
     )
-    with NoMemoryEffect {
+    with NoMemoryEffect:
 
   override def custom_verify(): Either[String, Operation] = (
     operands.length,
@@ -59,27 +56,24 @@ case class AbsfOp(
     successors.length,
     regions.length,
     properties.size
-  ) match {
+  ) match
     case (1, 1, 0, 0, 0) => Right(this)
     case _               =>
       Left(
         "AbsfOp must have 1 result and 1 operand."
       )
-  }
-
-}
 
 // ==--------== //
 //   FPowIOp   //
 // ==--------== //
 
-object FPowIOp extends OperationCompanion {
+object FPowIOp extends OperationCompanion:
   override def name: String = "math.fpowi"
 
   override def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
-  ): P[Operation] = {
+  ): P[Operation] =
     P(
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ ":" ~ parser.Type ~ "," ~ parser.Type
     ).map {
@@ -97,9 +91,6 @@ object FPowIOp extends OperationCompanion {
           resultsTypes = Seq(operand1Type)
         )
     }
-  }
-
-}
 
 case class FPowIOp(
     override val operands: Seq[Value[Attribute]],
@@ -117,7 +108,7 @@ case class FPowIOp(
       properties,
       attributes
     )
-    with NoMemoryEffect {
+    with NoMemoryEffect:
 
   override def custom_verify(): Either[String, Operation] = (
     operands.length,
@@ -125,15 +116,13 @@ case class FPowIOp(
     successors.length,
     regions.length,
     properties.size
-  ) match {
+  ) match
     case (2, 1, 0, 0, 0) => Right(this)
     case _               =>
       Left(
         "FPowIOp must have 1 result and 2 operands."
       )
-  }
 
-}
 /////////////
 // DIALECT //
 /////////////

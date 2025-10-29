@@ -5,7 +5,7 @@ import scair.utils.{IntrusiveNode, IntrusiveList}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class IntrusiveListTest extends AnyFlatSpec with Matchers {
+class IntrusiveListTest extends AnyFlatSpec with Matchers:
 
   case class I(val i: Int) extends IntrusiveNode[I]
 
@@ -174,5 +174,3 @@ class IntrusiveListTest extends AnyFlatSpec with Matchers {
     val list = IntrusiveList[I](I(1), I(2), I(0), I(0), I(0))
     list.patchInPlace(2, Seq(I(3), I(4), I(5)), 3)
     list shouldEqual Seq(I(1), I(2), I(3), I(4), I(5))
-
-}

@@ -53,22 +53,17 @@ val TestReplacingDummyOperation = pattern {
     op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
 }
 
-final class DummyPass(ctx: MLContext) extends WalkerPass(ctx) {
+final class DummyPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "dummy-pass"
 
   override final val walker = PatternRewriteWalker(AddDummyAttributeToDict)
 
-}
-
-final class TestInsertionPass(ctx: MLContext) extends WalkerPass(ctx) {
+final class TestInsertionPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "test-ins-pass"
 
   override final val walker = PatternRewriteWalker(TestInsertingDummyOperation)
-}
 
-final class TestReplacementPass(ctx: MLContext) extends WalkerPass(ctx) {
+final class TestReplacementPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "test-rep-pass"
 
   override final val walker = PatternRewriteWalker(TestReplacingDummyOperation)
-
-}

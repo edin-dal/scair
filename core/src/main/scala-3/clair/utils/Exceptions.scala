@@ -26,28 +26,22 @@ class ClairCustomException(name: String, message: String)
         clairErr + name +
         "\n" +
         clairErr + " => " + message + "\n"
-    ) {
+    ):
   override def fillInStackTrace(): Throwable = this
-}
 
-object ClairExceptionMethods {
+object ClairExceptionMethods:
 
-  def throwParseError(input: String, failure: Parsed.Failure) = {
+  def throwParseError(input: String, failure: Parsed.Failure) =
     val traced = failure.extra.traced
     val msg =
       s"Parse error at ${input}:${failure.extra.input
           .prettyIndex(failure.index)}:\n\n${failure.extra.trace().aggregateMsg}"
     Console.err.print(msg)
     sys.exit(0)
-  }
 
-  def throwCustomClairError(throwable: Throwable): Unit = {
-    throwable match {
+  def throwCustomClairError(throwable: Throwable): Unit =
+    throwable match
       case e: ClairCustomException =>
         Console.err.print(throwable.getMessage())
         sys.exit(0)
       case _ => throw throwable
-    }
-  }
-
-}

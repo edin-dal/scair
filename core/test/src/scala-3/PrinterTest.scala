@@ -7,7 +7,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import java.io.*
 
-class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
+class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
 
   var out = StringWriter()
   var printer = new Printer(true, p = PrintWriter(out));
@@ -133,5 +133,3 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter {
     val result = out.toString()
     result shouldEqual expected
   }
-
-}

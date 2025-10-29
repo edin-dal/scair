@@ -7,38 +7,30 @@ import scopt.OParser
 
 import scala.io.Source
 
-trait ScairRunBase {
+trait ScairRunBase:
   val ctx = MLContext()
 
   register_all_dialects()
   register_all_passes()
 
-  def allDialects = {
+  def allDialects =
     scair.utils.allDialects
-  }
 
-  def allPasses = {
+  def allPasses =
     scair.utils.allPasses
-  }
 
-  final def register_all_dialects(): Unit = {
-    for (dialect <- allDialects) {
-      ctx.registerDialect(dialect)
-    }
-  }
+  final def register_all_dialects(): Unit =
+    for dialect <- allDialects do ctx.registerDialect(dialect)
 
-  final def register_all_passes(): Unit = {
-    for (pass <- allPasses) {
-      ctx.registerPass(pass)
-    }
-  }
+  final def register_all_passes(): Unit =
+    for pass <- allPasses do ctx.registerPass(pass)
 
-  def run(args: Array[String]): Unit = {
+  def run(args: Array[String]): Unit =
 
     // Define CLI args
     val argbuilder = OParser.builder[Args]
-    val argparser = {
-      import argbuilder._
+    val argparser =
+      import argbuilder.*
       OParser.sequence(
         programName("scair-run"),
         head("scair-run", "0"),
@@ -48,38 +40,31 @@ trait ScairRunBase {
           .text("input file")
           .action((x, c) => c.copy(input = Some(x)))
       )
-    }
 
     // Parse the CLI args
     val parsed_args = OParser.parse(argparser, args, Args()).get
 
     // Open the input file or stdin
-    val input = parsed_args.input match {
+    val input = parsed_args.input match
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
-    }
 
     // Parse content
 
-    val input_module = {
+    val input_module =
       val parser = new scair.Parser(ctx, parsed_args)
       parser.parseThis(
         input.mkString,
         pattern = parser.TopLevel(using _)
-      ) match {
+      ) match
         case fastparse.Parsed.Success(input_module, _) =>
           Right(input_module)
         case failure: fastparse.Parsed.Failure =>
           Left(parser.error(failure))
-      }
-    }
 
     // Here goes the magic
 
     println("Such interpretation, much wow")
-  }
-
-}
 
 object ScairRun extends ScairRunBase:
   def main(args: Array[String]): Unit = run(args)
