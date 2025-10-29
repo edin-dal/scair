@@ -147,7 +147,7 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
     else insertAll(apply(idx), elems)
 
   def insertAll(at: A, elems: IterableOnce[A]): Unit =
-    elems.foreach(e => insert(at, e))
+    elems.iterator.foreach(e => insert(at, e))
 
   override def patchInPlace(
       from: Int,
