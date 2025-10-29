@@ -9,10 +9,10 @@ import scair.transformations.patterns.*
 val AddDummyAttributeToDict = pattern {
   case x: UnregisteredOperation =>
     x.updated(attributes =
-      x.attributes + ("dummy" -> StringData("UnregDumDum"))
+      x.attributes.addOne("dummy" -> StringData("UnregDumDum"))
     )
   case d =>
-    d.updated(attributes = d.attributes + ("dummy" -> StringData("dumdum")))
+    d.updated(attributes = d.attributes.addOne("dummy" -> StringData("dumdum")))
 }
 
 val TestInsertingDummyOperation = pattern {
@@ -26,7 +26,7 @@ val TestInsertingDummyOperation = pattern {
     )
   case op
       if (!op.attributes.contains("replaced")) && op.container_block != None =>
-    op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
+    op.updated(attributes = op.attributes.addOne("replaced" -> StringData("false")))
 }
 
 val TestReplacingDummyOperation = pattern {
@@ -50,7 +50,7 @@ val TestReplacingDummyOperation = pattern {
     )
   case op
       if (!op.attributes.contains("replaced")) && op.container_block != None =>
-    op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
+    op.updated(attributes = op.attributes.addOne("replaced" -> StringData("false")))
 }
 
 final class DummyPass(ctx: MLContext) extends WalkerPass(ctx) {

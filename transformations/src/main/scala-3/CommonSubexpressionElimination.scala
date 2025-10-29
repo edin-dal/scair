@@ -27,8 +27,6 @@ final case class OperationInfo(val op: Operation) {
 
 }
 
-given Conversion[Operation, OperationInfo] = OperationInfo.apply
-
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
       Map[OperationInfo, Operation](),
@@ -39,11 +37,11 @@ case class CSE(
     op match
       case _: IsTerminator      => ()
       case free: NoMemoryEffect =>
-        knownOps.get(op) match
+        knownOps.get(OperationInfo(op)) match
           case Some(known) =>
             (op.results zip known.results).foreach(rewriter.replace_value)
             toErase.add(op)
-          case None => knownOps(op) = op
+          case None => knownOps(OperationInfo(op)) = op
       case _ => ()
 
   def simplify(block: Block): Unit =

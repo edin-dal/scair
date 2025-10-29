@@ -47,7 +47,7 @@ inline def pattern(
             )
           case new_op: Operation =>
             rewriter.replace_op(op, new_op, None)
-          case new_ops: Seq[Operation] =>
+          case new_ops: Seq[Operation@unchecked] =>
             rewriter.replace_op(op, new_ops, None)
       })
 

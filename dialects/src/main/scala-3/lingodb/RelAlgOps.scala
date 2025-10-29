@@ -462,7 +462,7 @@ object AggregationOp extends OperationCompanion {
         resultsNames = resNames,
         resultsTypes = Seq(TupleStream(Seq())),
         regions = Seq(y),
-        attributes = w + ("group_by_cols" -> reff, "computed_cols" -> deff)
+        attributes = w + ("group_by_cols" -> reff) + ("computed_cols" -> deff)
       )
   )
   // ==----------------------== //
@@ -658,7 +658,7 @@ object AggrFuncOp extends OperationCompanion {
         operandsTypes = Seq(operand_type),
         resultsNames = resNames,
         resultsTypes = resTypes,
-        attributes = y + ("fn" -> aggrfunc, "attr" -> attr)
+        attributes = y + ("fn" -> aggrfunc) + ("attr" -> attr)
       )
   )
   // ==----------------------== //
@@ -875,7 +875,7 @@ object MaterializeOp extends OperationCompanion {
         operandsTypes = Seq(operand_type),
         resultsNames = resNames,
         resultsTypes = resTypes,
-        attributes = y + ("cols" -> cols, "columns" -> columns)
+        attributes = y + ("cols" -> cols) + ("columns" -> columns)
       )
   )
   // ==----------------------== //

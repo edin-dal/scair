@@ -123,8 +123,10 @@ trait ScairOptBase {
         }
       }
 
-      if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
-        throw new Exception(input_module.left.get)
+      if (!parsed_args.parsing_diagnostics) then
+        input_module match
+          case Left(msg) => throw Exception(msg)
+          case Right(_) => ()
 
       val processed_module: Either[String, Operation] =
         input_module.flatMap(input_module => {
