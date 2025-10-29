@@ -65,6 +65,7 @@ class AttrParser(
     val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
 ):
 
+
   import AttrParser.whitespace
 
   def DialectAttribute[$: P]: P[Attribute] = P(
