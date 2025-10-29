@@ -4,6 +4,7 @@ import scair.dialects.arith
 import scair.dialects.builtin.*
 import scair.dialects.complex.*
 import scair.ir.*
+import scair.transformations.CanonicalizationPatterns
 import scair.transformations.patterns.*
 
 // complex.create(complex.re(op), complex.im(op)) -> op
@@ -12,10 +13,14 @@ val CreateReIm = pattern {
     (Seq(), Seq(op))
 }
 
+given CanonicalizationPatterns[Create](
+  CreateReIm
+)
+
 // complex.re(complex.constant(a, b)) -> a
 val ReConstant = pattern {
-  case op @ Re(Owner(Constant(ArrayAttribute(Seq(r, _)), _)), _) =>
-    arith.Constant(r, op.results.head.copy())
+  case Re(Owner(Constant(ArrayAttribute(Seq(r, _)), _)), res) =>
+    arith.Constant(r, res.copy())
 }
 
 // complex.re(complex.create(a, b)) -> a
@@ -23,16 +28,46 @@ val ReCreate = pattern { case Re(Owner(Create(a, b, _)), _) =>
   (Seq(), Seq(a))
 }
 
+// complex.re(complex.neg(complex.create(a, b))) -> -a
+val ReNegCreate = pattern {
+  case Re(
+        Owner(Neg(Owner(Create(a @ Value(at: FloatType), _, _)), _, fastmath)),
+        _
+      ) =>
+    arith.NegF(a.asInstanceOf[Value[FloatType]], Result(at), fastmath)
+}
+
+given CanonicalizationPatterns[Re](
+  ReConstant,
+  ReCreate,
+  ReNegCreate
+)
+
 // complex.im(complex.constant(a, b)) -> b
 val ImConstant = pattern {
-  case op @ Im(Owner(Constant(ArrayAttribute(Seq(_, i)), _)), _) =>
-    arith.Constant(i, op.results.head.copy())
+  case Im(Owner(Constant(ArrayAttribute(Seq(_, i)), _)), res) =>
+    arith.Constant(i, res.copy())
 }
 
 // complex.im(complex.create(a, b)) -> b
 val ImCreate = pattern { case Im(Owner(Create(a, b, _)), _) =>
   (Seq(), Seq(b))
 }
+
+// complex.im(complex.neg(complex.create(a, b))) -> -b
+val ImNegCreate = pattern {
+  case Im(
+        Owner(Neg(Owner(Create(_, b @ Value(bt: FloatType), _)), _, fastmath)),
+        _
+      ) =>
+    arith.NegF(b.asInstanceOf[Value[FloatType]], Result(bt), fastmath)
+}
+
+given CanonicalizationPatterns[Im](
+  ImConstant,
+  ImCreate,
+  ImNegCreate
+)
 
 // complex.add(complex.sub(a, b), b) -> a
 val AddSub = pattern {
@@ -74,6 +109,12 @@ val AddZero = pattern {
     (Seq(), Seq(a))
 }
 
+given CanonicalizationPatterns[Add](
+  AddSub,
+  AddSubRHS,
+  AddZero
+)
+
 // complex.sub(complex.add(a, b), b) -> a
 val SubAdd = pattern {
   case Sub(
@@ -103,28 +144,19 @@ val SubZero = pattern {
     (Seq(), Seq(a))
 }
 
+given CanonicalizationPatterns[Sub](
+  SubAdd,
+  SubZero
+)
+
 // complex.neg(complex.neg(a)) -> a
 val NegNeg = pattern { case Neg(Owner(Neg(a, _, _)), _, _) =>
   (Seq(), Seq(a))
 }
 
-// complex.re(complex.neg(complex.create(a, b))) -> -a
-val ReNegCreate = pattern {
-  case Re(
-        Owner(Neg(Owner(Create(a @ Value(at: FloatType), _, _)), _, fastmath)),
-        _
-      ) =>
-    arith.NegF(a.asInstanceOf[Value[FloatType]], Result(at), fastmath)
-}
-
-// complex.im(complex.neg(complex.create(a, b))) -> -b
-val ImNegCreate = pattern {
-  case Im(
-        Owner(Neg(Owner(Create(_, b @ Value(bt: FloatType), _)), _, fastmath)),
-        _
-      ) =>
-    arith.NegF(b.asInstanceOf[Value[FloatType]], Result(bt), fastmath)
-}
+given CanonicalizationPatterns[Neg](
+  NegNeg
+)
 
 // complex.mul(a, complex.constant<1.0, 0.0>) -> a
 val MulOne = pattern {
@@ -195,20 +227,7 @@ val MulConstant = pattern {
     )
 }
 
-val complexCanonicalizationPatterns = Seq(
-  CreateReIm,
-  ReConstant,
-  ReCreate,
-  ImConstant,
-  ImCreate,
-  AddSub,
-  AddSubRHS,
-  AddZero,
-  SubAdd,
-  SubZero,
-  NegNeg,
-  ReNegCreate,
-  ImNegCreate,
+given CanonicalizationPatterns[Mul](
   MulOne,
   MulZero,
   MulConstant

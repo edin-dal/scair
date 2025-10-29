@@ -1,7 +1,6 @@
 package scair.tools
 
 import scair.MLContext
-import scair.TransformContext
 import scair.core.utils.Args
 import scair.ir.*
 import scopt.OParser
@@ -10,7 +9,6 @@ import scala.io.Source
 
 trait ScairRunBase {
   val ctx = MLContext()
-  val transformCtx = TransformContext()
 
   register_all_dialects()
   register_all_passes()
@@ -31,7 +29,7 @@ trait ScairRunBase {
 
   final def register_all_passes(): Unit = {
     for (pass <- allPasses) {
-      transformCtx.registerPass(pass)
+      ctx.registerPass(pass)
     }
   }
 

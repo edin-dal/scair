@@ -1,5 +1,6 @@
 package scair.utils
 
+import scair.MLContext
 import scair.dialects.LingoDB.DBOps.DBOps
 import scair.dialects.LingoDB.RelAlgOps.RelAlgOps
 import scair.dialects.LingoDB.SubOperatorOps.SubOperatorOps
@@ -47,13 +48,13 @@ val allDialects: Seq[Dialect] =
     SCFDialect
   )
 
-val allPasses: Seq[ModulePass] =
+val allPasses: Seq[MLContext => ModulePass] =
   Seq(
-    BenchmarkConstantFolding,
-    CommonSubexpressionElimination,
-    DummyPass,
-    ReconcileUnrealizedCasts,
-    TestInsertionPass,
-    TestReplacementPass,
-    Canonicalize
+    BenchmarkConstantFolding(_),
+    CommonSubexpressionElimination(_),
+    DummyPass(_),
+    ReconcileUnrealizedCasts(_),
+    TestInsertionPass(_),
+    TestReplacementPass(_),
+    Canonicalize(_)
   )
