@@ -142,14 +142,38 @@ case class VariableDirective(
   )(using Quotes): Expr[Unit] =
     val space = printSpace(p, state)
     val printVar = construct match
-      case OperandDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.print(${ selectMember[Operand[Attribute]](op, n) }) }
-      case OperandDef(name = n, variadicity = Variadicity.Variadic) =>
-        '{
-          $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })(using
-            0
-          )
-        }
+      case OperandDef(name = n, variadicity = v) =>
+        v match
+          case Variadicity.Single =>
+            '{ $p.print(${ selectMember[Operand[Attribute]](op, n) }) }
+          case Variadicity.Variadic =>
+            '{
+              $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })(
+                using 0
+              )
+            }
+          case Variadicity.Optional =>
+            '{
+              $p.printList(${
+                selectMember[Option[Operand[Attribute]]](op, n)
+              })(using 0)
+            }
+      case ResultDef(name = n, variadicity = v) =>
+        v match
+          case Variadicity.Single =>
+            '{ $p.print(${ selectMember[Result[Attribute]](op, n) }) }
+          case Variadicity.Variadic =>
+            '{
+              $p.printList(${ selectMember[Seq[Result[Attribute]]](op, n) })(
+                using 0
+              )
+            }
+          case Variadicity.Optional =>
+            '{
+              $p.printList(${ selectMember[Option[Result[Attribute]]](op, n) })(
+                using 0
+              )
+            }
     Expr.block(List(space), printVar)
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
@@ -160,6 +184,8 @@ case class VariableDirective(
             '{ Parser.ValueUse(using $ctx) }
           case Variadicity.Variadic =>
             '{ Parser.ValueUseList(using $ctx) }
+          case Variadicity.Optional =>
+            '{ given P[?] = $ctx; Parser.ValueUse.? }
 
   override def parsed(p: Expr[?])(using Quotes) =
     import quotes.reflect.*
@@ -222,13 +248,21 @@ case class TypeDirective(
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
     construct match
-      case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.Type(using $ctx) }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Variadic
-          ) =>
-        '{ $p.TypeList(using $ctx) }
+      case MayVariadicOpInputDef(name = n, variadicity = v) =>
+        v match
+          case Variadicity.Single =>
+            '{ $p.Type(using $ctx) }
+          case Variadicity.Variadic =>
+            '{ $p.TypeList(using $ctx) }
+          case Variadicity.Optional =>
+            '{ given P[?] = $ctx; $p.Type.? }
+
+  // Ew; but works
+  override def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
+    VariableDirective(construct).parsed(p)
+
+  override def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
+    VariableDirective(construct).isPresent(op)
 
 case class OptionalGroupDirective(
     anchor: Directive,
