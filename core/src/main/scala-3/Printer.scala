@@ -254,10 +254,10 @@ case class Printer(
     print("\n")
     flush()
 
-  def printTopLevel(op: Operation | Seq[Operation]): Unit =
-    val ops = op match
-      case o: Operation        => Seq(o)
-      case seq: Seq[Operation] => seq
+  def printTopLevel(op: Operation): Unit =
+    printTopLevel(Seq(op)): Unit
+
+  def printTopLevel(ops: Seq[Operation]): Unit =
     printAliases(ops)
     print(ops)(using indentLevel = 0)
 

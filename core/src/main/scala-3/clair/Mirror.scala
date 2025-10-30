@@ -239,7 +239,7 @@ def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
     .declaredMethod("parse")
     .head
     .signature
-  comp.memberMethod("parse").filter(_.signature == sig) match
+  comp.methodMember("parse").filter(_.signature == sig) match
     case Seq(m) =>
       val callTerm = Select
         .unique(Ref(comp), m.name)
@@ -267,7 +267,7 @@ def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
     .declaredMethod("parse")
     .head
     .signature
-  comp.memberMethod("parse").filter(_.signature == sig) match
+  comp.methodMember("parse").filter(_.signature == sig) match
     case Seq(m) =>
       val callTerm = Select
         .unique(Ref(comp), m.name)
