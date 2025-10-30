@@ -3,10 +3,10 @@ package scair.core.irdl_printer
 import fastparse.Parsed
 import scair.MLContext
 import scair.Parser
+import scair.dialects.builtin.ArrayAttribute
 import scair.dialects.irdl.*
 import scair.dialects.irdl.IRDL
 import scair.ir.Value
-import scair.dialects.builtin.ArrayAttribute
 
 import java.io.PrintWriter
 import scala.io.Source
