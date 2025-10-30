@@ -87,17 +87,11 @@ trait ScairRunBase {
     // casted as moduleOp
     val module = input_module.right.get.asInstanceOf[ModuleOp]
 
-    // main block
-    // TODO: handling multiple blocks, assuming only one for now
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
     var interpreterCtx = new InterpreterCtx(mutable.Map(), ListBuffer(), ListBuffer(), None)
 
-    //val interpreted_output = interpreter.interpret(main_block)
-    //println(module_block.operations)
-
-    // TODO: assumed one block only for now
     val output = interpreter.interpret(module_block, interpreterCtx)
     if (output.isDefined) {
       println(output.get)

@@ -21,6 +21,7 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler {
   }
 
   def interpret_op(op: Operation, ctx: InterpreterCtx): Unit = {
+    println(op)
     op match {
 
       case func_op: func.Func =>
