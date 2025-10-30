@@ -62,8 +62,6 @@ trait JvmScairModule
 
   override def artifactName = s"scair-${super.artifactName()}"
 
-  override def jvmId = "temurin:18.0.2"
-
   override def pomSettings = PomSettings(
     description = artifactName(),
     organization = "io.github.edin-dal",
