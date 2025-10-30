@@ -530,12 +530,15 @@ case class AssemblyFormatDirective(
       .from(
         parsedDirectives.zipWithIndex.flatMap((d, i) =>
           d match
-            case VariableDirective(OpPropertyDef(name = name)) => Some(name -> i)
-            case _                                          => None
+            case VariableDirective(OpPropertyDef(name = name)) =>
+              Some(name -> i)
+            case _ => None
         )
       )
-      .mapValues((i) => '{ $parsed(${ Expr(i) })}.asExprOf[Any]).map((n, e) => '{(${Expr(n)}, $e)}).toSeq
-    val propertiesDict = '{Map.from(${Expr.ofList(propertiesNames)})}
+      .mapValues((i) => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
+      .map((n, e) => '{ (${ Expr(n) }, $e) })
+      .toSeq
+    val propertiesDict = '{ Map.from(${ Expr.ofList(propertiesNames) }) }
     // This pushes the constructor disptching to runtime just like with generic syntax.
     // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
