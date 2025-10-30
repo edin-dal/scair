@@ -53,20 +53,20 @@ import scair.dialects.builtin._
 import scair.ir._
 import scair.clair.macros._
 
-final case class complex(
+case class Complex(
   elem: Attribute,
-) extends DerivedAttribute["cmath.complex", complex] with TypeAttribute
+) extends DerivedAttribute["cmath.complex", Complex] with TypeAttribute
 
-final case class norm(
+case class Norm(
   in: Operand[Attribute],
   out: Result[Attribute],
-) extends DerivedOperation["cmath.norm", norm]
+) extends DerivedOperation["cmath.norm", Norm]
 
-final case class mul(
+case class Mul(
   lhs: Operand[Attribute],
   rhs: Operand[Attribute],
   res: Result[Attribute],
-) extends DerivedOperation["cmath.mul", mul]
+) extends DerivedOperation["cmath.mul", Mul]
 
-val cmath = summonDialect[complex *: EmptyTuple, norm *: mul *: EmptyTuple]()
+val cmath = summonDialect[Complex *: EmptyTuple, Norm *: Mul *: EmptyTuple]()
 """.stripMargin

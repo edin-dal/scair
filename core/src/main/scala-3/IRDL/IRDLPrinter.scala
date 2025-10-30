@@ -33,29 +33,26 @@ extension (parameters: Parameters)
 
 extension (operation: Operation)
 
-  def operandDefs = {
+  def operandDefs =
     val x = operation.body.blocks.head.operations.collect { case o: Operands =>
       o
     }
     if x.isEmpty then Operands(Seq(), ArrayAttribute(Seq()))
     else x.head
-  }
 
-  def resultDefs = {
+  def resultDefs =
     val x = operation.body.blocks.head.operations.collect { case r: Results =>
       r
     }
     if x.isEmpty then Results(Seq(), ArrayAttribute(Seq()))
     else x.head
-  }
 
-  def attributeDefs = {
+  def attributeDefs =
     val x = operation.body.blocks.head.operations.collect {
       case r: Attributes => r
     }
     if x.isEmpty then Attributes(Seq(), ArrayAttribute(Seq()))
     else x.head
-  }
 
 extension (attribute: Attribute)
 
@@ -111,11 +108,10 @@ object IRDLPrinter:
     p.print("summonDialect[")
     dialect.body.blocks.head.operations.foreach({
       case attr: Attribute =>
-        p.print(attr.sym_name.data)
+        p.print(attr.sym_name.data.capitalize)
         p.print(" *: ")
       case t: Type =>
-        t.sym_name.data
-        p.print(t.sym_name.data)
+        p.print(t.sym_name.data.capitalize)
         p.print(" *: ")
       case _ =>
     })
@@ -180,8 +176,8 @@ object IRDLPrinter:
     val className = typ.sym_name.data
     val name = s"$dialectName.$className"
 
-    p.print("final case class ")
-    p.print(className)
+    p.print("case class ")
+    p.print(className.capitalize)
     p.println("(")
 
     typ.parameterDefs.info.foreach((name, tpe) =>
@@ -195,7 +191,7 @@ object IRDLPrinter:
     p.print(") extends DerivedAttribute[\"")
     p.print(name)
     p.print("\", ")
-    p.print(className)
+    p.print(className.capitalize)
     p.println("] with TypeAttribute")
     p.println()
 
@@ -205,8 +201,8 @@ object IRDLPrinter:
     val className = attr.sym_name.data
     val name = s"$dialectName.$className"
 
-    p.print("final case class ")
-    p.print(className)
+    p.print("case class ")
+    p.print(className.capitalize)
     p.println("(")
 
     attr.parameterDefs.info.foreach((name, tpe) =>
@@ -220,6 +216,6 @@ object IRDLPrinter:
     p.print(") extends DerivedAttribute[\"")
     p.print(name)
     p.print("\", ")
-    p.print(className)
+    p.print(className.capitalize)
     p.println("]")
     p.println()
