@@ -53,9 +53,30 @@ package scair
   * ) extends DerivedOperation["sample.sampop1", SampOp1]
   *
   * case class SampOp2(
-  *     e1: Seq[Operand[complex]],
+  *     e1: Seq[Operand[Complex]],
   *     e2: Result[Attribute]
   * ) extends DerivedOperation["sample.sampop2", SampOp2]
+  *
+  * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
+  * ||   constraints over operation components   ||
+  * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
+  *
+  * import scair.core.constraints.{*, given}
+  *
+  * type T = Var["T"]
+  * val i32 = IntegerType(IntData(32), Signless)
+  *
+  * case class MulIEq(
+  *     lhs: Operand[IntegerType !> EqAttr[i32.type]],
+  *     rhs: Operand[IntegerType !> EqAttr[i32.type]],
+  *     result: Result[IntegerType]
+  * ) extends DerivedOperation["samplecnstr.mulieq", MulIEq]
+  *
+  * case class MulIVar(
+  *     lhs: Operand[IntegerType !> T],
+  *     rhs: Operand[IntegerType !> T],
+  *     result: Result[IntegerType]
+  * ) extends DerivedOperation["samplecnstr.mulivar", MulIVar]
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   packaging into a dialect   ||
