@@ -23,12 +23,11 @@ sealed trait Attribute:
   def prefix: String = "#"
   def custom_verify(): Either[String, Unit] = Right(())
   def printParameters(p: Printer): Unit
+
   def custom_print(p: Printer): Unit =
     given indentLevel: Int = 0
     p.print(prefix, name)
     printParameters(p)
-    
-
 
   override def toString(): String =
     val out = StringWriter()
@@ -44,8 +43,7 @@ abstract trait ParametrizedAttribute() extends Attribute:
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
-
-  override def printParameters(p: Printer): Unit = 
+  override def printParameters(p: Printer): Unit =
     if parameters.size > 0 then
       p.printListF(
         parameters,

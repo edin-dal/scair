@@ -174,6 +174,17 @@ case class VariableDirective(
                 using 0
               )
             }
+      case OpPropertyDef(name = n, variadicity = v) =>
+        v match
+          case Variadicity.Single =>
+            '{
+              $p.print(${ selectMember[Attribute](op, n) })
+            }
+          case Variadicity.Optional =>
+            '{
+              ${ selectMember[Option[Attribute]](op, n) }.foreach($p.print)
+            }
+
     Expr.block(List(space), printVar)
 
   def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
@@ -186,6 +197,16 @@ case class VariableDirective(
             '{ Parser.ValueUseList(using $ctx) }
           case Variadicity.Optional =>
             '{ given P[?] = $ctx; Parser.ValueUse.? }
+      case OpPropertyDef(name = n, variadicity = v) =>
+        v match
+          case Variadicity.Single =>
+            '{
+              $p.Attribute(using $ctx)
+            }
+          case Variadicity.Optional =>
+            '{
+              given P[?] = $ctx; $p.Attribute.?
+            }
 
   override def parsed(p: Expr[?])(using Quotes) =
     import quotes.reflect.*
@@ -505,6 +526,16 @@ case class AssemblyFormatDirective(
       $parsed(${ Expr(attrDictIndex) }).asInstanceOf[Map[String, Attribute]]
     }
 
+    val propertiesNames = Map
+      .from(
+        parsedDirectives.zipWithIndex.flatMap((d, i) =>
+          d match
+            case VariableDirective(OpPropertyDef(name = name)) => Some(name -> i)
+            case _                                          => None
+        )
+      )
+      .mapValues((i) => '{ $parsed(${ Expr(i) })}.asExprOf[Any]).map((n, e) => '{(${Expr(n)}, $e)}).toSeq
+    val propertiesDict = '{Map.from(${Expr.ofList(propertiesNames)})}
     // This pushes the constructor disptching to runtime just like with generic syntax.
     // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
@@ -515,7 +546,8 @@ case class AssemblyFormatDirective(
         operandsTypes = $flatOperandTypes,
         resultsNames = $resNames,
         resultsTypes = $flatResultTypes,
-        attributes = $attrDict
+        attributes = $attrDict,
+        properties = $propertiesDict.asInstanceOf[Map[String, Attribute]]
       )
     }
 
