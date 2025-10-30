@@ -5,6 +5,7 @@ import scair.Parser.*
 import scair.dialects.affine.AffineMapP
 import scair.dialects.affine.AffineSetP
 import scair.dialects.builtin.*
+import scair.dialects.builtin.VectorType
 import scair.ir.*
 
 import java.lang.Float.intBitsToFloat
@@ -272,7 +273,7 @@ class AttrParser(
   // dimension             ::=   `?` | decimal-literal
   // encoding              ::=   attribute-value
 
-  def TensorTypeP[$: P]: P[ContainerType] = P(
+  def TensorTypeP[$: P]: P[TensorType] = P(
     "tensor" ~ "<" ~/ (UnrankedTensorTypeP | RankedTensorTypeP) ~ ">"
   )
 

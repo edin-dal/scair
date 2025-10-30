@@ -211,6 +211,10 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
             Left(
               s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
             )
+      case _ =>
+        Left(
+          s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
+        )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  OPERATION DEFINTION  ||
