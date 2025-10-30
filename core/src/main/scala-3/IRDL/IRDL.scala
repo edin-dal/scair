@@ -39,6 +39,11 @@ final case class Results(
     names: ArrayAttribute[StringData]
 ) extends DerivedOperation["irdl.results", Results]
 
+final case class Attributes(
+    args: Seq[Operand[AttributeType]],
+    attribute_value_names: ArrayAttribute[StringData]
+) extends DerivedOperation["irdl.attributes", Attributes]
+
 final case class AttributeType()
     extends DerivedAttribute["irdl.attribute", AttributeType]
 
@@ -51,5 +56,15 @@ final case class Any(
 
 val IRDL = summonDialect[
   (AttributeType, RegionType),
-  (Dialect, Operation, Attribute, Type, Parameters, Operands, Results, Any)
+  (
+      Dialect,
+      Operation,
+      Attribute,
+      Type,
+      Parameters,
+      Operands,
+      Attributes,
+      Results,
+      Any
+  )
 ]()
