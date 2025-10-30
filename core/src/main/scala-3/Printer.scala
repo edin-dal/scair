@@ -96,16 +96,16 @@ case class Printer(
     case o: Operation => print(o)
     case a: Attribute => print(a)
 
-  inline def print(inline things: (Printable | Iterable[Printable])*)(using
+  inline def print(inline things: (Printable | IterableOnce[Printable])*)(using
       indentLevel: Int
   ): Unit =
     things.foreach(_ match
-      case p: Printable           => print(p)
-      case i: Iterable[Printable] =>
+      case p: Printable               => print(p)
+      case i: IterableOnce[Printable] =>
         printList(i))
 
   inline def printList[T <: Printable](
-      inline iterable: Iterable[T],
+      inline iterable: IterableOnce[T],
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = ""
@@ -115,7 +115,7 @@ case class Printer(
     printListF(iterable, (x: Printable) => print(x), start, sep, end)
 
   inline def printListF[T](
-      inline iterable: Iterable[T],
+      inline iterable: IterableOnce[T],
       f: T => Unit,
       inline start: String = "",
       inline sep: String = ", ",
@@ -126,8 +126,9 @@ case class Printer(
     inline if start != "" then print(start)
     inline if sep == "" then iterable.foreach(f)
     else if iterable.nonEmpty then
-      f(iterable.head)
-      iterable.tail.foreach(e =>
+      val it = iterable.iterator
+      f(it.next())
+      it.foreach(e =>
         print(sep)
         f(e)
       )
