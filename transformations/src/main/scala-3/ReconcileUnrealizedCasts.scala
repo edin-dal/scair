@@ -1,5 +1,6 @@
 package scair.transformations.reconcile
 
+import scair.MLContext
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
@@ -50,11 +51,9 @@ val InputFuse = pattern { case matched: UnrealizedConversionCastOp =>
     case _ => PatternAction.Abort
 }
 
-object ReconcileUnrealizedCasts extends WalkerPass {
+final class ReconcileUnrealizedCasts(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "reconcile-unrealized-casts"
 
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(Seq(SameType, Unused, InputFuse))
   )
-
-}

@@ -1,12 +1,13 @@
 package scair.transformations.cse
 
+import scair.MLContext
 import scair.ir.*
 import scair.transformations.*
 
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set
 
-final case class OperationInfo(val op: Operation) {
+final case class OperationInfo(val op: Operation):
 
   override def hashCode(): Int =
     (op.name, op.attributes, op.properties, op.results.typ, op.operands)
@@ -24,25 +25,21 @@ final case class OperationInfo(val op: Operation) {
       a.regions == b.regions
     case _ => false
 
-}
-
-given Conversion[Operation, OperationInfo] = OperationInfo.apply
-
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
       Map[OperationInfo, Operation](),
     val toErase: Set[Operation] = Set[Operation]()
-)(using rewriter: Rewriter) {
+)(using rewriter: Rewriter):
 
   def simplify(op: Operation): Unit =
     op match
       case _: IsTerminator      => ()
       case free: NoMemoryEffect =>
-        knownOps.get(op) match
+        knownOps.get(OperationInfo(op)) match
           case Some(known) =>
             (op.results zip known.results).foreach(rewriter.replace_value)
             toErase.add(op)
-          case None => knownOps(op) = op
+          case None => knownOps(OperationInfo(op)) = op
       case _ => ()
 
   def simplify(block: Block): Unit =
@@ -66,9 +63,8 @@ case class CSE(
       // Just mimicing MLIR here
       case _ => ()
 
-}
-
-object CommonSubexpressionElimination extends ModulePass {
+final class CommonSubexpressionElimination(ctx: MLContext)
+    extends ModulePass(ctx):
   override val name = "cse"
 
   override def transform(op: Operation): Operation =
@@ -76,5 +72,3 @@ object CommonSubexpressionElimination extends ModulePass {
     val c = CSE()
     op.regions.foreach(c.simplify)
     op
-
-}

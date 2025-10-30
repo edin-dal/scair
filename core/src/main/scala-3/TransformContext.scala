@@ -18,14 +18,11 @@ import scala.collection.mutable
 // ╚█████╔╝ ╚█████╔╝ ██║░╚███║ ░░░██║░░░ ███████╗ ██╔╝╚██╗ ░░░██║░░░
 // ░╚════╝░ ░╚════╝░ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝ ░░░╚═╝░░░
 
-class TransformContext() {
+class TransformContext():
 
   val passContext: mutable.Map[String, ModulePass] = mutable.Map()
 
   def getPass(name: String) = passContext.get(name)
 
-  def registerPass(pass: ModulePass) = {
+  def registerPass(pass: ModulePass) =
     passContext += pass.name -> pass
-  }
-
-}

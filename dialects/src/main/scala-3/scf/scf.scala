@@ -29,21 +29,17 @@ type I1 = IntegerType
 type AnySignlessIntegerOrIndex = IntegerType | IndexType
 type Index = IndexType
 
-trait AllTypesMatch(values: Attribute*) extends Operation {
+trait AllTypesMatch(values: Attribute*) extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
-    if (values.isEmpty) Right(this)
-    else {
+  override def trait_verify(): Either[String, Operation] =
+    if values.isEmpty then Right(this)
+    else
       val firstClass = values.head.getClass
-      if (values.tail.forall(_.getClass == firstClass)) Right(this)
+      if values.tail.forall(_.getClass == firstClass) then Right(this)
       else
         Left(
           "All parameters of AllTypesMatch must be of the same type in operation " + this.name
         )
-    }
-  }
-
-}
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  OPERATION DEFINTION  ||

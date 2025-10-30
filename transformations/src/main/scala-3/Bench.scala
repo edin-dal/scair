@@ -1,5 +1,6 @@
 package scair.transformations.benchmark_constant_folding
 
+import scair.MLContext
 import scair.dialects.arith.AddI
 import scair.dialects.arith.Constant
 import scair.dialects.builtin.IntegerAttr
@@ -20,11 +21,9 @@ val AddIfold = pattern {
     Constant(c0 + c1, Result(c0.typ))
 }
 
-object BenchmarkConstantFolding extends WalkerPass {
+final class BenchmarkConstantFolding(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "benchmark-constant-folding"
 
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(Seq(AddIfold, RemoveUnusedOperations))
   )
-
-}

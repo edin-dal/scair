@@ -4,8 +4,8 @@ import scair.ir.*
 
 import scala.quoted.*
 
-def eqAttrImpl[To <: Attribute: Type](using Quotes) = {
-  import quotes.reflect._
+def eqAttrImpl[To <: Attribute: Type](using Quotes) =
+  import quotes.reflect.*
   val t = TypeRepr.of[To].simplified
   val ref = t match
     case tr: TermRef => Ref(tr.termSymbol).asExprOf[To]
@@ -14,4 +14,3 @@ def eqAttrImpl[To <: Attribute: Type](using Quotes) = {
         s"got ${t.show}:\n${t}"
       )
   ref
-}

@@ -1,5 +1,6 @@
 package scair.transformations.cdt
 
+import scair.MLContext
 import scair.dialects.builtin.StringData
 import scair.ir.*
 import scair.transformations.*
@@ -8,10 +9,10 @@ import scair.transformations.patterns.*
 val AddDummyAttributeToDict = pattern {
   case x: UnregisteredOperation =>
     x.updated(attributes =
-      x.attributes + ("dummy" -> StringData("UnregDumDum"))
+      x.attributes.addOne("dummy" -> StringData("UnregDumDum"))
     )
   case d =>
-    d.updated(attributes = d.attributes + ("dummy" -> StringData("dumdum")))
+    d.updated(attributes = d.attributes.addOne("dummy" -> StringData("dumdum")))
 }
 
 val TestInsertingDummyOperation = pattern {
@@ -25,7 +26,9 @@ val TestInsertingDummyOperation = pattern {
     )
   case op
       if (!op.attributes.contains("replaced")) && op.container_block != None =>
-    op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
+    op.updated(attributes =
+      op.attributes.addOne("replaced" -> StringData("false"))
+    )
 }
 
 val TestReplacingDummyOperation = pattern {
@@ -49,25 +52,22 @@ val TestReplacingDummyOperation = pattern {
     )
   case op
       if (!op.attributes.contains("replaced")) && op.container_block != None =>
-    op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
+    op.updated(attributes =
+      op.attributes.addOne("replaced" -> StringData("false"))
+    )
 }
 
-object DummyPass extends WalkerPass {
+final class DummyPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "dummy-pass"
 
   override final val walker = PatternRewriteWalker(AddDummyAttributeToDict)
 
-}
-
-object TestInsertionPass extends WalkerPass {
+final class TestInsertionPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "test-ins-pass"
 
   override final val walker = PatternRewriteWalker(TestInsertingDummyOperation)
-}
 
-object TestReplacementPass extends WalkerPass {
+final class TestReplacementPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "test-rep-pass"
 
   override final val walker = PatternRewriteWalker(TestReplacingDummyOperation)
-
-}

@@ -5,9 +5,8 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
 
-object FillerOp extends OperationCompanion {
+object FillerOp extends OperationCompanion:
   override def name: String = "filler"
-}
 
 case class FillerOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
@@ -28,9 +27,8 @@ case class FillerOp(
       attributes
     ) {}
 
-object TerminatorOp extends OperationCompanion {
+object TerminatorOp extends OperationCompanion:
   override def name: String = "terminator"
-}
 
 case class TerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
@@ -52,9 +50,8 @@ case class TerminatorOp(
     )
     with IsTerminator {}
 
-object NoTerminatorOp extends OperationCompanion {
+object NoTerminatorOp extends OperationCompanion:
   override def name: String = "noterminator"
-}
 
 case class NoTerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
@@ -76,7 +73,7 @@ case class NoTerminatorOp(
     )
     with NoTerminator {}
 
-class TraitTest extends AnyFlatSpec with BeforeAndAfter {
+class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
   "IsTerminator Test1" should "pass the test the IsTerminator trait" in {
 
@@ -168,5 +165,3 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter {
       "NoTerminator Operation 'noterminator' requires single-block regions"
     )
   }
-
-}

@@ -1,9 +1,8 @@
 package scair.dialects.affine
 
 import fastparse.*
-import scair.Parser.DecimalLiteral
-import scair.Parser.IntegerLiteral
-import scair.Parser.whitespace
+import scair.AttrParser.whitespace
+import scair.Parser.*
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝
@@ -30,30 +29,26 @@ import scair.Parser.whitespace
 ||      UTILS      ||
 \*≡==----=≡=----==≡*/
 
-def checkDistinct(name: String, list: Seq[String]): Seq[String] = {
-  if (list.distinct.size != list.size) {
+def checkDistinct(name: String, list: Seq[String]): Seq[String] =
+  if list.distinct.size != list.size then
     throw new Exception(
       s"Number of ${name} in Affine Map/Set must be unique! ;)"
     )
-  }
   return list
-}
 
 def validateAffineExpr(
     name: String,
     dimsym: String,
     list: Seq[String]
-): String = {
-  if (!list.contains(dimsym)) {
+): String =
+  if !list.contains(dimsym) then
     println(list.contains(dimsym))
     println(list)
     println(dimsym)
     throw new Exception(
       s"${name} \"${dimsym}\" used in the expression but not defined! | ${dimsym} | ${list}"
     )
-  }
   return dimsym
-}
 
 val add = AffineBinaryOp.Add
 val minus = AffineBinaryOp.Minus
@@ -261,9 +256,9 @@ def EqualP[$: P](
     AffineConstraintExpr(equal, _, _)
   )
 
-object TestAffine {
+object TestAffine:
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
     val parsed =
       parse("d0 + d1", AffineExprP(Seq("d0", "d1"), Seq())(using _))
     println(parsed)
@@ -273,6 +268,3 @@ object TestAffine {
     val parsed2 =
       parse("(d0, d1)[s0] : (d0 + d1 + s0 >= d1 + s0)", AffineSetP(using _))
     println(parsed2)
-  }
-
-}

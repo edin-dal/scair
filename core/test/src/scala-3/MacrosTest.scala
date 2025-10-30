@@ -53,6 +53,9 @@ case class MulOptional(
     rhs: Operand[IntegerType],
     res: Result[IntegerType]
 ) extends DerivedOperation["cmath.mulopt", MulOptional]
+    with AssemblyFormat[
+      "($lhs^ `,`)? $rhs attr-dict `:` `(` (type($lhs)^ `,`)? type($rhs) `)` `->` type($res)"
+    ]
 
 case class MulMultiOptional(
     lhs: Option[Operand[IntegerType]],
@@ -86,9 +89,9 @@ val multiOptPropOpComp =
 val multiOptCompOp =
   summon[DerivedOperationCompanion[MultiOptionalCompositionOp]]
 
-class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
+class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
-  object TestCases {
+  object TestCases:
 
     def unstrucOp = mulComp.UnstructuredOp(
       operands = Seq(
@@ -311,8 +314,6 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         ("prop2" -> IntegerType(IntData(5), Unsigned))
       )
     )
-
-  }
 
   "Unstructured instantiation" should "Correctly instantiates the UnstructuredOp" in {
     val opT = DerivedOperationCompanion.derived[Mul]
@@ -575,6 +576,23 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
     }
   }
 
+  "Single Optional custom syntax printing" should "Correctly print" in {
+    val op = TestCases.adtMulOptional
+    val op2 = MulOptional(
+      lhs = None,
+      rhs = Value(IntegerType(IntData(5), Unsigned)),
+      res = Result(IntegerType(IntData(25), Unsigned))
+    )
+
+    val out = java.io.StringWriter()
+    val printer = new scair.Printer(p = java.io.PrintWriter(out))
+    printer.print(op, op2)(using 0)
+
+    out.toString() should be(
+      "%0 = cmath.mulopt %1, %2 : (ui5, ui5) -> ui25\n%3 = cmath.mulopt %4 : ( ui5) -> ui25\n"
+    )
+  }
+
   "Single Optional Conversion to ADTOp" should "Correctly translate from Single Optional Unstructured operation to ADT Operation" in {
     val op = TestCases.unstructMulOptional
     val adtMulOptional = mulOptComp.structure(op)
@@ -717,5 +735,3 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       case Result(IntegerType(IntData(25), Unsigned)) =>
     }
   }
-
-}
