@@ -53,6 +53,5 @@ inline def pattern(
 
   pattern
 
-object Owner {
+object Owner:
   def unapply(v: Value[Attribute]) = v.owner
-}

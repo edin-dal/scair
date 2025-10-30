@@ -1,5 +1,6 @@
 package scair.utils
 
+import scair.MLContext
 import scair.dialects.LingoDB.DBOps.DBOps
 import scair.dialects.LingoDB.RelAlgOps.RelAlgOps
 import scair.dialects.LingoDB.SubOperatorOps.SubOperatorOps
@@ -8,7 +9,7 @@ import scair.dialects.affine.AffineDialect
 import scair.dialects.arith.ArithDialect
 import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.cmath.cmath
-import scair.dialects.samplemath.samplemath
+import scair.dialects.complex.Complex
 import scair.dialects.func.FuncDialect
 import scair.dialects.irdl.IRDL
 import scair.dialects.llvm.LLVMDialect
@@ -31,6 +32,7 @@ import scair.transformations.samplemathcanon.SampleMathCanon
 val allDialects: Seq[Dialect] =
   Seq(
     BuiltinDialect,
+    Complex,
     MathDialect,
     TupleStreamDialect,
     DBOps,
@@ -50,14 +52,13 @@ val allDialects: Seq[Dialect] =
     SCFDialect
   )
 
-val allPasses: Seq[ModulePass] =
+val allPasses: Seq[MLContext => ModulePass] =
   Seq(
-    BenchmarkConstantFolding,
-    CommonSubexpressionElimination,
-    DummyPass,
-    ReconcileUnrealizedCasts,
-    TestInsertionPass,
-    TestReplacementPass,
-    Canonicalize,
-    SampleMathCanon
+    BenchmarkConstantFolding(_),
+    CommonSubexpressionElimination(_),
+    DummyPass(_),
+    ReconcileUnrealizedCasts(_),
+    TestInsertionPass(_),
+    TestReplacementPass(_),
+    Canonicalize(_)
   )

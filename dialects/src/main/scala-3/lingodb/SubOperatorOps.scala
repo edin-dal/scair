@@ -2,10 +2,10 @@ package scair.dialects.LingoDB.SubOperatorOps
 
 import fastparse.*
 import scair.AttrParser
+import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.ValueId
-import scair.Parser.whitespace
 import scair.Printer
 import scair.dialects.builtin.*
 import scair.ir.*
@@ -18,23 +18,21 @@ import scair.ir.*
 //   StateMembers   //
 // ==------------== //
 
-object StateMembers extends AttributeCompanion {
+object StateMembers extends AttributeCompanion:
   override def name: String = "subop.state_members"
 
   override def parse[$: P](parser: AttrParser) = P(
     "[" ~ (BareId.map(StringData(_)) ~ ":" ~ parser.Type)
       .rep(0, sep = ",") ~ "]"
-  ).map((x: Seq[(StringData, Attribute)]) => {
+  ).map((x: Seq[(StringData, Attribute)]) =>
     val (names, types) = x.unzip
     StateMembers(names, types)
-  })
-
-}
+  )
 
 case class StateMembers(
     val names: Seq[StringData],
     val types: Seq[Attribute]
-) extends ParametrizedAttribute {
+) extends ParametrizedAttribute:
 
   override def name: String = "subop.state_members"
 
@@ -52,8 +50,6 @@ case class StateMembers(
 
     // s"[${(for { (x, y) <- (names zip types) } yield s"${x.stringLiteral} : ${y.custom_print}").mkString(", ")}]"
 
-}
-
 ///////////
 // TYPES //
 ///////////
@@ -62,23 +58,20 @@ case class StateMembers(
 //   ResultTable   //
 // ==-----------== //
 
-object ResultTable extends AttributeCompanion {
+object ResultTable extends AttributeCompanion:
   override def name: String = "subop.result_table"
 
   override def parse[$: P](parser: AttrParser) = P(
     "<" ~ StateMembers.parse(parser) ~ ">"
   ).map(x => ResultTable(x.asInstanceOf[StateMembers]))
 
-}
-
 case class ResultTable(
     val members: StateMembers
 ) extends ParametrizedAttribute
-    with TypeAttribute {
+    with TypeAttribute:
 
   override def name: String = "subop.result_table"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(members)
-}
 
 ////////////////
 // OPERATIONS //
@@ -88,7 +81,7 @@ case class ResultTable(
 //   SetResultOp   //
 // ==-----------== //
 
-object SetResultOp extends OperationCompanion {
+object SetResultOp extends OperationCompanion:
   override def name: String = "subop.set_result"
 
   // ==--- Custom Parsing ---== //
@@ -113,9 +106,8 @@ object SetResultOp extends OperationCompanion {
         resultsNames = resNames
       )
   )
-  // ==----------------------== //
 
-}
+  // ==----------------------== //
 
 case class SetResultOp(
     override val operands: Seq[Value[Attribute]],
@@ -132,7 +124,7 @@ case class SetResultOp(
       regions,
       properties,
       attributes
-    ) {
+    ):
 
   override def custom_verify(): Either[String, Operation] = (
     operands.length,
@@ -140,29 +132,24 @@ case class SetResultOp(
     results.length,
     regions.length,
     properties.size
-  ) match {
+  ) match
     case (1, 0, 0, 0, 0) =>
-      attributes.get("result_id") match {
+      attributes.get("result_id") match
         case Some(x) =>
-          x match {
+          x match
             case _: IntegerAttr => Right(this)
             case _              =>
               Left(
                 "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
               )
-          }
         case _ =>
           Left(
             "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
           )
-      }
     case _ =>
       Left(
         "SetResultOp Operation must have 1 operand, 0 successors, 0 results, 0 regions and 0 properties."
       )
-  }
-
-}
 
 val SubOperatorOps: Dialect =
   new Dialect(

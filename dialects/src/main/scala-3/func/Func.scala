@@ -2,6 +2,7 @@ package scair.dialects.func
 
 import fastparse.*
 import fastparse.ParsingRun
+import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.*
 import scair.Printer
@@ -16,7 +17,7 @@ case class Call(
     _results: Seq[Result[Attribute]]
 ) extends DerivedOperation["func.call", Call]
 
-object Func {
+object Func:
 
   def parseResultTypes[$: ParsingRun](
       parser: Parser
@@ -54,8 +55,6 @@ object Func {
           f.attributes.addAll(attributes)
           f
       })
-
-}
 
 case class Func(
     sym_name: StringData,

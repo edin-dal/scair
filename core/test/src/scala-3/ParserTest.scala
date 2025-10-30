@@ -11,16 +11,15 @@ import scair.ir.*
 class ParserTest
     extends AnyFlatSpec
     with BeforeAndAfter
-    with TableDrivenPropertyChecks {
+    with TableDrivenPropertyChecks:
 
   val I32 = IntegerType(IntData(32), Signless)
   val I64 = IntegerType(IntData(64), Signless)
 
   def getResult[A](result: String, expected: A) =
-    result match {
+    result match
       case "Success" => ((x: Int) => Parsed.Success(expected, x))
       case "Failure" => Parsed.Failure(_, _, _)
-    }
 
   val ctx = new MLContext()
   val args = scair.core.utils.Args(allow_unregistered = true)
@@ -492,5 +491,3 @@ class ParserTest
       opToErase.container_block shouldEqual None
     }
   }
-
-}

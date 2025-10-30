@@ -9,7 +9,7 @@ import org.scalatest.prop.Tables.Table
 import scair.dialects.LingoDB.TupleStream.*
 import scair.dialects.builtin.*
 
-class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
+class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter:
   val ctx = new MLContext()
   ctx.registerDialect(TupleStreamDialect)
   var parser = new Parser(ctx)
@@ -21,10 +21,9 @@ class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
   }
 
   def getResult[A](result: String, expected: A) =
-    result match {
+    result match
       case "Success" => ((x: Int) => Parsed.Success(expected, x))
       case "Failure" => Parsed.Failure(_, _, _)
-    }
 
   val strToAttributeTests =
     Table(
@@ -51,5 +50,3 @@ class TupleStreamTest extends AnyFlatSpec with BeforeAndAfter {
       }
     }
   }
-
-}

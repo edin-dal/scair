@@ -95,6 +95,18 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
   override def length: Int =
     lengthRec(_head, 0)
 
+  @tailrec
+  private final def foreachRec[U](current: Option[A])(f: A => U): Unit =
+    current match
+      case Some(n) =>
+        f(n)
+        foreachRec(n.next)(f)
+      case None => ()
+
+  // Override of foreach to accomodate side effects on the list chaining.
+  override def foreach[U](f: A => U): Unit =
+    foreachRec(_head)(f)
+
   override def addOne(elem: A): this.type =
     _last match
       case None =>

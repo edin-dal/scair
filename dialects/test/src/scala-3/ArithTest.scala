@@ -17,7 +17,7 @@ import java.io.*
   * time of reading ;)
   */
 
-class ArithTests extends AnyFlatSpec with BeforeAndAfter {
+class ArithTests extends AnyFlatSpec with BeforeAndAfter:
 
   given indentLevel: Int = 0
 
@@ -85,5 +85,3 @@ builtin.module {
 }
 """.trim()
   }
-
-}

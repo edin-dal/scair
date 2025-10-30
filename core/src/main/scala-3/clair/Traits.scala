@@ -11,7 +11,7 @@ object DerivedAttribute:
     DerivedAttributeCompanion.derived[T]
 
 trait DerivedAttribute[name <: String, T <: Attribute]
-    extends ParametrizedAttribute {
+    extends ParametrizedAttribute:
 
   this: T =>
 
@@ -21,8 +21,6 @@ trait DerivedAttribute[name <: String, T <: Attribute]
   override val parameters: Seq[Attribute | Seq[Attribute]] =
     companion.parameters(this)
 
-}
-
 trait AssemblyFormat[format <: String]
 
 object DerivedOperation:
@@ -30,7 +28,7 @@ object DerivedOperation:
   inline given [T <: DerivedOperation[?, ?]]: DerivedOperationCompanion[T] =
     DerivedOperationCompanion.derived[T]
 
-trait DerivedOperation[name <: String, T] extends Operation {
+trait DerivedOperation[name <: String, T] extends Operation:
 
   this: T =>
 
@@ -70,5 +68,3 @@ trait DerivedOperation[name <: String, T] extends Operation {
 
   def constraint_verify(): Either[String, Operation] =
     companion.constraint_verify(this)
-
-}

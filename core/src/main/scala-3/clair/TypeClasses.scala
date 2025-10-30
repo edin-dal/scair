@@ -10,20 +10,17 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion {
+trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion:
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
-}
 
-object DerivedAttributeCompanion {
+object DerivedAttributeCompanion:
 
   inline def derived[T <: Attribute]: DerivedAttributeCompanion[T] = ${
     derivedAttributeCompanion[T]
   }
 
-}
-
-trait DerivedOperationCompanion[T] extends OperationCompanion {
+trait DerivedOperationCompanion[T] extends OperationCompanion:
 
   companion =>
 
@@ -53,18 +50,14 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
         regions,
         properties,
         attributes
-      ) {
+      ):
 
-    override def structured = Try(companion.structure(this)) match {
+    override def structured = Try(companion.structure(this)) match
       case Failure(e)  => Left(e.toString())
       case Success(op) => op.asInstanceOf[Operation].structured
-    }
 
-    override def verify(): Either[String, Operation] = {
+    override def verify(): Either[String, Operation] =
       structured.flatMap(op => op.verify())
-    }
-
-  }
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
@@ -79,15 +72,11 @@ trait DerivedOperationCompanion[T] extends OperationCompanion {
   def destructure(adtOp: T): UnstructuredOp
   def structure(unstrucOp: UnstructuredOp): T
 
-}
-
-object DerivedOperationCompanion {
+object DerivedOperationCompanion:
 
   inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
     deriveOperationCompanion[T]
   }
-
-}
 
 def summonMLIRTraitsMacroRec[T <: Tuple: Type](using
     Quotes

@@ -5,6 +5,7 @@ import scair.AttrParser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
+import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.ir.*
 
@@ -45,12 +46,12 @@ object FastMathFlags:
 
   def apply(flags: FastMathFlag*): FastMathFlags = SortedSet(flags*)
 
-object FastMathFlagsAttr extends AttributeCompanion {
+object FastMathFlagsAttr extends AttributeCompanion:
   override def name: String = "arith.fastmath"
 
-  override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] = {
+  override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
 
-    import scair.Parser.whitespace
+    import scair.AttrParser.whitespace
     P(
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","
@@ -59,7 +60,7 @@ object FastMathFlagsAttr extends AttributeCompanion {
       if parsed_flags.isEmpty then
         throw new Exception("FastMathFlagsAttr requires at least one flag")
       val flags = parsed_flags
-        .map(_ match {
+        .map(_ match
           case "none"     => FastMathFlags.none
           case "reassoc"  => FastMathFlags.reassoc
           case "nnan"     => FastMathFlags.nnan
@@ -69,15 +70,10 @@ object FastMathFlagsAttr extends AttributeCompanion {
           case "contract" => FastMathFlags.contract
           case "afn"      => FastMathFlags.afn
           case "fast"     => FastMathFlags.fast
-          case f          => throw new Exception(s"Invalid fastmath flag '$f'")
-        })
+          case f          => throw new Exception(s"Invalid fastmath flag '$f'"))
         .reduce(_ | _)
       FastMathFlagsAttr(flags)
     }
-
-  }
-
-}
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
     extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags):
@@ -136,93 +132,77 @@ type BitcastType = SignlessIntegerOrFloatLike | MemrefType
 // TODO: this is specifically a memref type of anysignless integer or index
 type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 
-trait SameOperandsAndResultTypes extends Operation {
+trait SameOperandsAndResultTypes extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     val params = this.operands.typ ++ this.results.typ
-    if (params.isEmpty) Right(this)
-    else {
+    if params.isEmpty then Right(this)
+    else
       val first = params.head
-      if (params.tail.forall(_ == first)) Right(this)
+      if params.tail.forall(_ == first) then Right(this)
       else
         Left(
           "All parameters of TypeConstraint must be of the same type in operation " + this.name
         )
-    }
-  }
 
-}
+trait SameOperandsAndResultShape extends Operation:
 
-trait SameOperandsAndResultShape extends Operation {
-
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
-    if (params.isEmpty) Right(this)
-    else {
+    if params.isEmpty then Right(this)
+    else
       val firstDim = params.head.getNumDims
       // check ranks of all parameters
-      if (params.map(_.getNumDims == firstDim).reduceLeft(_ && _)) then
+      if params.map(_.getNumDims == firstDim).reduceLeft(_ && _) then
         Right(this)
       else
         Left(
           s"All parameters of operation '${this.name}' must have the same rank"
         )
-    }
-  }
 
-}
+trait SameInputOutputTensorDims extends Operation:
 
-trait SameInputOutputTensorDims extends Operation {
-
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): Either[String, Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
-    if (params.isEmpty) Right(this)
-    else {
+    if params.isEmpty then Right(this)
+    else
       val firstShape = params.head.getShape
       // checks if all parameters have the same shape
-      if (params.map(_.getShape == firstShape).reduceLeft(_ && _)) then
+      if params.map(_.getShape == firstShape).reduceLeft(_ && _) then
         Right(this)
       else
         Left(
           s"All parameters of operation '${this.name}' must have compatible shape"
         )
-    }
-  }
 
-}
+trait AllTypesMatch(values: Attribute*) extends Operation:
 
-trait AllTypesMatch(values: Attribute*) extends Operation {
-
-  override def trait_verify(): Either[String, Operation] = {
-    if (values.isEmpty) Right(this)
-    else {
+  override def trait_verify(): Either[String, Operation] =
+    if values.isEmpty then Right(this)
+    else
       val first = values.head
-      if (values.tail.forall(_ == first)) Right(this)
+      if values.tail.forall(_ == first) then Right(this)
       else
         Left(
           "All parameters of AllTypesMatch must be of the same type in operation " + this.name
         )
-    }
-  }
-
-}
 
 trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
-    extends Operation {
+    extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
-    condition match {
+  override def trait_verify(): Either[String, Operation] =
+    condition match
       case IntegerType(IntData(1), Signless) => Right(this)
       case x: ShapedType                     =>
-        result match {
+        result match
           case y: ShapedType =>
-            if (x.getShape == y.getShape) then Right(this)
+            if x.getShape == y.getShape then Right(this)
             else
               Left(
                 s"Condition must be a I1 boolean, or the result of operation '${this.name}' must have the same shape as the condition, but got ${x.getShape} and ${y.getShape}"
@@ -231,11 +211,6 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
             Left(
               s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
             )
-        }
-    }
-  }
-
-}
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  OPERATION DEFINTION  ||
@@ -282,7 +257,7 @@ case class AndI(
 
 case class BitCast(
     val in: Operand[BitcastType],
-    val out: Operand[BitcastType]
+    val out: Result[BitcastType]
 ) extends DerivedOperation["arith.bitcast", BitCast]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -327,7 +302,7 @@ case class Constant(
     val result: Result[Attribute]
 ) extends DerivedOperation["arith.constant", Constant]
     with NoMemoryEffect
-    with ConstantLike
+    with ConstantLike(value)
 
 case class DivF(
     val lhs: Operand[FloatType],
@@ -356,7 +331,7 @@ case class DivUI(
 
 case class ExtF(
     val in: Operand[FloatType],
-    val out: Operand[FloatType],
+    val out: Result[FloatType],
     val fastmath: Option[FastMathFlagsAttr] = None
 ) extends DerivedOperation["arith.extf", ExtF]
     with SameOperandsAndResultShape
@@ -365,7 +340,7 @@ case class ExtF(
 
 case class ExtSI(
     val in: Operand[SignlessFixedWidthIntegerLike],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.extsi", ExtSI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -373,7 +348,7 @@ case class ExtSI(
 
 case class ExtUI(
     val in: Operand[SignlessFixedWidthIntegerLike],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.extui", ExtUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -389,14 +364,14 @@ case class FloorDivSI(
 
 case class FPToSI(
     val in: Operand[FloatType],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.fptosi", FPToSI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
 
 case class FPToUI(
     val in: Operand[FloatType],
-    val out: Operand[SignlessFixedWidthIntegerLike]
+    val out: Result[SignlessFixedWidthIntegerLike]
 ) extends DerivedOperation["arith.fptoui", FPToUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims

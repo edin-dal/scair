@@ -11,7 +11,7 @@ import scair.dialects.cmath.*
 class TransformationsTest
     extends AnyFlatSpec
     with BeforeAndAfter
-    with TableDrivenPropertyChecks {
+    with TableDrivenPropertyChecks:
 
   val I32 = IntegerType(IntData(32), Signless)
   val I64 = IntegerType(IntData(64), Signless)
@@ -135,5 +135,3 @@ class TransformationsTest
         "given as a point of reference does not exist in the current block."
     }
   }
-
-}

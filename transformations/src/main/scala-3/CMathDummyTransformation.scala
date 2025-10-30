@@ -1,5 +1,6 @@
 package scair.transformations.cdt
 
+import scair.MLContext
 import scair.dialects.builtin.StringData
 import scair.ir.*
 import scair.transformations.*
@@ -52,38 +53,17 @@ val TestReplacingDummyOperation = pattern {
     op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
 }
 
-object DummyPass extends ModulePass {
+final class DummyPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "dummy-pass"
 
-  override def transform(op: Operation): Operation = {
-    val prw = PatternRewriteWalker(AddDummyAttributeToDict)
-    prw.rewrite_op(op)
+  override final val walker = PatternRewriteWalker(AddDummyAttributeToDict)
 
-    return op
-  }
-
-}
-
-object TestInsertionPass extends ModulePass {
+final class TestInsertionPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "test-ins-pass"
 
-  override def transform(op: Operation): Operation = {
-    val prw = PatternRewriteWalker(TestInsertingDummyOperation)
-    prw.rewrite_op(op)
+  override final val walker = PatternRewriteWalker(TestInsertingDummyOperation)
 
-    return op
-  }
-
-}
-
-object TestReplacementPass extends ModulePass {
+final class TestReplacementPass(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "test-rep-pass"
 
-  override def transform(op: Operation): Operation = {
-    val prw = PatternRewriteWalker(TestReplacingDummyOperation)
-    prw.rewrite_op(op)
-
-    return op
-  }
-
-}
+  override final val walker = PatternRewriteWalker(TestReplacingDummyOperation)

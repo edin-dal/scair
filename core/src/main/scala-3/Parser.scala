@@ -23,42 +23,9 @@ import scala.collection.mutable
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 
-object Parser {
+object Parser:
 
-  /** Whitespace syntax that supports // line-comments, *without* /* */
-    * comments, as is the case in the MLIR Language Spec.
-    *
-    * It's litteraly fastparse's JavaWhitespace with the /* */ states just
-    * erased :)
-    */
-  implicit val whitespace: Whitespace = { implicit ctx: P[?] =>
-    val input = ctx.input
-    val startIndex = ctx.index
-    @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] = {
-      if (!input.isReachable(current)) {
-        if (state == 0 || state == 1) ctx.freshSuccessUnit(current)
-        else ctx.freshSuccessUnit(current - 1)
-      } else {
-        val currentChar = input(current)
-        (state: @switch) match {
-          case 0 =>
-            (currentChar: @switch) match {
-              case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
-              case '/'                      => rec(current + 1, state = 2)
-              case _                        => ctx.freshSuccessUnit(current)
-            }
-          case 1 =>
-            rec(current + 1, state = if (currentChar == '\n') 0 else state)
-          case 2 =>
-            (currentChar: @switch) match {
-              case '/' => rec(current + 1, state = 1)
-              case _   => ctx.freshSuccessUnit(current - 1)
-            }
-        }
-      }
-    }
-    rec(current = ctx.index, state = 0)
-  }
+  import AttrParser.whitespace
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   || COMMON FUNCTIONS ||
@@ -66,15 +33,13 @@ object Parser {
 
   // Custom function wrapper that allows to Escape out of a pattern
   // to carry out custom computation
-  def E[$: P](action: => Unit) = {
+  def E[$: P](action: => Unit) =
     action
     Pass(())
-  }
 
-  def giveBack[A](a: A) = {
+  def giveBack[A](a: A) =
     println(a)
     a
-  }
 
   extension [T](inline p: P[T])
 
@@ -107,12 +72,10 @@ object Parser {
       */
     inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
       p.flatMapX(parsed =>
-        try {
-          f(parsed)
-        } catch {
+        try f(parsed)
+        catch
           case e: Exception =>
             Fail(e.getMessage())
-        }
       )
     )
 
@@ -129,20 +92,16 @@ object Parser {
       */
     inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
       p.flatMapX(parsed =>
-        try {
-          Pass(f(parsed))
-        } catch {
+        try Pass(f(parsed))
+        catch
           case e: Exception =>
             Fail(e.getMessage())
-        }
       )
     )
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      SCOPE      ||
   \*≡==---==≡==---==≡*/
-
-  object Scope {}
 
   class Scope(
       var parentScope: Option[Scope] = None,
@@ -152,7 +111,7 @@ object Parser {
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
       var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
-  ) {
+  ):
 
     def useValue(name: String, typ: Attribute): Value[Attribute] =
       valueMap.getOrElseUpdate(
@@ -169,17 +128,16 @@ object Parser {
         case None => ()
 
     private def defineValue(name: String, typ: Attribute): Value[Attribute] =
-      if valueMap.contains(name) then {
+      if valueMap.contains(name) then
         if !forwardValues.remove(name) then
           throw new Exception(
             s"Value cannot be defined twice within the same scope - %${name}"
           )
         valueMap(name)
-      } else {
+      else
         val v = Value[Attribute](typ)
         valueMap(name) = v
         v
-      }
 
     inline def defineResult(name: String, typ: Attribute): Result[Attribute] =
       defineValue(name, typ)
@@ -199,37 +157,33 @@ object Parser {
     def defineBlock(
         blockName: String
     ): Block =
-      if blockMap.contains(blockName) then {
-        if !forwardBlocks.remove(blockName) then {
+      if blockMap.contains(blockName) then
+        if !forwardBlocks.remove(blockName) then
           throw new Exception(
             s"Block cannot be defined twice within the same scope - ^${blockName}"
           )
-        }
         blockMap(blockName)
-      } else {
+      else
         val newBlock = new Block()
         blockMap(blockName) = newBlock
         newBlock
-      }
 
     def forwardBlock(
         blockName: String
-    ): Block = {
+    ): Block =
       blockMap.getOrElseUpdate(
         blockName, {
           forwardBlocks += blockName
           new Block()
         }
       )
-    }
 
     // child starts off from the parents context
-    def createChild(): Scope = {
+    def createChild(): Scope =
       return new Scope(
         valueMap = valueMap.clone,
         parentScope = Some(this)
       )
-    }
 
     def switchWithParent: Scope =
       checkForwardedValues()
@@ -239,8 +193,6 @@ object Parser {
           x
         case None =>
           this
-
-  }
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||  COMMON SYNTAX  ||
@@ -277,14 +229,13 @@ object Parser {
   def HexadecimalLiteral[$: P] =
     P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
 
-  private def parseFloatNum(float: (String, String)): Double = {
+  private def parseFloatNum(float: (String, String)): Double =
     val number = parseFloat(float._1)
     val power = parseLong(float._2)
     return number * pow(10, power)
-  }
 
   def FloatLiteral[$: P] = P(
-    CharIn("\\-\\+").? ~~ (DecDigits ~~ "." ~~ DecDigits).!
+    (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).!
       ~~ (CharIn("eE")
         ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
@@ -378,11 +329,10 @@ object Parser {
   ).map((results: Seq[Seq[String]]) => results.flatten)
 
   def sequenceValues(value: (String, Option[BigInt])): Seq[String] =
-    value match {
+    value match
       case (name, Some(totalNo)) =>
         (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
       case (name, None) => Seq(name)
-    }
 
   def OpResult[$: P] =
     P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
@@ -449,8 +399,6 @@ object Parser {
     (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
   )
 
-}
-
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
@@ -460,11 +408,10 @@ final class Parser(
     val args: Args = Args(),
     attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
     typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
-) extends AttrParser(context, attributeAliases, typeAliases) {
+) extends AttrParser(context, attributeAliases, typeAliases):
 
-  import Parser._
-
-  implicit val whitespace: Whitespace = Parser.whitespace
+  import Parser.*
+  import AttrParser.whitespace
 
   def error(failure: Failure) =
     // .trace() below reparses from the start with more bookkeeping to provide helpful
@@ -495,20 +442,17 @@ final class Parser(
       s"Parse error at ${args.input.getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced.label}"
 
     if args.parsing_diagnostics then msg
-    else {
+    else
       Console.err.println(msg)
       sys.exit(1)
-    }
 
-  implicit var currentScope: Scope = new Scope()
+  var currentScope: Scope = new Scope()
 
-  def enterLocalRegion = {
+  def enterLocalRegion =
     currentScope = currentScope.createChild()
-  }
 
-  def enterParentRegion = {
+  def enterParentRegion =
     currentScope = currentScope.switchWithParent
-  }
 
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
   || TOP LEVEL PRODUCTION  ||
@@ -524,7 +468,7 @@ final class Parser(
         case o: Operation => Seq(o)
         case _            => Seq())) ~ End
   ).map((toplevel: Seq[Operation]) =>
-    toplevel.toList match {
+    toplevel.toList match
       case (head: ModuleOp) :: Nil => head
       case (head: DerivedOperationCompanion[ModuleOp]#UnstructuredOp) :: Nil =>
         head
@@ -533,13 +477,11 @@ final class Parser(
         val region = new Region(blocks = Seq(block))
         val moduleOp = ModuleOp(region)
 
-        for (op <- toplevel) op.container_block = Some(block)
+        for op <- toplevel do op.container_block = Some(block)
         block.container_region = Some(region)
         region.container_operation = Some(moduleOp)
 
         moduleOp
-
-    }
   ) ~ E({
     currentScope.switchWithParent
   })
@@ -592,24 +534,22 @@ final class Parser(
       attributes: Map[String, Attribute] = Map(),
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
-  ): Operation = {
+  ): Operation =
 
-    if (operandsNames.length != operandsTypes.length) {
+    if operandsNames.length != operandsTypes.length then
       throw new Exception(
         s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"${opName}\"."
       )
-    }
 
-    if (resultsNames.length != resultsTypes.length) {
+    if resultsNames.length != resultsTypes.length then
       throw new Exception(
         s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
-    }
 
     val operands = operandsNames zip operandsTypes map currentScope.useValue
     val results = resultsNames zip resultsTypes map currentScope.defineResult
 
-    val op: Operation = ctx.getOperation(opName) match {
+    val op: Operation = ctx.getOperation(opName) match
       case Some(x) =>
         x(
           operands = operands,
@@ -635,10 +575,8 @@ final class Parser(
           throw new Exception(
             s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
           )
-    }
 
     return op
-  }
 
   def Operations[$: P](
       at_least_this_many: Int = 0
@@ -651,10 +589,10 @@ final class Parser(
 
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
-  ).map(op => {
-    for (region <- op.regions) region.container_operation = Some(op)
+  ).map(op =>
+    for region <- op.regions do region.container_operation = Some(op)
     op
-  })
+  )
 
   def GenericOperation[$: P](resNames: Seq[String]) = P(
     (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
@@ -689,14 +627,13 @@ final class Parser(
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
-      ctx.getOperation(s"${x}.${y}") match {
+      ctx.getOperation(s"${x}.${y}") match
         case Some(y) =>
           Pass ~ y.parse(this, resNames)
         case None =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
           )
-      }
     }
   )
 
@@ -713,11 +650,10 @@ final class Parser(
   def populateBlockOps(
       block: Block,
       ops: Seq[Operation]
-  ): Block = {
+  ): Block =
     block.operations ++= ops
     ops.foreach(_.container_block = Some(block))
     block
-  }
 
   def populateBlockArgs(
       block: Block,
@@ -756,20 +692,18 @@ final class Parser(
 
   def defineRegion(
       parseResult: (Seq[Operation], Seq[Block])
-  ): Region = {
-    return parseResult._1.length match {
+  ): Region =
+    return parseResult._1.length match
       case 0 =>
         val region = new Region(blocks = parseResult._2)
-        for (block <- region.blocks) block.container_region = Some(region)
+        for block <- region.blocks do block.container_region = Some(region)
         region
       case _ =>
         val startblock =
           new Block(operations = parseResult._1, arguments_types = ListType())
         val region = new Region(blocks = startblock +: parseResult._2)
-        for (block <- region.blocks) block.container_region = Some(region)
+        for block <- region.blocks do block.container_region = Some(region)
         region
-    }
-  }
 
   // EntryBlock might break - take out if it does...
   def Region[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
@@ -777,7 +711,7 @@ final class Parser(
       { enterLocalRegion }
     ) ~/ (BlockBody(populateBlockArgs(new Block(), entryArgs)) ~/ Block.rep)
       .map((entry: Block, blocks: Seq[Block]) =>
-        if (entry.operations.isEmpty && entry.arguments.isEmpty) then blocks
+        if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
         else entry +: blocks
       ) ~/ "}"
   ).map(new Region(_)) ~/ E(
@@ -793,14 +727,13 @@ final class Parser(
   def TypeAliasDef[$: P] = P(
     "!" ~~ AliasName ~ "=" ~ Type
   )./.map((name: String, value: Attribute) =>
-    typeAliases.get(name) match {
+    typeAliases.get(name) match
       case Some(t) =>
         throw new Exception(
           s"""Type alias "$name" already defined as $t."""
         )
       case None =>
         typeAliases(name) = value
-    }
   )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -897,8 +830,5 @@ final class Parser(
         TopLevel(using x)
       },
       verboseFailures: Boolean = false
-  ): fastparse.Parsed[B] = {
+  ): fastparse.Parsed[B] =
     return parse(text, pattern, verboseFailures = verboseFailures)
-  }
-
-}

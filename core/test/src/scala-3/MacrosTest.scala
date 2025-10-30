@@ -86,9 +86,9 @@ val multiOptPropOpComp =
 val multiOptCompOp =
   summon[DerivedOperationCompanion[MultiOptionalCompositionOp]]
 
-class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
+class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
-  object TestCases {
+  object TestCases:
 
     def unstrucOp = mulComp.UnstructuredOp(
       operands = Seq(
@@ -311,8 +311,6 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
         ("prop2" -> IntegerType(IntData(5), Unsigned))
       )
     )
-
-  }
 
   "Unstructured instantiation" should "Correctly instantiates the UnstructuredOp" in {
     val opT = DerivedOperationCompanion.derived[Mul]
@@ -717,5 +715,3 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter {
       case Result(IntegerType(IntData(25), Unsigned)) =>
     }
   }
-
-}
