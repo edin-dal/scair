@@ -10,4 +10,4 @@ builtin.module {
   }
 }
 
-// CHECK: 5
+// CHECK: 6
