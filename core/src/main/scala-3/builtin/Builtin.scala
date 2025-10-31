@@ -130,7 +130,6 @@ final case class IntegerAttr(
     // TODO: Make it correct
     IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
 
-
   override def custom_print(p: Printer) = (value, typ) match
     case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
     case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")

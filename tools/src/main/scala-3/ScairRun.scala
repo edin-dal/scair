@@ -2,14 +2,13 @@ package scair.tools
 
 import scair.MLContext
 import scair.core.utils.Args
+import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 import scopt.OParser
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-
 import scala.io.Source
-import scair.dialects.builtin.ModuleOp
-
 
 trait ScairRunBase:
   val ctx = MLContext()
@@ -67,8 +66,8 @@ trait ScairRunBase:
         case failure: fastparse.Parsed.Failure =>
           Left(parser.error(failure))
 
-    if (!parsed_args.parsing_diagnostics && input_module.isLeft) then
-        throw new Exception(input_module.left.get)
+    if !parsed_args.parsing_diagnostics && input_module.isLeft then
+      throw new Exception(input_module.left.get)
 
     // casted as moduleOp
     val module = input_module.right.get.asInstanceOf[ModuleOp]
@@ -76,13 +75,11 @@ trait ScairRunBase:
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var interpreterCtx = new InterpreterCtx(mutable.Map(), ListBuffer(), ListBuffer(), None)
+    var interpreterCtx =
+      new InterpreterCtx(mutable.Map(), ListBuffer(), ListBuffer(), None)
 
     val output = interpreter.interpret(module_block, interpreterCtx)
-    if (output.isDefined) {
-      println(output.get)
-    }
-    
+    if output.isDefined then println(output.get)
 
 object ScairRun extends ScairRunBase:
   def main(args: Array[String]): Unit = run(args)
