@@ -12,24 +12,23 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
   // TODO: only passing in block for now, may need to generalise for list of blocks later
   // keeping buffer function for extensibility
-  def interpret(block: Block, ctx: InterpreterCtx): Option[Attribute] =
+  def interpret(block: Block, ctx: InterpreterCtx): Option[Any] =
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
 
   def interpret_op(op: Operation, ctx: InterpreterCtx): Unit =
     op match
-
       case func_op: func.Func =>
         interpret_function(func_op, ctx)
 
-      // Function Return
+      // Return Operation
       case return_op: func.Return =>
-        // TODO: multiple return values
         ctx.result = Some(lookup_op(return_op.operands.head.owner.get, ctx))
 
-      // Literals
-      case constant: arith.Constant =>
-        ctx.vars.put(op, constant.value)
+      // Constant Operation
+      case constant_op: arith.Constant =>
+        val value = interpret_constant(constant_op)
+        ctx.vars.put(op, value)
 
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations

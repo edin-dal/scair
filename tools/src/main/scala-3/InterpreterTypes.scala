@@ -6,26 +6,22 @@ import scair.ir.*
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-// note: arguments in function treated like variables in an environment
-// when interpreting function, create new nested context with args as vars
-// when interpreting variable, look up in current context, if not found look up in parent context
-// when finished interpreting function definition, add function context to that level of ctx
+// interpreter context class stores variables, memory, function definitions and the current result
 class InterpreterCtx(
-    val vars: mutable.Map[Operation, Attribute],
-    val memory: ListBuffer[Attribute],
+    val vars: mutable.Map[Operation, Any],
     val funcs: ListBuffer[FunctionCtx],
-    var result: Option[Attribute] = None
+    var result: Option[Any] = None
 ):
 
   // creates independent context
   def clone_ctx(): InterpreterCtx =
     InterpreterCtx(
       mutable.Map() ++ this.vars,
-      ListBuffer() ++ this.memory,
       ListBuffer() ++ this.funcs,
       None
     )
 
+  // helper function for adding a function to the context
   def add_func_ctx(function: func.Func): Unit =
     val func_ctx = FunctionCtx(
       name = function.sym_name,
