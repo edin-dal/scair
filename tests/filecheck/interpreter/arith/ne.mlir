@@ -9,4 +9,4 @@ builtin.module {
   }
 }
 
-// CHECK: false
+// CHECK: 0

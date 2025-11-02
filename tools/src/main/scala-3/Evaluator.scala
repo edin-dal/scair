@@ -5,7 +5,7 @@ import scair.ir.*
 // TODO: move all interpreter helper functions here
 // match owner of operation to its evaluated value and return it
 
-def lookup_op(operation: Operation | Block, ctx: InterpreterCtx): Attribute =
+def lookup_op(operation: Operation | Block, ctx: InterpreterCtx): Any =
   operation match
     case op: Operation =>
       ctx.vars.getOrElse(
