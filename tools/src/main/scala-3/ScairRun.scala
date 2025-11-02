@@ -76,7 +76,7 @@ trait ScairRunBase:
 
     val interpreter = new Interpreter()
     var interpreterCtx =
-      new InterpreterCtx(mutable.Map(), ListBuffer(), ListBuffer(), None)
+      new InterpreterCtx(mutable.Map(), ListBuffer(), None)
 
     val output = interpreter.interpret(module_block, interpreterCtx)
     if output.isDefined then println(output.get)
