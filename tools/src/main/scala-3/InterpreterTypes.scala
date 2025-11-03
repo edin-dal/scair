@@ -35,3 +35,18 @@ case class FunctionCtx(
     saved_ctx: InterpreterCtx,
     body: Block
 )
+
+case class ShapedArray[T](
+  private val data: Array[T],
+  shape: Seq[Int]
+):
+  lazy val strides: Seq[Int] =
+    shape.scanRight(1)(_ * _).tail
+
+  private def offset(indices: Seq[Int]): Int =
+    indices.zip(strides).map(_ * _).sum
+
+  def apply(indices: Seq[Int]): T = data(offset(indices))
+
+  def update(indices: Seq[Int], value: T): Unit =
+    data(offset(indices)) = value
