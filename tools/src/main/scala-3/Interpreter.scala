@@ -105,10 +105,10 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
       // Select Operation
       case select_op: arith.SelectOp =>
         interpret_block_or_op(select_op.condition.owner.get, ctx)
-        val lookup = lookup_op(select_op.condition.owner.get, ctx)
-        lookup match
-          case condOp: IntegerAttr =>
-            condOp.value.value.toInt match
+        val cond_val = lookup_op(select_op.condition.owner.get, ctx)
+        cond_val match
+          case condOp: Int =>
+            condOp match
               case 0 =>
                 ctx.vars.put(op, lookup_op(select_op.falseValue.owner.get, ctx))
               case 1 =>
