@@ -8,6 +8,8 @@ import scair.Parser.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
+import scair.core.constraints.Constraint
+import scair.core.constraints.ConstraintVerifier
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.scairdl.constraints.*
@@ -15,6 +17,7 @@ import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 
 import scala.annotation.switch
+import scala.compiletime.summonInline
 import scala.quoted.*
 
 // ░█████╗░ ██╗░░░░░ ░█████╗░ ██╗ ██████╗░ ██╗░░░██╗ ██████╗░
@@ -220,9 +223,12 @@ def verifyMacro(
     .collect(_ match
       case OperandDef(name, _, _, Some(constraint)) =>
         val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.core.constraints.ConstraintContext) =>
-          $constraint.verify($mem.typ)(using ctx)
-        })
+        constraint match
+          case '[type t <: Constraint; `t`] =>
+
+            '{ (ctx: scair.core.constraints.ConstraintContext) =>
+              summonInline[ConstraintVerifier[t]]($mem.typ)(ctx)
+            })
 
   '{
     given ctx: scair.core.constraints.ConstraintContext =
@@ -840,6 +846,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
       '{ $canonicalizationPatterns.patterns }
     case None => '{ Seq() }
 
+  val verify = '{ (adtOp: T) => ${ verifyMacro(opDef, '{ adtOp }) } }
+
   '{
 
     new DerivedOperationCompanion[T]:
@@ -864,9 +872,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
       def constraint_verify(adtOp: T): Either[String, Operation] =
-        ${
-          verifyMacro(opDef, '{ adtOp })
-        }
+        $verify(adtOp)
 
       override def parse[$: P as ctx](
           p: Parser,
