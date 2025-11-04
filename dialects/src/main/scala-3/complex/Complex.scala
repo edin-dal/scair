@@ -30,6 +30,7 @@ case class Constant(
     value: ArrayAttribute[IntegerAttr | FloatAttr],
     complex: Result[ComplexType]
 ) extends DerivedOperation["complex.constant", Constant]
+    with AssemblyFormat["$value attr-dict `:` type($complex)"]
     with NoMemoryEffect
     with ConstantLike(value):
 

@@ -80,7 +80,8 @@ case class SuccessorDef(
 case class OpPropertyDef(
     override val name: String,
     val tpe: Type[?],
-    override val variadicity: Variadicity = Variadicity.Single,
+    override val variadicity: Variadicity.Single.type |
+      Variadicity.Optional.type = Variadicity.Single,
     val constraint: Option[Expr[ConstraintImpl[?]]] = None
 ) extends OpInputDef
     with MayVariadicOpInputDef {}

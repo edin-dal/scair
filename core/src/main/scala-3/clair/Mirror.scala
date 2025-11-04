@@ -116,12 +116,19 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
         variadicity
       )
     case '[Attribute] =>
-      OpPropertyDef(
-        name = name,
-        tpe = tpe,
-        variadicity,
-        constraint
-      )
+      variadicity match
+        case Variadicity.Variadic =>
+          report.errorAndAbort(
+            s"Variadic properties are not supported; use ArrayAttribute[${Type
+                .show(using elem)}] instead."
+          )
+        case v @ (Variadicity.Single | Variadicity.Optional) =>
+          OpPropertyDef(
+            name = name,
+            tpe = tpe,
+            v,
+            constraint
+          )
     case _: Type[?] =>
       report.errorAndAbort(
         s"Field ${Type.show[Label]} : ${Type.show[Elem]} is unsupported for MLIR derivation."
