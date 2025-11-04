@@ -1,13 +1,12 @@
 package scair.tools
 
 import scair.dialects.arith
-import scair.dialects.builtin
 import scair.dialects.builtin.*
 import scair.dialects.func
 import scair.dialects.memref
 import scair.ir.*
 
-// TODO: do flow analysis to find correct return op
+// INTERPRETER CLASS
 class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
   // TODO: only passing in block for now, may need to generalise for list of blocks later
