@@ -225,10 +225,7 @@ def verifyMacro(
         val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
         constraint match
           case '[type t <: Constraint; `t`] =>
-
-            '{ (ctx: scair.core.constraints.ConstraintContext) =>
-              summonInline[ConstraintVerifier[t]]($mem.typ)(ctx)
-            })
+            '{ summonInline[ConstraintVerifier[t]]($mem.typ) })
 
   '{
     given ctx: scair.core.constraints.ConstraintContext =
@@ -236,7 +233,13 @@ def verifyMacro(
     ${
       val chain = a.foldLeft[Expr[Either[String, Unit]]](
         '{ Right(()) }
-      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
+      )((res, result) =>
+        '{
+          $res match
+            case _: Right[String, Unit] => $result(ctx)
+            case left                   => left
+        }
+      )
       '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
     }
   }
