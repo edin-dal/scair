@@ -1,4 +1,4 @@
-//| mill-version: 1.0.3-native
+//| mill-version: 1.0.6-114-ed0e74-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
@@ -106,6 +106,8 @@ trait JvmScairModule
     lazy val test = new ScairScoverageTests {}
 
   override lazy val scoverage: ScairScoverageData = new ScairScoverageData:
+
+    override def enableBsp = false
     override def mainClass = outer().mainClass
 
   override def publishVersion =
@@ -144,6 +146,7 @@ trait ScairModule extends ScairSettings:
       agnosticModule().mainClass()
 
   lazy val graal: GraalScairModule = new GraalScairModule:
+    override def enableBsp = false
     override def moduleDeps = agnosticModule().moduleDeps.map(_.graal)
     override def mvnDeps = agnosticModule().mvnDeps
 
@@ -154,6 +157,7 @@ trait ScairModule extends ScairSettings:
       agnosticModule().mainClass()
 
   lazy val native: NativeScairModule = new NativeScairModule:
+    override def enableBsp = false
     override def moduleDeps = agnosticModule().moduleDeps.map(_.native)
     override def mvnDeps = agnosticModule().mvnDeps
 
