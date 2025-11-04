@@ -27,11 +27,11 @@ trait MemoryHandler:
   def store_memory(store_op: memref.Store, ctx: InterpreterCtx): Unit = 
     val value = lookup_op(store_op.value, ctx)
     val memref = lookup_op(store_op.memref, ctx)
+    // could already be a list?
     val indices = for index <- store_op.indices yield lookup_op(index, ctx)
-    val int_indices = indices.collect {case i: Int => i}
+    val int_indices = indices.collect {case i: Int => i }
 
     (memref, value) match {
-      // fine if not strictly ShapedArray[Int]?
       case (sa: ShapedArray[_], value: Int) if sa.tag == implicitly[ClassTag[Int]] =>
         val int_sa = sa.asInstanceOf[ShapedArray[Int]]
         int_sa(int_indices) = value
@@ -40,16 +40,15 @@ trait MemoryHandler:
     }
 
   // TODO: index accesses
-  def load_memory(load_op: memref.Load, ctx: InterpreterCtx): Unit = 0
-    // val memoryOperand = load_op.memref.owner.getOrElse(
-    //   throw new Exception("memref operand for store operation not found")
-    // )
-    // val addr = lookup_op(memoryOperand, ctx)
-// 
-    // addr match
-    //   case integerAddr: IntegerAttr =>
-    //     val memAddrIndex = integerAddr.value.value.toInt
-    //     // note that load and store values will not be connected even with a shared value
-    //     val retrievedVal = ctx.memory(memAddrIndex)
-    //     ctx.vars.put(load_op, retrievedVal)
-    //   case _ => throw new Exception("non integer addresses not yet supported")
+  def load_memory(load_op: memref.Load, ctx: InterpreterCtx): Unit =
+    val memref = lookup_op(load_op.memref, ctx)
+    val indices = for index <- load_op.indices yield lookup_op(index, ctx)
+    val int_indices = indices.collect {case i: Int => i }
+
+    memref match {
+      case sa: ShapedArray[_] if sa.tag == implicitly[ClassTag[Int]] =>
+        val int_sa = sa.asInstanceOf[ShapedArray[Int]]
+        ctx.vars.put(load_op.result, int_sa(int_indices))
+      case _ =>
+        throw new Exception("Memory reference points to invalid memory data type")
+    }
