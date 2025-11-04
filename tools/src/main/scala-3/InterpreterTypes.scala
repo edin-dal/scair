@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 // interpreter context class stores variables, memory, function definitions and the current result
 class InterpreterCtx(
-    val vars: mutable.Map[Operation, Any],
+    val vars: mutable.Map[Value[Attribute], Any],
     val funcs: ListBuffer[FunctionCtx],
     var result: Option[Any] = None
 ):

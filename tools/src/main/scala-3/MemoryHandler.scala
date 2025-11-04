@@ -10,19 +10,11 @@ trait MemoryHandler:
   def allocate_memory(alloc_op: memref.Alloc, ctx: InterpreterCtx): Unit =
     // TODO: consider 3d array and indices
     val dynamic_size = alloc_op.dynamicSizes
-    ctx.vars.put(alloc_op, ListBuffer())
+    ctx.vars.put(alloc_op.memref, ListBuffer())
 
   def store_memory(store_op: memref.Store, ctx: InterpreterCtx): Unit = 
-    val value_operand = store_op.value.owner.getOrElse(
-      throw new Exception("value operand for store operation not found")
-    )
-    val value_to_store = lookup_op(value_operand, ctx)
-    
-    val memory_operand = store_op.memref.owner.getOrElse(
-      throw new Exception("memref operand for store operation not found")
-    )
-    // the list buffer
-    val memref = lookup_op(memory_operand, ctx)
+    val value_to_store = lookup_op(store_op.value, ctx)
+    val memref = lookup_op(store_op.memref, ctx)
     // addr match
     //   case integerAddr: IntegerAttr =>
     //     val memAddrIndex = integerAddr.value.value.toInt

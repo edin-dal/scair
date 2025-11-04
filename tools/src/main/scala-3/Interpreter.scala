@@ -22,77 +22,78 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
       // Return Operation
       case return_op: func.Return =>
-        ctx.result = Some(lookup_op(return_op.operands.head.owner.get, ctx))
+        val return_results = for op <- return_op._operands yield lookup_op(op, ctx)
+        ctx.result = Some(return_results)
 
       // Constant Operation
       case constant_op: arith.Constant =>
         val value = interpret_constant(constant_op)
-        ctx.vars.put(op, value)
+        ctx.vars.put(constant_op.result, value)
 
       // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
       case addI_op: arith.AddI =>
         ctx.vars.put(
-          addI_op,
+          addI_op.result,
           interpret_bin_op(addI_op.lhs, addI_op.rhs, ctx)(_ + _)
         )
       case subI_op: arith.SubI =>
         ctx.vars.put(
-          subI_op,
+          subI_op.result,
           interpret_bin_op(subI_op.lhs, subI_op.rhs, ctx)(_ - _)
         )
       case mulI_op: arith.MulI =>
         ctx.vars.put(
-          mulI_op,
+          mulI_op.result,
           interpret_bin_op(mulI_op.lhs, mulI_op.rhs, ctx)(_ * _)
         )
       case div_op: arith.DivSI =>
         ctx.vars.put(
-          div_op,
+          div_op.result,
           interpret_bin_op(div_op.lhs, div_op.rhs, ctx)(_ / _)
         )
       case div_op: arith.DivUI =>
         ctx.vars.put(
-          div_op,
+          div_op.result,
           interpret_bin_op(div_op.lhs, div_op.rhs, ctx)(_ / _)
         )
       case andI_op: arith.AndI =>
         ctx.vars.put(
-          andI_op,
+          andI_op.result,
           interpret_bin_op(andI_op.lhs, andI_op.rhs, ctx)(_ & _)
         )
       case orI_op: arith.OrI =>
         ctx.vars.put(
-          orI_op,
+          orI_op.result,
           interpret_bin_op(orI_op.lhs, orI_op.rhs, ctx)(_ | _)
         )
       case xorI_op: arith.XOrI =>
         ctx.vars.put(
-          xorI_op,
+          xorI_op.result,
           interpret_bin_op(xorI_op.lhs, xorI_op.rhs, ctx)(_ ^ _)
         )
 
       // Shift Operations
       case shli_op: arith.ShLI =>
         ctx.vars.put(
-          shli_op,
+          shli_op.result,
           interpret_bin_op(shli_op.lhs, shli_op.rhs, ctx)(_ << _)
         )
       case shrsi_op: arith.ShRSI =>
         ctx.vars.put(
-          shrsi_op,
+          shrsi_op.result,
           interpret_bin_op(shrsi_op.lhs, shrsi_op.rhs, ctx)(_ >> _)
         )
       case shrui_op: arith.ShRUI =>
         ctx.vars.put(
-          shrui_op,
+          shrui_op.result,
           interpret_bin_op(shrui_op.lhs, shrui_op.rhs, ctx)(_ >>> _)
         )
 
       // Comparison Operation
       case cmpi_op: arith.CmpI =>
         ctx.vars.put(
-          cmpi_op,
+          cmpi_op.result,
           interpret_cmp_op(
             cmpi_op.lhs,
             cmpi_op.rhs,
@@ -103,15 +104,14 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
       // Select Operation
       case select_op: arith.SelectOp =>
-        interpret_block_or_op(select_op.condition.owner.get, ctx)
-        val cond_val = lookup_op(select_op.condition.owner.get, ctx)
+        val cond_val = lookup_op(select_op.condition, ctx)
         cond_val match
           case condOp: Int =>
             condOp match
               case 0 =>
-                ctx.vars.put(op, lookup_op(select_op.falseValue.owner.get, ctx))
+                ctx.vars.put(select_op.result, lookup_op(select_op.falseValue, ctx))
               case 1 =>
-                ctx.vars.put(op, lookup_op(select_op.trueValue.owner.get, ctx))
+                ctx.vars.put(select_op.result, lookup_op(select_op.trueValue, ctx))
               case _ => throw new Exception("Select condition must be 0 or 1")
           case _ =>
             throw new Exception("Select condition must be an integer attribute")

@@ -19,8 +19,8 @@ trait ArithmeticEvaluator:
       rhs: Value[Attribute],
       ctx: InterpreterCtx
   )(combine: (Int, Int) => Int): Int = 
-    val lval = lookup_op(lhs.owner.get, ctx)
-    val rval = lookup_op(rhs.owner.get, ctx)
+    val lval = lookup_op(lhs, ctx)
+    val rval = lookup_op(rhs, ctx)
     (lval, rval) match
       case (lval: Int, rval: Int) =>
         combine(lval, rval)
@@ -33,8 +33,8 @@ trait ArithmeticEvaluator:
       predicate: Int,
       ctx: InterpreterCtx
   ): Int =
-    val lval = lookup_op(lhs.owner.get, ctx)
-    val rval = lookup_op(rhs.owner.get, ctx)
+    val lval = lookup_op(lhs, ctx)
+    val rval = lookup_op(rhs, ctx)
     (lval, rval) match
       case (lval: Int, rval: Int) =>
         predicate match

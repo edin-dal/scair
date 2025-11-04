@@ -2,15 +2,9 @@ package scair.tools
 
 import scair.ir.*
 
-// TODO: move all interpreter helper functions here
-// match owner of operation to its evaluated value and return it
-
-def lookup_op(operation: Operation | Block, ctx: InterpreterCtx): Any =
-  operation match
-    case op: Operation =>
-      ctx.vars.getOrElse(
-        op,
-        throw new Exception(s"Operation ${op} not found in context")
-      )
-    case block: Block =>
-      throw new Exception("Block lookup not supported yet")
+// lookup function for context variables
+def lookup_op(value: Value[Attribute], ctx: InterpreterCtx): Any =
+  ctx.vars.getOrElse(
+    value,
+    throw new Exception(s"Value $value} not found in context")
+  )
