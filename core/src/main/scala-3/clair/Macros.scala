@@ -846,8 +846,6 @@ def deriveOperationCompanion[T <: Operation: Type](using
       '{ $canonicalizationPatterns.patterns }
     case None => '{ Seq() }
 
-  val verify = '{ (adtOp: T) => ${ verifyMacro(opDef, '{ adtOp }) } }
-
   '{
 
     new DerivedOperationCompanion[T]:
@@ -872,7 +870,9 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
       def constraint_verify(adtOp: T): Either[String, Operation] =
-        $verify(adtOp)
+        ${
+          verifyMacro(opDef, '{ adtOp })
+        }
 
       override def parse[$: P as ctx](
           p: Parser,
