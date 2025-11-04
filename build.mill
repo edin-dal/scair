@@ -47,7 +47,6 @@ trait ScairSettings extends ScalaModule:
 
 trait JvmScairModule
     extends ScalafixModule
-    with PlatformScalaModule
     with SonatypeCentralPublishModule
     with ScoverageModule
     with ScairSettings:
@@ -87,27 +86,27 @@ trait JvmScairModule
   // dependencies. This enforces that everything ScaIR is transitively compiled with
   // coverage when compiling a module with coverage.
   trait ScairScoverageData extends ScoverageData with ScairSettings:
+    override def enableBsp = false
 
     override def transitiveModuleRunModuleDeps =
       super.transitiveModuleRunModuleDeps.map {
-        case m: ScairModule => m.jvm.scoverage
+        case m: ScairModule => m.scoverage
         case m              => m
       }
 
     override def transitiveModuleCompileModuleDeps =
       super.transitiveModuleCompileModuleDeps.map {
-        case m: ScairModule => m.jvm.scoverage
+        case m: ScairModule => m.scoverage
         case m              => m
       }
 
     trait ScairScoverageTests extends ScoverageTests with ScairTests:
+      override def enableBsp = false
       override def moduleDir: Path = outer().test.moduleDir
 
     lazy val test = new ScairScoverageTests {}
 
   override lazy val scoverage: ScairScoverageData = new ScairScoverageData:
-
-    override def enableBsp = false
     override def mainClass = outer().mainClass
 
   override def publishVersion =
@@ -115,13 +114,17 @@ trait JvmScairModule
 
   lazy val test = new ScairTests {}
 
-trait GraalScairModule extends JvmScairModule with NativeImageModule:
+trait GraalScairModule extends JvmScairModule with NativeImageModule
+    with PlatformScalaModule:
+  override def enableBsp = false
   override def jvmId = "graalvm-community:24.0.1"
 
   override def nativeImageOptions =
     Seq("--no-fallback", "--initialize-at-build-time")
 
-trait NativeScairModule extends JvmScairModule with ScalaNativeModule:
+trait NativeScairModule extends JvmScairModule with ScalaNativeModule
+    with PlatformScalaModule:
+  override def enableBsp = false
   override def scalaNativeVersion = "0.5.8"
   override def nativeLTO: Simple[LTO] = LTO.Full
   override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
@@ -131,41 +134,29 @@ trait NativeScairModule extends JvmScairModule with ScalaNativeModule:
 
   override object test extends ScairTests with ScalaNativeTests
 
-trait ScairModule extends ScairSettings:
-  def agnosticModule = ModuleRef(this)
+trait ScairModule extends JvmScairModule:
+  def jvmModule = ModuleRef(this)
   def moduleDeps: Seq[ScairModule] = Seq()
 
-  lazy val jvm: JvmScairModule = new JvmScairModule:
-    override def moduleDeps = agnosticModule().moduleDeps.map(_.jvm)
-    override def mvnDeps = agnosticModule().mvnDeps
-
-    override def generatedSources: Simple[Seq[PathRef]] =
-      agnosticModule().generatedSources
-
-    override def mainClass: Simple[Option[String]] =
-      agnosticModule().mainClass()
-
   lazy val graal: GraalScairModule = new GraalScairModule:
-    override def enableBsp = false
-    override def moduleDeps = agnosticModule().moduleDeps.map(_.graal)
-    override def mvnDeps = agnosticModule().mvnDeps
+    override def moduleDeps = jvmModule().moduleDeps.map(_.graal)
+    override def mvnDeps = jvmModule().mvnDeps
 
     override def generatedSources: Simple[Seq[PathRef]] =
-      agnosticModule().generatedSources
+      jvmModule().generatedSources
 
     override def mainClass: Simple[Option[String]] =
-      agnosticModule().mainClass()
+      jvmModule().mainClass()
 
   lazy val native: NativeScairModule = new NativeScairModule:
-    override def enableBsp = false
-    override def moduleDeps = agnosticModule().moduleDeps.map(_.native)
-    override def mvnDeps = agnosticModule().mvnDeps
+    override def moduleDeps = jvmModule().moduleDeps.map(_.native)
+    override def mvnDeps = jvmModule().mvnDeps
 
     override def generatedSources: Simple[Seq[PathRef]] =
-      agnosticModule().generatedSources
+      jvmModule().generatedSources
 
     override def mainClass: Simple[Option[String]] =
-      agnosticModule().mainClass()
+      jvmModule().mainClass()
 
   override def sources: Simple[Seq[PathRef]] =
     super.sources() :+ PathRef(moduleDir / "build")
@@ -294,7 +285,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     Task.sequence(
       allChildren
         .flatMap {
-          case m: ScairModule => Some(m.jvm.fix(args*))
+          case m: ScairModule => Some(m.fix(args*))
           case _              => None
         }
     )()
@@ -314,12 +305,12 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   // Define a testAll to run the full framework testing infrastructure
   def testAll(evaluator: Evaluator) = Command {
-    runAll("_.jvm.test", evaluator)()
+    runAll("_.test", evaluator)()
     filechecks.run()()
   }
 
   def scoverage(evaluator: Evaluator) = Command(exclusive = true) {
-    runAll("_.jvm.scoverage.test", evaluator)()
+    runAll("_.scoverage.test", evaluator)()
     filechecks.scoverage.run()()
     xmlReportAll(evaluator)()
   }
@@ -353,17 +344,17 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
   object filechecks extends filechecks:
-    override def scairOpt = opt.jvm.launcher
-    override def scairRun = runTool.jvm.launcher
+    override def scairOpt = opt.launcher
+    override def scairRun = runTool.launcher
 
     object scoverage extends filechecks:
-      override def scairOpt = opt.jvm.scoverage.launcher
-      override def scairRun = runTool.jvm.scoverage.launcher
+      override def scairOpt = opt.scoverage.launcher
+      override def scairRun = runTool.scoverage.launcher
 
     object graal extends filechecks:
       override def scairOpt = opt.graal.nativeImage
-      override def scairRun = runTool.jvm.launcher
+      override def scairRun = runTool.launcher
 
     object native extends filechecks:
       override def scairOpt = opt.native.nativeLink
-      override def scairRun = runTool.jvm.launcher
+      override def scairRun = runTool.launcher
