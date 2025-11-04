@@ -30,12 +30,14 @@ class InterpreterCtx(
     )
     this.funcs.append(func_ctx)
 
+// function context class for saving a context at the function's definition (cannot use values defined after the function itself)
 case class FunctionCtx(
     name: String,
     saved_ctx: InterpreterCtx,
     body: Block
 )
 
+// custom ShapedArray class used for memory and other multi-dimensional data structures
 case class ShapedArray[T](
   private val data: Array[T],
   shape: Seq[Int]
