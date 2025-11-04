@@ -2,8 +2,8 @@
 
 builtin.module {
   func.func @ops(%arg0: f32) {
-    %0 = "complex.constant"() <{value = [1.000000e-01, -1.000000e+00]}> : () -> complex<f64>
-    %1 = "complex.constant"() <{value = [1.000000e-01 : f32, -1.000000e+00 : f32]}> : () -> complex<f32>
+    %0 = complex.constant [1.000000e-01, -1.000000e+00] : complex<f64>
+    %1 = complex.constant [1.000000e-01 : f32, -1.000000e+00 : f32] : complex<f32>
     %2 = "complex.create"(%arg0, %arg0) : (f32, f32) -> complex<f32>
     %3 = "complex.re"(%2) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> f32
     %4 = "complex.im"(%2) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> f32
@@ -35,8 +35,8 @@ builtin.module {
 
 // CHECK:       builtin.module {
 // CHECK-NEXT:    func.func @ops(%0: f32) {
-// CHECK-NEXT:      %1 = "complex.constant"() <{value = [0.1 : f64, -1.0 : f64]}> : () -> (complex<f64>)
-// CHECK-NEXT:      %2 = "complex.constant"() <{value = [0.1 : f32, -1.0 : f32]}> : () -> (complex<f32>)
+// CHECK-NEXT:      %1 = complex.constant [0.1 : f64, -1.0 : f64] : complex<f64>
+// CHECK-NEXT:      %2 = complex.constant [0.1 : f32, -1.0 : f32] : complex<f32>
 // CHECK-NEXT:      %3 = "complex.create"(%0, %0) : (f32, f32) -> (complex<f32>)
 // CHECK-NEXT:      %4 = "complex.re"(%3) : (complex<f32>) -> (f32)
 // CHECK-NEXT:      %5 = "complex.im"(%3) : (complex<f32>) -> (f32)

@@ -22,7 +22,12 @@ sealed trait Attribute:
   def name: String
   def prefix: String = "#"
   def custom_verify(): Either[String, Unit] = Right(())
-  def custom_print(p: Printer): Unit
+  def printParameters(p: Printer): Unit
+
+  def custom_print(p: Printer): Unit =
+    given indentLevel: Int = 0
+    p.print(prefix, name)
+    printParameters(p)
 
   override def toString(): String =
     val out = StringWriter()
@@ -38,9 +43,7 @@ abstract trait ParametrizedAttribute() extends Attribute:
 
   def parameters: Seq[Attribute | Seq[Attribute]]
 
-  override def custom_print(p: Printer) =
-    given indentLevel: Int = 0
-    p.print(prefix, name)
+  override def printParameters(p: Printer): Unit =
     if parameters.size > 0 then
       p.printListF(
         parameters,
@@ -69,8 +72,8 @@ abstract class DataAttribute[D](
     val data: D
 ) extends Attribute:
 
-  override def custom_print(p: Printer) =
-    p.print(prefix, name, "<", data.toString, ">")(using indentLevel = 0)
+  override def printParameters(p: Printer) =
+    p.print("<", data.toString, ">")(using indentLevel = 0)
 
   override def equals(attr: Any): Boolean =
     attr match

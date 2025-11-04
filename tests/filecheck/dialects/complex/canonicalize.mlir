@@ -27,7 +27,7 @@ builtin.module {
   // CHECK-NEXT:    }
 
   func.func @real_of_const() -> f32 {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
     %1 = "complex.re"(%0) : (complex<f32>) -> (f32)
     func.return %1 : f32
   }
@@ -49,7 +49,7 @@ builtin.module {
   // CHECK-NEXT:    }
 
   func.func @imag_of_const() -> f32 {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
     %1 = "complex.im"(%0) : (complex<f32>) -> (f32)
     func.return %1 : f32
   }
@@ -71,90 +71,90 @@ builtin.module {
   // CHECK-NEXT:    }
 
   func.func @complex_add_sub_lhs() -> complex<f32> {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
-    %1 = "complex.constant"() <{value = [0.0 : f32, 2.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
+    %1 = complex.constant [0.0 : f32, 2.0 : f32] : complex<f32>
     %2 = "complex.sub"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     %3 = "complex.add"(%2, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     func.return %3 : complex<f32>
   }
   // CHECK-NEXT:    func.func @complex_add_sub_lhs() -> complex<f32> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+  // CHECK-NEXT:      %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
   // CHECK-NEXT:      func.return %0 : complex<f32>
   // CHECK-NEXT:    }
 
   func.func @complex_add_sub_rhs() -> complex<f32> {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
-    %1 = "complex.constant"() <{value = [0.0 : f32, 2.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
+    %1 = complex.constant [0.0 : f32, 2.0 : f32] : complex<f32>
     %2 = "complex.sub"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     %3 = "complex.add"(%1, %2) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     func.return %3 : complex<f32>
   }
   // CHECK-NEXT:    func.func @complex_add_sub_rhs() -> complex<f32> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+  // CHECK-NEXT:      %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
   // CHECK-NEXT:      func.return %0 : complex<f32>
   // CHECK-NEXT:    }
 
   func.func @complex_neg_neg() -> complex<f32> {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
     %1 = "complex.neg"(%0) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
     %2 = "complex.neg"(%1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
     func.return %2 : complex<f32>
   }
   // CHECK-NEXT:    func.func @complex_neg_neg() -> complex<f32> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+  // CHECK-NEXT:      %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
   // CHECK-NEXT:      func.return %0 : complex<f32>
   // CHECK-NEXT:    }
 
 //   func.func @complex_log_exp() -> complex<f32> {
-//     %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+//     %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
 //     %1 = "complex.exp"(%0) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
 //     %2 = "complex.log"(%1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
 //     func.return %2 : complex<f32>
 //   }
 //   func.func @complex_exp_log() -> complex<f32> {
-//     %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+//     %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
 //     %1 = "complex.log"(%0) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
 //     %2 = "complex.exp"(%1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
 //     func.return %2 : complex<f32>
 //   }
 //   func.func @complex_conj_conj() -> complex<f32> {
-//     %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+//     %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
 //     %1 = "complex.conj"(%0) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
 //     %2 = "complex.conj"(%1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
 //     func.return %2 : complex<f32>
 //   }
 
   func.func @complex_add_zero() -> complex<f32> {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
-    %1 = "complex.constant"() <{value = [0.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
+    %1 = complex.constant [0.0 : f32, 0.0 : f32] : complex<f32>
     %2 = "complex.add"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     func.return %2 : complex<f32>
   }
   // CHECK-NEXT:    func.func @complex_add_zero() -> complex<f32> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+  // CHECK-NEXT:      %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
   // CHECK-NEXT:      func.return %0 : complex<f32>
   // CHECK-NEXT:    }
 
   func.func @complex_sub_add_lhs() -> complex<f32> {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
-    %1 = "complex.constant"() <{value = [0.0 : f32, 2.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
+    %1 = complex.constant [0.0 : f32, 2.0 : f32] : complex<f32>
     %2 = "complex.add"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     %3 = "complex.sub"(%2, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     func.return %3 : complex<f32>
   }
   // CHECK-NEXT:    func.func @complex_sub_add_lhs() -> complex<f32> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+  // CHECK-NEXT:      %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
   // CHECK-NEXT:      func.return %0 : complex<f32>
   // CHECK-NEXT:    }
 
   func.func @complex_sub_zero() -> complex<f32> {
-    %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
-    %1 = "complex.constant"() <{value = [0.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+    %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
+    %1 = complex.constant [0.0 : f32, 0.0 : f32] : complex<f32>
     %2 = "complex.sub"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     func.return %2 : complex<f32>
   }
   // CHECK-NEXT:    func.func @complex_sub_zero() -> complex<f32> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+  // CHECK-NEXT:      %0 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
   // CHECK-NEXT:      func.return %0 : complex<f32>
   // CHECK-NEXT:    }
 
@@ -182,7 +182,7 @@ builtin.module {
 
   func.func @mul_one_f16(%0: f16, %1: f16) -> complex<f16> {
     %2 = "complex.create"(%0, %1) : (f16, f16) -> (complex<f16>)
-    %3 = "complex.constant"() <{value = [1.0 : f16, 0.0 : f16]}> : () -> (complex<f16>)
+    %3 = complex.constant [1.0 : f16, 0.0 : f16] : complex<f16>
     %4 = "complex.mul"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f16>, complex<f16>) -> (complex<f16>)
     func.return %4 : complex<f16>
   }
@@ -193,7 +193,7 @@ builtin.module {
 
   func.func @mul_one_f32(%0: f32, %1: f32) -> complex<f32> {
     %2 = "complex.create"(%0, %1) : (f32, f32) -> (complex<f32>)
-    %3 = "complex.constant"() <{value = [1.0 : f32, 0.0 : f32]}> : () -> (complex<f32>)
+    %3 = complex.constant [1.0 : f32, 0.0 : f32] : complex<f32>
     %4 = "complex.mul"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
     func.return %4 : complex<f32>
   }
@@ -204,7 +204,7 @@ builtin.module {
 
   func.func @mul_one_f64(%0: f64, %1: f64) -> complex<f64> {
     %2 = "complex.create"(%0, %1) : (f64, f64) -> (complex<f64>)
-    %3 = "complex.constant"() <{value = [1.0 : f64, 0.0 : f64]}> : () -> (complex<f64>)
+    %3 = complex.constant [1.0 : f64, 0.0 : f64] : complex<f64>
     %4 = "complex.mul"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f64>, complex<f64>) -> (complex<f64>)
     func.return %4 : complex<f64>
   }
@@ -215,7 +215,7 @@ builtin.module {
 
   func.func @mul_one_f80(%0: f80, %1: f80) -> complex<f80> {
     %2 = "complex.create"(%0, %1) : (f80, f80) -> (complex<f80>)
-    %3 = "complex.constant"() <{value = [1.0 : f80, 0.0 : f80]}> : () -> (complex<f80>)
+    %3 = complex.constant [1.0 : f80, 0.0 : f80] : complex<f80>
     %4 = "complex.mul"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f80>, complex<f80>) -> (complex<f80>)
     func.return %4 : complex<f80>
   }
@@ -226,7 +226,7 @@ builtin.module {
 
   func.func @mul_one_f128(%0: f128, %1: f128) -> complex<f128> {
     %2 = "complex.create"(%0, %1) : (f128, f128) -> (complex<f128>)
-    %3 = "complex.constant"() <{value = [1.0 : f128, 0.0 : f128]}> : () -> (complex<f128>)
+    %3 = complex.constant [1.0 : f128, 0.0 : f128] : complex<f128>
     %4 = "complex.mul"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f128>, complex<f128>) -> (complex<f128>)
     func.return %4 : complex<f128>
   }
@@ -237,13 +237,13 @@ builtin.module {
 
 
   func.func @mul_cst() -> complex<f128> {
-    %0 = "complex.constant"() <{value = [1.0 : f128, 2.0 : f128]}> : () -> (complex<f128>)
-    %1 = "complex.constant"() <{value = [3.0 : f128, 4.0 : f128]}> : () -> (complex<f128>)
+    %0 = complex.constant [1.0 : f128, 2.0 : f128] : complex<f128>
+    %1 = complex.constant [3.0 : f128, 4.0 : f128] : complex<f128>
     %2 = "complex.mul"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (complex<f128>, complex<f128>) -> (complex<f128>)
     func.return %2 : complex<f128>
   }
   // CHECK-NEXT:    func.func @mul_cst() -> complex<f128> {
-  // CHECK-NEXT:      %0 = "complex.constant"() <{value = [-5.0 : f128, 10.0 : f128]}> : () -> (complex<f128>)
+  // CHECK-NEXT:      %0 = complex.constant [-5.0 : f128, 10.0 : f128] : complex<f128>
   // CHECK-NEXT:      func.return %0 : complex<f128>
   // CHECK-NEXT:    }
 
