@@ -2,6 +2,7 @@ package scair.tools
 
 import scair.dialects.func
 import scair.ir.*
+import scala.reflect.ClassTag
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -38,12 +39,14 @@ case class FunctionCtx(
 )
 
 // custom ShapedArray class used for memory and other multi-dimensional data structures
-case class ShapedArray[T](
+case class ShapedArray[T: ClassTag](
   private val data: Array[T],
   shape: Seq[Int]
 ):
   lazy val strides: Seq[Int] =
     shape.scanRight(1)(_ * _).tail
+  
+  val tag: ClassTag[T] = implicitly[ClassTag[T]]
 
   def length: Int =
     shape.product
