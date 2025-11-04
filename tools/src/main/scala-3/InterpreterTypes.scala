@@ -45,6 +45,9 @@ case class ShapedArray[T](
   lazy val strides: Seq[Int] =
     shape.scanRight(1)(_ * _).tail
 
+  def length: Int =
+    shape.product
+
   private def offset(indices: Seq[Int]): Int =
     indices.zip(strides).map(_ * _).sum
 

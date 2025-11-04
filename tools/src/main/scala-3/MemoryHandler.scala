@@ -9,8 +9,18 @@ trait MemoryHandler:
   // assign some attribute to variables
   def allocate_memory(alloc_op: memref.Alloc, ctx: InterpreterCtx): Unit =
     // TODO: consider 3d array and indices
-    val dynamic_size = alloc_op.dynamicSizes
-    ctx.vars.put(alloc_op.memref, ListBuffer())
+    val shape_seq: Seq[Int] = alloc_op.dynamicSizes.map { dim =>
+      lookup_op(dim, ctx) match {
+        case i: Int => i
+        case other  => throw new Exception(
+          "Expected int arguments for array shape"
+        )
+      }
+    }
+
+
+    val shaped_array = ShapedArray[Int](Array.range(0, shape_seq.product), shape_seq)
+    ctx.vars.put(alloc_op.memref, shaped_array)
 
   def store_memory(store_op: memref.Store, ctx: InterpreterCtx): Unit = 
     val value_to_store = lookup_op(store_op.value, ctx)
