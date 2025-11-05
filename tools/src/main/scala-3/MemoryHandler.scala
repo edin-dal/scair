@@ -39,7 +39,6 @@ trait MemoryHandler:
         throw new Exception("Memory reference points to invalid memory data type")
     }
 
-  // TODO: index accesses
   def load_memory(load_op: memref.Load, ctx: InterpreterCtx): Unit =
     val memref = lookup_op(load_op.memref, ctx)
     val indices = for index <- load_op.indices yield lookup_op(index, ctx)

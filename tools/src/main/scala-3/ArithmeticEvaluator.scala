@@ -32,24 +32,24 @@ trait ArithmeticEvaluator:
       rhs: Value[Attribute],
       predicate: Int,
       ctx: InterpreterCtx
-  ): Int =
+  ): Boolean =
     val lval = lookup_op(lhs, ctx)
     val rval = lookup_op(rhs, ctx)
     (lval, rval) match
       case (lval: Int, rval: Int) =>
         predicate match
           case 0 => // EQ
-            if lval == rval then 1 else 0
+            lval == rval
           case 1 => // NE
-            if lval != rval then 1 else 0
+            lval != rval
           case 2 | 6 => // SLT and ULT, assume both numbers are already converted accoringly
-            if lval < rval then 1 else 0
+            lval < rval
           case 3 | 7 => // SLE and ULE
-            if lval <= rval then 1 else 0
+            lval <= rval
           case 4 | 8 => // SGT and UGT
-            if lval > rval then 1 else 0
+            lval > rval
           case 5 | 9 => // SGE and UGE
-            if lval >= rval then 1 else 0
+            lval >= rval
           case _ => throw new Exception("Unknown comparison predicate")
       case other =>
         throw new Exception("Unsupported operand types for cmpi")

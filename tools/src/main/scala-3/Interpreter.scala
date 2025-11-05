@@ -9,12 +9,12 @@ import scair.ir.*
 // INTERPRETER CLASS
 class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
-  // TODO: only passing in block for now, may need to generalise for list of blocks later
   // keeping buffer function for extensibility
   def interpret(block: Block, ctx: InterpreterCtx): Option[Any] =
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
 
+  // main operation interpretation function
   def interpret_op(op: Operation, ctx: InterpreterCtx): Unit =
     op match
       case func_op: func.Func =>
@@ -23,14 +23,18 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
       // Return Operation
       case return_op: func.Return =>
         val return_results = for op <- return_op._operands yield lookup_op(op, ctx)
-        ctx.result = Some(return_results)
+        if return_results.length == 1 then
+          ctx.result = Some(return_results.head)
+        else if return_results.length == 0 then
+          ctx.result = None
+        else
+          ctx.result = Some(return_results)
 
       // Constant Operation
       case constant_op: arith.Constant =>
         val value = interpret_constant(constant_op)
         ctx.vars.put(constant_op.result, value)
 
-      // TODO: handling block arguments for all arithmetic operations
       // Binary Operations
       case addI_op: arith.AddI =>
         ctx.vars.put(
