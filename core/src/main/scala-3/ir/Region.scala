@@ -20,6 +20,12 @@ object Region:
   def apply(blocks: Seq[Block]): Region =
     Region(blocks*)
 
+  def apply(operations: Iterable[Operation]) : Region =
+    Region(Block(operations))
+
+  def apply(operation: Operation) : Region =
+    Region(Block(operation))
+
 case class Region(
     blocks: Block*
 ) extends IRNode:
