@@ -10,7 +10,7 @@ object DerivedAttribute:
   inline given [T <: DerivedAttribute[?, ?]]: DerivedAttributeCompanion[T] =
     DerivedAttributeCompanion.derived[T]
 
-trait DerivedAttribute[name <: String, T <: Attribute]
+transparent trait DerivedAttribute[name <: String, T <: Attribute]
     extends ParametrizedAttribute:
 
   this: T =>
@@ -28,7 +28,7 @@ object DerivedOperation:
   inline given [T <: DerivedOperation[?, ?]]: DerivedOperationCompanion[T] =
     DerivedOperationCompanion.derived[T]
 
-trait DerivedOperation[name <: String, T] extends Operation:
+transparent trait DerivedOperation[name <: String, T] extends Operation:
 
   this: T =>
 
