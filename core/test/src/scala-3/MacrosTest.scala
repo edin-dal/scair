@@ -117,8 +117,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       result2 = Result(IntegerType(IntData(25), Unsigned)),
       randProp1 = StringData("what1"),
       randProp2 = StringData("what2"),
-      reg1 = Region(Seq()),
-      reg2 = Region(Seq()),
+      reg1 = Region(),
+      reg2 = Region(),
       succ1 = scair.ir.Block(),
       succ2 = scair.ir.Block()
     )
@@ -525,10 +525,12 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       comp.UnstructuredOp(regions =
         Seq(
           Region(
-            Seq(Block(comp.UnstructuredOp()), Block(comp.UnstructuredOp()))
+            Block(comp.UnstructuredOp()),
+            Block(comp.UnstructuredOp())
           ),
           Region(
-            Seq(Block(comp.UnstructuredOp()), Block(comp.UnstructuredOp()))
+            Block(comp.UnstructuredOp()),
+            Block(comp.UnstructuredOp())
           )
         )
       )
@@ -539,12 +541,10 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
             RegionOp(
               Seq(
                 Region(
-                  Seq(
-                    Block(_, BlockOperations(RegionOp(_))),
-                    Block(_, BlockOperations(RegionOp(_)))
-                  )
+                  Block(_, BlockOperations(RegionOp(_))),
+                  Block(_, BlockOperations(RegionOp(_)))
                 ),
-                Region(_)
+                Region(_*)
               )
             )
           ) =>

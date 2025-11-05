@@ -473,7 +473,7 @@ final class Parser(
         head
       case _ =>
         val block = new Block(operations = toplevel)
-        val region = new Region(blocks = Seq(block))
+        val region = Region(block)
         val moduleOp = ModuleOp(region)
 
         for op <- toplevel do op.container_block = Some(block)
@@ -637,7 +637,7 @@ final class Parser(
   )
 
   def RegionList[$: P] =
-    P("(" ~ Region().rep(sep = ",") ~ ")")
+    P("(" ~ RegionP().rep(sep = ",") ~ ")")
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||      BLOCKS      ||
@@ -694,18 +694,18 @@ final class Parser(
   ): Region =
     return parseResult._1.length match
       case 0 =>
-        val region = new Region(blocks = parseResult._2)
+        val region = Region(blocks = parseResult._2)
         for block <- region.blocks do block.container_region = Some(region)
         region
       case _ =>
         val startblock =
           new Block(operations = parseResult._1, arguments_types = ListType())
-        val region = new Region(blocks = startblock +: parseResult._2)
+        val region = Region(blocks = startblock +: parseResult._2)
         for block <- region.blocks do block.container_region = Some(region)
         region
 
   // EntryBlock might break - take out if it does...
-  def Region[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
+  def RegionP[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
     "{" ~/ E(
       { enterLocalRegion }
     ) ~/ (BlockBody(populateBlockArgs(new Block(), entryArgs)) ~/ Block.rep)
@@ -713,7 +713,7 @@ final class Parser(
         if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
         else entry +: blocks
       ) ~/ "}"
-  ).map(new Region(_)) ~/ E(
+  ).map(Region(_)) ~/ E(
     { enterParentRegion }
   )
 
