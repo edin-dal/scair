@@ -217,66 +217,64 @@ class ParserTest
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        pattern = parser.Region()(using _)
+        pattern = parser.RegionP()(using _)
       ) should matchPattern {
         case Parsed.Success(
               Region(
-                Seq(
-                  Block(
-                    ListType(Value(I32)),
-                    BlockOperations(
-                      UnregisteredOperation(
-                        "test.op",
-                        Seq(),
-                        Seq(),
-                        Seq(
-                          Result(I32),
-                          Result(I64),
-                          Result(I32)
-                        ),
-                        Seq(),
-                        _,
-                        _
+                Block(
+                  ListType(Value(I32)),
+                  BlockOperations(
+                    UnregisteredOperation(
+                      "test.op",
+                      Seq(),
+                      Seq(),
+                      Seq(
+                        Result(I32),
+                        Result(I64),
+                        Result(I32)
                       ),
-                      UnregisteredOperation(
-                        "test.op",
-                        Seq(Value(I64), Value(I32)),
-                        Seq(),
-                        Seq(),
-                        Seq(),
-                        _,
-                        _
-                      )
+                      Seq(),
+                      _,
+                      _
+                    ),
+                    UnregisteredOperation(
+                      "test.op",
+                      Seq(Value(I64), Value(I32)),
+                      Seq(),
+                      Seq(),
+                      Seq(),
+                      _,
+                      _
                     )
-                  ),
-                  Block(
-                    ListType(Value(I32)),
-                    BlockOperations(
-                      UnregisteredOperation(
-                        "test.op",
-                        Seq(),
-                        Seq(),
-                        Seq(
-                          Result(I32),
-                          Result(I64),
-                          Result(I32)
-                        ),
-                        Seq(),
-                        _,
-                        _
+                  )
+                ),
+                Block(
+                  ListType(Value(I32)),
+                  BlockOperations(
+                    UnregisteredOperation(
+                      "test.op",
+                      Seq(),
+                      Seq(),
+                      Seq(
+                        Result(I32),
+                        Result(I64),
+                        Result(I32)
                       ),
-                      UnregisteredOperation(
-                        "test.op",
-                        Seq(
-                          Value(I64),
-                          Value(I32)
-                        ),
-                        Seq(),
-                        Seq(),
-                        Seq(),
-                        _,
-                        _
-                      )
+                      Seq(),
+                      _,
+                      _
+                    ),
+                    UnregisteredOperation(
+                      "test.op",
+                      Seq(
+                        Value(I64),
+                        Value(I32)
+                      ),
+                      Seq(),
+                      Seq(),
+                      Seq(),
+                      _,
+                      _
                     )
                   )
                 )
@@ -299,7 +297,7 @@ class ParserTest
   %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
   "test.op"(%8, %7) : (i64, i32) -> ()
 }""",
-        pattern = parser.Region()(using _),
+        pattern = parser.RegionP()(using _),
         verboseFailures = true
       ) should matchPattern {
         case Parsed.Failure(
@@ -350,7 +348,7 @@ class ParserTest
       val operation =
         UnregisteredOperation(
           "test.op",
-          regions = Seq(Region(Seq(bb3, bb4)))
+          regions = Seq(Region(bb3, bb4))
         )
 
       parser.parseThis(
@@ -370,23 +368,21 @@ class ParserTest
         case Parsed.Success(
               ModuleOp(
                 Region(
-                  Seq(
-                    Block(
-                      ListType(),
-                      BlockOperations(
-                        UnregisteredOperation(
-                          "test.op",
-                          Seq(),
-                          Seq(),
-                          Seq(
-                            Result(I32),
-                            Result(I64),
-                            Result(I32)
-                          ),
-                          Seq(),
-                          _,
-                          _
-                        )
+                  Block(
+                    ListType(),
+                    BlockOperations(
+                      UnregisteredOperation(
+                        "test.op",
+                        Seq(),
+                        Seq(),
+                        Seq(
+                          Result(I32),
+                          Result(I64),
+                          Result(I32)
+                        ),
+                        Seq(),
+                        _,
+                        _
                       )
                     )
                   )

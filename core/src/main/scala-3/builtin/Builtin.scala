@@ -492,7 +492,7 @@ object ModuleOp:
       resNames: Seq[String]
   ): P[Operation] =
     P(
-      parser.Region()
+      parser.RegionP()
     ).map(ModuleOp.apply)
 
   // ==----------------------== //
