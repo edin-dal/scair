@@ -144,7 +144,7 @@ private def DialectRegion[$: P](parser: Parser) = P(
       ~ "{"
       ~ parser.Operations(1) ~ "}").map((b: Block, y: Seq[Operation]) =>
       b.operations ++= y
-      new Region(Seq(b))
+      Region(b)
     )
 )
   ~ E({ parser.enterParentRegion })

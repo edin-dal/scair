@@ -1,5 +1,6 @@
 package scair.ir
 
+import scala.annotation.targetName
 import scala.collection.mutable
 
 // ██╗ ██████╗░
@@ -13,8 +14,14 @@ import scala.collection.mutable
 ||     REGIONS     ||
 \*≡==---==≡==---==≡*/
 
+object Region:
+
+  @targetName("applySeq")
+  def apply(blocks: Seq[Block]): Region =
+    Region(blocks*)
+
 case class Region(
-    blocks: Seq[Block]
+    blocks: Block*
 ) extends IRNode:
 
   final override def deepCopy(using
