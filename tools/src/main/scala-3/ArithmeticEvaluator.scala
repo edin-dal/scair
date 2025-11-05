@@ -1,8 +1,8 @@
 package scair.tools
 
+import scair.dialects.arith
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.dialects.arith
 
 trait ArithmeticEvaluator:
   self: Interpreter =>
@@ -18,7 +18,7 @@ trait ArithmeticEvaluator:
       lhs: Value[Attribute],
       rhs: Value[Attribute],
       ctx: InterpreterCtx
-  )(combine: (Int, Int) => Int): Int = 
+  )(combine: (Int, Int) => Int): Int =
     val lval = lookup_op(lhs, ctx)
     val rval = lookup_op(rhs, ctx)
     (lval, rval) match

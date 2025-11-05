@@ -22,13 +22,12 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
       // Return Operation
       case return_op: func.Return =>
-        val return_results = for op <- return_op._operands yield lookup_op(op, ctx)
+        val return_results =
+          for op <- return_op._operands yield lookup_op(op, ctx)
         if return_results.length == 1 then
           ctx.result = Some(return_results.head)
-        else if return_results.length == 0 then
-          ctx.result = None
-        else
-          ctx.result = Some(return_results)
+        else if return_results.length == 0 then ctx.result = None
+        else ctx.result = Some(return_results)
 
       // Constant Operation
       case constant_op: arith.Constant =>
@@ -113,9 +112,15 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
           case condOp: Int =>
             condOp match
               case 0 =>
-                ctx.vars.put(select_op.result, lookup_op(select_op.falseValue, ctx))
+                ctx.vars.put(
+                  select_op.result,
+                  lookup_op(select_op.falseValue, ctx)
+                )
               case 1 =>
-                ctx.vars.put(select_op.result, lookup_op(select_op.trueValue, ctx))
+                ctx.vars.put(
+                  select_op.result,
+                  lookup_op(select_op.trueValue, ctx)
+                )
               case _ => throw new Exception("Select condition must be 0 or 1")
           case _ =>
             throw new Exception("Select condition must be an integer attribute")
