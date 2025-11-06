@@ -110,12 +110,6 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
 
-    val skip_verify = parsed_args.skip_verify
-
-    val print_generic = parsed_args.print_generic
-
-    val passes = parsed_args.passes
-
     // TODO: more robust separator splitting
     val input_chunks =
       if parsed_args.split_input_file then input.mkString.split("\n// -----\n")
@@ -149,13 +143,13 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       val processed_module: Either[String, Operation] =
         input_module.flatMap(input_module =>
           var module =
-            if skip_verify then Right(input_module)
+            if parsed_args.skip_verify then Right(input_module)
             else input_module.structured.flatMap(_.verify())
           // verify parsed content
           module match
             case Right(op) =>
               // apply the specified passes
-              passes
+              parsed_args.passes
                 .map(ctx.getPass(_).get)
                 .foldLeft(module)((module, pass) => module.map(pass.transform))
             case Left(errorMsg) =>
@@ -164,7 +158,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         )
 
       {
-        val printer = new Printer(print_generic)
+        val printer = new Printer(parsed_args.print_generic)
         processed_module.fold(
           printer.print,
           printer.printTopLevel
