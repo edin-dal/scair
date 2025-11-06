@@ -20,8 +20,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val argparser =
       import argbuilder.*
       OParser.sequence(
-        programName("scair-run"),
-        head("scair-run", "0"),
+        commonHeaders,
         // The input file - defaulting to stdin
         arg[String]("file")
           .optional()
@@ -67,4 +66,5 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val output = interpreter.interpret(module_block, interpreterCtx)
     if output.isDefined then println(output.get)
 
-object ScairRun extends ScairRunBase
+object ScairRun extends ScairRunBase:
+  def toolName = "scair-run"

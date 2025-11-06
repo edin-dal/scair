@@ -26,7 +26,16 @@ abstract class ScairToolBase[Args]:
   final def registerPasses(): Unit =
     passes.foreach(ctx.registerPass)
 
+  final def commonHeaders =
+    val argbuilder = OParser.builder[Args]
+
+    OParser.sequence(
+      argbuilder.programName(toolName),
+      argbuilder.head(toolName, "0")
+    )
+
   def parseArgs(args: Array[String]): Args
+  def toolName: String
 
 case class ScairOptArgs(
     val allow_unregistered: Boolean = false,
@@ -47,8 +56,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     val argparser =
       import argbuilder.*
       OParser.sequence(
-        programName("scair-opt"),
-        head("scair-opt", "0"),
+        commonHeaders,
         // The input file - defaulting to stdin
         arg[String]("file")
           .optional()
@@ -166,4 +174,5 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       }
     )
 
-object ScairOpt extends ScairOptBase
+object ScairOpt extends ScairOptBase:
+  def toolName: String = "scair-opt"
