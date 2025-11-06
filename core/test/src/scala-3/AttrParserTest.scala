@@ -13,13 +13,12 @@ import java.io.*
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
 
   val ctx = MLContext()
-  val args = scair.core.utils.Args(allow_unregistered = true)
-  var parser = new Parser(ctx, args)
+  var parser = new Parser(ctx, allowUnregisteredDialect = true)
   var out = StringWriter()
   var printer = new Printer(true, p = PrintWriter(out))
 
   before {
-    parser = new Parser(ctx, args)
+    parser = new Parser(ctx, allowUnregisteredDialect = true)
     out = StringWriter()
     printer = new Printer(true, p = PrintWriter(out))
   }
