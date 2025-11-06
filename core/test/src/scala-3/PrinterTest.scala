@@ -85,7 +85,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
     )
     val expected = """%0 = "op1"(%1) ({
                      |  "op2"() : () -> ()
-                     |}) : (f32) -> (f32)
+                     |}) : (f32) -> f32
                      |""".stripMargin
     printer.print(operation)
     val result = out.toString()

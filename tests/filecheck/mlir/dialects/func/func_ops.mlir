@@ -43,11 +43,11 @@ func.func @multi_return_body(%a : i32) -> (i32, i32) {
 // CHECK-NEXT:      func.return
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @arg_rec(%0: index) -> index {
-// CHECK-NEXT:      %1 = "func.call"(%0) <{callee = @arg_rec}> : (index) -> (index)
+// CHECK-NEXT:      %1 = "func.call"(%0) <{callee = @arg_rec}> : (index) -> index
 // CHECK-NEXT:      func.return %1 : index
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @arg_rec_block(%0: index) -> index {
-// CHECK-NEXT:      %1 = "func.call"(%0) <{callee = @arg_rec_block}> : (index) -> (index)
+// CHECK-NEXT:      %1 = "func.call"(%0) <{callee = @arg_rec_block}> : (index) -> index
 // CHECK-NEXT:      func.return %1 : index
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func private @external_fn(i32) -> (i32, i32)

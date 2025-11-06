@@ -17,8 +17,8 @@ class PatternRewriterTest extends AnyFlatSpec:
     val parser = Parser(ctx, allowUnregisteredDialect = true)
     val input = parser
       .parseThis("""
-%0 = "test.op1"() : () -> (i32)
-%1 = "test.op2"(%0) : (i32) -> (i32)
+%0 = "test.op1"() : () -> i32
+%1 = "test.op2"(%0) : (i32) -> i32
 "test.op3"(%1) : (i32) -> ()
 """).get
       .value
@@ -42,8 +42,8 @@ class PatternRewriterTest extends AnyFlatSpec:
     Printer(p = new PrintWriter(baos)).print(input)
     baos.toString() shouldEqual
       """builtin.module {
-  %0 = "test.op1"() : () -> (i64)
-  %1 = "test.op2"(%0) : (i64) -> (i64)
+  %0 = "test.op1"() : () -> i64
+  %1 = "test.op2"(%0) : (i64) -> i64
   "test.op3"(%1) : (i64) -> ()
 }
 """

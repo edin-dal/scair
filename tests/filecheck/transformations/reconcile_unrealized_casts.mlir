@@ -2,12 +2,12 @@
 
 builtin.module {
   func.func @unusedCast(%0: i64) -> i64 {
-    %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> (i32)
+    %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> i32
     func.return %0 : i64
   }
   func.func @sameTypes(%0: i64) -> i64 {
-    %1 = "test.op"() : () -> (i64)
-    %2 = "builtin.unrealized_conversion_cast"(%1) : (i64) -> (i64)
+    %1 = "test.op"() : () -> i64
+    %2 = "builtin.unrealized_conversion_cast"(%1) : (i64) -> i64
     func.return %2 : i64
   }
   func.func @pair(%arg0: i64) -> i64 {
@@ -120,7 +120,7 @@ builtin.module {
 // CHECK-NEXT:      func.return %0 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @sameTypes(%0: i64) -> i64 {
-// CHECK-NEXT:      %1 = "test.op"() : () -> (i64)
+// CHECK-NEXT:      %1 = "test.op"() : () -> i64
 // CHECK-NEXT:      func.return %1 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @pair(%0: i64) -> i64 {
@@ -136,27 +136,27 @@ builtin.module {
 // CHECK-NEXT:      func.return %0 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @bifurcation(%0: i64) -> i64 {
-// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) : (i64, i64) -> (i64)
+// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) : (i64, i64) -> i64
 // CHECK-NEXT:      func.return %1 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @unusedBifurcation(%0: i64) -> i64 {
-// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) : (i64, i64) -> (i64)
+// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) : (i64, i64) -> i64
 // CHECK-NEXT:      func.return %1 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @liveSingleCast(%0: i64) -> i32 {
-// CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> (i32)
+// CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> i32
 // CHECK-NEXT:      func.return %1 : i32
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @liveChain(%0: i64) -> i32 {
-// CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> (i1)
-// CHECK-NEXT:      %2 = "builtin.unrealized_conversion_cast"(%1) : (i1) -> (i32)
+// CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> i1
+// CHECK-NEXT:      %2 = "builtin.unrealized_conversion_cast"(%1) : (i1) -> i32
 // CHECK-NEXT:      func.return %2 : i32
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @liveBifurcation(%0: i64) -> i64 {
-// CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> (i32)
-// CHECK-NEXT:      %2 = "builtin.unrealized_conversion_cast"(%1) : (i32) -> (i1)
-// CHECK-NEXT:      %3 = "arith.extsi"(%2) : (i1) -> (i64)
-// CHECK-NEXT:      %4 = "arith.addi"(%0, %3) : (i64, i64) -> (i64)
+// CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> i32
+// CHECK-NEXT:      %2 = "builtin.unrealized_conversion_cast"(%1) : (i32) -> i1
+// CHECK-NEXT:      %3 = "arith.extsi"(%2) : (i1) -> i64
+// CHECK-NEXT:      %4 = "arith.addi"(%0, %3) : (i64, i64) -> i64
 // CHECK-NEXT:      func.return %4 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @deadNToOneCast(%0: index, %1: index) {
@@ -172,7 +172,7 @@ builtin.module {
 // CHECK-NEXT:      func.return %0, %1 : index, index
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @emptyCast() -> index {
-// CHECK-NEXT:      %0 = "builtin.unrealized_conversion_cast"() : () -> (index)
+// CHECK-NEXT:      %0 = "builtin.unrealized_conversion_cast"() : () -> index
 // CHECK-NEXT:      func.return %0 : index
 // CHECK-NEXT:    }
 // CHECK-NEXT:  }

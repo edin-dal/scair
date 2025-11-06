@@ -16,7 +16,7 @@
 
 %2 = "affine.apply"(%zero, %zero) <{map = affine_map<(d0, d1) -> (d0 + d1, d1)>}> : (index, index) -> index
 
-%min = "affine.min"(%zero) <{"map" = affine_map<(d0) -> ((d0 + 41), d0)>}> : (index) -> index
+%min = "affine.min"(%zero) <{"map" = affine_map<(d0) -> (d0 + 41, d0)>}> : (index) -> index
 
 %same_value = "affine.load"(%memref, %zero, %zero) <{"map" = affine_map<(d0, d1) -> (d0, d1)>}> : (memref<2x3xf64>, index, index) -> f64
 
@@ -49,9 +49,9 @@
 // CHECK-NEXT:      "affine.yield"() : () -> ()
 // CHECK-NEXT:    }) : (index) -> ()
 // CHECK-NEXT:    "affine.store"(%1, %2) <{map = #map3}> : (f64, memref<2x3xf64>) -> ()
-// CHECK-NEXT:    %4 = "affine.apply"(%3, %3) <{map = #map4}> : (index, index) -> (index)
-// CHECK-NEXT:    %5 = "affine.min"(%3) <{map = #map5}> : (index) -> (index)
-// CHECK-NEXT:    %6 = "affine.load"(%2, %3, %3) <{map = #map6}> : (memref<2x3xf64>, index, index) -> (f64)
+// CHECK-NEXT:    %4 = "affine.apply"(%3, %3) <{map = #map4}> : (index, index) -> index
+// CHECK-NEXT:    %5 = "affine.min"(%3) <{map = #map5}> : (index) -> index
+// CHECK-NEXT:    %6 = "affine.load"(%2, %3, %3) <{map = #map6}> : (memref<2x3xf64>, index, index) -> f64
 // CHECK-NEXT:    "affine.if"() <{condition = #set}> ({
 // CHECK-NEXT:      "affine.yield"() : () -> ()
 // CHECK-NEXT:    }, {

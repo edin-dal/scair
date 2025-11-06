@@ -36,7 +36,7 @@ class TransformationsTest
     withClue("Operand Erasure: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
-                    | %2 = "test.op"(%0) : (i32) -> (i32)
+                    | %2 = "test.op"(%0) : (i32) -> i32
                     | "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
@@ -69,11 +69,11 @@ class TransformationsTest
         |   "test.op"() ({
         |       ^bb1(%6 : f32, %7 : f32, %8 : f32):
         |           "test.op"()  : () -> ()
-        |           %9 = "cmath.norm"(%6) : (f32) -> (f64)
-        |           %10 = "cmath.mul"(%7, %8) : (f32, f32) -> (f32)
+        |           %9 = "cmath.norm"(%6) : (f32) -> f64
+        |           %10 = "cmath.mul"(%7, %8) : (f32, f32) -> f32
         |       }) {attr = "this is it"} : () -> ()
-        |   %6 = "cmath.norm"(%3) : (f32) -> (f64)
-        |   %7 = "cmath.mul"(%4, %5) : (f32, f32) -> (f32)
+        |   %6 = "cmath.norm"(%3) : (f32) -> f64
+        |   %7 = "cmath.mul"(%4, %5) : (f32, f32) -> f32
         | }) : () -> (!cmath.complex<f32>, !cmath.complex<index>, !cmath.complex<f32>)""".stripMargin
 
       val Parsed.Success(value, _) = parser.parseThis(
@@ -98,12 +98,12 @@ class TransformationsTest
     withClue("Operand Insertion: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
-                    | %2 = "test.op"(%0) : (i32) -> (i32)
+                    | %2 = "test.op"(%0) : (i32) -> i32
                     | "test.op"() ({
                     |    ^bb0(%444 : f32, %555 : f32, %6666 : f32):
                     |        "test.op"()  : () -> ()
-                    |        %3 = "cmath.norm"(%1) : (i64) -> (f64)
-                    |        %4 = "cmath.mul"(%3, %2) : (f64, i32) -> (f32)
+                    |        %3 = "cmath.norm"(%1) : (i64) -> f64
+                    |        %4 = "cmath.mul"(%3, %2) : (f64, i32) -> f32
                     |    }) {attr = "this is it"} : () -> ()
                     | "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()

@@ -233,13 +233,15 @@ case class Printer(
       ")"
     )
     print(" -> ")
-    printListF(
-      op.results,
-      r => print(r.typ),
-      "(",
-      ", ",
-      ")"
-    )
+    if op.results.length == 1 then print(op.results.head.typ)
+    else
+      printListF(
+        op.results,
+        r => print(r.typ),
+        "(",
+        ", ",
+        ")"
+      )
 
   def print(op: Operation)(using indentLevel: Int = 0): Unit =
     print(indent * indentLevel)

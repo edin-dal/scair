@@ -6,7 +6,7 @@
 #set = affine_set<(d0, d1)[s0]: (d0 + d1 + s0 >= d1 + s0)>
 #set1 = affine_set<(d0, d1, d2)[s0, s1, s2]: (d0 == s0, d1 <= s1, d2 >= s2)>
 builtin.module {
-  %0 = "test.op"() {hello = "world", quoted = i3298} : () -> (i32)
+  %0 = "test.op"() {hello = "world", quoted = i3298} : () -> i32
   "test.op"() {hello = #map} : () -> ()
   "test.op"() {hello = #map1} : () -> ()
   "test.op"() {hello = #map2} : () -> ()
@@ -20,7 +20,7 @@ builtin.module {
 // CHECK-NEXT:  #set = affine_set<(d0, d1)[s0]: (d0 + d1 + s0 - d1 + s0 >= 0)>
 // CHECK-NEXT:  #set1 = affine_set<(d0, d1, d2)[s0, s1, s2]: (d0 - s0 == 0, d1 + s1 >= 0, d2 - s2 >= 0)>
 // CHECK-NEXT:  builtin.module {
-// CHECK-NEXT:    %0 = "test.op"() {hello = "world", quoted = i3298} : () -> (i32)
+// CHECK-NEXT:    %0 = "test.op"() {hello = "world", quoted = i3298} : () -> i32
 // CHECK-NEXT:    "test.op"() {hello = #map} : () -> ()
 // CHECK-NEXT:    "test.op"() {hello = #map1} : () -> ()
 // This to check the deduplicated map here
