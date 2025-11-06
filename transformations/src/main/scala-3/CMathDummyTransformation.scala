@@ -46,7 +46,7 @@ val TestReplacingDummyOperation = pattern {
 
     UnregisteredOperation(
       "replacedOp",
-      regions = Seq(Region(Seq(Block(operations = Seq(op1, op2, op3))))),
+      regions = Seq(Region(Block(operations = Seq(op1, op2, op3)))),
       results = Seq(StringData("replaced(i32)"), StringData("replaced(i64)"))
         .map(Result(_))
     )

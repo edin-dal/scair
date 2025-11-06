@@ -17,8 +17,7 @@ class IRDLPrinterTest extends AnyFlatSpec:
   val ctx = MLContext()
   ctx.registerDialect(BuiltinDialect)
   ctx.registerDialect(IRDL)
-  val args = scair.core.utils.Args()
-  var parser = new Parser(ctx, args)
+  var parser = new Parser(ctx)
 
   val module = parser.parseThis("""
 "builtin.module"() ({

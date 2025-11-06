@@ -33,12 +33,12 @@ object Func:
         Pass(args.map(_._2)) ~ parseResultTypes(
           parser
         ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser
-          .Region(args)
+          .RegionP(args)
     )) | (
       parser.ParenTypeList ~ parseResultTypes(
         parser
       ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(
-        new Region(Seq())
+        Region()
       )
     )))
       .map({

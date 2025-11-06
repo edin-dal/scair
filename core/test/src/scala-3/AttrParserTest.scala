@@ -13,13 +13,12 @@ import java.io.*
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
 
   val ctx = MLContext()
-  val args = scair.core.utils.Args(allow_unregistered = true)
-  var parser = new Parser(ctx, args)
+  var parser = new Parser(ctx, allowUnregisteredDialect = true)
   var out = StringWriter()
   var printer = new Printer(true, p = PrintWriter(out))
 
   before {
-    parser = new Parser(ctx, args)
+    parser = new Parser(ctx, allowUnregisteredDialect = true)
     out = StringWriter()
     printer = new Printer(true, p = PrintWriter(out))
   }
@@ -334,23 +333,21 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
               Seq(),
               Seq(
                 Region(
-                  Seq(
-                    Block(
-                      ListType(Value(F128)),
-                      BlockOperations(
-                        UnregisteredOperation(
-                          "test.op",
-                          Seq(),
-                          Seq(),
-                          Seq(
-                            Result(IntegerType(IntData(32), Signless)),
-                            Result(IntegerType(IntData(64), Signed)),
-                            Result(IntegerType(IntData(80), Unsigned))
-                          ),
-                          Seq(),
-                          _,
-                          _
-                        )
+                  Block(
+                    ListType(Value(F128)),
+                    BlockOperations(
+                      UnregisteredOperation(
+                        "test.op",
+                        Seq(),
+                        Seq(),
+                        Seq(
+                          Result(IntegerType(IntData(32), Signless)),
+                          Result(IntegerType(IntData(64), Signed)),
+                          Result(IntegerType(IntData(80), Unsigned))
+                        ),
+                        Seq(),
+                        _,
+                        _
                       )
                     )
                   )

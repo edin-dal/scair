@@ -7,7 +7,6 @@ import scair.transformations.*
 import scair.Parser
 import scair.Printer
 import scair.MLContext
-import scair.core.utils.Args
 import java.io.*
 
 class PatternRewriterTest extends AnyFlatSpec:
@@ -15,8 +14,7 @@ class PatternRewriterTest extends AnyFlatSpec:
   "PatternRewriterWalker" should "not trigger on removed operations" in {
     // Create a simple module with an operation
     val ctx = MLContext()
-    val args = Args(allow_unregistered = true)
-    val parser = Parser(ctx, args)
+    val parser = Parser(ctx, allowUnregisteredDialect = true)
     val input = parser
       .parseThis("""
 %0 = "test.op1"() : () -> (i32)

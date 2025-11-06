@@ -130,9 +130,9 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
     val block2 = new Block(operations = Seq(filler3, filler4))
     val block3 = new Block(operations = Seq(filler5, filler6))
 
-    val region1 = new Region(Seq(block1))
-    val region2 = new Region(Seq(block2))
-    val region3 = new Region(Seq(block3))
+    val region1 = Region(block1)
+    val region2 = Region(block2)
+    val region3 = Region(block3)
 
     val noterminator =
       new NoTerminatorOp(regions = Seq(region1, region2, region3))
@@ -153,8 +153,8 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
     val block2 = new Block(operations = Seq(filler3, filler4))
     val block3 = new Block(operations = Seq(filler5, filler6))
 
-    val region1 = new Region(Seq(block1, block2))
-    val region2 = new Region(Seq(block3))
+    val region1 = Region(block1, block2)
+    val region2 = Region(block3)
 
     val noterminator =
       new NoTerminatorOp(regions = Seq(region1, region2))
