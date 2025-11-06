@@ -6,6 +6,7 @@ import scair.exceptions.VerifyException
 import scair.ir.*
 import scopt.OParser
 
+import scala.io.BufferedSource
 import scala.io.Source
 
 abstract class ScairToolBase[Args]:
@@ -36,6 +37,7 @@ abstract class ScairToolBase[Args]:
 
   def parseArgs(args: Array[String]): Args
   def toolName: String
+  def parse(args: Args)(input: BufferedSource): Array[Either[String, Operation]]
 
 case class ScairOptArgs(
     val allow_unregistered: Boolean = false,
@@ -49,6 +51,38 @@ case class ScairOptArgs(
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
+
+  override def parse(args: ScairOptArgs)(
+      input: BufferedSource
+  ): Array[Either[String, Operation]] =
+    // TODO: more robust separator splitting
+    val input_chunks =
+      if args.split_input_file then input.mkString.split("\n// -----\n")
+      else Array(input.mkString)
+    input_chunks.map(input =>
+      // Parse content
+      val parser = new scair.Parser(
+        ctx,
+        inputPath = args.input,
+        parsingDiagnostics = args.parsing_diagnostics,
+        allowUnregisteredDialect = args.allow_unregistered
+      )
+      val parsedModule = parser.parseThis(
+        input,
+        pattern = parser.TopLevel(using _)
+      ) match
+        case fastparse.Parsed.Success(input_module, _) =>
+          Right(input_module)
+        case failure: fastparse.Parsed.Failure =>
+          Left(parser.error(failure))
+
+      if !args.parsing_diagnostics then
+        parsedModule match
+          case Left(msg)     => throw Exception(msg)
+          case Right(module) => ()
+
+      parsedModule
+    )
 
   override def parseArgs(args: Array[String]): ScairOptArgs =
     // Define CLI args
@@ -110,41 +144,15 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
 
-    // TODO: more robust separator splitting
-    val input_chunks =
-      if parsed_args.split_input_file then input.mkString.split("\n// -----\n")
-      else Array(input.mkString)
+    val inputModules = parse(parsed_args)(input)
 
-    // Parse content
-
-    input_chunks.foreach(chunk =>
-
-      val input_module =
-        val parser = new scair.Parser(
-          ctx,
-          inputPath = parsed_args.input,
-          parsingDiagnostics = parsed_args.parsing_diagnostics,
-          allowUnregisteredDialect = parsed_args.allow_unregistered
-        )
-        parser.parseThis(
-          chunk,
-          pattern = parser.TopLevel(using _)
-        ) match
-          case fastparse.Parsed.Success(input_module, _) =>
-            Right(input_module)
-          case failure: fastparse.Parsed.Failure =>
-            Left(parser.error(failure))
-
-      if !parsed_args.parsing_diagnostics then
-        input_module match
-          case Left(msg) => throw Exception(msg)
-          case Right(_)  => ()
+    inputModules.foreach(inputModule =>
 
       val processed_module: Either[String, Operation] =
-        input_module.flatMap(input_module =>
+        inputModule.flatMap(inputModule =>
           var module =
-            if parsed_args.skip_verify then Right(input_module)
-            else input_module.structured.flatMap(_.verify())
+            if parsed_args.skip_verify then Right(inputModule)
+            else inputModule.structured.flatMap(_.verify())
           // verify parsed content
           module match
             case Right(op) =>
@@ -163,7 +171,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
           printer.print,
           printer.printTopLevel
         )
-        if chunk != input_chunks.last then printer.print("// -----\n")
+        if inputModule != inputModules.last then printer.print("// -----\n")
         printer.flush()
       }
     )
