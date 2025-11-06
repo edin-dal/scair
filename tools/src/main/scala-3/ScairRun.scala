@@ -6,8 +6,8 @@ import scopt.OParser
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 import scala.io.BufferedSource
+import scala.io.Source
 
 case class ScairRunArgs(
     val input: Option[String] = None
