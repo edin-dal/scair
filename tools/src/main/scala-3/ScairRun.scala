@@ -1,7 +1,5 @@
 package scair.tools
 
-import scair.MLContext
-import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 import scopt.OParser
@@ -10,28 +8,15 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
-trait ScairRunBase:
-  val ctx = MLContext()
+case class ScairRunArgs(
+    val input: Option[String] = None
+)
 
-  register_all_dialects()
-  register_all_passes()
+trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
-  def allDialects =
-    scair.utils.allDialects
-
-  def allPasses =
-    scair.utils.allPasses
-
-  final def register_all_dialects(): Unit =
-    for dialect <- allDialects do ctx.registerDialect(dialect)
-
-  final def register_all_passes(): Unit =
-    for pass <- allPasses do ctx.registerPass(pass)
-
-  def run(args: Array[String]): Unit =
-
+  override def parseArgs(args: Array[String]): ScairRunArgs =
     // Define CLI args
-    val argbuilder = OParser.builder[Args]
+    val argbuilder = OParser.builder[ScairRunArgs]
     val argparser =
       import argbuilder.*
       OParser.sequence(
@@ -45,7 +30,11 @@ trait ScairRunBase:
       )
 
     // Parse the CLI args
-    val parsed_args = OParser.parse(argparser, args, Args()).get
+    OParser.parse(argparser, args, ScairRunArgs()).get
+
+  def main(args: Array[String]): Unit =
+
+    val parsed_args = parseArgs(args)
 
     // Open the input file or stdin
     val input = parsed_args.input match
@@ -56,7 +45,7 @@ trait ScairRunBase:
     // ONE CHUNK ONLY
 
     val input_module =
-      val parser = new scair.Parser(ctx, parsed_args)
+      val parser = new scair.Parser(ctx, inputPath = parsed_args.input)
       parser.parseThis(
         input.mkString,
         pattern = parser.TopLevel(using _)
@@ -65,9 +54,6 @@ trait ScairRunBase:
           Right(input_module)
         case failure: fastparse.Parsed.Failure =>
           Left(parser.error(failure))
-
-    if !parsed_args.parsing_diagnostics && input_module.isLeft then
-      throw new Exception(input_module.left.get)
 
     // casted as moduleOp
     val module = input_module.right.get.asInstanceOf[ModuleOp]
@@ -81,5 +67,4 @@ trait ScairRunBase:
     val output = interpreter.interpret(module_block, interpreterCtx)
     if output.isDefined then println(output.get)
 
-object ScairRun extends ScairRunBase:
-  def main(args: Array[String]): Unit = run(args)
+object ScairRun extends ScairRunBase

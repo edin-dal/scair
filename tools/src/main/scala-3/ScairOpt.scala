@@ -2,35 +2,48 @@ package scair.tools
 
 import scair.MLContext
 import scair.Printer
-import scair.core.utils.Args
 import scair.exceptions.VerifyException
 import scair.ir.*
 import scopt.OParser
 
 import scala.io.Source
 
-trait ScairOptBase:
+abstract class ScairToolBase[Args]:
   val ctx = MLContext()
 
-  register_all_dialects()
-  register_all_passes()
+  registerDialects()
+  registerPasses()
 
-  def allDialects =
+  def dialects =
     scair.utils.allDialects
 
-  def allPasses =
+  def passes =
     scair.utils.allPasses
 
-  final def register_all_dialects(): Unit =
-    for dialect <- allDialects do ctx.registerDialect(dialect)
+  final def registerDialects(): Unit =
+    dialects.foreach(ctx.registerDialect)
 
-  final def register_all_passes(): Unit =
-    for pass <- allPasses do ctx.registerPass(pass)
+  final def registerPasses(): Unit =
+    passes.foreach(ctx.registerPass)
 
-  def run(args: Array[String]): Unit =
+  def parseArgs(args: Array[String]): Args
 
+case class ScairOptArgs(
+    val allow_unregistered: Boolean = false,
+    val input: Option[String] = None,
+    val skip_verify: Boolean = false,
+    val split_input_file: Boolean = false,
+    val parsing_diagnostics: Boolean = false,
+    val print_generic: Boolean = false,
+    val passes: Seq[String] = Seq(),
+    val verify_diagnostics: Boolean = false
+)
+
+trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
+
+  override def parseArgs(args: Array[String]): ScairOptArgs =
     // Define CLI args
-    val argbuilder = OParser.builder[Args]
+    val argbuilder = OParser.builder[ScairOptArgs]
     val argparser =
       import argbuilder.*
       OParser.sequence(
@@ -78,7 +91,11 @@ trait ScairOptBase:
       )
 
     // Parse the CLI args
-    val parsed_args = OParser.parse(argparser, args, Args()).get
+    OParser.parse(argparser, args, ScairOptArgs()).get
+
+  def main(args: Array[String]): Unit =
+
+    val parsed_args = parseArgs(args)
 
     // Open the input file or stdin
     val input = parsed_args.input match
@@ -101,7 +118,12 @@ trait ScairOptBase:
     input_chunks.foreach(chunk =>
 
       val input_module =
-        val parser = new scair.Parser(ctx, parsed_args)
+        val parser = new scair.Parser(
+          ctx,
+          inputPath = parsed_args.input,
+          parsingDiagnostics = parsed_args.parsing_diagnostics,
+          allowUnregisteredDialect = parsed_args.allow_unregistered
+        )
         parser.parseThis(
           chunk,
           pattern = parser.TopLevel(using _)
@@ -144,5 +166,4 @@ trait ScairOptBase:
       }
     )
 
-object ScairOpt extends ScairOptBase:
-  def main(args: Array[String]): Unit = run(args)
+object ScairOpt extends ScairOptBase

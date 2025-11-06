@@ -5,7 +5,6 @@ import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.clair.macros.DerivedOperationCompanion
-import scair.core.utils.Args
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
@@ -403,8 +402,10 @@ object Parser:
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
 final class Parser(
-    val context: MLContext,
-    val args: Args = Args(),
+    context: MLContext,
+    inputPath: Option[String] = None,
+    parsingDiagnostics: Boolean = false,
+    allowUnregisteredDialect: Boolean = false,
     attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
     typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
 ) extends AttrParser(context, attributeAliases, typeAliases):
@@ -438,9 +439,9 @@ final class Parser(
 
     // Build the error message.
     val msg =
-      s"Parse error at ${args.input.getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced.label}"
+      s"Parse error at ${inputPath.getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced.label}"
 
-    if args.parsing_diagnostics then msg
+    if parsingDiagnostics then msg
     else
       Console.err.println(msg)
       sys.exit(1)
@@ -560,7 +561,7 @@ final class Parser(
         )
 
       case None =>
-        if args.allow_unregistered then
+        if allowUnregisteredDialect then
           new UnregisteredOperation(
             name = opName,
             operands = operands,
