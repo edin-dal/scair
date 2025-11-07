@@ -245,16 +245,15 @@ object Parser:
 
   inline def EscapedP[$: P] = P(
     ("\\" ~~ (
-      "n" ~~ Pass("\n")
-        | "t" ~~ Pass("\t")
-        | "\\" ~~ Pass("\\")
-        | "\"" ~~ Pass("\"")
+      "n" ~~ Pass('\n')
+        | "t" ~~ Pass('\t')
+        | "\\" ~~ Pass('\\')
+        | "\"" ~~ Pass('\"')
         | CharIn("a-fA-F0-9")
           .repX(exactly = 2)
           .!
-          .map(Integer.parseInt(_, 16).toChar.toString)
-    ))
-      | Pass("")
+          .map(Integer.parseInt(_, 16).toChar)
+    )).repX.map(chars => String(chars.toArray))
   )
 
   def StringLiteral[$: P] = P(
