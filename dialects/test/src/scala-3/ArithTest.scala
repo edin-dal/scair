@@ -62,8 +62,8 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
     out.toString().trim() shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {
-    %1 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
-    %2 = "arith.addi"(%0, %1) : (i32, i32) -> (i32)
+    %1 = "arith.constant"() <{value = 0 : i32}> : () -> i32
+    %2 = "arith.addi"(%0, %1) : (i32, i32) -> i32
     func.return %2 : i32
   }
 }

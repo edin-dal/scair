@@ -211,7 +211,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |  %5, %6, %7 = "test.op"()[^bb0] : () -> (i1, i16, i32)
                      |  "test.op"(%6, %5) : (i16, i1) -> ()
                      |^bb2(%8: i64):
-                     |  %9 = "test.op"() : () -> (index)
+                     |  %9 = "test.op"() : () -> index
                      |  "test.op"(%9) : (index) -> ()
                      |}) : () -> ()
                      |""".stripMargin
@@ -304,7 +304,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |    %5, %6, %7 = "test.op"()[^bb0] : () -> (i1, i16, i32)
                      |    "test.op"(%6, %5) : (i16, i1) -> ()
                      |  ^bb2(%8: i64):
-                     |    %9 = "test.op"() : () -> (index)
+                     |    %9 = "test.op"() : () -> index
                      |    "test.op"(%9) : (index) -> ()
                      |  }) : () -> ()""".stripMargin
 

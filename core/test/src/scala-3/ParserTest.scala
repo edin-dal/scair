@@ -461,7 +461,7 @@ class ParserTest
     withClue("Operand Erasure: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
-                    | %2 = "test.op"(%0) : (i32) -> (i32)
+                    | %2 = "test.op"(%0) : (i32) -> i32
                     | "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
