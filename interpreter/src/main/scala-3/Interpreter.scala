@@ -10,12 +10,12 @@ import scair.ir.*
 class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
   // keeping buffer function for extensibility
-  def interpret(block: Block, ctx: InterpreterCtx): Option[Any] =
+  def interpret(block: Block, ctx: RunTimeCtx): Option[Any] =
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
 
   // main operation interpretation function
-  def interpret_op(op: Operation, ctx: InterpreterCtx): Unit =
+  def interpret_op(op: Operation, ctx: RunTimeCtx): Unit =
     op match
       case func_op: func.Func =>
         interpret_function(func_op, ctx)
@@ -136,14 +136,14 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
 
   def interpret_block_or_op(
       value: Operation | Block,
-      ctx: InterpreterCtx
+      ctx: RunTimeCtx
   ): Unit =
     value match
       case op: Operation => interpret_op(op, ctx)
       case block: Block  =>
         for op <- block.operations do interpret_op(op, ctx)
 
-  def interpret_function(function: func.Func, ctx: InterpreterCtx): Unit =
+  def interpret_function(function: func.Func, ctx: RunTimeCtx): Unit =
     // if main, interpret it immediately by creating a call operation and evaluating it
     if function.sym_name.stringLiteral == "main" then
       val main_ctx = FunctionCtx(
@@ -159,10 +159,10 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
       )
       interpret_call(new_call, ctx)
     else
-      // function definition; no call, add function and current running context functionCtx to interpreter context
+      // function definition; no call, add function and current running context FunctionCtx to interpreter context
       ctx.add_func_ctx(function)
 
-  def interpret_call(call_op: func.Call, ctx: InterpreterCtx): Unit =
+  def interpret_call(call_op: func.Call, ctx: RunTimeCtx): Unit =
     for func_ctx <- ctx.funcs do
       if func_ctx.name == call_op.callee.rootRef.stringLiteral then
         interpret_block_or_op(func_ctx.body, func_ctx.saved_ctx)
