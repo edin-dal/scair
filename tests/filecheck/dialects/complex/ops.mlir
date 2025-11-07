@@ -37,15 +37,15 @@ builtin.module {
 // CHECK-NEXT:    func.func @ops(%0: f32) {
 // CHECK-NEXT:      %1 = complex.constant [0.1 : f64, -1.0 : f64] : complex<f64>
 // CHECK-NEXT:      %2 = complex.constant [0.1 : f32, -1.0 : f32] : complex<f32>
-// CHECK-NEXT:      %3 = "complex.create"(%0, %0) : (f32, f32) -> (complex<f32>)
-// CHECK-NEXT:      %4 = "complex.re"(%3) : (complex<f32>) -> (f32)
-// CHECK-NEXT:      %5 = "complex.im"(%3) : (complex<f32>) -> (f32)
-// CHECK-NEXT:      %6 = "complex.abs"(%3) : (complex<f32>) -> (f32)
-// CHECK-NEXT:      %7 = "complex.add"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
-// CHECK-NEXT:      %8 = "complex.div"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
-// CHECK-NEXT:      %9 = "complex.mul"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
-// CHECK-NEXT:      %10 = "complex.neg"(%3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> (complex<f32>)
-// CHECK-NEXT:      %11 = "complex.sub"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> (complex<f32>)
+// CHECK-NEXT:      %3 = "complex.create"(%0, %0) : (f32, f32) -> complex<f32>
+// CHECK-NEXT:      %4 = "complex.re"(%3) : (complex<f32>) -> f32
+// CHECK-NEXT:      %5 = "complex.im"(%3) : (complex<f32>) -> f32
+// CHECK-NEXT:      %6 = "complex.abs"(%3) : (complex<f32>) -> f32
+// CHECK-NEXT:      %7 = "complex.add"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> complex<f32>
+// CHECK-NEXT:      %8 = "complex.div"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> complex<f32>
+// CHECK-NEXT:      %9 = "complex.mul"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> complex<f32>
+// CHECK-NEXT:      %10 = "complex.neg"(%3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>) -> complex<f32>
+// CHECK-NEXT:      %11 = "complex.sub"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (complex<f32>, complex<f32>) -> complex<f32>
 // CHECK-NEXT:      func.return
 // CHECK-NEXT:    }
 // CHECK-NEXT:  }

@@ -3,10 +3,10 @@
 "test.op"() {"function_type" = (index, f32) -> f64} : () -> ()
 #alias = "aliased"
 !alias = i32
-%0 = "test.op"() {aliased = #alias} : () -> (!alias)
+%0 = "test.op"() {aliased = #alias} : () -> !alias
 "test.op"() {emptyString = "", escapedString = "He\"ll\"o"} : () -> ()
 
 // CHECK:  "test.op"() {1 = array<i32>, 2 = array<f64: 0.0, 2.0, 8.0>} : () -> ()
 // CHECK:  "test.op"() {function_type = (index, f32) -> f64} : () -> ()
-// CHECK:  %0 = "test.op"() {aliased = "aliased"} : () -> (i32)
+// CHECK:  %0 = "test.op"() {aliased = "aliased"} : () -> i32
 // CHECK:  "test.op"() {emptyString = "", escapedString = "He\"ll\"o"} : () -> ()

@@ -9,67 +9,67 @@
 #map1 = affine_map<()[] -> (0)>
 #map2 = affine_map<()[] -> (4)>
 func.func @simple_constant() -> (i32, i32) {
-  %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-  %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+  %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
   func.return %0, %1 : i32, i32
 }
 // CHECK-NEXT:    func.func @simple_constant() -> (i32, i32) {
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:      func.return %0, %0 : i32, i32
 // CHECK-NEXT:    }
 
 func.func @simple_float_constant() -> (f32, f32) {
-  %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
-  %1 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
+  %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> f32
+  %1 = "arith.constant"() <{value = 1.0 : f32}> : () -> f32
   func.return %0, %1 : f32, f32
 }
 // CHECK-NEXT:    func.func @simple_float_constant() -> (f32, f32) {
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> (f32)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> f32
 // CHECK-NEXT:      func.return %0, %0 : f32, f32
 // CHECK-NEXT:    
 
 func.func @basic() -> (index, index) {
-  %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-  %1 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-  %2 = "affine.apply"(%0) <{map = #map}> : (index) -> (index)
-  %3 = "affine.apply"(%1) <{map = #map}> : (index) -> (index)
+  %0 = "arith.constant"() <{value = 0 : index}> : () -> index
+  %1 = "arith.constant"() <{value = 0 : index}> : () -> index
+  %2 = "affine.apply"(%0) <{map = #map}> : (index) -> index
+  %3 = "affine.apply"(%1) <{map = #map}> : (index) -> index
   func.return %2, %3 : index, index
 }
 // CHECK-NEXT:    func.func @basic() -> (index, index) {
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : index}> : () -> (index)
-// CHECK-NEXT:      %1 = "affine.apply"(%0) <{map = #map}> : (index) -> (index)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : index}> : () -> index
+// CHECK-NEXT:      %1 = "affine.apply"(%0) <{map = #map}> : (index) -> index
 // CHECK-NEXT:      func.return %1, %1 : index, index
 // CHECK-NEXT:    }
 
 func.func @many(%0: f32, %1: f32) -> f32 {
-  %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %3 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %4 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %5 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %6 = "arith.addf"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %7 = "arith.addf"(%4, %5) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %8 = "arith.addf"(%2, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %9 = "arith.addf"(%6, %7) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %10 = "arith.addf"(%7, %8) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-  %11 = "arith.addf"(%9, %10) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+  %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %3 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %4 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %5 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %6 = "arith.addf"(%2, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %7 = "arith.addf"(%4, %5) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %8 = "arith.addf"(%2, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %9 = "arith.addf"(%6, %7) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %10 = "arith.addf"(%7, %8) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+  %11 = "arith.addf"(%9, %10) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
   func.return %11 : f32
 }
 // CHECK-NEXT:    func.func @many(%0: f32, %1: f32) -> f32 {
-// CHECK-NEXT:      %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      %3 = "arith.addf"(%2, %2) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      %4 = "arith.addf"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
-// CHECK-NEXT:      %5 = "arith.addf"(%4, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> (f32)
+// CHECK-NEXT:      %2 = "arith.addf"(%0, %1) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:      %3 = "arith.addf"(%2, %2) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:      %4 = "arith.addf"(%3, %3) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:      %5 = "arith.addf"(%4, %4) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
 // CHECK-NEXT:      func.return %5 : f32
 // CHECK-NEXT:    }
 
 func.func @different_ops() -> (i32, i32) {
-  %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
-  %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  %0 = "arith.constant"() <{value = 0 : i32}> : () -> i32
+  %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
   func.return %0, %1 : i32, i32
 }
 // CHECK-NEXT:    func.func @different_ops() -> (i32, i32) {
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : i32}> : () -> (i32)
-// CHECK-NEXT:      %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : i32}> : () -> i32
+// CHECK-NEXT:      %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:      func.return %0, %1 : i32, i32
 // CHECK-NEXT:    }
 
@@ -82,40 +82,40 @@ func.func @different_ops() -> (i32, i32) {
 // }) : () -> ()
 
 func.func @different_attributes(%0: index, %1: index) -> (i1, i1, i1) {
-  %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> (i1)
-  %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> (i1)
-  %4 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> (i1)
+  %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> i1
+  %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> i1
+  %4 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> i1
   func.return %2, %3, %4 : i1, i1, i1
 }
 // CHECK-NEXT:    func.func @different_attributes(%0: index, %1: index) -> (i1, i1, i1) {
-// CHECK-NEXT:      %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> (i1)
-// CHECK-NEXT:      %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> (i1)
+// CHECK-NEXT:      %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> i1
+// CHECK-NEXT:      %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> i1
 // CHECK-NEXT:      func.return %2, %3, %3 : i1, i1, i1
 // CHECK-NEXT:    }
 
 func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
-  %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
-  %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+  %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+  %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
   func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
 }
 // CHECK-NEXT:    func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
-// CHECK-NEXT:      %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
-// CHECK-NEXT:      %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> (memref<2x1xf32>)
+// CHECK-NEXT:      %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+// CHECK-NEXT:      %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
 // CHECK-NEXT:      func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
 // CHECK-NEXT:    }
 
 func.func @down_propagate_for() {
-  %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
   "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
   ^bb0(%1: index):
-    %2 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo"(%0, %2) : (i32, i32) -> ()
     "affine.yield"() : () -> ()
   }) : () -> ()
   func.return
 }
 // CHECK-NEXT:    func.func @down_propagate_for() {
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:      "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
 // CHECK-NEXT:      ^bb0(%1: index):
 // CHECK-NEXT:        "foo"(%0, %0) : (i32, i32) -> ()
@@ -138,21 +138,21 @@ func.func @down_propagate_for() {
 func.func @up_propagate_for() -> i32 {
   "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
   ^bb0(%0: index):
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo"(%1) : (i32) -> ()
     "affine.yield"() : () -> ()
   }) : () -> ()
-  %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
   func.return %0 : i32
 }
 // CHECK-NEXT:    func.func @up_propagate_for() -> i32 {
 // CHECK-NEXT:      "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
 // CHECK-NEXT:      ^bb0(%0: index):
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:        "foo"(%1) : (i32) -> ()
 // CHECK-NEXT:        "affine.yield"() : () -> ()
 // CHECK-NEXT:      }) : () -> ()
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:      func.return %0 : i32
 // CHECK-NEXT:    }
 
@@ -188,25 +188,25 @@ func.func @up_propagate_for() -> i32 {
 /// This test checks that nested regions that are isolated from above are
 /// properly handled.
 func.func @nested_isolated() -> i32 {
-  %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+  %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
   func.func @nested_func() {
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo.yield"(%1) : (i32) -> ()
   }
   "foo.region"() ({
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo.yield"(%1) : (i32) -> ()
   }) : () -> ()
   func.return %0 : i32
 }
 // CHECK-NEXT:    func.func @nested_isolated() -> i32 {
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:      func.func @nested_func() {
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:        "foo.yield"(%1) : (i32) -> ()
 // CHECK-NEXT:      }
 // CHECK-NEXT:      "foo.region"() ({
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:        "foo.yield"(%1) : (i32) -> ()
 // CHECK-NEXT:      }) : () -> ()
 // CHECK-NEXT:      func.return %0 : i32
@@ -222,17 +222,17 @@ func.func @nested_isolated() -> i32 {
 /// here!
 func.func @use_before_def() {
   "test.graph_region"() ({
-    %0 = "arith.addi"(%1, %2) : (i32, i32) -> (i32)
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
-    %2 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+    %0 = "arith.addi"(%1, %2) : (i32, i32) -> i32
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo.yield"(%0) : (i32) -> ()
   }) : () -> ()
   func.return
 }
 // CHECK-NEXT:    func.func @use_before_def() {
 // CHECK-NEXT:      "test.graph_region"() ({
-// CHECK-NEXT:        %0 = "arith.addi"(%1, %1) : (i32, i32) -> (i32)
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> (i32)
+// CHECK-NEXT:        %0 = "arith.addi"(%1, %1) : (i32, i32) -> i32
+// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:        "foo.yield"(%0) : (i32) -> ()
 // CHECK-NEXT:      }) : () -> ()
 // CHECK-NEXT:      func.return
