@@ -240,13 +240,29 @@ object Parser:
 
   inline def nonExcludedCharacter(c: Char): Boolean =
     c: @switch match
-      case '\"' | '\n' | '\f' | '\u000B' | '\r' => false
-      case _                                    => true
+      case '"' | '\\' => false
+      case _          => true
 
-  inline def notExcluded[$: P] =
-    CharsWhile(nonExcludedCharacter)
+  inline def EscapedP[$: P] = P(
+    ("\\" ~~ (
+      "n" ~~ Pass("\n")
+        | "t" ~~ Pass("\t")
+        | "\\" ~~ Pass("\\")
+        | "\"" ~~ Pass("\"")
+        | CharIn("a-fA-F0-9")
+          .repX(exactly = 2)
+          .!
+          .map(Integer.parseInt(_, 16).toChar.toString)
+    ))
+      | Pass("")
+  )
 
-  def StringLiteral[$: P] = P("\"" ~~ notExcluded.! ~~ "\"")
+  def StringLiteral[$: P] = P(
+    "\"" ~~ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP)
+      .map(_ + _)
+      .repX
+      .map(_.mkString) ~~ "\""
+  )
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||   IDENTIFIERS   ||
@@ -585,7 +601,7 @@ final class Parser(
 
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?
-  )
+  )./
 
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
