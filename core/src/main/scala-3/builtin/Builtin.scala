@@ -201,7 +201,23 @@ final case class StringData(stringLiteral: String)
     derives TransparentData:
 
   override def custom_print(p: Printer) =
-    p.print("\"", stringLiteral, "\"")(using 0)
+    //       ("\\" ~~ (
+    //   "n"  ~~ Pass("\n")
+    // | "t"  ~~ Pass("\t")
+    // | "\\" ~~ Pass("\\")
+    // | "\"" ~~ Pass("\"")
+    p.print(
+      "\"",
+      stringLiteral.flatMap((c: Char) =>
+        c match
+          case '\n' => "\\n"
+          case '\t' => "\\t"
+          case '\\' => "\\\\"
+          case '"'  => "\\\""
+          case _    => c.toString()
+      ),
+      "\""
+    )(using 0)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   SHAPED TYPE    ||
