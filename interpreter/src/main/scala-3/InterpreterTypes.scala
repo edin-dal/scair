@@ -7,16 +7,22 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
-// interpreter context class stores variables, memory, function definitions and the current result
-class RunTimeCtx(
+type OperationImpl = (Operation, RuntimeCtx) => Unit
+
+final case class InterpreterDialects(
+    val implementations: Seq[OperationImpl]
+)
+
+// interpreter context class stores variables, function definitions and the current result
+class RuntimeCtx(
     val vars: mutable.Map[Value[Attribute], Any],
     val funcs: ListBuffer[FunctionCtx],
     var result: Option[Any] = None
 ):
 
   // creates independent context
-  def clone_ctx(): RunTimeCtx =
-    RunTimeCtx(
+  def deep_clone_ctx(): RuntimeCtx =
+    RuntimeCtx(
       mutable.Map() ++ this.vars,
       ListBuffer() ++ this.funcs,
       None
@@ -26,7 +32,7 @@ class RunTimeCtx(
   def add_func_ctx(function: func.Func): Unit =
     val func_ctx = FunctionCtx(
       name = function.sym_name,
-      saved_ctx = this.clone_ctx(),
+      saved_ctx = this.deep_clone_ctx(),
       body = function.body.blocks.head
     )
     this.funcs.append(func_ctx)
@@ -34,7 +40,7 @@ class RunTimeCtx(
 // function context class for saving a context at the function's definition (cannot use values defined after the function itself)
 case class FunctionCtx(
     name: String,
-    saved_ctx: RunTimeCtx,
+    saved_ctx: RuntimeCtx,
     body: Block
 )
 

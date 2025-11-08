@@ -17,7 +17,7 @@ trait ArithmeticEvaluator:
   def interpret_bin_op(
       lhs: Value[Attribute],
       rhs: Value[Attribute],
-      ctx: RunTimeCtx
+      ctx: RuntimeCtx
   )(combine: (Int, Int) => Int): Int =
     val lval = lookup_op(lhs, ctx)
     val rval = lookup_op(rhs, ctx)
@@ -31,7 +31,7 @@ trait ArithmeticEvaluator:
       lhs: Value[Attribute],
       rhs: Value[Attribute],
       predicate: Int,
-      ctx: RunTimeCtx
+      ctx: RuntimeCtx
   ): Boolean =
     val lval = lookup_op(lhs, ctx)
     val rval = lookup_op(rhs, ctx)

@@ -1,19 +1,15 @@
 package scair.tools
 
 import scala.collection.mutable
-
-final case class InterpreterDialects(
-    val implementations: Seq[Any]
-)
-
-val allInterpreterDialects: Seq[InterpreterDialects] = Seq(
-    InterpreterDialects(Seq())
-)
+import scair.ir.*
 
 case class InterpreterContext(
     val interpreterDialects: Seq[InterpreterDialects],
-    val implementationCtx: mutable.Map[String,Any]
+    val implementationCtx: mutable.Map[Operation, OperationImpl]
 ):
-    def registerImplementations(): Seq[Any] = Seq()
+    def registerImplementations(dialects: InterpreterDialects): Unit =
+        for impl <- dialects.implementations do
+            None
+
 
 

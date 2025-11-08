@@ -65,10 +65,10 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var runTimeCtx =
-      new RunTimeCtx(mutable.Map(), ListBuffer(), None)
+    var runtimeCtx =
+      new RuntimeCtx(mutable.Map(), ListBuffer(), None)
 
-    val output = interpreter.interpret(module_block, runTimeCtx)
+    val output = interpreter.interpret(module_block, runtimeCtx)
 
     if output.isDefined then
       if output.get == 1 then println("true")
