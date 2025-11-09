@@ -3,17 +3,20 @@ package scair.tools
 import scala.collection.mutable
 import scair.ir.*
 
-type OperationImpl = (Operation, RuntimeCtx) => Unit
+case class OpImpl(opType: Class[? <: Operation], run: (Operation, RuntimeCtx) => Unit)
 
-final case class InterpreterDialects(
-    val implementations: Seq[OperationImpl]
+final case class InterpreterDialect(
+    val implementations: Seq[OpImpl]
 )
 
+inline def summonImplementations(impls: Seq[OpImpl]): InterpreterDialect = 
+    new InterpreterDialect(impls)
+
 case class InterpreterContext(
-    val interpreterDialects: Seq[InterpreterDialects],
-    val implementationCtx: mutable.Map[Operation, OperationImpl]
+    val interpreterDialects: Seq[InterpreterDialect],
+    val implementationCtx: mutable.Map[? <: Operation, OpImpl]
 ):
-    def registerImplementations(dialects: InterpreterDialects): Unit =
+    def registerImplementations(dialects: InterpreterDialect): Unit =
         for impl <- dialects.implementations do
             None
 
