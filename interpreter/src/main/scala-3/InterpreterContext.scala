@@ -12,7 +12,6 @@ case class InterpreterContext(
     val implementationCtx: mutable.Map[Class[? <: Operation], OpImpl[? <: Operation]]
 ):
     def registerInterpreterDialects(dialects: Seq[InterpreterDialect]): Unit =
-        println("reached")
         for dialect <- dialects do
             registerImplementations(dialect)
 
