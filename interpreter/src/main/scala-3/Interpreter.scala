@@ -35,102 +35,45 @@ class Interpreter:
 
       // Binary Operations
       case addI_op: arith.AddI =>
-        ctx.vars.put(
-          addI_op.result,
-          interpret_bin_op(addI_op.lhs, addI_op.rhs, ctx)(_ + _)
-        )
+        run_addi(addI_op, ctx)
       case subI_op: arith.SubI =>
-        ctx.vars.put(
-          subI_op.result,
-          interpret_bin_op(subI_op.lhs, subI_op.rhs, ctx)(_ - _)
-        )
+        run_subi(subI_op, ctx)
       case mulI_op: arith.MulI =>
-        ctx.vars.put(
-          mulI_op.result,
-          interpret_bin_op(mulI_op.lhs, mulI_op.rhs, ctx)(_ * _)
-        )
+        run_muli(mulI_op, ctx)
       case div_op: arith.DivSI =>
-        ctx.vars.put(
-          div_op.result,
-          interpret_bin_op(div_op.lhs, div_op.rhs, ctx)(_ / _)
-        )
+        run_divsi(div_op, ctx)
       case div_op: arith.DivUI =>
-        ctx.vars.put(
-          div_op.result,
-          interpret_bin_op(div_op.lhs, div_op.rhs, ctx)(_ / _)
-        )
+        run_divui(div_op, ctx)
       case andI_op: arith.AndI =>
-        ctx.vars.put(
-          andI_op.result,
-          interpret_bin_op(andI_op.lhs, andI_op.rhs, ctx)(_ & _)
-        )
+        run_andi(andI_op, ctx)
       case orI_op: arith.OrI =>
-        ctx.vars.put(
-          orI_op.result,
-          interpret_bin_op(orI_op.lhs, orI_op.rhs, ctx)(_ | _)
-        )
+        run_ori(orI_op, ctx)
       case xorI_op: arith.XOrI =>
-        ctx.vars.put(
-          xorI_op.result,
-          interpret_bin_op(xorI_op.lhs, xorI_op.rhs, ctx)(_ ^ _)
-        )
+        run_xori(xorI_op, ctx)
 
       // Shift Operations
       case shli_op: arith.ShLI =>
-        ctx.vars.put(
-          shli_op.result,
-          interpret_bin_op(shli_op.lhs, shli_op.rhs, ctx)(_ << _)
-        )
+        run_shli(shli_op, ctx)
       case shrsi_op: arith.ShRSI =>
-        ctx.vars.put(
-          shrsi_op.result,
-          interpret_bin_op(shrsi_op.lhs, shrsi_op.rhs, ctx)(_ >> _)
-        )
+        run_shrsi( shrsi_op, ctx)
       case shrui_op: arith.ShRUI =>
-        ctx.vars.put(
-          shrui_op.result,
-          interpret_bin_op(shrui_op.lhs, shrui_op.rhs, ctx)(_ >>> _)
-        )
+        run_shrui(shrui_op, ctx)
 
       // Comparison Operation
       case cmpi_op: arith.CmpI =>
-        ctx.vars.put(
-          cmpi_op.result,
-          interpret_cmp_op(
-            cmpi_op.lhs,
-            cmpi_op.rhs,
-            cmpi_op.predicate.value.toInt,
-            ctx
-          )
-        )
+        run_cmpi(cmpi_op, ctx)
 
       // Select Operation
       case select_op: arith.SelectOp =>
-        val cond_val = lookup_op(select_op.condition, ctx)
-        cond_val match
-          case condOp: Int =>
-            condOp match
-              case 0 =>
-                ctx.vars.put(
-                  select_op.result,
-                  lookup_op(select_op.falseValue, ctx)
-                )
-              case 1 =>
-                ctx.vars.put(
-                  select_op.result,
-                  lookup_op(select_op.trueValue, ctx)
-                )
-              case _ => throw new Exception("Select condition must be 0 or 1")
-          case _ =>
-            throw new Exception("Select condition must be an integer attribute")
+        run_select(select_op, ctx)
 
       // Memory operations
       case alloc_op: memref.Alloc =>
-        allocate_memory(alloc_op, ctx)
+        run_alloc(alloc_op, ctx)
       case load_op: memref.Load =>
-        load_memory(load_op, ctx)
+        run_load(load_op, ctx)
       case store_op: memref.Store =>
-        store_memory(store_op, ctx)
+        run_store(store_op, ctx)
       case _ => throw new Exception("Unsupported operation when interpreting")
 
   def interpret_block_or_op(

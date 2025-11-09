@@ -12,7 +12,13 @@ def lookup_op(value: Value[Attribute], ctx: RuntimeCtx): Any =
   ctx.vars.getOrElse(
     value,
     throw new Exception(s"Value $value} not found in context")
-)
+  )
+
+// helper function to summon implementations into an InterpreterDialect
+inline def summonImplementations(
+    impls: Seq[OpImpl[? <: Operation]]
+): InterpreterDialect =
+  new InterpreterDialect(impls)
 
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
