@@ -7,7 +7,7 @@ import scair.dialects.memref
 import scair.ir.*
 
 // INTERPRETER CLASS
-class Interpreter extends ArithmeticEvaluator with MemoryHandler:
+class Interpreter extends ArithmeticEvaluator:
 
   // keeping buffer function for extensibility
   def interpret(block: Block, ctx: RuntimeCtx): Option[Any] =
