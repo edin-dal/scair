@@ -67,6 +67,14 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val interpreter = new Interpreter()
     var runtimeCtx =
       new RuntimeCtx(mutable.Map(), ListBuffer(), None)
+    
+    val interpreterContext = new InterpreterContext(Seq(), mutable.Map())
+    
+    interpreterContext.registerInterpreterDialects(
+      Seq(
+        InterpreterMemrefDialect
+      )
+    )
 
     val output = interpreter.interpret(module_block, runtimeCtx)
 

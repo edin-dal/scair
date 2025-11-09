@@ -9,10 +9,6 @@ object OpImpl:
   def apply[T <: Operation : ClassTag](run: (T, RuntimeCtx) => Unit): OpImpl[T] =
     OpImpl(summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]], run)
 
-final case class InterpreterDialect(
-    val implementations: Seq[OpImpl[? <: Operation]]
-)
-
 // wrap into OpImpl here for readability
 inline def summonImplementations(impls: Seq[OpImpl[? <: Operation]]): InterpreterDialect = 
     new InterpreterDialect(impls)
