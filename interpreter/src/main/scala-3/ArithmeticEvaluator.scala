@@ -4,13 +4,14 @@ import scair.dialects.arith
 import scair.dialects.builtin.*
 import scair.ir.*
 
+// eventually just be Arith.scala
 trait ArithmeticEvaluator:
   self: Interpreter =>
 
-  def interpret_constant(constant: arith.Constant): Int =
-    constant.value match
+  def run_constant(op: arith.Constant, ctx: RuntimeCtx): Unit =
+    op.value match
       case value: IntegerAttr =>
-        value.value.toInt
+        ctx.vars.put(op.result, value.value.toInt)
       case _ =>
         throw new Exception("Unsupported value type for constant operation")
 

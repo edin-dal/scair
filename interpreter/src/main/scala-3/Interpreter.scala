@@ -30,9 +30,8 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
         else ctx.result = Some(return_results)
 
       // Constant Operation
-      case constant_op: arith.Constant =>
-        val value = interpret_constant(constant_op)
-        ctx.vars.put(constant_op.result, value)
+      case constant: arith.Constant =>
+        run_constant(constant, ctx)
 
       // Binary Operations
       case addI_op: arith.AddI =>

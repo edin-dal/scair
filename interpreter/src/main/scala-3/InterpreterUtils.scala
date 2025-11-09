@@ -7,10 +7,11 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
-type OperationImpl = (Operation, RuntimeCtx) => Unit
-
-final case class InterpreterDialects(
-    val implementations: Seq[OperationImpl]
+// lookup function for context variables
+def lookup_op(value: Value[Attribute], ctx: RuntimeCtx): Any =
+  ctx.vars.getOrElse(
+    value,
+    throw new Exception(s"Value $value} not found in context")
 )
 
 // interpreter context class stores variables, function definitions and the current result
