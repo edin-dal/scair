@@ -20,7 +20,6 @@ def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
   ctx.vars.get(value) match
     case Some(v: Int) => v
     case _ => throw new Exception(s"Bool-like ${value} not found in context")
-  
 
 // helper function to summon implementations into an InterpreterDialect
 inline def summonImplementations(

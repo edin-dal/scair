@@ -41,7 +41,7 @@ case class FunctionCtx(
 
 // custom ShapedArray class used for memory and other multi-dimensional data structures
 case class ShapedArray(
-    private val data: Array[Int],
+    private val data: Array[Any],
     shape: Seq[Int]
 ):
 
@@ -55,9 +55,9 @@ case class ShapedArray(
   private def offset(indices: Seq[Int]): Int =
     indices.zip(strides).map(_ * _).sum
 
-  def apply(indices: Seq[Int]): Int = data(offset(indices))
+  def apply(indices: Seq[Int]): Any = data(offset(indices))
 
-  def update(indices: Seq[Int], value: Int): Unit =
+  def update(indices: Seq[Int], value: Any): Unit =
     data(offset(indices)) = value
 
 
@@ -80,50 +80,50 @@ class Interpreter:
         run_return(return_op, ctx)
 
       // Constant Operation
-      case constant: arith.Constant =>
-        run_constant(constant, ctx)
+      case constant: arith.Constant => None
+        //run_constant(constant, ctx)
 
       // Binary Operations
       case addI_op: arith.AddI =>
-        run_addi(addI_op, ctx)
+        //run_addi(addI_op, ctx)
       case subI_op: arith.SubI =>
-        run_subi(subI_op, ctx)
+        //run_subi(subI_op, ctx)
       case mulI_op: arith.MulI =>
-        run_muli(mulI_op, ctx)
+        //run_muli(mulI_op, ctx)
       case div_op: arith.DivSI =>
-        run_divsi(div_op, ctx)
+        //run_divsi(div_op, ctx)
       case div_op: arith.DivUI =>
-        run_divui(div_op, ctx)
+        //run_divui(div_op, ctx)
       case andI_op: arith.AndI =>
-        run_andi(andI_op, ctx)
+        //run_andi(andI_op, ctx)
       case orI_op: arith.OrI =>
-        run_ori(orI_op, ctx)
+        //run_ori(orI_op, ctx)
       case xorI_op: arith.XOrI =>
-        run_xori(xorI_op, ctx)
+        //run_xori(xorI_op, ctx)
 
       // Shift Operations
       case shli_op: arith.ShLI =>
-        run_shli(shli_op, ctx)
+        //run_shli(shli_op, ctx)
       case shrsi_op: arith.ShRSI =>
-        run_shrsi( shrsi_op, ctx)
+        //run_shrsi( shrsi_op, ctx)
       case shrui_op: arith.ShRUI =>
-        run_shrui(shrui_op, ctx)
+        //run_shrui(shrui_op, ctx)
 
       // Comparison Operation
       case cmpi_op: arith.CmpI =>
-        run_cmpi(cmpi_op, ctx)
+        //run_cmpi(cmpi_op, ctx)
 
       // Select Operation
       case select_op: arith.SelectOp =>
-        run_select(select_op, ctx)
+        //run_select(select_op, ctx)
 
       // Memory operations
       case alloc_op: memref.Alloc =>
-        run_alloc(alloc_op, ctx)
+        //run_alloc(alloc_op, ctx)
       case load_op: memref.Load =>
-        run_load(load_op, ctx)
+        //run_load(load_op, ctx)
       case store_op: memref.Store =>
-        run_store(store_op, ctx)
+        //run_store(store_op, ctx)
       case _ => throw new Exception("Unsupported operation when interpreting")
 
   def interpret_block_or_op(
