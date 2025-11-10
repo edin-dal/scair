@@ -23,106 +23,61 @@ def run_constant(op: arith.Constant, ctx: RuntimeCtx): Unit =
 def run_addi(op: arith.AddI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs + rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for AddI operation")
+  ctx.vars.put(op.result, lhs + rhs)
 
 def run_subi(op: arith.SubI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs - rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for SubI operation")
+  ctx.vars.put(op.result, lhs - rhs)
 
 def run_muli(op: arith.MulI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs * rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for MulI operation")
+  ctx.vars.put(op.result, lhs * rhs)
 
 def run_divsi(op: arith.DivSI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs / rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for DivSI operation")
+  ctx.vars.put(op.result, lhs / rhs)
 
 def run_divui(op: arith.DivUI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs / rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for DivUI operation")
+  ctx.vars.put(op.result, lhs / rhs)
 
 def run_andi(op: arith.AndI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs & rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for AndI operation")
+  ctx.vars.put(op.result, lhs & rhs)
 
 def run_ori(op: arith.OrI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs | rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for OrI operation")
+  ctx.vars.put(op.result, lhs | rhs)
 
 def run_xori(op: arith.XOrI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs ^ rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for XorI operation")
+  ctx.vars.put(op.result, lhs ^ rhs)
 
 def run_shli(op: arith.ShLI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs << rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for ShLI operation")
+  ctx.vars.put(op.result, lhs << rhs)
 
 def run_shrsi(op: arith.ShRSI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs >> rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for ShRI operation")
+  ctx.vars.put(op.result, lhs >> rhs)
 
 def run_shrui(op: arith.ShRUI, ctx: RuntimeCtx): Unit = 
   val lhs = lookup_op(op.lhs, ctx)
   val rhs = lookup_op(op.rhs, ctx)
-  (lhs, rhs) match
-    case (lhs: Int, rhs: Int) =>
-      ctx.vars.put(op.result, lhs >>> rhs)
-    case _ =>
-      throw new Exception("Unsupported operand types for ShRLI operation")
+  ctx.vars.put(op.result, lhs >>> rhs)
 
 def run_cmpi(op: arith.CmpI, ctx: RuntimeCtx): Unit = 
-  // bad casting for now
-  val lhs = lookup_op(op.lhs, ctx).asInstanceOf[Int]
-  val rhs = lookup_op(op.rhs, ctx).asInstanceOf[Int]
+  val lhs = lookup_op(op.lhs, ctx)
+  val rhs = lookup_op(op.rhs, ctx)
 
   op.predicate.value.toInt match
     case 0 => // EQ
@@ -141,22 +96,18 @@ def run_cmpi(op: arith.CmpI, ctx: RuntimeCtx): Unit =
   
 
 def run_select(op: arith.SelectOp, ctx: RuntimeCtx): Unit = 
-  lookup_op(op.condition, ctx) match
-    case cond: Int =>
-      cond match
-        case 0 =>
-          ctx.vars.put(
-            op.result,
-            lookup_op(op.falseValue, ctx)
-          )
-        case 1 =>
-          ctx.vars.put(
-            op.result,
-            lookup_op(op.trueValue, ctx)
-          )
-        case _ => throw new Exception("Select condition must be 0 or 1")
-    case _ =>
-      throw new Exception("Select condition must be an integer attribute")
+  lookup_boollike(op.condition, ctx) match
+    case 0 =>
+      ctx.vars.put(
+        op.result,
+        lookup_op(op.falseValue, ctx)
+      )
+    case 1 =>
+      ctx.vars.put(
+        op.result,
+        lookup_op(op.trueValue, ctx)
+      )
+    case _ => throw new Exception("Select condition must be 0 or 1")
 
 val InterpreterArithDialect = summonImplementations(
   Seq(
