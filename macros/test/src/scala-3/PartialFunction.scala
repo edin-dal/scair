@@ -5,6 +5,7 @@ import flatspec.*
 
 import scair.macros.{popPF, mapInline, code}
 import org.scalactic.exceptions.NullArgumentException
+import scair.macros.stuff
 
 inline def p1(x: Int) = x + 1
 
@@ -78,3 +79,5 @@ class PartialFunctionTest extends AnyFlatSpec with should.Matchers:
     }
 }: scala.Int)
 """.strip())
+
+    stuff

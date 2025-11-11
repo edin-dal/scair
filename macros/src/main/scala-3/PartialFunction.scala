@@ -101,6 +101,89 @@ inline def code(inline expr: Any): String =
 def codeImpl(expr: Expr[Any])(using Quotes): Expr[String] =
   Expr(expr.show)
 
+type ValueT = Int
+
+opaque type Value[Name <: String] <: ValueT = ValueT
+
+import scala.compiletime._
+
+inline def summonOption[T] =
+  summonFrom {
+    case t: T => Some(t)
+    case _    => None
+  }
+def varOrImpl[Name <: String : Type](name: Expr[String], value: Expr[ValueT], next: Expr[Unit])(using Quotes) =
+  import quotes.reflect.*
+  println(s"varOrImpl for ${name.valueOrAbort} / ${value.show}")
+  // Expr.summon[Value[Name]] match
+  //   case Some(v) =>
+  //     '{
+        
+  //       println(s"found ${$name} = ${$v}, have ${$value}")
+  //     }
+  //   case None => 
+  //     '{
+  //       println(s"${$name} not found, have ${$value}")
+  //       given Value[Name] = $value
+  //       $next
+  //     }
+      
+  // '{
+  //   println(s"${$name} not found, have ${$value}")
+  //   given Value[Name] = $value
+  //   $next
+  // }
+  '{
+    summonOption[Value[Name]] match
+      case Some(v) =>
+        println(s"found ${$name} = $v, have ${$value}")
+      case None    => 
+        println(s"${$name} not found, have ${$value}")
+        given Value[Name] = $value
+        $next
+  }
+
+inline def varOrMacro[Name <: String](inline name: String, inline value: ValueT, inline next: Unit) =
+  ${ varOrImpl[Name]('name, 'value, 'next) }
+
+inline def varOr[Name <: String](inline value: ValueT, inline next: => Unit) =
+  val name = constValue[Name]
+  varOrMacro(name, value, next)
+
+inline def stuff: Unit = ${ stuffImpl }
+
+def stuffImpl(using Quotes): Expr[Unit] =
+
+
+  val bExpansion = varOrImpl["X"]('{"X"}, '{2}, '{()})
+  varOrImpl["X"]('{"X"}, '{1}, bExpansion)
+
+// def stuffImpl(using Quotes): Expr[Unit] =
+//   import quotes.reflect.*
+
+//   val aGiven = '{ "hello from macroA" }
+
+//   // manually call macroBImpl inside this macro
+//   val bExpansion = '{macroB}
+//   '{
+//     given String = $aGiven
+//     $bExpansion
+//   }
+
+inline def macroB = ${ macroBImpl}
+
+inline def summonString =
+  summonFrom[String] {
+      case s: String => s
+      case _         => "no string found"
+    }
+
+def macroBImpl(using Quotes): Expr[Unit] =
+  '{
+    println("macroB got: " + summonString)
+  }
+  
+
 // inline def combinePF[A, B](inline pfs: PartialFunction[A, B]*) =
 //   ${ combinePFImpl('pfs) }
 
