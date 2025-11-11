@@ -150,13 +150,24 @@ inline def varOr[Name <: String](inline value: ValueT, inline next: => Unit) =
   val name = constValue[Name]
   varOrMacro(name, value, next)
 
+inline def varOfChain(a : (Quotes) => Expr[Unit] => Expr[Unit], b : (Quotes) => Expr[Unit] => Expr[Unit], s: Expr[Unit]) : (Quotes) => Expr[Unit] =
+  ${ varOfChainImpl('a, 'b, 's) }
+
 inline def stuff: Unit = ${ stuffImpl }
 
 def stuffImpl(using Quotes): Expr[Unit] =
 
 
-  val bExpansion = varOrImpl["X"]('{"X"}, '{2}, '{()})
-  varOrImpl["X"]('{"X"}, '{1}, bExpansion)
+  // val bExpansion = varOrImpl["X"]('{"X"}, '{2}, '{()})
+  // varOrImpl["X"]('{"X"}, '{1}, bExpansion)
+
+  val b = 
+    (q: Quotes) => (next: Expr[Unit]) => varOrImpl["X"]('{"X"}, '{2}, next)(using Type.of["X"], q)
+  val a =
+    (q: Quotes) => (next: Expr[Unit]) => varOrImpl["X"]('{"X"}, '{1}, next)(using Type.of["X"], q)
+  
+  val chain = varOfChain(a, b, '{()})
+  chain(quotes)
 
 // def stuffImpl(using Quotes): Expr[Unit] =
 //   import quotes.reflect.*
