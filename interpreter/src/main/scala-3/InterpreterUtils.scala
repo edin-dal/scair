@@ -2,6 +2,16 @@ package scair.tools
 
 import scair.ir.*
 import scair.dialects.builtin.*
+import scala.collection.mutable
+
+val interpreterContext = InterpreterContext(
+      Seq(
+        InterpreterFuncDialect,
+        InterpreterArithDialect,
+        InterpreterMemrefDialect
+      ),
+      mutable.Map()
+    )
 
 // type maps from operation to its resulting lookup type
 // base case is Int (may have issues later)

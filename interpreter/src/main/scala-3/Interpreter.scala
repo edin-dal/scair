@@ -74,10 +74,11 @@ class Interpreter:
     op match
       case func_op: func.Func =>
         interpret_function(func_op, ctx)
+        val interpreterCtx = scair.tools.interpreterContext
 
       // Return Operation
       case return_op: func.Return =>
-        run_return(return_op, ctx)
+        //run_return(return_op, ctx)
 
       // Constant Operation
       case constant: arith.Constant => None
