@@ -16,7 +16,7 @@ abstract class ScairToolBase[Args]:
   registerPasses()
 
   def dialects =
-    scair.utils.allDialects
+    scair.dialects.allDialects
 
   def passes =
     scair.passes.allPasses

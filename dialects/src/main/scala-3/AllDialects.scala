@@ -1,4 +1,4 @@
-package scair.utils
+package scair.dialects
 
 import scair.dialects.affine.AffineDialect
 import scair.dialects.arith.ArithDialect
@@ -20,7 +20,6 @@ val allDialects: Seq[Dialect] =
     Complex,
     MathDialect,
     Test,
-    // Clair
     IRDL,
     ArithDialect,
     MemrefDialect,
