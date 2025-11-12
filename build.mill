@@ -114,7 +114,7 @@ trait JvmScairModule
 
   lazy val test = new ScairTests {}
 
-trait GraalScairModule extends JvmScairModule with NativeImageModule
+trait GraalScairModule extends ScairSettings with NativeImageModule
     with PlatformScalaModule:
   override def enableBsp = false
   override def jvmId = "graalvm-community:24.0.1"
@@ -122,17 +122,12 @@ trait GraalScairModule extends JvmScairModule with NativeImageModule
   override def nativeImageOptions =
     Seq("--no-fallback", "--initialize-at-build-time")
 
-trait NativeScairModule extends JvmScairModule with ScalaNativeModule
+trait NativeScairModule extends ScairSettings with ScalaNativeModule
     with PlatformScalaModule:
   override def enableBsp = false
   override def scalaNativeVersion = "0.5.8"
   override def nativeLTO: Simple[LTO] = LTO.Full
   override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
-
-  override object scoverage extends ScairScoverageData:
-    override object test extends ScairScoverageTests with ScalaNativeTests {}
-
-  override object test extends ScairTests with ScalaNativeTests
 
 trait ScairModule extends JvmScairModule:
   def jvmModule = ModuleRef(this)
@@ -305,12 +300,12 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   // Define a testAll to run the full framework testing infrastructure
   def testAll(evaluator: Evaluator) = Command {
-    runAll("_.test", evaluator)()
+    runAll("__:ScairModule.test", evaluator)()
     filechecks.run()()
   }
 
   def scoverage(evaluator: Evaluator) = Command(exclusive = true) {
-    runAll("_.scoverage.test", evaluator)()
+    runAll("__:ScairModule.scoverage.test", evaluator)()
     filechecks.scoverage.run()()
     xmlReportAll(evaluator)()
   }
