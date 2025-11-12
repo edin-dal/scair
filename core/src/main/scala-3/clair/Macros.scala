@@ -10,7 +10,6 @@ import scair.clair.codegen.*
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.scairdl.constraints.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 
@@ -366,29 +365,18 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
             s"Expected ${${ Expr(segmentSizesName) }} property"
           )
 
-    ParametrizedAttrConstraint[DenseArrayAttr](
-      Seq(
-        EqualAttr(IntegerType(IntData(32), Signless)),
-        AllOf(
-          Seq(
-            BaseAttr[IntegerAttr](),
-            ParametrizedAttrConstraint[IntegerAttr](
-              Seq(
-                BaseAttr[IntData](),
-                EqualAttr(IntegerType(IntData(32), Signless))
-              )
-            )
-          )
-        )
+    if dense.typ != I32 then
+      throw new Exception(
+        s"Expected ${${ Expr(segmentSizesName) }} to be of element type i32"
       )
-    ).verify(dense, scair.scairdl.constraints.ConstraintContext())
 
-    for (s <- dense) yield s match
-      case right: IntegerAttr => right.value.data.toInt
-      case _                  =>
+    dense.map {
+      case IntegerAttr(IntData(value), eltpe) if eltpe == I32 => value.toInt
+      case _                                                  =>
         throw new Exception(
-          "Unreachable exception as per above constraint check."
+          s"Expected ${${ Expr(segmentSizesName) }} to contain IntegerAttr of i32"
         )
+    }
   }
 
 /** Partition a construct sequence, in the case of no variadic defintion.
