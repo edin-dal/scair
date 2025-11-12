@@ -1,43 +1,13 @@
-package scair.tools
+package scair.tools.opt
 
-import scair.MLContext
 import scair.Printer
 import scair.exceptions.VerifyException
 import scair.ir.*
+import scair.tools.ScairToolBase
 import scopt.OParser
 
 import scala.io.BufferedSource
 import scala.io.Source
-
-abstract class ScairToolBase[Args]:
-  val ctx = MLContext()
-
-  registerDialects()
-  registerPasses()
-
-  def dialects =
-    scair.dialects.allDialects
-
-  def passes =
-    scair.passes.allPasses
-
-  final def registerDialects(): Unit =
-    dialects.foreach(ctx.registerDialect)
-
-  final def registerPasses(): Unit =
-    passes.foreach(ctx.registerPass)
-
-  final def commonHeaders =
-    val argbuilder = OParser.builder[Args]
-
-    OParser.sequence(
-      argbuilder.programName(toolName),
-      argbuilder.head(toolName, "0")
-    )
-
-  def parseArgs(args: Array[String]): Args
-  def toolName: String
-  def parse(args: Args)(input: BufferedSource): Array[Either[String, Operation]]
 
 case class ScairOptArgs(
     val allow_unregistered: Boolean = false,
@@ -51,6 +21,10 @@ case class ScairOptArgs(
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
+
+  override def dialects = scair.dialects.allDialects
+
+  override def passes = scair.passes.allPasses
 
   override def parse(args: ScairOptArgs)(
       input: BufferedSource

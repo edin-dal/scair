@@ -1,4 +1,4 @@
-package scair.tools
+package scair.interpreter
 
 import scair.dialects.func
 import scair.ir.*

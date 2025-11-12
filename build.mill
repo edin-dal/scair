@@ -136,7 +136,7 @@ trait NativeScairModule extends JvmScairModule with ScalaNativeModule
 
 trait ScairModule extends JvmScairModule:
   def jvmModule = ModuleRef(this)
-  def moduleDeps: Seq[ScairModule] = Seq()
+  override def moduleDeps: Seq[ScairModule] = Seq()
 
   lazy val graal: GraalScairModule = new GraalScairModule:
     override def moduleDeps = jvmModule().moduleDeps.map(_.graal)
@@ -236,30 +236,27 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
     override def generatedSources = scalaFiles()
-    def moduleDeps = Seq(core)
+    override def moduleDeps = Seq(core)
 
   object passes extends ScairModule:
-    def moduleDeps = Seq(dialects)
+    override def moduleDeps = Seq(dialects)
 
   object interpreter extends ScairModule:
-    def moduleDeps = Seq(dialects)
-
-  object opt extends ScairModule:
-
-    override def moduleDir: Path = tools.moduleDir
-    def moduleDeps = Seq(dialects, passes, interpreter)
-
-    override def mainClass = Some("scair.tools.ScairOpt")
-
-  object runTool extends ScairModule:
-
-    override def moduleDir: Path = tools.moduleDir
-    def moduleDeps = Seq(dialects, passes, interpreter)
-
-    override def mainClass = Some("scair.tools.ScairRun")
+    override def moduleDeps = Seq(dialects)
 
   object tools extends ScairModule:
-    def moduleDeps = Seq(opt, runTool)
+
+    override def moduleDeps = Seq(core)
+
+    object runTool extends ScairModule:
+      override def moduleDeps = Seq(dialects, interpreter, tools)
+
+      override def mainClass = Some("scair.tools.runTool.ScairRun")
+
+    object opt extends ScairModule:
+      override def moduleDeps = Seq(dialects, passes, tools)
+
+      override def mainClass = Some("scair.tools.opt.ScairOpt")
 
   // Top-level commands and helpers
 
@@ -347,17 +344,17 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
   object filechecks extends filechecks:
-    override def scairOpt = opt.launcher
-    override def scairRun = runTool.launcher
+    override def scairOpt = tools.opt.launcher
+    override def scairRun = tools.runTool.launcher
 
     object scoverage extends filechecks:
-      override def scairOpt = opt.scoverage.launcher
-      override def scairRun = runTool.scoverage.launcher
+      override def scairOpt = tools.opt.scoverage.launcher
+      override def scairRun = tools.runTool.scoverage.launcher
 
     object graal extends filechecks:
-      override def scairOpt = opt.graal.nativeImage
-      override def scairRun = runTool.launcher
+      override def scairOpt = tools.opt.graal.nativeImage
+      override def scairRun = tools.runTool.launcher
 
     object native extends filechecks:
-      override def scairOpt = opt.native.nativeLink
-      override def scairRun = runTool.launcher
+      override def scairOpt = tools.opt.native.nativeLink
+      override def scairRun = tools.runTool.launcher
