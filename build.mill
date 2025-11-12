@@ -32,13 +32,14 @@ import java.io.PrintWriter
 import os.Path
 import mill.api.Task.Simple
 import mill.scalalib.PlatformScalaModule
+import mill.scalalib.PublishModule
 import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
 import mill.scalanativelib.api.ReleaseMode
 import java.lang.reflect.InvocationTargetException
 import mill.javalib.PlatformModuleBase
 
-trait ScairSettings extends ScalaModule:
+trait ScairSettings extends ScalaModule with PublishModule:
   def scoverageVersion = Task { "2.3.0" }
 
   override def scalaVersion = "3.7.1"
@@ -46,21 +47,10 @@ trait ScairSettings extends ScalaModule:
   override def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
 
-trait JvmScairModule
-    extends ScalafixModule
-    with SonatypeCentralPublishModule
-    with ScoverageModule
-    with ScairSettings:
-
-  trait ScairTests extends ScalaTests with TestModule.ScalaTest:
-    override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.19")
-    // This was necessary to cooperate with graalvm at time of writing.
-    // Please remove if unit tests work fine without it in the future.
-    override def testParallelism = false
-
-  def outer = ModuleRef(this)
-
   override def artifactName = s"scair-${super.artifactName()}"
+
+  override def publishVersion =
+    VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -82,6 +72,20 @@ trait JvmScairModule
       )
     )
   )
+
+trait JvmScairModule
+    extends ScalafixModule
+    with SonatypeCentralPublishModule
+    with ScoverageModule
+    with ScairSettings:
+
+  trait ScairTests extends ScalaTests with TestModule.ScalaTest:
+    override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.19")
+    // This was necessary to cooperate with graalvm at time of writing.
+    // Please remove if unit tests work fine without it in the future.
+    override def testParallelism = false
+
+  def outer = ModuleRef(this)
 
   // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
   // dependencies. This enforces that everything ScaIR is transitively compiled with
@@ -110,9 +114,6 @@ trait JvmScairModule
   override lazy val scoverage: ScairScoverageData = new ScairScoverageData:
     override def mainClass = outer().mainClass
 
-  override def publishVersion =
-    VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
-
   lazy val test = new ScairTests {}
 
 trait GraalScairModule extends ScairSettings with NativeImageModule:
@@ -132,15 +133,6 @@ trait ScairModule extends JvmScairModule with GraalScairModule:
   def jvmModule = ModuleRef(this)
   override def moduleDeps: Seq[ScairModule] = Seq()
 
-  // object graal extends GraalScairModule:
-  //   override def mvnDeps = jvmModule().mvnDeps
-
-  //   override def generatedSources: Simple[Seq[PathRef]] =
-  //     jvmModule().generatedSources
-
-  //   override def mainClass: Simple[Option[String]] =
-  //     jvmModule().mainClass()
-
   lazy val native: NativeScairModule = new NativeScairModule:
     override def moduleDeps = jvmModule().moduleDeps.map(_.native)
     override def mvnDeps = jvmModule().mvnDeps
@@ -158,22 +150,15 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   override def artifactName = "scair-all"
 
+  override def moduleDeps = allChildren.collect {
+    case m: ScairModule => m
+  }
+
   override def unidocOptions =
     super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
   override def unidocVersion = Task { Some("0.5.0") }
   override def unidocDocumentTitle = Task { "ScaIR Unidoc" }
-
-  override def unidocSourceFiles =
-    (Seq(compile().classes) ++ Task
-      .traverse(transitiveModuleDeps)(_.compile)()
-      .map(_.classes))
-      .filter(pr => os.exists(pr.path))
-      .flatMap(pr => os.walk(pr.path))
-      .filter(_.ext == "tasty")
-      .map(PathRef(_))
-
-  override def moduleDeps = Seq(tools)
 
   def rootPath = moduleDir
 
