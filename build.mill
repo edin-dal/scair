@@ -36,6 +36,7 @@ import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
 import mill.scalanativelib.api.ReleaseMode
 import java.lang.reflect.InvocationTargetException
+import mill.javalib.PlatformModuleBase
 
 trait ScairSettings extends ScalaModule:
   def scoverageVersion = Task { "2.3.0" }
@@ -114,9 +115,7 @@ trait JvmScairModule
 
   lazy val test = new ScairTests {}
 
-trait GraalScairModule extends ScairSettings with NativeImageModule
-    with PlatformScalaModule:
-  override def enableBsp = false
+trait GraalScairModule extends ScairSettings with NativeImageModule:
   override def jvmId = "graalvm-community:24.0.1"
 
   override def nativeImageOptions =
@@ -129,19 +128,18 @@ trait NativeScairModule extends ScairSettings with ScalaNativeModule
   override def nativeLTO: Simple[LTO] = LTO.Full
   override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
 
-trait ScairModule extends JvmScairModule:
+trait ScairModule extends JvmScairModule with GraalScairModule:
   def jvmModule = ModuleRef(this)
   override def moduleDeps: Seq[ScairModule] = Seq()
 
-  lazy val graal: GraalScairModule = new GraalScairModule:
-    override def moduleDeps = jvmModule().moduleDeps.map(_.graal)
-    override def mvnDeps = jvmModule().mvnDeps
+  // object graal extends GraalScairModule:
+  //   override def mvnDeps = jvmModule().mvnDeps
 
-    override def generatedSources: Simple[Seq[PathRef]] =
-      jvmModule().generatedSources
+  //   override def generatedSources: Simple[Seq[PathRef]] =
+  //     jvmModule().generatedSources
 
-    override def mainClass: Simple[Option[String]] =
-      jvmModule().mainClass()
+  //   override def mainClass: Simple[Option[String]] =
+  //     jvmModule().mainClass()
 
   lazy val native: NativeScairModule = new NativeScairModule:
     override def moduleDeps = jvmModule().moduleDeps.map(_.native)
@@ -157,6 +155,8 @@ trait ScairModule extends JvmScairModule:
     super.sources() :+ PathRef(moduleDir / "build")
 
 object `package` extends ScairSettings with ScoverageReport with UnidocModule:
+
+  override def artifactName = "scair-all"
 
   override def unidocOptions =
     super.unidocOptions() ++ Seq("-snippet-compiler:compile")
@@ -175,7 +175,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   override def moduleDeps = Seq(tools)
 
-  def rootModule = ModuleRef(this)
+  def rootPath = moduleDir
 
   object utils extends ScairModule
 
@@ -320,8 +320,6 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
     // Define a Mill command to run filechecks
     def run() = Task.Command(exclusive = true) {
-      // Get the directory root to use as lit's working directory
-      val rootPath = rootModule().moduleDir
       // Run lit, forwarding it the relevant scair-opt through the env var
       val litStatus = os
         .proc("lit", "tests/filecheck", "-v")
@@ -347,7 +345,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
       override def scairRun = tools.runTool.scoverage.launcher
 
     object graal extends filechecks:
-      override def scairOpt = tools.opt.graal.nativeImage
+      override def scairOpt = tools.opt.nativeImage
       override def scairRun = tools.runTool.launcher
 
     object native extends filechecks:
