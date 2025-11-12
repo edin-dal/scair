@@ -8,12 +8,6 @@ import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.ir.*
-import scair.scairdl.constraints.BaseAttr
-import scair.scairdl.constraints.ConstraintContext
-
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -437,24 +431,40 @@ final case class DenseIntOrFPElementsAttr(
 
   def elementType = typ.elementType
 
-  val int_or_float = BaseAttr[IntegerType | FloatType]()
-
   override def custom_verify(): Either[String, Unit] =
-    Try(int_or_float.verify(elementType, new ConstraintContext())) match
-      case Success(_) =>
-        Try(
-          for x <- data.attrValues do
-            int_or_float.verify(
-              x match
-                case IntegerAttr(_, t) => t
-                case FloatAttr(_, t)   => t
-              ,
-              new ConstraintContext()
-            )
-        ) match
-          case Success(_) => Right(())
-          case Failure(e) => Left(e.getMessage)
-      case Failure(e) => Left(e.getMessage)
+    val tpe = elementType match
+      case it: IntegerType => Right(it)
+      case ft: FloatType   => Right(ft)
+      case _               =>
+        Left(
+          s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: ${elementType}"
+        )
+
+    data.attrValues
+      .foldLeft[Either[String, Any]](
+        tpe
+      )((acc, elt) =>
+        acc.map(tpe =>
+          elt match
+            case IntegerAttr(_, etyp) =>
+              if tpe == etyp then acc
+              else
+                Left(
+                  s"DenseIntOrFPElementsAttr data element type ${etyp} does not match expected type ${tpe}"
+                )
+            case FloatAttr(_, etyp) =>
+              if tpe == etyp then acc
+              else
+                Left(
+                  s"DenseIntOrFPElementsAttr data element type ${etyp} does not match expected type ${tpe}"
+                )
+            case _ =>
+              Left(
+                s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: ${elt}"
+              )
+        )
+      )
+      .map(_ => ())
 
   override def custom_print(p: Printer) =
     val values = data.attrValues(0) match
