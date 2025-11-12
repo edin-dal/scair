@@ -7,6 +7,8 @@ import scair.Parser
 import scair.Parser.BareId
 import scair.Parser.ValueId
 import scair.Printer
+import scair.clair.macros.DerivedOperation
+import scair.clair.macros.summonDialect
 import scair.dialects.builtin.*
 import scair.ir.*
 
@@ -81,11 +83,11 @@ case class ResultTable(
 //   SetResultOp   //
 // ==-----------== //
 
-object SetResultOp extends OperationCompanion:
-  override def name: String = "subop.set_result"
+object SetResultOp:
+  def name: String = "subop.set_result"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
+  def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
   ): P[Operation] = P(
@@ -110,51 +112,11 @@ object SetResultOp extends OperationCompanion:
   // ==----------------------== //
 
 case class SetResultOp(
-    override val operands: Seq[Value[Attribute]],
-    override val successors: Seq[Block],
-    override val results: Seq[Result[Attribute]],
-    override val regions: Seq[Region],
-    override val properties: Map[String, Attribute],
-    override val attributes: DictType[String, Attribute]
-) extends BaseOperation(
-      name = "subop.set_result",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    ):
-
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length,
-    properties.size
-  ) match
-    case (1, 0, 0, 0, 0) =>
-      attributes.get("result_id") match
-        case Some(x) =>
-          x match
-            case _: IntegerAttr => Right(this)
-            case _              =>
-              Left(
-                "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
-              )
-        case _ =>
-          Left(
-            "SetResultOp Operation's 'result_id' must be of type IntegerAttr."
-          )
-    case _ =>
-      Left(
-        "SetResultOp Operation must have 1 operand, 0 successors, 0 results, 0 regions and 0 properties."
-      )
-
-val SubOperatorOps: Dialect =
-  new Dialect(
-    operations = Seq(SetResultOp),
-    attributes = Seq(ResultTable)
-  )
-
+    result_id: IntegerAttr,
+    state: Operand[Attribute]
+) extends DerivedOperation["subop.set_result", SetResultOp]
 // !subop.result_table<[avg_disc$0 : !db.decimal<31, 21>, count_order$0 : i64]>
+
+val SubOperatorOps: Dialect = summonDialect[EmptyTuple, Tuple1[SetResultOp]](
+  Seq(StateMembers, ResultTable)
+)

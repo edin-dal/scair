@@ -7,6 +7,8 @@ import scair.Parser
 import scair.Parser.ValueId
 import scair.Parser.orElse
 import scair.Printer
+import scair.clair.macros.DerivedOperation
+import scair.clair.macros.summonDialect
 import scair.dialects.builtin.*
 import scair.ir.*
 
@@ -18,14 +20,14 @@ import scair.ir.*
 //   Tuple   //
 // ==-----== //
 
-object TupleStreamTuple extends AttributeCompanion:
+object TupleType extends AttributeCompanion:
   override def name: String = "tuples.tuple"
 
   override def parse[$: P](p: AttrParser) =
     P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
-      .map(TupleStreamTuple(_))
+      .map(TupleType(_))
 
-case class TupleStreamTuple(val tupleVals: Seq[Attribute])
+case class TupleType(val tupleVals: Seq[Attribute])
     extends ParametrizedAttribute
     with TypeAttribute:
 
@@ -41,13 +43,14 @@ case class TupleStreamTuple(val tupleVals: Seq[Attribute])
 //   TupleStream   //
 // ==-----------== //
 
-object TupleStream extends AttributeCompanion:
+object TupleStreamType extends AttributeCompanion:
   override def name: String = "tuples.tuplestream"
 
   override def parse[$: P](p: AttrParser) =
-    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq())).map(TupleStream(_))
+    P(("<" ~/ p.Type.rep(sep = ",") ~ ">").orElse(Seq()))
+      .map(TupleStreamType(_))
 
-case class TupleStream(val tuples: Seq[Attribute])
+case class TupleStreamType(val tuples: Seq[Attribute])
     extends ParametrizedAttribute
     with TypeAttribute:
 
@@ -60,7 +63,7 @@ case class TupleStream(val tuples: Seq[Attribute])
       if i == tuples.length then Right(())
 
       tuples(i) match
-        case x: TupleStreamTuple =>
+        case x: TupleType =>
           x.custom_verify() match
             case Right(_)  => verifyTuples(i + 1)
             case Left(err) => Left(err)
@@ -121,8 +124,8 @@ case class ColumnRefAttr(val refName: SymbolRefAttr)
 //   ReturnOp   //
 // ==--------== //
 
-object ReturnOp extends OperationCompanion:
-  override def name: String = "tuples.return"
+object ReturnOp:
+  def name: String = "tuples.return"
 
   // ==--- Custom Parsing ---== //
   private def makeResults(
@@ -131,7 +134,7 @@ object ReturnOp extends OperationCompanion:
     case Some((y, z)) => (y, z)
     case None         => (Seq(), Seq())
 
-  override def parse[$: P](
+  def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
   ): P[Operation] = P(
@@ -151,44 +154,19 @@ object ReturnOp extends OperationCompanion:
   // ==----------------------== //
 
 case class ReturnOp(
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] = Map(),
-    override val attributes: DictType[String, Attribute] = DictType()
-) extends BaseOperation(
-      name = "tuples.return",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    )
-    with IsTerminator:
-
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    regions.length,
-    properties.size
-  ) match
-    case (0, 0, 0, 0) => Right(this)
-    case _            =>
-      Left(
-        "ReturnOp Operation must contain only results and an attribute dictionary."
-      )
+    _results: Seq[Operand[Attribute]]
+) extends DerivedOperation["tuples.return", ReturnOp]
+    with IsTerminator
 
 // ==-----------== //
 //   GetColumnOp   //
 // ==-----------== //
 
-object GetColumnOp extends OperationCompanion:
-  override def name: String = "tuples.getcol"
+object GetColumnOp:
+  def name: String = "tuples.getcol"
 
   // ==--- Custom Parsing ---== //
-  override def parse[$: P](
+  def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
   ): P[Operation] = P(
@@ -215,66 +193,16 @@ object GetColumnOp extends OperationCompanion:
   // ==----------------------== //
 
 case class GetColumnOp(
-    override val operands: Seq[Value[Attribute]],
-    override val successors: Seq[Block],
-    override val results: Seq[Result[Attribute]],
-    override val regions: Seq[Region],
-    override val properties: Map[String, Attribute],
-    override val attributes: DictType[String, Attribute]
-) extends BaseOperation(
-      name = "tuples.getcol",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    ):
-
-  override def custom_verify(): Either[String, Operation] = (
-    operands.length,
-    successors.length,
-    results.length,
-    regions.length,
-    properties.size
-  ) match
-    case (1, 0, 1, 0, 0) =>
-      {
-        operands(0).typ match
-          case x: TupleStreamTuple =>
-            x.custom_verify() match
-              case Right(value) => Right(this)
-              case Left(err)    => Left(err)
-          case _ =>
-            Left(
-              "GetColumnOp Operation must contain an operand of type TupleStreamTuple."
-            )
-      }.flatMap(_ =>
-        attributes.get("attr") match
-          case Some(x) =>
-            x match
-              case _: ColumnRefAttr => Right(this)
-              case _                =>
-                Left(
-                  "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
-                )
-          case None =>
-            Left(
-              "GetColumnOp Operation must contain a ColumnRefAttr Attribute."
-            )
-      )
-    case _ =>
-      Left(
-        "GetColumnOp Operation must contain only 2 operands, 1 result and an attribute dictionary."
-      )
+    attr: ColumnRefAttr,
+    tuple: TupleType,
+    res: Result[Attribute]
+) extends DerivedOperation["tuples.getcol", GetColumnOp]
 
 /////////////
 // DIALECT //
 /////////////
 
 val TupleStreamDialect: Dialect =
-  new Dialect(
-    operations = Seq(ReturnOp, GetColumnOp),
-    attributes =
-      Seq(TupleStreamTuple, TupleStream, ColumnDefAttr, ColumnRefAttr)
+  summonDialect[EmptyTuple, (ReturnOp, GetColumnOp)](
+    Seq(TupleType, TupleStreamType, ColumnDefAttr, ColumnRefAttr)
   )

@@ -41,16 +41,24 @@ trait DerivedOperationCompanion[T] extends OperationCompanion:
         Map.empty[String, Attribute],
       override val attributes: DictType[String, Attribute] =
         DictType.empty[String, Attribute]
-  ) extends BaseOperation(
-        name =
-          name, // DEFINED IN OperationCompanion, derived in DerivedOperationCompanion Companion
+  ) extends Operation:
+
+    override def updated(
+        operands: Seq[Value[Attribute]] = operands,
+        successors: Seq[Block] = successors,
+        results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
+        regions: Seq[Region] = detached_regions,
+        properties: Map[String, Attribute] = properties,
+        attributes: DictType[String, Attribute] = attributes
+    ): Operation =
+      UnstructuredOp(
         operands,
         successors,
         results,
         regions,
         properties,
         attributes
-      ):
+      )
 
     override def structured = Try(companion.structure(this)) match
       case Failure(e)  => Left(e.toString())
@@ -58,6 +66,8 @@ trait DerivedOperationCompanion[T] extends OperationCompanion:
 
     override def verify(): Either[String, Operation] =
       structured.flatMap(op => op.verify())
+
+    override def name = companion.name
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
