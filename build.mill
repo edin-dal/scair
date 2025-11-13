@@ -128,13 +128,12 @@ trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettin
     with PlatformScalaModule:
   override def enableBsp = false
   override def scalaNativeVersion = "0.5.9"
-    override def mvnDeps = scairModule().mvnDeps
-
-    override def generatedSources: Simple[Seq[PathRef]] =
-      scairModule().generatedSources
-
-    override def mainClass: Simple[Option[String]] =
-      scairModule().mainClass()
+  
+  override def mvnDeps = scairModule().mvnDeps
+  override def generatedSources: Simple[Seq[PathRef]] =
+    scairModule().generatedSources
+  override def mainClass: Simple[Option[String]] =
+    scairModule().mainClass()
 
 trait ScairModule extends JvmScairModule with GraalScairModule:
   def scairModule = ModuleRef(this)
