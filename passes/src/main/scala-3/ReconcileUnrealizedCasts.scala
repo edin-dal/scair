@@ -1,4 +1,4 @@
-package scair.transformations.reconcile
+package scair.passes.reconcile
 
 import scair.MLContext
 import scair.dialects.builtin.*

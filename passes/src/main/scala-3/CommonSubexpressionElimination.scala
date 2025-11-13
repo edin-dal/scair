@@ -1,4 +1,4 @@
-package scair.transformations.cse
+package scair.passes.cse
 
 import scair.MLContext
 import scair.ir.*
