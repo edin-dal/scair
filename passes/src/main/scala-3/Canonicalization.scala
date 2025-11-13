@@ -1,4 +1,4 @@
-package scair.transformations.canonicalization
+package scair.passes.canonicalization
 
 import scair.MLContext
 import scair.ir.*

@@ -238,7 +238,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def generatedSources = scalaFiles()
     def moduleDeps = Seq(core)
 
-  object transformations extends ScairModule:
+  object passes extends ScairModule:
     def moduleDeps = Seq(dialects)
 
   object interpreter extends ScairModule:
@@ -247,14 +247,14 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
   object opt extends ScairModule:
 
     override def moduleDir: Path = tools.moduleDir
-    def moduleDeps = Seq(dialects, transformations, interpreter)
+    def moduleDeps = Seq(dialects, passes, interpreter)
 
     override def mainClass = Some("scair.tools.ScairOpt")
 
   object runTool extends ScairModule:
 
     override def moduleDir: Path = tools.moduleDir
-    def moduleDeps = Seq(dialects, transformations, interpreter)
+    def moduleDeps = Seq(dialects, passes, interpreter)
 
     override def mainClass = Some("scair.tools.ScairRun")
 

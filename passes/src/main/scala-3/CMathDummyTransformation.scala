@@ -1,4 +1,4 @@
-package scair.transformations.cdt
+package scair.passes.cdt
 
 import scair.MLContext
 import scair.dialects.builtin.StringData

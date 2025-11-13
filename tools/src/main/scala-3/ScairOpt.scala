@@ -19,7 +19,7 @@ abstract class ScairToolBase[Args]:
     scair.utils.allDialects
 
   def passes =
-    scair.utils.allPasses
+    scair.passes.allPasses
 
   final def registerDialects(): Unit =
     dialects.foreach(ctx.registerDialect)
