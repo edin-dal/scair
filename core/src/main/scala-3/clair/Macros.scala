@@ -10,6 +10,7 @@ import scair.clair.codegen.*
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.macros.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 
@@ -34,19 +35,6 @@ import scala.quoted.*
 ||  ADT to Unstructured conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-/** Small helper to select a member of an expression.
-  * @param obj
-  *   The object to select the member from.
-  * @param name
-  *   The name of the member to select.
-  */
-def selectMember[T: Type](obj: Expr[?], name: String)(using
-    Quotes
-): Expr[T] =
-  import quotes.reflect.*
-
-  Select.unique(obj.asTerm, name).asExprOf[T]
-
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
@@ -62,7 +50,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
               case Variadicity.Single                          => Expr(1)
               case Variadicity.Variadic | Variadicity.Optional =>
                 '{
-                  ${ selectMember[Seq[?]](adtOpExpr, d.name) }.length
+                  ${ adtOpExpr.member[Seq[?]](d.name) }.length
                 }
           )
         )
@@ -95,8 +83,7 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
 )(using Quotes): Expr[Seq[DefinedInput[Def]]] =
   val stuff =
     opInputDefs.map((d: Def) =>
-      selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
-        adtOpExpr,
+      adtOpExpr.member[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
         d.name
       )
     )
@@ -218,7 +205,7 @@ def verifyMacro(
     .filter(_.variadicity == Variadicity.Single)
     .collect(_ match
       case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
+        val mem = adtOpExpr.member[Operand[Attribute]](name)
         '{ (ctx: scair.core.constraints.ConstraintContext) =>
           $constraint.verify($mem.typ)(using ctx)
         })
@@ -785,7 +772,7 @@ def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     adtAttrExpr: Expr[?]
 )(using Quotes): Expr[Seq[Attribute]] =
   Expr.ofList(
-    attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
+    attrInputDefs.map(d => adtAttrExpr.member[Attribute](d.name))
   )
 
 def parametersMacro(

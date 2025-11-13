@@ -7,6 +7,7 @@ import scair.Parser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.ir.*
+import scair.macros.*
 
 import scala.quoted.*
 
@@ -121,7 +122,7 @@ case class AttrDictDirective() extends Directive:
     state.lastWasPunctuation = false
     '{
       $p.printOptionalAttrDict(${
-        selectMember[DictType[String, Attribute]](op, "attributes")
+        op.member[DictType[String, Attribute]]("attributes")
       }.toMap)(using 0)
     }
 
@@ -145,44 +146,44 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ $p.print(${ selectMember[Operand[Attribute]](op, n) }) }
+            '{ $p.print(${ op.member[Operand[Attribute]](n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })(
-                using 0
+              $p.printList(${ op.member[Seq[Operand[Attribute]]](n) })(using
+                0
               )
             }
           case Variadicity.Optional =>
             '{
               $p.printList(${
-                selectMember[Option[Operand[Attribute]]](op, n)
+                op.member[Option[Operand[Attribute]]](n)
               })(using 0)
             }
       case ResultDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ $p.print(${ selectMember[Result[Attribute]](op, n) }) }
+            '{ $p.print(${ op.member[Result[Attribute]](n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember[Seq[Result[Attribute]]](op, n) })(
-                using 0
+              $p.printList(${ op.member[Seq[Result[Attribute]]](n) })(using
+                0
               )
             }
           case Variadicity.Optional =>
             '{
-              $p.printList(${ selectMember[Option[Result[Attribute]]](op, n) })(
-                using 0
+              $p.printList(${ op.member[Option[Result[Attribute]]](n) })(using
+                0
               )
             }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
             '{
-              $p.print(${ selectMember[Attribute](op, n) })
+              $p.print(${ op.member[Attribute](n) })
             }
           case Variadicity.Optional =>
             '{
-              ${ selectMember[Option[Attribute]](op, n) }.foreach($p.print)
+              ${ op.member[Option[Attribute]](n) }.foreach($p.print)
             }
 
     Expr.block(List(space), printVar)
@@ -228,7 +229,7 @@ case class VariableDirective(
 
   override def isPresent(op: Expr[?])(using Quotes) =
     construct match
-      case OpInputDef(name = n) => parsed(selectMember[Any](op, n))
+      case OpInputDef(name = n) => parsed(op.member[Any](n))
 
 /** Directive for types of individual operands or results.
   */
@@ -244,13 +245,13 @@ case class TypeDirective(
 
     val printType = construct match
       case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.print(${ selectMember[Value[?]](op, n) }.typ) }
+        '{ $p.print(${ op.member[Value[?]](n) }.typ) }
       case MayVariadicOpInputDef(
             name = n,
             variadicity = Variadicity.Variadic
           ) =>
         '{
-          $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))(using
+          $p.printList(${ op.member[Seq[Value[?]]](n) }.map(_.typ))(using
             0
           )
         }
@@ -259,7 +260,7 @@ case class TypeDirective(
             variadicity = Variadicity.Optional
           ) =>
         '{
-          ${ selectMember[Option[Value[?]]](op, n) }
+          ${ op.member[Option[Value[?]]](n) }
             .map(_.typ)
             .map($p.print)
             .getOrElse(())
