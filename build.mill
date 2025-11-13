@@ -119,8 +119,10 @@ trait JvmScairModule
 trait GraalScairModule extends ScairSettings with NativeImageModule:
   override def jvmId = "graalvm-community:24.0.2"
 
+  // Remove "-Ob" (fast build) to revert to default "-O2" (highest optimization available
+  // before paywall)
   override def nativeImageOptions =
-    Seq("--no-fallback", "--initialize-at-build-time")
+    Seq("--no-fallback", "--initialize-at-build-time", "-Ob")
 
 trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule
     with PlatformScalaModule:
