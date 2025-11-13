@@ -119,29 +119,35 @@ trait JvmScairModule
 trait GraalScairModule extends ScairSettings with NativeImageModule:
   override def jvmId = "graalvm-community:24.0.2"
 
+  // Remove "-Ob" (fast build) to revert to default "-O2" (highest optimization available
+  // before paywall)
   override def nativeImageOptions =
-    Seq("--no-fallback", "--initialize-at-build-time")
+    Seq("--no-fallback", "--initialize-at-build-time", "-Ob")
 
-trait NativeScairModule extends ScairSettings with ScalaNativeModule
+trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule
     with PlatformScalaModule:
   override def enableBsp = false
   override def scalaNativeVersion = "0.5.9"
-  override def nativeLTO: Simple[LTO] = LTO.Full
-  override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
+  
+  override def mvnDeps = scairModule().mvnDeps
+  override def generatedSources: Simple[Seq[PathRef]] =
+    scairModule().generatedSources
+  override def mainClass: Simple[Option[String]] =
+    scairModule().mainClass()
 
 trait ScairModule extends JvmScairModule with GraalScairModule:
-  def jvmModule = ModuleRef(this)
+  def scairModule = ModuleRef(this)
   override def moduleDeps: Seq[ScairModule] = Seq()
 
-  lazy val native: NativeScairModule = new NativeScairModule:
-    override def moduleDeps = jvmModule().moduleDeps.map(_.native)
-    override def mvnDeps = jvmModule().mvnDeps
+  lazy val nativeOpt: NativeScairModule = new NativeScairModule(scairModule):
+    override def nativeLTO: Simple[LTO] = LTO.Full
+    override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
+    override def moduleDeps = scairModule().moduleDeps.map(_.nativeOpt)
 
-    override def generatedSources: Simple[Seq[PathRef]] =
-      jvmModule().generatedSources
-
-    override def mainClass: Simple[Option[String]] =
-      jvmModule().mainClass()
+  lazy val native: NativeScairModule = new NativeScairModule(scairModule):
+    override def nativeLTO: Simple[LTO] = LTO.None
+    override def releaseMode: Simple[ReleaseMode] = ReleaseMode.Debug
+    override def moduleDeps = scairModule().moduleDeps.map(_.native)
 
   override def sources: Simple[Seq[PathRef]] =
     super.sources() :+ PathRef(moduleDir / "build")
@@ -334,8 +340,13 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
     object graal extends filechecks:
       override def scairOpt = tools.opt.nativeImage
-      override def scairRun = tools.runTool.launcher
+      override def scairRun = tools.runTool.nativeImage
 
     object native extends filechecks:
       override def scairOpt = tools.opt.native.nativeLink
-      override def scairRun = tools.runTool.launcher
+      override def scairRun = tools.runTool.native.nativeLink
+
+    object nativeOpt extends filechecks:
+      override def scairOpt = tools.opt.nativeOpt.nativeLink
+      override def scairRun = tools.runTool.nativeOpt.nativeLink
+
