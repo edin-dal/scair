@@ -3,6 +3,7 @@ package scair.ir
 import fastparse.*
 import scair.AttrParser
 import scair.Printer
+import scair.dialects.builtin.IntegerAttr
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -38,6 +39,15 @@ sealed trait Attribute:
 
 trait TypeAttribute extends Attribute:
   override def prefix: String = "!"
+
+trait IntegerEnumAttr extends Attribute:
+  def ordinalIntAttr: IntegerAttr
+
+  override def printParameters(p: Printer): Unit = ()
+
+  override def custom_print(p: Printer): Unit =
+    given indentLevel: Int = 0
+    if p.strictly_generic then p.print(ordinalIntAttr) else p.print(s"${p.strictly_generic} $name")
 
 abstract trait ParametrizedAttribute() extends Attribute:
 
