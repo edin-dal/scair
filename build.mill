@@ -169,8 +169,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def moduleDeps = Seq(utils)
 
     override def mvnDeps = Seq(
-      mvn"com.lihaoyi::fastparse::3.1.0",
-      mvn"com.github.scopt::scopt::4.1.0"
+      mvn"com.lihaoyi::fastparse::3.1.0"
     )
 
   object dialects extends ScairModule:
@@ -225,6 +224,10 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def moduleDeps = Seq(dialects)
 
   object tools extends ScairModule:
+
+    override def mvnDeps = Seq(
+      mvn"com.github.scopt::scopt::4.1.0"
+    )
 
     override def moduleDeps = Seq(core)
 
