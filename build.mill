@@ -1,8 +1,8 @@
-//| mill-version: 1.0.6-114-ed0e74-native
+//| mill-version: 1.1.0-RC1-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
-//|   - com.lihaoyi::mill-contrib-scoverage:1.0.3
+//|   - com.lihaoyi::mill-contrib-scoverage:1.1.0-RC1
 //| mill-jvm-opts: ["-Xss10m"]
 
 import com.goyeau.mill.scalafix.ScalafixModule
@@ -40,9 +40,9 @@ import java.lang.reflect.InvocationTargetException
 import mill.javalib.PlatformModuleBase
 
 trait ScairSettings extends ScalaModule with PublishModule:
-  def scoverageVersion = Task { "2.3.0" }
+  def scoverageVersion = Task { "2.4.1" }
 
-  override def scalaVersion = "3.7.1"
+  override def scalaVersion = "3.7.4"
 
   override def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
@@ -117,7 +117,7 @@ trait JvmScairModule
   lazy val test = new ScairTests {}
 
 trait GraalScairModule extends ScairSettings with NativeImageModule:
-  override def jvmId = "graalvm-community:24.0.1"
+  override def jvmId = "graalvm-community:24.0.2"
 
   override def nativeImageOptions =
     Seq("--no-fallback", "--initialize-at-build-time")
@@ -125,7 +125,7 @@ trait GraalScairModule extends ScairSettings with NativeImageModule:
 trait NativeScairModule extends ScairSettings with ScalaNativeModule
     with PlatformScalaModule:
   override def enableBsp = false
-  override def scalaNativeVersion = "0.5.8"
+  override def scalaNativeVersion = "0.5.9"
   override def nativeLTO: Simple[LTO] = LTO.Full
   override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
 
@@ -157,7 +157,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
   override def unidocOptions =
     super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
-  override def unidocVersion = Task { Some("0.5.0") }
+  override def unidocVersion = Task { Some("0.6.0") }
   override def unidocDocumentTitle = Task { "ScaIR Unidoc" }
 
   def rootPath = moduleDir
@@ -169,7 +169,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def moduleDeps = Seq(utils)
 
     override def mvnDeps = Seq(
-      mvn"com.lihaoyi::fastparse::3.1.0"
+      mvn"com.lihaoyi::fastparse::3.1.1"
     )
 
   object dialects extends ScairModule:
