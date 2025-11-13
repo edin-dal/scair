@@ -170,9 +170,11 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   object utils extends ScairModule
 
+  object macros extends ScairModule
+
   object core extends ScairModule:
 
-    override def moduleDeps = Seq(utils)
+    override def moduleDeps = Seq(utils, macros)
 
     override def mvnDeps = Seq(
       mvn"com.lihaoyi::fastparse::3.1.1"
