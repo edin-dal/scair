@@ -151,45 +151,6 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   final override def hashCode(): Int = System.identityHashCode(this)
   final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
 
-abstract class BaseOperation(
-    val name: String,
-    val operands: Seq[Value[Attribute]] = Seq(),
-    val successors: Seq[Block] = Seq(),
-    val results: Seq[Result[Attribute]] = Seq(),
-    val regions: Seq[Region] = Seq(),
-    val properties: Map[String, Attribute] = Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends Operation:
-
-  // def companion : OperationCompanion
-
-  def copy(
-      operands: Seq[Value[Attribute]],
-      successors: Seq[Block],
-      results: Seq[Result[Attribute]],
-      regions: Seq[Region],
-      properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
-  ): BaseOperation
-
-  override def updated(
-      operands: Seq[Value[Attribute]] = operands,
-      successors: Seq[Block] = successors,
-      results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-      regions: Seq[Region] = detached_regions,
-      properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes
-  ) =
-    copy(
-      operands = operands,
-      successors = successors,
-      results = results,
-      regions = regions,
-      properties = properties,
-      attributes = attributes
-    )
-
 case class UnregisteredOperation(
     override val name: String,
     override val operands: Seq[Value[Attribute]] = Seq(),
@@ -200,30 +161,22 @@ case class UnregisteredOperation(
       Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
       DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = name,
-      operands = operands,
-      successors = successors,
-      results = results,
-      regions = regions,
-      properties = properties,
-      attributes = attributes
-    ):
+) extends Operation:
 
-  override def copy(
-      operands: Seq[Value[Attribute]],
-      successors: Seq[Block],
-      results: Seq[Result[Attribute]],
-      regions: Seq[Region],
-      properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
+  override def updated(
+      operands: Seq[Value[Attribute]] = operands,
+      successors: Seq[Block] = successors,
+      results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
+      regions: Seq[Region] = detached_regions,
+      properties: Map[String, Attribute] = properties,
+      attributes: DictType[String, Attribute] = attributes
   ) =
     UnregisteredOperation(
       name = name,
       operands = operands,
       successors = successors,
       results = results,
-      regions = regions.map(_.detached),
+      regions = regions,
       properties = properties,
       attributes = attributes
     )
