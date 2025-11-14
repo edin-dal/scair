@@ -4,6 +4,7 @@ import scair.ir.*
 import scair.dialects.builtin.*
 import scala.collection.mutable
 
+// definition of all dialects in interpreter context
 val interpreterContext = InterpreterContext(
       Seq(
         InterpreterFuncDialect,
