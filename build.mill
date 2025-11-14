@@ -1,8 +1,8 @@
-//| mill-version: 1.0.6-114-ed0e74-native
+//| mill-version: 1.1.0-RC1-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
-//|   - com.lihaoyi::mill-contrib-scoverage:1.0.3
+//|   - com.lihaoyi::mill-contrib-scoverage:1.1.0-RC1
 //| mill-jvm-opts: ["-Xss10m"]
 
 import com.goyeau.mill.scalafix.ScalafixModule
@@ -32,34 +32,25 @@ import java.io.PrintWriter
 import os.Path
 import mill.api.Task.Simple
 import mill.scalalib.PlatformScalaModule
+import mill.scalalib.PublishModule
 import mill.scalanativelib.ScalaNativeModule
 import mill.scalanativelib.api.LTO
 import mill.scalanativelib.api.ReleaseMode
 import java.lang.reflect.InvocationTargetException
+import mill.javalib.PlatformModuleBase
 
-trait ScairSettings extends ScalaModule:
-  def scoverageVersion = Task { "2.3.0" }
+trait ScairSettings extends ScalaModule with PublishModule:
+  def scoverageVersion = Task { "2.4.1" }
 
-  override def scalaVersion = "3.7.1"
+  override def scalaVersion = "3.7.4"
 
   override def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
 
-trait JvmScairModule
-    extends ScalafixModule
-    with SonatypeCentralPublishModule
-    with ScoverageModule
-    with ScairSettings:
-
-  trait ScairTests extends ScalaTests with TestModule.ScalaTest:
-    override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.19")
-    // This was necessary to cooperate with graalvm at time of writing.
-    // Please remove if unit tests work fine without it in the future.
-    override def testParallelism = false
-
-  def outer = ModuleRef(this)
-
   override def artifactName = s"scair-${super.artifactName()}"
+
+  override def publishVersion =
+    VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
 
   override def pomSettings = PomSettings(
     description = artifactName(),
@@ -81,6 +72,20 @@ trait JvmScairModule
       )
     )
   )
+
+trait JvmScairModule
+    extends ScalafixModule
+    with SonatypeCentralPublishModule
+    with ScoverageModule
+    with ScairSettings:
+
+  trait ScairTests extends ScalaTests with TestModule.ScalaTest:
+    override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.19")
+    // This was necessary to cooperate with graalvm at time of writing.
+    // Please remove if unit tests work fine without it in the future.
+    override def testParallelism = false
+
+  def outer = ModuleRef(this)
 
   // The normal behaviour, IIUC, is to compile the module at hand with coverage, and not
   // dependencies. This enforces that everything ScaIR is transitively compiled with
@@ -109,78 +114,59 @@ trait JvmScairModule
   override lazy val scoverage: ScairScoverageData = new ScairScoverageData:
     override def mainClass = outer().mainClass
 
-  override def publishVersion =
-    VcsVersion.vcsState().format(untaggedSuffix = "-SNAPSHOT")
-
   lazy val test = new ScairTests {}
 
-trait GraalScairModule extends JvmScairModule with NativeImageModule
-    with PlatformScalaModule:
-  override def enableBsp = false
-  override def jvmId = "graalvm-community:24.0.1"
+trait GraalScairModule extends ScairSettings with NativeImageModule:
+  override def jvmId = "graalvm-community:24.0.2"
 
+  // Remove "-Ob" (fast build) to revert to default "-O2" (highest optimization available
+  // before paywall)
   override def nativeImageOptions =
-    Seq("--no-fallback", "--initialize-at-build-time")
+    Seq("--no-fallback", "--initialize-at-build-time", "-Ob")
 
-trait NativeScairModule extends JvmScairModule with ScalaNativeModule
+trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule
     with PlatformScalaModule:
   override def enableBsp = false
-  override def scalaNativeVersion = "0.5.8"
-  override def nativeLTO: Simple[LTO] = LTO.Full
-  override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
+  override def scalaNativeVersion = "0.5.9"
+  
+  override def mvnDeps = scairModule().mvnDeps
+  override def generatedSources: Simple[Seq[PathRef]] =
+    scairModule().generatedSources
+  override def mainClass: Simple[Option[String]] =
+    scairModule().mainClass()
 
-  override object scoverage extends ScairScoverageData:
-    override object test extends ScairScoverageTests with ScalaNativeTests {}
+trait ScairModule extends JvmScairModule with GraalScairModule:
+  def scairModule = ModuleRef(this)
+  override def moduleDeps: Seq[ScairModule] = Seq()
 
-  override object test extends ScairTests with ScalaNativeTests
+  lazy val nativeOpt: NativeScairModule = new NativeScairModule(scairModule):
+    override def nativeLTO: Simple[LTO] = LTO.Full
+    override def releaseMode: Simple[ReleaseMode] = ReleaseMode.ReleaseFull
+    override def moduleDeps = scairModule().moduleDeps.map(_.nativeOpt)
 
-trait ScairModule extends JvmScairModule:
-  def jvmModule = ModuleRef(this)
-  def moduleDeps: Seq[ScairModule] = Seq()
-
-  lazy val graal: GraalScairModule = new GraalScairModule:
-    override def moduleDeps = jvmModule().moduleDeps.map(_.graal)
-    override def mvnDeps = jvmModule().mvnDeps
-
-    override def generatedSources: Simple[Seq[PathRef]] =
-      jvmModule().generatedSources
-
-    override def mainClass: Simple[Option[String]] =
-      jvmModule().mainClass()
-
-  lazy val native: NativeScairModule = new NativeScairModule:
-    override def moduleDeps = jvmModule().moduleDeps.map(_.native)
-    override def mvnDeps = jvmModule().mvnDeps
-
-    override def generatedSources: Simple[Seq[PathRef]] =
-      jvmModule().generatedSources
-
-    override def mainClass: Simple[Option[String]] =
-      jvmModule().mainClass()
+  lazy val native: NativeScairModule = new NativeScairModule(scairModule):
+    override def nativeLTO: Simple[LTO] = LTO.None
+    override def releaseMode: Simple[ReleaseMode] = ReleaseMode.Debug
+    override def moduleDeps = scairModule().moduleDeps.map(_.native)
 
   override def sources: Simple[Seq[PathRef]] =
     super.sources() :+ PathRef(moduleDir / "build")
 
 object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
+  override def artifactName = "scair-all"
+
+  override def moduleDeps = allChildren.collect {
+    case m: ScairModule => m
+  }
+
   override def unidocOptions =
     super.unidocOptions() ++ Seq("-snippet-compiler:compile")
 
-  override def unidocVersion = Task { Some("0.5.0") }
+  override def unidocVersion = Task { Some("0.6.0") }
   override def unidocDocumentTitle = Task { "ScaIR Unidoc" }
 
-  override def unidocSourceFiles =
-    (Seq(compile().classes) ++ Task
-      .traverse(transitiveModuleDeps)(_.compile)()
-      .map(_.classes))
-      .filter(pr => os.exists(pr.path))
-      .flatMap(pr => os.walk(pr.path))
-      .filter(_.ext == "tasty")
-      .map(PathRef(_))
-
-  override def moduleDeps = Seq(tools)
-
-  def rootModule = ModuleRef(this)
+  def rootPath = moduleDir
 
   object utils extends ScairModule
 
@@ -189,8 +175,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def moduleDeps = Seq(utils)
 
     override def mvnDeps = Seq(
-      mvn"com.lihaoyi::fastparse::3.1.0",
-      mvn"com.github.scopt::scopt::4.1.0"
+      mvn"com.lihaoyi::fastparse::3.1.1"
     )
 
   object dialects extends ScairModule:
@@ -236,30 +221,31 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
     override def generatedSources = scalaFiles()
-    def moduleDeps = Seq(core)
+    override def moduleDeps = Seq(core)
 
-  object transformations extends ScairModule:
-    def moduleDeps = Seq(dialects)
+  object passes extends ScairModule:
+    override def moduleDeps = Seq(dialects)
 
   object interpreter extends ScairModule:
-    def moduleDeps = Seq(dialects)
-
-  object opt extends ScairModule:
-
-    override def moduleDir: Path = tools.moduleDir
-    def moduleDeps = Seq(dialects, transformations, interpreter)
-
-    override def mainClass = Some("scair.tools.ScairOpt")
-
-  object runTool extends ScairModule:
-
-    override def moduleDir: Path = tools.moduleDir
-    def moduleDeps = Seq(dialects, transformations, interpreter)
-
-    override def mainClass = Some("scair.tools.ScairRun")
+    override def moduleDeps = Seq(dialects)
 
   object tools extends ScairModule:
-    def moduleDeps = Seq(opt, runTool)
+
+    override def mvnDeps = Seq(
+      mvn"com.github.scopt::scopt::4.1.0"
+    )
+
+    override def moduleDeps = Seq(core)
+
+    object runTool extends ScairModule:
+      override def moduleDeps = Seq(dialects, interpreter, tools)
+
+      override def mainClass = Some("scair.tools.runTool.ScairRun")
+
+    object opt extends ScairModule:
+      override def moduleDeps = Seq(dialects, passes, tools)
+
+      override def mainClass = Some("scair.tools.opt.ScairOpt")
 
   // Top-level commands and helpers
 
@@ -308,12 +294,12 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   // Define a testAll to run the full framework testing infrastructure
   def testAll(evaluator: Evaluator) = Command {
-    runAll("_.test", evaluator)()
+    runAll("__:ScairModule.test", evaluator)()
     filechecks.run()()
   }
 
   def scoverage(evaluator: Evaluator) = Command(exclusive = true) {
-    runAll("_.scoverage.test", evaluator)()
+    runAll("__:ScairModule.scoverage.test", evaluator)()
     filechecks.scoverage.run()()
     xmlReportAll(evaluator)()
   }
@@ -328,8 +314,6 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
     // Define a Mill command to run filechecks
     def run() = Task.Command(exclusive = true) {
-      // Get the directory root to use as lit's working directory
-      val rootPath = rootModule().moduleDir
       // Run lit, forwarding it the relevant scair-opt through the env var
       val litStatus = os
         .proc("lit", "tests/filecheck", "-v")
@@ -347,17 +331,22 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
   object filechecks extends filechecks:
-    override def scairOpt = opt.launcher
-    override def scairRun = runTool.launcher
+    override def scairOpt = tools.opt.launcher
+    override def scairRun = tools.runTool.launcher
 
     object scoverage extends filechecks:
-      override def scairOpt = opt.scoverage.launcher
-      override def scairRun = runTool.scoverage.launcher
+      override def scairOpt = tools.opt.scoverage.launcher
+      override def scairRun = tools.runTool.scoverage.launcher
 
     object graal extends filechecks:
-      override def scairOpt = opt.graal.nativeImage
-      override def scairRun = runTool.launcher
+      override def scairOpt = tools.opt.nativeImage
+      override def scairRun = tools.runTool.nativeImage
 
     object native extends filechecks:
-      override def scairOpt = opt.native.nativeLink
-      override def scairRun = runTool.launcher
+      override def scairOpt = tools.opt.native.nativeLink
+      override def scairRun = tools.runTool.native.nativeLink
+
+    object nativeOpt extends filechecks:
+      override def scairOpt = tools.opt.nativeOpt.nativeLink
+      override def scairRun = tools.runTool.nativeOpt.nativeLink
+

@@ -1,7 +1,10 @@
-package scair.tools
+package scair.tools.runTool
 
 import scair.dialects.builtin.ModuleOp
+import scair.interpreter.Interpreter
+import scair.interpreter.InterpreterCtx
 import scair.ir.*
+import scair.tools.ScairToolBase
 import scopt.OParser
 
 import scala.collection.mutable
@@ -14,6 +17,8 @@ case class ScairRunArgs(
 )
 
 trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
+
+  override def dialects = scair.dialects.allDialects
 
   override def parseArgs(args: Array[String]): ScairRunArgs =
     // Define CLI args

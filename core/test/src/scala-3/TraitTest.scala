@@ -4,74 +4,30 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
-
-object FillerOp extends OperationCompanion:
-  override def name: String = "filler"
+import scair.clair.macros.DerivedOperation
 
 case class FillerOp(
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
+    override val operands: Seq[Operand[Attribute]] = Seq(),
+    override val successors: Seq[Successor] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = "filler",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    ) {}
-
-object TerminatorOp extends OperationCompanion:
-  override def name: String = "terminator"
+    override val regions: Seq[Region] = Seq()
+) extends DerivedOperation["filler", FillerOp]
 
 case class TerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = "terminator",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    )
+    override val regions: Seq[Region] = Seq()
+) extends DerivedOperation["terminator", TerminatorOp]
     with IsTerminator {}
-
-object NoTerminatorOp extends OperationCompanion:
-  override def name: String = "noterminator"
 
 case class NoTerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
-) extends BaseOperation(
-      name = "noterminator",
-      operands,
-      successors,
-      results,
-      regions,
-      properties,
-      attributes
-    )
-    with NoTerminator {}
+    override val regions: Seq[Region] = Seq()
+) extends DerivedOperation["noterminator", NoTerminatorOp]
+    with NoTerminator
 
 class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 

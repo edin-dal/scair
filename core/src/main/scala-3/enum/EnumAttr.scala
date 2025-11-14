@@ -7,32 +7,32 @@ import scair.Printer
 import scair.ir.AttributeCompanion
 import scair.ir.*
 import java.io.PrintWriter
-// import scair.eenum.mirror.*
 
-abstract class I32Enum(override val name: String) extends IntegerEnumAttr with scala.reflect.Enum {
-  def ordinalIntAttr: IntegerAttr = IntegerAttr(IntData(this.ordinal), I32) 
-}
+import scair.eenum.macros.*
 
-enum Color(name: String) extends I32Enum(name):
-  case Red extends Color("red")
-  case Green extends Color("green")
-  case Blue extends Color("blue")
+abstract class I32Enum(override val name: String)
+    extends IntegerEnumAttr
+    with scala.reflect.Enum:
+  def ordinalIntAttr: IntegerAttr = IntegerAttr(IntData(this.ordinal), I32)
 
-object ColorTest:
+// object ColorTest:
 
-  def what(yo: scala.reflect.Enum): Int = yo.ordinal
+//   def what(yo: scala.reflect.Enum): Int = yo.ordinal
 
-  def main(args: Array[String]): Unit =
-    val redAttr: Color = Color.Red
-    val greenAttr: Color = Color.Green
+//   def main(args: Array[String]): Unit =
+//     val redAttr: Color = Color.Red
+//     val greenAttr: Color = Color.Green
 
-    // println(what(redAttr))
-    // println(Color)
+//     // println(what(redAttr))
+//     println(redAttr)
 
-    val p: PrintWriter = new PrintWriter(System.out)
-    val printer = new Printer(strictly_generic = true, p = p)
-    printer.print(redAttr)
+//     println((enumFromOrdinalFunction[Color](redAttr.ordinal)))
 
-    p.flush()
-    
-    // println(s"Red attribute: $redAttr")
+//     val p: PrintWriter = new PrintWriter(System.out)
+//     val printer = new Printer(strictly_generic = true, p = p)
+//     printer.print(redAttr)
+
+//     p.flush()
+//     println("")
+
+//     // println(s"Red attribute: $redAttr")

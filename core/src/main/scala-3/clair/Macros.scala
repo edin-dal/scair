@@ -12,6 +12,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
+import scair.eenum.macros.*
 
 import scala.annotation.switch
 import scala.quoted.*
@@ -671,6 +672,23 @@ def tryConstruct[T: Type](
     ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
       tpe match
+        case '[type t <: scala.reflect.Enum; `t`] =>
+          val property = variadicity match
+            case Variadicity.Optional =>
+              enumFromPropertyOption[t](
+                properties,
+                name
+              )
+            case Variadicity.Single =>
+              enumFromProperty[t](
+                properties,
+                name
+              )
+            case Variadicity.Variadic =>
+              report.errorAndAbort(
+                s"Properties cannot be variadic in an ADT."
+              )
+          NamedArg(name, property.asTerm)
         case '[type t <: Attribute; `t`] =>
           val property = variadicity match
             case Variadicity.Optional =>

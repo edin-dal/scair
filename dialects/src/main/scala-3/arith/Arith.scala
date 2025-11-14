@@ -10,6 +10,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 
 import scala.collection.immutable.*
+import scair.eenum.enumattr.I32Enum
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
@@ -667,6 +668,15 @@ case class XOrI(
     with SameOperandsAndResultTypes
     with Commutative
 
+enum Color(name: String) extends I32Enum(name):
+  case Red extends Color("red")
+  case Green extends Color("green")
+  case Blue extends Color("blue")
+
+case class EnumOperation(
+    val color: Color
+) extends DerivedOperation["arith.enum_op", EnumOperation]
+
 val ArithDialect =
   summonDialect[
     EmptyTuple,
@@ -722,6 +732,7 @@ val ArithDialect =
         TruncI,
         UIToFP,
         XOrI,
-        IndexCast
+        IndexCast,
+        EnumOperation
     )
   ](Seq(FastMathFlagsAttr))
