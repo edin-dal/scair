@@ -2,17 +2,6 @@ package scair.tools
 
 import scair.ir.*
 import scair.dialects.builtin.*
-import scala.collection.mutable
-
-// definition of all dialects in interpreter context
-val interpreterContext = InterpreterContext(
-      Seq(
-        InterpreterFuncDialect,
-        InterpreterArithDialect,
-        InterpreterMemrefDialect
-      ),
-      mutable.Map()
-    )
 
 // type maps from operation to its resulting lookup type
 // base case is Int (may have issues later)

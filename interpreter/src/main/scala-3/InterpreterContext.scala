@@ -4,11 +4,6 @@ import scair.ir.*
 
 import scala.collection.mutable
 
-// sequence of OpIml to represent a dialect for interpretation
-final case class InterpreterDialect(
-    val implementations: Seq[OpImpl[? <: Operation]]
-)
-
 // global interpreter context to hold all registered dialects and their implementations
 // may have future uses
 case class InterpreterContext(
