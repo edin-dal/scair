@@ -100,7 +100,7 @@ class Interpreter extends ArithmeticEvaluator with MemoryHandler:
           interpret_cmp_op(
             cmpi_op.lhs,
             cmpi_op.rhs,
-            cmpi_op.predicate.value.toInt,
+            cmpi_op.predicate.ordinal,
             ctx
           )
         )
