@@ -12,6 +12,15 @@ import scair.ir.*
 
 import scala.collection.immutable.*
 
+//
+// ░█████╗░ ██████╗░ ██╗ ████████╗ ██╗░░██╗
+// ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██║░░██║
+// ███████║ ██████╔╝ ██║ ░░░██║░░░ ███████║
+// ██╔══██║ ██╔══██╗ ██║ ░░░██║░░░ ██╔══██║
+// ██║░░██║ ██║░░██║ ██║ ░░░██║░░░ ██║░░██║
+// ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚═╝░░╚═╝
+//
+
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
 // Let's keep it progressive here though.
