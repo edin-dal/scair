@@ -7,14 +7,48 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
+import scair.enums.enumattr.*
 import scair.ir.*
 
 import scala.collection.immutable.*
-import scair.eenum.enumattr.I32Enum
 
 // TODO: Upstream Arith natively support vector or other containers of it's operands and results type
 // i.e., add vectors not just integers.
 // Let's keep it progressive here though.
+
+/*≡==--==≡≡≡≡≡==--=≡≡*\
+||       ENUMS       ||
+\*≡==---==≡≡≡==---==≡*/
+
+enum CmpIPredicate(name: String) extends I64Enum(name):
+  case eq extends CmpIPredicate("eq")
+  case ne extends CmpIPredicate("ne")
+  case slt extends CmpIPredicate("slt")
+  case sle extends CmpIPredicate("sle")
+  case sgt extends CmpIPredicate("sgt")
+  case sge extends CmpIPredicate("sge")
+  case ult extends CmpIPredicate("ult")
+  case ule extends CmpIPredicate("ule")
+  case ugt extends CmpIPredicate("ugt")
+  case uge extends CmpIPredicate("uge")
+
+enum CmpFPredicate(name: String) extends I64Enum(name):
+  case AlwaysFalse extends CmpFPredicate("false")
+  case OEQ extends CmpFPredicate("oeq")
+  case OGT extends CmpFPredicate("ogt")
+  case OGE extends CmpFPredicate("oge")
+  case OLT extends CmpFPredicate("olt")
+  case OLE extends CmpFPredicate("ole")
+  case ONE extends CmpFPredicate("one")
+  case ORD extends CmpFPredicate("ord")
+  case UEQ extends CmpFPredicate("ueq")
+  case UGT extends CmpFPredicate("ugt")
+  case UGE extends CmpFPredicate("uge")
+  case ULT extends CmpFPredicate("ult")
+  case ULE extends CmpFPredicate("ule")
+  case UNE extends CmpFPredicate("une")
+  case UNO extends CmpFPredicate("uno")
+  case AlwaysTrue extends CmpFPredicate("true")
 
 // TODO, think about providing bunch of helpers for this kind of attribute
 enum FastMathFlag:
@@ -288,7 +322,7 @@ case class CmpF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[I1],
-    val predicate: IntegerPredicate,
+    val predicate: CmpFPredicate,
     val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none)
 ) extends DerivedOperation["arith.cmpf", CmpF]
     with NoMemoryEffect
@@ -297,7 +331,7 @@ case class CmpI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[I1],
-    val predicate: IntegerPredicate
+    val predicate: CmpIPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends DerivedOperation["arith.cmpi", CmpI]
     with NoMemoryEffect
@@ -668,15 +702,6 @@ case class XOrI(
     with SameOperandsAndResultTypes
     with Commutative
 
-enum Color(name: String) extends I32Enum(name):
-  case Red extends Color("red")
-  case Green extends Color("green")
-  case Blue extends Color("blue")
-
-case class EnumOperation(
-    val color: Color
-) extends DerivedOperation["arith.enum_op", EnumOperation]
-
 val ArithDialect =
   summonDialect[
     EmptyTuple,
@@ -732,7 +757,6 @@ val ArithDialect =
         TruncI,
         UIToFP,
         XOrI,
-        IndexCast,
-        EnumOperation
+        IndexCast
     )
   ](Seq(FastMathFlagsAttr))

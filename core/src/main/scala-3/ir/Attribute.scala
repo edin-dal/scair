@@ -46,8 +46,7 @@ trait IntegerEnumAttr extends Attribute:
   override def printParameters(p: Printer): Unit = ()
 
   override def custom_print(p: Printer): Unit =
-    given indentLevel: Int = 0
-    if p.strictly_generic then p.print(ordinalIntAttr) else p.print(s"${p.strictly_generic} $name")
+    p.print(ordinalIntAttr)
 
 abstract trait ParametrizedAttribute() extends Attribute:
 

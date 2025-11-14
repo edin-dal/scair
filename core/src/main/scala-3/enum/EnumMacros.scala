@@ -1,12 +1,32 @@
-package scair.eenum.macros
+package scair.enums.macros
+
+import scair.dialects.builtin.IntData
+import scair.dialects.builtin.IntegerAttr
+import scair.ir.Attribute
 
 import scala.quoted.*
-import scair.ir.Attribute
-import scair.dialects.builtin.{IntegerAttr, IntData}
 
-inline def enumFromOrdinalFunction[E <: scala.reflect.Enum]: Int => E =
-  ${ enumFromOrdinalFunc[E] }
+// ███████╗ ███╗░░██╗ ██╗░░░██╗ ███╗░░░███╗
+// ██╔════╝ ████╗░██║ ██║░░░██║ ████╗░████║
+// █████╗░░ ██╔██╗██║ ██║░░░██║ ██╔████╔██║
+// ██╔══╝░░ ██║╚████║ ██║░░░██║ ██║╚██╔╝██║
+// ███████╗ ██║░╚███║ ╚██████╔╝ ██║░╚═╝░██║
+// ╚══════╝ ╚═╝░░╚══╝ ░╚═════╝░ ╚═╝░░░░░╚═╝
+//
+// ███╗░░░███╗ ░█████╗░ ░█████╗░ ██████╗░ ░█████╗░ ░██████╗
+// ████╗░████║ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝
+// ██╔████╔██║ ███████║ ██║░░╚═╝ ██████╔╝ ██║░░██║ ╚█████╗░
+// ██║╚██╔╝██║ ██╔══██║ ██║░░██╗ ██╔══██╗ ██║░░██║ ░╚═══██╗
+// ██║░╚═╝░██║ ██║░░██║ ╚█████╔╝ ██║░░██║ ╚█████╔╝ ██████╔╝
+// ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░╚════╝░ ╚═╝░░╚═╝ ░╚════╝░ ╚═════╝░
 
+/** Generates code to convert an IntegerAttr value to an Optional enum property
+  * argument.
+  *
+  * @param list
+  * @param propName
+  * @return
+  */
 def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
     list: Expr[Map[String, Attribute]],
     propName: String
@@ -24,11 +44,19 @@ def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
     }
   }
 
+/** Generates code to convert an IntegerAttr value to a required enum property
+  * argument.
+  *
+  * @param list
+  * @param propName
+  * @return
+  */
 def enumFromProperty[A <: scala.reflect.Enum: Type](
     list: Expr[Map[String, Attribute]],
     propName: String
 )(using Quotes): Expr[A] =
-  val typeName = Type.of[A].toString()
+  import quotes.reflect.*
+  val typeName = TypeRepr.of[A].show
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
     value match
@@ -38,8 +66,9 @@ def enumFromProperty[A <: scala.reflect.Enum: Type](
               Expr(typeName)
             }}"
         )
-      case Some(prop: A) => prop
-      case Some(_)       =>
+      case Some(prop @ IntegerAttr(IntData(i), _)) =>
+        $enumFromOrdinalFunc(i.toInt)
+      case Some(_) =>
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
             s"expected ${${ Expr(typeName) }}, " +
@@ -47,6 +76,12 @@ def enumFromProperty[A <: scala.reflect.Enum: Type](
         )
   }
 
+/** Retrieves a given Enum case's companion object and returns an expression of
+  * ``fromOrdinal`` method as a function.
+  *
+  * @return
+  *   Expr[Int => E]
+  */
 def enumFromOrdinalFunc[E <: scala.reflect.Enum: Type](using
     Quotes
 ): Expr[Int => E] =

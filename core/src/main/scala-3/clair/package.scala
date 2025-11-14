@@ -14,6 +14,20 @@ package scair
   * import scair.clair.macros.*
   * import scair.dialects.builtin.*
   * import scair.dialects.cmath.*
+  * import scair.enums.enumattr.I32Enum
+  *
+  * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
+  * ||   defining a custom I32 enum attribute   ||
+  * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
+  *
+  * enum Color(name: String) extends I32Enum(name):
+  *   case Red extends Color("red")
+  *   case Green extends Color("green")
+  *   case Blue extends Color("blue")
+  *
+  * case class EnumOperation(
+  *     val color: Color
+  * ) extends DerivedOperation["arith.enum_op", EnumOperation]
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom data attribute   ||

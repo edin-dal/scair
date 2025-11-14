@@ -41,14 +41,15 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         parsingDiagnostics = args.parsing_diagnostics,
         allowUnregisteredDialect = args.allow_unregistered
       )
-      val parsedModule = parser.parseThis(
-        input,
-        pattern = parser.TopLevel(using _)
-      ) match
-        case fastparse.Parsed.Success(input_module, _) =>
-          Right(input_module)
-        case failure: fastparse.Parsed.Failure =>
-          Left(parser.error(failure))
+      val parsedModule =
+        parser.parseThis(
+          input,
+          pattern = parser.TopLevel(using _)
+        ) match
+          case fastparse.Parsed.Success(input_module, _) =>
+            Right(input_module)
+          case failure: fastparse.Parsed.Failure =>
+            Left(parser.error(failure))
 
       if !args.parsing_diagnostics then
         parsedModule match
@@ -135,7 +136,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                 .map(ctx.getPass(_).get)
                 .foldLeft(module)((module, pass) => module.map(pass.transform))
             case Left(errorMsg) =>
-              if parsed_args.verify_diagnostics then Left(errorMsg)
+              if parsed_args.verify_diagnostics then Left(errorMsg + "\n")
               else throw new VerifyException(errorMsg)
         )
 
