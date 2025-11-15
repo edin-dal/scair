@@ -146,4 +146,3 @@ inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
     summonMLIRTraits[Operations],
     attributes ++ summonAttributeTraits[Attributes]
   )
-  

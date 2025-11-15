@@ -3,10 +3,11 @@ package scair.interpreter
 import scair.dialects.builtin.*
 import scair.dialects.func
 import scair.ir.*
+import scair.utils.ShapedArray
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
-import scair.utils.ShapedArray
 
 // global implementation dictionary for interpreter
 val impl_dict = mutable.Map[Class[? <: Operation], OpImpl[
@@ -18,8 +19,8 @@ val ext_func_dict = mutable.Map[String, FunctionCtx]()
 
 // OpImpl class representing operation implementation, mainly for accessing implementation type information
 trait OpImpl[T <: Operation: ClassTag]:
-    def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-    def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
+  def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+  def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
 
 // function context class for saving a context at the function's definition (cannot use values defined after the function itself)
 case class FunctionCtx(
@@ -59,7 +60,7 @@ class Interpreter:
   // base case is Int (may have issues later)
   type ImplOf[T <: Value[Attribute]] = T match
     case Value[MemrefType] => ShapedArray
-    case _ => Int
+    case _                 => Int
 
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for ImplOf
@@ -67,25 +68,25 @@ class Interpreter:
     ctx.vars.get(value) match
       case Some(v) => v.asInstanceOf[ImplOf[T]]
       case _ => throw new Exception(s"Variable ${value} not found in context")
-    
+
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
     ctx.vars.get(value) match
       case Some(v: Int) => v
       case _ => throw new Exception(s"Bool-like ${value} not found in context")
 
-  def register_implementations(): Unit = 
+  def register_implementations(): Unit =
     for dialect <- allInterpreterDialects do
-      for impl <- dialect do
-        impl_dict.put(impl.opType, impl)
+      for impl <- dialect do impl_dict.put(impl.opType, impl)
 
   // keeping buffer function for extensibility
   def interpret(block: Block, ctx: RuntimeCtx): Option[Any] =
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
-  
+
   // note: results are put within implementations, may change later
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
-    val impl = impl_dict.get(op.getClass) 
+    val impl = impl_dict.get(op.getClass)
     impl match
       case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
-      case None => throw new Exception("Unsupported operation when interpreting")
+      case None       =>
+        throw new Exception("Unsupported operation when interpreting")

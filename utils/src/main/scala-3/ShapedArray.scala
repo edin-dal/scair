@@ -8,7 +8,6 @@ case class ShapedArray(
   lazy val strides: Seq[Int] =
     shape.scanRight(1)(_ * _).tail
 
-
   def length: Int =
     shape.product
 
