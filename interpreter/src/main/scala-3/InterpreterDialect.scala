@@ -3,17 +3,6 @@ package scair.tools
 import scair.ir.*
 
 import scala.reflect.ClassTag
-import scala.collection.mutable
-
-// definition of all dialects in interpreter context
-val interpreterContext = InterpreterContext(
-      Seq(
-        InterpreterFuncDialect,
-        InterpreterArithDialect,
-        InterpreterMemrefDialect
-      ),
-      mutable.Map()
-    )
 
 // OpImpl class representing operation implementation, mainly for accessing implementation type information
 trait OpImpl[T <: Operation: ClassTag]:

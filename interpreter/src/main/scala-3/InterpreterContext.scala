@@ -4,6 +4,16 @@ import scair.ir.*
 
 import scala.collection.mutable
 
+// definition of all dialects in interpreter context
+val interpreterContext = InterpreterContext(
+      Seq(
+        InterpreterFuncDialect,
+        InterpreterArithDialect,
+        InterpreterMemrefDialect
+      ),
+      mutable.Map()
+)
+
 // global interpreter context to hold all registered dialects and their implementations
 // may have future uses
 case class InterpreterContext(
@@ -13,8 +23,8 @@ case class InterpreterContext(
     ]]
 ):
   // registering all dialects
-  def registerInterpreterDialects(dialects: Seq[InterpreterDialect]): Unit =
-    for dialect <- dialects do registerImplementations(dialect)
+  def registerInterpreterDialects(): Unit =
+    for dialect <- interpreterDialects do registerImplementations(dialect)
 
   // registers all implementations in a dialect
   def registerImplementations(dialect: InterpreterDialect): Unit =

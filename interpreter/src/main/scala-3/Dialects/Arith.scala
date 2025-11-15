@@ -2,6 +2,7 @@ package scair.tools
 
 import scair.dialects.arith
 import scair.ir.*
+import scair.dialects.builtin.IntegerAttr
 
 // implicit helper function to convert Boolean to Int
 // is this necessary?
@@ -10,6 +11,14 @@ class asInt(b: Boolean) {
 }
 
 implicit def convertBooleanToInt(b: Boolean): asInt = new asInt(b)
+
+object run_constant extends OpImpl[arith.Constant]:
+  def run(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+    op.value match
+      case intAttr: IntegerAttr =>
+        ctx.vars.put(op.result, intAttr.value.toInt)
+      case _ => throw new Exception("Unsupported constant attribute type")
+    
 
 // may extend bin ops to BigInt later
 object run_addi extends OpImpl[arith.AddI]:
@@ -115,6 +124,7 @@ object run_select extends OpImpl[arith.SelectOp]:
 
 val InterpreterArithDialect = summonImplementations(
   Seq(
+    run_constant,
     run_addi,
     run_subi,
     run_muli,

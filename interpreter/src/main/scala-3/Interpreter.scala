@@ -68,9 +68,17 @@ class Interpreter:
   def interpret(block: Block, ctx: RuntimeCtx): Option[Any] =
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
+  
+  // note: results are put within implementations, may change later
+  def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
+    val impl = interpreterContext.implementationCtx.get(op.getClass) 
+    impl match
+      case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
+      case None => throw new Exception("Unsupported operation when interpreting")
+    
 
   // main operation interpretation function
-  def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
+  def interpret_op_old(op: Operation, ctx: RuntimeCtx): Unit =
     op match
       case func_op: func.Func =>
         interpret_function(func_op, ctx)
