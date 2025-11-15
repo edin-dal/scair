@@ -23,74 +23,74 @@ object run_constant extends OpImpl[arith.Constant]:
 // may extend bin ops to BigInt later
 object run_addi extends OpImpl[arith.AddI]:
   def run(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs + rhs)
 
 object run_subi extends OpImpl[arith.SubI]:
   def run(op: arith.SubI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs - rhs)
 
 object run_muli extends OpImpl[arith.MulI]:
   def run(op: arith.MulI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs * rhs)
 
 object run_divsi extends OpImpl[arith.DivSI]:
   def run(op: arith.DivSI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs / rhs)
 
 object run_divui extends OpImpl[arith.DivUI]:
   def run(op: arith.DivUI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs / rhs)
 
 object run_andi extends OpImpl[arith.AndI]:
   def run(op: arith.AndI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs & rhs)
 
 object run_ori extends OpImpl[arith.OrI]:
   def run(op: arith.OrI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs | rhs)
 
 object run_xori extends OpImpl[arith.XOrI]:
   def run(op: arith.XOrI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs ^ rhs)
 
 object run_shli extends OpImpl[arith.ShLI]:
   def run(op: arith.ShLI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs << rhs)
 
 object run_shrsi extends OpImpl[arith.ShRSI]:
   def run(op: arith.ShRSI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs >> rhs)
 
 object run_shrui extends OpImpl[arith.ShRUI]:
   def run(op: arith.ShRUI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
     ctx.vars.put(op.result, lhs >>> rhs)
 
 object run_cmpi extends OpImpl[arith.CmpI]:
   def run(op: arith.CmpI, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    val lhs = lookup_op(op.lhs, ctx)
-    val rhs = lookup_op(op.rhs, ctx)
+    val lhs = interpreter.lookup_op(op.lhs, ctx)
+    val rhs = interpreter.lookup_op(op.rhs, ctx)
 
     op.predicate.ordinal match
       case 0 => // EQ
@@ -109,20 +109,20 @@ object run_cmpi extends OpImpl[arith.CmpI]:
   
 object run_select extends OpImpl[arith.SelectOp]:
   def run(op: arith.SelectOp, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 
-    lookup_boollike(op.condition, ctx) match
+    interpreter.lookup_boollike(op.condition, ctx) match
       case 0 =>
         ctx.vars.put(
           op.result,
-          lookup_op(op.falseValue, ctx)
+          interpreter.lookup_op(op.falseValue, ctx)
         )
       case 1 =>
         ctx.vars.put(
           op.result,
-          lookup_op(op.trueValue, ctx)
+          interpreter.lookup_op(op.trueValue, ctx)
         )
       case _ => throw new Exception("Select condition must be 0 or 1")
 
-val InterpreterArithDialect = summonImplementations(
+val InterpreterArithDialect: InterpreterDialect =
   Seq(
     run_constant,
     run_addi,
@@ -139,4 +139,3 @@ val InterpreterArithDialect = summonImplementations(
     run_cmpi,
     run_select
   )
-)

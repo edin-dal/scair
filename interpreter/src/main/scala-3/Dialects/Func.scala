@@ -7,7 +7,7 @@ import scair.dialects.builtin.SymbolRefAttr
 // assume one return value for now
 object run_return extends OpImpl[func.Return]:
   def run(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    ctx.result = Some(lookup_op(op._operands.head, ctx))
+    ctx.result = Some(interpreter.lookup_op(op._operands.head, ctx))
 
 object run_call extends OpImpl[func.Call]:
   def run(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
@@ -35,7 +35,7 @@ object run_function extends OpImpl[func.Func]:
       // should it be external call like xDSL?
       run_call.run(new_call, interpreter, ctx)
       // get return value from main call and add to context
-      val return_result = lookup_op(new_call._results.head, ctx)
+      val return_result = interpreter.lookup_op(new_call._results.head, ctx)
       ctx.result = Some(return_result)
     else
       ctx.add_func_ctx(op)
@@ -43,10 +43,9 @@ object run_function extends OpImpl[func.Func]:
         
 
 
-val InterpreterFuncDialect = summonImplementations(
+val InterpreterFuncDialect: InterpreterDialect =
   Seq(
     run_return,
     run_call,
     run_function
   )
-)

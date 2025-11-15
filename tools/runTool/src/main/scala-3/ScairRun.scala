@@ -2,7 +2,6 @@ package scair.tools.runTool
 
 import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
-import scair.interpreter.interpreterContext
 import scair.interpreter.RuntimeCtx
 import scair.ir.*
 import scair.tools.ScairToolBase
@@ -73,8 +72,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val interpreter = new Interpreter()
     var runtimeCtx =
       new RuntimeCtx(mutable.Map(), ListBuffer(), None)
-    
-    interpreterContext.registerInterpreterDialects()
+
+    interpreter.register_implementations()
 
     val output = interpreter.interpret(module_block, runtimeCtx)
 
