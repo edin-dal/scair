@@ -9,6 +9,6 @@
 // CHECK:      builtin.module {
 // CHECK-NEXT:   %0 = "test.op"() : () -> f32
 // CHECK-NEXT:   %1 = "test.op"() : () -> i32
-// CHECK-NEXT:   %2 = "math.absf"(%0) : (f32) -> f32
-// CHECK-NEXT:   %3 = "math.fpowi"(%2, %1) : (f32, i32) -> f32
+// CHECK-NEXT:   %2 = "math.absf"(%0) <{fastmath = #arith.fastmath<none>}> : (f32) -> f32
+// CHECK-NEXT:   %3 = "math.fpowi"(%2, %1) <{fastmath = #arith.fastmath<none>}> : (f32, i32) -> f32
 // CHECK-NEXT: }

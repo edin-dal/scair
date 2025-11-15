@@ -13,6 +13,8 @@ import java.io.PrintWriter
 import scair.clair.macros.DerivedOperation
 import scala.collection.mutable.LinkedHashMap
 
+import scair.dialects.test.TestOp
+
 class DeepCopyTest extends AnyFlatSpec:
 
   "Operation.deepCopy" should "deep copy a simple operation" in:

@@ -52,7 +52,7 @@ To use the command you would need to have defined a new main class somewhere in 
 # No main class specified or found!
 ./mill run
 # To run the main CLI:
-./mill tools.run
+./mill tools.opt.run
 # To run the titlegen:
 ./mill clair.run
 ```

@@ -9,8 +9,8 @@ import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
+import scair.enums.macros.*
 import scair.ir.*
-import scair.scairdl.constraints.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 
@@ -366,29 +366,18 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
             s"Expected ${${ Expr(segmentSizesName) }} property"
           )
 
-    ParametrizedAttrConstraint[DenseArrayAttr](
-      Seq(
-        EqualAttr(IntegerType(IntData(32), Signless)),
-        AllOf(
-          Seq(
-            BaseAttr[IntegerAttr](),
-            ParametrizedAttrConstraint[IntegerAttr](
-              Seq(
-                BaseAttr[IntData](),
-                EqualAttr(IntegerType(IntData(32), Signless))
-              )
-            )
-          )
-        )
+    if dense.typ != I32 then
+      throw new Exception(
+        s"Expected ${${ Expr(segmentSizesName) }} to be of element type i32"
       )
-    ).verify(dense, scair.scairdl.constraints.ConstraintContext())
 
-    for (s <- dense) yield s match
-      case right: IntegerAttr => right.value.data.toInt
-      case _                  =>
+    dense.map {
+      case IntegerAttr(IntData(value), eltpe) if eltpe == I32 => value.toInt
+      case _                                                  =>
         throw new Exception(
-          "Unreachable exception as per above constraint check."
+          s"Expected ${${ Expr(segmentSizesName) }} to contain IntegerAttr of i32"
         )
+    }
   }
 
 /** Partition a construct sequence, in the case of no variadic defintion.
@@ -682,7 +671,24 @@ def tryConstruct[T: Type](
       properties
     ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
     opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
-      tpe match
+      val namedArg = tpe match
+        case '[type t <: scala.reflect.Enum; `t`] =>
+          val property = variadicity match
+            case Variadicity.Optional =>
+              enumFromPropertyOption[t](
+                properties,
+                name
+              )
+            case Variadicity.Single =>
+              enumFromProperty[t](
+                properties,
+                name
+              )
+            case Variadicity.Variadic =>
+              report.errorAndAbort(
+                s"Properties cannot be variadic in an ADT."
+              )
+          NamedArg(name, property.asTerm)
         case '[type t <: Attribute; `t`] =>
           val property = variadicity match
             case Variadicity.Optional =>
@@ -700,6 +706,7 @@ def tryConstruct[T: Type](
                 s"Properties cannot be variadic in an ADT."
               )
           NamedArg(name, property.asTerm)
+      namedArg
     }
   // Return a call to the primary constructor of the ADT.
   Apply(
