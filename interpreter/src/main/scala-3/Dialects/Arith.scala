@@ -1,4 +1,4 @@
-package scair.tools
+package scair.interpreter
 
 import scair.dialects.arith
 import scair.ir.*
@@ -92,7 +92,7 @@ object run_cmpi extends OpImpl[arith.CmpI]:
     val lhs = lookup_op(op.lhs, ctx)
     val rhs = lookup_op(op.rhs, ctx)
 
-    op.predicate.value.toInt match
+    op.predicate.ordinal match
       case 0 => // EQ
         ctx.vars.put(op.result, (lhs == rhs).toInt)
       case 1 => // NE

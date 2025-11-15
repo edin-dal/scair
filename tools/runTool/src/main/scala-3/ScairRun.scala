@@ -2,7 +2,8 @@ package scair.tools.runTool
 
 import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
-import scair.interpreter.InterpreterCtx
+import scair.interpreter.interpreterContext
+import scair.interpreter.RuntimeCtx
 import scair.ir.*
 import scair.tools.ScairToolBase
 import scopt.OParser

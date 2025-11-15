@@ -1,4 +1,4 @@
-package scair.tools
+package scair.interpreter
 
 import scair.dialects.func
 import scair.ir.Result
@@ -7,7 +7,6 @@ import scair.dialects.builtin.SymbolRefAttr
 // assume one return value for now
 object run_return extends OpImpl[func.Return]:
   def run(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-
     ctx.result = Some(lookup_op(op._operands.head, ctx))
 
 object run_call extends OpImpl[func.Call]:
