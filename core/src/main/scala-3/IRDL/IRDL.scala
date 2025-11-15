@@ -4,6 +4,13 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
+// ██╗ ██████╗░ ██████╗░ ██╗░░░░░
+// ██║ ██╔══██╗ ██╔══██╗ ██║░░░░░
+// ██║ ██████╔╝ ██║░░██║ ██║░░░░░
+// ██║ ██╔══██╗ ██║░░██║ ██║░░░░░
+// ██║ ██║░░██║ ██████╔╝ ███████╗
+// ╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝
+
 final case class Dialect(
     sym_name: StringData,
     body: Region

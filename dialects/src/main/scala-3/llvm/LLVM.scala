@@ -5,6 +5,13 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 
+// ██╗░░░░░ ██╗░░░░░ ██╗░░░██╗ ███╗░░░███╗
+// ██║░░░░░ ██║░░░░░ ██║░░░██║ ████╗░████║
+// ██║░░░░░ ██║░░░░░ ╚██╗░██╔╝ ██╔████╔██║
+// ██║░░░░░ ██║░░░░░ ░╚████╔╝░ ██║╚██╔╝██║
+// ███████╗ ███████╗ ░░╚██╔╝░░ ██║░╚═╝░██║
+// ╚══════╝ ╚══════╝ ░░░╚═╝░░░ ╚═╝░░░░░╚═╝
+
 case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
 
 case class Load(
