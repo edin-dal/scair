@@ -2,18 +2,19 @@ package scair.tools
 
 import scair.dialects.func
 
+// assume one return value for now
 object run_return extends OpImpl[func.Return]:
   def run(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    val result_ops = for op <- op.operands yield op
-    ctx.result = Some(result_ops)
+    ctx.result = Some(op._operands.head)
 
 object run_call extends OpImpl[func.Call]:
-  def run(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Unit = 0
-//     for func_ctx <- ctx.funcs do
-//       if func_ctx.name == op.callee.rootRef.stringLiteral then
-//         val new_ctx = func_ctx.saved_ctx.deep_clone_ctx()
-//         for op <- func_ctx.body.operations do
-//           interpreter.interpret_op(op, new_ctx) // create clone so function can run without modifying saved context
+  def run(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+    for func_ctx <- ctx.funcs do
+      if func_ctx.name == op.callee.rootRef.stringLiteral then
+        val new_ctx = func_ctx.saved_ctx.deep_clone_ctx()
+        for op <- func_ctx.body.operations do
+          interpreter.interpret_op(op, new_ctx) // create clone so function can run without modifying saved context
+        ctx.vars.put(op._results.head, new_ctx.result.get) // assuming one return value for now
 
         
 
