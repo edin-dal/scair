@@ -21,7 +21,6 @@ class DlamDeBruijnTests extends AnyFlatSpec:
     given indentLevel: Int = 0
     val p = scair.Printer(p = pw)
     p.print(attr)
-    // attr.custom_print(p)
     pw.flush()
     sw.toString.trim
 

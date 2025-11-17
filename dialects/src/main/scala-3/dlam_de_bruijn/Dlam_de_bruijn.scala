@@ -9,12 +9,7 @@ import scair.AttrParser
 import fastparse.ParsingRun
 import fastparse.*
 
-/** \========================= Types (with de Bruijn) \=========================
-  *
-  * Model dlam types as Attributes to match the general scair.ir shape. If
-  * codebase differentiates Type/Attribute at the kind level, change DlamType to
-  * extend the correct base (e.g., Type) accordingly.
-  */
+// ========================= Types (with de Bruijn) \=========================
 
 // A sealed "kind" for all dlam types
 sealed trait DlamType extends TypeAttribute
@@ -30,8 +25,6 @@ final case class DlamBVarType(k: IntegerAttr)
     extends DlamType
     with DerivedAttribute["dlam.bvar", DlamBVarType]
     derives DerivedAttributeCompanion
-//override def name: String = "dlam.bvar"
-//override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(k)
 
 // !dlam.fun<in -> out> — function type
 final case class DlamFunType(in: TypeAttribute, out: TypeAttribute)
@@ -60,8 +53,6 @@ final case class DlamForAllType(body: TypeAttribute)
     extends DlamType
     with DerivedAttribute["dlam.forall", DlamForAllType]
     derives DerivedAttributeCompanion
-//override def name: String = "dlam.forall"
-//override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(body)
 
 // --------------------- Nat indexing ---------------------
 
@@ -265,8 +256,7 @@ final case class VApply(
           )
       case other => Left(s"vapply: fun not a function type: $other")
 
-/** \========================= Dialect Registration \=========================
-  */
+// ========================= Dialect Registration \=========================
 val DlamDialect = summonDialect[
   // Custom attributes
   (DlamTypeType, DlamBVarType, DlamForAllType),
