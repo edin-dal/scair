@@ -268,7 +268,7 @@ final case class VApply(
 /** \========================= Dialect Registration \=========================
   */
 val DlamDialect = summonDialect[
-  // Custom attributes (none here)
+  // Custom attributes
   (DlamTypeType, DlamBVarType, DlamForAllType),
   // Operations
   (VLambda, VReturn, TLambda, TReturn, TApply, VApply)

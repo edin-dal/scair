@@ -27,6 +27,7 @@ import scair.transformations.cdt.TestReplacementPass
 import scair.transformations.cse.CommonSubexpressionElimination
 import scair.transformations.reconcile.ReconcileUnrealizedCasts
 import scair.passes.MonomorphizePass
+import scair.dialects.dlam_de_bruijn.DlamDialect
 
 val allDialects: Seq[Dialect] =
   Seq(
@@ -46,7 +47,8 @@ val allDialects: Seq[Dialect] =
     AffineDialect,
     FuncDialect,
     LLVMDialect,
-    SCFDialect
+    SCFDialect,
+    DlamDialect
   )
 
 val allPasses: Seq[MLContext => ModulePass] =
