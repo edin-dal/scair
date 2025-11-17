@@ -8,7 +8,7 @@ import scair.clair.macros.DerivedOperationCompanion
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
-import java.lang.Float.parseFloat
+import java.lang.Double.parseDouble
 import java.lang.Math.pow
 import scala.annotation.switch
 import scala.annotation.tailrec
@@ -228,8 +228,8 @@ object Parser:
     P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
 
   private def parseFloatNum(float: (String, String)): Double =
-    val number = parseFloat(float._1).toDouble
-    val power = parseFloat(float._2).toDouble
+    val number = parseDouble(float._1)
+    val power = parseDouble(float._2)
     return number * pow(10, power)
 
   def FloatLiteral[$: P] = P(
