@@ -232,6 +232,13 @@ object Parser:
     val power = parseDouble(float._2)
     return number * pow(10, power)
 
+  /** Parses a floating-point number from its string representation. NOTE: This
+    * is only a float approximation, and in its current form should not be
+    * trusted for precision sensitive applications.
+    *
+    * @return
+    *   float: (String, String)
+    */
   def FloatLiteral[$: P] = P(
     (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).!
       ~~ (CharIn("eE")
