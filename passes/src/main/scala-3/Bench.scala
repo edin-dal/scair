@@ -12,6 +12,15 @@ import scair.transformations.WalkerPass
 import scair.transformations.patterns.Owner
 import scair.transformations.patterns.pattern
 
+//
+// ██████╗░ ███████╗ ███╗░░██╗ ░█████╗░ ██╗░░██╗
+// ██╔══██╗ ██╔════╝ ████╗░██║ ██╔══██╗ ██║░░██║
+// ██████╦╝ █████╗░░ ██╔██╗██║ ██║░░╚═╝ ███████║
+// ██╔══██╗ ██╔══╝░░ ██║╚████║ ██║░░██╗ ██╔══██║
+// ██████╦╝ ███████╗ ██║░╚███║ ╚█████╔╝ ██║░░██║
+// ╚═════╝░ ╚══════╝ ╚═╝░░╚══╝ ░╚════╝░ ╚═╝░░╚═╝
+//
+
 val AddIfold = pattern {
   case AddI(
         Owner(Constant(c0: IntegerAttr, _)),
