@@ -3,16 +3,19 @@ package scair.ir
 import fastparse.*
 import scair.AttrParser
 import scair.Printer
+import scair.dialects.builtin.IntegerAttr
 
 import java.io.PrintWriter
 import java.io.StringWriter
 
-// ██╗ ██████╗░
-// ██║ ██╔══██╗
-// ██║ ██████╔╝
-// ██║ ██╔══██╗
-// ██║ ██║░░██║
-// ╚═╝ ╚═╝░░╚═╝
+//
+// ░█████╗░ ████████╗ ████████╗ ██████╗░ ██╗ ██████╗░ ██╗░░░██╗ ████████╗ ███████╗
+// ██╔══██╗ ╚══██╔══╝ ╚══██╔══╝ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ╚══██╔══╝ ██╔════╝
+// ███████║ ░░░██║░░░ ░░░██║░░░ ██████╔╝ ██║ ██████╦╝ ██║░░░██║ ░░░██║░░░ █████╗░░
+// ██╔══██║ ░░░██║░░░ ░░░██║░░░ ██╔══██╗ ██║ ██╔══██╗ ██║░░░██║ ░░░██║░░░ ██╔══╝░░
+// ██║░░██║ ░░░██║░░░ ░░░██║░░░ ██║░░██║ ██║ ██████╦╝ ╚██████╔╝ ░░░██║░░░ ███████╗
+// ╚═╝░░╚═╝ ░░░╚═╝░░░ ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝ ╚═════╝░ ░╚═════╝░ ░░░╚═╝░░░ ╚══════╝
+//
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    ATTRIBUTES    ||
@@ -38,6 +41,14 @@ sealed trait Attribute:
 
 trait TypeAttribute extends Attribute:
   override def prefix: String = "!"
+
+trait IntegerEnumAttr extends Attribute:
+  def ordinalIntAttr: IntegerAttr
+
+  override def printParameters(p: Printer): Unit = ()
+
+  override def custom_print(p: Printer): Unit =
+    p.print(ordinalIntAttr)
 
 abstract trait ParametrizedAttribute() extends Attribute:
 

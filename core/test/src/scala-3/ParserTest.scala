@@ -21,6 +21,13 @@ class ParserTest
       case "Success" => ((x: Int) => Parsed.Success(expected, x))
       case "Failure" => Parsed.Failure(_, _, _)
 
+  def passed[A](res: Parsed[A], expected_result: A, result: String) =
+    res match
+      case Parsed.Success(actual_result, i) if result == "Success" =>
+        expected_result == actual_result
+      case Parsed.Failure(_, _, _) if result == "Failure" => true
+      case _                                              => false
+
   val ctx = new MLContext()
   var parser: Parser = new Parser(ctx, allowUnregisteredDialect = true)
 
@@ -30,54 +37,54 @@ class ParserTest
 
   val digitTests = Table(
     ("input", "result", "expected"),
-    ("7", "Success", "7"),
+    ("7", "Success", ()),
     ("a", "Failure", ""),
     (" $ ! £ 4 1 ", "Failure", "")
   )
 
   val hexTests = Table(
     ("input", "result", "expected"),
-    ("5", "Success", "5"),
-    ("f", "Success", "f"),
-    ("E", "Success", "E"),
-    ("41", "Success", "4"),
+    ("5", "Success", ()),
+    ("f", "Success", ()),
+    ("E", "Success", ()),
+    ("41", "Success", ()),
     ("G", "Failure", ""),
     ("g", "Failure", "")
   )
 
   val intLiteralTests = Table(
     ("input", "result", "expected"),
-    ("123456789", "Success", "123456789"),
-    ("1231f", "Success", "1231"),
-    ("0x0011ffff", "Success", "0x0011ffff"),
-    ("1xds%", "Success", "1"),
-    ("0xgg", "Success", "0"),
+    ("123456789", "Success", 123456789),
+    ("1231f", "Success", 1231),
+    ("0x0011ffff", "Success", 0x0011ffff),
+    ("1xds%", "Success", 1),
+    ("0xgg", "Success", 0),
     ("f1231", "Failure", ""),
-    ("0x0011gggg", "Failure", "")
+    ("0x0011gggg", "Success", 0x0011)
   )
 
   val decimalLiteralTests = Table(
     ("input", "result", "expected"),
-    ("123456789", "Success", "123456789"),
-    ("1231f", "Success", "1231"),
+    ("123456789", "Success", 123456789),
+    ("1231f", "Success", 1231),
     ("f1231", "Failure", "")
   )
 
   val hexadecimalLiteralTests = Table(
     ("input", "result", "expected"),
-    ("0x0011ffff", "Success", "0x0011ffff"),
-    ("0x0011gggg", "Failure", ""),
+    ("0x0011ffff", "Success", 0x0011ffff),
+    ("0x0011gggg", "Success", 0x0011),
     ("1xds%", "Failure", ""),
     ("0xgg", "Failure", "")
   )
 
   val floatLiteralTests = Table(
     ("input", "result", "expected"),
-    ("1.0", "Success", "1.0"),
-    ("1.01242", "Success", "1.01242"),
-    ("993.013131", "Success", "993.013131"),
-    ("1.0e10", "Success", "1.0e10"),
-    ("1.0E10", "Success", "1.0E10"),
+    ("1.0", "Success", 1.0),
+    ("1.01242", "Success", 1.01242),
+    ("993.013131", "Success", 993.013131),
+    ("1.0e10", "Success", 1.0e10),
+    ("1.0E10", "Success", 1.0e10),
     ("1.", "Failure", "")
   )
 
@@ -160,7 +167,7 @@ class ParserTest
       name should s"[ '$input' -> '$expected' = $result ]" in {
         // Run the pqrser on the input and check
         parser.parseThis(input, pattern) should matchPattern {
-          case res => // pass
+          case x if passed(x.asInstanceOf[Parsed[?]], expected, result) =>
         }
       }
     }

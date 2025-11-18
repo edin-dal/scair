@@ -95,7 +95,7 @@ final case class IntegerType(width: IntData, sign: Signedness)
 || INTEGER ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
 
-final case class IntegerAttr(
+case class IntegerAttr(
     value: IntData,
     typ: IntegerType | IndexType = I64
 ) extends DerivedAttribute["builtin.integer_attr", IntegerAttr]:
