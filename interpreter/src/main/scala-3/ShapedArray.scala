@@ -1,4 +1,4 @@
-package scair.utils
+package scair.interpreter
 
 case class ShapedArray(
     private val data: Array[Any],

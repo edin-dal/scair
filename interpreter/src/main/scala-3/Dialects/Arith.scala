@@ -4,12 +4,7 @@ import scair.dialects.arith
 import scair.dialects.builtin.IntegerAttr
 import scair.ir.*
 
-// implicit helper function to convert Boolean to Int
-// is this necessary?
-class asInt(b: Boolean):
-  def toInt = if b then 1 else 0
-
-implicit def convertBooleanToInt(b: Boolean): asInt = new asInt(b)
+given Conversion[Boolean, Int] = if _ then 1 else 0
 
 object run_constant extends OpImpl[arith.Constant]:
 
@@ -105,17 +100,17 @@ object run_cmpi extends OpImpl[arith.CmpI]:
 
     op.predicate.ordinal match
       case 0 => // EQ
-        ctx.vars.put(op.result, (lhs == rhs).toInt)
+        ctx.vars.put(op.result, (lhs == rhs): Int)
       case 1 => // NE
-        ctx.vars.put(op.result, (lhs != rhs).toInt)
+        ctx.vars.put(op.result, (lhs != rhs): Int)
       case 2 | 6 => // SLT and ULT
-        ctx.vars.put(op.result, (lhs < rhs).toInt)
+        ctx.vars.put(op.result, (lhs < rhs): Int)
       case 3 | 7 => // SLE and ULE
-        ctx.vars.put(op.result, (lhs <= rhs).toInt)
+        ctx.vars.put(op.result, (lhs <= rhs): Int)
       case 4 | 8 => // SGT and UGT
-        ctx.vars.put(op.result, (lhs > rhs).toInt)
+        ctx.vars.put(op.result, (lhs > rhs): Int)
       case 5 | 9 => // SGE and UGE
-        ctx.vars.put(op.result, (lhs >= rhs).toInt)
+        ctx.vars.put(op.result, (lhs >= rhs): Int)
       case _ => throw new Exception("Unknown comparison predicate")
 
 object run_select extends OpImpl[arith.SelectOp]:

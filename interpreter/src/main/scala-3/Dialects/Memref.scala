@@ -1,7 +1,7 @@
 package scair.interpreter
 
 import scair.dialects.memref
-import scair.utils.ShapedArray
+import scair.interpreter.ShapedArray
 
 object run_alloc extends OpImpl[memref.Alloc]:
 

@@ -2,8 +2,8 @@ package scair.interpreter
 
 import scair.dialects.builtin.*
 import scair.dialects.func
+import scair.interpreter.ShapedArray
 import scair.ir.*
-import scair.utils.ShapedArray
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
