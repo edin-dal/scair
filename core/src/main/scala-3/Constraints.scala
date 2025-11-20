@@ -23,11 +23,10 @@ class ConstraintContext():
   val var_constraints: DictType[String, Attribute] =
     DictType.empty[String, Attribute]
 
-trait ConstraintImpl[c <: Constraint]:
-
-  def verify(attr: Attribute)(using
-      ctx: ConstraintContext
-  ): Either[String, Unit]
+opaque type ConstraintVerifier[
+    C <: Constraint
+] <: Attribute => ConstraintContext => Either[String, Unit] =
+  Attribute => ConstraintContext => Either[String, Unit]
 
 infix type !>[A <: Attribute, C <: Constraint] = A
 
@@ -46,32 +45,25 @@ trait Var[To <: String] extends Constraint
 inline def eqAttr[To <: Attribute]: To =
   ${ eqAttrImpl[To] }
 
-class ConstraintImplEqAttr[To <: Attribute](ref: To)
-    extends ConstraintImpl[EqAttr[To]]:
-
-  override def verify(attr: Attribute)(using
-      ctx: ConstraintContext
-  ): Either[String, Unit] =
-    if attr == ref then Right(())
-    else Left(s"Expected ${ref}, got ${attr}")
-
-inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
+inline given [To <: Attribute] => ConstraintVerifier[EqAttr[To]] =
   val ref = eqAttr[To]
-  new ConstraintImplEqAttr(ref)
-
-class ConstraintImplVar[To <: String](name: To) extends ConstraintImpl[Var[To]]:
-
-  override def verify(attr: Attribute)(using
+  (attr: Attribute) =>
+    (
       ctx: ConstraintContext
-  ): Either[String, Unit] =
-    if ctx.var_constraints.contains(name) then
-      if ctx.var_constraints.apply(name) != attr then
-        Left(s"Expected ${ctx.var_constraints.apply(name)}, got ${attr}")
-      else Right(())
-    else
-      ctx.var_constraints += ((name, attr))
-      Right(())
+    ) =>
+      if attr == ref then Right(())
+      else Left(s"Expected ${ref}, got ${attr}")
 
-inline given [To <: String] => ConstraintImpl[Var[To]] =
+inline given [To <: String] => ConstraintVerifier[Var[To]] =
   val name = constValue[To]
-  new ConstraintImplVar(name)
+  (attr: Attribute) =>
+    (
+      ctx: ConstraintContext
+    ) =>
+      if ctx.var_constraints.contains(name) then
+        if ctx.var_constraints.apply(name) != attr then
+          Left(s"Expected ${ctx.var_constraints.apply(name)}, got ${attr}")
+        else Right(())
+      else
+        ctx.var_constraints += ((name, attr))
+        Right(())
