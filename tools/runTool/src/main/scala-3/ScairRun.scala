@@ -2,7 +2,7 @@ package scair.tools.runTool
 
 import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
-import scair.interpreter.InterpreterCtx
+import scair.interpreter.RuntimeCtx
 import scair.ir.*
 import scair.tools.ScairToolBase
 import scopt.OParser
@@ -86,10 +86,12 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val module_block = module.body.blocks.head
 
     val interpreter = new Interpreter()
-    var interpreterCtx =
-      new InterpreterCtx(mutable.Map(), ListBuffer(), None)
+    var runtimeCtx =
+      new RuntimeCtx(mutable.Map(), ListBuffer(), None)
 
-    val output = interpreter.interpret(module_block, interpreterCtx)
+    interpreter.register_implementations()
+
+    val output = interpreter.interpret(module_block, runtimeCtx)
 
     if output.isDefined then
       if output.get == 1 then println("true")
