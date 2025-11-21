@@ -541,4 +541,4 @@ case class UnrealizedConversionCastOp(
     ]
 
 val BuiltinDialect =
-  summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)](Seq())
+  summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)]

@@ -24,7 +24,7 @@ import scala.util.Try
 // ╚█████╔╝ ███████╗ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ░╚════╝░ ╚══════╝ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
-trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion:
+trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion[T]:
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
 
@@ -127,15 +127,15 @@ def summonMLIRTraitsMacro[T <: Tuple: Type](using
 
 def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
     Quotes
-): Seq[Expr[DerivedAttributeCompanion[?]]] =
+): Seq[Expr[AttributeCompanion[?]]] =
   import quotes.reflect.*
   Type.of[T] match
     case '[type t <: Attribute; `t` *: ts] =>
       val dat = Expr
-        .summon[DerivedAttributeCompanion[t]]
+        .summon[AttributeCompanion[t]]
         .getOrElse(
           report.errorAndAbort(
-            "summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."
+            f"Could not summon AttributeCompanion for ${Type.show[t]}"
           )
         )
       dat +: summonAttributeTraitsMacroRec[ts]
@@ -143,20 +143,17 @@ def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
 
 def summonAttributeTraitsMacro[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedAttributeCompanion[?]]] =
+): Expr[Seq[AttributeCompanion[?]]] =
   Expr.ofSeq(summonAttributeTraitsMacroRec[T])
 
-inline def summonAttributeTraits[T <: Tuple]
-    : Seq[DerivedAttributeCompanion[?]] =
+inline def summonAttributeTraits[T <: Tuple]: Seq[AttributeCompanion[?]] =
   ${ summonAttributeTraitsMacro[T] }
 
 inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
   ${ summonMLIRTraitsMacro[T] }
 
-inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
-    attributes: Seq[AttributeCompanion] = Seq()
-): Dialect =
+inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
   new Dialect(
     summonMLIRTraits[Operations],
-    attributes ++ summonAttributeTraits[Attributes]
+    summonAttributeTraits[Attributes]
   )

@@ -94,7 +94,7 @@ abstract class DataAttribute[D](
         x.data == this.data
       case _ => false
 
-trait AttributeCompanion:
+trait AttributeCompanion[T <: Attribute]:
   def name: String
   def parse[$: P](p: AttrParser): P[Attribute]
 

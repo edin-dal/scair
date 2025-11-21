@@ -120,4 +120,4 @@ case class Return(
     with NoMemoryEffect
     with IsTerminator
 
-val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())
+val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)]

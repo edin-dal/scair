@@ -103,4 +103,4 @@ case class FPowIOp(
 /////////////
 
 val MathDialect: Dialect =
-  summonDialect[EmptyTuple, (AbsfOp, FPowIOp)]()
+  summonDialect[EmptyTuple, (AbsfOp, FPowIOp)]
