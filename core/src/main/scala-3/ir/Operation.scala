@@ -182,7 +182,7 @@ case class UnregisteredOperation(
       attributes = attributes
     )
 
-trait OperationCompanion:
+trait OperationCompanion[O <: Operation]:
   def name: String
 
   def parse[$: P](parser: Parser, resNames: Seq[String]): P[Operation] =

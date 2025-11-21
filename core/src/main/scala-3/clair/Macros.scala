@@ -729,7 +729,7 @@ def tryConstruct[T: Type](
     *   ADT.
     */
 
-def fromUnstructuredOperationMacro[T: Type](
+def fromUnstructuredOperationMacro[T <: Operation: Type](
     opDef: OperationDef,
     genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp]
 )(using Quotes): Expr[T] =
