@@ -1,7 +1,6 @@
 package scair.dialects.func
 
 import fastparse.*
-import fastparse.ParsingRun
 import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.*
@@ -28,15 +27,15 @@ case class Call(
 
 object Func:
 
-  def parseResultTypes[$: ParsingRun](
+  def parseResultTypes[$: P](
       parser: Parser
-  ): ParsingRun[Seq[Attribute]] =
+  ): P[Seq[Attribute]] =
     ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
 
-  def parse[$: ParsingRun](
+  def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
-  ): ParsingRun[Operation] =
+  ): P[Func] =
     ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
         Pass(args.map(_._2)) ~ parseResultTypes(

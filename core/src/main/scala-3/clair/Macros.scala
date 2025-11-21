@@ -191,13 +191,13 @@ def customPrintMacro(
         )
       }
 
-def parseMacro(
+def parseMacro[O <: Operation: Type](
     opDef: OperationDef,
     p: Expr[Parser],
     resNames: Expr[Seq[String]]
 )(using
     Quotes
-): Expr[P[Any] ?=> P[Operation]] =
+): Expr[P[Any] ?=> P[O]] =
   opDef.assembly_format match
     case Some(format) =>
       format.parse(opDef, p, resNames)
@@ -878,10 +878,10 @@ def deriveOperationCompanion[T <: Operation: Type](using
       override def parse[$: P as ctx](
           p: Parser,
           resNames: Seq[String]
-      ): P[Operation] =
+      ): P[T] =
         ${
           (getOpCustomParse[T]('{ p }, '{ resNames })
-            .getOrElse(parseMacro(opDef, '{ p }, '{ resNames })))
+            .getOrElse(parseMacro[T](opDef, '{ p }, '{ resNames })))
         }(using ctx)
 
       def apply(

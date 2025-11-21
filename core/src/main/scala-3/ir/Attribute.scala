@@ -96,6 +96,6 @@ abstract class DataAttribute[D](
 
 trait AttributeCompanion[T <: Attribute]:
   def name: String
-  def parse[$: P](p: AttrParser): P[Attribute]
+  def parse[$: P](p: AttrParser): P[T]
 
 trait AliasedAttribute(val alias: String) extends Attribute

@@ -34,20 +34,22 @@ object AbsfOp:
   def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
-  ): P[Operation] =
+  ): P[AbsfOp] =
     P(
       "" ~ Parser.ValueUse ~ parser.Attribute.orElse(
         FastMathFlagsAttr(FastMathFlags.none)
       ) ~ ":" ~ parser.Type
     ).map { case (operandName, flags, type_) =>
-      parser.generateOperation(
-        opName = name,
-        operandsNames = Seq(operandName),
-        operandsTypes = Seq(type_),
-        resultsNames = resNames,
-        resultsTypes = Seq(type_),
-        properties = Map("fastmath" -> flags)
-      )
+      parser
+        .generateOperation(
+          opName = name,
+          operandsNames = Seq(operandName),
+          operandsTypes = Seq(type_),
+          resultsNames = resNames,
+          resultsTypes = Seq(type_),
+          properties = Map("fastmath" -> flags)
+        )
+        .asInstanceOf[AbsfOp]
     }
 
 case class AbsfOp(
@@ -67,7 +69,7 @@ object FPowIOp:
   def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
-  ): P[Operation] =
+  ): P[FPowIOp] =
     P(
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ parser.Attribute.orElse(
         FastMathFlagsAttr(FastMathFlags.none)
@@ -80,14 +82,16 @@ object FPowIOp:
             operand1Type,
             operand2Type
           ) =>
-        parser.generateOperation(
-          opName = name,
-          operandsNames = Seq(operand1Name, operand2Name),
-          operandsTypes = Seq(operand1Type, operand2Type),
-          resultsNames = resNames,
-          resultsTypes = Seq(operand1Type),
-          properties = Map("fastmath" -> flags)
-        )
+        parser
+          .generateOperation(
+            opName = name,
+            operandsNames = Seq(operand1Name, operand2Name),
+            operandsTypes = Seq(operand1Type, operand2Type),
+            resultsNames = resNames,
+            resultsTypes = Seq(operand1Type),
+            properties = Map("fastmath" -> flags)
+          )
+          .asInstanceOf[FPowIOp]
     }
 
 case class FPowIOp(
