@@ -4,30 +4,31 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
-import scair.clair.macros.DerivedOperation
+import scair.clair.macros.*
 
 case class FillerOp(
     override val operands: Seq[Operand[Attribute]] = Seq(),
     override val successors: Seq[Successor] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq()
-) extends DerivedOperation["filler", FillerOp]
+) extends DerivedOperation.WithCompanion["filler", FillerOp]
+    derives DerivedOperationCompanion
 
 case class TerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq()
-) extends DerivedOperation["terminator", TerminatorOp]
-    with IsTerminator {}
+) extends DerivedOperation.WithCompanion["terminator", TerminatorOp]
+    with IsTerminator derives DerivedOperationCompanion
 
 case class NoTerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq()
-) extends DerivedOperation["noterminator", NoTerminatorOp]
-    with NoTerminator
+) extends DerivedOperation.WithCompanion["noterminator", NoTerminatorOp]
+    with NoTerminator derives DerivedOperationCompanion
 
 class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 

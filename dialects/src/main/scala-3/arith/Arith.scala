@@ -269,63 +269,66 @@ case class AddF(
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.addf", AddF]
+) extends DerivedOperation.WithCompanion["arith.addf", AddF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 // TODO Apparently there's a new overflow flag here, overlooking for now.
 case class AddI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.addi", AddI]
+) extends DerivedOperation.WithCompanion["arith.addi", AddI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class AddUIExtendedOp(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
     val overflow: Result[BoolLike]
-) extends DerivedOperation["arith.addui_extended", AddUIExtendedOp]
+) extends DerivedOperation.WithCompanion[
+      "arith.addui_extended",
+      AddUIExtendedOp
+    ]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class AndI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[I1]
-) extends DerivedOperation["arith.andi", AndI]
+) extends DerivedOperation.WithCompanion["arith.andi", AndI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class BitCast(
     val in: Operand[BitcastType],
     val out: Result[BitcastType]
-) extends DerivedOperation["arith.bitcast", BitCast]
+) extends DerivedOperation.WithCompanion["arith.bitcast", BitCast]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class CeilDivSi(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.ceildivsi", CeilDivSi]
+) extends DerivedOperation.WithCompanion["arith.ceildivsi", CeilDivSi]
     with SameOperandsAndResultTypes
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class CeilDivUi(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.ceildivui", CeilDivUi]
+) extends DerivedOperation.WithCompanion["arith.ceildivui", CeilDivUi]
     with SameOperandsAndResultTypes
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class CmpF(
     val lhs: Operand[FloatType],
@@ -333,8 +336,8 @@ case class CmpF(
     val result: Result[I1],
     val predicate: CmpFPredicate,
     val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none)
-) extends DerivedOperation["arith.cmpf", CmpF]
-    with NoMemoryEffect
+) extends DerivedOperation.WithCompanion["arith.cmpf", CmpF]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class CmpI(
     val lhs: Operand[AnyIntegerType],
@@ -342,268 +345,268 @@ case class CmpI(
     val result: Result[I1],
     val predicate: CmpIPredicate
     // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
-) extends DerivedOperation["arith.cmpi", CmpI]
-    with NoMemoryEffect
+) extends DerivedOperation.WithCompanion["arith.cmpi", CmpI]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Constant(
     val value: Attribute,
     val result: Result[Attribute]
-) extends DerivedOperation["arith.constant", Constant]
+) extends DerivedOperation.WithCompanion["arith.constant", Constant]
     with NoMemoryEffect
-    with ConstantLike(value)
+    with ConstantLike(value) derives DerivedOperationCompanion
 
 case class DivF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.divf", DivF]
+) extends DerivedOperation.WithCompanion["arith.divf", DivF]
     with SameOperandsAndResultTypes
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class DivSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.divsi", DivSI]
+) extends DerivedOperation.WithCompanion["arith.divsi", DivSI]
     with SameOperandsAndResultTypes
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class DivUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.divui", DivUI]
+) extends DerivedOperation.WithCompanion["arith.divui", DivUI]
     with SameOperandsAndResultTypes
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class ExtF(
     val in: Operand[FloatType],
     val out: Result[FloatType],
     val fastmath: Option[FastMathFlagsAttr] = None
-) extends DerivedOperation["arith.extf", ExtF]
+) extends DerivedOperation.WithCompanion["arith.extf", ExtF]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class ExtSI(
     val in: Operand[SignlessFixedWidthIntegerLike],
     val out: Result[SignlessFixedWidthIntegerLike]
-) extends DerivedOperation["arith.extsi", ExtSI]
+) extends DerivedOperation.WithCompanion["arith.extsi", ExtSI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class ExtUI(
     val in: Operand[SignlessFixedWidthIntegerLike],
     val out: Result[SignlessFixedWidthIntegerLike]
-) extends DerivedOperation["arith.extui", ExtUI]
+) extends DerivedOperation.WithCompanion["arith.extui", ExtUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class FloorDivSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.floordivsi", FloorDivSI]
+) extends DerivedOperation.WithCompanion["arith.floordivsi", FloorDivSI]
     with SameOperandsAndResultTypes
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class FPToSI(
     val in: Operand[FloatType],
     val out: Result[SignlessFixedWidthIntegerLike]
-) extends DerivedOperation["arith.fptosi", FPToSI]
+) extends DerivedOperation.WithCompanion["arith.fptosi", FPToSI]
     with SameOperandsAndResultShape
-    with SameInputOutputTensorDims
+    with SameInputOutputTensorDims derives DerivedOperationCompanion
 
 case class FPToUI(
     val in: Operand[FloatType],
     val out: Result[SignlessFixedWidthIntegerLike]
-) extends DerivedOperation["arith.fptoui", FPToUI]
+) extends DerivedOperation.WithCompanion["arith.fptoui", FPToUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class IndexCast(
     val in: Operand[IndexCastTypeConstraint],
     val result: Result[IndexCastTypeConstraint]
     // assembly_format: "$in `:` type($in) `to` type($out)"
-) extends DerivedOperation["arith.index_cast", IndexCast]
+) extends DerivedOperation.WithCompanion["arith.index_cast", IndexCast]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class IndexCastUI(
     val in: Operand[IndexCastTypeConstraint],
     val result: Result[IndexCastTypeConstraint]
-) extends DerivedOperation["arith.index_castui", IndexCastUI]
+) extends DerivedOperation.WithCompanion["arith.index_castui", IndexCastUI]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class MaximumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.maximumf", MaximumF]
+) extends DerivedOperation.WithCompanion["arith.maximumf", MaximumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MaxNumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.maxnumf", MaxNumF]
+) extends DerivedOperation.WithCompanion["arith.maxnumf", MaxNumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MaxSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.maxsi", MaxSI]
+) extends DerivedOperation.WithCompanion["arith.maxsi", MaxSI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MaxUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.maxui", MaxUI]
+) extends DerivedOperation.WithCompanion["arith.maxui", MaxUI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MinimumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.minimumf", MinimumF]
+) extends DerivedOperation.WithCompanion["arith.minimumf", MinimumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MinNumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.minnumf", MinNumF]
+) extends DerivedOperation.WithCompanion["arith.minnumf", MinNumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MinSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.minsi", MinSI]
+) extends DerivedOperation.WithCompanion["arith.minsi", MinSI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MinUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.minui", MinUI]
+) extends DerivedOperation.WithCompanion["arith.minui", MinUI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MulF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.mulf", MulF]
+) extends DerivedOperation.WithCompanion["arith.mulf", MulF]
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MulI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.muli", MulI]
+) extends DerivedOperation.WithCompanion["arith.muli", MulI]
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MulSIExtended(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val low: Result[AnyIntegerType],
     val high: Result[AnyIntegerType]
-) extends DerivedOperation["arith.mulsi_extended", MulSIExtended]
+) extends DerivedOperation.WithCompanion["arith.mulsi_extended", MulSIExtended]
     with AllTypesMatch(lhs.typ, rhs.typ, low.typ, high.typ)
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class MulUIExtended(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val low: Result[AnyIntegerType],
     val high: Result[AnyIntegerType]
-) extends DerivedOperation["arith.mului_extended", MulUIExtended]
+) extends DerivedOperation.WithCompanion["arith.mului_extended", MulUIExtended]
     with AllTypesMatch(lhs.typ, rhs.typ, low.typ, high.typ)
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class NegF(
     val operand: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.negf", NegF]
+) extends DerivedOperation.WithCompanion["arith.negf", NegF]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class OrI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[I1]
-) extends DerivedOperation["arith.ori", OrI]
+) extends DerivedOperation.WithCompanion["arith.ori", OrI]
     with NoMemoryEffect
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 case class RemF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: FastMathFlagsAttr
-) extends DerivedOperation["arith.remf", RemF]
+) extends DerivedOperation.WithCompanion["arith.remf", RemF]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class RemSI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.remsi", RemSI]
+) extends DerivedOperation.WithCompanion["arith.remsi", RemSI]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class RemUI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.remui", RemUI]
+) extends DerivedOperation.WithCompanion["arith.remui", RemUI]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class ScalingExtF(
     val in: Operand[FloatType],
     val scale: Operand[FloatType],
     val out: Result[FloatType],
     val fastmath: Option[FastMathFlagsAttr]
-) extends DerivedOperation["arith.scaling_extf", ScalingExtF]
+) extends DerivedOperation.WithCompanion["arith.scaling_extf", ScalingExtF]
     with NoMemoryEffect
-    with SameInputOutputTensorDims
+    with SameInputOutputTensorDims derives DerivedOperationCompanion
 
 case class ScalingTruncF(
     val in: Operand[FloatType],
@@ -611,105 +614,106 @@ case class ScalingTruncF(
     val out: Result[FloatType],
     // TODO: val roundingmode: Option[RoundingModeAttr],
     val fastmath: Option[FastMathFlagsAttr]
-) extends DerivedOperation["arith.scaling_truncf", ScalingTruncF]
+) extends DerivedOperation.WithCompanion["arith.scaling_truncf", ScalingTruncF]
     with NoMemoryEffect
-    with SameInputOutputTensorDims
+    with SameInputOutputTensorDims derives DerivedOperationCompanion
 
 case class SelectOp(
     val condition: Operand[BoolLike],
     val trueValue: Operand[TypeAttribute],
     val falseValue: Operand[TypeAttribute],
     val result: Result[TypeAttribute]
-) extends DerivedOperation["arith.select", SelectOp]
+) extends DerivedOperation.WithCompanion["arith.select", SelectOp]
     with NoMemoryEffect
     with BooleanConditionOrMatchingShape(condition.typ, result.typ)
     with AllTypesMatch(trueValue.typ, falseValue.typ, result.typ)
+    derives DerivedOperationCompanion
 
 case class ShLI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
     // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
-) extends DerivedOperation["arith.shli", ShLI]
-    with SameOperandsAndResultTypes
+) extends DerivedOperation.WithCompanion["arith.shli", ShLI]
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class ShRSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.shrsi", ShRSI]
+) extends DerivedOperation.WithCompanion["arith.shrsi", ShRSI]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class ShRUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.shrui", ShRUI]
+) extends DerivedOperation.WithCompanion["arith.shrui", ShRUI]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class SIToFP(
     in: Operand[SignlessFixedWidthIntegerLike],
     out: Result[FloatType]
     // assembly_format: "$in `:` type($in) `to` type($out)"
-) extends DerivedOperation["arith.sitofp", SIToFP]
+) extends DerivedOperation.WithCompanion["arith.sitofp", SIToFP]
     with NoMemoryEffect
     with SameOperandsAndResultShape
-    with SameInputOutputTensorDims
+    with SameInputOutputTensorDims derives DerivedOperationCompanion
 
 case class SubF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
     val fastmath: Option[FastMathFlagsAttr] = None
-) extends DerivedOperation["arith.subf", SubF]
+) extends DerivedOperation.WithCompanion["arith.subf", SubF]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class SubI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
     // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
-) extends DerivedOperation["arith.subi", SubI]
+) extends DerivedOperation.WithCompanion["arith.subi", SubI]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class TruncF(
     val in: Operand[FloatType],
     val out: Result[FloatType],
     // TODO: val roundingmode: Option[RoundingModeAttr],
     val fastmath: Option[FastMathFlagsAttr]
-) extends DerivedOperation["arith.truncf", TruncF]
+) extends DerivedOperation.WithCompanion["arith.truncf", TruncF]
     with SameOperandsAndResultShape
     with NoMemoryEffect
-    with SameInputOutputTensorDims
+    with SameInputOutputTensorDims derives DerivedOperationCompanion
 
 case class TruncI(
     val in: Operand[SignlessFixedWidthIntegerLike],
     val out: Result[SignlessFixedWidthIntegerLike]
     // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
-) extends DerivedOperation["arith.trunci", TruncI]
+) extends DerivedOperation.WithCompanion["arith.trunci", TruncI]
     with NoMemoryEffect
-    with SameOperandsAndResultTypes
+    with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
 case class UIToFP(
     val in: Operand[SignlessFixedWidthIntegerLike],
     val out: Result[FloatType]
-) extends DerivedOperation["arith.uitofp", UIToFP]
+) extends DerivedOperation.WithCompanion["arith.uitofp", UIToFP]
     with SameOperandsAndResultShape
     with NoMemoryEffect
-    with SameInputOutputTensorDims
+    with SameInputOutputTensorDims derives DerivedOperationCompanion
 
 case class XOrI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType]
-) extends DerivedOperation["arith.xori", XOrI]
+) extends DerivedOperation.WithCompanion["arith.xori", XOrI]
     with NoMemoryEffect
     with SameOperandsAndResultTypes
-    with Commutative
+    with Commutative derives DerivedOperationCompanion
 
 val ArithDialect =
   summonDialect[

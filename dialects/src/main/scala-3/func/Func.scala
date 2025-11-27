@@ -24,7 +24,8 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]]
-) extends DerivedOperation["func.call", Call]
+) extends DerivedOperation.WithCompanion["func.call", Call]
+    derives DerivedOperationCompanion
 
 object Func:
 
@@ -70,8 +71,8 @@ case class Func(
     function_type: FunctionType,
     sym_visibility: Option[StringData],
     body: Region
-) extends DerivedOperation["func.func", Func]
-    with IsolatedFromAbove:
+) extends DerivedOperation.WithCompanion["func.func", Func]
+    with IsolatedFromAbove derives DerivedOperationCompanion:
 
   override def custom_print(printer: Printer)(using indentLevel: Int) =
     val lprinter = printer.copy()
@@ -115,9 +116,9 @@ case class Func(
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
-) extends DerivedOperation["func.return", Return]
+) extends DerivedOperation.WithCompanion["func.return", Return]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
     with NoMemoryEffect
-    with IsTerminator
+    with IsTerminator derives DerivedOperationCompanion
 
 val FuncDialect = summonDialect[EmptyTuple, (Call, Func, Return)](Seq())

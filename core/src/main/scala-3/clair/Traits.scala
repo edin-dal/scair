@@ -32,14 +32,21 @@ trait AssemblyFormat[format <: String]
 
 object DerivedOperation:
 
-  inline given [T <: DerivedOperation[?, ?]]: DerivedOperationCompanion[T] =
-    DerivedOperationCompanion.derived[T]
+  abstract class WithCompanion[name <: String, T](using
+      comp: DerivedOperationCompanion[T]
+  ) extends DerivedOperation[name, T]:
+
+    this: T =>
+
+    // satisfy the trait requirement using the derived instance
+    protected given companion: DerivedOperationCompanion[T] = comp
 
 transparent trait DerivedOperation[name <: String, T] extends Operation:
 
   this: T =>
 
-  given companion: DerivedOperationCompanion[T] = deferred
+  /** Will be provided by the WithCompanion base class */
+  protected given companion: DerivedOperationCompanion[T]
 
   override def updated(
       operands: Seq[Value[Attribute]],

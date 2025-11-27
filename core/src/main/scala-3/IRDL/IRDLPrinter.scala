@@ -183,11 +183,12 @@ object IRDLPrinter:
       p.println("],")
     )
 
-    p.print(") extends DerivedOperation[\"")
+    p.print(") extends DerivedOperation.WithCompanion[\"")
     p.print(name)
     p.print("\", ")
     p.print(className.capitalize)
     p.println("]")
+    p.println("  derives DerivedOperationCompanion")
     p.println()
 
   def printConstraint(tpe: Value[AttributeType])(using p: PrintWriter): Unit =

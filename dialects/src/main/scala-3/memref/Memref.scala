@@ -19,31 +19,35 @@ case class Alloc(
     symbolOperands: Seq[Operand[IndexType]],
     memref: Result[MemrefType],
     alignment: IntegerAttr
-) extends DerivedOperation["memref.alloc", Alloc]
+) extends DerivedOperation.WithCompanion["memref.alloc", Alloc]
+    derives DerivedOperationCompanion
 
 case class Dealloc(
     memref: Operand[MemrefType]
-) extends DerivedOperation["memref.dealloc", Dealloc]
+) extends DerivedOperation.WithCompanion["memref.dealloc", Dealloc]
     with AssemblyFormat["$memref attr-dict `:` type($memref)"]
+    derives DerivedOperationCompanion
 
 case class Dim(
     memref: Operand[MemrefType],
     index: Operand[IndexType],
     result: Result[IndexType]
-) extends DerivedOperation["memref.dim", Dim]
-    with NoMemoryEffect
+) extends DerivedOperation.WithCompanion["memref.dim", Dim]
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Load(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
     result: Result[Attribute]
-) extends DerivedOperation["memref.load", Load]
+) extends DerivedOperation.WithCompanion["memref.load", Load]
+    derives DerivedOperationCompanion
 
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]]
-) extends DerivedOperation["memref.store", Store]
+) extends DerivedOperation.WithCompanion["memref.store", Store]
+    derives DerivedOperationCompanion
 
 val MemrefDialect =
   summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store, Dim)](Seq())
