@@ -27,7 +27,7 @@ package scair
   *
   * case class EnumOperation(
   *     val color: Color
-  * ) extends DerivedOperation.WithCompanion["arith.enum_op", EnumOperation]
+  * ) extends DerivedOperation["arith.enum_op", EnumOperation]
   *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
@@ -65,13 +65,13 @@ package scair
   *     e1: Seq[Operand[IntegerAttr]],
   *     e2: Result[Attribute],
   *     e3: Region
-  * ) extends DerivedOperation.WithCompanion["sample.sampop1", SampOp1]
+  * ) extends DerivedOperation["sample.sampop1", SampOp1]
   *     derives DerivedOperationCompanion
   *
   * case class SampOp2(
   *     e1: Seq[Operand[Complex]],
   *     e2: Result[Attribute]
-  * ) extends DerivedOperation.WithCompanion["sample.sampop2", SampOp2]
+  * ) extends DerivedOperation["sample.sampop2", SampOp2]
   *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
@@ -87,14 +87,14 @@ package scair
   *     lhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     rhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     result: Result[IntegerType]
-  * ) extends DerivedOperation.WithCompanion["samplecnstr.mulieq", MulIEq]
+  * ) extends DerivedOperation["samplecnstr.mulieq", MulIEq]
   *     derives DerivedOperationCompanion
   *
   * case class MulIVar(
   *     lhs: Operand[IntegerType !> T],
   *     rhs: Operand[IntegerType !> T],
   *     result: Result[IntegerType]
-  * ) extends DerivedOperation.WithCompanion["samplecnstr.mulivar", MulIVar]
+  * ) extends DerivedOperation["samplecnstr.mulivar", MulIVar]
   *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\

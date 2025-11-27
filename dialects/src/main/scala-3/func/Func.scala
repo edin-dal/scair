@@ -24,8 +24,7 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]]
-) extends DerivedOperation.WithCompanion["func.call", Call]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
 object Func:
 
@@ -71,7 +70,7 @@ case class Func(
     function_type: FunctionType,
     sym_visibility: Option[StringData],
     body: Region
-) extends DerivedOperation.WithCompanion["func.func", Func]
+) extends DerivedOperation["func.func", Func]
     with IsolatedFromAbove derives DerivedOperationCompanion:
 
   override def custom_print(printer: Printer)(using indentLevel: Int) =
@@ -116,7 +115,7 @@ case class Func(
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
-) extends DerivedOperation.WithCompanion["func.return", Return]
+) extends DerivedOperation["func.return", Return]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
     with NoMemoryEffect
     with IsTerminator derives DerivedOperationCompanion

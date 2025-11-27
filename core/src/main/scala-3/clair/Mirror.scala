@@ -204,7 +204,7 @@ def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
 
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
-        case '[DerivedOperation[name, ?]] =>
+        case '[DerivedOperation[name, T]] =>
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(
@@ -311,7 +311,7 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(
-            s"${Type.show[T]} should extend DerivedAttribute to derive DerivedAttributeCompanion.",
+            s"${Type.show[T]} should extend DerivedAttribute.DerivedOperation to derive DerivedAttributeCompanion.",
             TypeRepr.of[T].typeSymbol.pos.get
           )
 

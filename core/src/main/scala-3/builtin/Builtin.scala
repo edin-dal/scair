@@ -525,7 +525,7 @@ object ModuleOp:
 
 case class ModuleOp(
     body: Region
-) extends DerivedOperation.WithCompanion["builtin.module", ModuleOp]
+) extends DerivedOperation["builtin.module", ModuleOp]
     derives DerivedOperationCompanion:
 
   override def custom_print(
@@ -536,7 +536,7 @@ case class ModuleOp(
 case class UnrealizedConversionCastOp(
     inputs: Seq[Value[Attribute]] = Seq(),
     outputs: Seq[Result[Attribute]] = Seq()
-) extends DerivedOperation.WithCompanion[
+) extends DerivedOperation[
       "builtin.unrealized_conversion_cast",
       UnrealizedConversionCastOp
     ] derives DerivedOperationCompanion

@@ -22,7 +22,7 @@ import scair.ir.*
 case class Abs(
     complex: Operand[ComplexType],
     result: Result[FloatType]
-) extends DerivedOperation.WithCompanion["complex.abs", Abs]
+) extends DerivedOperation["complex.abs", Abs]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Add(
@@ -30,7 +30,7 @@ case class Add(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
-) extends DerivedOperation.WithCompanion["complex.add", Add]
+) extends DerivedOperation["complex.add", Add]
     with NoMemoryEffect
     // TODO: Should probably handle fastmath flags!
     with Commutative derives DerivedOperationCompanion
@@ -38,7 +38,7 @@ case class Add(
 case class Constant(
     value: ArrayAttribute[IntegerAttr | FloatAttr],
     complex: Result[ComplexType]
-) extends DerivedOperation.WithCompanion["complex.constant", Constant]
+) extends DerivedOperation["complex.constant", Constant]
     with AssemblyFormat["$value attr-dict `:` type($complex)"]
     with NoMemoryEffect
     with ConstantLike(value) derives DerivedOperationCompanion:
@@ -56,7 +56,7 @@ case class Create(
     real: Operand[IndexType | IntegerType | FloatType],
     imaginary: Operand[IndexType | IntegerType | FloatType],
     complex: Result[ComplexType]
-) extends DerivedOperation.WithCompanion["complex.create", Create]
+) extends DerivedOperation["complex.create", Create]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Div(
@@ -64,13 +64,13 @@ case class Div(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
-) extends DerivedOperation.WithCompanion["complex.div", Div]
+) extends DerivedOperation["complex.div", Div]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Im(
     complex: Operand[ComplexType],
     imaginary: Result[IndexType | IntegerType | FloatType]
-) extends DerivedOperation.WithCompanion["complex.im", Im]
+) extends DerivedOperation["complex.im", Im]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Mul(
@@ -78,7 +78,7 @@ case class Mul(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
-) extends DerivedOperation.WithCompanion["complex.mul", Mul]
+) extends DerivedOperation["complex.mul", Mul]
     with NoMemoryEffect
     with Commutative derives DerivedOperationCompanion
 
@@ -86,13 +86,13 @@ case class Neg(
     complex: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
-) extends DerivedOperation.WithCompanion["complex.neg", Neg]
+) extends DerivedOperation["complex.neg", Neg]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Re(
     complex: Operand[ComplexType],
     real: Result[IndexType | IntegerType | FloatType]
-) extends DerivedOperation.WithCompanion["complex.re", Re]
+) extends DerivedOperation["complex.re", Re]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Sub(
@@ -100,7 +100,7 @@ case class Sub(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr
-) extends DerivedOperation.WithCompanion["complex.sub", Sub]
+) extends DerivedOperation["complex.sub", Sub]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 object ComplexAttr:

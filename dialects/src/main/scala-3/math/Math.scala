@@ -53,7 +53,7 @@ case class AbsfOp(
     fastmath: FastMathFlagsAttr,
     operand: Operand[FloatType],
     result: Result[FloatType]
-) extends DerivedOperation.WithCompanion["math.absf", AbsfOp]
+) extends DerivedOperation["math.absf", AbsfOp]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 // ==--------== //
@@ -94,7 +94,7 @@ case class FPowIOp(
     rhs: Operand[IntegerType],
     fastmath: FastMathFlagsAttr,
     result: Result[FloatType]
-) extends DerivedOperation.WithCompanion["math.fpowi", FPowIOp]
+) extends DerivedOperation["math.fpowi", FPowIOp]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 /////////////

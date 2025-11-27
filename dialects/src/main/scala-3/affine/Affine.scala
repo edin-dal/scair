@@ -27,7 +27,7 @@ case class Apply(
     mapOperands: Seq[Operand[IndexType]],
     res: Result[IndexType],
     map: AffineMapAttr
-) extends DerivedOperation.WithCompanion["affine.apply", Apply]
+) extends DerivedOperation["affine.apply", Apply]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡≡=---=≡≡*\
@@ -43,8 +43,7 @@ case class For(
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region
-) extends DerivedOperation.WithCompanion["affine.for", For]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.for", For] derives DerivedOperationCompanion
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -60,7 +59,7 @@ case class Parallel(
     upperBoundsGroups: DenseIntOrFPElementsAttr,
     res: Seq[Result[Attribute]],
     body: Region
-) extends DerivedOperation.WithCompanion["affine.parallel", Parallel]
+) extends DerivedOperation["affine.parallel", Parallel]
     derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡=--=≡≡*\
@@ -73,8 +72,7 @@ case class If(
     condition: AffineSetAttr,
     then_region: Region,
     else_region: Region
-) extends DerivedOperation.WithCompanion["affine.if", If]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.if", If] derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -85,7 +83,7 @@ case class Store(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
     map: AffineMapAttr
-) extends DerivedOperation.WithCompanion["affine.store", Store]
+) extends DerivedOperation["affine.store", Store]
     derives DerivedOperationCompanion
 
 /*≡==---=≡≡≡=---=≡≡*\
@@ -97,7 +95,7 @@ case class Load(
     indices: Seq[Operand[IndexType]],
     result: Result[Attribute],
     map: AffineMapAttr
-) extends DerivedOperation.WithCompanion["affine.load", Load]
+) extends DerivedOperation["affine.load", Load]
     derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -108,7 +106,7 @@ case class Min(
     arguments: Seq[Operand[IndexType]],
     result: Result[IndexType],
     map: AffineMapAttr
-) extends DerivedOperation.WithCompanion["affine.min", Min]
+) extends DerivedOperation["affine.min", Min]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -117,7 +115,7 @@ case class Min(
 
 case class Yield(
     arguments: Seq[Operand[Attribute]]
-) extends DerivedOperation.WithCompanion["affine.yield", Yield]
+) extends DerivedOperation["affine.yield", Yield]
     with IsTerminator
     with NoMemoryEffect derives DerivedOperationCompanion
 

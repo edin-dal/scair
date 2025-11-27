@@ -183,7 +183,7 @@ object IRDLPrinter:
       p.println("],")
     )
 
-    p.print(") extends DerivedOperation.WithCompanion[\"")
+    p.print(") extends DerivedOperation[\"")
     p.print(name)
     p.print("\", ")
     p.print(className.capitalize)

@@ -10,7 +10,7 @@ import scair.Printer
 import scair.dialects.builtin.*
 import java.io.StringWriter
 import java.io.PrintWriter
-import scair.clair.macros.DerivedOperation
+import scair.clair.macros.*
 import scala.collection.mutable.LinkedHashMap
 
 import scair.dialects.test.TestOp

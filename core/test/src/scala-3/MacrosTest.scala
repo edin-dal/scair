@@ -8,7 +8,7 @@ import scala.collection.mutable.LinkedHashMap
 
 case class RegionOp(
     wowregions: Seq[Region]
-) extends DerivedOperation.WithCompanion["test.region", RegionOp]
+) extends DerivedOperation["test.region", RegionOp]
     derives DerivedOperationCompanion
 
 case class Mul(
@@ -16,15 +16,14 @@ case class Mul(
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: StringData
-) extends DerivedOperation.WithCompanion["cmath.mul", Mul]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mul", Mul] derives DerivedOperationCompanion
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
     rhs: Seq[Operand[IntegerType]],
     result: Seq[Result[IntegerType]],
     randProp: StringData
-) extends DerivedOperation.WithCompanion[
+) extends DerivedOperation[
       "cmath.mulsinglevariadic",
       MulSingleVariadic
     ] derives DerivedOperationCompanion
@@ -38,7 +37,7 @@ case class MulMultiVariadic(
     result3: Seq[Result[IntegerType]],
     operandSegmentSizes: DenseArrayAttr,
     resultSegmentSizes: DenseArrayAttr
-) extends DerivedOperation.WithCompanion[
+) extends DerivedOperation[
       "cmath.mulmultivariadic",
       MulMultiVariadic
     ] derives DerivedOperationCompanion
@@ -54,14 +53,14 @@ case class MulFull(
     reg2: Region,
     succ1: Successor,
     succ2: Successor
-) extends DerivedOperation.WithCompanion["cmath.mulfull", MulFull]
+) extends DerivedOperation["cmath.mulfull", MulFull]
     derives DerivedOperationCompanion
 
 case class MulOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Operand[IntegerType],
     res: Result[IntegerType]
-) extends DerivedOperation.WithCompanion["cmath.mulopt", MulOptional]
+) extends DerivedOperation["cmath.mulopt", MulOptional]
     with AssemblyFormat[
       "($lhs^ `,`)? $rhs attr-dict `:` `(` (type($lhs)^ `,`)? type($rhs) `)` `->` type($res)"
     ] derives DerivedOperationCompanion
@@ -71,14 +70,14 @@ case class MulMultiOptional(
     rhs: Option[Operand[IntegerType]],
     additional: Option[Operand[IntegerType]],
     res: Result[IntegerType]
-) extends DerivedOperation.WithCompanion["cmath.mulmultiopt", MulMultiOptional]
+) extends DerivedOperation["cmath.mulmultiopt", MulMultiOptional]
     derives DerivedOperationCompanion
 
 case class MultiOptionalPropertyOp(
     prop1: Option[IntegerType],
     prop2: Option[IntegerType],
     prop3: Option[IntegerType]
-) extends DerivedOperation.WithCompanion[
+) extends DerivedOperation[
       "cmath.multpropop",
       MultiOptionalPropertyOp
     ] derives DerivedOperationCompanion
@@ -88,7 +87,7 @@ case class MultiOptionalCompositionOp(
     prop1: Option[IntegerType],
     prop2: IntegerType,
     result: Option[Result[IntegerType]]
-) extends DerivedOperation.WithCompanion[
+) extends DerivedOperation[
       "cmath.multpropcompop",
       MultiOptionalCompositionOp
     ] derives DerivedOperationCompanion

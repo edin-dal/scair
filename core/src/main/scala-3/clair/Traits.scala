@@ -30,23 +30,11 @@ transparent trait DerivedAttribute[name <: String, T <: Attribute]
 
 trait AssemblyFormat[format <: String]
 
-object DerivedOperation:
-
-  abstract class WithCompanion[name <: String, T](using
-      comp: DerivedOperationCompanion[T]
-  ) extends DerivedOperation[name, T]:
-
-    this: T =>
-
-    // satisfy the trait requirement using the derived instance
-    protected given companion: DerivedOperationCompanion[T] = comp
-
-transparent trait DerivedOperation[name <: String, T] extends Operation:
+abstract class DerivedOperation[name <: String, T](using
+    private final val comp: DerivedOperationCompanion[T]
+) extends Operation:
 
   this: T =>
-
-  /** Will be provided by the WithCompanion base class */
-  protected given companion: DerivedOperationCompanion[T]
 
   override def updated(
       operands: Seq[Value[Attribute]],
@@ -56,7 +44,7 @@ transparent trait DerivedOperation[name <: String, T] extends Operation:
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute]
   ) =
-    companion(
+    comp(
       operands = operands,
       successors = successors,
       results = results,
@@ -65,15 +53,15 @@ transparent trait DerivedOperation[name <: String, T] extends Operation:
       attributes = attributes
     )
 
-  def name: String = companion.name
-  def operands: Seq[Value[Attribute]] = companion.operands(this)
-  def successors: Seq[Block] = companion.successors(this)
-  def results: Seq[Result[Attribute]] = companion.results(this)
-  def regions: Seq[Region] = companion.regions(this)
-  def properties: Map[String, Attribute] = companion.properties(this)
+  def name: String = comp.name
+  def operands: Seq[Value[Attribute]] = comp.operands(this)
+  def successors: Seq[Block] = comp.successors(this)
+  def results: Seq[Result[Attribute]] = comp.results(this)
+  def regions: Seq[Region] = comp.regions(this)
+  def properties: Map[String, Attribute] = comp.properties(this)
 
   override def custom_print(p: Printer)(using indentLevel: Int): Unit =
-    companion.custom_print(this, p)
+    comp.custom_print(this, p)
 
   override def verify(): Either[String, Operation] =
     super
@@ -81,4 +69,6 @@ transparent trait DerivedOperation[name <: String, T] extends Operation:
       .flatMap(_ => constraint_verify())
 
   def constraint_verify(): Either[String, Operation] =
-    companion.constraint_verify(this)
+    comp.constraint_verify(this)
+
+// transparent trait DerivedOperation[name <: String, T] extends Operation:
