@@ -1,9 +1,12 @@
 package scair.dialects.test
 
+import scair.clair.macros.summonDialect
 import scair.ir.*
 
-object TestOp extends OperationCompanion:
+object TestOp extends OperationCompanion[TestOp]:
   override def name: String = "test.op"
+
+given OperationCompanion[TestOp] = TestOp
 
 case class TestOp(
     override val operands: Seq[Operand[Attribute]] = Seq(),
@@ -34,4 +37,4 @@ case class TestOp(
       attributes
     )
 
-val Test: Dialect = new Dialect(Seq(TestOp), Seq())
+val Test: Dialect = summonDialect[EmptyTuple, Tuple1[TestOp]]

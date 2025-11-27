@@ -516,7 +516,7 @@ object ModuleOp:
   def parse[$: P](
       parser: Parser,
       resNames: Seq[String]
-  ): P[Operation] =
+  ): P[ModuleOp] =
     P(
       parser.RegionP()
     ).map(ModuleOp.apply)
@@ -541,4 +541,4 @@ case class UnrealizedConversionCastOp(
     ]
 
 val BuiltinDialect =
-  summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)](Seq())
+  summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)]

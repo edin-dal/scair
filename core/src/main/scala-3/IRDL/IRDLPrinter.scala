@@ -146,7 +146,7 @@ object IRDLPrinter:
       case _ =>
     })
 
-    p.println("EmptyTuple]()")
+    p.println("EmptyTuple]")
 
   def printOperation(
       op: Operation
