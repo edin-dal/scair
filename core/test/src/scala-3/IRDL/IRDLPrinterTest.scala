@@ -60,12 +60,14 @@ case class Norm(
   in: Operand[Attribute],
   out: Result[Attribute],
 ) extends DerivedOperation["cmath.norm", Norm]
+  derives DerivedOperationCompanion
 
 case class Mul(
   lhs: Operand[Attribute],
   rhs: Operand[Attribute],
   res: Result[Attribute],
 ) extends DerivedOperation["cmath.mul", Mul]
+  derives DerivedOperationCompanion
 
 val cmath = summonDialect[Complex *: EmptyTuple, Norm *: Mul *: EmptyTuple]
 """.stripMargin

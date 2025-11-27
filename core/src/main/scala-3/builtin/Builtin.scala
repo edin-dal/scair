@@ -525,7 +525,8 @@ object ModuleOp:
 
 case class ModuleOp(
     body: Region
-) extends DerivedOperation["builtin.module", ModuleOp]:
+) extends DerivedOperation["builtin.module", ModuleOp]
+    derives DerivedOperationCompanion:
 
   override def custom_print(
       p: Printer
@@ -538,7 +539,7 @@ case class UnrealizedConversionCastOp(
 ) extends DerivedOperation[
       "builtin.unrealized_conversion_cast",
       UnrealizedConversionCastOp
-    ]
+    ] derives DerivedOperationCompanion
 
 val BuiltinDialect =
   summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)]

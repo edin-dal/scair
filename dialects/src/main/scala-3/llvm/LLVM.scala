@@ -19,6 +19,7 @@ case class Load(
     res: Result[Attribute]
 ) extends DerivedOperation["llvm.load", Load]
     with AssemblyFormat["$addr attr-dict `:` type($addr) `->` type($res)"]
+    derives DerivedOperationCompanion
 
 case class GetElementPtr(
     base: Operand[Ptr],
@@ -27,6 +28,6 @@ case class GetElementPtr(
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute
 ) extends DerivedOperation["llvm.getelementptr", GetElementPtr]
-    with NoMemoryEffect
+    with NoMemoryEffect derives DerivedOperationCompanion
 
 val LLVMDialect = summonDialect[Tuple1[Ptr], (Load, GetElementPtr)]

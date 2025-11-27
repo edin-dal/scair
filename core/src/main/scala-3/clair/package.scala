@@ -28,6 +28,7 @@ package scair
   * case class EnumOperation(
   *     val color: Color
   * ) extends DerivedOperation["arith.enum_op", EnumOperation]
+  *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom data attribute   ||
@@ -65,11 +66,13 @@ package scair
   *     e2: Result[Attribute],
   *     e3: Region
   * ) extends DerivedOperation["sample.sampop1", SampOp1]
+  *     derives DerivedOperationCompanion
   *
   * case class SampOp2(
   *     e1: Seq[Operand[Complex]],
   *     e2: Result[Attribute]
   * ) extends DerivedOperation["sample.sampop2", SampOp2]
+  *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   constraints over operation components   ||
@@ -85,12 +88,14 @@ package scair
   *     rhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     result: Result[IntegerType]
   * ) extends DerivedOperation["samplecnstr.mulieq", MulIEq]
+  *     derives DerivedOperationCompanion
   *
   * case class MulIVar(
   *     lhs: Operand[IntegerType !> T],
   *     rhs: Operand[IntegerType !> T],
   *     result: Result[IntegerType]
   * ) extends DerivedOperation["samplecnstr.mulivar", MulIVar]
+  *     derives DerivedOperationCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   packaging into a dialect   ||
