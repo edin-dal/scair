@@ -4,6 +4,8 @@ ScaIR: MLIR inspired Scala Compiler Framework
 [![codecov](https://codecov.io/github/edin-dal/scair/graph/badge.svg?token=H3TBWG1YNT)](https://codecov.io/github/edin-dal/scair)
 [![example branch parameter](https://img.shields.io/badge/license-Apache_2.0-blue)](https://github.com/edin-dal/scair/blob/main/LICENSE)
 
+Please see [Scala Workshop talk](https://2025.workshop.scala-lang.org/details/scala-2025/7/ScaIR-Type-safe-Compiler-Framework-Compatible-with-MLIR) for paper and our talks
+
 ## Navigation
 - [Installation](#installation)
 - [Contributing to the Project](#contributing-to-the-project)
