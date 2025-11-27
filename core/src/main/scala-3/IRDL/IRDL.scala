@@ -81,4 +81,4 @@ val IRDL = summonDialect[
       Results,
       Any
   )
-]()
+]

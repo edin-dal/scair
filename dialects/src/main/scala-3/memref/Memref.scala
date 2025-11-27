@@ -50,4 +50,4 @@ case class Store(
     derives DerivedOperationCompanion
 
 val MemrefDialect =
-  summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store, Dim)](Seq())
+  summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store, Dim)]

@@ -189,7 +189,7 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] =
         .asInstanceOf[String] :: stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 
-def getDefImpl[T: Type](using quotes: Quotes): OperationDef =
+def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
   import quotes.reflect.*
 
   val m = Expr.summon[Mirror.ProductOf[T]].get
@@ -234,14 +234,17 @@ def getCompanion[T: Type](using quotes: Quotes) =
   import quotes.reflect.*
   TypeRepr.of[T].typeSymbol.companionModule
 
-def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
-    using quotes: Quotes
+def getOpCustomParse[T <: Operation: Type](
+    p: Expr[Parser],
+    resNames: Expr[Seq[String]]
+)(using
+    quotes: Quotes
 ) =
   import quotes.reflect.*
 
   val comp = getCompanion(using Type.of[T])
   val sig = TypeRepr
-    .of[OperationCompanion]
+    .of[OperationCompanion[T]]
     .typeSymbol
     .declaredMethod("parse")
     .head
@@ -253,7 +256,7 @@ def getOpCustomParse[T: Type](p: Expr[Parser], resNames: Expr[Seq[String]])(
         .appliedToType(TypeRepr.of[Any])
         .appliedTo(p.asTerm, resNames.asTerm)
         .etaExpand(comp)
-        .asExprOf[P[Any] => P[Operation]]
+        .asExprOf[P[Any] => P[T]]
       Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })
     case Seq() =>
       None

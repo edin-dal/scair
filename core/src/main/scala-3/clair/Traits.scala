@@ -30,7 +30,7 @@ transparent trait DerivedAttribute[name <: String, T <: Attribute]
 
 trait AssemblyFormat[format <: String]
 
-abstract class DerivedOperation[name <: String, T](using
+abstract class DerivedOperation[name <: String, T <: Operation](using
     private final val comp: DerivedOperationCompanion[T]
 ) extends Operation:
 

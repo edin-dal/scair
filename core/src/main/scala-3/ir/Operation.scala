@@ -182,10 +182,10 @@ case class UnregisteredOperation(
       attributes = attributes
     )
 
-trait OperationCompanion:
+trait OperationCompanion[O <: Operation]:
   def name: String
 
-  def parse[$: P](parser: Parser, resNames: Seq[String]): P[Operation] =
+  def parse[$: P](parser: Parser, resNames: Seq[String]): P[O] =
     throw new Exception(
       s"No custom Parser implemented for Operation '${name}'"
     )

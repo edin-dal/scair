@@ -101,9 +101,8 @@ package scair
   * ||   packaging into a dialect   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * val Sample = summonDialect[(SampleAttr, SampleType), (SampOp1, SampOp1)](
-  *   Seq(SampleData)
-  * )
+  * val Sample =
+  *   summonDialect[(SampleAttr, SampleType, SampleData), (SampOp1, SampOp1)]
   * ```
   *
   * To include the defined Dialect in ScaIR, the user should put the file into

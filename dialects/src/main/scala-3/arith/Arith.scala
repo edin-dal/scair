@@ -90,7 +90,7 @@ object FastMathFlags:
 
   def apply(flags: FastMathFlag*): FastMathFlags = SortedSet(flags*)
 
-object FastMathFlagsAttr extends AttributeCompanion:
+given AttributeCompanion[FastMathFlagsAttr]:
   override def name: String = "arith.fastmath"
 
   override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
@@ -717,7 +717,7 @@ case class XOrI(
 
 val ArithDialect =
   summonDialect[
-    EmptyTuple,
+    Tuple1[FastMathFlagsAttr],
     (
         AddF,
         AddI,
@@ -772,4 +772,4 @@ val ArithDialect =
         XOrI,
         IndexCast
     )
-  ](Seq(FastMathFlagsAttr))
+  ]

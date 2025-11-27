@@ -18,7 +18,7 @@ case class EnumOperation(
 ) extends DerivedOperation["enum.enum_op", EnumOperation]
     derives DerivedOperationCompanion
 
-val EnumTestDialect = summonDialect[EmptyTuple, Tuple1[EnumOperation]](Seq())
+val EnumTestDialect = summonDialect[EmptyTuple, Tuple1[EnumOperation]]
 
 class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
 

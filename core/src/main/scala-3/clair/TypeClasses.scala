@@ -24,7 +24,7 @@ import scala.util.Try
 // ╚█████╔╝ ███████╗ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ░╚════╝░ ╚══════╝ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
-trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion:
+trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion[T]:
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
 
@@ -34,7 +34,7 @@ object DerivedAttributeCompanion:
     derivedAttributeCompanion[T]
   }
 
-trait DerivedOperationCompanion[T] extends OperationCompanion:
+trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
 
   companion =>
 
@@ -102,61 +102,57 @@ object DerivedOperationCompanion:
     deriveOperationCompanion[T]
   }
 
-def summonMLIRTraitsMacroRec[T <: Tuple: Type](using
+def summonOperationCompanionsMacroRec[T <: Tuple: Type](using
     Quotes
-): Seq[Expr[DerivedOperationCompanion[?]]] =
+): Seq[Expr[OperationCompanion[?]]] =
   import quotes.reflect.*
   Type.of[T] match
-    case '[t *: ts] =>
+    case '[type o <: Operation; o *: ts] =>
       val dat = Expr
-        .summon[DerivedOperationCompanion[t]]
-        // TODO: Come on.
+        .summon[OperationCompanion[o]]
         .getOrElse(
           report.errorAndAbort(
-            "summonDialect's operation type parameters should be for derived operations; Please use the Dialect constructor otherwise."
+            f"Could not summon OperationCompanion for ${Type.show[o]}"
           )
         )
-      dat +: summonMLIRTraitsMacroRec[ts]
+      dat +: summonOperationCompanionsMacroRec[ts]
 
     case '[EmptyTuple] => Seq()
 
-def summonMLIRTraitsMacro[T <: Tuple: Type](using
+def summonOperationCompanionsMacro[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedOperationCompanion[?]]] =
-  Expr.ofSeq(summonMLIRTraitsMacroRec[T])
+): Expr[Seq[OperationCompanion[?]]] =
+  Expr.ofSeq(summonOperationCompanionsMacroRec[T])
 
-def summonAttributeTraitsMacroRec[T <: Tuple: Type](using
+def summonAttributeCompanionsMacroRec[T <: Tuple: Type](using
     Quotes
-): Seq[Expr[DerivedAttributeCompanion[?]]] =
+): Seq[Expr[AttributeCompanion[?]]] =
   import quotes.reflect.*
   Type.of[T] match
-    case '[type t <: Attribute; `t` *: ts] =>
+    case '[type a <: Attribute; `a` *: ts] =>
       val dat = Expr
-        .summon[DerivedAttributeCompanion[t]]
+        .summon[AttributeCompanion[a]]
         .getOrElse(
           report.errorAndAbort(
-            "summonDialect's attribute type parameters should be for derived attributes; Please use the function arguments otherwise."
+            f"Could not summon AttributeCompanion for ${Type.show[a]}"
           )
         )
-      dat +: summonAttributeTraitsMacroRec[ts]
+      dat +: summonAttributeCompanionsMacroRec[ts]
     case '[EmptyTuple] => Seq()
 
-def summonAttributeTraitsMacro[T <: Tuple: Type](using
+def summonAttributeCompanionsMacro[T <: Tuple: Type](using
     Quotes
-): Expr[Seq[DerivedAttributeCompanion[?]]] =
-  Expr.ofSeq(summonAttributeTraitsMacroRec[T])
+): Expr[Seq[AttributeCompanion[?]]] =
+  Expr.ofSeq(summonAttributeCompanionsMacroRec[T])
 
-inline def summonAttributeTraits[T <: Tuple]
-    : Seq[DerivedAttributeCompanion[?]] =
-  ${ summonAttributeTraitsMacro[T] }
+inline def summonAttributeCompanions[T <: Tuple]: Seq[AttributeCompanion[?]] =
+  ${ summonAttributeCompanionsMacro[T] }
 
-inline def summonMLIRTraits[T <: Tuple]: Seq[DerivedOperationCompanion[?]] =
-  ${ summonMLIRTraitsMacro[T] }
+inline def summonOperationCompanions[T <: Tuple]: Seq[OperationCompanion[?]] =
+  ${ summonOperationCompanionsMacro[T] }
 
-inline def summonDialect[Attributes <: Tuple, Operations <: Tuple](
-    attributes: Seq[AttributeCompanion] = Seq()
-): Dialect =
-  new Dialect(
-    summonMLIRTraits[Operations],
-    attributes ++ summonAttributeTraits[Attributes]
+inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
+  Dialect(
+    summonOperationCompanions[Operations],
+    summonAttributeCompanions[Attributes]
   )
