@@ -35,7 +35,8 @@ object DerivedOperation:
   inline given [T <: DerivedOperation[?, ?]]: DerivedOperationCompanion[T] =
     DerivedOperationCompanion.derived[T]
 
-transparent trait DerivedOperation[name <: String, T] extends Operation:
+transparent trait DerivedOperation[name <: String, T <: Operation]
+    extends Operation:
 
   this: T =>
 

@@ -584,12 +584,16 @@ case class AssemblyFormatDirective(
     * @return
     *   Specialized code to parse an assembly format into an Operation.
     */
-  def parse(opDef: OperationDef, p: Expr[Parser], resNames: Expr[Seq[String]])(
-      using quotes: Quotes
-  ) =
+  def parse[O <: Operation: Type](
+      opDef: OperationDef,
+      p: Expr[Parser],
+      resNames: Expr[Seq[String]]
+  )(using
+      quotes: Quotes
+  ): Expr[P[Any] ?=> P[O]] =
     '{ (ctx: P[Any]) ?=>
       ${ parseTuple(p)(using '{ ctx }) }.map(parsed =>
-        ${ buildOperation(opDef, p, '{ parsed }, resNames) }
+        ${ buildOperation(opDef, p, '{ parsed }, resNames) }.asInstanceOf[O]
       )
     }
 

@@ -156,4 +156,4 @@ val SCFDialect =
         IndexSwitchOp,
         YieldOp
     )
-  ](Seq())
+  ]

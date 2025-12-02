@@ -137,4 +137,4 @@ case class ComplexAttr(
 
 val Complex = summonDialect[Tuple1[
   ComplexAttr
-], (Abs, Add, Constant, Create, Div, Im, Mul, Neg, Re, Sub)](Seq())
+], (Abs, Add, Constant, Create, Div, Im, Mul, Neg, Re, Sub)]
