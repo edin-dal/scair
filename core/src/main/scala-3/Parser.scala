@@ -163,19 +163,19 @@ object Parser:
           Fail(s"Successor ^$blockName not defined within Scope")
         case None => Pass
 
-    def defineBlock(
+    def defineBlock[$: P](
         blockName: String
-    ): Block =
+    ): P[Block] =
       if blockMap.contains(blockName) then
         if !forwardBlocks.remove(blockName) then
-          throw new Exception(
-            s"Block cannot be defined twice within the same scope - ^${blockName}"
+          Fail(
+            f"Block cannot be defined twice within the same scope - ^${blockName}"
           )
-        blockMap(blockName)
+        else Pass(blockMap(blockName))
       else
         val newBlock = new Block()
         blockMap(blockName) = newBlock
-        newBlock
+        Pass(newBlock)
 
     def forwardBlock(
         blockName: String
@@ -764,8 +764,8 @@ final class Parser(
     P(BlockLabel.flatMap(BlockBody))
 
   def BlockLabel[$: P] = P(
-    (BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
-      .orElse(Seq())).flatMap(populateBlockArgs) ~ ":"
+    (BlockId.flatMap(currentScope.defineBlock) ~ (BlockArgList
+      .orElse(Seq()))).flatMap(populateBlockArgs) ~ ":"
   )
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
