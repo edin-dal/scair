@@ -57,22 +57,14 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         parsingDiagnostics = args.parsing_diagnostics,
         allowUnregisteredDialect = args.allow_unregistered
       )
-      val parsedModule =
-        parser.parseThis(
-          input,
-          pattern = parser.TopLevel(using _)
-        ) match
-          case fastparse.Parsed.Success(input_module, _) =>
-            Right(input_module)
-          case failure: fastparse.Parsed.Failure =>
-            Left(parser.error(failure))
-
-      if !args.parsing_diagnostics then
-        parsedModule match
-          case Left(msg)     => throw Exception(msg)
-          case Right(module) => ()
-
-      parsedModule
+      parser.parseThis(
+        input,
+        pattern = parser.TopLevel(using _)
+      ) match
+        case fastparse.Parsed.Success(input_module, _) =>
+          Right(input_module)
+        case failure: fastparse.Parsed.Failure =>
+          Left(parser.error(failure))
     )
 
   override def parseArgs(args: Array[String]): ScairOptArgs =
@@ -135,36 +127,42 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
 
-    val inputModules = parse(parsed_args)(input)
+    val parsedModules = parse(parsed_args)(input)
 
-    inputModules.foreach(inputModule =>
+    parsedModules.foreach(parsedModule =>
 
-      val processed_module: Either[String, Operation] =
-        inputModule.flatMap(inputModule =>
-          var module =
-            if parsed_args.skip_verify then Right(inputModule)
-            else inputModule.structured.flatMap(_.verify())
-          // verify parsed content
-          module match
-            case Right(op) =>
-              // apply the specified passes
-              parsed_args.passes
-                .map(ctx.getPass(_).get)
-                .foldLeft(module)((module, pass) => module.map(pass.transform))
-            case Left(errorMsg) =>
-              if parsed_args.verify_diagnostics then Left(errorMsg + "\n")
-              else throw new VerifyException(errorMsg)
-        )
+      parsedModule match
+        case Right(inputModule) =>
+          val processed_module: Either[String, Operation] =
+            var module =
+              if parsed_args.skip_verify then Right(inputModule)
+              else inputModule.structured.flatMap(_.verify())
+            // verify parsed content
+            module match
+              case Right(op) =>
+                // apply the specified passes
+                parsed_args.passes
+                  .map(ctx.getPass(_).get)
+                  .foldLeft(module)((module, pass) =>
+                    module.map(pass.transform)
+                  )
+              case Left(errorMsg) =>
+                if parsed_args.verify_diagnostics then Left(errorMsg + "\n")
+                else throw new VerifyException(errorMsg)
 
-      {
-        val printer = new Printer(parsed_args.print_generic)
-        processed_module.fold(
-          printer.print,
-          printer.printTopLevel
-        )
-        if inputModule != inputModules.last then printer.print("// -----\n")
-        printer.flush()
-      }
+          {
+            val printer = new Printer(parsed_args.print_generic)
+            processed_module.fold(
+              printer.print,
+              printer.printTopLevel
+            )
+            printer.flush()
+          }
+        case Left(errorMsg) =>
+          if parsed_args.parsing_diagnostics then println(errorMsg)
+          else throw new Exception(errorMsg)
+
+      if parsedModule != parsedModules.last then println("// -----")
     )
 
 object ScairOpt extends ScairOptBase:
