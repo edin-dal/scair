@@ -266,7 +266,7 @@ object Parser:
   )
 
   def StringLiteral[$: P] = P(
-    "\"" ~~ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP)
+    "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP)
       .map(_ + _)
       .repX
       .map(_.mkString) ~~ "\""

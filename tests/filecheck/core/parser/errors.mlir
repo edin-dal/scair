@@ -28,3 +28,36 @@
 // CHECK:       %1 = "test.op"() : () -> (i8, i16)
 // CHECK-NEXT:                              ^
 // CHECK-NEXT:  Number of results (1) does not match the number of the corresponding result types.
+
+// -----
+
+"unregistered.generic"() : () -> ()
+
+// CHECK:       Parse error at [[SOURCE_FILE]]:34:23:
+
+// CHECK:       "unregistered.generic"() : () -> ()
+// CHECK-NEXT:                        ^
+// CHECK-NEXT:  Operation unregistered.generic is not registered. If this is intended, use `--allow-unregistered-dialect`.
+
+// -----
+
+unregistered.custom
+
+// CHECK:       Parse error at [[SOURCE_FILE]]:44:20:
+
+// CHECK:       unregistered.custom
+// CHECK-NEXT:                     ^
+// CHECK-NEXT:  Operation unregistered.custom is not defined in any supported Dialect.
+
+// -----
+
+"builtin.module"() ({
+    ^bb0:
+    ^bb0:
+})
+
+// CHECK:       Parse error at [[SOURCE_FILE]]:56:9:
+
+// CHECK:           ^bb0:
+// CHECK-NEXT:          ^
+// CHECK-NEXT:  Block cannot be defined twice within the same scope - ^bb0
