@@ -124,11 +124,11 @@ object Parser:
         )
       )
 
-    def checkForwardedValues() =
+    def checkForwardedValues[$: P]() =
       forwardValues.headOption match
         case Some(valueName) =>
-          throw new Exception(s"Value %${valueName} not defined within Scope")
-        case None => ()
+          Fail(s"Value %${valueName} not defined within Scope")
+        case None => Pass
 
     private def defineValue[$: P](
         name: String,
@@ -157,11 +157,11 @@ object Parser:
     ): P[BlockArgument[Attribute]] =
       defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
 
-    def checkForwardedBlocks() =
+    def checkForwardedBlocks[$: P]() =
       forwardBlocks.headOption match
         case Some(blockName) =>
-          throw new Exception(s"Successor ^$blockName not defined within Scope")
-        case None => ()
+          Fail(s"Successor ^$blockName not defined within Scope")
+        case None => Pass
 
     def defineBlock(
         blockName: String
@@ -193,15 +193,6 @@ object Parser:
         valueMap = valueMap.clone,
         parentScope = Some(this)
       )
-
-    def switchWithParent: Scope =
-      checkForwardedValues()
-      checkForwardedBlocks()
-      parentScope match
-        case Some(x) =>
-          x
-        case None =>
-          this
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||  COMMON SYNTAX  ||
@@ -484,8 +475,10 @@ final class Parser(
   def enterLocalRegion =
     currentScope = currentScope.createChild()
 
-  def enterParentRegion =
-    currentScope = currentScope.switchWithParent
+  def exitRegion[$: P] =
+    val toExit = currentScope
+    currentScope = currentScope.parentScope.getOrElse(currentScope)
+    toExit.checkForwardedValues().flatMapX(_ => toExit.checkForwardedBlocks())
 
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
   || TOP LEVEL PRODUCTION  ||
@@ -495,11 +488,11 @@ final class Parser(
   // shortened definition TODO: finish...
 
   def TopLevel[$: P]: P[Operation] = P(
-    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef)
-      .rep()
-      .map(_.flatMap(_ match
-        case o: Operation => Seq(o)
-        case _            => Seq())) ~ End
+    Start ~ (OperationPat | AttributeAliasDef | TypeAliasDef).rep.map(
+      _.collect { case o: Operation =>
+        o
+      }
+    ) ~ End ~/ exitRegion
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match
       case (head: ModuleOp) :: Nil => head
@@ -515,9 +508,7 @@ final class Parser(
         region.container_operation = Some(moduleOp)
 
         moduleOp
-  ) ~ E({
-    currentScope.switchWithParent
-  })
+  )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||    OPERATIONS    ||
@@ -816,10 +807,8 @@ final class Parser(
       .map((entry: Block, blocks: Seq[Block]) =>
         if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
         else entry +: blocks
-      ) ~/ "}"
-  ).map(Region(_)) ~/ E(
-    { enterParentRegion }
-  )
+      ) ~/ "}" ~/ exitRegion
+  ).map(Region(_))
 
   // def EntryBlock[$: P] = P(OperationPat.rep(1))
 

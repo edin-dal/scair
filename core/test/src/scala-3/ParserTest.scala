@@ -327,12 +327,13 @@ class ParserTest
                    |  "test.op"(%10, %9) : (i64, i32) -> ()
                    |}) : () -> ()""".stripMargin
 
-      val exception = intercept[Exception](
-        parser.parseThis(
-          text = text,
-          pattern = parser.TopLevel(using _)
-        )
-      ).getMessage shouldBe "Successor ^bb3 not defined within Scope"
+      parser.parseThis(
+        text = text,
+        pattern = parser.TopLevel(using _),
+        true
+      ) should matchPattern {
+        case Parsed.Failure("Successor ^bb3 not defined within Scope", _, _) =>
+      }
     }
   }
 
