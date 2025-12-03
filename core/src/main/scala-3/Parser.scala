@@ -572,20 +572,19 @@ final class Parser(
       val results = resultsNames zip resultsTypes map currentScope.defineResult
 
       ctx.getOpCompanion(opName, allowUnregisteredDialect) match
-        case Right(x) =>
-          Pass(x(
-            operands = operands,
-            successors = successors,
-            properties = properties,
-            results = results,
-            attributes = DictType.from(attributes),
-            regions = regions
-          ))
-        case Left(error) =>
-          Fail(
-            s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+        case Right(companion) =>
+          Pass(
+            companion(
+              operands = operands,
+              successors = successors,
+              properties = properties,
+              results = results,
+              attributes = DictType.from(attributes),
+              regions = regions
+            )
           )
-          
+        case Left(error) => Fail(error)
+
     catch case e: Exception => return Fail(e.getMessage())
 
   def Operations[$: P](
@@ -605,16 +604,9 @@ final class Parser(
   )
 
   def GenericOperationName[$: P]: P[OperationCompanion[?]] =
-    StringLiteral.flatMap(name =>
-      ctx.getOpCompanion(name) match
-        case Some(x) => Pass(x)
-        case None    =>
-          if allowUnregisteredDialect then Pass(UnregisteredOperation(name))
-          else
-            Fail(
-              s"Operation ${name} is not registered. If this is intended, use `--allow-unregistered-dialect`"
-            )
-    )
+    StringLiteral.flatMap(ctx.getOpCompanion(_, allowUnregisteredDialect) match
+      case Right(companion) => Pass(companion)
+      case Left(error)      => Fail(error))
 
   def GenericOperation[$: P](resultsNames: Seq[String]): P[Operation] = P(
     (GenericOperationName ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
