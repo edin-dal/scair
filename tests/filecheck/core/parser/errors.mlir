@@ -8,4 +8,4 @@
 
 // CHECK:       %3 = "test.op"() : () -> i64
 // CHECK-NEXT:  ^
-// CHECK-NEXT:  Number of results (1) does not match the number of the corresponding result types (0) in "test.op".
+// CHECK-NEXT:  Number of results (1) does not match the number of the corresponding result types (0).

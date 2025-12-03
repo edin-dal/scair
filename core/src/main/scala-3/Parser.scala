@@ -604,15 +604,27 @@ final class Parser(
     op
   )
 
-  def GenericOperation[$: P](resNames: Seq[String]) = P(
-    (StringLiteral ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
+  def GenericOperationName[$: P]: P[OperationCompanion[?]] =
+    StringLiteral.flatMap(name =>
+      ctx.getOpCompanion(name) match
+        case Some(x) => Pass(x)
+        case None    =>
+          if allowUnregisteredDialect then Pass(UnregisteredOperation(name))
+          else
+            Fail(
+              s"Operation ${name} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+            )
+    )
+
+  def GenericOperation[$: P](resultsNames: Seq[String]): P[Operation] = P(
+    (GenericOperationName ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
       ~/ SuccessorList.orElse(Seq())
       ~/ properties.orElse(Map.empty)
       ~/ RegionList.orElse(Seq())
       ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
       .flatMap(
         (
-            opName: String,
+            opCompanion: OperationCompanion[?],
             operandsNames: Seq[String],
             successors: Seq[Block],
             properties: Map[String, Attribute],
@@ -620,16 +632,31 @@ final class Parser(
             attributes: Map[String, Attribute],
             operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
         ) =>
-          generateOperation(
-            opName,
-            resNames,
-            operandsNames,
-            successors,
-            properties,
-            regions,
-            attributes,
-            operandsAndResultsTypes._2,
-            operandsAndResultsTypes._1
+          val (operandsTypes, resultsTypes) = operandsAndResultsTypes
+          if operandsNames.length != operandsTypes.length then
+            return Fail(
+              s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length})."
+            )
+
+          if resultsNames.length != resultsTypes.length then
+            return Fail(
+              s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length})."
+            )
+
+          val operands =
+            operandsNames zip operandsTypes map currentScope.useValue
+          val results =
+            resultsNames zip resultsTypes map currentScope.defineResult
+
+          Pass(
+            opCompanion(
+              operands,
+              successors,
+              results,
+              regions,
+              properties,
+              attributes.to(DictType)
+            )
           )
       )
       ./
