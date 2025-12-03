@@ -608,47 +608,106 @@ final class Parser(
       case Right(companion) => Pass(companion)
       case Left(error)      => Fail(error))
 
+  def GenericOperandsTypesRec[$: P](using
+      expected: Int
+  )(operandsNames: Seq[String], parsed: Int = 1): P[Seq[Value[Attribute]]] =
+    operandsNames match
+      case head :: Nil =>
+        Type.mapTry(currentScope.useValue(head, _)).map(Seq(_))
+      case head :: tail =>
+        (Type.mapTry(currentScope.useValue(head, _)) ~ ",".opaque(
+          f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
+        ) ~ GenericOperandsTypesRec(
+          tail,
+          parsed + 1
+        )).map(_ +: _)
+      case Nil => Pass(Seq())
+
+  def GenericOperandsTypes[$: P](
+      operandsNames: Seq[String]
+  ): P[Seq[Value[Attribute]]] =
+    "(" ~ GenericOperandsTypesRec(using operandsNames.length)(
+      operandsNames
+    ) ~ ")"
+
+  def GenericResultsTypesRec[$: P](using
+      expected: Int
+  )(
+      resultsNames: Seq[String],
+      parsed: Int = 1
+  ): P[Seq[Result[Attribute]]] =
+    resultsNames match
+      case head :: Nil =>
+        Type
+          .mapTry(
+            currentScope.defineResult(head, _)
+          )
+          .map(Seq(_))
+      case head :: tail =>
+        (Type.mapTry(
+          currentScope.defineResult(head, _)
+        ) ~ ",".opaque(
+          f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
+        ) ~ GenericResultsTypesRec(tail, parsed + 1)).map(_ +: _)
+      case Nil => Pass(Seq())
+
+  def GenericResultsTypes[$: P](
+      resultsNames: Seq[String]
+  ): P[Seq[Result[Attribute]]] =
+    ("("./ ~ GenericResultsTypesRec(using resultsNames.length)(
+      resultsNames
+    ) ~ ")") | Pass(())
+      .filter(_ => resultsNames.length == 1)
+      .flatMap(_ =>
+        GenericResultsTypesRec(using resultsNames.length)(resultsNames)
+      )
+
+  def GenericOperationType[$: P](
+      resultsNames: Seq[String],
+      operandsNames: Seq[String]
+  ) =
+    P(
+      GenericOperandsTypes(operandsNames)
+        ~ "->" ~/ GenericResultsTypes(resultsNames)
+    )
+
   def GenericOperation[$: P](resultsNames: Seq[String]): P[Operation] = P(
-    (GenericOperationName ~/ "(" ~ ValueUseList.orElse(Seq()) ~ ")"
-      ~/ SuccessorList.orElse(Seq())
-      ~/ properties.orElse(Map.empty)
-      ~/ RegionList.orElse(Seq())
-      ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
-      .flatMap(
-        (
-            opCompanion: OperationCompanion[?],
-            operandsNames: Seq[String],
-            successors: Seq[Block],
-            properties: Map[String, Attribute],
-            regions: Seq[Region],
-            attributes: Map[String, Attribute],
-            operandsAndResultsTypes: (Seq[Attribute], Seq[Attribute])
-        ) =>
-          val (operandsTypes, resultsTypes) = operandsAndResultsTypes
-          if operandsNames.length != operandsTypes.length then
-            return Fail(
-              s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length})."
-            )
-
-          if resultsNames.length != resultsTypes.length then
-            return Fail(
-              s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length})."
-            )
-
-          val operands =
-            operandsNames zip operandsTypes map currentScope.useValue
-          val results =
-            resultsNames zip resultsTypes map currentScope.defineResult
-
-          Pass(
-            opCompanion(
-              operands,
-              successors,
-              results,
-              regions,
-              properties,
-              attributes.to(DictType)
-            )
+    GenericOperationName
+      .flatMapX((opCompanion: OperationCompanion[?]) =>
+        "(" ~ ValueUseList
+          .orElse(Seq())
+          .flatMap((operandsNames: Seq[String]) =>
+            (")"
+              ~/ SuccessorList.orElse(Seq())
+              ~/ properties.orElse(Map.empty)
+              ~/ RegionList.orElse(Seq())
+              ~/ OptionalAttributes ~/ ":" ~/ GenericOperationType(
+                resultsNames,
+                operandsNames
+              ))
+              .flatMap(
+                (
+                    successors: Seq[Block],
+                    properties: Map[String, Attribute],
+                    regions: Seq[Region],
+                    attributes: Map[String, Attribute],
+                    operandsAndResults: (
+                        Seq[Value[Attribute]],
+                        Seq[Result[Attribute]]
+                    )
+                ) =>
+                  val (operands, results) = operandsAndResults
+                  Pass(
+                    opCompanion(
+                      operands,
+                      successors,
+                      results,
+                      regions,
+                      properties,
+                      attributes.to(DictType)
+                    )
+                  )
+              )
           )
       )
       ./
