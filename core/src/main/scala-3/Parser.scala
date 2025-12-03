@@ -662,15 +662,6 @@ final class Parser(
         GenericResultsTypesRec(using resultsNames.length)(resultsNames)
       )
 
-  def GenericOperationType[$: P](
-      resultsNames: Seq[String],
-      operandsNames: Seq[String]
-  ) =
-    P(
-      GenericOperandsTypes(operandsNames)
-        ~ "->" ~/ GenericResultsTypes(resultsNames)
-    )
-
   def GenericOperation[$: P](resultsNames: Seq[String]): P[Operation] = P(
     GenericOperationName
       .flatMapX((opCompanion: OperationCompanion[?]) =>
@@ -681,31 +672,26 @@ final class Parser(
               ~/ SuccessorList.orElse(Seq())
               ~/ properties.orElse(Map.empty)
               ~/ RegionList.orElse(Seq())
-              ~/ OptionalAttributes ~/ ":" ~/ GenericOperationType(
-                resultsNames,
+              ~/ OptionalAttributes ~/ ":" ~/ GenericOperandsTypes(
                 operandsNames
-              ))
-              .flatMap(
+              )
+              ~ "->" ~/ GenericResultsTypes(resultsNames))
+              .map(
                 (
                     successors: Seq[Block],
                     properties: Map[String, Attribute],
                     regions: Seq[Region],
                     attributes: Map[String, Attribute],
-                    operandsAndResults: (
-                        Seq[Value[Attribute]],
-                        Seq[Result[Attribute]]
-                    )
+                    operands: Seq[Value[Attribute]],
+                    results: Seq[Result[Attribute]]
                 ) =>
-                  val (operands, results) = operandsAndResults
-                  Pass(
-                    opCompanion(
-                      operands,
-                      successors,
-                      results,
-                      regions,
-                      properties,
-                      attributes.to(DictType)
-                    )
+                  opCompanion(
+                    operands,
+                    successors,
+                    results,
+                    regions,
+                    properties,
+                    attributes.to(DictType)
                   )
               )
           )
