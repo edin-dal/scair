@@ -60,7 +60,7 @@ object Parser:
       * errors.
       *
       * @note
-      *   flatMapX because it often yields more nat ural error positions.
+      *   flatMapX because it often yields more natural error positions.
       *
       * @param f
       *   The function to apply to the parsed value.
@@ -93,6 +93,9 @@ object Parser:
         try Pass(f(parsed))
         catch
           case e: Exception =>
+            Console.err.print(
+              "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
+            )
             Fail(e.getMessage())
       )
     )
