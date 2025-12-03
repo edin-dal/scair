@@ -437,7 +437,7 @@ final class Parser(
   import Parser.*
   import AttrParser.whitespace
 
-  def error(failure: Failure) =
+  def error(failure: Failure, lineOffset: Int = 0) =
     // .trace() below reparses from the start with more bookkeeping to provide helpful
     // context for the error message.
     // We do this very non-functional bookkeeping in currentScope ourselves, which
@@ -463,7 +463,7 @@ final class Parser(
 
     // Build the error message.
     val msg =
-      s"Parse error at ${inputPath.getOrElse("-")}:$line:$col:\n\n$input_line\n$indicator\n${traced.label}"
+      s"Parse error at ${inputPath.getOrElse("-")}:${line + lineOffset}:$col:\n\n$input_line\n$indicator\n${traced.label}"
 
     if parsingDiagnostics then msg
     else
@@ -670,7 +670,11 @@ final class Parser(
   ): P[Seq[Result[Attribute]]] =
     ("("./ ~ GenericResultsTypesRec(using resultsNames.length)(
       resultsNames
-    ) ~ ")") | Pass(())
+    ).flatMap(resultsTypes =>
+      ")".opaque(
+        f"Number of results (${resultsNames.length}) does not match the number of the corresponding result types."
+      ) ~ Pass(resultsTypes)
+    )) | Pass(())
       .filter(_ => resultsNames.length == 1)
       .flatMap(_ =>
         GenericResultsTypesRec(using resultsNames.length)(resultsNames)

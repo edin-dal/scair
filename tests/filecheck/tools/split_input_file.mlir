@@ -9,7 +9,6 @@
 // CHECK-NEXT:    "test.op"() : () -> ()
 // CHECK-NEXT:    "test.op"() : () -> ()
 // CHECK-NEXT:  }
-// CHECK-END:
 
 // SPLIT:       builtin.module {
 // SPLIT-NEXT:    "test.op"() : () -> ()

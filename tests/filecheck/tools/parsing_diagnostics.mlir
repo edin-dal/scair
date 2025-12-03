@@ -12,7 +12,7 @@ notir
 // -----
 notir
 
-// CHECK:       Parse error at [[FILE]]:1:1:
+// CHECK:       Parse error at [[FILE]]:13:1:
 
 // CHECK:       notir
 // CHECK-NEXT:  ^

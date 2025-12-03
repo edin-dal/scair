@@ -49,6 +49,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     val input_chunks =
       if args.split_input_file then input.mkString.split("\n// -----\n")
       else Array(input.mkString)
+    var indexOffset = 0
     input_chunks.map(input =>
       // Parse content
       val parser = new scair.Parser(
@@ -57,14 +58,18 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         parsingDiagnostics = args.parsing_diagnostics,
         allowUnregisteredDialect = args.allow_unregistered
       )
-      parser.parseThis(
+      val parsed = parser.parseThis(
         input,
         pattern = parser.TopLevel(using _)
       ) match
         case fastparse.Parsed.Success(input_module, _) =>
           Right(input_module)
         case failure: fastparse.Parsed.Failure =>
-          Left(parser.error(failure))
+          Left(parser.error(failure, indexOffset))
+
+      indexOffset += input.count(_ == '\n') + 2
+
+      parsed
     )
 
   override def parseArgs(args: Array[String]): ScairOptArgs =
