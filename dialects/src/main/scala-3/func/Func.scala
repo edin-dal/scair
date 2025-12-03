@@ -36,13 +36,13 @@ object Func:
       parser: Parser,
       resNames: Seq[String]
   ): P[Func] =
-    ("private".!.? ~ parser.SymbolRefAttrP ~ ((parser.BlockArgList.flatMap(
+    ("private".!.? ~ parser.SymbolRefAttrP ~ (parser.BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
         Pass(args.map(_._2)) ~ parseResultTypes(
           parser
         ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser
           .RegionP(args)
-    )) | (
+    ) | (
       parser.ParenTypeList ~ parseResultTypes(
         parser
       ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(

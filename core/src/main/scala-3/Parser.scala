@@ -114,12 +114,14 @@ object Parser:
       var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
   ):
 
-    def useValue(name: String, typ: Attribute): Value[Attribute] =
-      valueMap.getOrElseUpdate(
-        name, {
-          forwardValues += name
-          Value[Attribute](typ)
-        }
+    def useValue[$: P](name: String, typ: Attribute): P[Value[Attribute]] =
+      Pass(
+        valueMap.getOrElseUpdate(
+          name, {
+            forwardValues += name
+            Value[Attribute](typ)
+          }
+        )
       )
 
     def checkForwardedValues() =
@@ -128,26 +130,32 @@ object Parser:
           throw new Exception(s"Value %${valueName} not defined within Scope")
         case None => ()
 
-    private def defineValue(name: String, typ: Attribute): Value[Attribute] =
+    private def defineValue[$: P](
+        name: String,
+        typ: Attribute
+    ): P[Value[Attribute]] =
       if valueMap.contains(name) then
         if !forwardValues.remove(name) then
-          throw new Exception(
+          Fail(
             s"Value cannot be defined twice within the same scope - %${name}"
           )
-        valueMap(name)
+        Pass(valueMap(name))
       else
         val v = Value[Attribute](typ)
         valueMap(name) = v
-        v
+        Pass(v)
 
-    inline def defineResult(name: String, typ: Attribute): Result[Attribute] =
-      defineValue(name, typ)
-
-    inline def defineBlockArgument(
+    inline def defineResult[$: P](
         name: String,
         typ: Attribute
-    ): BlockArgument[Attribute] =
-      defineValue(name, typ)
+    ): P[Result[Attribute]] =
+      defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
+
+    inline def defineBlockArgument[$: P](
+        name: String,
+        typ: Attribute
+    ): P[BlockArgument[Attribute]] =
+      defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
 
     def checkForwardedBlocks() =
       forwardBlocks.headOption match
@@ -570,25 +578,36 @@ final class Parser(
       return Fail(
         s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
-    try
-      val operands = operandsNames zip operandsTypes map currentScope.useValue
-      val results = resultsNames zip resultsTypes map currentScope.defineResult
 
-      ctx.getOpCompanion(opName, allowUnregisteredDialect) match
-        case Right(companion) =>
-          Pass(
-            companion(
-              operands = operands,
-              successors = successors,
-              properties = properties,
-              results = results,
-              attributes = DictType.from(attributes),
-              regions = regions
-            )
+    (operandsNames zip operandsTypes)
+      .foldLeft(
+        Pass(Seq.empty[Value[Attribute]])
+      )((l: P[Seq[Value[Attribute]]], r: (String, Attribute)) =>
+        (l ~ currentScope.useValue(r._1, r._2)).map(_ :+ _)
+      )
+      .flatMap(operands =>
+        (resultsNames zip resultsTypes)
+          .foldLeft(
+            Pass(Seq.empty[Result[Attribute]])
+          )((l: P[Seq[Result[Attribute]]], r: (String, Attribute)) =>
+            (l ~ currentScope.defineResult(r._1, r._2)).map(_ :+ _)
           )
-        case Left(error) => Fail(error)
-
-    catch case e: Exception => return Fail(e.getMessage())
+          .flatMap(results =>
+            ctx.getOpCompanion(opName, allowUnregisteredDialect) match
+              case Right(companion) =>
+                Pass(
+                  companion(
+                    operands = operands,
+                    successors = successors,
+                    properties = properties,
+                    results = results,
+                    attributes = DictType.from(attributes),
+                    regions = regions
+                  )
+                )
+              case Left(error) => Fail(error)
+          )
+      )
 
   def Operations[$: P](
       at_least_this_many: Int = 0
@@ -616,9 +635,9 @@ final class Parser(
   )(operandsNames: Seq[String], parsed: Int = 1): P[Seq[Value[Attribute]]] =
     operandsNames match
       case head :: Nil =>
-        Type.mapTry(currentScope.useValue(head, _)).map(Seq(_))
+        Type.flatMap(currentScope.useValue(head, _)).map(Seq(_))
       case head :: tail =>
-        (Type.mapTry(currentScope.useValue(head, _)) ~ ",".opaque(
+        (Type.flatMap(currentScope.useValue(head, _)) ~ ",".opaque(
           f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
         ) ~ GenericOperandsTypesRec(
           tail,
@@ -642,12 +661,12 @@ final class Parser(
     resultsNames match
       case head :: Nil =>
         Type
-          .mapTry(
+          .flatMap(
             currentScope.defineResult(head, _)
           )
           .map(Seq(_))
       case head :: tail =>
-        (Type.mapTry(
+        (Type.flatMap(
           currentScope.defineResult(head, _)
         ) ~ ",".opaque(
           f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
@@ -732,13 +751,19 @@ final class Parser(
     ops.foreach(_.container_block = Some(block))
     block
 
-  def populateBlockArgs(
+  def populateBlockArgs[$: P](
       block: Block,
       args: Seq[(String, Attribute)]
   ) =
-    block.arguments ++= args map currentScope.defineResult
-    block.arguments.foreach(_.owner = Some(block))
-    block
+    args
+      .foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
+        (l ~ currentScope.defineBlockArgument(r._1, r._2)).map(_ :+ _)
+      )
+      .map(args =>
+        block.arguments ++= args
+        block.arguments.foreach(_.owner = Some(block))
+        block
+      )
 
   def BlockBody[$: P](block: Block) =
     Operations(0).mapTry(populateBlockOps(block, _))
@@ -748,7 +773,7 @@ final class Parser(
 
   def BlockLabel[$: P] = P(
     (BlockId.mapTry(currentScope.defineBlock) ~/ BlockArgList
-      .orElse(Seq())).map(populateBlockArgs) ~ ":"
+      .orElse(Seq())).flatMap(populateBlockArgs) ~ ":"
   )
 
   def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
@@ -786,7 +811,8 @@ final class Parser(
   def RegionP[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
     "{" ~/ E(
       { enterLocalRegion }
-    ) ~/ (BlockBody(populateBlockArgs(new Block(), entryArgs)) ~/ Block.rep)
+    ) ~/ (populateBlockArgs(new Block(), entryArgs)
+      .flatMap(BlockBody) ~/ Block.rep)
       .map((entry: Block, blocks: Seq[Block]) =>
         if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
         else entry +: blocks
@@ -846,7 +872,10 @@ final class Parser(
     P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
 
   def BlockArgList[$: P] =
-    P("(" ~ ValueIdAndTypeList ~ ")")
+    P(
+      "(" ~ ValueIdAndType
+        .rep(sep = ",") ~ ")"
+    )
 
   // [x] dictionary-properties ::= `<` dictionary-attribute `>`
   // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`

@@ -41,11 +41,9 @@ object AbsfOp:
         .flatMap(operandName =>
           (parser.Attribute.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ parser.Type.map(tpe =>
-            (
-              parser.currentScope.useValue(operandName, tpe),
+          ) ~ ":" ~ parser.Type.flatMap(tpe =>
+            parser.currentScope.useValue(operandName, tpe) ~
               parser.currentScope.defineResult(resNames.head, tpe)
-            )
           ))
         )
         .flatMap { case (flags, operandAndResult) =>
@@ -86,13 +84,13 @@ object FPowIOp:
         ("," ~ Parser.ValueUse.flatMap(rhsName =>
           (parser.Attribute.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ parser.Type.map(lhsType =>
-            (
-              parser.currentScope.useValue(lhsName, lhsType),
+          ) ~ ":" ~ parser.Type.flatMap(lhsType =>
+            parser.currentScope.useValue(lhsName, lhsType) ~
               parser.currentScope.defineResult(resNames.head, lhsType)
-            )
           )
-            ~ "," ~ parser.Type.map(parser.currentScope.useValue(rhsName, _)))
+            ~ "," ~ parser.Type.flatMap(
+              parser.currentScope.useValue(rhsName, _)
+            ))
             .flatMap {
               case (
                     flags,
