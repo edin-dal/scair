@@ -472,8 +472,9 @@ final class Parser(
 
   var currentScope: Scope = new Scope()
 
-  def enterLocalRegion =
+  def enterRegion[$: P] =
     currentScope = currentScope.createChild()
+    Pass
 
   def exitRegion[$: P] =
     val toExit = currentScope
@@ -800,9 +801,7 @@ final class Parser(
 
   // EntryBlock might break - take out if it does...
   def RegionP[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
-    "{" ~/ E(
-      { enterLocalRegion }
-    ) ~/ (populateBlockArgs(new Block(), entryArgs)
+    "{" ~/ enterRegion ~/ (populateBlockArgs(new Block(), entryArgs)
       .flatMap(BlockBody) ~/ Block.rep)
       .map((entry: Block, blocks: Seq[Block]) =>
         if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
