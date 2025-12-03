@@ -39,7 +39,7 @@ object AbsfOp:
       "" ~ Parser.ValueUse ~ parser.Attribute.orElse(
         FastMathFlagsAttr(FastMathFlags.none)
       ) ~ ":" ~ parser.Type
-    ).map { case (operandName, flags, type_) =>
+    ).flatMap { case (operandName, flags, type_) =>
       parser
         .generateOperation(
           opName = name,
@@ -49,7 +49,7 @@ object AbsfOp:
           resultsTypes = Seq(type_),
           properties = Map("fastmath" -> flags)
         )
-        .asInstanceOf[AbsfOp]
+        .asInstanceOf[P[AbsfOp]]
     }
 
 case class AbsfOp(
@@ -74,7 +74,7 @@ object FPowIOp:
       Parser.ValueUse ~ "," ~ Parser.ValueUse ~ parser.Attribute.orElse(
         FastMathFlagsAttr(FastMathFlags.none)
       ) ~ ":" ~ parser.Type ~ "," ~ parser.Type
-    ).map {
+    ).flatMap {
       case (
             operand1Name,
             operand2Name,
@@ -91,7 +91,7 @@ object FPowIOp:
             resultsTypes = Seq(operand1Type),
             properties = Map("fastmath" -> flags)
           )
-          .asInstanceOf[FPowIOp]
+          .asInstanceOf[P[FPowIOp]]
     }
 
 case class FPowIOp(

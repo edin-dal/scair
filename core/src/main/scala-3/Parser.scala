@@ -546,7 +546,7 @@ final class Parser(
     * @return
     *   The generated operation.
     */
-  def generateOperation(
+  def generateOperation[$: P](
       opName: String,
       resultsNames: Seq[String] = Seq(),
       operandsNames: Seq[String] = Seq(),
@@ -556,35 +556,37 @@ final class Parser(
       attributes: Map[String, Attribute] = Map(),
       resultsTypes: Seq[Attribute] = Seq(),
       operandsTypes: Seq[Attribute] = Seq()
-  ): Operation =
+  ): P[Operation] =
 
     if operandsNames.length != operandsTypes.length then
-      throw new Exception(
+      return Fail(
         s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"${opName}\"."
       )
 
     if resultsNames.length != resultsTypes.length then
-      throw new Exception(
+      return Fail(
         s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
       )
+    try
+      val operands = operandsNames zip operandsTypes map currentScope.useValue
+      val results = resultsNames zip resultsTypes map currentScope.defineResult
 
-    val operands = operandsNames zip operandsTypes map currentScope.useValue
-    val results = resultsNames zip resultsTypes map currentScope.defineResult
-
-    ctx.getOpCompanion(opName, allowUnregisteredDialect) match
-      case Right(x) =>
-        x(
-          operands = operands,
-          successors = successors,
-          properties = properties,
-          results = results,
-          attributes = DictType.from(attributes),
-          regions = regions
-        )
-      case Left(error) =>
-        throw new Exception(
-          s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
-        )
+      ctx.getOpCompanion(opName, allowUnregisteredDialect) match
+        case Right(x) =>
+          Pass(x(
+            operands = operands,
+            successors = successors,
+            properties = properties,
+            results = results,
+            attributes = DictType.from(attributes),
+            regions = regions
+          ))
+        case Left(error) =>
+          Fail(
+            s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+          )
+          
+    catch case e: Exception => return Fail(e.getMessage())
 
   def Operations[$: P](
       at_least_this_many: Int = 0
@@ -608,7 +610,7 @@ final class Parser(
       ~/ properties.orElse(Map.empty)
       ~/ RegionList.orElse(Seq())
       ~/ OptionalAttributes ~/ ":" ~/ FunctionType)
-      .mapTry(
+      .flatMap(
         (
             opName: String,
             operandsNames: Seq[String],
@@ -639,7 +641,7 @@ final class Parser(
         case Right(companion) =>
           Pass ~ companion.parse(this, resNames)
         case Left(_) =>
-          throw new Exception(
+          Fail(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
           )
     }
