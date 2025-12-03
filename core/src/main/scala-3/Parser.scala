@@ -820,11 +820,12 @@ final class Parser(
   )./.map((name: String, value: Attribute) =>
     typeAliases.get(name) match
       case Some(t) =>
-        throw new Exception(
+        Fail(
           s"""Type alias "$name" already defined as $t."""
         )
       case None =>
         typeAliases(name) = value
+        Pass
   )
 
   /*≡==--==≡≡≡≡==--=≡≡*\
@@ -840,11 +841,12 @@ final class Parser(
   )./.map((name: String, value: Attribute) =>
     attributeAliases.get(name) match
       case Some(a) =>
-        throw new Exception(
+        Fail(
           s"""Attribute alias "$name" already defined as $a."""
         )
       case None =>
         attributeAliases(name) = value
+        Pass
   )
 
   // [x] - value-id-and-type ::= value-id `:` type
