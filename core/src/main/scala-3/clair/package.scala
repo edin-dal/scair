@@ -56,8 +56,7 @@ package scair
   * case class SampleType(
   *     val value: FloatType
   * ) extends DerivedAttribute["sample.sample_type", SampleType]
-  *     with TypeAttribute
-  *     derives DerivedAttributeCompanion
+  *     with TypeAttribute derives DerivedAttributeCompanion
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining custom operations   ||
