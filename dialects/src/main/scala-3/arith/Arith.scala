@@ -100,23 +100,25 @@ given AttributeCompanion[FastMathFlagsAttr]:
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","
       ) ~ ">"
-    ).map { parsed_flags =>
+    ).flatMap { parsed_flags =>
       if parsed_flags.isEmpty then
-        throw new Exception("FastMathFlagsAttr requires at least one flag")
-      val flags = parsed_flags
-        .map(_ match
-          case "none"     => FastMathFlags.none
-          case "reassoc"  => FastMathFlags.reassoc
-          case "nnan"     => FastMathFlags.nnan
-          case "ninf"     => FastMathFlags.ninf
-          case "nsz"      => FastMathFlags.nsz
-          case "arcp"     => FastMathFlags.arcp
-          case "contract" => FastMathFlags.contract
-          case "afn"      => FastMathFlags.afn
-          case "fast"     => FastMathFlags.fast
-          case f          => throw new Exception(s"Invalid fastmath flag '$f'"))
-        .reduce(_ | _)
-      FastMathFlagsAttr(flags)
+        Fail("FastMathFlagsAttr expects at least one flag")
+      else
+        val flags = parsed_flags
+          .map(_ match
+            case "none"     => FastMathFlags.none
+            case "reassoc"  => FastMathFlags.reassoc
+            case "nnan"     => FastMathFlags.nnan
+            case "ninf"     => FastMathFlags.ninf
+            case "nsz"      => FastMathFlags.nsz
+            case "arcp"     => FastMathFlags.arcp
+            case "contract" => FastMathFlags.contract
+            case "afn"      => FastMathFlags.afn
+            case "fast"     => FastMathFlags.fast
+            // Unreachable per above logic; I feel like FastParse could type this better with new types!
+            case f => throw new Exception(s"Invalid fastmath flag '$f'"))
+          .reduce(_ | _)
+        Pass(FastMathFlagsAttr(flags))
     }
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)

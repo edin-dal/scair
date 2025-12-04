@@ -3,8 +3,6 @@ package scair.clair.macros
 import scair.Printer
 import scair.ir.*
 
-import scala.compiletime.deferred
-
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
 // ░░░██║░░░ ██████╔╝ ███████║ ██║ ░░░██║░░░ ╚█████╗░
@@ -12,21 +10,16 @@ import scala.compiletime.deferred
 // ░░░██║░░░ ██║░░██║ ██║░░██║ ██║ ░░░██║░░░ ██████╔╝
 // ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚═════╝░
 
-object DerivedAttribute:
-
-  inline given [T <: DerivedAttribute[?, ?]]: DerivedAttributeCompanion[T] =
-    DerivedAttributeCompanion.derived[T]
-
-transparent trait DerivedAttribute[name <: String, T <: Attribute]
-    extends ParametrizedAttribute:
+transparent trait DerivedAttribute[name <: String, T <: Attribute](using
+    private final val comp: DerivedAttributeCompanion[T]
+) extends ParametrizedAttribute:
 
   this: T =>
 
-  given companion: DerivedAttributeCompanion[T] = deferred
-  override val name: String = companion.name
+  override val name: String = comp.name
 
   override val parameters: Seq[Attribute | Seq[Attribute]] =
-    companion.parameters(this)
+    comp.parameters(this)
 
 trait AssemblyFormat[format <: String]
 
@@ -70,5 +63,3 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
 
   def constraint_verify(): Either[String, Operation] =
     comp.constraint_verify(this)
-
-// transparent trait DerivedOperation[name <: String, T] extends Operation:

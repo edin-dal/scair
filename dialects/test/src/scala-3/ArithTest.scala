@@ -22,10 +22,9 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
   given indentLevel: Int = 0
 
   "Such real ADT manipulation" should "flex how working it is" in {
-    val zero = UnregisteredOperation(
-      name = "arith.constant",
-      results = Seq(Result(I32)),
-      properties = Map("value" -> IntegerAttr(IntData(0), I32))
+    val zero = Constant(
+      IntegerAttr(IntData(0), I32),
+      Result(I32)
     )
     val module = ModuleOp(
       Region(

@@ -28,9 +28,19 @@ class MLContext():
   val dialectAttrContext: mutable.Map[String, AttributeCompanion[?]] =
     mutable.Map()
 
-  def getOperation(name: String) = dialectOpContext.get(name)
+  def getOpCompanion(
+      name: String,
+      allowUnregisteredDialect: Boolean = false
+  ) = dialectOpContext.get(name) match
+    case Some(companion) => Right(companion)
+    case None            =>
+      if allowUnregisteredDialect then Right(UnregisteredOperation(name))
+      else
+        Left(
+          s"Operation ${name} is not registered. If this is intended, use `--allow-unregistered-dialect`."
+        )
 
-  def getAttribute(name: String) = dialectAttrContext.get(name)
+  def getAttrCompanion(name: String) = dialectAttrContext.get(name)
 
   def registerDialect(dialect: Dialect) =
     dialectOpContext ++= {

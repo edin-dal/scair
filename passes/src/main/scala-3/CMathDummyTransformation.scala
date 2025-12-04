@@ -19,10 +19,10 @@ val TestInsertingDummyOperation = pattern {
 
   case op if (op.name == "tobereplaced") && (op.results.length == 0) =>
     Seq(
-      UnregisteredOperation("dummy1"),
-      UnregisteredOperation("dummy2"),
-      UnregisteredOperation("dummy3"),
-      UnregisteredOperation("dummy4")
+      UnregisteredOperation("dummy1")(),
+      UnregisteredOperation("dummy2")(),
+      UnregisteredOperation("dummy3")(),
+      UnregisteredOperation("dummy4")()
     )
   case op
       if (!op.attributes.contains("replaced")) && op.container_block != None =>
@@ -34,18 +34,17 @@ val TestInsertingDummyOperation = pattern {
 val TestReplacingDummyOperation = pattern {
   case op if (op.name == "tobereplaced") =>
     val op1 =
-      UnregisteredOperation("dummy-op1")
+      UnregisteredOperation("dummy-op1")()
 
     val op2 =
-      UnregisteredOperation("dummy-op2")
+      UnregisteredOperation("dummy-op2")()
 
     val op3 =
       UnregisteredOperation(
         "dummy-return"
-      )
+      )()
 
-    UnregisteredOperation(
-      "replacedOp",
+    UnregisteredOperation("replacedOp")(
       regions = Seq(Region(Block(operations = Seq(op1, op2, op3)))),
       results = Seq(StringData("replaced(i32)"), StringData("replaced(i64)"))
         .map(Result(_))

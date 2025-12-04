@@ -29,26 +29,26 @@ import scair.Parser.*
 ||      UTILS      ||
 \*≡==----=≡=----==≡*/
 
-def checkDistinct(name: String, list: Seq[String]): Seq[String] =
+def checkDistinct[$: P](name: String, list: Seq[String]): P[Seq[String]] =
   if list.distinct.size != list.size then
-    throw new Exception(
+    Fail(
       s"Number of ${name} in Affine Map/Set must be unique! ;)"
     )
-  return list
+  else Pass(list)
 
-def validateAffineExpr(
+def validateAffineExpr[$: P](
     name: String,
     dimsym: String,
     list: Seq[String]
-): String =
+): P[String] =
   if !list.contains(dimsym) then
     println(list.contains(dimsym))
     println(list)
     println(dimsym)
-    throw new Exception(
+    Fail(
       s"${name} \"${dimsym}\" used in the expression but not defined! | ${dimsym} | ${list}"
     )
-  return dimsym
+  else Pass(dimsym)
 
 val add = AffineBinaryOp.Add
 val minus = AffineBinaryOp.Minus
@@ -74,10 +74,11 @@ def DimUseP[$: P]: P[String] = P("d" ~~ DecimalLiteral).!
 def SymUseP[$: P]: P[String] = P("s" ~~ DecimalLiteral).!
 
 def DimUseListP[$: P]: P[Seq[String]] =
-  P("(" ~ DimUseP.rep(0, sep = ",") ~ ")").map(checkDistinct("dimensions", _))
+  P("(" ~ DimUseP.rep(0, sep = ",") ~ ")")
+    .flatMap(checkDistinct("dimensions", _))
 
 def SymUseListP[$: P]: P[Seq[String]] =
-  P("[" ~ SymUseP.rep(0, sep = ",") ~ "]").map(checkDistinct("symbols", _))
+  P("[" ~ SymUseP.rep(0, sep = ",") ~ "]").flatMap(checkDistinct("symbols", _))
 
 def DimSymUseListP[$: P]: P[(Seq[String], Seq[String])] =
   P(DimUseListP ~ SymUseListP.rep(min = 0, max = 1).map(_.flatten))
@@ -111,10 +112,14 @@ def AffineSinglesP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
   )
 
 def AffineDimExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
-  P(DimUseP).map(validateAffineExpr("dimension", _, dims)).map(AffineDimExpr(_))
+  P(DimUseP)
+    .flatMap(validateAffineExpr("dimension", _, dims))
+    .map(AffineDimExpr(_))
 
 def AffineSymExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
-  P(SymUseP).map(validateAffineExpr("symbol", _, symbs)).map(AffineSymExpr(_))
+  P(SymUseP)
+    .flatMap(validateAffineExpr("symbol", _, symbs))
+    .map(AffineSymExpr(_))
 
 def AffineConstantP[$: P](
     dims: Seq[String],

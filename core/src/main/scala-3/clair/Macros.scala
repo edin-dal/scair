@@ -203,7 +203,7 @@ def parseMacro[O <: Operation: Type](
       format.parse(opDef, p, resNames)
     case None =>
       '{
-        throw new Exception(
+        Fail(
           s"No custom Parser implemented for Operation '${${
               Expr(opDef.name)
             }}'"

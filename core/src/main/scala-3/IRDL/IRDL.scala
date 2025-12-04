@@ -60,9 +60,11 @@ final case class Attributes(
 
 final case class AttributeType()
     extends DerivedAttribute["irdl.attribute", AttributeType]
+    derives DerivedAttributeCompanion
 
 final case class RegionType()
     extends DerivedAttribute["irdl.region", RegionType]
+    derives DerivedAttributeCompanion
 
 final case class Any(
     output: Result[AttributeType]

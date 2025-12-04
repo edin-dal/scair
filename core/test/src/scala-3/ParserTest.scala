@@ -327,12 +327,13 @@ class ParserTest
                    |  "test.op"(%10, %9) : (i64, i32) -> ()
                    |}) : () -> ()""".stripMargin
 
-      val exception = intercept[Exception](
-        parser.parseThis(
-          text = text,
-          pattern = parser.TopLevel(using _)
-        )
-      ).getMessage shouldBe "Successor ^bb3 not defined within Scope"
+      parser.parseThis(
+        text = text,
+        pattern = parser.TopLevel(using _),
+        true
+      ) should matchPattern {
+        case Parsed.Failure("Successor ^bb3 not defined within Scope", _, _) =>
+      }
     }
   }
 
@@ -346,14 +347,13 @@ class ParserTest
                  |  }) : () -> ()""".stripMargin
 
       val bb4 = Block(
-        ListType(UnregisteredOperation("test.op"))
+        ListType(UnregisteredOperation("test.op")())
       )
       val bb3 = Block(
-        ListType(UnregisteredOperation("test.op", successors = Seq(bb4)))
+        ListType(UnregisteredOperation("test.op")(successors = Seq(bb4)))
       )
       val operation =
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           regions = Seq(Region(bb3, bb4))
         )
 

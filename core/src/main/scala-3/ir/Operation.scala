@@ -152,7 +152,32 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   final override def hashCode(): Int = System.identityHashCode(this)
   final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
 
-case class UnregisteredOperation(
+object UnregisteredOperation:
+
+  def apply(_name: String) =
+    new OperationCompanion[UnregisteredOperation]:
+      override def name = _name
+
+      def apply(
+          operands: Seq[Value[Attribute]] = Seq(),
+          successors: Seq[Block] = Seq(),
+          results: Seq[Result[Attribute]] = Seq(),
+          regions: Seq[Region] = Seq(),
+          properties: Map[String, Attribute] = Map.empty[String, Attribute],
+          attributes: DictType[String, Attribute] =
+            DictType.empty[String, Attribute]
+      ): UnregisteredOperation =
+        new UnregisteredOperation(
+          name = _name,
+          operands = operands,
+          successors = successors,
+          results = results,
+          regions = regions,
+          properties = properties,
+          attributes = attributes
+        )
+
+case class UnregisteredOperation private (
     override val name: String,
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
@@ -172,8 +197,7 @@ case class UnregisteredOperation(
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ) =
-    UnregisteredOperation(
-      name = name,
+    UnregisteredOperation(name)(
       operands = operands,
       successors = successors,
       results = results,
@@ -186,7 +210,7 @@ trait OperationCompanion[O <: Operation]:
   def name: String
 
   def parse[$: P](parser: Parser, resNames: Seq[String]): P[O] =
-    throw new Exception(
+    fastparse.Fail(
       s"No custom Parser implemented for Operation '${name}'"
     )
 

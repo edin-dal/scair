@@ -55,6 +55,7 @@ import scair.clair.macros._
 case class Complex(
   elem: Attribute,
 ) extends DerivedAttribute["cmath.complex", Complex] with TypeAttribute
+  derives DerivedAttributeCompanion
 
 case class Norm(
   in: Operand[Attribute],
