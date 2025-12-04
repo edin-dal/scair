@@ -73,6 +73,9 @@ object Parser:
         try f(parsed)
         catch
           case e: Exception =>
+            Console.err.print(
+              "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
+            )
             Fail(e.getMessage())
       )
     )
@@ -493,7 +496,7 @@ final class Parser(
       _.collect { case o: Operation =>
         o
       }
-    ) ~ End ~/ exitRegion
+    ) ~/ exitRegion ~ End
   ).map((toplevel: Seq[Operation]) =>
     toplevel.toList match
       case (head: ModuleOp) :: Nil => head
