@@ -5,6 +5,7 @@ import scair.Parser
 import scair.Printer
 import scair.transformations.RewritePattern
 import scair.utils.IntrusiveNode
+import scair.utils.R
 
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashMap
@@ -86,37 +87,37 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var container_block: Option[Block] = None
-  def trait_verify(): Either[String, Operation] = Right(this)
+  def trait_verify(): R[Operation] = Right(this)
 
   def custom_print(p: Printer)(using indentLevel: Int) =
     p.printGenericMLIROperation(this)
 
-  def custom_verify(): Either[String, Operation] = Right(this)
+  def custom_verify(): R[Operation] = Right(this)
 
-  def structured: Either[String, Operation] = regions
-    .foldLeft[Either[String, Unit]](Right(()))((res, reg) =>
+  def structured: R[Operation] = regions
+    .foldLeft[R[Unit]](Right(()))((res, reg) =>
       res.flatMap(_ => reg.structured)
     )
     .map(_ => this)
 
-  def verify(): Either[String, Operation] =
+  def verify(): R[Operation] =
     results
-      .foldLeft[Either[String, Unit]](Right(()))((res, result) =>
+      .foldLeft[R[Unit]](Right(()))((res, result) =>
         res.flatMap(_ => result.verify())
       )
       .flatMap(_ =>
-        regions.foldLeft[Either[String, Unit]](Right(()))((res, region) =>
+        regions.foldLeft[R[Unit]](Right(()))((res, region) =>
           res.flatMap(_ => region.verify())
         )
       )
       .flatMap(_ =>
-        properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, prop) => res.flatMap(_ => prop.custom_verify())
+        properties.values.toSeq.foldLeft[R[Unit]](Right(()))((res, prop) =>
+          res.flatMap(_ => prop.custom_verify())
         )
       )
       .flatMap(_ =>
-        attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, attr) => res.flatMap(_ => attr.custom_verify())
+        attributes.values.toSeq.foldLeft[R[Unit]](Right(()))((res, attr) =>
+          res.flatMap(_ => attr.custom_verify())
         )
       )
       .flatMap(_ => trait_verify())

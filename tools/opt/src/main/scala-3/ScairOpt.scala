@@ -4,6 +4,7 @@ import scair.Printer
 import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.tools.ScairToolBase
+import scair.utils.R
 import scopt.OParser
 
 import scala.io.BufferedSource
@@ -44,7 +45,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
 
   override def parse(args: ScairOptArgs)(
       input: BufferedSource
-  ): Array[Either[String, Operation]] =
+  ): Array[R[Operation]] =
     // TODO: more robust separator splitting
     val input_chunks =
       if args.split_input_file then input.mkString.split("\n// -----\n")
@@ -138,7 +139,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
 
       parsedModule match
         case Right(inputModule) =>
-          val processed_module: Either[String, Operation] =
+          val processed_module: R[Operation] =
             var module =
               if parsed_args.skip_verify then Right(inputModule)
               else inputModule.structured.flatMap(_.verify())

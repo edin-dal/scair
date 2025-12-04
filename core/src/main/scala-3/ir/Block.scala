@@ -1,5 +1,7 @@
 package scair.ir
 
+import scair.utils.R
+
 import scala.collection.mutable
 
 //
@@ -275,8 +277,8 @@ case class Block private (
     detach_op(op)
     op.erase(safe_erase)
 
-  def structured: Either[String, Unit] =
-    operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
+  def structured: R[Unit] =
+    operations.foldLeft[R[Unit]](Right(()))((res, op) =>
       res.flatMap(_ =>
         op.structured
           .map(v =>
@@ -286,13 +288,13 @@ case class Block private (
       )
     )
 
-  def verify(): Either[String, Unit] =
+  def verify(): R[Unit] =
     arguments
-      .foldLeft[Either[String, Unit]](Right(()))((res, arg) =>
+      .foldLeft[R[Unit]](Right(()))((res, arg) =>
         res.flatMap(_ => arg.verify())
       )
       .flatMap(_ =>
-        operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
+        operations.foldLeft[R[Unit]](Right(()))((res, op) =>
           res.flatMap(_ => op.verify().map(_ => ()))
         )
       )

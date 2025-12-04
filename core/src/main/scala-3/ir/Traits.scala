@@ -1,5 +1,7 @@
 package scair.ir
 
+import scair.utils.R
+
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
 // ░░░██║░░░ ██████╔╝ ███████║ ██║ ░░░██║░░░ ╚█████╗░
@@ -13,7 +15,7 @@ package scair.ir
 
 trait IsTerminator extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): R[Operation] = {
     this.container_block match
       case Some(b) =>
         if this ne b.operations.last then
@@ -33,7 +35,7 @@ trait IsTerminator extends Operation:
 
 trait NoTerminator extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
+  override def trait_verify(): R[Operation] = {
     if regions.filter(x => x.blocks.length != 1).length != 0 then
       Left(
         s"NoTerminator Operation '${name}' requires single-block regions"
@@ -45,32 +47,31 @@ trait NoMemoryEffect extends Operation
 
 trait IsolatedFromAbove extends Operation:
 
-  final def verify_rec(regs: Seq[Region]): Either[String, Operation] =
+  final def verify_rec(regs: Seq[Region]): R[Operation] =
     val r = regs match
       case region :: tail =>
-        region.blocks.foldLeft[Either[String, Operation]](Right(this))(
-          (r, block) =>
-            r.flatMap(_ =>
-              block.operations.foldLeft[Either[String, Operation]](r)((r, op) =>
-                op.operands
-                  .foldLeft(r)((r, o) =>
-                    if !this.is_ancestor(
-                        o.owner.getOrElse(throw new Exception(s"${op.name}"))
-                      )
-                    then
-                      Left(
-                        s"Operation '${name}' is not an ancestor of operand '${o}' of '${op.name}'"
-                      )
-                    else r
-                  )
-                  .flatMap(_ => verify_rec(tail ++ op.regions))
-              )
+        region.blocks.foldLeft[R[Operation]](Right(this))((r, block) =>
+          r.flatMap(_ =>
+            block.operations.foldLeft[R[Operation]](r)((r, op) =>
+              op.operands
+                .foldLeft(r)((r, o) =>
+                  if !this.is_ancestor(
+                      o.owner.getOrElse(throw new Exception(s"${op.name}"))
+                    )
+                  then
+                    Left(
+                      s"Operation '${name}' is not an ancestor of operand '${o}' of '${op.name}'"
+                    )
+                  else r
+                )
+                .flatMap(_ => verify_rec(tail ++ op.regions))
             )
+          )
         )
       case Nil => Right(this)
     r.flatMap(_ => super.trait_verify())
 
-  override def trait_verify(): Either[String, Operation] =
+  override def trait_verify(): R[Operation] =
     verify_rec(regions)
 
 trait Commutative extends Operation
