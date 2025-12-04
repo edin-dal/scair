@@ -17,12 +17,14 @@ case class MulFEq(
     rhs: Operand[FloatType !> EqAttr[f32.type]],
     result: Result[FloatType]
 ) extends DerivedOperation["cmath.mul", MulFEq]
+    derives DerivedOperationCompanion
 
 case class MulFVar(
     lhs: Operand[FloatType !> T],
     rhs: Operand[FloatType !> T],
     result: Result[FloatType]
 ) extends DerivedOperation["cmath.mul", MulFVar]
+    derives DerivedOperationCompanion
 
 class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
