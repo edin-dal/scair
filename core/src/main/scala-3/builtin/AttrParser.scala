@@ -71,11 +71,11 @@ class AttrParser(
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match
+        ctx.getAttrCompanion(s"${dialect}.${attrName}") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
-            throw new Exception(
+            Fail(
               s"Attribute $dialect.$attrName is not defined in any supported Dialect."
             )
     }
@@ -84,11 +84,11 @@ class AttrParser(
   def DialectType[$: P]: P[Attribute] = P(
     "!" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match
+        ctx.getAttrCompanion(s"${dialect}.${attrName}") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
-            throw new Exception(
+            Fail(
               s"Type $dialect.$attrName is not defined in any supported Dialect."
             )
     }
@@ -105,17 +105,20 @@ class AttrParser(
     Type | BuiltinAttr | DialectAttribute | AttributeAlias // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
   )
 
-  def AttributeAlias[$: P] = P("#" ~~ AliasName).map((name: String) =>
-    attributeAliases.getOrElse(
-      name,
-      throw new Exception(s"Attribute alias ${name} not defined.")
+  def AttributeAlias[$: P] = P(
+    "#" ~~ AliasName.flatMap((name: String) =>
+      attributeAliases.get(name) match
+        case Some(attr) => Pass(attr)
+        case None       =>
+          Fail(s"Attribute alias ${name} not defined.")
     )
   )
 
-  def TypeAlias[$: P] = P("!" ~~ AliasName).map((name: String) =>
-    typeAliases.getOrElse(
-      name,
-      throw new Exception(s"Type alias ${name} not defined.")
+  def TypeAlias[$: P] = P(
+    "!" ~~ AliasName.flatMap((name: String) =>
+      typeAliases.get(name) match
+        case Some(attr) => Pass(attr)
+        case None       => Fail(s"Type alias ${name} not defined.")
     )
   )
 

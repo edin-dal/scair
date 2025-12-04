@@ -59,7 +59,7 @@ trait IsolatedFromAbove extends Operation:
                       )
                     then
                       Left(
-                        s"Operation '${name}' is not an ancestor of operand '${o.typ}'"
+                        s"Operation '${name}' is not an ancestor of operand '${o}' of '${op.name}'"
                       )
                     else r
                   )

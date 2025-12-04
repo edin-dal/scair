@@ -12,7 +12,7 @@
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
-// CHECK: Parse error at [[FILE]]:2:31:
+// CHECK: Parse error at [[FILE]]:14:31:
 // CHECK: "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
 // CHECK:                               ^
 // CHECK-NEXT:  (Attribute | Type)
@@ -20,7 +20,7 @@
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex<f32, f32>} : () -> ()
-// CHECK: Parse error at [[FILE]]:2:55:
+// CHECK: Parse error at [[FILE]]:22:55:
 // CHECK: "test.op"() {"invalid_type" = !cmath.complex<f32, f32>} : () -> ()
 // CHECK:                                                       ^
 // CHECK: Number of attributes 1 does not match the number of provided attributes 2
