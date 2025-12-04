@@ -5,6 +5,7 @@ import scair.AttrParser.whitespace
 import scair.Parser
 import scair.Parser.orElse
 import scair.clair.macros.DerivedOperation
+import scair.clair.macros.DerivedOperationCompanion
 import scair.clair.macros.summonDialect
 import scair.dialects.arith.FastMathFlags
 import scair.dialects.arith.FastMathFlagsAttr
@@ -36,21 +37,29 @@ object AbsfOp:
       resNames: Seq[String]
   ): P[AbsfOp] =
     P(
-      "" ~ Parser.ValueUse ~ parser.Attribute.orElse(
-        FastMathFlagsAttr(FastMathFlags.none)
-      ) ~ ":" ~ parser.Type
-    ).map { case (operandName, flags, type_) =>
-      parser
-        .generateOperation(
-          opName = name,
-          operandsNames = Seq(operandName),
-          operandsTypes = Seq(type_),
-          resultsNames = resNames,
-          resultsTypes = Seq(type_),
-          properties = Map("fastmath" -> flags)
+      "" ~ Parser.ValueUse
+        .flatMap(operandName =>
+          (parser.Attribute.orElse(
+            FastMathFlagsAttr(FastMathFlags.none)
+          ) ~ ":" ~ parser.Type.flatMap(tpe =>
+            parser.currentScope.useValue(operandName, tpe) ~
+              parser.currentScope.defineResult(resNames.head, tpe)
+          ))
         )
-        .asInstanceOf[AbsfOp]
-    }
+        .flatMap { case (flags, operandAndResult) =>
+          val (operand, result) = operandAndResult
+          summon[DerivedOperationCompanion[AbsfOp]]
+            .apply(
+              operands = Seq(operand),
+              results = Seq(result),
+              properties = Map("fastmath" -> flags)
+            )
+            .structured match
+            case Right(op: AbsfOp) => Pass(op)
+            case Left(err)         => Fail(err)
+
+        }
+    )
 
 case class AbsfOp(
     fastmath: FastMathFlagsAttr,
@@ -71,28 +80,38 @@ object FPowIOp:
       resNames: Seq[String]
   ): P[FPowIOp] =
     P(
-      Parser.ValueUse ~ "," ~ Parser.ValueUse ~ parser.Attribute.orElse(
-        FastMathFlagsAttr(FastMathFlags.none)
-      ) ~ ":" ~ parser.Type ~ "," ~ parser.Type
-    ).map {
-      case (
-            operand1Name,
-            operand2Name,
-            flags,
-            operand1Type,
-            operand2Type
-          ) =>
-        parser
-          .generateOperation(
-            opName = name,
-            operandsNames = Seq(operand1Name, operand2Name),
-            operandsTypes = Seq(operand1Type, operand2Type),
-            resultsNames = resNames,
-            resultsTypes = Seq(operand1Type),
-            properties = Map("fastmath" -> flags)
+      Parser.ValueUse.flatMap(lhsName =>
+        ("," ~ Parser.ValueUse.flatMap(rhsName =>
+          (parser.Attribute.orElse(
+            FastMathFlagsAttr(FastMathFlags.none)
+          ) ~ ":" ~ parser.Type.flatMap(lhsType =>
+            parser.currentScope.useValue(lhsName, lhsType) ~
+              parser.currentScope.defineResult(resNames.head, lhsType)
           )
-          .asInstanceOf[FPowIOp]
-    }
+            ~ "," ~ parser.Type.flatMap(
+              parser.currentScope.useValue(rhsName, _)
+            ))
+            .flatMap {
+              case (
+                    flags,
+                    lhsAndRes,
+                    rhs
+                  ) =>
+                println(f"Attempting construction")
+                val made = summon[DerivedOperationCompanion[FPowIOp]].apply(
+                  operands = Seq(lhsAndRes._1, rhs),
+                  results = Seq(lhsAndRes._2),
+                  properties = Map("fastmath" -> flags)
+                )
+                println(f"Made: $made")
+                made.structured match
+                  case Right(op: FPowIOp) => Pass(op)
+                  case Left(err)          => Fail(err)
+
+            }
+        ))
+      )
+    )
 
 case class FPowIOp(
     lhs: Operand[FloatType],
