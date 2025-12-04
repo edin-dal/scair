@@ -132,8 +132,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
   val valINDEX = Value[Attribute](INDEX)
 
   "printDataibutesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
-    val op = UnregisteredOperation(
-      "test.op",
+    val op = UnregisteredOperation("test.op")(
       results = Seq(
         F32,
         F64,
@@ -144,14 +143,12 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       ListType(F128),
       ListType(
         op,
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           operands = Seq(op.results(1), op.results(0))
         )
       )
     )
-    val op2 = UnregisteredOperation(
-      "test.op",
+    val op2 = UnregisteredOperation("test.op")(
       successors = Seq(block1),
       results = Seq(
         I1,
@@ -163,8 +160,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       ListType(I32),
       ListType(
         op2,
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           operands = Seq(
             op2.results(1),
             op2.results(0)
@@ -172,8 +168,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         )
       )
     )
-    val op3 = UnregisteredOperation(
-      "test.op",
+    val op3 = UnregisteredOperation("test.op")(
       results = Seq(
         INDEX
       ).map(Result(_))
@@ -182,16 +177,14 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       ListType(I64),
       ListType(
         op3,
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           operands = Seq(op3.results(0))
         )
       )
     )
 
     val program =
-      UnregisteredOperation(
-        "op1",
+      UnregisteredOperation("op1")(
         regions = Seq(
           Region(
             Seq(
@@ -225,23 +218,20 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     val block1 = new Block(
       ListType(F16),
       ListType(
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           operands = Seq(
             valF32,
             valF64,
             Value(F80)
           )
         ),
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           Seq(valF64, valF32)
         )
       )
     )
 
-    val op4 = UnregisteredOperation(
-      "test.op",
+    val op4 = UnregisteredOperation("test.op")(
       successors = Seq(block1),
       results = Seq(
         I1,
@@ -254,8 +244,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       ListType(F128),
       ListType(
         op4,
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           operands = Seq(
             op4.results(1),
             op4.results(0)
@@ -264,8 +253,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       )
     )
 
-    val op5 = UnregisteredOperation(
-      "test.op",
+    val op5 = UnregisteredOperation("test.op")(
       results = Seq(
         INDEX
       ).map(Result(_))
@@ -275,16 +263,14 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       ListType(I64),
       ListType(
         op5,
-        UnregisteredOperation(
-          "test.op",
+        UnregisteredOperation("test.op")(
           operands = Seq(op5.results(0))
         )
       )
     )
 
     val program =
-      UnregisteredOperation(
-        "op1",
+      UnregisteredOperation("op1")(
         regions = Seq(
           Region(
             Seq(

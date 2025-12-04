@@ -571,8 +571,8 @@ final class Parser(
     val operands = operandsNames zip operandsTypes map currentScope.useValue
     val results = resultsNames zip resultsTypes map currentScope.defineResult
 
-    val op: Operation = ctx.getOperation(opName) match
-      case Some(x) =>
+    ctx.getOpCompanion(opName, allowUnregisteredDialect) match
+      case Right(x) =>
         x(
           operands = operands,
           successors = successors,
@@ -581,24 +581,10 @@ final class Parser(
           attributes = DictType.from(attributes),
           regions = regions
         )
-
-      case None =>
-        if allowUnregisteredDialect then
-          new UnregisteredOperation(
-            name = opName,
-            operands = operands,
-            successors = successors,
-            properties = properties,
-            results = results,
-            attributes = DictType.from(attributes),
-            regions = regions
-          )
-        else
-          throw new Exception(
-            s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
-          )
-
-    return op
+      case Left(error) =>
+        throw new Exception(
+          s"Operation ${opName} is not registered. If this is intended, use `--allow-unregistered-dialect`"
+        )
 
   def Operations[$: P](
       at_least_this_many: Int = 0
@@ -649,10 +635,10 @@ final class Parser(
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
-      ctx.getOperation(s"${x}.${y}") match
-        case Some(y) =>
-          Pass ~ y.parse(this, resNames)
-        case None =>
+      ctx.getOpCompanion(s"${x}.${y}") match
+        case Right(companion) =>
+          Pass ~ companion.parse(this, resNames)
+        case Left(_) =>
           throw new Exception(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
           )

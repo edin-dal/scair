@@ -71,7 +71,7 @@ class AttrParser(
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match
+        ctx.getAttrCompanion(s"${dialect}.${attrName}") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
@@ -84,7 +84,7 @@ class AttrParser(
   def DialectType[$: P]: P[Attribute] = P(
     "!" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttribute(s"${dialect}.${attrName}") match
+        ctx.getAttrCompanion(s"${dialect}.${attrName}") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
