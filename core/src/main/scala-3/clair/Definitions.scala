@@ -1,7 +1,7 @@
 package scair.clair.codegen
 
 import scair.clair.macros.AssemblyFormatDirective
-import scair.core.constraints.ConstraintImpl
+import scair.core.constraints.Constraint
 
 import scala.quoted.*
 import scala.reflect.*
@@ -53,7 +53,7 @@ case class OperandDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None
+    val constraint: Option[Type[? <: Constraint]] = None
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
@@ -61,7 +61,7 @@ case class ResultDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None
+    val constraint: Option[Type[? <: Constraint]] = None
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
@@ -80,9 +80,8 @@ case class SuccessorDef(
 case class OpPropertyDef(
     override val name: String,
     val tpe: Type[?],
-    override val variadicity: Variadicity.Single.type |
-      Variadicity.Optional.type = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None
+    override val variadicity: Variadicity = Variadicity.Single,
+    val constraint: Option[Type[? <: Constraint]] = None
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 

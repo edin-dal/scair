@@ -37,16 +37,7 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
     case AppliedType(op, List(attr, constraint)) =>
       constraint.asType match
         case '[type t <: Constraint; `t`] =>
-          Expr.summon[ConstraintImpl[t]] match
-            case Some(i) => Some(i)
-            case None    =>
-              Implicits.search(TypeRepr.of[ConstraintImpl[t]]) match
-                case s: ImplicitSearchSuccess =>
-                  Some(s.tree.asExprOf[ConstraintImpl[t]])
-                case f: ImplicitSearchFailure =>
-                  report.errorAndAbort(
-                    s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
-                  )
+          Some(Type.of[t])
     case _ =>
       None
 
