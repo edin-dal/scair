@@ -70,30 +70,6 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
       )
     case false => None
 
-/** Get all constructs of the specified type flattened from the ADT expression.
-  * @tparam Def
-  *   The construct definition type.
-  * @param opInputDefs
-  *   The construct definitions.
-  * @param adtOpExpr
-  *   The ADT expression.
-  */
-def ADTFlatInputMacro[Def <: OpInputDef: Type](
-    opInputDefs: Seq[Def],
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[DefinedInput[Def]]] =
-  val stuff =
-    opInputDefs.map((d: Def) =>
-      adtOpExpr.member[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
-        d.name
-      )
-    )
-  stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
-    next match
-      case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
-      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
-  )
-
 def customPrintMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -761,7 +737,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
 ): Expr[DerivedOperationCompanion[T]] =
   OperationDeriver[T].companion
 
-final class OperationDeriver[T <: Operation: Type](using Quotes) {
+final class OperationDeriver[T <: Operation: Type](using Quotes):
 
   val opDef: OperationDef = operationDefOf[T]
 
@@ -769,29 +745,53 @@ final class OperationDeriver[T <: Operation: Type](using Quotes) {
     case Some(canonicalizationPatterns) =>
       '{ $canonicalizationPatterns.patterns }
     case None => '{ Seq() }
-  
-  def operandsMacro(
-      adtOpExpr: Expr[?]
+
+  /** Get all constructs of the specified type flattened from the ADT
+    * expression.
+    * @tparam Def
+    *   The construct definition type.
+    * @param opInputDefs
+    *   The construct definitions.
+    * @param adtOpExpr
+    *   The ADT expression.
+    */
+  def ADTFlatInputMacro[Def <: OpInputDef: Type](
+      opInputDefs: Seq[Def]
+  )(using adtOpExpr: Expr[T]): Expr[Seq[DefinedInput[Def]]] =
+    val stuff =
+      opInputDefs.map((d: Def) =>
+        adtOpExpr.member[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
+          d.name
+        )
+      )
+    stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
+      next match
+        case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
+        case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
+    )
+
+  def operandsMacro(using
+      adtOpExpr: Expr[T]
   ): Expr[Seq[Operand[Attribute]]] =
-    ADTFlatInputMacro(opDef.operands, adtOpExpr)
+    ADTFlatInputMacro(opDef.operands)
 
-  def successorsMacro(
-      adtOpExpr: Expr[?]
+  def successorsMacro(using
+      adtOpExpr: Expr[T]
   ): Expr[Seq[Successor]] =
-    ADTFlatInputMacro(opDef.successors, adtOpExpr)
+    ADTFlatInputMacro(opDef.successors)
 
-  def resultsMacro(
-      adtOpExpr: Expr[?]
+  def resultsMacro(using
+      adtOpExpr: Expr[T]
   ): Expr[Seq[Result[Attribute]]] =
-    ADTFlatInputMacro(opDef.results, adtOpExpr)
+    ADTFlatInputMacro(opDef.results)
 
-  def regionsMacro(
-      adtOpExpr: Expr[?]
+  def regionsMacro(using
+      adtOpExpr: Expr[T]
   ): Expr[Seq[Region]] =
-    ADTFlatInputMacro(opDef.regions, adtOpExpr)
+    ADTFlatInputMacro(opDef.regions)
 
-  def propertiesMacro(
-      adtOpExpr: Expr[?]
+  def propertiesMacro(using
+      adtOpExpr: Expr[T]
   ): Expr[Map[String, Attribute]] =
 
     val opSegSizeProp = makeSegmentSizes(
@@ -819,20 +819,22 @@ final class OperationDeriver[T <: Operation: Type](using Quotes) {
       if opDef.properties.isEmpty then '{ Map.empty[String, Attribute] }
       else
         // extracting property instances from the ADT
-        val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
-        val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
+        val propertyExprs = ADTFlatInputMacro(opDef.properties)
+        val propertyNames =
+          Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
         '{
           Map.from(${ propertyNames } zip ${ propertyExprs })
         }
 
-    Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(
-      definedProps
-    ) {
-      case (map, Some((name, segSize))) =>
-        '{ $map + (${ Expr(name) } -> $segSize) }
-      case (map, None) => map
-    }
-    
+    Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp)
+      .foldLeft(
+        definedProps
+      ) {
+        case (map, Some((name, segSize))) =>
+          '{ $map + (${ Expr(name) } -> $segSize) }
+        case (map, None) => map
+      }
+
   def companion: Expr[DerivedOperationCompanion[T]] =
     '{
 
@@ -842,15 +844,15 @@ final class OperationDeriver[T <: Operation: Type](using Quotes) {
           $summonedPatterns
 
         def operands(adtOp: T): Seq[Value[Attribute]] =
-          ${ operandsMacro('{ adtOp }) }
+          ${ operandsMacro(using '{ adtOp }) }
         def successors(adtOp: T): Seq[Block] =
-          ${ successorsMacro('{ adtOp }) }
+          ${ successorsMacro(using '{ adtOp }) }
         def results(adtOp: T): Seq[Result[Attribute]] =
-          ${ resultsMacro('{ adtOp }) }
+          ${ resultsMacro(using '{ adtOp }) }
         def regions(adtOp: T): Seq[Region] =
-          ${ regionsMacro('{ adtOp }) }
+          ${ regionsMacro(using '{ adtOp }) }
         def properties(adtOp: T): Map[String, Attribute] =
-          ${ propertiesMacro('{ adtOp }) }
+          ${ propertiesMacro(using '{ adtOp }) }
 
         def name: String = ${ Expr(opDef.name) }
 
@@ -927,4 +929,3 @@ final class OperationDeriver[T <: Operation: Type](using Quotes) {
               )
 
     }
-}
