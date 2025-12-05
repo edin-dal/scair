@@ -5,6 +5,7 @@ import scair.interpreter.Interpreter
 import scair.interpreter.RuntimeCtx
 import scair.ir.*
 import scair.tools.ScairToolBase
+import scair.utils.R
 import scopt.OParser
 
 import scala.collection.mutable
@@ -55,7 +56,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   override def parse(args: ScairRunArgs)(
       input: BufferedSource
-  ): Array[Either[String, Operation]] =
+  ): Array[R[Operation]] =
     // Parse content
     // ONE CHUNK ONLY
 

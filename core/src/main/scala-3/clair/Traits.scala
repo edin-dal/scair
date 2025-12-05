@@ -2,6 +2,7 @@ package scair.clair.macros
 
 import scair.Printer
 import scair.ir.*
+import scair.utils.R
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -56,10 +57,10 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
   override def custom_print(p: Printer)(using indentLevel: Int): Unit =
     comp.custom_print(this, p)
 
-  override def verify(): Either[String, Operation] =
+  override def verify(): R[Operation] =
     super
       .verify()
       .flatMap(_ => constraint_verify())
 
-  def constraint_verify(): Either[String, Operation] =
+  def constraint_verify(): R[Operation] =
     comp.constraint_verify(this)

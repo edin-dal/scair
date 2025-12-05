@@ -1,8 +1,9 @@
 package scair.ir
 
+import scair.utils.R
+
 import scala.annotation.targetName
 import scala.collection.mutable
-
 //
 // ██████╗░ ███████╗ ░██████╗░ ██╗ ░█████╗░ ███╗░░██╗
 // ██╔══██╗ ██╔════╝ ██╔════╝░ ██║ ██╔══██╗ ████╗░██║
@@ -46,12 +47,12 @@ case class Region(
   blocks.foreach(attach_block)
 
   def structured =
-    blocks.foldLeft[Either[String, Unit]](Right(()))((res, block) =>
+    blocks.foldLeft[R[Unit]](Right(()))((res, block) =>
       res.flatMap(_ => block.structured)
     )
 
-  def verify(): Either[String, Unit] =
-    blocks.foldLeft[Either[String, Unit]](Right(()))((res, block) =>
+  def verify(): R[Unit] =
+    blocks.foldLeft[R[Unit]](Right(()))((res, block) =>
       res.flatMap(_ => block.verify())
     )
 
