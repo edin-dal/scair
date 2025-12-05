@@ -189,7 +189,7 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] =
         .asInstanceOf[String] :: stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 
-def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
+def operationDefOf[T <: Operation: Type](using quotes: Quotes): OperationDef =
   import quotes.reflect.*
 
   val m = Expr.summon[Mirror.ProductOf[T]].get

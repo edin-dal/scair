@@ -11,6 +11,7 @@ import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.enums.macros.*
 import scair.ir.*
+import scair.macros.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 
@@ -35,19 +36,6 @@ import scala.quoted.*
 ||  ADT to Unstructured conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-/** Small helper to select a member of an expression.
-  * @param obj
-  *   The object to select the member from.
-  * @param name
-  *   The name of the member to select.
-  */
-def selectMember[T: Type](obj: Expr[?], name: String)(using
-    Quotes
-): Expr[T] =
-  import quotes.reflect.*
-
-  Select.unique(obj.asTerm, name).asExprOf[T]
-
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
@@ -63,7 +51,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
               case Variadicity.Single                          => Expr(1)
               case Variadicity.Variadic | Variadicity.Optional =>
                 '{
-                  ${ selectMember[Seq[?]](adtOpExpr, d.name) }.length
+                  ${ adtOpExpr.member[Seq[?]](d.name) }.length
                 }
           )
         )
@@ -81,99 +69,6 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
         }
       )
     case false => None
-
-/** Get all constructs of the specified type flattened from the ADT expression.
-  * @tparam Def
-  *   The construct definition type.
-  * @param opInputDefs
-  *   The construct definitions.
-  * @param adtOpExpr
-  *   The ADT expression.
-  */
-def ADTFlatInputMacro[Def <: OpInputDef: Type](
-    opInputDefs: Seq[Def],
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[DefinedInput[Def]]] =
-  val stuff =
-    opInputDefs.map((d: Def) =>
-      selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
-        adtOpExpr,
-        d.name
-      )
-    )
-  stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
-    next match
-      case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
-      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
-  )
-
-def operandsMacro(
-    opDef: OperationDef,
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[Operand[Attribute]]] =
-  ADTFlatInputMacro(opDef.operands, adtOpExpr)
-
-def successorsMacro(
-    opDef: OperationDef,
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[Successor]] =
-  ADTFlatInputMacro(opDef.successors, adtOpExpr)
-
-def resultsMacro(
-    opDef: OperationDef,
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[Result[Attribute]]] =
-  ADTFlatInputMacro(opDef.results, adtOpExpr)
-
-def regionsMacro(
-    opDef: OperationDef,
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Seq[Region]] =
-  ADTFlatInputMacro(opDef.regions, adtOpExpr)
-
-def propertiesMacro(
-    opDef: OperationDef,
-    adtOpExpr: Expr[?]
-)(using Quotes): Expr[Map[String, Attribute]] =
-
-  val opSegSizeProp = makeSegmentSizes(
-    opDef.hasMultiVariadicOperands,
-    opDef.operands,
-    adtOpExpr
-  )
-  val resSegSizeProp = makeSegmentSizes(
-    opDef.hasMultiVariadicResults,
-    opDef.results,
-    adtOpExpr
-  )
-  val regSegSizeProp = makeSegmentSizes(
-    opDef.hasMultiVariadicRegions,
-    opDef.regions,
-    adtOpExpr
-  )
-  val succSegSizeProp = makeSegmentSizes(
-    opDef.hasMultiVariadicSuccessors,
-    opDef.successors,
-    adtOpExpr
-  )
-  // Populating a Dictionarty with the properties
-  val definedProps =
-    if opDef.properties.isEmpty then '{ Map.empty[String, Attribute] }
-    else
-      // extracting property instances from the ADT
-      val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
-      val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-      '{
-        Map.from(${ propertyNames } zip ${ propertyExprs })
-      }
-
-  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(
-    definedProps
-  ) {
-    case (map, Some((name, segSize))) =>
-      '{ $map + (${ Expr(name) } -> $segSize) }
-    case (map, None) => map
-  }
 
 def customPrintMacro(
     opDef: OperationDef,
@@ -219,7 +114,7 @@ def verifyMacro(
     .filter(_.variadicity == Variadicity.Single)
     .collect(_ match
       case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
+        val mem = adtOpExpr.member[Operand[Attribute]](name)
         '{ (ctx: scair.core.constraints.ConstraintContext) =>
           $constraint.verify($mem.typ)(using ctx)
         })
@@ -804,7 +699,7 @@ def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     adtAttrExpr: Expr[?]
 )(using Quotes): Expr[Seq[Attribute]] =
   Expr.ofList(
-    attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
+    attrInputDefs.map(d => adtAttrExpr.member[Attribute](d.name))
   )
 
 def parametersMacro(
@@ -840,103 +735,197 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
 def deriveOperationCompanion[T <: Operation: Type](using
     Quotes
 ): Expr[DerivedOperationCompanion[T]] =
-  val opDef = getDefImpl[T]
+  OperationDeriver[T].companion
+
+final class OperationDeriver[T <: Operation: Type](using Quotes):
+
+  val opDef: OperationDef = operationDefOf[T]
 
   val summonedPatterns = Expr.summon[CanonicalizationPatterns[T]] match
     case Some(canonicalizationPatterns) =>
       '{ $canonicalizationPatterns.patterns }
     case None => '{ Seq() }
 
-  '{
+  /** Get all constructs of the specified type flattened from the ADT
+    * expression.
+    * @tparam Def
+    *   The construct definition type.
+    * @param opInputDefs
+    *   The construct definitions.
+    * @param adtOpExpr
+    *   The ADT expression.
+    */
+  def ADTFlatInputMacro[Def <: OpInputDef: Type](
+      opInputDefs: Seq[Def]
+  )(using adtOpExpr: Expr[T]): Expr[Seq[DefinedInput[Def]]] =
+    val stuff =
+      opInputDefs.map((d: Def) =>
+        adtOpExpr.member[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
+          d.name
+        )
+      )
+    stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
+      next match
+        case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
+        case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
+    )
 
-    new DerivedOperationCompanion[T]:
+  def operandsMacro(using
+      adtOpExpr: Expr[T]
+  ): Expr[Seq[Operand[Attribute]]] =
+    ADTFlatInputMacro(opDef.operands)
 
-      override def canonicalizationPatterns: Seq[RewritePattern] =
-        $summonedPatterns
+  def successorsMacro(using
+      adtOpExpr: Expr[T]
+  ): Expr[Seq[Successor]] =
+    ADTFlatInputMacro(opDef.successors)
 
-      def operands(adtOp: T): Seq[Value[Attribute]] =
-        ${ operandsMacro(opDef, '{ adtOp }) }
-      def successors(adtOp: T): Seq[Block] =
-        ${ successorsMacro(opDef, '{ adtOp }) }
-      def results(adtOp: T): Seq[Result[Attribute]] =
-        ${ resultsMacro(opDef, '{ adtOp }) }
-      def regions(adtOp: T): Seq[Region] =
-        ${ regionsMacro(opDef, '{ adtOp }) }
-      def properties(adtOp: T): Map[String, Attribute] =
-        ${ propertiesMacro(opDef, '{ adtOp }) }
+  def resultsMacro(using
+      adtOpExpr: Expr[T]
+  ): Expr[Seq[Result[Attribute]]] =
+    ADTFlatInputMacro(opDef.results)
 
-      def name: String = ${ Expr(opDef.name) }
+  def regionsMacro(using
+      adtOpExpr: Expr[T]
+  ): Expr[Seq[Region]] =
+    ADTFlatInputMacro(opDef.regions)
 
-      def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
-        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+  def propertiesMacro(using
+      adtOpExpr: Expr[T]
+  ): Expr[Map[String, Attribute]] =
 
-      def constraint_verify(adtOp: T): Either[String, Operation] =
-        ${
-          verifyMacro(opDef, '{ adtOp })
+    val opSegSizeProp = makeSegmentSizes(
+      opDef.hasMultiVariadicOperands,
+      opDef.operands,
+      adtOpExpr
+    )
+    val resSegSizeProp = makeSegmentSizes(
+      opDef.hasMultiVariadicResults,
+      opDef.results,
+      adtOpExpr
+    )
+    val regSegSizeProp = makeSegmentSizes(
+      opDef.hasMultiVariadicRegions,
+      opDef.regions,
+      adtOpExpr
+    )
+    val succSegSizeProp = makeSegmentSizes(
+      opDef.hasMultiVariadicSuccessors,
+      opDef.successors,
+      adtOpExpr
+    )
+    // Populating a Dictionarty with the properties
+    val definedProps =
+      if opDef.properties.isEmpty then '{ Map.empty[String, Attribute] }
+      else
+        // extracting property instances from the ADT
+        val propertyExprs = ADTFlatInputMacro(opDef.properties)
+        val propertyNames =
+          Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
+        '{
+          Map.from(${ propertyNames } zip ${ propertyExprs })
         }
 
-      override def parse[$: P as ctx](
-          p: Parser,
-          resNames: Seq[String]
-      ): P[T] =
-        ${
-          (getOpCustomParse[T]('{ p }, '{ resNames })
-            .getOrElse(parseMacro[T](opDef, '{ p }, '{ resNames })))
-        }(using ctx)
+    Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp)
+      .foldLeft(
+        definedProps
+      ) {
+        case (map, Some((name, segSize))) =>
+          '{ $map + (${ Expr(name) } -> $segSize) }
+        case (map, None) => map
+      }
 
-      def apply(
-          operands: Seq[Value[Attribute]] = Seq(),
-          successors: Seq[Block] = Seq(),
-          results: Seq[Result[Attribute]] = Seq(),
-          regions: Seq[Region] = Seq(),
-          properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] =
-            DictType.empty[String, Attribute]
-      ): UnstructuredOp | T & Operation =
-        try {
-          val structured = ${
-            tryConstruct(
-              opDef,
-              '{ operands },
-              '{ results },
-              '{ regions },
-              '{ successors },
-              '{ properties }
+  def companion: Expr[DerivedOperationCompanion[T]] =
+    '{
+
+      new DerivedOperationCompanion[T]:
+
+        override def canonicalizationPatterns: Seq[RewritePattern] =
+          $summonedPatterns
+
+        def operands(adtOp: T): Seq[Value[Attribute]] =
+          ${ operandsMacro(using '{ adtOp }) }
+        def successors(adtOp: T): Seq[Block] =
+          ${ successorsMacro(using '{ adtOp }) }
+        def results(adtOp: T): Seq[Result[Attribute]] =
+          ${ resultsMacro(using '{ adtOp }) }
+        def regions(adtOp: T): Seq[Region] =
+          ${ regionsMacro(using '{ adtOp }) }
+        def properties(adtOp: T): Map[String, Attribute] =
+          ${ propertiesMacro(using '{ adtOp }) }
+
+        def name: String = ${ Expr(opDef.name) }
+
+        def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
+          ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+
+        def constraint_verify(adtOp: T): Either[String, Operation] =
+          ${
+            verifyMacro(opDef, '{ adtOp })
+          }
+
+        override def parse[$: P as ctx](
+            p: Parser,
+            resNames: Seq[String]
+        ): P[T] =
+          ${
+            (getOpCustomParse[T]('{ p }, '{ resNames })
+              .getOrElse(parseMacro[T](opDef, '{ p }, '{ resNames })))
+          }(using ctx)
+
+        def apply(
+            operands: Seq[Value[Attribute]] = Seq(),
+            successors: Seq[Block] = Seq(),
+            results: Seq[Result[Attribute]] = Seq(),
+            regions: Seq[Region] = Seq(),
+            properties: Map[String, Attribute] = Map.empty[String, Attribute],
+            attributes: DictType[String, Attribute] =
+              DictType.empty[String, Attribute]
+        ): UnstructuredOp | T & Operation =
+          try {
+            val structured = ${
+              tryConstruct(
+                opDef,
+                '{ operands },
+                '{ results },
+                '{ regions },
+                '{ successors },
+                '{ properties }
+              )
+            }
+            structured.attributes.addAll(attributes)
+            structured
+          } catch { _ =>
+            UnstructuredOp(
+              operands = operands,
+              successors = successors,
+              results = results,
+              regions = regions,
+              properties = properties,
+              attributes = attributes
             )
           }
-          structured.attributes.addAll(attributes)
-          structured
-        } catch { _ =>
+
+        def destructure(adtOp: T): UnstructuredOp =
           UnstructuredOp(
-            operands = operands,
-            successors = successors,
-            results = results,
-            regions = regions,
-            properties = properties,
-            attributes = attributes
+            operands = operands(adtOp),
+            successors = successors(adtOp),
+            results = results(adtOp),
+            regions = regions(adtOp).map(_.detached),
+            properties = properties(adtOp),
+            attributes = adtOp.attributes
           )
-        }
 
-      def destructure(adtOp: T): UnstructuredOp =
-        UnstructuredOp(
-          operands = operands(adtOp),
-          successors = successors(adtOp),
-          results = results(adtOp),
-          regions = regions(adtOp).map(_.detached),
-          properties = properties(adtOp),
-          attributes = adtOp.attributes
-        )
+        def structure(unstrucOp: UnstructuredOp): T =
+          ${
+            fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
+          } match
+            case adt: DerivedOperation[?, T] =>
+              adt.attributes.addAll(unstrucOp.attributes)
+              adt
+            case _ =>
+              throw new Exception(
+                s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unstrucOp}"
+              )
 
-      def structure(unstrucOp: UnstructuredOp): T =
-        ${
-          fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
-        } match
-          case adt: DerivedOperation[?, T] =>
-            adt.attributes.addAll(unstrucOp.attributes)
-            adt
-          case _ =>
-            throw new Exception(
-              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unstrucOp}"
-            )
-
-  }
+    }
