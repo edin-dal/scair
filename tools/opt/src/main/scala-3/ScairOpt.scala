@@ -58,9 +58,9 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         parsingDiagnostics = args.parsing_diagnostics,
         allowUnregisteredDialect = args.allow_unregistered
       )
-      val parsed = parser.parseThis(
+      val parsed = parser.parse(
         input,
-        pattern = parser.TopLevel(using _)
+        parser = parser.TopLevel(using _)
       ) match
         case fastparse.Parsed.Success(input_module, _) =>
           Right(input_module)

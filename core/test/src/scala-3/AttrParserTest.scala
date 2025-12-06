@@ -294,8 +294,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |    "test.op"(%9) : (index) -> ()
                      |  }) : () -> ()""".stripMargin
 
-    parser.parseThis(
-      text = input
+    parser.parse(
+      input = input
     ) should matchPattern { case Parsed.Success(program, _) => }
   }
 
@@ -307,9 +307,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |  }) : () -> ()""".stripMargin
 
     parser
-      .parseThis(
-        text = input,
-        pattern = parser.OperationPat(using _)
+      .parse(
+        input = input,
+        parser = parser.OperationPat(using _)
       ) should matchPattern {
       case Parsed.Success(
             UnregisteredOperation(

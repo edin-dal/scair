@@ -90,9 +90,9 @@ object IRDLPrinter:
     val ctx = MLContext()
     ctx.registerDialect(IRDL)
     val parser = Parser(ctx)
-    val dialect = parser.parseThis(
-      input.mkString,
-      pattern = parser.OperationPat(using _)
+    val dialect = parser.parse(
+      input = input.mkString,
+      parser = parser.OperationPat(using _)
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
       case Parsed.Success(_, _)                =>

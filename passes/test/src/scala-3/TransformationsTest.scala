@@ -42,9 +42,9 @@ class TransformationsTest
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()""".stripMargin
 
-      val Parsed.Success(value, _) = parser.parseThis(
-        text = text,
-        pattern = parser.TopLevel(using _)
+      val Parsed.Success(value, _) = parser.parse(
+        input = text,
+        parser = parser.TopLevel(using _)
       ): @unchecked
 
       val opToErase = value.regions(0).blocks(0).operations(1)
@@ -76,9 +76,9 @@ class TransformationsTest
         |   %7 = "cmath.mul"(%4, %5) : (f32, f32) -> f32
         | }) : () -> (!cmath.complex<f32>, !cmath.complex<index>, !cmath.complex<f32>)""".stripMargin
 
-      val Parsed.Success(value, _) = parser.parseThis(
-        text = text,
-        pattern = parser.TopLevel(using _)
+      val Parsed.Success(value, _) = parser.parse(
+        input = text,
+        parser = parser.TopLevel(using _)
       ): @unchecked
 
       val opToAdd = value.regions(0).blocks(0).operations(0)
@@ -110,9 +110,9 @@ class TransformationsTest
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()""".stripMargin
 
-      val Parsed.Success(value, _) = parser.parseThis(
-        text = text,
-        pattern = parser.TopLevel(using _)
+      val Parsed.Success(value, _) = parser.parse(
+        input = text,
+        parser = parser.TopLevel(using _)
       ): @unchecked
 
       val block =

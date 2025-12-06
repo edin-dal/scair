@@ -915,15 +915,17 @@ final class Parser(
   inline def OptionalKeywordAttributes[$: P] =
     ("attributes" ~/ DictionaryAttribute).orElse(Map.empty)
 
-  /*≡==--==≡≡≡≡==--=≡≡*\
-  ||  PARSE FUNCTION  ||
-  \*≡==---==≡≡==---==≡*/
-
-  def parseThis[A, B](
-      text: String,
-      pattern: fastparse.P[?] => fastparse.P[B] = { (x: fastparse.P[?]) =>
-        TopLevel(using x)
-      },
-      verboseFailures: Boolean = false
-  ): fastparse.Parsed[B] =
-    return parse(text, pattern, verboseFailures = verboseFailures)
+  inline def parse[T](
+      inline input: ParserInputSource,
+      inline parser: P[?] => P[T] = TopLevel(using _),
+      inline verboseFailures: Boolean = false,
+      inline startIndex: Int = 0,
+      inline instrument: fastparse.internal.Instrument = null
+  ) =
+    fastparse.parse(
+      input,
+      parser,
+      verboseFailures,
+      startIndex,
+      instrument
+    )

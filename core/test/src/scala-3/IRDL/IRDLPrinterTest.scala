@@ -19,7 +19,7 @@ class IRDLPrinterTest extends AnyFlatSpec:
   ctx.registerDialect(IRDL)
   var parser = new Parser(ctx)
 
-  val module = parser.parseThis("""
+  val module = parser.parse("""
 "builtin.module"() ({
   "irdl.dialect"() <{sym_name = "cmath"}> ({
     "irdl.type"() <{sym_name = "complex"}> ({

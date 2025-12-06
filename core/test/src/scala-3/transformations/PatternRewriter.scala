@@ -16,7 +16,7 @@ class PatternRewriterTest extends AnyFlatSpec:
     val ctx = MLContext()
     val parser = Parser(ctx, allowUnregisteredDialect = true)
     val input = parser
-      .parseThis("""
+      .parse("""
 %0 = "test.op1"() : () -> i32
 %1 = "test.op2"(%0) : (i32) -> i32
 "test.op3"(%1) : (i32) -> ()
