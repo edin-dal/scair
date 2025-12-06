@@ -209,7 +209,7 @@ case class UnregisteredOperation private (
 trait OperationCompanion[O <: Operation]:
   def name: String
 
-  def parse[$: P](parser: Parser, resNames: Seq[String]): P[O] =
+  def parse[$: P](resNames: Seq[String])(using Parser): P[O] =
     fastparse.Fail(
       s"No custom Parser implemented for Operation '${name}'"
     )

@@ -180,7 +180,7 @@ class ParserTest
         input =
           "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        parser = parser.Block(using _)
+        parser = BlockP(using _, parser)
       ) should matchPattern {
         case Parsed.Success(
               Block(
@@ -224,7 +224,7 @@ class ParserTest
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        parser = parser.RegionP()(using _)
+        parser = RegionP()(using _, parser)
       ) should matchPattern {
         case Parsed.Success(
               Region(
@@ -304,7 +304,7 @@ class ParserTest
   %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
   "test.op"(%8, %7) : (i64, i32) -> ()
 }""",
-        parser = parser.RegionP()(using _),
+        parser = RegionP()(using _, parser),
         verboseFailures = true
       ) should matchPattern {
         case Parsed.Failure(

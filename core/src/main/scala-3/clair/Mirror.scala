@@ -254,10 +254,10 @@ def getOpCustomParse[T <: Operation: Type](
       val callTerm = Select
         .unique(Ref(comp), m.name)
         .appliedToType(TypeRepr.of[Any])
-        .appliedTo(p.asTerm, resNames.asTerm)
+        .appliedTo(resNames.asTerm)
         .etaExpand(comp)
-        .asExprOf[P[Any] => P[T]]
-      Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })
+        .asExprOf[(P[Any], Parser) => P[T]]
+      Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx, $p) })
     case Seq() =>
       None
     case d: Seq[?] =>

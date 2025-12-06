@@ -34,17 +34,16 @@ object AbsfOp:
   def name: String = "math.absf"
 
   def parse[$: P](
-      parser: Parser,
       resNames: Seq[String]
-  ): P[AbsfOp] =
+  )(using p: Parser): P[AbsfOp] =
     P(
       "" ~ ValueUse
         .flatMap(operandName =>
-          (parser.Attribute.orElse(
+          (p.Attribute.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ parser.Type.flatMap(tpe =>
-            parser.currentScope.useValue(operandName, tpe) ~
-              parser.currentScope.defineResult(resNames.head, tpe)
+          ) ~ ":" ~ p.Type.flatMap(tpe =>
+            p.currentScope.useValue(operandName, tpe) ~
+              p.currentScope.defineResult(resNames.head, tpe)
           ))
         )
         .flatMap { case (flags, operandAndResult) =>
@@ -77,20 +76,19 @@ object FPowIOp:
   def name: String = "math.fpowi"
 
   def parse[$: P](
-      parser: Parser,
       resNames: Seq[String]
-  ): P[FPowIOp] =
+  )(using p: Parser): P[FPowIOp] =
     P(
       ValueUse.flatMap(lhsName =>
         ("," ~ ValueUse.flatMap(rhsName =>
-          (parser.Attribute.orElse(
+          (p.Attribute.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ parser.Type.flatMap(lhsType =>
-            parser.currentScope.useValue(lhsName, lhsType) ~
-              parser.currentScope.defineResult(resNames.head, lhsType)
+          ) ~ ":" ~ p.Type.flatMap(lhsType =>
+            p.currentScope.useValue(lhsName, lhsType) ~
+              p.currentScope.defineResult(resNames.head, lhsType)
           )
-            ~ "," ~ parser.Type.flatMap(
-              parser.currentScope.useValue(rhsName, _)
+            ~ "," ~ p.Type.flatMap(
+              p.currentScope.useValue(rhsName, _)
             ))
             .flatMap {
               case (

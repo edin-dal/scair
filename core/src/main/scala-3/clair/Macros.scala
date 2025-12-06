@@ -874,9 +874,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
         }
 
       override def parse[$: P as ctx](
-          p: Parser,
           resNames: Seq[String]
-      ): P[T] =
+      )(using p: Parser): P[T] =
         ${
           (getOpCustomParse[T]('{ p }, '{ resNames })
             .getOrElse(parseMacro[T](opDef, '{ p }, '{ resNames })))

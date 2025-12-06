@@ -7,7 +7,7 @@ import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.ir.*
-import scair.parse.Parser
+import scair.parse.*
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -520,11 +520,10 @@ object ModuleOp:
 
   // ==--- Custom Parsing ---== //
   def parse[$: P](
-      parser: Parser,
       resNames: Seq[String]
-  ): P[ModuleOp] =
+  )(using Parser): P[ModuleOp] =
     P(
-      parser.RegionP()
+      RegionP()
     ).map(ModuleOp.apply)
 
   // ==----------------------== //

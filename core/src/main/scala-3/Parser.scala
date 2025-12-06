@@ -477,6 +477,8 @@ final class Parser(
     currentScope = currentScope.parentScope.getOrElse(currentScope)
     toExit.checkForwardedValues().flatMapX(_ => toExit.checkForwardedBlocks())
 
+  given Parser = this
+
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
   || TOP LEVEL PRODUCTION  ||
   \*≡==---==≡≡≡≡≡≡≡==---==≡*/
@@ -717,7 +719,7 @@ final class Parser(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
       ctx.getOpCompanion(s"${x}.${y}") match
         case Right(companion) =>
-          Pass ~ companion.parse(this, resNames)
+          Pass ~ companion.parse(resNames)
         case Left(_) =>
           Fail(
             s"Operation ${x}.${y} is not defined in any supported Dialect."
@@ -728,92 +730,9 @@ final class Parser(
   def RegionList[$: P] =
     P("(" ~ RegionP().rep(sep = ",") ~ ")")
 
-  /*≡==--==≡≡≡≡==--=≡≡*\
-  ||      BLOCKS      ||
-  \*≡==---==≡≡==---==≡*/
-
-  // [x] - block           ::= block-label operation+
-  // [x] - block-label     ::= block-id block-arg-list? `:`
-
-  def populateBlockOps(
-      block: Block,
-      ops: Seq[Operation]
-  ): Block =
-    block.operations ++= ops
-    ops.foreach(_.container_block = Some(block))
-    block
-
-  def populateBlockArgs[$: P](
-      block: Block,
-      args: Seq[(String, Attribute)]
-  ) =
-    args
-      .foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
-        (l ~ currentScope.defineBlockArgument(r._1, r._2)).map(_ :+ _)
-      )
-      .map(args =>
-        block.arguments ++= args
-        block.arguments.foreach(_.owner = Some(block))
-        block
-      )
-
-  def BlockBody[$: P](block: Block) =
-    Operations(0).mapTry(populateBlockOps(block, _))
-
-  def Block[$: P] =
-    P(BlockLabel.flatMap(BlockBody))
-
-  def BlockLabel[$: P] = P(
-    (BlockId.flatMap(currentScope.defineBlock) ~ (BlockArgList
-      .orElse(Seq()))).flatMap(populateBlockArgs) ~ ":"
-  )
-
-  def SuccessorList[$: P] = P("[" ~ Successor.rep(sep = ",") ~ "]")
-
-  def Successor[$: P] =
-    P(CaretId).map(currentScope.forwardBlock) // possibly shortened version
-
-  /*≡==--==≡≡≡≡≡==--=≡≡*\
-  ||      REGIONS      ||
-  \*≡==---==≡≡≡==---==≡*/
-
-  // [x] - region        ::= `{` entry-block? block* `}`
-  // [x] - entry-block   ::= operation+
-  //                    |
-  //                    |  rewritten as
-  //                   \/
-  // [x] - region        ::= `{` operation* block* `}`
-
-  def defineRegion(
-      parseResult: (Seq[Operation], Seq[Block])
-  ): Region =
-    return parseResult._1.length match
-      case 0 =>
-        val region = Region(blocks = parseResult._2)
-        for block <- region.blocks do block.container_region = Some(region)
-        region
-      case _ =>
-        val startblock =
-          new Block(operations = parseResult._1, arguments_types = ListType())
-        val region = Region(blocks = startblock +: parseResult._2)
-        for block <- region.blocks do block.container_region = Some(region)
-        region
-
-  // EntryBlock might break - take out if it does...
-  def RegionP[$: P](entryArgs: Seq[(String, Attribute)] = Seq()) = P(
-    "{" ~/ enterRegion ~/ (populateBlockArgs(new Block(), entryArgs)
-      .flatMap(BlockBody) ~/ Block.rep)
-      .map((entry: Block, blocks: Seq[Block]) =>
-        if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
-        else entry +: blocks
-      ) ~/ "}" ~/ exitRegion
-  ).map(Region(_))
-
-  // def EntryBlock[$: P] = P(OperationPat.rep(1))
-
-  // // Type aliases
-  // [x] type-alias-def ::= `!` alias-name `=` type
-  // [x] type-alias ::= `!` alias-name
+// // Type aliases
+// [x] type-alias-def ::= `!` alias-name `=` type
+// [x] type-alias ::= `!` alias-name
 
   def TypeAliasDef[$: P] = P(
     "!" ~~ AliasName ~ "=" ~ Type
@@ -849,73 +768,6 @@ final class Parser(
         Pass
   )
 
-  // [x] - value-id-and-type ::= value-id `:` type
-
-  // // Non-empty list of names and types.
-  // [x] - value-id-and-type-list ::= value-id-and-type (`,` value-id-and-type)*
-
-  // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
-
-  def ValueIdAndType[$: P] = P(ValueId ~ ":" ~ Type)
-
-  def ValueIdAndTypeList[$: P] =
-    P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
-
-  def BlockArgList[$: P] =
-    P(
-      "(" ~ ValueIdAndType
-        .rep(sep = ",") ~ ")"
-    )
-
-  // [x] dictionary-properties ::= `<` dictionary-attribute `>`
-  // [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
-
-  /** Parses a properties dictionary, which synctatically simply is an attribute
-    * dictionary wrapped in angle brackets.
-    *
-    * @return
-    *   A properties dictionary parser.
-    */
-  def properties[$: P] = P(
-    "<" ~ DictionaryAttribute ~ ">"
-  )
-
-  /** Parses an attributes dictionary.
-    *
-    * @return
-    *   An attribute dictionary parser.
-    */
-  inline def DictionaryAttribute[$: P] = P(
-    DictionaryAttributeP.map(_.entries)
-  )
-
-  /** Parses an optional properties dictionary from the input.
-    *
-    * @return
-    *   An optional dictionary of properties - empty if no dictionary is
-    *   present.
-    */
-  inline def OptionalProperties[$: P]() =
-    (properties).orElse(DictType.empty)
-
-  /** Parses an optional attributes dictionary from the input.
-    *
-    * @return
-    *   An optional dictionary of attributes - empty if no dictionary is
-    *   present.
-    */
-  inline def OptionalAttributes[$: P] =
-    (DictionaryAttribute).orElse(Map.empty)
-
-  /** Parses an optional attributes dictionary from the input, preceded by the
-    * `attributes` keyword.
-    *
-    * @return
-    *   An optional dictionary of attributes - empty if no keyword is present.
-    */
-  inline def OptionalKeywordAttributes[$: P] =
-    ("attributes" ~/ DictionaryAttribute).orElse(Map.empty)
-
   inline def parse[T](
       inline input: ParserInputSource,
       inline parser: P[?] => P[T] = TopLevel(using _),
@@ -930,3 +782,136 @@ final class Parser(
       startIndex,
       instrument
     )
+
+  /*≡==--==≡≡≡≡==--=≡≡*\
+||      BLOCKS      ||
+\*≡==---==≡≡==---==≡*/
+
+// [x] - block           ::= block-label operation+
+// [x] - block-label     ::= block-id block-arg-list? `:`
+
+  def populateBlockOps(
+      block: Block,
+      ops: Seq[Operation]
+  ): Block =
+    block.operations ++= ops
+    ops.foreach(_.container_block = Some(block))
+    block
+
+  def populateBlockArgs[$: P](
+      block: Block,
+      args: Seq[(String, Attribute)]
+  ) =
+    args
+      .foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
+        (l ~ currentScope.defineBlockArgument(r._1, r._2)).map(_ :+ _)
+      )
+      .map(args =>
+        block.arguments ++= args
+        block.arguments.foreach(_.owner = Some(block))
+        block
+      )
+
+  def BlockBody[$: P](block: Block) =
+    Operations(0).mapTry(populateBlockOps(block, _))
+
+def BlockP[$: P](using p: Parser) =
+  P(BlockLabel.flatMap(p.BlockBody))
+
+def BlockLabel[$: P](using p: Parser) = P(
+  (BlockId.flatMap(p.currentScope.defineBlock) ~ (BlockArgList
+    .orElse(Seq()))).flatMap(p.populateBlockArgs) ~ ":"
+)
+
+def SuccessorList[$: P](using Parser) = P("[" ~ Successor.rep(sep = ",") ~ "]")
+
+def Successor[$: P](using p: Parser) =
+  P(CaretId).map(p.currentScope.forwardBlock) // possibly shortened version
+
+/*≡==--==≡≡≡≡≡==--=≡≡*\
+||      REGIONS      ||
+\*≡==---==≡≡≡==---==≡*/
+
+// [x] - region        ::= `{` entry-block? block* `}`
+// [x] - entry-block   ::= operation+
+//                    |
+//                    |  rewritten as
+//                   \/
+// [x] - region        ::= `{` operation* block* `}`
+
+def RegionP[$: P](
+    entryArgs: Seq[(String, Attribute)] = Seq()
+)(using p: Parser) = P(
+  "{" ~/ p.enterRegion ~/ (p
+    .populateBlockArgs(new Block(), entryArgs)
+    .flatMap(p.BlockBody) ~/ BlockP.rep)
+    .map((entry: Block, blocks: Seq[Block]) =>
+      if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
+      else entry +: blocks
+    ) ~/ "}" ~/ p.exitRegion
+).map(Region(_))
+
+// [x] - value-id-and-type ::= value-id `:` type
+
+// // Non-empty list of names and types.
+// [x] - value-id-and-type-list ::= value-id-and-type (`,` value-id-and-type)*
+
+// [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
+
+def ValueIdAndType[$: P](using p: Parser) = P(ValueId ~ ":" ~ p.Type)
+
+def ValueIdAndTypeList[$: P](using Parser) =
+  P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
+
+def BlockArgList[$: P](using Parser) =
+  P(
+    "(" ~ ValueIdAndType
+      .rep(sep = ",") ~ ")"
+  )
+
+// [x] dictionary-properties ::= `<` dictionary-attribute `>`
+// [x] dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
+
+/** Parses a properties dictionary, which synctatically simply is an attribute
+  * dictionary wrapped in angle brackets.
+  *
+  * @return
+  *   A properties dictionary parser.
+  */
+def properties[$: P](using Parser) = P(
+  "<" ~ DictionaryAttribute ~ ">"
+)
+
+/** Parses an attributes dictionary.
+  *
+  * @return
+  *   An attribute dictionary parser.
+  */
+inline def DictionaryAttribute[$: P](using p: Parser) = P(
+  p.DictionaryAttributeP.map(_.entries)
+)
+
+/** Parses an optional properties dictionary from the input.
+  *
+  * @return
+  *   An optional dictionary of properties - empty if no dictionary is present.
+  */
+inline def OptionalProperties[$: P](using Parser) =
+  (properties).orElse(DictType.empty)
+
+/** Parses an optional attributes dictionary from the input.
+  *
+  * @return
+  *   An optional dictionary of attributes - empty if no dictionary is present.
+  */
+inline def OptionalAttributes[$: P](using Parser) =
+  (DictionaryAttribute).orElse(Map.empty)
+
+/** Parses an optional attributes dictionary from the input, preceded by the
+  * `attributes` keyword.
+  *
+  * @return
+  *   An optional dictionary of attributes - empty if no keyword is present.
+  */
+inline def OptionalKeywordAttributes[$: P](using Parser) =
+  ("attributes" ~/ DictionaryAttribute).orElse(Map.empty)

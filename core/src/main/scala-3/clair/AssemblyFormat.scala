@@ -145,7 +145,7 @@ case class AttrDictDirective() extends Directive:
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ $p.OptionalAttributes(using $ctx) }
+    '{ OptionalAttributes(using $ctx, $p) }
 
 /** Directive for variables, handling operations' individual constructs
   * (operands, results, regions, successors or properties).

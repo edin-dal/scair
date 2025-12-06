@@ -34,19 +34,17 @@ object Func:
     ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
 
   def parse[$: P](
-      parser: Parser,
       resNames: Seq[String]
-  ): P[Func] =
-    ("private".!.? ~ parser.SymbolRefAttrP ~ (parser.BlockArgList.flatMap(
+  )(using p: Parser): P[Func] =
+    ("private".!.? ~ p.SymbolRefAttrP ~ (BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
         Pass(args.map(_._2)) ~ parseResultTypes(
-          parser
-        ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser
-          .RegionP(args)
+          p
+        ) ~ ("attributes" ~ DictionaryAttribute).orElse(Map()) ~ RegionP(args)
     ) | (
-      parser.ParenTypeList ~ parseResultTypes(
-        parser
-      ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(
+      p.ParenTypeList ~ parseResultTypes(
+        p
+      ) ~ ("attributes" ~ DictionaryAttribute).orElse(Map()) ~ Pass(
         Region()
       )
     )))
