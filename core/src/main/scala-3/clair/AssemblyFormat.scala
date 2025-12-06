@@ -3,6 +3,7 @@ package scair.clair.macros
 import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
+import scair.*
 import scair.Parser
 import scair.Printer
 import scair.clair.codegen.*
@@ -208,11 +209,11 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ Parser.ValueUse(using $ctx) }
+            '{ ValueUse(using $ctx) }
           case Variadicity.Variadic =>
-            '{ Parser.ValueUseList(using $ctx) }
+            '{ ValueUseList(using $ctx) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; Parser.ValueUse.? }
+            '{ given P[?] = $ctx; ValueUse.? }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>

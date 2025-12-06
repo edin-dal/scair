@@ -1,8 +1,8 @@
 package scair.dialects.affine
 
 import fastparse.*
-import scair.AttrParser.whitespace
-import scair.Parser.*
+import scair.*
+import scair.whitespace
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

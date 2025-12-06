@@ -95,7 +95,7 @@ given AttributeCompanion[FastMathFlagsAttr]:
 
   override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
 
-    import scair.AttrParser.whitespace
+    import scair.whitespace
     P(
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","

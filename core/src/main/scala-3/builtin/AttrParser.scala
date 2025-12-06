@@ -1,7 +1,7 @@
 package scair
 
 import fastparse.*
-import scair.Parser.*
+import scair.*
 import scair.dialects.affine.AffineMapP
 import scair.dialects.affine.AffineSetP
 import scair.dialects.builtin.*
@@ -26,47 +26,43 @@ import scala.collection.mutable
 // ██╔═══╝░ ██╔══██║ ██╔══██╗ ░╚═══██╗ ██╔══╝░░ ██╔══██╗
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
-//
 // IE THE PARSER FOR BUILTIN DIALECT ATTRIBUTES
-object AttrParser:
 
-  /** Whitespace syntax that supports // line-comments, *without* /* */
-    * comments, as is the case in the MLIR Language Spec.
-    *
-    * It's litteraly fastparse's JavaWhitespace with the /* */ states just
-    * erased :)
-    */
-  given whitespace: Whitespace = new Whitespace:
-    def apply(ctx: P[?]) =
-      val input = ctx.input
-      val startIndex = ctx.index
-      @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] =
-        if !input.isReachable(current) then
-          if state == 0 || state == 1 then ctx.freshSuccessUnit(current)
-          else ctx.freshSuccessUnit(current - 1)
-        else
-          val currentChar = input(current)
-          (state: @switch) match
-            case 0 =>
-              (currentChar: @switch) match
-                case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
-                case '/'                      => rec(current + 1, state = 2)
-                case _                        => ctx.freshSuccessUnit(current)
-            case 1 =>
-              rec(current + 1, state = if currentChar == '\n' then 0 else state)
-            case 2 =>
-              (currentChar: @switch) match
-                case '/' => rec(current + 1, state = 1)
-                case _   => ctx.freshSuccessUnit(current - 1)
-      rec(current = ctx.index, state = 0)
+/** Whitespace syntax that supports // line-comments, *without* /* */ comments,
+  * as is the case in the MLIR Language Spec.
+  *
+  * It's litteraly fastparse's JavaWhitespace with the /* */ states just erased
+  * :)
+  */
+given whitespace: Whitespace = new Whitespace:
+  def apply(ctx: P[?]) =
+    val input = ctx.input
+    val startIndex = ctx.index
+    @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] =
+      if !input.isReachable(current) then
+        if state == 0 || state == 1 then ctx.freshSuccessUnit(current)
+        else ctx.freshSuccessUnit(current - 1)
+      else
+        val currentChar = input(current)
+        (state: @switch) match
+          case 0 =>
+            (currentChar: @switch) match
+              case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
+              case '/'                      => rec(current + 1, state = 2)
+              case _                        => ctx.freshSuccessUnit(current)
+          case 1 =>
+            rec(current + 1, state = if currentChar == '\n' then 0 else state)
+          case 2 =>
+            (currentChar: @switch) match
+              case '/' => rec(current + 1, state = 1)
+              case _   => ctx.freshSuccessUnit(current - 1)
+    rec(current = ctx.index, state = 0)
 
 class AttrParser(
     val ctx: MLContext,
     val attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
     val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
 ):
-
-  import AttrParser.whitespace
 
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
@@ -102,7 +98,7 @@ class AttrParser(
   )
 
   def Attribute[$: P] = P(
-    Type | BuiltinAttr | DialectAttribute | AttributeAlias // AttrParser.BuiltIn | DialectAttribute // | AttributeAlias //
+    Type | BuiltinAttr | DialectAttribute | AttributeAlias // AttrBuiltIn | DialectAttribute // | AttributeAlias //
   )
 
   def AttributeAlias[$: P] = P(
@@ -262,7 +258,7 @@ class AttrParser(
   // string-attribute ::= string-literal (`:` type)?
 
   def StringAttributeP[$: P]: P[StringData] = P(
-    Parser.StringLiteral.map((x: String) => StringData(stringLiteral = x))
+    StringLiteral.map((x: String) => StringData(stringLiteral = x))
   ) // shortened definition omits typing information
 
   /*≡==--==≡≡≡==--=≡≡*\

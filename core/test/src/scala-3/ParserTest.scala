@@ -115,47 +115,47 @@ class ParserTest
     ("name", "pattern", "tests"),
     (
       "Digit",
-      ((x: fastparse.P[?]) => Parser.DecDigits(using x)),
+      ((x: fastparse.P[?]) => DecDigits(using x)),
       digitTests
     ),
     (
       "HexDigit",
-      ((x: fastparse.P[?]) => Parser.HexDigits(using x)),
+      ((x: fastparse.P[?]) => HexDigits(using x)),
       hexTests
     ),
     (
       "IntegerLiteral",
-      ((x: fastparse.P[?]) => Parser.IntegerLiteral(using x)),
+      ((x: fastparse.P[?]) => IntegerLiteral(using x)),
       intLiteralTests
     ),
     (
       "DecimalLiteral",
-      ((x: fastparse.P[?]) => Parser.DecimalLiteral(using x)),
+      ((x: fastparse.P[?]) => DecimalLiteral(using x)),
       decimalLiteralTests
     ),
     (
       "HexadecimalLiteral",
-      ((x: fastparse.P[?]) => Parser.HexadecimalLiteral(using x)),
+      ((x: fastparse.P[?]) => HexadecimalLiteral(using x)),
       hexadecimalLiteralTests
     ),
     (
       "FloatLiteral",
-      ((x: fastparse.P[?]) => Parser.FloatLiteral(using x)),
+      ((x: fastparse.P[?]) => FloatLiteral(using x)),
       floatLiteralTests
     ),
     (
       "StringLiteral",
-      ((x: fastparse.P[?]) => Parser.StringLiteral(using x)),
+      ((x: fastparse.P[?]) => StringLiteral(using x)),
       stringLiteralTests
     ),
     (
       "ValueId",
-      ((x: fastparse.P[?]) => Parser.ValueId(using x)),
+      ((x: fastparse.P[?]) => ValueId(using x)),
       valueIdTests
     ),
     (
       "OpResultList",
-      ((x: fastparse.P[?]) => Parser.OpResultList(using x)),
+      ((x: fastparse.P[?]) => OpResultList(using x)),
       opResultListTests
     )
   )

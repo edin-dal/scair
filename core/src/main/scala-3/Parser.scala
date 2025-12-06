@@ -21,408 +21,403 @@ import scala.collection.mutable
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 
-object Parser:
+/*≡==--==≡≡≡≡==--=≡≡*\
+|| COMMON FUNCTIONS ||
+\*≡==---==≡≡==---==≡*/
 
-  import AttrParser.whitespace
+// Custom function wrapper that allows to Escape out of a pattern
+// to carry out custom computation
+def E[$: P](action: => Unit) =
+  action
+  Pass(())
 
-  /*≡==--==≡≡≡≡==--=≡≡*\
-  || COMMON FUNCTIONS ||
-  \*≡==---==≡≡==---==≡*/
+def giveBack[A](a: A) =
+  println(a)
+  a
 
-  // Custom function wrapper that allows to Escape out of a pattern
-  // to carry out custom computation
-  def E[$: P](action: => Unit) =
-    action
-    Pass(())
+extension [T](inline p: P[T])
 
-  def giveBack[A](a: A) =
-    println(a)
-    a
+  /** Make the parser optional, parsing defaults if otherwise failing.
+    *
+    * @todo:
+    *   Figure out dark implicit magic to figure out magically that the default
+    *   default is "T()".
+    *
+    * @param default
+    *   The default value to use if the parser fails.
+    * @return
+    *   An optional parser, defaulting to default.
+    */
+  inline def orElse[$: P](inline default: T): P[T] = P(
+    p.?.map(_.getOrElse(default))
+  )
 
-  extension [T](inline p: P[T])
-
-    /** Make the parser optional, parsing defaults if otherwise failing.
-      *
-      * @todo:
-      *   Figure out dark implicit magic to figure out magically that the
-      *   default default is "T()".
-      *
-      * @param default
-      *   The default value to use if the parser fails.
-      * @return
-      *   An optional parser, defaulting to default.
-      */
-    inline def orElse[$: P](inline default: T): P[T] = P(
-      p.?.map(_.getOrElse(default))
-    )
-
-    /** Like fastparse's flatMapX but capturing exceptions as standard parse
-      * errors.
-      *
-      * @note
-      *   flatMapX because it often yields more natural error positions.
-      *
-      * @param f
-      *   The function to apply to the parsed value.
-      * @return
-      *   A parser that applies f to the parsed value, catching exceptions and
-      *   turning them into parse errors.
-      */
-    inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
-      p.flatMapX(parsed =>
-        try f(parsed)
-        catch
-          case e: Exception =>
-            Console.err.print(
-              "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
-            )
-            Fail(e.getMessage())
-      )
-    )
-
-    /** Like fastparse's mapX but capturing exceptions as standard parse errors.
-      *
-      * @note
-      *   flatMapX because it often yields more nat ural error positions.
-      *
-      * @param f
-      *   The function to apply to the parsed value.
-      * @return
-      *   A parser that applies f to the parsed value, catching exceptions and
-      *   turning them into parse errors.
-      */
-    inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
-      p.flatMapX(parsed =>
-        try Pass(f(parsed))
-        catch
-          case e: Exception =>
-            Console.err.print(
-              "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
-            )
-            Fail(e.getMessage())
-      )
-    )
-
-  /*≡==--==≡≡≡==--=≡≡*\
-  ||      SCOPE      ||
-  \*≡==---==≡==---==≡*/
-
-  class Scope(
-      var parentScope: Option[Scope] = None,
-      var valueMap: mutable.Map[String, Value[Attribute]] =
-        mutable.Map.empty[String, Value[Attribute]],
-      var forwardValues: mutable.Set[String] = mutable.Set.empty[String],
-      var blockMap: mutable.Map[String, Block] =
-        mutable.Map.empty[String, Block],
-      var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
-  ):
-
-    def useValue[$: P](name: String, typ: Attribute): P[Value[Attribute]] =
-      Pass(
-        valueMap.getOrElseUpdate(
-          name, {
-            forwardValues += name
-            Value[Attribute](typ)
-          }
-        )
-      )
-
-    def checkForwardedValues[$: P]() =
-      forwardValues.headOption match
-        case Some(valueName) =>
-          Fail(s"Value %${valueName} not defined within Scope")
-        case None => Pass
-
-    private def defineValue[$: P](
-        name: String,
-        typ: Attribute
-    ): P[Value[Attribute]] =
-      if valueMap.contains(name) then
-        if !forwardValues.remove(name) then
-          Fail(
-            s"Value cannot be defined twice within the same scope - %${name}"
+  /** Like fastparse's flatMapX but capturing exceptions as standard parse
+    * errors.
+    *
+    * @note
+    *   flatMapX because it often yields more natural error positions.
+    *
+    * @param f
+    *   The function to apply to the parsed value.
+    * @return
+    *   A parser that applies f to the parsed value, catching exceptions and
+    *   turning them into parse errors.
+    */
+  inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
+    p.flatMapX(parsed =>
+      try f(parsed)
+      catch
+        case e: Exception =>
+          Console.err.print(
+            "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
           )
-        Pass(valueMap(name))
-      else
-        val v = Value[Attribute](typ)
-        valueMap(name) = v
-        Pass(v)
+          Fail(e.getMessage())
+    )
+  )
 
-    inline def defineResult[$: P](
-        name: String,
-        typ: Attribute
-    ): P[Result[Attribute]] =
-      defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
-
-    inline def defineBlockArgument[$: P](
-        name: String,
-        typ: Attribute
-    ): P[BlockArgument[Attribute]] =
-      defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
-
-    def checkForwardedBlocks[$: P]() =
-      forwardBlocks.headOption match
-        case Some(blockName) =>
-          Fail(s"Successor ^$blockName not defined within Scope")
-        case None => Pass
-
-    def defineBlock[$: P](
-        blockName: String
-    ): P[Block] =
-      if blockMap.contains(blockName) then
-        if !forwardBlocks.remove(blockName) then
-          Fail(
-            f"Block cannot be defined twice within the same scope - ^${blockName}"
+  /** Like fastparse's mapX but capturing exceptions as standard parse errors.
+    *
+    * @note
+    *   flatMapX because it often yields more nat ural error positions.
+    *
+    * @param f
+    *   The function to apply to the parsed value.
+    * @return
+    *   A parser that applies f to the parsed value, catching exceptions and
+    *   turning them into parse errors.
+    */
+  inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
+    p.flatMapX(parsed =>
+      try Pass(f(parsed))
+      catch
+        case e: Exception =>
+          Console.err.print(
+            "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
           )
-        else Pass(blockMap(blockName))
-      else
-        val newBlock = new Block()
-        blockMap(blockName) = newBlock
-        Pass(newBlock)
+          Fail(e.getMessage())
+    )
+  )
 
-    def forwardBlock(
-        blockName: String
-    ): Block =
-      blockMap.getOrElseUpdate(
-        blockName, {
-          forwardBlocks += blockName
-          new Block()
+/*≡==--==≡≡≡==--=≡≡*\
+||      SCOPE      ||
+\*≡==---==≡==---==≡*/
+
+class Scope(
+    var parentScope: Option[Scope] = None,
+    var valueMap: mutable.Map[String, Value[Attribute]] =
+      mutable.Map.empty[String, Value[Attribute]],
+    var forwardValues: mutable.Set[String] = mutable.Set.empty[String],
+    var blockMap: mutable.Map[String, Block] = mutable.Map.empty[String, Block],
+    var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
+):
+
+  def useValue[$: P](name: String, typ: Attribute): P[Value[Attribute]] =
+    Pass(
+      valueMap.getOrElseUpdate(
+        name, {
+          forwardValues += name
+          Value[Attribute](typ)
         }
       )
-
-    // child starts off from the parents context
-    def createChild(): Scope =
-      return new Scope(
-        valueMap = valueMap.clone,
-        parentScope = Some(this)
-      )
-
-  /*≡==--==≡≡≡==--=≡≡*\
-  ||  COMMON SYNTAX  ||
-  \*≡==---==≡==---==≡*/
-
-  // [x] digit     ::= [0-9]
-  // [x] hex_digit ::= [0-9a-fA-F]
-  // [x] letter    ::= [a-zA-Z]
-  // [x] id-punct  ::= [$._-]
-
-  // [x] integer-literal ::= decimal-literal | hexadecimal-literal
-  // [x] decimal-literal ::= digit+
-  // [x] hexadecimal-literal ::= `0x` hex_digit+
-  // [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
-  // [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
-
-  inline val DecDigit = "0-9"
-  inline val HexDigit = "0-9a-fA-F"
-
-  inline def DecDigits[$: P] = CharsWhileIn(DecDigit)
-
-  inline def HexDigits[$: P] = CharsWhileIn(HexDigit)
-
-  inline val Letter = "a-zA-Z"
-  inline val IdPunct = "$._\\-"
-
-  def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
-
-  def DecimalLiteral[$: P] =
-    P(("-" | "+").?.! ~ DecDigits.!).map((sign: String, literal: String) =>
-      BigInt(sign + literal)
     )
 
-  def HexadecimalLiteral[$: P] =
-    P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
+  def checkForwardedValues[$: P]() =
+    forwardValues.headOption match
+      case Some(valueName) =>
+        Fail(s"Value %${valueName} not defined within Scope")
+      case None => Pass
 
-  private def parseFloatNum(float: (String, String)): Double =
-    val number = parseDouble(float._1)
-    val power = parseDouble(float._2)
-    return number * pow(10, power)
+  private def defineValue[$: P](
+      name: String,
+      typ: Attribute
+  ): P[Value[Attribute]] =
+    if valueMap.contains(name) then
+      if !forwardValues.remove(name) then
+        Fail(
+          s"Value cannot be defined twice within the same scope - %${name}"
+        )
+      Pass(valueMap(name))
+    else
+      val v = Value[Attribute](typ)
+      valueMap(name) = v
+      Pass(v)
 
-  /** Parses a floating-point number from its string representation. NOTE: This
-    * is only a float approximation, and in its current form should not be
-    * trusted for precision sensitive applications.
-    *
-    * @return
-    *   float: (String, String)
-    */
-  def FloatLiteral[$: P] = P(
-    (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).!
-      ~~ (CharIn("eE")
-        ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
-  ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
+  inline def defineResult[$: P](
+      name: String,
+      typ: Attribute
+  ): P[Result[Attribute]] =
+    defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
 
-  inline def nonExcludedCharacter(c: Char): Boolean =
-    c: @switch match
-      case '"' | '\\' => false
-      case _          => true
+  inline def defineBlockArgument[$: P](
+      name: String,
+      typ: Attribute
+  ): P[BlockArgument[Attribute]] =
+    defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
 
-  inline def EscapedP[$: P] = P(
-    ("\\" ~~ (
-      "n" ~~ Pass('\n')
-        | "t" ~~ Pass('\t')
-        | "\\" ~~ Pass('\\')
-        | "\"" ~~ Pass('\"')
-        | CharIn("a-fA-F0-9")
-          .repX(exactly = 2)
-          .!
-          .map(Integer.parseInt(_, 16).toChar)
-    )).repX.map(chars => String(chars.toArray))
-  )
+  def checkForwardedBlocks[$: P]() =
+    forwardBlocks.headOption match
+      case Some(blockName) =>
+        Fail(s"Successor ^$blockName not defined within Scope")
+      case None => Pass
 
-  def StringLiteral[$: P] = P(
-    "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP)
-      .map(_ + _)
-      .repX
-      .map(_.mkString) ~~ "\""
-  )
+  def defineBlock[$: P](
+      blockName: String
+  ): P[Block] =
+    if blockMap.contains(blockName) then
+      if !forwardBlocks.remove(blockName) then
+        Fail(
+          f"Block cannot be defined twice within the same scope - ^${blockName}"
+        )
+      else Pass(blockMap(blockName))
+    else
+      val newBlock = new Block()
+      blockMap(blockName) = newBlock
+      Pass(newBlock)
 
-  /*≡==--==≡≡≡==--=≡≡*\
-  ||   IDENTIFIERS   ||
-  \*≡==---==≡==---==≡*/
-
-  // [x] bare-id ::= (letter|[_]) (letter|digit|[_$.])*
-  // [ ] bare-id-list ::= bare-id (`,` bare-id)*
-  // [x] value-id ::= `%` suffix-id
-  // [x] alias-name :: = bare-id
-  // [x] suffix-id ::= (digit+ | ((letter|id-punct) (letter|id-punct|digit)*))
-
-  // [ ] symbol-ref-id ::= `@` (suffix-id | string-literal) // - redundant - (`::` symbol-ref-id)?
-  // [ ] value-id-list ::= value-id (`,` value-id)*
-
-  // // Uses of value, e.g. in an operand list to an operation.
-  // [x] value-use ::= value-id (`#` decimal-literal)?
-  // [x] value-use-list ::= value-use (`,` value-use)*
-
-  def BareId[$: P] = P(
-    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
-  ).!
-
-  def ValueId[$: P] = P("%" ~~ SuffixId)
-
-  // Alias can't have dots in their names for ambiguity with dialect names.
-  def AliasName[$: P] = P(
-    CharIn(Letter + "_") ~~ (CharsWhileIn(
-      Letter + DecDigit + "_$",
-      min = 0
-    )) ~~ !"."
-  ).!
-
-  def SuffixId[$: P] = P(
-    DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
-      Letter + IdPunct + DecDigit,
-      min = 0
+  def forwardBlock(
+      blockName: String
+  ): Block =
+    blockMap.getOrElseUpdate(
+      blockName, {
+        forwardBlocks += blockName
+        new Block()
+      }
     )
-  ).!
 
-  def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
+  // child starts off from the parents context
+  def createChild(): Scope =
+    return new Scope(
+      valueMap = valueMap.clone,
+      parentScope = Some(this)
+    )
 
-  def ValueUse[$: P] =
-    P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
+/*≡==--==≡≡≡==--=≡≡*\
+||  COMMON SYNTAX  ||
+\*≡==---==≡==---==≡*/
 
-  def ValueUseList[$: P] =
-    P(ValueUse.rep(sep = ","))
+// [x] digit     ::= [0-9]
+// [x] hex_digit ::= [0-9a-fA-F]
+// [x] letter    ::= [a-zA-Z]
+// [x] id-punct  ::= [$._-]
 
-  /*≡==--==≡≡≡==--=≡≡*\
-  ||      TYPES      ||
-  \*≡==---==≡==---==≡*/
+// [x] integer-literal ::= decimal-literal | hexadecimal-literal
+// [x] decimal-literal ::= digit+
+// [x] hexadecimal-literal ::= `0x` hex_digit+
+// [x] float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
+// [x] string-literal  ::= `"` [^"\n\f\v\r]* `"`
 
-  // [x] type ::= type-alias | dialect-type | builtin-type
+inline val DecDigit = "0-9"
+inline val HexDigit = "0-9a-fA-F"
 
-  // [x] type-list-no-parens ::=  type (`,` type)*
-  // [x] type-list-parens ::= `(` `)` | `(` type-list-no-parens `)`
+inline def DecDigits[$: P] = CharsWhileIn(DecDigit)
 
-  // // This is a common way to refer to a value with a specified type.
-  // [ ] ssa-use-and-type ::= ssa-use `:` type
-  // [ ] ssa-use ::= value-use
+inline def HexDigits[$: P] = CharsWhileIn(HexDigit)
 
-  // // Non-empty list of names and types.
-  // [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
+inline val Letter = "a-zA-Z"
+inline val IdPunct = "$._\\-"
 
-  // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
-  /*≡==--==≡≡≡≡==--=≡≡*\
-  ||    OPERATIONS    ||
-  \*≡==---==≡≡==---==≡*/
-
-  // [x] op-result-list        ::= op-result (`,` op-result)* `=`
-  // [x] op-result             ::= value-id (`:` integer-literal)?
-  // [x] successor-list        ::= `[` successor (`,` successor)* `]`
-  // [x] successor             ::= caret-id (`:` block-arg-list)?
-  // [x] trailing-location     ::= `loc` `(` location `)`
-
-  def OpResultList[$: P] = P(
-    OpResult.rep(1, sep = ",") ~ "="
-  ).map((results: Seq[Seq[String]]) => results.flatten)
-
-  def sequenceValues(value: (String, Option[BigInt])): Seq[String] =
-    value match
-      case (name, Some(totalNo)) =>
-        (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
-      case (name, None) => Seq(name)
-
-  def OpResult[$: P] =
-    P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
-
-  def TrailingLocation[$: P] = P(
-    "loc" ~ "(" ~ "unknown" ~ ")"
-  ) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
-
-  /*≡==--==≡≡≡≡==--=≡≡*\
-  ||      BLOCKS      ||
-  \*≡==---==≡≡==---==≡*/
-
-  // [x] - block-id        ::= caret-id
-  // [x] - caret-id        ::= `^` suffix-id
-
-  def BlockId[$: P] = P(CaretId)
-
-  def CaretId[$: P] = P("^" ~~/ SuffixId)
-
-  /*≡==--==≡≡≡==--=≡≡*\
-  ||  DIALECT TYPES  ||
-  \*≡==---==≡==---==≡*/
-
-  // [x] - dialect-namespace      ::= bare-id
-
-  // [x] - dialect-type           ::= `!` (opaque-dialect-type | pretty-dialect-type)
-  // [x] - opaque-dialect-type    ::= dialect-namespace dialect-type-body
-  // [x] - pretty-dialect-type    ::= dialect-namespace `.` pretty-dialect-type-lead-ident dialect-type-body?
-  // [x] - pretty-dialect-type-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
-
-  // [x] - dialect-type-body      ::= `<` dialect-type-contents+ `>`
-  // [x] - dialect-type-contents  ::= dialect-type-body
-  //                             | `(` dialect-type-contents+ `)`
-  //                             | `[` dialect-type-contents+ `]`
-  //                             | `{` dialect-type-contents+ `}`
-  //                             | [^\[<({\]>)}\0]+
-
-  val excludedCharactersDTC: Set[Char] =
-    Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
-
-  def notExcludedDTC[$: P] = P(
-    CharPred(char => !excludedCharactersDTC.contains(char))
+def DecimalLiteral[$: P] =
+  P(("-" | "+").?.! ~ DecDigits.!).map((sign: String, literal: String) =>
+    BigInt(sign + literal)
   )
 
-  def DialectBareId[$: P] = P(
-    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$", min = 0)
-  ).!
+def HexadecimalLiteral[$: P] =
+  P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
 
-  def DialectNamespace[$: P] = P(DialectBareId)
+private def parseFloatNum(float: (String, String)): Double =
+  val number = parseDouble(float._1)
+  val power = parseDouble(float._2)
+  return number * pow(10, power)
 
-  def PrettyDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
+/** Parses a floating-point number from its string representation. NOTE: This is
+  * only a float approximation, and in its current form should not be trusted
+  * for precision sensitive applications.
+  *
+  * @return
+  *   float: (String, String)
+  */
+def FloatLiteral[$: P] = P(
+  (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).!
+    ~~ (CharIn("eE")
+      ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
+).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
+
+inline def nonExcludedCharacter(c: Char): Boolean =
+  c: @switch match
+    case '"' | '\\' => false
+    case _          => true
+
+inline def EscapedP[$: P] = P(
+  ("\\" ~~ (
+    "n" ~~ Pass('\n')
+      | "t" ~~ Pass('\t')
+      | "\\" ~~ Pass('\\')
+      | "\"" ~~ Pass('\"')
+      | CharIn("a-fA-F0-9")
+        .repX(exactly = 2)
+        .!
+        .map(Integer.parseInt(_, 16).toChar)
+  )).repX.map(chars => String(chars.toArray))
+)
+
+def StringLiteral[$: P] = P(
+  "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP)
+    .map(_ + _)
+    .repX
+    .map(_.mkString) ~~ "\""
+)
+
+/*≡==--==≡≡≡==--=≡≡*\
+||   IDENTIFIERS   ||
+\*≡==---==≡==---==≡*/
+
+// [x] bare-id ::= (letter|[_]) (letter|digit|[_$.])*
+// [ ] bare-id-list ::= bare-id (`,` bare-id)*
+// [x] value-id ::= `%` suffix-id
+// [x] alias-name :: = bare-id
+// [x] suffix-id ::= (digit+ | ((letter|id-punct) (letter|id-punct|digit)*))
+
+// [ ] symbol-ref-id ::= `@` (suffix-id | string-literal) // - redundant - (`::` symbol-ref-id)?
+// [ ] value-id-list ::= value-id (`,` value-id)*
+
+// // Uses of value, e.g. in an operand list to an operation.
+// [x] value-use ::= value-id (`#` decimal-literal)?
+// [x] value-use-list ::= value-use (`,` value-use)*
+
+def BareId[$: P] = P(
+  CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
+).!
+
+def ValueId[$: P] = P("%" ~~ SuffixId)
+
+// Alias can't have dots in their names for ambiguity with dialect names.
+def AliasName[$: P] = P(
+  CharIn(Letter + "_") ~~ (CharsWhileIn(
+    Letter + DecDigit + "_$",
+    min = 0
+  )) ~~ !"."
+).!
+
+def SuffixId[$: P] = P(
+  DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+    Letter + IdPunct + DecDigit,
+    min = 0
   )
+).!
 
-  def OpaqueDialectReferenceName[$: P] = P(
-    (DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName)
-  )
+def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
-  def DialectReferenceName[$: P] = P(
-    PrettyDialectReferenceName | OpaqueDialectReferenceName
-  )
+def ValueUse[$: P] =
+  P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
 
-  def PrettyDialectTypeOrAttReferenceName[$: P] = P(
-    (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
-  )
+def ValueUseList[$: P] =
+  P(ValueUse.rep(sep = ","))
+
+/*≡==--==≡≡≡==--=≡≡*\
+||      TYPES      ||
+\*≡==---==≡==---==≡*/
+
+// [x] type ::= type-alias | dialect-type | builtin-type
+
+// [x] type-list-no-parens ::=  type (`,` type)*
+// [x] type-list-parens ::= `(` `)` | `(` type-list-no-parens `)`
+
+// // This is a common way to refer to a value with a specified type.
+// [ ] ssa-use-and-type ::= ssa-use `:` type
+// [ ] ssa-use ::= value-use
+
+// // Non-empty list of names and types.
+// [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
+
+// [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    OPERATIONS    ||
+\*≡==---==≡≡==---==≡*/
+
+// [x] op-result-list        ::= op-result (`,` op-result)* `=`
+// [x] op-result             ::= value-id (`:` integer-literal)?
+// [x] successor-list        ::= `[` successor (`,` successor)* `]`
+// [x] successor             ::= caret-id (`:` block-arg-list)?
+// [x] trailing-location     ::= `loc` `(` location `)`
+
+def OpResultList[$: P] = P(
+  OpResult.rep(1, sep = ",") ~ "="
+).map((results: Seq[Seq[String]]) => results.flatten)
+
+def sequenceValues(value: (String, Option[BigInt])): Seq[String] =
+  value match
+    case (name, Some(totalNo)) =>
+      (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
+    case (name, None) => Seq(name)
+
+def OpResult[$: P] =
+  P(ValueId ~ (":" ~ DecimalLiteral).?).map(sequenceValues)
+
+def TrailingLocation[$: P] = P(
+  "loc" ~ "(" ~ "unknown" ~ ")"
+) // definition taken from xdsl attribute_parser.py v-0.19.0 line 1106
+
+/*≡==--==≡≡≡≡==--=≡≡*\
+||      BLOCKS      ||
+\*≡==---==≡≡==---==≡*/
+
+// [x] - block-id        ::= caret-id
+// [x] - caret-id        ::= `^` suffix-id
+
+def BlockId[$: P] = P(CaretId)
+
+def CaretId[$: P] = P("^" ~~/ SuffixId)
+
+/*≡==--==≡≡≡==--=≡≡*\
+||  DIALECT TYPES  ||
+\*≡==---==≡==---==≡*/
+
+// [x] - dialect-namespace      ::= bare-id
+
+// [x] - dialect-type           ::= `!` (opaque-dialect-type | pretty-dialect-type)
+// [x] - opaque-dialect-type    ::= dialect-namespace dialect-type-body
+// [x] - pretty-dialect-type    ::= dialect-namespace `.` pretty-dialect-type-lead-ident dialect-type-body?
+// [x] - pretty-dialect-type-lead-ident ::= `[A-Za-z][A-Za-z0-9._]*`
+
+// [x] - dialect-type-body      ::= `<` dialect-type-contents+ `>`
+// [x] - dialect-type-contents  ::= dialect-type-body
+//                             | `(` dialect-type-contents+ `)`
+//                             | `[` dialect-type-contents+ `]`
+//                             | `{` dialect-type-contents+ `}`
+//                             | [^\[<({\]>)}\0]+
+
+val excludedCharactersDTC: Set[Char] =
+  Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
+
+def notExcludedDTC[$: P] = P(
+  CharPred(char => !excludedCharactersDTC.contains(char))
+)
+
+def DialectBareId[$: P] = P(
+  CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$", min = 0)
+).!
+
+def DialectNamespace[$: P] = P(DialectBareId)
+
+def PrettyDialectReferenceName[$: P] = P(
+  (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
+)
+
+def OpaqueDialectReferenceName[$: P] = P(
+  (DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName)
+)
+
+def DialectReferenceName[$: P] = P(
+  PrettyDialectReferenceName | OpaqueDialectReferenceName
+)
+
+def PrettyDialectTypeOrAttReferenceName[$: P] = P(
+  (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
+)
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
 ||     PARSER CLASS     ||
@@ -436,9 +431,6 @@ final class Parser(
     attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
     typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
 ) extends AttrParser(context, attributeAliases, typeAliases):
-
-  import Parser.*
-  import AttrParser.whitespace
 
   def error(failure: Failure, lineOffset: Int = 0) =
     // .trace() below reparses from the start with more bookkeeping to provide helpful

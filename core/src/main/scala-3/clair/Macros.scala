@@ -1,10 +1,9 @@
 package scair.clair.macros
 
 import fastparse.*
+import scair.*
 import scair.AttrParser
-import scair.AttrParser.whitespace
 import scair.Parser
-import scair.Parser.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
@@ -13,6 +12,7 @@ import scair.enums.macros.*
 import scair.ir.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
+import scair.whitespace
 
 import scala.annotation.switch
 import scala.quoted.*
@@ -825,9 +825,8 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
       override def parse[$: P as ctx](p: AttrParser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
           '{
-            P(
-              ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
-            ).orElse(Seq())
+            ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
+              .orElse(Seq())
               .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
           }
         )

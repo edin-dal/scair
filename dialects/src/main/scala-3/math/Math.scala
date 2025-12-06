@@ -1,9 +1,8 @@
 package scair.dialects.math
 
 import fastparse.*
-import scair.AttrParser.whitespace
+import scair.*
 import scair.Parser
-import scair.Parser.orElse
 import scair.clair.macros.*
 import scair.clair.macros.DerivedOperation
 import scair.clair.macros.DerivedOperationCompanion
@@ -12,6 +11,7 @@ import scair.dialects.arith.FastMathFlags
 import scair.dialects.arith.FastMathFlagsAttr
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.whitespace
 
 //
 // ███╗░░░███╗ ░█████╗░ ████████╗ ██╗░░██╗
@@ -38,7 +38,7 @@ object AbsfOp:
       resNames: Seq[String]
   ): P[AbsfOp] =
     P(
-      "" ~ Parser.ValueUse
+      "" ~ ValueUse
         .flatMap(operandName =>
           (parser.Attribute.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
@@ -81,8 +81,8 @@ object FPowIOp:
       resNames: Seq[String]
   ): P[FPowIOp] =
     P(
-      Parser.ValueUse.flatMap(lhsName =>
-        ("," ~ Parser.ValueUse.flatMap(rhsName =>
+      ValueUse.flatMap(lhsName =>
+        ("," ~ ValueUse.flatMap(rhsName =>
           (parser.Attribute.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
           ) ~ ":" ~ parser.Type.flatMap(lhsType =>

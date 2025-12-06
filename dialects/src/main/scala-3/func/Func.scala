@@ -1,14 +1,14 @@
 package scair.dialects.func
 
 import fastparse.*
-import scair.AttrParser.whitespace
+import scair.*
 import scair.Parser
-import scair.Parser.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.whitespace
 
 //
 // ███████╗ ██╗░░░██╗ ███╗░░██╗ ░█████╗░
