@@ -3,6 +3,7 @@ package scair.tools.opt
 import scair.Printer
 import scair.exceptions.VerifyException
 import scair.ir.*
+import scair.parse.*
 import scair.tools.ScairToolBase
 import scopt.OParser
 
@@ -52,7 +53,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     var indexOffset = 0
     input_chunks.map(input =>
       // Parse content
-      val parser = new scair.Parser(
+      val parser = new Parser(
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsing_diagnostics,

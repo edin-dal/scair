@@ -4,10 +4,10 @@ import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
 import scair.*
-import scair.Parser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.ir.*
+import scair.parse.*
 
 import scala.quoted.*
 
@@ -690,7 +690,7 @@ def parseAssemblyFormat(
     opDef: OperationDef
 ): AssemblyFormatDirective =
   given OperationDef = opDef
-  parse(format, (x: fastparse.P[?]) => assemblyFormat(using x)) match
+  fastparse.parse(format, assemblyFormat(using _)) match
     case Parsed.Success(value, index) =>
       value
     case failure: Parsed.Failure =>

@@ -1,8 +1,9 @@
-package scair.dialects.affine
+package scair.parse
 
 import fastparse.*
 import scair.*
-import scair.whitespace
+import scair.dialects.affine.*
+import scair.parse.whitespace
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝
@@ -260,16 +261,3 @@ def EqualP[$: P](
   P(AffineExprP(dims, symbs) ~ "==" ~ AffineExprP(dims, symbs)).map(
     AffineConstraintExpr(equal, _, _)
   )
-
-object TestAffine:
-
-  def main(args: Array[String]): Unit =
-    val parsed =
-      parse("d0 + d1", AffineExprP(Seq("d0", "d1"), Seq())(using _))
-    println(parsed)
-    val parsed1 =
-      parse("(d0, d1)[s0] -> (d0 + d1 + s0, d1 + s0)", AffineMapP(using _))
-    println(parsed1)
-    val parsed2 =
-      parse("(d0, d1)[s0] : (d0 + d1 + s0 >= d1 + s0)", AffineSetP(using _))
-    println(parsed2)

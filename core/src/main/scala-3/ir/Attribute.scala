@@ -1,9 +1,9 @@
 package scair.ir
 
 import fastparse.*
-import scair.AttrParser
 import scair.Printer
 import scair.dialects.builtin.IntegerAttr
+import scair.parse.AttrParser
 
 import java.io.PrintWriter
 import java.io.StringWriter

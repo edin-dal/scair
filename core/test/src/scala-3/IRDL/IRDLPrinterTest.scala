@@ -3,6 +3,7 @@ package scair
 import scair.dialects.irdl.*
 import scair.dialects.builtin.*
 import scair.core.irdl_printer.IRDLPrinter.printIRDL
+import scair.parse.*
 
 import fastparse.*
 import org.scalatest.*

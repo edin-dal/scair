@@ -1,12 +1,12 @@
 package scair.clair.mirrored
 
 import fastparse.*
-import scair.AttrParser
-import scair.Parser
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.core.constraints.*
 import scair.ir.*
+import scair.parse.AttrParser
+import scair.parse.Parser
 
 import scala.deriving.*
 import scala.quoted.*

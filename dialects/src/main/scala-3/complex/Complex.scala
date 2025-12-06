@@ -1,7 +1,6 @@
 package scair.dialects.complex
 
 import fastparse.*
-import scair.AttrParser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
@@ -9,6 +8,7 @@ import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.complex.canonicalization.given
 import scair.ir.*
+import scair.parse.AttrParser
 
 //
 // ░█████╗░ ░█████╗░ ███╗░░░███╗ ██████╗░ ██╗░░░░░ ███████╗ ██╗░░██╗
@@ -106,7 +106,7 @@ case class Sub(
 object ComplexAttr:
 
   def parse[$: P](parser: AttrParser): P[ComplexAttr] =
-    given Whitespace = scair.whitespace
+    given Whitespace = scair.parse.whitespace
     ("<:" ~ parser.FloatTypeP ~ parser.FloatDataP ~ "," ~ parser.FloatDataP ~ ">" ~ (":" ~ parser.ComplexTypeP).?)
       .map(
         (

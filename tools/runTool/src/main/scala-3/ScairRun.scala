@@ -4,6 +4,7 @@ import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
 import scair.interpreter.RuntimeCtx
 import scair.ir.*
+import scair.parse.*
 import scair.tools.ScairToolBase
 import scopt.OParser
 
@@ -60,7 +61,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // ONE CHUNK ONLY
 
     val input_module =
-      val parser = new scair.Parser(ctx, inputPath = args.input)
+      val parser = new Parser(ctx, inputPath = args.input)
       parser.parse(
         input = input.mkString,
         parser = parser.TopLevel(using _)

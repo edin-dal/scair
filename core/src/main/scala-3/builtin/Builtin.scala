@@ -1,13 +1,13 @@
 package scair.dialects.builtin
 
 import fastparse.*
-import scair.Parser
 import scair.Printer
 import scair.clair.macros.*
 import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.ir.*
+import scair.parse.Parser
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║

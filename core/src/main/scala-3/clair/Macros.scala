@@ -2,17 +2,16 @@ package scair.clair.macros
 
 import fastparse.*
 import scair.*
-import scair.AttrParser
-import scair.Parser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.enums.macros.*
 import scair.ir.*
+import scair.parse.*
+import scair.parse.whitespace
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
-import scair.whitespace
 
 import scala.annotation.switch
 import scala.quoted.*

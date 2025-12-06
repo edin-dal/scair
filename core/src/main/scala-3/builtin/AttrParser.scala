@@ -1,9 +1,7 @@
-package scair
+package scair.parse
 
 import fastparse.*
 import scair.*
-import scair.dialects.affine.AffineMapP
-import scair.dialects.affine.AffineSetP
 import scair.dialects.builtin.*
 import scair.dialects.builtin.VectorType
 import scair.ir.*

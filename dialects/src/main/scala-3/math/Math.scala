@@ -2,7 +2,6 @@ package scair.dialects.math
 
 import fastparse.*
 import scair.*
-import scair.Parser
 import scair.clair.macros.*
 import scair.clair.macros.DerivedOperation
 import scair.clair.macros.DerivedOperationCompanion
@@ -11,7 +10,8 @@ import scair.dialects.arith.FastMathFlags
 import scair.dialects.arith.FastMathFlagsAttr
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.whitespace
+import scair.parse.*
+import scair.parse.whitespace
 
 //
 // ███╗░░░███╗ ░█████╗░ ████████╗ ██╗░░██╗

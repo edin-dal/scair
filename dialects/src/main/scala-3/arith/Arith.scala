@@ -1,7 +1,6 @@
 package scair.dialects.arith
 
 import fastparse.*
-import scair.AttrParser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
@@ -9,6 +8,7 @@ import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.enums.enumattr.*
 import scair.ir.*
+import scair.parse.AttrParser
 
 import scala.collection.immutable.*
 
@@ -95,7 +95,7 @@ given AttributeCompanion[FastMathFlagsAttr]:
 
   override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
 
-    import scair.whitespace
+    import scair.parse.whitespace
     P(
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","

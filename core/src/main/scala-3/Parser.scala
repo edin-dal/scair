@@ -1,9 +1,10 @@
-package scair
+package scair.parse
 
 import fastparse.*
 import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
+import scair.MLContext
 import scair.clair.macros.DerivedOperationCompanion
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*

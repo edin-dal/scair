@@ -7,6 +7,7 @@ import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.parse.*
 
 class ParserTest
     extends AnyFlatSpec

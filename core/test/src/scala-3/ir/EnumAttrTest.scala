@@ -7,6 +7,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.clair.macros.*
 import scair.enums.enumattr.I32Enum
+import scair.parse.*
 
 enum Color(name: String) extends I32Enum(name):
   case Red extends Color("red")

@@ -1,9 +1,9 @@
 package scair.clair.macros
 
 import fastparse.ParsingRun
-import scair.AttrParser
 import scair.Printer
 import scair.ir.*
+import scair.parse.AttrParser
 
 import scala.quoted.*
 import scala.util.Failure

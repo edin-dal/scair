@@ -1,8 +1,8 @@
 package scair.ir
 
 import fastparse.P
-import scair.Parser
 import scair.Printer
+import scair.parse.Parser
 import scair.transformations.RewritePattern
 import scair.utils.IntrusiveNode
 

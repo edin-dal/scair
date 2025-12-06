@@ -8,6 +8,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.parse.*
 import java.io.*
 
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:

@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
-import scair.Parser
+import scair.parse.Parser
 import scair.Printer
 import scair.MLContext
 import java.io.*

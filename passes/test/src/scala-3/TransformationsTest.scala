@@ -7,6 +7,7 @@ import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.*
 import scair.dialects.builtin.*
 import scair.dialects.cmath.*
+import scair.parse.*
 
 class TransformationsTest
     extends AnyFlatSpec
