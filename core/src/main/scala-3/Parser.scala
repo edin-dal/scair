@@ -26,16 +26,6 @@ import scala.collection.mutable
 || COMMON FUNCTIONS ||
 \*≡==---==≡≡==---==≡*/
 
-// Custom function wrapper that allows to Escape out of a pattern
-// to carry out custom computation
-def E[$: P](action: => Unit) =
-  action
-  Pass(())
-
-def giveBack[A](a: A) =
-  println(a)
-  a
-
 extension [T](inline p: P[T])
 
   /** Make the parser optional, parsing defaults if otherwise failing.
@@ -50,7 +40,7 @@ extension [T](inline p: P[T])
     *   An optional parser, defaulting to default.
     */
   inline def orElse[$: P](inline default: T): P[T] = P(
-    p.?.map(_.getOrElse(default))
+    p | Pass(default)
   )
 
   /** Like fastparse's flatMapX but capturing exceptions as standard parse
