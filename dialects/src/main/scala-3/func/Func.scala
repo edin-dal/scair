@@ -36,12 +36,12 @@ object Func:
   def parse[$: P](
       resNames: Seq[String]
   )(using Parser): P[Func] =
-    ("private".!.? ~ SymbolRefAttrP ~ (BlockArgList.flatMap(
-      (args: Seq[(String, Attribute)]) =>
-        Pass(
-          args.map(_._2)
-        ) ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
-          .orElse(Map()) ~ RegionP(args)
+    ("private".!.? ~ SymbolRefAttrP ~ (("(" ~ ValueIdAndType
+      .rep(sep = ",") ~ ")").flatMap((args: Seq[(String, Attribute)]) =>
+      Pass(
+        args.map(_._2)
+      ) ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
+        .orElse(Map()) ~ RegionP(args)
     ) | (
       ParenTypeList ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
         .orElse(Map()) ~ Pass(

@@ -310,7 +310,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     parser
       .parse(
         input = input,
-        parser = OperationPat(using _, parser)
+        parser = OperationP(using _, parser)
       ) should matchPattern {
       case Parsed.Success(
             UnregisteredOperation(

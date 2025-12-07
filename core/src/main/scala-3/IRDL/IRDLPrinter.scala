@@ -92,7 +92,7 @@ object IRDLPrinter:
     val parser = Parser(ctx)
     val dialect = parser.parse(
       input = input.mkString,
-      parser = OperationPat(using _, parser)
+      parser = OperationP(using _, parser)
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
       case Parsed.Success(_, _)                =>

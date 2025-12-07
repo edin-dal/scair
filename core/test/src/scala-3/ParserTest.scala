@@ -105,13 +105,6 @@ class ParserTest
     ("% hello", "Failure", "")
   )
 
-  val opResultListTests = Table(
-    ("input", "result", "expected"),
-    ("%0, %1, %2 =", "Success", List("0", "1", "2")),
-    ("%0   ,    %1   ,   %2  =   ", "Success", List("0", "1", "2")),
-    ("%0,%1,%2=", "Success", List("0", "1", "2"))
-  )
-
   val unitTests = Table(
     ("name", "pattern", "tests"),
     (
@@ -153,11 +146,6 @@ class ParserTest
       "ValueId",
       ((x: fastparse.P[?]) => ValueId(using x)),
       valueIdTests
-    ),
-    (
-      "OpResultList",
-      ((x: fastparse.P[?]) => OpResultList(using x)),
-      opResultListTests
     )
   )
 
@@ -330,7 +318,7 @@ class ParserTest
 
       parser.parse(
         input = text,
-        parser = TopLevel(using _, parser),
+        parser = TopLevelP(using _, parser),
         true
       ) should matchPattern {
         case Parsed.Failure("Successor ^bb3 not defined within Scope", _, _) =>
@@ -360,7 +348,7 @@ class ParserTest
 
       parser.parse(
         input = text,
-        parser = OperationPat(using _, parser)
+        parser = OperationP(using _, parser)
       ) should matchPattern { case operation =>
       }
     }
@@ -370,7 +358,7 @@ class ParserTest
     withClue("Test 1: ") {
       parser.parse(
         input = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        parser = TopLevel(using _, parser)
+        parser = TopLevelP(using _, parser)
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
@@ -412,7 +400,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parse(
         input = text,
-        parser = TopLevel(using _, parser)
+        parser = TopLevelP(using _, parser)
       ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
@@ -444,7 +432,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parse(
         input = text,
-        parser = TopLevel(using _, parser)
+        parser = TopLevelP(using _, parser)
       ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(0).results(0).uses
@@ -477,7 +465,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parse(
         input = text,
-        parser = TopLevel(using _, parser)
+        parser = TopLevelP(using _, parser)
       ): @unchecked
 
       val printer = new Printer(true)

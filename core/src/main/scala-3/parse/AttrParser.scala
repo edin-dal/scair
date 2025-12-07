@@ -26,15 +26,15 @@ import scala.collection.mutable
 // IE THE PARSER FOR BUILTIN DIALECT ATTRIBUTES
 
 class AttrParser(
-    private[parse] val context: MLContext,
-    private[parse] val attributeAliases: mutable.Map[String, Attribute] =
+    private[parse] final val context: MLContext,
+    private[parse] final val attributeAliases: mutable.Map[String, Attribute] =
       mutable.Map.empty,
-    private[parse] val typeAliases: mutable.Map[String, Attribute] =
+    private[parse] final val typeAliases: mutable.Map[String, Attribute] =
       mutable.Map.empty
 )
 
-def DialectAttribute[$: P](using p: AttrParser): P[Attribute] = P(
-  "#" ~~ PrettyDialectReferenceName.flatMapTry {
+private inline def DialectAttribute[$: P](using p: AttrParser): P[Attribute] =
+  "#" ~~ PrettyDialectReferenceName./.flatMapTry {
     (dialect: String, attrName: String) =>
       p.context.getAttrCompanion(s"${dialect}.${attrName}") match
         case Some(attr) =>
@@ -44,10 +44,9 @@ def DialectAttribute[$: P](using p: AttrParser): P[Attribute] = P(
             s"Attribute $dialect.$attrName is not defined in any supported Dialect."
           )
   }
-)
 
-def DialectType[$: P](using p: AttrParser): P[Attribute] = P(
-  "!" ~~ PrettyDialectReferenceName.flatMapTry {
+private inline def DialectType[$: P](using p: AttrParser): P[Attribute] =
+  "!" ~~ PrettyDialectReferenceName./.flatMapTry {
     (dialect: String, attrName: String) =>
       p.context.getAttrCompanion(s"${dialect}.${attrName}") match
         case Some(attr) =>
@@ -57,27 +56,24 @@ def DialectType[$: P](using p: AttrParser): P[Attribute] = P(
             s"Type $dialect.$attrName is not defined in any supported Dialect."
           )
   }
-)
 
 // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
 // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
-def AttributeEntry[$: P](using AttrParser) = P(
-  (BareId | StringLiteral) ~ "=" ~/ (AttributeP | TypeP)
-)
+private inline def AttributeEntry[$: P](using AttrParser) =
+  (BareId | StringLiteral) ~ "=" ~/ (AttributeP)
 
 def AttributeP[$: P](using AttrParser) = P(
   TypeP | BuiltinAttr | DialectAttribute | AttributeAlias // AttrBuiltIn | DialectAttribute // | AttributeAlias //
 )
 
-def AttributeAlias[$: P](using p: AttrParser) = P(
+private inline def AttributeAlias[$: P](using p: AttrParser) =
   "#" ~~ AliasName.flatMap((name: String) =>
     p.attributeAliases.get(name) match
       case Some(attr) => Pass(attr)
       case None       =>
         Fail(s"Attribute alias ${name} not defined.")
   )
-)
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||      TYPES      ||
@@ -97,44 +93,40 @@ def AttributeAlias[$: P](using p: AttrParser) = P(
 
 // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
-def TypeP[$: P](using AttrParser) = P(
-  (BuiltinType | DialectType | TypeAlias)
-)
+def TypeP[$: P](using AttrParser) =
+  P(BuiltinType | DialectType | TypeAlias)
 
-def TypeList[$: P](using AttrParser) = TypeP.rep(sep = ",")
+def TypeList[$: P](using AttrParser) = P(TypeP.rep(sep = ","))
 
 def ParenTypeList[$: P](using AttrParser) = P(
-  "(" ~ TypeP.rep(sep = ",") ~ ")"
+  "(" ~ TypeList ~ ")"
 )
 
-def TypeAlias[$: P](using p: AttrParser) = P(
+private inline def TypeAlias[$: P](using p: AttrParser) =
   "!" ~~ AliasName.flatMap((name: String) =>
     p.typeAliases.get(name) match
       case Some(attr) => Pass(attr)
       case None       => Fail(s"Type alias ${name} not defined.")
   )
-)
-
-def AttributeList[$: P](using AttrParser) = AttributeP.rep(sep = ",")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    FLOAT TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
 def Float16TypeP[$: P](using AttrParser): P[Float16Type] =
-  P("f16").map(_ => Float16Type())
+  P("f16".map(_ => Float16Type()))
 
 def Float32TypeP[$: P](using AttrParser): P[Float32Type] =
-  P("f32").map(_ => Float32Type())
+  P("f32".map(_ => Float32Type()))
 
 def Float64TypeP[$: P](using AttrParser): P[Float64Type] =
-  P("f64").map(_ => Float64Type())
+  P("f64".map(_ => Float64Type()))
 
 def Float80TypeP[$: P](using AttrParser): P[Float80Type] =
-  P("f80").map(_ => Float80Type())
+  P("f80".map(_ => Float80Type()))
 
 def Float128TypeP[$: P](using AttrParser): P[Float128Type] =
-  P("f128").map(_ => Float128Type())
+  P("f128".map(_ => Float128Type()))
 
 def FloatTypeP[$: P](using AttrParser): P[FloatType] = P(
   Float16TypeP | Float32TypeP | Float64TypeP | Float80TypeP | Float128TypeP
@@ -205,13 +197,13 @@ def FloatAttrP[$: P](using AttrParser): P[FloatAttr] =
 \*≡==---==≡≡==---==≡*/
 
 inline def IndexTypeP[$: P](using AttrParser): P[IndexType] =
-  "index".map(_ => IndexType())
+  P("index".map(_ => IndexType()))
 /*≡==--==≡≡≡≡≡≡==--=≡≡*\
 ||    COMPLEX TYPE    ||
 \*≡==---==≡≡≡≡==---==≡*/
 
 inline def ComplexTypeP[$: P](using AttrParser): P[ComplexType] =
-  ("complex<" ~ (IndexTypeP | IntegerTypeP | FloatTypeP) ~ ">").map(
+  P("complex<" ~ (IndexTypeP | IntegerTypeP | FloatTypeP) ~ ">").map(
     (tpe: TypeAttribute) =>
       ComplexType(tpe.asInstanceOf[IntegerType | IndexType | FloatType])
   )
@@ -223,7 +215,8 @@ inline def ComplexTypeP[$: P](using AttrParser): P[ComplexType] =
 // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
 def ArrayAttributeP[$: P](using AttrParser): P[ArrayAttribute[Attribute]] = P(
-  "[" ~ AttributeList
+  "[" ~ AttributeP
+    .rep(sep = ",")
     .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
 )
 
@@ -414,14 +407,14 @@ def EmptyTensorLiteral[$: P](using AttrParser): P[TensorLiteralArray] =
 \*≡==---==≡≡≡≡≡==---==≡*/
 
 def AffineMapAttrP[$: P](using AttrParser): P[AffineMapAttr] =
-  P("affine_map<" ~ AffineMapP ~ ">").map(AffineMapAttr(_))
+  P("affine_map<" ~/ AffineMapP ~ ">").map(AffineMapAttr(_))
 
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||   AFFINE SET ATTR   ||
 \*≡==---==≡≡≡≡≡==---==≡*/
 
 def AffineSetAttrP[$: P](using AttrParser): P[AffineSetAttr] =
-  P("affine_set<" ~ AffineSetP ~ ">").map(AffineSetAttr(_))
+  P("affine_set<" ~/ AffineSetP ~ ">").map(AffineSetAttr(_))
 
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||   FUNCTION TYPE   ||
@@ -432,7 +425,7 @@ def FunctionTypeP[$: P](using AttrParser): P[FunctionType] = P(
     .map(FunctionType.apply)
 )
 
-def BuiltinType[$: P](using AttrParser): P[Attribute] = P(
+private inline def BuiltinType[$: P](using AttrParser): P[Attribute] =
   FloatTypeP |
     IntegerTypeP |
     IndexTypeP |
@@ -441,9 +434,8 @@ def BuiltinType[$: P](using AttrParser): P[Attribute] = P(
     TensorTypeP |
     MemrefTypeP |
     VectorTypeP
-)
 
-def BuiltinAttr[$: P](using AttrParser): P[Attribute] = P(
+private inline def BuiltinAttr[$: P](using AttrParser): P[Attribute] =
   ArrayAttributeP |
     DenseArrayAttributeP |
     StringAttributeP |
@@ -453,4 +445,3 @@ def BuiltinAttr[$: P](using AttrParser): P[Attribute] = P(
     DenseIntOrFPElementsAttrP |
     AffineMapAttrP |
     AffineSetAttrP
-)
