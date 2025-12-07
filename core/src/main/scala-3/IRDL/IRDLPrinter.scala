@@ -6,7 +6,7 @@ import scair.dialects.builtin.ArrayAttribute
 import scair.dialects.irdl.*
 import scair.dialects.irdl.IRDL
 import scair.ir.Value
-import scair.parse.Parser
+import scair.parse.*
 
 import java.io.PrintWriter
 import scala.io.Source
@@ -92,7 +92,7 @@ object IRDLPrinter:
     val parser = Parser(ctx)
     val dialect = parser.parse(
       input = input.mkString,
-      parser = parser.OperationPat(using _)
+      parser = OperationPat(using _, parser)
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
       case Parsed.Success(_, _)                =>

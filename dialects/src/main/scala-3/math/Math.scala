@@ -39,11 +39,11 @@ object AbsfOp:
     P(
       "" ~ ValueUse
         .flatMap(operandName =>
-          (p.Attribute.orElse(
+          (AttributeP.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ p.Type.flatMap(tpe =>
-            p.currentScope.useValue(operandName, tpe) ~
-              p.currentScope.defineResult(resNames.head, tpe)
+          ) ~ ":" ~ TypeP.flatMap(tpe =>
+            useValue(operandName, tpe) ~
+              defineResult(resNames.head, tpe)
           ))
         )
         .flatMap { case (flags, operandAndResult) =>
@@ -81,14 +81,14 @@ object FPowIOp:
     P(
       ValueUse.flatMap(lhsName =>
         ("," ~ ValueUse.flatMap(rhsName =>
-          (p.Attribute.orElse(
+          (AttributeP.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ p.Type.flatMap(lhsType =>
-            p.currentScope.useValue(lhsName, lhsType) ~
-              p.currentScope.defineResult(resNames.head, lhsType)
+          ) ~ ":" ~ TypeP.flatMap(lhsType =>
+            useValue(lhsName, lhsType) ~
+              defineResult(resNames.head, lhsType)
           )
-            ~ "," ~ p.Type.flatMap(
-              p.currentScope.useValue(rhsName, _)
+            ~ "," ~ TypeP.flatMap(
+              useValue(rhsName, _)
             ))
             .flatMap {
               case (

@@ -218,11 +218,13 @@ case class VariableDirective(
         v match
           case Variadicity.Single =>
             '{
-              $p.Attribute(using $ctx)
+              AttributeP(using $ctx, $p)
             }
           case Variadicity.Optional =>
             '{
-              given P[?] = $ctx; $p.Attribute.?
+              given P[?] = $ctx
+              given Parser = $p
+              AttributeP.?
             }
 
   override def parsed(p: Expr[?])(using Quotes) =
@@ -289,11 +291,15 @@ case class TypeDirective(
       case MayVariadicOpInputDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ $p.Type(using $ctx) }
+            '{ TypeP(using $ctx, $p) }
           case Variadicity.Variadic =>
-            '{ $p.TypeList(using $ctx) }
+            '{ TypeList(using $ctx, $p) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; $p.Type.? }
+            '{
+              given P[?] = $ctx
+              given Parser = $p
+              TypeP.?
+            }
 
   // Ew; but works
   override def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =

@@ -120,7 +120,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     val res = getResult(result, expected)
     "strToAttributeTests" should s"[ '$input' -> '$expected' = $result ]" in {
       // Run the pqrser on the input and check
-      parse(input, parser.Attribute(using _)) should matchPattern {
+      parse(input, AttributeP(using _, parser)) should matchPattern {
         case res => // pass
       }
     }
@@ -310,7 +310,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     parser
       .parse(
         input = input,
-        parser = parser.OperationPat(using _)
+        parser = OperationPat(using _, parser)
       ) should matchPattern {
       case Parsed.Success(
             UnregisteredOperation(

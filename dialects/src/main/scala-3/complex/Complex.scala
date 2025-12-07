@@ -8,7 +8,7 @@ import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.complex.canonicalization.given
 import scair.ir.*
-import scair.parse.AttrParser
+import scair.parse.*
 
 //
 // ░█████╗░ ░█████╗░ ███╗░░░███╗ ██████╗░ ██╗░░░░░ ███████╗ ██╗░░██╗
@@ -105,9 +105,9 @@ case class Sub(
 
 object ComplexAttr:
 
-  def parse[$: P](parser: AttrParser): P[ComplexAttr] =
+  def parse[$: P](using AttrParser): P[ComplexAttr] =
     given Whitespace = scair.parse.whitespace
-    ("<:" ~ parser.FloatTypeP ~ parser.FloatDataP ~ "," ~ parser.FloatDataP ~ ">" ~ (":" ~ parser.ComplexTypeP).?)
+    ("<:" ~ FloatTypeP ~ FloatDataP ~ "," ~ FloatDataP ~ ">" ~ (":" ~ ComplexTypeP).?)
       .map(
         (
             tpe: FloatType,

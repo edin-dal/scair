@@ -34,7 +34,7 @@ class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
   "EnumAttr" should "print and parse correctly" in {
     val parsed = parser.parse(
       """"enum.enum_op"() <{color = 0 : i32}> : () -> ()""",
-      parser.GenericOperation(Seq())(using _)
+      GenericOperation(Seq())(using _, parser)
     )
     parsed match
       case fastparse.Parsed.Success(value, _) =>

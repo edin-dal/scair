@@ -61,7 +61,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       )
       val parsed = parser.parse(
         input,
-        parser = parser.TopLevel(using _)
+        parser = TopLevel(using _, parser)
       ) match
         case fastparse.Parsed.Success(input_module, _) =>
           Right(input_module)

@@ -28,23 +28,23 @@ case class Call(
 
 object Func:
 
-  def parseResultTypes[$: P](
-      parser: Parser
+  def parseResultTypes[$: P](using
+      Parser
   ): P[Seq[Attribute]] =
-    ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
+    ("->" ~ (ParenTypeList | TypeP.map(Seq(_)))).orElse(Seq())
 
   def parse[$: P](
       resNames: Seq[String]
-  )(using p: Parser): P[Func] =
-    ("private".!.? ~ p.SymbolRefAttrP ~ (BlockArgList.flatMap(
+  )(using Parser): P[Func] =
+    ("private".!.? ~ SymbolRefAttrP ~ (BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
-        Pass(args.map(_._2)) ~ parseResultTypes(
-          p
-        ) ~ ("attributes" ~ DictionaryAttribute).orElse(Map()) ~ RegionP(args)
+        Pass(
+          args.map(_._2)
+        ) ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
+          .orElse(Map()) ~ RegionP(args)
     ) | (
-      p.ParenTypeList ~ parseResultTypes(
-        p
-      ) ~ ("attributes" ~ DictionaryAttribute).orElse(Map()) ~ Pass(
+      ParenTypeList ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
+        .orElse(Map()) ~ Pass(
         Region()
       )
     )))

@@ -15,7 +15,7 @@
 // CHECK: Parse error at [[FILE]]:14:31:
 // CHECK: "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
 // CHECK:                               ^
-// CHECK-NEXT:  (Attribute | Type)
+// CHECK-NEXT:  (AttributeP | TypeP)
 
 // -----
 

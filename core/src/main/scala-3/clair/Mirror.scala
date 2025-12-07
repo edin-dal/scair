@@ -282,8 +282,7 @@ def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
       val callTerm = Select
         .unique(Ref(comp), m.name)
         .appliedToType(TypeRepr.of[Any])
-        .appliedTo(p.asTerm)
-        .appliedTo(ctx.asTerm)
+        .appliedTo(ctx.asTerm, p.asTerm)
         .etaExpand(comp)
         .asExprOf[P[T]]
       Some(callTerm)

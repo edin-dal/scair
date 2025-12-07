@@ -93,7 +93,7 @@ object FastMathFlags:
 given AttributeCompanion[FastMathFlagsAttr]:
   override def name: String = "arith.fastmath"
 
-  override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
+  override def parse[$: P](using AttrParser): P[FastMathFlagsAttr] =
 
     import scair.parse.whitespace
     P(
