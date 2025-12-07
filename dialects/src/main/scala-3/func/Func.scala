@@ -26,7 +26,7 @@ case class Call(
     _results: Seq[Result[Attribute]]
 ) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
-object Func:
+given OperationCustomParser[Func]:
 
   def parseResultTypes[$: P](using
       Parser

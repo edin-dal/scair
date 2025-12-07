@@ -516,7 +516,7 @@ final case class AffineSetAttr(affine_set: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-object ModuleOp:
+given OperationCustomParser[ModuleOp]:
 
   // ==--- Custom Parsing ---== //
   def parse[$: P](

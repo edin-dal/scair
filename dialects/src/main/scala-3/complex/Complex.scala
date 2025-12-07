@@ -103,7 +103,7 @@ case class Sub(
 ) extends DerivedOperation["complex.sub", Sub]
     with NoMemoryEffect derives DerivedOperationCompanion
 
-object ComplexAttr:
+given AttributeCustomParser[ComplexAttr]:
 
   def parse[$: P](using AttrParser): P[ComplexAttr] =
     given Whitespace = scair.parse.whitespace

@@ -29,9 +29,7 @@ import scair.parse.whitespace
 // ==--------== //
 //   AbsfOp   //
 // ==--------== //
-
-object AbsfOp:
-  def name: String = "math.absf"
+given OperationCustomParser[AbsfOp]:
 
   def parse[$: P](
       resNames: Seq[String]
@@ -72,8 +70,7 @@ case class AbsfOp(
 //   FPowIOp   //
 // ==--------== //
 
-object FPowIOp:
-  def name: String = "math.fpowi"
+given OperationCustomParser[FPowIOp]:
 
   def parse[$: P](
       resNames: Seq[String]
