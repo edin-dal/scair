@@ -7,7 +7,6 @@ import scair.dialects.builtin.VectorType
 import scair.ir.*
 
 import java.lang.Float.intBitsToFloat
-import scala.annotation.switch
 import scala.annotation.tailrec
 import scala.collection.mutable
 
@@ -25,36 +24,6 @@ import scala.collection.mutable
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 // IE THE PARSER FOR BUILTIN DIALECT ATTRIBUTES
-
-/** Whitespace syntax that supports // line-comments, *without* /* */ comments,
-  * as is the case in the MLIR Language Spec.
-  *
-  * It's litteraly fastparse's JavaWhitespace with the /* */ states just erased
-  * :)
-  */
-given whitespace: Whitespace = new Whitespace:
-  def apply(ctx: P[?]) =
-    val input = ctx.input
-    val startIndex = ctx.index
-    @tailrec def rec(current: Int, state: Int): ParsingRun[Unit] =
-      if !input.isReachable(current) then
-        if state == 0 || state == 1 then ctx.freshSuccessUnit(current)
-        else ctx.freshSuccessUnit(current - 1)
-      else
-        val currentChar = input(current)
-        (state: @switch) match
-          case 0 =>
-            (currentChar: @switch) match
-              case ' ' | '\t' | '\n' | '\r' => rec(current + 1, state)
-              case '/'                      => rec(current + 1, state = 2)
-              case _                        => ctx.freshSuccessUnit(current)
-          case 1 =>
-            rec(current + 1, state = if currentChar == '\n' then 0 else state)
-          case 2 =>
-            (currentChar: @switch) match
-              case '/' => rec(current + 1, state = 1)
-              case _   => ctx.freshSuccessUnit(current - 1)
-    rec(current = ctx.index, state = 0)
 
 class AttrParser(
     private[parse] val context: MLContext,
@@ -110,6 +79,34 @@ def AttributeAlias[$: P](using p: AttrParser) = P(
   )
 )
 
+/*≡==--==≡≡≡==--=≡≡*\
+||      TYPES      ||
+\*≡==---==≡==---==≡*/
+
+// [x] type ::= type-alias | dialect-type | builtin-type
+
+// [x] type-list-no-parens ::=  type (`,` type)*
+// [x] type-list-parens ::= `(` `)` | `(` type-list-no-parens `)`
+
+// // This is a common way to refer to a value with a specified type.
+// [ ] ssa-use-and-type ::= ssa-use `:` type
+// [ ] ssa-use ::= value-use
+
+// // Non-empty list of names and types.
+// [ ] ssa-use-and-type-list ::= ssa-use-and-type (`,` ssa-use-and-type)*
+
+// [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
+
+def TypeP[$: P](using AttrParser) = P(
+  (BuiltinType | DialectType | TypeAlias)
+)
+
+def TypeList[$: P](using AttrParser) = TypeP.rep(sep = ",")
+
+def ParenTypeList[$: P](using AttrParser) = P(
+  "(" ~ TypeP.rep(sep = ",") ~ ")"
+)
+
 def TypeAlias[$: P](using p: AttrParser) = P(
   "!" ~~ AliasName.flatMap((name: String) =>
     p.typeAliases.get(name) match
@@ -119,12 +116,6 @@ def TypeAlias[$: P](using p: AttrParser) = P(
 )
 
 def AttributeList[$: P](using AttrParser) = AttributeP.rep(sep = ",")
-
-def TypeP[$: P](using AttrParser) = P(
-  (BuiltinType | DialectType | TypeAlias)
-)
-
-def TypeList[$: P](using AttrParser) = TypeP.rep(sep = ",")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    FLOAT TYPE    ||
@@ -435,10 +426,6 @@ def AffineSetAttrP[$: P](using AttrParser): P[AffineSetAttr] =
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||   FUNCTION TYPE   ||
 \*≡==---==≡≡≡==---==≡*/
-
-def ParenTypeList[$: P](using AttrParser) = P(
-  "(" ~ TypeP.rep(sep = ",") ~ ")"
-)
 
 def FunctionTypeP[$: P](using AttrParser): P[FunctionType] = P(
   (ParenTypeList ~ "->" ~/ (ParenTypeList | TypeP.map(Seq(_))))
