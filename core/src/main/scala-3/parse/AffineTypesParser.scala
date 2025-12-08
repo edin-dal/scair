@@ -3,7 +3,6 @@ package scair.parse
 import fastparse.*
 import scair.*
 import scair.dialects.affine.*
-import scair.parse.whitespace
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

@@ -225,3 +225,4 @@ trait OperationCompanion[O <: Operation]:
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()
+  export scair.parse.whitespace

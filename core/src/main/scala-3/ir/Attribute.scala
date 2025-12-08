@@ -97,5 +97,6 @@ abstract class DataAttribute[D](
 trait AttributeCompanion[T <: Attribute]:
   def name: String
   def parse[$: P](using AttrParser): P[T]
+  export scair.parse.whitespace
 
 trait AliasedAttribute(val alias: String) extends Attribute

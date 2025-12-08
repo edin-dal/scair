@@ -9,7 +9,6 @@ import scair.dialects.builtin.*
 import scair.enums.macros.*
 import scair.ir.*
 import scair.parse.*
-import scair.parse.whitespace
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 
@@ -824,6 +823,7 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
       override def parse[$: P as ctx](using p: AttrParser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
           '{
+            given Whitespace = scair.parse.whitespace
             given AttrParser = p
             ("<" ~/ AttributeP.rep(sep = ",") ~ ">")
               .orElse(Seq())

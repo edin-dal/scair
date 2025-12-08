@@ -11,7 +11,6 @@ import scair.dialects.arith.FastMathFlagsAttr
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
-import scair.parse.whitespace
 
 //
 // ███╗░░░███╗ ░█████╗░ ████████╗ ██╗░░██╗

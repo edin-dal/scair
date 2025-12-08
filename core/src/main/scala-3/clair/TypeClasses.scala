@@ -3,7 +3,8 @@ package scair.clair.macros
 import fastparse.P
 import scair.Printer
 import scair.ir.*
-import scair.parse.{Parser, AttrParser}
+import scair.parse.AttrParser
+import scair.parse.Parser
 
 import scala.quoted.*
 import scala.util.Failure
@@ -25,6 +26,7 @@ import scala.util.Try
 // ░╚════╝░ ╚══════╝ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
 trait AttributeCustomParser[T <: Attribute]:
+  export scair.parse.whitespace
 
   def parse[$: P](using
       AttrParser
@@ -41,6 +43,7 @@ object DerivedAttributeCompanion:
   }
 
 trait OperationCustomParser[T <: Operation]:
+  export scair.parse.whitespace
 
   def parse[$: P](
       resNames: Seq[String]

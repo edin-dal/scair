@@ -9,7 +9,6 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.Parser
-import scair.parse.whitespace
 
 //
 // ███████╗ ██╗░░░██╗ ███╗░░██╗ ░█████╗░
