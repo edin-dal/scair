@@ -91,8 +91,7 @@ extension [T](inline p: P[T])
 ||      SCOPE      ||
 \*≡==---==≡==---==≡*/
 
-private class Scope(
-    var parentScope: Option[Scope] = None,
+private final class Scope(
     var valueMap: mutable.Map[String, Value[Attribute]] =
       mutable.Map.empty[String, Value[Attribute]],
     var forwardValues: mutable.Set[String] = mutable.Set.empty[String],
@@ -155,13 +154,6 @@ private class Scope(
       }
     )
 
-  // child starts off from the parents context
-  def createChild(): Scope =
-    return new Scope(
-      valueMap = valueMap.clone,
-      parentScope = Some(this)
-    )
-
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    OPERATIONS    ||
 \*≡==---==≡≡==---==≡*/
@@ -200,17 +192,16 @@ final class Parser(
     private[parse] attributeAliases: mutable.Map[String, Attribute] =
       mutable.Map.empty,
     private[parse] typeAliases: mutable.Map[String, Attribute] =
-      mutable.Map.empty
+      mutable.Map.empty,
+    private[parse] val scopes: mutable.Stack[Scope] = mutable.Stack(new Scope())
 ) extends AttrParser(context, attributeAliases, typeAliases):
 
   private[parse] inline def enterRegion[$: P] =
-    currentScope = currentScope.createChild()
+    scopes.push(new Scope())
     Pass
 
   private[parse] inline def exitRegion[$: P] =
-    val toExit = currentScope
-    currentScope = currentScope.parentScope.getOrElse(currentScope)
-    toExit.allBlocksAndValuesDefined
+    scopes.pop.allBlocksAndValuesDefined
 
   inline def parse[T](
       inline input: ParserInputSource,
@@ -226,8 +217,6 @@ final class Parser(
       startIndex,
       instrument
     )
-
-  private[parse] var currentScope: Scope = new Scope()
 
   /** Generates an operation based on the provided parameters.
     *
@@ -315,7 +304,8 @@ final class Parser(
     // it already had at the time of the catched error!
     // This is a workaround to get the error message with the correct state.
     // TODO: More functional and fastparse-compatible state handling!
-    currentScope = new Scope()
+    scopes.popAll
+    scopes.push(new Scope())
 
     // Reparse for more context on error.
     val traced = failure.trace()
@@ -342,24 +332,28 @@ final class Parser(
 
 def useValue[$: P](name: String, typ: Attribute)(using
     p: Parser
-): P[Value[Attribute]] = P(
-  // TODO: If already defined, this should definitely be checking if defined with the right type
-  Pass(
-    p.currentScope.valueMap.getOrElseUpdate(
-      name, {
-        p.currentScope.forwardValues += name
-        Value[Attribute](typ)
-      }
-    )
-  )
-)
+): P[Value[Attribute]] =
+  p.scopes.collectFirst {
+    case scope if scope.valueMap.contains(name) =>
+      scope.valueMap(name)
+  } match
+    case Some(value) if value.typ == typ => Pass(value)
+    case Some(value)                     =>
+      Fail(
+        s"Value %${name} defined with type ${value.typ}, but used with type ${typ}."
+      )
+    case None =>
+      val forwardValue = Value[Attribute](typ)
+      p.scopes.top.valueMap(name) = forwardValue
+      p.scopes.top.forwardValues += name
+      Pass(forwardValue)
 
 def defineResult[$: P](
     name: String,
     typ: Attribute
 )(using p: Parser): P[Result[Attribute]] =
   P(
-    p.currentScope.defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
+    p.scopes.top.defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
   )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -600,7 +594,7 @@ private inline def populateBlockArgs[$: P](
 )(using p: Parser) =
   args
     .foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
-      (l ~ p.currentScope.defineBlockArgument(r._1, r._2)).map(_ :+ _)
+      (l ~ p.scopes.top.defineBlockArgument(r._1, r._2)).map(_ :+ _)
     )
     .map(args =>
       block.arguments ++= args
@@ -616,7 +610,7 @@ def BlockP[$: P](using Parser) = P(
 )
 
 private inline def BlockLabel[$: P](using p: Parser) =
-  (BlockId.flatMap(p.currentScope.defineBlock) ~ (BlockArgList
+  (BlockId.flatMap(p.scopes.top.defineBlock) ~ (BlockArgList
     .orElse(Seq()))).flatMap(populateBlockArgs) ~ ":"
 
 inline def SuccessorList[$: P](using Parser) = P(
@@ -624,7 +618,7 @@ inline def SuccessorList[$: P](using Parser) = P(
 )
 
 inline def Successor[$: P](using p: Parser) = P(
-  P(CaretId).map(p.currentScope.forwardBlock)
+  P(CaretId).map(p.scopes.top.forwardBlock)
 )
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||      REGIONS      ||
@@ -637,7 +631,7 @@ inline def Successor[$: P](using p: Parser) = P(
 //                   \/
 // [x] - region        ::= `{` operation* block* `}`
 
-inline def RegionP[$: P](
+def RegionP[$: P](
     entryArgs: Seq[(String, Attribute)] = Seq()
 )(using p: Parser) = P(
   "{" ~/ p.enterRegion ~/ (populateBlockArgs(new Block(), entryArgs)
