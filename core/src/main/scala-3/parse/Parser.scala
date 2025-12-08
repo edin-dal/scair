@@ -100,11 +100,15 @@ private class Scope(
     var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
 ):
 
-  def checkForwardedValues[$: P]() =
+  def allBlocksAndValuesDefined[$: P] =
     forwardValues.headOption match
       case Some(valueName) =>
         Fail(s"Value %${valueName} not defined within Scope")
-      case None => Pass
+      case None =>
+        forwardBlocks.headOption match
+          case Some(blockName) =>
+            Fail(s"Successor ^$blockName not defined within Scope")
+          case None => Pass
 
   def defineValue[$: P](
       name: String,
@@ -126,12 +130,6 @@ private class Scope(
       typ: Attribute
   ): P[BlockArgument[Attribute]] =
     defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
-
-  def checkForwardedBlocks[$: P]() =
-    forwardBlocks.headOption match
-      case Some(blockName) =>
-        Fail(s"Successor ^$blockName not defined within Scope")
-      case None => Pass
 
   def defineBlock[$: P](
       blockName: String
@@ -204,6 +202,15 @@ final class Parser(
     private[parse] typeAliases: mutable.Map[String, Attribute] =
       mutable.Map.empty
 ) extends AttrParser(context, attributeAliases, typeAliases):
+
+  private[parse] inline def enterRegion[$: P] =
+    currentScope = currentScope.createChild()
+    Pass
+
+  private[parse] inline def exitRegion[$: P] =
+    val toExit = currentScope
+    currentScope = currentScope.parentScope.getOrElse(currentScope)
+    toExit.allBlocksAndValuesDefined
 
   inline def parse[T](
       inline input: ParserInputSource,
@@ -355,15 +362,6 @@ def defineResult[$: P](
     p.currentScope.defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
   )
 
-private inline def enterRegion[$: P](using p: Parser) =
-  p.currentScope = p.currentScope.createChild()
-  Pass
-
-private inline def exitRegion[$: P](using p: Parser) =
-  val toExit = p.currentScope
-  p.currentScope = p.currentScope.parentScope.getOrElse(p.currentScope)
-  toExit.checkForwardedValues().flatMapX(_ => toExit.checkForwardedBlocks())
-
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || TOP LEVEL PRODUCTION  ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
@@ -376,7 +374,7 @@ def TopLevelP[$: P](using p: Parser): P[Operation] = P(
     _.collect { case o: Operation =>
       o
     }
-  ) ~/ exitRegion ~ End
+  ) ~/ p.exitRegion ~ End
 ).map((toplevel: Seq[Operation]) =>
   toplevel.toList match
     case (head: ModuleOp) :: Nil => head
@@ -641,13 +639,13 @@ inline def Successor[$: P](using p: Parser) = P(
 
 inline def RegionP[$: P](
     entryArgs: Seq[(String, Attribute)] = Seq()
-)(using Parser) = P(
-  "{" ~/ enterRegion ~/ (populateBlockArgs(new Block(), entryArgs)
+)(using p: Parser) = P(
+  "{" ~/ p.enterRegion ~/ (populateBlockArgs(new Block(), entryArgs)
     .flatMap(BlockBody) ~/ BlockP.rep)
     .map((entry: Block, blocks: Seq[Block]) =>
       if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
       else entry +: blocks
-    ) ~/ "}" ~/ exitRegion
+    ) ~/ "}" ~/ p.exitRegion
 ).map(Region(_))
 
 // [x] - value-id-and-type ::= value-id `:` type
