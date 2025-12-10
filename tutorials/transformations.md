@@ -123,3 +123,36 @@ final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
 
 WalkerPass is a kind of IR **`Pass`** that walks over all operations in the IR via **`PatternRewriteWalker`**, and applies a given pattern. 
 In this case a **`GreedyRewritePatternApplier`**, which itself is a pattern that takes an Operation and applies all given patterns greedily over it, until a change is seen, or all patterns are tried.  
+
+# Footnotes
+TODO: not sure whether to include this or not. 
+
+Here is the un-sugared **`pattern`** example for constant folding an addition. We can see the full method signature with [PatternRewriter](https://edin-dal.github.io/scair/scair/transformations/PatternRewriteWalker$PatternRewriter.html), our API for manipulating the IR.
+```scala
+// Rewrite pattern for constant folding an addition
+object AddIfold extends RewritePattern:
+	override def match_and_rewrite(
+		op: Operation,
+		rewriter: PatternRewriter
+	): Unit =
+		op match
+			case AddI(
+				Owner(Constant(c0: IntegerAttr, _)),
+				Owner(Constant(c1: IntegerAttr, _)),
+				_
+			) =>
+				val new_op = Constant(c0 + c1, Result(c0.typ))
+				rewriter.replace_op(op, new_op, None)
+			case _ => ()
+```
+
+We can also pattern match and transform over Operations not defined within ScaIR. **`UnregisteredOperation`** class is used to instantiate all such Operations. 
+```Scala
+val UnregPat = pattern {
+  case UnregisteredOperation(
+        name = "some.opreatioafnasjfias"
+      ) =>
+    val const = StringData("some.opreatioafnasjfias")
+    Constant(StringData("some.opreatioafnasjfias"), Result(const))
+}
+```
