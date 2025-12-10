@@ -32,7 +32,7 @@ class TransformationsTest
     printer = new Printer(true)
   }
 
-  "Operation Erasure" should "Test that operation does not get erased and throws error :)" in {
+  "Operation Erasure" should "Test that operation does not get erased and throws error :)" in
     withClue("Operand Erasure: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
@@ -44,7 +44,7 @@ class TransformationsTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ): @unchecked
 
       val opToErase = value.regions(0).blocks(0).operations(1)
@@ -58,9 +58,8 @@ class TransformationsTest
 
       opToErase.containerBlock shouldEqual None
     }
-  }
 
-  "Operation Adding" should "Test that adding op to it's own block does not work :)" in {
+  "Operation Adding" should "Test that adding op to it's own block does not work :)" in
     withClue("Operand Adding: ") {
 
       val text = """  
@@ -78,7 +77,7 @@ class TransformationsTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ): @unchecked
 
       val opToAdd = value.regions(0).blocks(0).operations(0)
@@ -92,9 +91,8 @@ class TransformationsTest
         blockToAddItTo.addOp(opToAdd)
       ).getMessage shouldBe "Can't add an operation to a block that is contained within that operation"
     }
-  }
 
-  "Operation Insertion" should "Test that operation does not get inserted into the wrong block and throws error :)" in {
+  "Operation Insertion" should "Test that operation does not get inserted into the wrong block and throws error :)" in
     withClue("Operand Insertion: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
@@ -112,7 +110,7 @@ class TransformationsTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ): @unchecked
 
       val block =
@@ -133,4 +131,3 @@ class TransformationsTest
       ).getMessage shouldBe "Can't insert the new operation into the block, as the operation that was " +
         "given as a point of reference does not exist in the current block."
     }
-  }

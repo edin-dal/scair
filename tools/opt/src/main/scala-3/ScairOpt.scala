@@ -33,7 +33,7 @@ case class ScairOptArgs(
     val parsingDiagnostics: Boolean = false,
     val printGeneric: Boolean = false,
     val passes: Seq[String] = Seq(),
-    val verifyDiagnostics: Boolean = false
+    val verifyDiagnostics: Boolean = false,
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
@@ -56,11 +56,11 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
-        allowUnregisteredDialect = args.allowUnregistered
+        allowUnregisteredDialect = args.allowUnregistered,
       )
       val parsed = parser.parseThis(
         input,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)
@@ -117,7 +117,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
           .text(
             "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
           )
-          .action((_, c) => c.copy(verifyDiagnostics = true))
+          .action((_, c) => c.copy(verifyDiagnostics = true)),
       )
 
     // Parse the CLI args
@@ -159,7 +159,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
             val printer = new Printer(parsedArgs.printGeneric)
             processedModule.fold(
               printer.print,
-              printer.printTopLevel
+              printer.printTopLevel,
             )
             printer.flush()
           }

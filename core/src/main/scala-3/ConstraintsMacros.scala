@@ -27,6 +27,6 @@ def eqAttrImpl[To <: Attribute: Type](using Quotes) =
     case tr: TermRef => Ref(tr.termSymbol).asExprOf[To]
     case _           =>
       report.errorAndAbort(
-        s"got ${t.show}:\n${t}"
+        s"got ${t.show}:\n$t"
       )
   ref

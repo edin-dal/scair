@@ -114,7 +114,7 @@ object Parser:
       var forwardValues: mutable.Set[String] = mutable.Set.empty[String],
       var blockMap: mutable.Map[String, Block] =
         mutable.Map.empty[String, Block],
-      var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String]
+      var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String],
   ):
 
     def useValue[$: P](name: String, typ: Attribute): P[Value[Attribute]] =
@@ -123,24 +123,24 @@ object Parser:
           name, {
             forwardValues += name
             Value[Attribute](typ)
-          }
+          },
         )
       )
 
     def checkForwardedValues[$: P]() =
       forwardValues.headOption match
         case Some(valueName) =>
-          Fail(s"Value %${valueName} not defined within Scope")
+          Fail(s"Value %$valueName not defined within Scope")
         case None => Pass
 
     private def defineValue[$: P](
         name: String,
-        typ: Attribute
+        typ: Attribute,
     ): P[Value[Attribute]] =
       if valueMap.contains(name) then
         if !forwardValues.remove(name) then
           Fail(
-            s"Value cannot be defined twice within the same scope - %${name}"
+            s"Value cannot be defined twice within the same scope - %$name"
           )
         Pass(valueMap(name))
       else
@@ -150,13 +150,13 @@ object Parser:
 
     inline def defineResult[$: P](
         name: String,
-        typ: Attribute
+        typ: Attribute,
     ): P[Result[Attribute]] =
       defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
 
     inline def defineBlockArgument[$: P](
         name: String,
-        typ: Attribute
+        typ: Attribute,
     ): P[BlockArgument[Attribute]] =
       defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
 
@@ -172,7 +172,7 @@ object Parser:
       if blockMap.contains(blockName) then
         if !forwardBlocks.remove(blockName) then
           Fail(
-            f"Block cannot be defined twice within the same scope - ^${blockName}"
+            f"Block cannot be defined twice within the same scope - ^$blockName"
           )
         else Pass(blockMap(blockName))
       else
@@ -187,14 +187,14 @@ object Parser:
         blockName, {
           forwardBlocks += blockName
           new Block()
-        }
+        },
       )
 
     // child starts off from the parents context
     def createChild(): Scope =
       return new Scope(
         valueMap = valueMap.clone,
-        parentScope = Some(this)
+        parentScope = Some(this),
       )
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -302,14 +302,14 @@ object Parser:
   def AliasName[$: P] = P(
     CharIn(Letter + "_") ~~ (CharsWhileIn(
       Letter + DecDigit + "_$",
-      min = 0
+      min = 0,
     )) ~~ !"."
   ).!
 
   def SuffixId[$: P] = P(
     DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
       Letter + IdPunct + DecDigit,
-      min = 0
+      min = 0,
     )
   ).!
 
@@ -434,7 +434,7 @@ final class Parser(
     parsingDiagnostics: Boolean = false,
     allowUnregisteredDialect: Boolean = false,
     attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
-    typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+    typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
 ) extends AttrParser(context, attributeAliases, typeAliases):
 
   import Parser.*
@@ -561,17 +561,17 @@ final class Parser(
       regions: Seq[Region] = Seq(),
       attributes: Map[String, Attribute] = Map(),
       resultsTypes: Seq[Attribute] = Seq(),
-      operandsTypes: Seq[Attribute] = Seq()
+      operandsTypes: Seq[Attribute] = Seq(),
   ): P[Operation] =
 
     if operandsNames.length != operandsTypes.length then
       return Fail(
-        s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"${opName}\"."
+        s"Number of operands (${operandsNames.length}) does not match the number of the corresponding operand types (${operandsTypes.length}) in \"$opName\"."
       )
 
     if resultsNames.length != resultsTypes.length then
       return Fail(
-        s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"${opName}\"."
+        s"Number of results (${resultsNames.length}) does not match the number of the corresponding result types (${resultsTypes.length}) in \"$opName\"."
       )
 
     (operandsNames zip operandsTypes)
@@ -597,7 +597,7 @@ final class Parser(
                     properties = properties,
                     results = results,
                     attributes = DictType.from(attributes),
-                    regions = regions
+                    regions = regions,
                   )
                 )
               case Left(error) => Fail(error)
@@ -636,7 +636,7 @@ final class Parser(
           f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
         ) ~ GenericOperandsTypesRec(
           tail,
-          parsed + 1
+          parsed + 1,
         )).map(_ +: _)
       case Nil => Pass(Seq())
 
@@ -651,7 +651,7 @@ final class Parser(
       expected: Int
   )(
       resultsNames: Seq[String],
-      parsed: Int = 1
+      parsed: Int = 1,
   ): P[Seq[Result[Attribute]]] =
     resultsNames match
       case head :: Nil =>
@@ -704,7 +704,7 @@ final class Parser(
                     regions: Seq[Region],
                     attributes: Map[String, Attribute],
                     operands: Seq[Value[Attribute]],
-                    results: Seq[Result[Attribute]]
+                    results: Seq[Result[Attribute]],
                 ) =>
                   opCompanion(
                     operands,
@@ -712,7 +712,7 @@ final class Parser(
                     results,
                     regions,
                     properties,
-                    attributes.to(DictType)
+                    attributes.to(DictType),
                   )
               )
           )
@@ -722,12 +722,12 @@ final class Parser(
 
   def CustomOperation[$: P](resNames: Seq[String]) = P(
     PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
-      ctx.getOpCompanion(s"${x}.${y}") match
+      ctx.getOpCompanion(s"$x.$y") match
         case Right(companion) =>
           Pass ~ companion.parse(this, resNames)
         case Left(_) =>
           Fail(
-            s"Operation ${x}.${y} is not defined in any supported Dialect."
+            s"Operation $x.$y is not defined in any supported Dialect."
           )
     }
   )
@@ -744,7 +744,7 @@ final class Parser(
 
   def populateBlockOps(
       block: Block,
-      ops: Seq[Operation]
+      ops: Seq[Operation],
   ): Block =
     block.operations ++= ops
     ops.foreach(_.containerBlock = Some(block))
@@ -752,7 +752,7 @@ final class Parser(
 
   def populateBlockArgs[$: P](
       block: Block,
-      args: Seq[(String, Attribute)]
+      args: Seq[(String, Attribute)],
   ) =
     args
       .foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
@@ -932,6 +932,6 @@ final class Parser(
       pattern: fastparse.P[?] => fastparse.P[B] = { (x: fastparse.P[?]) =>
         TopLevel(using x)
       },
-      verboseFailures: Boolean = false
+      verboseFailures: Boolean = false,
   ): fastparse.Parsed[B] =
     return parse(text, pattern, verboseFailures = verboseFailures)

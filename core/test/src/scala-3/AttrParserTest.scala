@@ -57,19 +57,19 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       RankedTensorType(
         Float32Type(),
         ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
-        None
+        None,
       ),
       "Success",
-      "tensor<3x?x5xf32>"
+      "tensor<3x?x5xf32>",
     ),
     (UnrankedTensorType(Float32Type()), "Success", "tensor<*xf32>"),
     (
       ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
       "Success",
-      "[f64, [], \"hello\"]"
+      "[f64, [], \"hello\"]",
     ),
     (StringData("hello world!"), "Success", "\"hello world!\""),
-    (INDEX, "Success", "index")
+    (INDEX, "Success", "index"),
   )
 
   val strToAttributeTests = Table(
@@ -91,7 +91,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     (
       "[f64, [], \"hello\"]",
       "Success",
-      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello")))
+      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
     ),
     ("\"hello world!\"", "Success", StringData("hello world!")),
     (
@@ -100,11 +100,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       RankedTensorType(
         Float32Type(),
         ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
-        None
-      )
+        None,
+      ),
     ),
     ("tensor<*xf32>", "Success", UnrankedTensorType(Float32Type())),
-    ("fg12", "Failure", "")
+    ("fg12", "Failure", ""),
   )
 
   forAll(attrToStringTests) { (input, result, expected) =>
@@ -136,7 +136,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       results = Seq(
         F32,
         F64,
-        F80
+        F80,
       ).map(Result(_))
     )
     val block1 = Block(
@@ -145,16 +145,16 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         op,
         UnregisteredOperation("test.op")(
           operands = Seq(op.results(1), op.results(0))
-        )
-      )
+        ),
+      ),
     )
     val op2 = UnregisteredOperation("test.op")(
       successors = Seq(block1),
       results = Seq(
         I1,
         I16,
-        I32
-      ).map(Result(_))
+        I32,
+      ).map(Result(_)),
     )
     val block2 = Block(
       ListType(I32),
@@ -163,10 +163,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         UnregisteredOperation("test.op")(
           operands = Seq(
             op2.results(1),
-            op2.results(0)
+            op2.results(0),
           )
-        )
-      )
+        ),
+      ),
     )
     val op3 = UnregisteredOperation("test.op")(
       results = Seq(
@@ -179,8 +179,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         op3,
         UnregisteredOperation("test.op")(
           operands = Seq(op3.results(0))
-        )
-      )
+        ),
+      ),
     )
 
     val program =
@@ -190,7 +190,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
             Seq(
               block1,
               block2,
-              block3
+              block3,
             )
           )
         )
@@ -222,13 +222,13 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
           operands = Seq(
             valF32,
             valF64,
-            Value(F80)
+            Value(F80),
           )
         ),
         UnregisteredOperation("test.op")(
           Seq(valF64, valF32)
-        )
-      )
+        ),
+      ),
     )
 
     val op4 = UnregisteredOperation("test.op")(
@@ -236,8 +236,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       results = Seq(
         I1,
         I16,
-        I32
-      ).map(Result(_))
+        I32,
+      ).map(Result(_)),
     )
 
     val block2 = new Block(
@@ -247,10 +247,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         UnregisteredOperation("test.op")(
           operands = Seq(
             op4.results(1),
-            op4.results(0)
+            op4.results(0),
           )
-        )
-      )
+        ),
+      ),
     )
 
     val op5 = UnregisteredOperation("test.op")(
@@ -265,8 +265,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         op5,
         UnregisteredOperation("test.op")(
           operands = Seq(op5.results(0))
-        )
-      )
+        ),
+      ),
     )
 
     val program =
@@ -276,7 +276,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
             Seq(
               block1,
               block2,
-              block3
+              block3,
             )
           )
         )
@@ -309,7 +309,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     parser
       .parseThis(
         text = input,
-        pattern = parser.OperationPat(using _)
+        pattern = parser.OperationPat(using _),
       ) should matchPattern {
       case Parsed.Success(
             UnregisteredOperation(
@@ -329,20 +329,20 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                         Seq(
                           Result(IntegerType(IntData(32), Signless)),
                           Result(IntegerType(IntData(64), Signed)),
-                          Result(IntegerType(IntData(80), Unsigned))
+                          Result(IntegerType(IntData(80), Unsigned)),
                         ),
                         Seq(),
                         _,
-                        _
+                        _,
                       )
-                    )
+                    ),
                   )
                 )
               ),
               _,
-              _
+              _,
             ),
-            98
+            98,
           ) =>
     }
   }

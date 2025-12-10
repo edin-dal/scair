@@ -35,7 +35,7 @@ case class Region(
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
       valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+        mutable.Map.empty,
   ): Region =
     Region(blocks.map(_.deepCopy))
 

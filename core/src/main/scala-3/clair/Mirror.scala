@@ -96,24 +96,24 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
         name = name,
         tpe = tpe,
         variadicity,
-        constraint
+        constraint,
       )
     case '[Value[t]] =>
       OperandDef(
         name = name,
         tpe = tpe,
         variadicity,
-        constraint
+        constraint,
       )
     case '[Region] =>
       RegionDef(
         name = name,
-        variadicity
+        variadicity,
       )
     case '[Successor] =>
       SuccessorDef(
         name = name,
-        variadicity
+        variadicity,
       )
     case '[Attribute] =>
       variadicity match
@@ -127,7 +127,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
             name = name,
             tpe = tpe,
             v,
-            constraint
+            constraint,
           )
     case _: Type[?] =>
       report.errorAndAbort(
@@ -158,7 +158,7 @@ def getAttrDef[Label: Type, Elem: Type](using
     case '[Attribute] =>
       AttributeParamDef(
         name = name,
-        tpe = Type.of[Elem]
+        tpe = Type.of[Elem],
       )
     case _ =>
       throw new Exception(
@@ -209,7 +209,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         case _ =>
           report.errorAndAbort(
             s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
-            TypeRepr.of[T].typeSymbol.pos.get
+            TypeRepr.of[T].typeSymbol.pos.get,
           )
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
@@ -222,7 +222,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        assemblyFormat = None
+        assemblyFormat = None,
       )
       val format = Type.of[T] match
         case '[AssemblyFormat[format]] =>
@@ -236,7 +236,7 @@ def getCompanion[T: Type](using quotes: Quotes) =
 
 def getOpCustomParse[T <: Operation: Type](
     p: Expr[Parser],
-    resNames: Expr[Seq[String]]
+    resNames: Expr[Seq[String]],
 )(using
     quotes: Quotes
 ) =
@@ -315,12 +315,12 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
         case _ =>
           report.errorAndAbort(
             s"${Type.show[T]} should extend DerivedAttribute.DerivedOperation to derive DerivedAttributeCompanion.",
-            TypeRepr.of[T].typeSymbol.pos.get
+            TypeRepr.of[T].typeSymbol.pos.get,
           )
 
       val attributeDefs = summonAttrDefs[elemLabels, elemTypes]
 
       AttributeDef(
         name = name,
-        attributes = attributeDefs
+        attributes = attributeDefs,
       )

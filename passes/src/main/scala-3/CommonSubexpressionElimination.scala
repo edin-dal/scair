@@ -51,7 +51,7 @@ final case class OperationInfo(val op: Operation):
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
       Map[OperationInfo, Operation](),
-    val toErase: Set[Operation] = Set[Operation]()
+    val toErase: Set[Operation] = Set[Operation](),
 )(using rewriter: Rewriter):
 
   def simplify(op: Operation): Unit =

@@ -15,17 +15,17 @@ case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
-    randProp: StringData
+    randProp: StringData,
 ) extends DerivedOperation["cmath.mul", Mul] derives DerivedOperationCompanion
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
     rhs: Seq[Operand[IntegerType]],
     result: Seq[Result[IntegerType]],
-    randProp: StringData
+    randProp: StringData,
 ) extends DerivedOperation[
       "cmath.mulsinglevariadic",
-      MulSingleVariadic
+      MulSingleVariadic,
     ] derives DerivedOperationCompanion
 
 case class MulMultiVariadic(
@@ -36,10 +36,10 @@ case class MulMultiVariadic(
     result2: Result[IntegerType],
     result3: Seq[Result[IntegerType]],
     operandSegmentSizes: DenseArrayAttr,
-    resultSegmentSizes: DenseArrayAttr
+    resultSegmentSizes: DenseArrayAttr,
 ) extends DerivedOperation[
       "cmath.mulmultivariadic",
-      MulMultiVariadic
+      MulMultiVariadic,
     ] derives DerivedOperationCompanion
 
 case class MulFull(
@@ -52,14 +52,14 @@ case class MulFull(
     reg1: Region,
     reg2: Region,
     succ1: Successor,
-    succ2: Successor
+    succ2: Successor,
 ) extends DerivedOperation["cmath.mulfull", MulFull]
     derives DerivedOperationCompanion
 
 case class MulOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Operand[IntegerType],
-    res: Result[IntegerType]
+    res: Result[IntegerType],
 ) extends DerivedOperation["cmath.mulopt", MulOptional]
     with AssemblyFormat[
       "($lhs^ `,`)? $rhs attr-dict `:` `(` (type($lhs)^ `,`)? type($rhs) `)` `->` type($res)"
@@ -69,27 +69,27 @@ case class MulMultiOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Option[Operand[IntegerType]],
     additional: Option[Operand[IntegerType]],
-    res: Result[IntegerType]
+    res: Result[IntegerType],
 ) extends DerivedOperation["cmath.mulmultiopt", MulMultiOptional]
     derives DerivedOperationCompanion
 
 case class MultiOptionalPropertyOp(
     prop1: Option[IntegerType],
     prop2: Option[IntegerType],
-    prop3: Option[IntegerType]
+    prop3: Option[IntegerType],
 ) extends DerivedOperation[
       "cmath.multpropop",
-      MultiOptionalPropertyOp
+      MultiOptionalPropertyOp,
     ] derives DerivedOperationCompanion
 
 case class MultiOptionalCompositionOp(
     operand: Option[Operand[IntegerType]],
     prop1: Option[IntegerType],
     prop2: IntegerType,
-    result: Option[Result[IntegerType]]
+    result: Option[Result[IntegerType]],
 ) extends DerivedOperation[
       "cmath.multpropcompop",
-      MultiOptionalCompositionOp
+      MultiOptionalCompositionOp,
     ] derives DerivedOperationCompanion
 
 val mulComp = summon[DerivedOperationCompanion[Mul]]
@@ -111,18 +111,18 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     def unstrucOp = mulComp.UnstructuredOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
       ),
       results =
         Seq[Attribute](IntegerType(IntData(25), Unsigned)).map(Result(_)),
-      properties = Map(("randProp" -> StringData("what")))
+      properties = Map(("randProp" -> StringData("what"))),
     )
 
     def adtMulOp = Mul(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Value(IntegerType(IntData(5), Unsigned)),
       result = Result(IntegerType(IntData(25), Unsigned)),
-      randProp = StringData("what")
+      randProp = StringData("what"),
     )
 
     def adtMulOpAllFields = MulFull(
@@ -135,33 +135,33 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       reg1 = Region(),
       reg2 = Region(),
       succ1 = scair.ir.Block(),
-      succ2 = scair.ir.Block()
+      succ2 = scair.ir.Block(),
     )
 
     def unstructMulSinVarOp = new mulSVComp.UnstructuredOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
       ),
       results = Seq(
         IntegerType(IntData(25), Unsigned),
-        IntegerType(IntData(25), Unsigned)
+        IntegerType(IntData(25), Unsigned),
       ).map(Result(_)),
-      properties = Map(("randProp" -> StringData("what")))
+      properties = Map(("randProp" -> StringData("what"))),
     )
 
     def adtMulSinVarOp = MulSingleVariadic(
       lhs = Value(IntegerType(IntData(5), Unsigned)),
       rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
-        Value(IntegerType(IntData(5), Unsigned))
+        Value(IntegerType(IntData(5), Unsigned)),
       ),
       result = Seq(
         Result(IntegerType(IntData(25), Unsigned)),
-        Result(IntegerType(IntData(25), Unsigned))
+        Result(IntegerType(IntData(25), Unsigned)),
       ),
-      randProp = StringData("what")
+      randProp = StringData("what"),
     )
 
     def unstructMulMulVarOp = mulMMVComp.UnstructuredOp(
@@ -171,7 +171,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
         Value(typ = IntegerType(IntData(5), Unsigned)),
         Value(typ = IntegerType(IntData(5), Unsigned)),
         Value(typ = IntegerType(IntData(5), Unsigned)),
-        Value(typ = IntegerType(IntData(5), Unsigned))
+        Value(typ = IntegerType(IntData(5), Unsigned)),
       ),
       results = Seq(
         IntegerType(IntData(25), Unsigned),
@@ -179,7 +179,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
         IntegerType(IntData(25), Unsigned),
-        IntegerType(IntData(25), Unsigned)
+        IntegerType(IntData(25), Unsigned),
       ).map(Result(_)),
       properties = Map(
         ("operandSegmentSizes" -> DenseArrayAttr(
@@ -187,18 +187,18 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
           Seq[IntegerAttr](
             IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
             IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
-          )
+            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless)),
+          ),
         )),
         ("resultSegmentSizes" -> DenseArrayAttr(
           IntegerType(IntData(32), Signless),
           Seq[IntegerAttr](
             IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
             IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
-          )
-        ))
-      )
+            IntegerAttr(IntData(2), IntegerType(IntData(32), Signless)),
+          ),
+        )),
+      ),
     )
 
     def adtMulMulVarOp = MulMultiVariadic(
@@ -206,66 +206,66 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       rhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
         Value(IntegerType(IntData(5), Unsigned)),
-        Value(IntegerType(IntData(5), Unsigned))
+        Value(IntegerType(IntData(5), Unsigned)),
       ),
       mhs = Seq(
         Value(IntegerType(IntData(5), Unsigned)),
-        Value(IntegerType(IntData(5), Unsigned))
+        Value(IntegerType(IntData(5), Unsigned)),
       ),
       result = Seq(
         Result(IntegerType(IntData(5), Unsigned)),
         Result(IntegerType(IntData(5), Unsigned)),
-        Result(IntegerType(IntData(5), Unsigned))
+        Result(IntegerType(IntData(5), Unsigned)),
       ),
       result2 = Result(IntegerType(IntData(5), Unsigned)),
       result3 = Seq(
         Result(IntegerType(IntData(5), Unsigned)),
-        Result(IntegerType(IntData(5), Unsigned))
+        Result(IntegerType(IntData(5), Unsigned)),
       ),
       operandSegmentSizes = DenseArrayAttr(
         IntegerType(IntData(32), Signless),
         Seq[IntegerAttr](
           IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
           IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
-          IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
-        )
+          IntegerAttr(IntData(2), IntegerType(IntData(32), Signless)),
+        ),
       ),
       resultSegmentSizes = DenseArrayAttr(
         IntegerType(IntData(32), Signless),
         Seq[IntegerAttr](
           IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
           IntegerAttr(IntData(3), IntegerType(IntData(32), Signless)),
-          IntegerAttr(IntData(2), IntegerType(IntData(32), Signless))
-        )
-      )
+          IntegerAttr(IntData(2), IntegerType(IntData(32), Signless)),
+        ),
+      ),
     )
 
     def adtMulOptional = MulOptional(
       lhs = Some(Value(IntegerType(IntData(5), Unsigned))),
       rhs = Value(IntegerType(IntData(5), Unsigned)),
-      res = Result(IntegerType(IntData(25), Unsigned))
+      res = Result(IntegerType(IntData(25), Unsigned)),
     )
 
     def unstructMulOptional = mulOptComp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
       ),
-      results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_))
+      results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
     )
 
     def adtMulMultiOptional = MulMultiOptional(
       lhs = Some(Value(IntegerType(IntData(5), Unsigned))),
       rhs = Some(Value(IntegerType(IntData(5), Unsigned))),
       additional = Some(Value(IntegerType(IntData(5), Unsigned))),
-      res = Result(IntegerType(IntData(25), Unsigned))
+      res = Result(IntegerType(IntData(25), Unsigned)),
     )
 
     def unstructMulMultiOptional = mulMultiOptComp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
       ),
       results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
       properties = Map(
@@ -274,16 +274,16 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
           Seq[IntegerAttr](
             IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
             IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless))
-          )
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+          ),
         ))
-      )
+      ),
     )
 
     def unstructMulMultiMissingOptional = mulMultiOptComp.UnstructuredOp(
       operands = Seq(
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
       ),
       results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
       properties = Map(
@@ -292,23 +292,23 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
           Seq[IntegerAttr](
             IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
             IntegerAttr(IntData(0), IntegerType(IntData(32), Signless)),
-            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless))
-          )
+            IntegerAttr(IntData(1), IntegerType(IntData(32), Signless)),
+          ),
         ))
-      )
+      ),
     )
 
     def adtMultiOptionalPropOp = MultiOptionalPropertyOp(
       prop1 = Some(IntegerType(IntData(5), Unsigned)),
       prop2 = Some(IntegerType(IntData(5), Unsigned)),
-      prop3 = Some(IntegerType(IntData(5), Unsigned))
+      prop3 = Some(IntegerType(IntData(5), Unsigned)),
     )
 
     def unstructMultiOptionalPropOp = multiOptPropOpComp.UnstructuredOp(
       properties = Map(
         ("prop1" -> IntegerType(IntData(5), Unsigned)),
         ("prop2" -> IntegerType(IntData(5), Unsigned)),
-        ("prop3" -> IntegerType(IntData(5), Unsigned))
+        ("prop3" -> IntegerType(IntData(5), Unsigned)),
       )
     )
 
@@ -316,7 +316,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       operand = Some(Value(IntegerType(IntData(5), Unsigned))),
       prop1 = Some(IntegerType(IntData(5), Unsigned)),
       prop2 = IntegerType(IntData(5), Unsigned),
-      result = Some(Result(IntegerType(IntData(25), Unsigned)))
+      result = Some(Result(IntegerType(IntData(25), Unsigned))),
     )
 
     def unstructMultiCompOptional = multiOptCompOp.UnstructuredOp(
@@ -326,8 +326,8 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
       properties = Map(
         ("prop1" -> IntegerType(IntData(5), Unsigned)),
-        ("prop2" -> IntegerType(IntData(5), Unsigned))
-      )
+        ("prop2" -> IntegerType(IntData(5), Unsigned)),
+      ),
     )
 
   "Unstructured instantiation" should "Correctly instantiates the UnstructuredOp" in {
@@ -336,17 +336,17 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     val unstructMulOp = opT(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
-        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned))
+        Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
       ),
       results = Seq(IntegerType(IntData(25), Unsigned)).map(Result(_)),
-      properties = Map(("randProp" -> StringData("what")))
+      properties = Map(("randProp" -> StringData("what"))),
     )
 
     unstructMulOp.name should be("cmath.mul")
     unstructMulOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     unstructMulOp.results should matchPattern {
@@ -367,7 +367,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     unstructMulOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     unstructMulOp.results should matchPattern {
@@ -429,13 +429,13 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     adtMulSinVarOp.rhs should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     adtMulSinVarOp.result should matchPattern {
       case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
-            Result(IntegerType(IntData(25), Unsigned))
+            Result(IntegerType(IntData(25), Unsigned)),
           ) =>
     }
     adtMulSinVarOp.randProp should matchPattern { case StringData("what") =>
@@ -453,13 +453,13 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     unstructMulSinVarOp.results should matchPattern {
       case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
-            Result(IntegerType(IntData(25), Unsigned))
+            Result(IntegerType(IntData(25), Unsigned)),
           ) =>
     }
     unstructMulSinVarOp.properties("randProp") should matchPattern {
@@ -478,20 +478,20 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     adtMulMulVarOp.mhs should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     adtMulMulVarOp.result should matchPattern {
       case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
             Result(IntegerType(IntData(25), Unsigned)),
-            Result(IntegerType(IntData(25), Unsigned))
+            Result(IntegerType(IntData(25), Unsigned)),
           ) =>
     }
     adtMulMulVarOp.result2 should matchPattern {
@@ -500,7 +500,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     adtMulMulVarOp.result3 should matchPattern {
       case Seq(
             Result(IntegerType(IntData(25), Unsigned)),
-            Result(IntegerType(IntData(25), Unsigned))
+            Result(IntegerType(IntData(25), Unsigned)),
           ) =>
     }
   }
@@ -519,7 +519,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     unstructMulSinVarOp.results should matchPattern {
@@ -529,7 +529,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
             Result(IntegerType(IntData(5), Unsigned)),
-            Result(IntegerType(IntData(5), Unsigned))
+            Result(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
   }
@@ -541,12 +541,12 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
         Seq(
           Region(
             Block(comp.UnstructuredOp()),
-            Block(comp.UnstructuredOp())
+            Block(comp.UnstructuredOp()),
           ),
           Region(
             Block(comp.UnstructuredOp()),
-            Block(comp.UnstructuredOp())
-          )
+            Block(comp.UnstructuredOp()),
+          ),
         )
       )
 
@@ -557,9 +557,9 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
               Seq(
                 Region(
                   Block(_, BlockOperations(RegionOp(_))),
-                  Block(_, BlockOperations(RegionOp(_)))
+                  Block(_, BlockOperations(RegionOp(_))),
                 ),
-                Region(_*)
+                Region(_*),
               )
             )
           ) =>
@@ -583,7 +583,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     unstructMulSinVarOp.operands should matchPattern {
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     unstructMulSinVarOp.results should matchPattern {
@@ -596,7 +596,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     val op2 = MulOptional(
       lhs = None,
       rhs = Value(IntegerType(IntData(5), Unsigned)),
-      res = Result(IntegerType(IntData(25), Unsigned))
+      res = Result(IntegerType(IntData(25), Unsigned)),
     )
 
     val out = java.io.StringWriter()
@@ -632,7 +632,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       case Seq(
             Value(IntegerType(IntData(5), Unsigned)),
             Value(IntegerType(IntData(5), Unsigned)),
-            Value(IntegerType(IntData(5), Unsigned))
+            Value(IntegerType(IntData(5), Unsigned)),
           ) =>
     }
     unstructMulSinVarOp.results should matchPattern {

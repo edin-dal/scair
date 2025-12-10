@@ -22,7 +22,7 @@ object Block:
 
   def apply(
       argumentsTypes: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq()
+      operations: Iterable[Operation] | Operation = Seq(),
   ): Block = new Block(argumentsTypes, operations)
 
   def apply(operations: Iterable[Operation] | Operation): Block =
@@ -32,13 +32,13 @@ object Block:
 
   def apply(
       argumentsTypes: Iterable[Attribute],
-      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation]
+      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation],
   ): Block =
     new Block(argumentsTypes, operationsExpr)
 
   def apply(
       argumentsTypes: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation]
+      operationsExpr: Value[Attribute] => Iterable[Operation],
   ): Block =
     new Block(argumentsTypes, operationsExpr)
 
@@ -51,19 +51,19 @@ object Block:
   */
 case class Block private (
     val arguments: ListType[Value[Attribute]],
-    val operations: BlockOperations
+    val operations: BlockOperations,
 ) extends IRNode:
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
       valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+        mutable.Map.empty,
   ): Block =
     Block(
       argumentsTypes = arguments.map(_.typ),
       (args) =>
         valueMapper addAll (arguments zip args)
-        operations.map(_.deepCopy)
+        operations.map(_.deepCopy),
     )
 
   final override def parent: Option[Region] = containerRegion
@@ -89,7 +89,7 @@ case class Block private (
     */
   def this(
       argumentsTypes: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq()
+      operations: Iterable[Operation] | Operation = Seq(),
   ) =
     this(
       ListType.from((argumentsTypes match
@@ -100,7 +100,7 @@ case class Block private (
         case single: Operation     => Seq(single)
         case multiple: Iterable[?] =>
           multiple.asInstanceOf[Iterable[Operation]]
-      ))
+      )),
     )
 
   /** Private tupled constructor mirroring the private primary constructor. Only
@@ -113,7 +113,7 @@ case class Block private (
   private def this(
       args: (
           Iterable[Value[Attribute]] | Value[Attribute],
-          Iterable[Operation] | Operation
+          Iterable[Operation] | Operation,
       )
   ) =
     this(
@@ -124,7 +124,7 @@ case class Block private (
       BlockOperations.from(args._2 match
         case single: Operation     => Seq(single)
         case multiple: Iterable[?] =>
-          multiple.asInstanceOf[Iterable[Operation]])
+          multiple.asInstanceOf[Iterable[Operation]]),
     )
 
   /** Constructs a Block instance with the given operations and no block
@@ -148,7 +148,7 @@ case class Block private (
   def this(
       argumentType: Iterable[Attribute],
       operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation] |
-        Operation
+        Operation,
   ) =
     this({
       val args = argumentType.map(Value(_))
@@ -166,7 +166,7 @@ case class Block private (
     */
   def this(
       argumentType: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation] | Operation
+      operationsExpr: Value[Attribute] => Iterable[Operation] | Operation,
   ) =
     this({
       val arg = Value(argumentType)
@@ -202,7 +202,7 @@ case class Block private (
 
   def insertOpBefore(
       existingOp: Operation,
-      newOp: Operation
+      newOp: Operation,
   ): Unit =
     (existingOp.containerBlock `equals` Some(this)) match
       case true =>
@@ -216,7 +216,7 @@ case class Block private (
 
   def insertOpsBefore(
       existingOp: Operation,
-      newOps: Seq[Operation]
+      newOps: Seq[Operation],
   ): Unit =
     (existingOp.containerBlock `equals` Some(this)) match
       case true =>
@@ -230,7 +230,7 @@ case class Block private (
 
   def insertOpAfter(
       existingOp: Operation,
-      newOp: Operation
+      newOp: Operation,
   ): Unit =
     (existingOp.containerBlock `equals` Some(this)) match
       case true =>
@@ -246,7 +246,7 @@ case class Block private (
 
   def insertOpsAfter(
       existingOp: Operation,
-      newOps: Seq[Operation]
+      newOps: Seq[Operation],
   ): Unit =
     (existingOp.containerBlock `equals` Some(this)) match
       case true =>

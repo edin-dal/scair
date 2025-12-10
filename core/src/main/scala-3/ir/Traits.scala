@@ -18,12 +18,12 @@ trait IsTerminator extends Operation:
       case Some(b) =>
         if this ne b.operations.last then
           Left(
-            s"Operation '${name}' marked as a terminator, but is not the last operation within its container block"
+            s"Operation '$name' marked as a terminator, but is not the last operation within its container block"
           )
         else Right(this)
       case None =>
         Left(
-          s"Operation '${name}' marked as a terminator, but is not contained in any block."
+          s"Operation '$name' marked as a terminator, but is not contained in any block."
         )
   }.flatMap(_ => super.traitVerify())
 
@@ -36,7 +36,7 @@ trait NoTerminator extends Operation:
   override def traitVerify(): Either[String, Operation] = {
     if regions.filter(x => x.blocks.length != 1).length != 0 then
       Left(
-        s"NoTerminator Operation '${name}' requires single-block regions"
+        s"NoTerminator Operation '$name' requires single-block regions"
       )
     else Right(this)
   }.flatMap(_ => super.traitVerify())
@@ -59,7 +59,7 @@ trait IsolatedFromAbove extends Operation:
                       )
                     then
                       Left(
-                        s"Operation '${name}' is not an ancestor of operand '${o}' of '${op.name}'"
+                        s"Operation '$name' is not an ancestor of operand '$o' of '${op.name}'"
                       )
                     else r
                   )

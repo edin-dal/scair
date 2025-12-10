@@ -30,14 +30,14 @@ class MLContext():
 
   def getOpCompanion(
       name: String,
-      allowUnregisteredDialect: Boolean = false
+      allowUnregisteredDialect: Boolean = false,
   ) = dialectOpContext.get(name) match
     case Some(companion) => Right(companion)
     case None            =>
       if allowUnregisteredDialect then Right(UnregisteredOperation(name))
       else
         Left(
-          s"Operation ${name} is not registered. If this is intended, use `--allow-unregistered-dialect`."
+          s"Operation $name is not registered. If this is intended, use `--allow-unregistered-dialect`."
         )
 
   def getAttrCompanion(name: String) = dialectAttrContext.get(name)

@@ -54,7 +54,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
       override val properties: Map[String, Attribute] =
         Map.empty[String, Attribute],
       override val attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+        DictType.empty[String, Attribute],
   ) extends Operation:
 
     override def updated(
@@ -63,7 +63,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
         results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
         regions: Seq[Region] = detachedRegions,
         properties: Map[String, Attribute] = properties,
-        attributes: DictType[String, Attribute] = attributes
+        attributes: DictType[String, Attribute] = attributes,
     ): Operation =
       UnstructuredOp(
         operands,
@@ -71,7 +71,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
         results,
         regions,
         properties,
-        attributes
+        attributes,
       )
 
     override def structured = Try(companion.structure(this)) match
@@ -90,7 +90,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+        DictType.empty[String, Attribute],
   ): UnstructuredOp | T & Operation
 
   def destructure(adtOp: T): UnstructuredOp
@@ -154,5 +154,5 @@ inline def summonOperationCompanions[T <: Tuple]: Seq[OperationCompanion[?]] =
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
   Dialect(
     summonOperationCompanions[Operations],
-    summonAttributeCompanions[Attributes]
+    summonAttributeCompanions[Attributes],
   )

@@ -63,7 +63,7 @@ object AttrParser:
 class AttrParser(
     val ctx: MLContext,
     val attributeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
-    val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty
+    val typeAliases: mutable.Map[String, Attribute] = mutable.Map.empty,
 ):
 
   import AttrParser.whitespace
@@ -71,7 +71,7 @@ class AttrParser(
   def DialectAttribute[$: P]: P[Attribute] = P(
     "#" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttrCompanion(s"${dialect}.${attrName}") match
+        ctx.getAttrCompanion(s"$dialect.$attrName") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
@@ -84,7 +84,7 @@ class AttrParser(
   def DialectType[$: P]: P[Attribute] = P(
     "!" ~~ PrettyDialectReferenceName.flatMapTry {
       (dialect: String, attrName: String) =>
-        ctx.getAttrCompanion(s"${dialect}.${attrName}") match
+        ctx.getAttrCompanion(s"$dialect.$attrName") match
           case Some(attr) =>
             attr.parse(this)
           case None =>
@@ -110,7 +110,7 @@ class AttrParser(
       attributeAliases.get(name) match
         case Some(attr) => Pass(attr)
         case None       =>
-          Fail(s"Attribute alias ${name} not defined.")
+          Fail(s"Attribute alias $name not defined.")
     )
   )
 
@@ -118,7 +118,7 @@ class AttrParser(
     "!" ~~ AliasName.flatMap((name: String) =>
       typeAliases.get(name) match
         case Some(attr) => Pass(attr)
-        case None       => Fail(s"Type alias ${name} not defined.")
+        case None       => Fail(s"Type alias $name not defined.")
     )
   )
 
@@ -195,7 +195,7 @@ class AttrParser(
       (FloatDataP ~ (":" ~ FloatTypeP).orElse(Float64Type())).map((x, y) =>
         FloatAttr(
           x,
-          y
+          y,
         )
       ) | (HexadecimalLiteral ~ ":" ~ FloatTypeP).map((x, y) =>
         FloatAttr(FloatData(intBitsToFloat(x.intValue())), y)
@@ -286,7 +286,7 @@ class AttrParser(
     RankedTensorType(
       shape = x._1,
       elementType = x._2,
-      encoding = x._3
+      encoding = x._3,
     )
   )
 
@@ -322,7 +322,7 @@ class AttrParser(
   ).map((x: (ArrayAttribute[IntData], Attribute)) =>
     RankedMemrefType(
       shape = x._1,
-      elementType = x._2
+      elementType = x._2,
     )
   )
 
@@ -345,7 +345,7 @@ class AttrParser(
     VectorType(
       shape = ArrayAttribute[IntData](shape),
       elementType = typ,
-      scalableDims = ArrayAttribute[IntData](scalableDims)
+      scalableDims = ArrayAttribute[IntData](scalableDims),
     )
   )
 
@@ -358,7 +358,7 @@ class AttrParser(
   ).map((x: String, y: Seq[String]) =>
     SymbolRefAttr(
       StringData(x),
-      y.map(z => StringData(z))
+      y.map(z => StringData(z)),
     )
   )
 

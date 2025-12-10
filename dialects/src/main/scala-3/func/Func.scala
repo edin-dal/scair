@@ -22,7 +22,7 @@ import scair.ir.*
 case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]]
+    _results: Seq[Result[Attribute]],
 ) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
 object Func:
@@ -34,7 +34,7 @@ object Func:
 
   def parse[$: P](
       parser: Parser,
-      resNames: Seq[String]
+      resNames: Seq[String],
   ): P[Func] =
     ("private".!.? ~ parser.SymbolRefAttrP ~ (parser.BlockArgList.flatMap(
       (args: Seq[(String, Attribute)]) =>
@@ -49,26 +49,26 @@ object Func:
         Region()
       )
     )))
-      .map({
+      .map {
         case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
           val f = Func(
             sym_name = symbol.rootRef,
             function_type = FunctionType(
               inputs = argTypes,
-              outputs = resTypes
+              outputs = resTypes,
             ),
             sym_visibility = visibility.map(StringData(_)),
-            body = body
+            body = body,
           )
           f.attributes.addAll(attributes)
           f
-      })
+      }
 
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
     sym_visibility: Option[StringData],
-    body: Region
+    body: Region,
 ) extends DerivedOperation["func.func", Func]
     with IsolatedFromAbove derives DerivedOperationCompanion:
 
@@ -90,7 +90,7 @@ case class Func(
           lprinter.printArgument,
           "(",
           ", ",
-          ")"
+          ")",
         )
         if function_type.outputs.nonEmpty then
           lprinter.print(" -> ")

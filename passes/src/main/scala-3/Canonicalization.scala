@@ -49,7 +49,7 @@ final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx):
     GreedyRewritePatternApplier(
       Seq(
         RemoveUnusedOperations,
-        Commute
+        Commute,
       ) ++ canonicalizationPatterns
     )
   )

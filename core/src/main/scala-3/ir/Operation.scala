@@ -34,7 +34,7 @@ trait IRNode:
   def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
       valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+        mutable.Map.empty,
   ): IRNode
 
 trait Operation extends IRNode with IntrusiveNode[Operation]:
@@ -44,7 +44,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
       valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+        mutable.Map.empty,
   ): Operation =
     val newResults = results.map(_.copy())
     valueMapper addAll (results zip newResults)
@@ -53,7 +53,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       operands = operands.map(o => valueMapper.getOrElse(o, o)),
       successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
       regions = regions.map(_.deepCopy),
-      attributes = LinkedHashMap.from(attributes)
+      attributes = LinkedHashMap.from(attributes),
     )
 
   regions.foreach(attachRegion)
@@ -75,7 +75,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes
+      attributes: DictType[String, Attribute] = attributes,
   ): Operation
 
   def operands: Seq[Value[Attribute]]
@@ -165,7 +165,7 @@ object UnregisteredOperation:
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: DictType[String, Attribute] =
-            DictType.empty[String, Attribute]
+            DictType.empty[String, Attribute],
       ): UnregisteredOperation =
         new UnregisteredOperation(
           name = _name,
@@ -174,7 +174,7 @@ object UnregisteredOperation:
           results = results,
           regions = regions,
           properties = properties,
-          attributes = attributes
+          attributes = attributes,
         )
 
 case class UnregisteredOperation private (
@@ -186,7 +186,7 @@ case class UnregisteredOperation private (
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+      DictType.empty[String, Attribute],
 ) extends Operation:
 
   override def updated(
@@ -195,7 +195,7 @@ case class UnregisteredOperation private (
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes
+      attributes: DictType[String, Attribute] = attributes,
   ) =
     UnregisteredOperation(name)(
       operands = operands,
@@ -203,7 +203,7 @@ case class UnregisteredOperation private (
       results = results,
       regions = regions,
       properties = properties,
-      attributes = attributes
+      attributes = attributes,
     )
 
 trait OperationCompanion[O <: Operation]:
@@ -211,7 +211,7 @@ trait OperationCompanion[O <: Operation]:
 
   def parse[$: P](parser: Parser, resNames: Seq[String]): P[O] =
     fastparse.Fail(
-      s"No custom Parser implemented for Operation '${name}'"
+      s"No custom Parser implemented for Operation '$name'"
     )
 
   def apply(
@@ -221,7 +221,7 @@ trait OperationCompanion[O <: Operation]:
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+        DictType.empty[String, Attribute],
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()

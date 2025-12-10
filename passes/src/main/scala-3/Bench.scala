@@ -25,7 +25,7 @@ val AddIfold = pattern {
   case AddI(
         Owner(Constant(c0: IntegerAttr, _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     Constant(c0 + c1, Result(c0.typ))
 }

@@ -26,7 +26,7 @@ class PatternRewriterTest extends AnyFlatSpec:
     object TestPattern extends RewritePattern:
       override def matchAndRewrite(
           op: Operation,
-          rewriter: PatternRewriter
+          rewriter: PatternRewriter,
       ): Unit =
         val newRes = op.results.map(_ match
           case Result(I32) => Result(I64)

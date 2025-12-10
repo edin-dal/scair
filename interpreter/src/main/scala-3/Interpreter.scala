@@ -26,14 +26,14 @@ trait OpImpl[T <: Operation: ClassTag]:
 case class FunctionCtx(
     name: String,
     saved_ctx: RuntimeCtx,
-    body: Block
+    body: Block,
 )
 
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val vars: mutable.Map[Value[Attribute], Any],
     val funcs: ListBuffer[FunctionCtx],
-    var result: Option[Any] = None
+    var result: Option[Any] = None,
 ):
 
   // creates independent context
@@ -41,7 +41,7 @@ class RuntimeCtx(
     RuntimeCtx(
       mutable.Map() ++ this.vars,
       ListBuffer() ++ this.funcs,
-      None
+      None,
     )
 
   // helper function for adding a function to the context
@@ -49,7 +49,7 @@ class RuntimeCtx(
     val func_ctx = FunctionCtx(
       name = function.sym_name,
       saved_ctx = this.deep_clone_ctx(),
-      body = function.body.blocks.head
+      body = function.body.blocks.head,
     )
     this.funcs.append(func_ctx)
 
@@ -76,12 +76,12 @@ class Interpreter:
   def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): ImplOf[T] =
     ctx.vars.get(value) match
       case Some(v) => v.asInstanceOf[ImplOf[T]]
-      case _ => throw new Exception(s"Variable ${value} not found in context")
+      case _ => throw new Exception(s"Variable $value not found in context")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
     ctx.vars.get(value) match
       case Some(v: Int) => v
-      case _ => throw new Exception(s"Bool-like ${value} not found in context")
+      case _ => throw new Exception(s"Bool-like $value not found in context")
 
   def register_implementations(): Unit =
     for dialect <- allInterpreterDialects do

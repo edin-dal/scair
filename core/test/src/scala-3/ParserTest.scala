@@ -39,7 +39,7 @@ class ParserTest
     ("input", "result", "expected"),
     ("7", "Success", ()),
     ("a", "Failure", ""),
-    (" $ ! £ 4 1 ", "Failure", "")
+    (" $ ! £ 4 1 ", "Failure", ""),
   )
 
   val hexTests = Table(
@@ -49,7 +49,7 @@ class ParserTest
     ("E", "Success", ()),
     ("41", "Success", ()),
     ("G", "Failure", ""),
-    ("g", "Failure", "")
+    ("g", "Failure", ""),
   )
 
   val intLiteralTests = Table(
@@ -60,14 +60,14 @@ class ParserTest
     ("1xds%", "Success", 1),
     ("0xgg", "Success", 0),
     ("f1231", "Failure", ""),
-    ("0x0011gggg", "Success", 0x0011)
+    ("0x0011gggg", "Success", 0x0011),
   )
 
   val decimalLiteralTests = Table(
     ("input", "result", "expected"),
     ("123456789", "Success", 123456789),
     ("1231f", "Success", 1231),
-    ("f1231", "Failure", "")
+    ("f1231", "Failure", ""),
   )
 
   val hexadecimalLiteralTests = Table(
@@ -75,7 +75,7 @@ class ParserTest
     ("0x0011ffff", "Success", 0x0011ffff),
     ("0x0011gggg", "Success", 0x0011),
     ("1xds%", "Failure", ""),
-    ("0xgg", "Failure", "")
+    ("0xgg", "Failure", ""),
   )
 
   val floatLiteralTests = Table(
@@ -85,12 +85,12 @@ class ParserTest
     ("993.013131", "Success", 993.013131),
     ("1.0e10", "Success", 1.0e10),
     ("1.0E10", "Success", 1.0e10),
-    ("1.", "Failure", "")
+    ("1.", "Failure", ""),
   )
 
   val stringLiteralTests = Table(
     ("input", "result", "expected"),
-    ("\"hello\"", "Success", "hello")
+    ("\"hello\"", "Success", "hello"),
   )
 
   val valueIdTests = Table(
@@ -101,14 +101,14 @@ class ParserTest
     ("%$$$$$", "Success", "$$$$$"),
     ("%_-_-_", "Success", "_-_-_"),
     ("%3asada", "Success", "3"),
-    ("% hello", "Failure", "")
+    ("% hello", "Failure", ""),
   )
 
   val opResultListTests = Table(
     ("input", "result", "expected"),
     ("%0, %1, %2 =", "Success", List("0", "1", "2")),
     ("%0   ,    %1   ,   %2  =   ", "Success", List("0", "1", "2")),
-    ("%0,%1,%2=", "Success", List("0", "1", "2"))
+    ("%0,%1,%2=", "Success", List("0", "1", "2")),
   )
 
   val unitTests = Table(
@@ -116,48 +116,48 @@ class ParserTest
     (
       "Digit",
       ((x: fastparse.P[?]) => Parser.DecDigits(using x)),
-      digitTests
+      digitTests,
     ),
     (
       "HexDigit",
       ((x: fastparse.P[?]) => Parser.HexDigits(using x)),
-      hexTests
+      hexTests,
     ),
     (
       "IntegerLiteral",
       ((x: fastparse.P[?]) => Parser.IntegerLiteral(using x)),
-      intLiteralTests
+      intLiteralTests,
     ),
     (
       "DecimalLiteral",
       ((x: fastparse.P[?]) => Parser.DecimalLiteral(using x)),
-      decimalLiteralTests
+      decimalLiteralTests,
     ),
     (
       "HexadecimalLiteral",
       ((x: fastparse.P[?]) => Parser.HexadecimalLiteral(using x)),
-      hexadecimalLiteralTests
+      hexadecimalLiteralTests,
     ),
     (
       "FloatLiteral",
       ((x: fastparse.P[?]) => Parser.FloatLiteral(using x)),
-      floatLiteralTests
+      floatLiteralTests,
     ),
     (
       "StringLiteral",
       ((x: fastparse.P[?]) => Parser.StringLiteral(using x)),
-      stringLiteralTests
+      stringLiteralTests,
     ),
     (
       "ValueId",
       ((x: fastparse.P[?]) => Parser.ValueId(using x)),
-      valueIdTests
+      valueIdTests,
     ),
     (
       "OpResultList",
       ((x: fastparse.P[?]) => Parser.OpResultList(using x)),
-      opResultListTests
-    )
+      opResultListTests,
+    ),
   )
 
   forAll(unitTests) { (name, pattern, tests) =>
@@ -173,13 +173,13 @@ class ParserTest
     }
   }
 
-  "Block - Unit Tests" should "parse correctly" in {
+  "Block - Unit Tests" should "parse correctly" in
     withClue("Test 1: ") {
       parser.parseThis(
         text =
           "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        pattern = parser.Block(using _)
+        pattern = parser.Block(using _),
       ) should matchPattern {
         case Parsed.Success(
               Block(
@@ -192,11 +192,11 @@ class ParserTest
                     Seq(
                       Result(I32),
                       Result(I64),
-                      Result(I32)
+                      Result(I32),
                     ),
                     Seq(),
                     _,
-                    _
+                    _,
                   ),
                   UnregisteredOperation(
                     "test.op",
@@ -205,25 +205,23 @@ class ParserTest
                     Seq(),
                     Seq(),
                     _,
-                    _
-                  )
-                )
+                    _,
+                  ),
+                ),
               ),
-              100
+              100,
             ) =>
       }
     }
-  }
 
-  "Region - Unit Tests" should "parse correctly" in {
-
+  "Region - Unit Tests" should "parse correctly" in
     withClue("Test 1: ") {
       parser.parseThis(
         text =
           "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
             "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        pattern = parser.RegionP()(using _)
+        pattern = parser.RegionP()(using _),
       ) should matchPattern {
         case Parsed.Success(
               Region(
@@ -237,11 +235,11 @@ class ParserTest
                       Seq(
                         Result(I32),
                         Result(I64),
-                        Result(I32)
+                        Result(I32),
                       ),
                       Seq(),
                       _,
-                      _
+                      _,
                     ),
                     UnregisteredOperation(
                       "test.op",
@@ -250,9 +248,9 @@ class ParserTest
                       Seq(),
                       Seq(),
                       _,
-                      _
-                    )
-                  )
+                      _,
+                    ),
+                  ),
                 ),
                 Block(
                   ListType(Value(I32)),
@@ -264,35 +262,33 @@ class ParserTest
                       Seq(
                         Result(I32),
                         Result(I64),
-                        Result(I32)
+                        Result(I32),
                       ),
                       Seq(),
                       _,
-                      _
+                      _,
                     ),
                     UnregisteredOperation(
                       "test.op",
                       Seq(
                         Value(I64),
-                        Value(I32)
+                        Value(I32),
                       ),
                       Seq(),
                       Seq(),
                       Seq(),
                       _,
-                      _
-                    )
-                  )
-                )
+                      _,
+                    ),
+                  ),
+                ),
               ),
-              202
+              202,
             ) =>
       }
     }
-  }
 
-  "Region2 - Unit Tests" should "parse correctly" in {
-
+  "Region2 - Unit Tests" should "parse correctly" in
     withClue("Test 2: ") {
       parser.parseThis(
         text = """{
@@ -304,18 +300,17 @@ class ParserTest
   "test.op"(%8, %7) : (i64, i32) -> ()
 }""",
         pattern = parser.RegionP()(using _),
-        verboseFailures = true
+        verboseFailures = true,
       ) should matchPattern {
         case Parsed.Failure(
               "Block cannot be defined twice within the same scope - ^bb0",
               _,
-              _
+              _,
             ) =>
       }
     }
-  }
 
-  "Operation  Test - Failure" should "Test faulty Operation IR" in {
+  "Operation  Test - Failure" should "Test faulty Operation IR" in
     withClue("Test 2: ") {
 
       val text = """"op1"()[^bb3]({
@@ -330,14 +325,13 @@ class ParserTest
       parser.parseThis(
         text = text,
         pattern = parser.TopLevel(using _),
-        true
+        true,
       ) should matchPattern {
         case Parsed.Failure("Successor ^bb3 not defined within Scope", _, _) =>
       }
     }
-  }
 
-  "Operation  Test" should "Test forward block reference" in {
+  "Operation  Test" should "Test forward block reference" in
     withClue("Test 3:") {
       val text = """"op1"()({
                  |  ^bb3():
@@ -359,17 +353,16 @@ class ParserTest
 
       parser.parseThis(
         text = text,
-        pattern = parser.OperationPat(using _)
+        pattern = parser.OperationPat(using _),
       ) should matchPattern { case operation =>
       }
     }
-  }
 
-  "TopLevel Tests" should "Test full programs" in {
+  "TopLevel Tests" should "Test full programs" in
     withClue("Test 1: ") {
       parser.parseThis(
         text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ) should matchPattern {
         case Parsed.Success(
               ModuleOp(
@@ -384,23 +377,22 @@ class ParserTest
                         Seq(
                           Result(I32),
                           Result(I64),
-                          Result(I32)
+                          Result(I32),
                         ),
                         Seq(),
                         _,
-                        _
+                        _,
                       )
-                    )
+                    ),
                   )
                 )
               ),
-              48
+              48,
             ) =>
       }
     }
-  }
 
-  "Value Uses assignment test forward ref" should "Test Operation's  forward-referenced Operand uses" in {
+  "Value Uses assignment test forward ref" should "Test Operation's  forward-referenced Operand uses" in
     withClue("Operand Uses: ") {
 
       val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
@@ -411,7 +403,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
@@ -430,9 +422,8 @@ class ParserTest
       uses2.map(use => (use.operation.name, use.index)) shouldEqual
         Set(("op1", 2), ("op2", 2), ("op3", 2), ("op4", 2))
     }
-  }
 
-  "Value Uses assignment test" should "Test Operation's Operand uses" in {
+  "Value Uses assignment test" should "Test Operation's Operand uses" in
     withClue("Operand Uses: ") {
 
       val text = """  %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
@@ -443,7 +434,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(0).results(0).uses
@@ -462,9 +453,8 @@ class ParserTest
       uses2.map(use => (use.operation.name, use.index)) shouldEqual
         Set(("op1", 2), ("op2", 2), ("op3", 2), ("op4", 2))
     }
-  }
 
-  "Operation Erasure" should "Test that operation gets erased :)" in {
+  "Operation Erasure" should "Test that operation gets erased :)" in
     withClue("Operand Erasure: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
@@ -476,7 +466,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ): @unchecked
 
       val printer = new Printer(true)
@@ -492,4 +482,3 @@ class ParserTest
 
       opToErase.containerBlock shouldEqual None
     }
-  }

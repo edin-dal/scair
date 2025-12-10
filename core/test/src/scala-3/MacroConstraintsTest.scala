@@ -15,14 +15,14 @@ type T = Var["T"]
 case class MulFEq(
     lhs: Operand[FloatType !> EqAttr[f32.type]],
     rhs: Operand[FloatType !> EqAttr[f32.type]],
-    result: Result[FloatType]
+    result: Result[FloatType],
 ) extends DerivedOperation["cmath.mul", MulFEq]
     derives DerivedOperationCompanion
 
 case class MulFVar(
     lhs: Operand[FloatType !> T],
     rhs: Operand[FloatType !> T],
-    result: Result[FloatType]
+    result: Result[FloatType],
 ) extends DerivedOperation["cmath.mul", MulFVar]
     derives DerivedOperationCompanion
 
@@ -32,14 +32,14 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     val x = MulFEq(
       Value[FloatType](Float64Type()),
       Value[FloatType](Float64Type()),
-      Value[FloatType](Float64Type())
+      Value[FloatType](Float64Type()),
     )
 
     val res = x.verify()
     assert(res.isLeft)
     assert(
       res.left.get.contains(
-        s"Expected ${f32}, got ${Float64Type()}"
+        s"Expected $f32, got ${Float64Type()}"
       )
     )
   }
@@ -48,7 +48,7 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     val x = MulFEq(
       Value[FloatType](Float32Type()),
       Value[FloatType](Float32Type()),
-      Value[FloatType](Float32Type())
+      Value[FloatType](Float32Type()),
     )
 
     val res = x.verify()
@@ -59,7 +59,7 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     val x = MulFVar(
       Value[FloatType](Float32Type()),
       Value[FloatType](Float64Type()),
-      Value[FloatType](Float64Type())
+      Value[FloatType](Float64Type()),
     )
 
     val res = x.verify()
@@ -75,7 +75,7 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     val x = MulFVar(
       Value[FloatType](Float64Type()),
       Value[FloatType](Float32Type()),
-      Value[FloatType](Float64Type())
+      Value[FloatType](Float64Type()),
     )
 
     val res = x.verify()
@@ -91,7 +91,7 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     val x = MulFVar(
       Value[FloatType](Float32Type()),
       Value[FloatType](Float64Type()),
-      Value[FloatType](Float64Type())
+      Value[FloatType](Float64Type()),
     )
 
     val res = x.verify()
@@ -107,7 +107,7 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     val x = MulFVar(
       Value[FloatType](Float32Type()),
       Value[FloatType](Float32Type()),
-      Value[FloatType](Float32Type())
+      Value[FloatType](Float32Type()),
     )
 
     val res = x.verify()

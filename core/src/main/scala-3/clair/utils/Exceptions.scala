@@ -18,7 +18,7 @@ import scala.io.AnsiColor.*
 // ███████╗ ██╔╝╚██╗ ╚█████╔╝ ███████╗ ██║░░░░░ ░░░██║░░░ ██║ ╚█████╔╝ ██║░╚███║ ██████╔╝
 // ╚══════╝ ╚═╝░░╚═╝ ░╚════╝░ ╚══════╝ ╚═╝░░░░░ ░░░╚═╝░░░ ╚═╝ ░╚════╝░ ╚═╝░░╚══╝ ╚═════╝░
 
-private val clairErr = s"[${RED}claierror${RESET}]   "
+private val clairErr = s"[${RED}claierror$RESET]   "
 
 class ClairCustomException(name: String, message: String)
     extends Exception(
@@ -34,7 +34,7 @@ object ClairExceptionMethods:
   def throwParseError(input: String, failure: Parsed.Failure) =
     val traced = failure.extra.trace
     val msg =
-      s"Parse error at ${input}:${failure.extra.input
+      s"Parse error at $input:${failure.extra.input
           .prettyIndex(failure.index)}:\n\n${failure.extra.trace().aggregateMsg}"
     Console.err.print(msg)
     sys.exit(0)

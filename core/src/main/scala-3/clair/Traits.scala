@@ -35,7 +35,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
+      attributes: DictType[String, Attribute],
   ) =
     comp(
       operands = operands,
@@ -43,7 +43,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       results = results,
       regions = detachedRegions,
       properties = properties,
-      attributes = attributes
+      attributes = attributes,
     )
 
   def name: String = comp.name

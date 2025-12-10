@@ -35,7 +35,7 @@ object AbsfOp:
 
   def parse[$: P](
       parser: Parser,
-      resNames: Seq[String]
+      resNames: Seq[String],
   ): P[AbsfOp] =
     P(
       "" ~ Parser.ValueUse
@@ -53,7 +53,7 @@ object AbsfOp:
             .apply(
               operands = Seq(operand),
               results = Seq(result),
-              properties = Map("fastmath" -> flags)
+              properties = Map("fastmath" -> flags),
             )
             .structured match
             case Right(op: AbsfOp) => Pass(op)
@@ -65,7 +65,7 @@ object AbsfOp:
 case class AbsfOp(
     fastmath: FastMathFlagsAttr,
     operand: Operand[FloatType],
-    result: Result[FloatType]
+    result: Result[FloatType],
 ) extends DerivedOperation["math.absf", AbsfOp]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -78,7 +78,7 @@ object FPowIOp:
 
   def parse[$: P](
       parser: Parser,
-      resNames: Seq[String]
+      resNames: Seq[String],
   ): P[FPowIOp] =
     P(
       Parser.ValueUse.flatMap(lhsName =>
@@ -96,13 +96,13 @@ object FPowIOp:
               case (
                     flags,
                     lhsAndRes,
-                    rhs
+                    rhs,
                   ) =>
                 println(f"Attempting construction")
                 val made = summon[DerivedOperationCompanion[FPowIOp]].apply(
                   operands = Seq(lhsAndRes._1, rhs),
                   results = Seq(lhsAndRes._2),
-                  properties = Map("fastmath" -> flags)
+                  properties = Map("fastmath" -> flags),
                 )
                 println(f"Made: $made")
                 made.structured match
@@ -118,7 +118,7 @@ case class FPowIOp(
     lhs: Operand[FloatType],
     rhs: Operand[IntegerType],
     fastmath: FastMathFlagsAttr,
-    result: Result[FloatType]
+    result: Result[FloatType],
 ) extends DerivedOperation["math.fpowi", FPowIOp]
     with NoMemoryEffect derives DerivedOperationCompanion
 

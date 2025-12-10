@@ -168,7 +168,7 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
   override def patchInPlace(
       from: Int,
       patch: IterableOnce[A],
-      replaced: Int
+      replaced: Int,
   ): this.type =
     var i = from
     patch.iterator

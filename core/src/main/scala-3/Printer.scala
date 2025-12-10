@@ -22,7 +22,7 @@ case class Printer(
       mutable.Map.empty,
     val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
     private val p: PrintWriter = new PrintWriter(System.out),
-    private var aliasesMap: Map[Attribute, String] = Map.empty
+    private var aliasesMap: Map[Attribute, String] = Map.empty,
 ):
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -108,7 +108,7 @@ case class Printer(
       inline iterable: IterableOnce[T],
       inline start: String = "",
       inline sep: String = ", ",
-      inline end: String = ""
+      inline end: String = "",
   )(using
       indentLevel: Int = 0
   ): Unit =
@@ -119,7 +119,7 @@ case class Printer(
       f: T => Unit,
       inline start: String = "",
       inline sep: String = ", ",
-      inline end: String = ""
+      inline end: String = "",
   )(using
       indentLevel: Int = 0
   ): Unit =
@@ -183,7 +183,7 @@ case class Printer(
           attr.customPrint(this)
           print("\n")
           aliasName
-        }
+        },
       )
     )
     this.aliasesMap = aliasesMap.toMap
@@ -200,7 +200,7 @@ case class Printer(
       (k, v) => print(k, " = ", v),
       " {",
       ", ",
-      "}"
+      "}",
     )
 
   def printOptionalAttrDict(
@@ -220,7 +220,7 @@ case class Printer(
         (k, v) => print(k, " = ", v),
         " <{",
         ", ",
-        "}>"
+        "}>",
       )
     if op.regions.nonEmpty then printList(op.regions, " (", ", ", ")")
     printOptionalAttrDict(op.attributes.toMap)
@@ -230,7 +230,7 @@ case class Printer(
       o => print(o.typ),
       "(",
       ", ",
-      ")"
+      ")",
     )
     print(" -> ")
     if op.results.length == 1 then print(op.results.head.typ)
@@ -240,7 +240,7 @@ case class Printer(
         r => print(r.typ),
         "(",
         ", ",
-        ")"
+        ")",
       )
 
   def print(op: Operation)(using indentLevel: Int = 0): Unit =
@@ -268,7 +268,7 @@ class AliasPrinter(
     strictlyGeneric: Boolean = false,
     private val p: PrintWriter = new PrintWriter(System.out),
     val toAlias: mutable.LinkedHashSet[AliasedAttribute] =
-      mutable.LinkedHashSet.empty
+      mutable.LinkedHashSet.empty,
 ) extends Printer(strictlyGeneric = strictlyGeneric, p = p):
 
   override def copy(
@@ -280,12 +280,12 @@ class AliasPrinter(
         mutable.Map.empty,
       blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
       p: PrintWriter = new PrintWriter(System.out),
-      aliasesMap: Map[Attribute, String] = Map.empty
+      aliasesMap: Map[Attribute, String] = Map.empty,
   ): AliasPrinter =
     new AliasPrinter(
       strictlyGeneric = strictlyGeneric,
       p = p,
-      toAlias = toAlias
+      toAlias = toAlias,
     )
 
   override def print(string: String) = ()

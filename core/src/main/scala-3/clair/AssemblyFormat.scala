@@ -229,12 +229,12 @@ case class VariableDirective(
     construct match
       case MayVariadicOpInputDef(
             name = n,
-            variadicity = Variadicity.Variadic
+            variadicity = Variadicity.Variadic,
           ) =>
         '{ ${ p }.asInstanceOf[Seq[?]].size > 0 }
       case MayVariadicOpInputDef(
             name = n,
-            variadicity = Variadicity.Optional
+            variadicity = Variadicity.Optional,
           ) =>
         '{ ${ p }.asInstanceOf[Option[?]].isDefined }
       case d: OpInputDef =>
@@ -263,7 +263,7 @@ case class TypeDirective(
         '{ $p.print(${ selectMember[Value[?]](op, n) }.typ) }
       case MayVariadicOpInputDef(
             name = n,
-            variadicity = Variadicity.Variadic
+            variadicity = Variadicity.Variadic,
           ) =>
         '{
           $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))(using
@@ -272,7 +272,7 @@ case class TypeDirective(
         }
       case MayVariadicOpInputDef(
             name = n,
-            variadicity = Variadicity.Optional
+            variadicity = Variadicity.Optional,
           ) =>
         '{
           ${ selectMember[Option[Value[?]]](op, n) }
@@ -303,7 +303,7 @@ case class TypeDirective(
 
 case class OptionalGroupDirective(
     anchor: Directive,
-    directives: Seq[Directive]
+    directives: Seq[Directive],
 ) extends Directive:
 
   def parse(
@@ -358,7 +358,7 @@ case class OptionalGroupDirective(
   */
 transparent inline def chainParsers(
     run: Expr[P[Any]],
-    next: Expr[P[Any]]
+    next: Expr[P[Any]],
 )(using quotes: Quotes, ctx: Expr[P[Any]]): Expr[P[Any]] =
 
   // This match to specialize the parsers types for fastparse's summoned Sequencer
@@ -411,7 +411,7 @@ transparent inline def chainParsers(
   */
 case class PrintingState(
     var shouldEmitSpace: Boolean = true,
-    var lastWasPunctuation: Boolean = false
+    var lastWasPunctuation: Boolean = false,
 )
 
 /** Declarative assembly format representation. Contains a sequence of
@@ -427,7 +427,7 @@ case class AssemblyFormatDirective(
       '{ $p.print($op.asInstanceOf[Operation].name) } +: directives
         .map(_.print(op, p))
         .toList,
-      '{}
+      '{},
     )
 
   /** Generates a parser for this assembly format. It currently simply chains
@@ -465,7 +465,7 @@ case class AssemblyFormatDirective(
       opDef: OperationDef,
       p: Expr[Parser],
       parsed: Expr[Tuple],
-      resNames: Expr[Seq[String]]
+      resNames: Expr[Seq[String]],
   )(using ctx: Expr[P[Any]])(using Quotes) =
     import quotes.reflect.report
 
@@ -566,7 +566,7 @@ case class AssemblyFormatDirective(
         resultsNames = $resNames,
         resultsTypes = $flatResultTypes,
         attributes = $attrDict,
-        properties = $propertiesDict.asInstanceOf[Map[String, Attribute]]
+        properties = $propertiesDict.asInstanceOf[Map[String, Attribute]],
       )(using $ctx)
     }
 
@@ -587,7 +587,7 @@ case class AssemblyFormatDirective(
   def parse[O <: Operation: Type](
       opDef: OperationDef,
       p: Expr[Parser],
-      resNames: Expr[Seq[String]]
+      resNames: Expr[Seq[String]],
   )(using
       quotes: Quotes
   ): Expr[P[Any] ?=> P[O]] =
@@ -686,7 +686,7 @@ def optionalGroupDirective[$: P](using opDef: OperationDef): P[Directive] =
   */
 def parseAssemblyFormat(
     format: String,
-    opDef: OperationDef
+    opDef: OperationDef,
 ): AssemblyFormatDirective =
   given OperationDef = opDef
   parse(format, (x: fastparse.P[?]) => assemblyFormat(using x)) match

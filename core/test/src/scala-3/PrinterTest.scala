@@ -40,7 +40,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
   "printBlock" should "return the correct string representation of a block" in {
     val block = Block(
       Seq(I32),
-      Seq(UnregisteredOperation("op1")())
+      Seq(UnregisteredOperation("op1")()),
     )
     val expected = """^bb0(%0: i32):
                      |  "op1"() : () -> ()
@@ -80,7 +80,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
             )
           )
         )
-      )
+      ),
     )
     val expected = """%0 = "op1"(%1) ({
                      |  "op2"() : () -> ()
@@ -100,7 +100,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
 
     val successorTestBlock = Block(
       ListType(),
-      ListType()
+      ListType(),
     )
 
     val program =
@@ -115,7 +115,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
                     successors = Seq(successorTestBlock)
                   )
                 )
-              )
+              ),
             )
           )
         )

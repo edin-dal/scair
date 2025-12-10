@@ -32,21 +32,21 @@ import scair.Parser.*
 def checkDistinct[$: P](name: String, list: Seq[String]): P[Seq[String]] =
   if list.distinct.size != list.size then
     Fail(
-      s"Number of ${name} in Affine Map/Set must be unique! ;)"
+      s"Number of $name in Affine Map/Set must be unique! ;)"
     )
   else Pass(list)
 
 def validateAffineExpr[$: P](
     name: String,
     dimsym: String,
-    list: Seq[String]
+    list: Seq[String],
 ): P[String] =
   if !list.contains(dimsym) then
     println(list.contains(dimsym))
     println(list)
     println(dimsym)
     Fail(
-      s"${name} \"${dimsym}\" used in the expression but not defined! | ${dimsym} | ${list}"
+      s"$name \"$dimsym\" used in the expression but not defined! | $dimsym | $list"
     )
   else Pass(dimsym)
 
@@ -123,7 +123,7 @@ def AffineSymExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
 
 def AffineConstantP[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineExpr] =
   P(IntegerLiteral).map(AffineConstantExpr(_))
 
@@ -140,54 +140,54 @@ def AffineExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
 
 def AffineAddExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineBinaryOpExpr] =
   P(AffineSinglesP(dims, symbs) ~ "+" ~ AffineExprP(dims, symbs))
     .map(AffineBinaryOpExpr(add, _, _))
 
 def AffineMinusExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineBinaryOpExpr] =
   P(AffineSinglesP(dims, symbs) ~ "-" ~ AffineExprP(dims, symbs))
     .map(AffineBinaryOpExpr(minus, _, _))
 
 def AffineMultiplyExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineBinaryOpExpr] =
   P(
     AffineConstantP(dims, symbs) ~ "*" ~ AffineSinglesP(
       dims,
-      symbs
+      symbs,
     ) | AffineSinglesP(dims, symbs) ~ "*" ~ AffineConstantP(dims, symbs)
   )
     .map(AffineBinaryOpExpr(multiply, _, _))
 
 def AffineCeilDivExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineBinaryOpExpr] =
   P(AffineSinglesP(dims, symbs) ~ "ceildiv" ~ AffineConstantP(dims, symbs))
     .map(AffineBinaryOpExpr(ceildiv, _, _))
 
 def AffineFloorDivExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineBinaryOpExpr] =
   P(AffineSinglesP(dims, symbs) ~ "floordiv" ~ AffineConstantP(dims, symbs))
     .map(AffineBinaryOpExpr(floordiv, _, _))
 
 def AffineModExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineBinaryOpExpr] =
   P(AffineSinglesP(dims, symbs) ~ "mod" ~ AffineConstantP(dims, symbs))
     .map(AffineBinaryOpExpr(mod, _, _))
 
 def MultiDimAffineExpr[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[Seq[AffineExpr]] =
   P("(" ~ AffineExprP(dims, symbs).rep(0, sep = ",") ~ ")")
 
@@ -233,13 +233,13 @@ def AffineSetP[$: P]: P[AffineSet] =
 
 def AffineConstraintP[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineConstraintExpr] =
   P(GreaterEqualP(dims, symbs) | LessEqualP(dims, symbs) | EqualP(dims, symbs))
 
 def GreaterEqualP[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineConstraintExpr] =
   P(AffineExprP(dims, symbs) ~ ">=" ~ AffineExprP(dims, symbs)).map(
     AffineConstraintExpr(greaterequal, _, _)
@@ -247,7 +247,7 @@ def GreaterEqualP[$: P](
 
 def LessEqualP[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineConstraintExpr] =
   P(AffineExprP(dims, symbs) ~ "<=" ~ AffineExprP(dims, symbs)).map(
     AffineConstraintExpr(lessequal, _, _)
@@ -255,7 +255,7 @@ def LessEqualP[$: P](
 
 def EqualP[$: P](
     dims: Seq[String],
-    symbs: Seq[String]
+    symbs: Seq[String],
 ): P[AffineConstraintExpr] =
   P(AffineExprP(dims, symbs) ~ "==" ~ AffineExprP(dims, symbs)).map(
     AffineConstraintExpr(equal, _, _)

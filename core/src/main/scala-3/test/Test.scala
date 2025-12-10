@@ -16,7 +16,7 @@ case class TestOp(
     override val properties: Map[String, Attribute] =
       Map.empty[String, Attribute],
     override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+      DictType.empty[String, Attribute],
 ) extends Operation:
   override def name = "test.op"
 
@@ -26,7 +26,7 @@ case class TestOp(
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes
+      attributes: DictType[String, Attribute] = attributes,
   ) =
     TestOp(
       operands,
@@ -34,7 +34,7 @@ case class TestOp(
       results,
       regions,
       properties,
-      attributes
+      attributes,
     )
 
 val Test: Dialect = summonDialect[EmptyTuple, Tuple1[TestOp]]

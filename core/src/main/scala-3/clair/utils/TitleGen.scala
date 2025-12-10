@@ -45,7 +45,7 @@ object TitleGen:
       title_size * letter_size + 2 // + title_size + 1 to create horizontal \n lines in between words
     val charMap = Letters.charMap
 
-    val generated_title = ListType.fill(lines) { new StringBuilder("") }
+    val generated_title = ListType.fill(lines)(new StringBuilder(""))
     var index = 0
 
     generated_title(0) += '\n'
@@ -108,7 +108,7 @@ object Letters:
       "██║░░██╗░",
       "██║░░╚██╗",
       "╚██████╔╝",
-      "░╚═════╝░"
+      "░╚═════╝░",
     )
 
   val letterH: Seq[String] =
@@ -133,7 +133,7 @@ object Letters:
       "██╔████╔██║",
       "██║╚██╔╝██║",
       "██║░╚═╝░██║",
-      "╚═╝░░░░░╚═╝"
+      "╚═╝░░░░░╚═╝",
     )
 
   val letterN: Seq[String] =
@@ -143,7 +143,7 @@ object Letters:
       "██╔██╗██║",
       "██║╚████║",
       "██║░╚███║",
-      "╚═╝░░╚══╝"
+      "╚═╝░░╚══╝",
     )
 
   val letterO: Seq[String] =
@@ -159,7 +159,7 @@ object Letters:
       "██║██╗██║",
       "╚██████╔╝",
       "░╚═██╔═╝░",
-      "░░░╚═╝░░░"
+      "░░░╚═╝░░░",
     )
 
   val letterR: Seq[String] =
@@ -175,7 +175,7 @@ object Letters:
       "░░░██║░░░",
       "░░░██║░░░",
       "░░░██║░░░",
-      "░░░╚═╝░░░"
+      "░░░╚═╝░░░",
     )
 
   val letterU: Seq[String] =
@@ -185,7 +185,7 @@ object Letters:
       "██║░░░██║",
       "██║░░░██║",
       "╚██████╔╝",
-      "░╚═════╝░"
+      "░╚═════╝░",
     )
 
   val letterV: Seq[String] =
@@ -195,7 +195,7 @@ object Letters:
       "╚██╗░██╔╝",
       "░╚████╔╝░",
       "░░╚██╔╝░░",
-      "░░░╚═╝░░░"
+      "░░░╚═╝░░░",
     )
 
   val letterW: Seq[String] =
@@ -205,7 +205,7 @@ object Letters:
       "╚██╗████╗██╔╝",
       "░████╔═████║░",
       "░╚██╔╝░╚██╔╝░",
-      "░░╚═╝░░░╚═╝░░"
+      "░░╚═╝░░░╚═╝░░",
     )
 
   val letterX: Seq[String] =
@@ -218,7 +218,7 @@ object Letters:
       "░╚████╔╝░",
       "░░╚██╔╝░░",
       "░░░██║░░░",
-      "░░░╚═╝░░░"
+      "░░░╚═╝░░░",
     )
 
   val letterZ: Seq[String] =
@@ -286,5 +286,5 @@ object Letters:
     ('6' -> number6),
     ('7' -> number7),
     ('8' -> number8),
-    ('9' -> number9)
+    ('9' -> number9),
   )

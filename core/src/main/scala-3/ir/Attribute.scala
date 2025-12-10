@@ -61,7 +61,7 @@ abstract trait ParametrizedAttribute() extends Attribute:
         p.print,
         "<",
         ", ",
-        ">"
+        ">",
       )
 
   override def equals(attr: Any): Boolean =
@@ -80,7 +80,7 @@ object DataAttribute:
 
 abstract class DataAttribute[D](
     override val name: String,
-    val data: D
+    val data: D,
 ) extends Attribute:
 
   override def printParameters(p: Printer) =
