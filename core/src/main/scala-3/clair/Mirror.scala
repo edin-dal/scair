@@ -222,13 +222,13 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        assembly_format = None
+        assemblyFormat = None
       )
       val format = Type.of[T] match
         case '[AssemblyFormat[format]] =>
           Some(parseAssemblyFormat(Type.valueOfConstant[format].get, opDef))
         case _ => None
-      opDef.copy(assembly_format = format)
+      opDef.copy(assemblyFormat = format)
 
 def getCompanion[T: Type](using quotes: Quotes) =
   import quotes.reflect.*

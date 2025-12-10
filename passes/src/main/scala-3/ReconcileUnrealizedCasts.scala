@@ -66,7 +66,7 @@ def findCycleRoot(
 
 val InputFuse = pattern { case matched: UnrealizedConversionCastOp =>
   findCycleRoot(matched) match
-    case Some(root) if root != matched && matched.container_block.isDefined =>
+    case Some(root) if root != matched && matched.containerBlock.isDefined =>
       UnrealizedConversionCastOp(
         inputs = root.inputs,
         outputs = matched.outputs

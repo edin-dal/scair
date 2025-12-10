@@ -24,10 +24,10 @@ import scala.collection.mutable.LinkedHashMap
 trait IRNode:
   def parent: Option[IRNode]
 
-  final def is_ancestor(other: IRNode): Boolean =
+  final def isAncestor(other: IRNode): Boolean =
     other.parent match
       case Some(parent) if parent == this => true
-      case Some(parent)                   => is_ancestor(parent)
+      case Some(parent)                   => isAncestor(parent)
       case None                           => false
       case null                           => false
 
@@ -39,7 +39,7 @@ trait IRNode:
 
 trait Operation extends IRNode with IntrusiveNode[Operation]:
 
-  final override def parent = container_block
+  final override def parent = containerBlock
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
@@ -56,7 +56,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       attributes = LinkedHashMap.from(attributes)
     )
 
-  regions.foreach(attach_region)
+  regions.foreach(attachRegion)
 
   results.foreach(r =>
     // if r.owner != None then
@@ -73,7 +73,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-      regions: Seq[Region] = detached_regions,
+      regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ): Operation
@@ -82,16 +82,16 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   def successors: Seq[Block]
   def results: Seq[Result[Attribute]]
   def regions: Seq[Region]
-  final def detached_regions = regions.map(_.detached)
+  final def detachedRegions = regions.map(_.detached)
   def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
-  var container_block: Option[Block] = None
-  def trait_verify(): Either[String, Operation] = Right(this)
+  var containerBlock: Option[Block] = None
+  def traitVerify(): Either[String, Operation] = Right(this)
 
-  def custom_print(p: Printer)(using indentLevel: Int) =
+  def customPrint(p: Printer)(using indentLevel: Int) =
     p.printGenericMLIROperation(this)
 
-  def custom_verify(): Either[String, Operation] = Right(this)
+  def customVerify(): Either[String, Operation] = Right(this)
 
   def structured: Either[String, Operation] = regions
     .foldLeft[Either[String, Unit]](Right(()))((res, reg) =>
@@ -111,43 +111,43 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       )
       .flatMap(_ =>
         properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, prop) => res.flatMap(_ => prop.custom_verify())
+          (res, prop) => res.flatMap(_ => prop.customVerify())
         )
       )
       .flatMap(_ =>
         attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, attr) => res.flatMap(_ => attr.custom_verify())
+          (res, attr) => res.flatMap(_ => attr.customVerify())
         )
       )
-      .flatMap(_ => trait_verify())
-      .flatMap(_ => custom_verify())
+      .flatMap(_ => traitVerify())
+      .flatMap(_ => customVerify())
 
-  final def drop_all_references: Unit =
-    container_block = None
+  final def dropAllReferences: Unit =
+    containerBlock = None
 
-  final def erase(safe_erase: Boolean = true): Unit =
-    if container_block != None then
+  final def erase(safeErase: Boolean = true): Unit =
+    if containerBlock != None then
       throw new Exception(
         "Operation should be first detached from its container block before erasure."
       )
-    drop_all_references
-    if safe_erase then for result <- results do result.erase()
+    dropAllReferences
+    if safeErase then for result <- results do result.erase()
 
-  final def attach_region(region: Region) =
-    region.container_operation match
+  final def attachRegion(region: Region) =
+    region.containerOperation match
       case Some(x) =>
         throw new Exception(
           s"""Can't attach a region already attached to an operation:
               ${Printer().print(region)(using 0)}"""
         )
       case None =>
-        region.is_ancestor(this) match
+        region.isAncestor(this) match
           case true =>
             throw new Exception(
               "Can't add a region to an operation that is contained within that region"
             )
           case false =>
-            region.container_operation = Some(this)
+            region.containerOperation = Some(this)
 
   final override def hashCode(): Int = System.identityHashCode(this)
   final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
@@ -193,7 +193,7 @@ case class UnregisteredOperation private (
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-      regions: Seq[Region] = detached_regions,
+      regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ) =

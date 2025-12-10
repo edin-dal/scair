@@ -24,7 +24,7 @@ class PatternRewriterTest extends AnyFlatSpec:
       .value
 
     object TestPattern extends RewritePattern:
-      override def match_and_rewrite(
+      override def matchAndRewrite(
           op: Operation,
           rewriter: PatternRewriter
       ): Unit =
@@ -32,7 +32,7 @@ class PatternRewriterTest extends AnyFlatSpec:
           case Result(I32) => Result(I64)
           case r           => r)
         if newRes != op.results then
-          rewriter.replace_op(op, op.updated(results = newRes))
+          rewriter.replaceOp(op, op.updated(results = newRes))
 
     // Apply the pattern
     val walker = PatternRewriteWalker(TestPattern)

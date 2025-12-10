@@ -12,14 +12,14 @@ object run_alloc extends OpImpl[memref.Alloc]:
   ): Unit =
 
     // retrieving the Seq[int] that derives the dimension of the the array and thus memory
-    val shape_seq =
+    val shapeSeq =
       for dim <- alloc_op.dynamicSizes yield interpreter.lookup_op(dim, ctx)
 
     // initialising a zero array to represent allocated memory
     // multi-dimensional objects are packed into a 1-D array
     ctx.vars.put(
       alloc_op.memref,
-      ShapedArray(Array.fill(shape_seq.product)(0), shape_seq)
+      ShapedArray(Array.fill(shapeSeq.product)(0), shapeSeq)
     )
 
 object run_store extends OpImpl[memref.Store]:

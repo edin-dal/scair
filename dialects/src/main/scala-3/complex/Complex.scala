@@ -124,7 +124,7 @@ case class ComplexAttr(
 ) extends DerivedAttribute["complex.number", ComplexAttr]
     derives DerivedAttributeCompanion:
 
-  override def custom_print(p: Printer): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print(
       s"#complex.number<:",
       tpe.tpe,

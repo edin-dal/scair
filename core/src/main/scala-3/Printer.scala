@@ -14,7 +14,7 @@ import scala.collection.mutable.LinkedHashSet
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
 
 case class Printer(
-    val strictly_generic: Boolean = false,
+    val strictlyGeneric: Boolean = false,
     val indent: String = "  ",
     var valueNextID: Int = 0,
     var blockNextID: Int = 0,
@@ -64,7 +64,7 @@ case class Printer(
   def print(attribute: Attribute): Unit =
     aliasesMap.get(attribute) match
       case Some(alias) => print(alias)
-      case None        => attribute.custom_print(this)
+      case None        => attribute.customPrint(this)
 
   def print(attributes: Seq[Attribute]): Unit =
     printList(attributes, "[", ", ", "]")
@@ -165,7 +165,7 @@ case class Printer(
     print(indent * indentLevel + "}")
 
   def printAliases(ops: Seq[Operation]) =
-    val printer = AliasPrinter(strictly_generic = strictly_generic, p = p)
+    val printer = AliasPrinter(strictlyGeneric = strictlyGeneric, p = p)
     printer.print(ops)(using indentLevel = 0)
     val aliasesMap = mutable.Map.empty[Attribute, String]
     val aliasesCounters = mutable.Map.empty[String, Int]
@@ -180,7 +180,7 @@ case class Printer(
             case c => c.toString)
           print(aliasName)
           print(" = ")
-          attr.custom_print(this)
+          attr.customPrint(this)
           print("\n")
           aliasName
         }
@@ -248,11 +248,11 @@ case class Printer(
     if op.results.nonEmpty then
       printList(op.results)
       print(" = ")
-    if strictly_generic then
+    if strictlyGeneric then
       printGenericMLIROperation(
         op
       )
-    else op.custom_print(this)
+    else op.customPrint(this)
 
     print("\n")
     flush()
@@ -265,14 +265,14 @@ case class Printer(
     print(ops)(using indentLevel = 0)
 
 class AliasPrinter(
-    strictly_generic: Boolean = false,
+    strictlyGeneric: Boolean = false,
     private val p: PrintWriter = new PrintWriter(System.out),
     val toAlias: mutable.LinkedHashSet[AliasedAttribute] =
       mutable.LinkedHashSet.empty
-) extends Printer(strictly_generic = strictly_generic, p = p):
+) extends Printer(strictlyGeneric = strictlyGeneric, p = p):
 
   override def copy(
-      strictly_generic: Boolean = false,
+      strictlyGeneric: Boolean = false,
       indent: String = "  ",
       valueNextID: Int = 0,
       blockNextID: Int = 0,
@@ -283,7 +283,7 @@ class AliasPrinter(
       aliasesMap: Map[Attribute, String] = Map.empty
   ): AliasPrinter =
     new AliasPrinter(
-      strictly_generic = strictly_generic,
+      strictlyGeneric = strictlyGeneric,
       p = p,
       toAlias = toAlias
     )
@@ -291,7 +291,7 @@ class AliasPrinter(
   override def print(string: String) = ()
 
   override def print(attribute: Attribute): Unit =
-    attribute.custom_print(this)
+    attribute.customPrint(this)
     attribute match
       case aliased: AliasedAttribute => toAlias.add(aliased)
       case _                         => ()

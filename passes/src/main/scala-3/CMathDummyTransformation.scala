@@ -25,7 +25,7 @@ val TestInsertingDummyOperation = pattern {
       UnregisteredOperation("dummy4")()
     )
   case op
-      if (!op.attributes.contains("replaced")) && op.container_block != None =>
+      if (!op.attributes.contains("replaced")) && op.containerBlock != None =>
     op.updated(attributes =
       op.attributes.addOne("replaced" -> StringData("false"))
     )
@@ -50,7 +50,7 @@ val TestReplacingDummyOperation = pattern {
         .map(Result(_))
     )
   case op
-      if (!op.attributes.contains("replaced")) && op.container_block != None =>
+      if (!op.attributes.contains("replaced")) && op.containerBlock != None =>
     op.updated(attributes =
       op.attributes.addOne("replaced" -> StringData("false"))
     )

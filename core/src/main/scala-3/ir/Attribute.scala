@@ -24,10 +24,10 @@ import java.io.StringWriter
 sealed trait Attribute:
   def name: String
   def prefix: String = "#"
-  def custom_verify(): Either[String, Unit] = Right(())
+  def customVerify(): Either[String, Unit] = Right(())
   def printParameters(p: Printer): Unit
 
-  def custom_print(p: Printer): Unit =
+  def customPrint(p: Printer): Unit =
     given indentLevel: Int = 0
     p.print(prefix, name)
     printParameters(p)
@@ -35,7 +35,7 @@ sealed trait Attribute:
   override def toString(): String =
     val out = StringWriter()
     val p = Printer(p = PrintWriter(out))
-    custom_print(p)
+    customPrint(p)
     p.flush()
     out.toString()
 
@@ -47,7 +47,7 @@ trait IntegerEnumAttr extends Attribute:
 
   override def printParameters(p: Printer): Unit = ()
 
-  override def custom_print(p: Printer): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print(ordinalIntAttr)
 
 abstract trait ParametrizedAttribute() extends Attribute:

@@ -51,13 +51,13 @@ class TransformationsTest
       val opToErase = value.regions(0).blocks(0).operations(1)
 
       val block =
-        opToErase.container_block.getOrElse(throw new Exception("bruh"))
+        opToErase.containerBlock.getOrElse(throw new Exception("bruh"))
 
       val exception = intercept[Exception](
-        block.erase_op(opToErase)
+        block.eraseOp(opToErase)
       ).getMessage shouldBe "Attempting to erase a Value that has uses in other operations."
 
-      opToErase.container_block shouldEqual None
+      opToErase.containerBlock shouldEqual None
     }
   }
 
@@ -87,10 +87,10 @@ class TransformationsTest
       val blockToAddItTo =
         opToAdd.regions(0).blocks(0).operations(0).regions(0).blocks(0)
 
-      value.regions(0).blocks(0).detach_op(opToAdd)
+      value.regions(0).blocks(0).detachOp(opToAdd)
 
       val exception = intercept[Exception](
-        blockToAddItTo.add_op(opToAdd)
+        blockToAddItTo.addOp(opToAdd)
       ).getMessage shouldBe "Can't add an operation to a block that is contained within that operation"
     }
   }
@@ -130,7 +130,7 @@ class TransformationsTest
         .operations(0)
 
       val exception = intercept[Exception](
-        block.insert_op_before(refOp, opToInsert)
+        block.insertOpBefore(refOp, opToInsert)
       ).getMessage shouldBe "Can't insert the new operation into the block, as the operation that was " +
         "given as a point of reference does not exist in the current block."
     }

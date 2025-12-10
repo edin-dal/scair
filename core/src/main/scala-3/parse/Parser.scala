@@ -316,14 +316,14 @@ final class Parser(
 
     // Get the error's line's content
     val length = traced.input.length
-    val input_line = traced.input.slice(0, length).split("\n")(line - 1)
+    val inputLine = traced.input.slice(0, length).split("\n")(line - 1)
 
     // Build a visual indicator of where the error is.
     val indicator = " " * (col - 1) + "^"
 
     // Build the error message.
     val msg =
-      s"Parse error at ${inputPath.getOrElse("-")}:${line + lineOffset}:$col:\n\n$input_line\n$indicator\n${traced.label}"
+      s"Parse error at ${inputPath.getOrElse("-")}:${line + lineOffset}:$col:\n\n$inputLine\n$indicator\n${traced.label}"
 
     if parsingDiagnostics then msg
     else
@@ -379,9 +379,9 @@ def TopLevelP[$: P](using p: Parser): P[Operation] = P(
       val region = Region(block)
       val moduleOp = ModuleOp(region)
 
-      for op <- toplevel do op.container_block = Some(block)
-      block.container_region = Some(region)
-      region.container_operation = Some(moduleOp)
+      for op <- toplevel do op.containerBlock = Some(block)
+      block.containerRegion = Some(region)
+      region.containerOperation = Some(moduleOp)
 
       moduleOp
 )
@@ -585,7 +585,7 @@ private inline def populateBlockOps(
     ops: Seq[Operation]
 )(using p: Parser): Block =
   block.operations ++= ops
-  ops.foreach(_.container_block = Some(block))
+  ops.foreach(_.containerBlock = Some(block))
   block
 
 private inline def populateBlockArgs[$: P](
