@@ -209,11 +209,11 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ ValueUse(using $ctx) }
+            '{ OperandName(using $ctx) }
           case Variadicity.Variadic =>
-            '{ ValueUseList(using $ctx) }
+            '{ OperandNames(using $ctx) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; ValueUse.? }
+            '{ given P[?] = $ctx; OperandName.? }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>

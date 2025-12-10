@@ -270,14 +270,14 @@ final class Parser(
       .foldLeft(
         Pass(Seq.empty[Value[Attribute]])
       )((l: P[Seq[Value[Attribute]]], r: (String, Attribute)) =>
-        (l ~ useValue(r._1, r._2)).map(_ :+ _)
+        (l ~ operand(r._1, r._2)).map(_ :+ _)
       )
       .flatMap(operands =>
         (resultsNames zip resultsTypes)
           .foldLeft(
             Pass(Seq.empty[Result[Attribute]])
           )((l: P[Seq[Result[Attribute]]], r: (String, Attribute)) =>
-            (l ~ defineResult(r._1, r._2)).map(_ :+ _)
+            (l ~ result(r._1, r._2)).map(_ :+ _)
           )
           .flatMap(results =>
             context.getOpCompanion(opName, allowUnregisteredDialect) match
@@ -330,7 +330,7 @@ final class Parser(
       Console.err.println(msg)
       sys.exit(1)
 
-def useValue[$: P](name: String, typ: Attribute)(using
+def operand[$: P](name: String, typ: Attribute)(using
     p: Parser
 ): P[Value[Attribute]] =
   p.scopes.collectFirst {
@@ -348,7 +348,7 @@ def useValue[$: P](name: String, typ: Attribute)(using
       p.scopes.top.forwardValues += name
       Pass(forwardValue)
 
-def defineResult[$: P](
+def result[$: P](
     name: String,
     typ: Attribute
 )(using p: Parser): P[Result[Attribute]] =
@@ -416,10 +416,10 @@ private def GenericOperandsTypesRec[$: P](using
         .opaque(
           f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed - 1})."
         )
-        .flatMap(useValue(head, _))
+        .flatMap(operand(head, _))
         .map(Seq(_))
     case head :: tail =>
-      (TypeP.flatMap(useValue(head, _)) ~ ",".opaque(
+      (TypeP.flatMap(operand(head, _)) ~ ",".opaque(
         f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
       ) ~ GenericOperandsTypesRec(
         tail,
@@ -448,12 +448,12 @@ private def GenericResultsTypesRec[$: P](using
           f"Number of results ($expected) does not match the number of the corresponding result types (${parsed - 1})."
         )
         .flatMap(
-          defineResult(head, _)
+          result(head, _)
         )
         .map(Seq(_))
     case head :: tail =>
       (TypeP.flatMap(
-        defineResult(head, _)
+        result(head, _)
       ) ~ ",".opaque(
         f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
       ) ~ GenericResultsTypesRec(tail, parsed + 1)).map(_ +: _)
@@ -488,7 +488,7 @@ private inline def GenericOperation[$: P](
 )(using Parser): P[Operation] =
   GenericOperationName
     .flatMapX((opCompanion: OperationCompanion[?]) =>
-      "(" ~ ValueUseList
+      "(" ~ OperandNames
         .orElse(Seq())
         .flatMap((operandsNames: Seq[String]) =>
           (")"

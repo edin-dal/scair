@@ -155,11 +155,11 @@ def SuffixId[$: P] = P(
 
 def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
 
-def ValueUse[$: P] =
+def OperandName[$: P] =
   P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
 
-def ValueUseList[$: P] =
-  P(ValueUse.rep(sep = ","))
+def OperandNames[$: P] =
+  P(OperandName.rep(sep = ","))
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||  DIALECT TYPES  ||

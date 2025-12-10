@@ -34,13 +34,12 @@ given OperationCustomParser[AbsfOp]:
       resNames: Seq[String]
   )(using p: Parser): P[AbsfOp] =
     P(
-      "" ~ ValueUse
-        .flatMap(operandName =>
+      OperandName.flatMap(operandName =>
           (AttributeP.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
           ) ~ ":" ~ TypeP.flatMap(tpe =>
-            useValue(operandName, tpe) ~
-              defineResult(resNames.head, tpe)
+            operand(operandName, tpe) ~
+              result(resNames.head, tpe)
           ))
         )
         .flatMap { case (flags, operandAndResult) =>
@@ -75,16 +74,16 @@ given OperationCustomParser[FPowIOp]:
       resNames: Seq[String]
   )(using p: Parser): P[FPowIOp] =
     P(
-      ValueUse.flatMap(lhsName =>
-        ("," ~ ValueUse.flatMap(rhsName =>
+      OperandName.flatMap(lhsName =>
+        ("," ~ OperandName.flatMap(rhsName =>
           (AttributeP.orElse(
             FastMathFlagsAttr(FastMathFlags.none)
           ) ~ ":" ~ TypeP.flatMap(lhsType =>
-            useValue(lhsName, lhsType) ~
-              defineResult(resNames.head, lhsType)
+            operand(lhsName, lhsType) ~
+              result(resNames.head, lhsType)
           )
             ~ "," ~ TypeP.flatMap(
-              useValue(rhsName, _)
+              operand(rhsName, _)
             ))
             .flatMap {
               case (
