@@ -18,5 +18,9 @@ And the general form of a type attribute is `!dialect.attribute<...>`
 # How to define an **Operation** 
 TODO: could mention IRDL as well 
 
+### Traits
+
+### 
+
 
 # How to package all into a **Dialect**
