@@ -1,14 +1,14 @@
 In this tutorial we will focus on the core compilation abstraction used in MLIR. 
-- [[#Static-Single Assignment]]
-- [[#Regions]]
-- [[#Attribute]]
-- [[#Operation]]
-- [[#Dialect]]
+- [Static-Single Assignment](#static-single-assignment)
+- [Regions](#regions)
+- [Attribute](#attribute)
+- [Operation](#operation)
+- [Dialect](#dialect)
 
 **`Note:`** The objective of this tutorial is to gain basic intuitions about the SSA form, Regions as well as the core compilation concepts introduced by MLIR. The tutorial will include brief informal definitions of each concept, complemented by some basic examples in the IR. As such, this tutorial does not serve as a comprehensive guide through each concept. 
 
 For more formal introductions please refer to:
-- 
+- some link
 
 # Static-Single Assignment (SSA)
 MLIR's Intermediate Representation (IR) maintains the SSA form. 

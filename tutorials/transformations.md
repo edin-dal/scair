@@ -1,9 +1,7 @@
 In this tutorial we will focus on writing optimizing transformations in ScaIR. 
-- [[#Constant Folding and Dead Code Elimination]]
-	- [[#Example]]
-	- [[#ScaIR Implementation]]
-	- [[#Connecting the Pass]]
-- [[#Footnotes]]
+- [Constant Folding and Dead Code Elimination](#constant-folding-and-dead-code-elimination)
+	- [Example](#example)
+	- [ScaIR Implementation](#scair-implementation)
 	- 
 # Constant Folding and Dead Code Elimination
 
@@ -102,7 +100,7 @@ Next, let's define our dead code elimination. And here is where our trait **`NoM
 If an Operation has no effects on memory, then we can safely erase it after making sure that none of its results are used anywhere in the IR: 
 ```scala
 val DeadCodeElimination = pattern {
-	case op: NoMemoryEffect if op.results.map(_.uses == 0).reduce(_ && _) =>
+	case op: NoMemoryEffect if op.results.forall(_.uses.length == 0) =>
 		PatternAction.Erase
 }
 ```
