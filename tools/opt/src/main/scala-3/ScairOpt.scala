@@ -62,8 +62,8 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         input,
         pattern = parser.TopLevel(using _)
       ) match
-        case fastparse.Parsed.Success(input_module, _) =>
-          Right(input_module)
+        case fastparse.Parsed.Success(inputModule, _) =>
+          Right(inputModule)
         case failure: fastparse.Parsed.Failure =>
           Left(parser.error(failure, indexOffset))
 

@@ -23,8 +23,8 @@ class ParserTest
 
   def passed[A](res: Parsed[A], expectedResult: A, result: String) =
     res match
-      case Parsed.Success(actual_result, i) if result == "Success" =>
-        expectedResult == actual_result
+      case Parsed.Success(actualResult, i) if result == "Success" =>
+        expectedResult == actualResult
       case Parsed.Failure(_, _, _) if result == "Failure" => true
       case _                                              => false
 

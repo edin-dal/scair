@@ -100,11 +100,11 @@ given AttributeCompanion[FastMathFlagsAttr]:
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","
       ) ~ ">"
-    ).flatMap { parsed_flags =>
-      if parsed_flags.isEmpty then
+    ).flatMap { parsedFlags =>
+      if parsedFlags.isEmpty then
         Fail("FastMathFlagsAttr expects at least one flag")
       else
-        val flags = parsed_flags
+        val flags = parsedFlags
           .map(_ match
             case "none"     => FastMathFlags.none
             case "reassoc"  => FastMathFlags.reassoc
