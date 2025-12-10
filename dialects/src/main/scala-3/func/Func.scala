@@ -72,7 +72,7 @@ case class Func(
 ) extends DerivedOperation["func.func", Func]
     with IsolatedFromAbove derives DerivedOperationCompanion:
 
-  override def custom_print(printer: Printer)(using indentLevel: Int) =
+  override def customPrint(printer: Printer)(using indentLevel: Int) =
     val lprinter = printer.copy()
     lprinter.print("func.func ")
     sym_visibility match

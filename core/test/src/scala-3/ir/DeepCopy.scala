@@ -64,8 +64,8 @@ class DeepCopyTest extends AnyFlatSpec:
     // Parent
     val pa = TestOp(
       regions = Seq(
-        Region(Block(arguments_types = Seq(I32), operations = Seq(ca0))),
-        Region(Block(arguments_types = Seq(I32), operations = Seq(ca1)))
+        Region(Block(argumentsTypes = Seq(I32), operations = Seq(ca0))),
+        Region(Block(argumentsTypes = Seq(I32), operations = Seq(ca1)))
       )
     )
 

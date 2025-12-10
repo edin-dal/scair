@@ -103,7 +103,7 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val assembly_format: Option[AssemblyFormatDirective] = None
+    val assemblyFormat: Option[AssemblyFormatDirective] = None
 ):
 
   def allDefs =

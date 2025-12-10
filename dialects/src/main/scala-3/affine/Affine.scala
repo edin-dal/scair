@@ -50,7 +50,7 @@ case class For(
 \*≡==----==≡≡≡==----==≡*/
 
 case class Parallel(
-    map_operands: Seq[Operand[IndexType]],
+    mapOperands: Seq[Operand[IndexType]],
     steps: Option[ArrayAttribute[IntegerAttr]],
     reductions: Attribute,
     lowerBoundsMap: AffineMapAttr,
@@ -70,8 +70,8 @@ case class If(
     args: Seq[Operand[Attribute]],
     res: Seq[Result[Attribute]],
     condition: AffineSetAttr,
-    then_region: Region,
-    else_region: Region
+    thenRegion: Region,
+    elseRegion: Region
 ) extends DerivedOperation["affine.if", If] derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\

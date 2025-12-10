@@ -32,7 +32,7 @@ final case class Value[+T <: Attribute](
         "Attempting to erase a Value that has uses in other operations."
       )
 
-  def verify(): Either[String, Unit] = typ.custom_verify()
+  def verify(): Either[String, Unit] = typ.customVerify()
 
   override final def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]

@@ -31,7 +31,7 @@ type Index = IndexType
 
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): Either[String, Operation] =
     if values.isEmpty then Right(this)
     else
       val firstClass = values.head.getClass

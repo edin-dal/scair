@@ -21,10 +21,10 @@ class ParserTest
       case "Success" => ((x: Int) => Parsed.Success(expected, x))
       case "Failure" => Parsed.Failure(_, _, _)
 
-  def passed[A](res: Parsed[A], expected_result: A, result: String) =
+  def passed[A](res: Parsed[A], expectedResult: A, result: String) =
     res match
       case Parsed.Success(actual_result, i) if result == "Success" =>
-        expected_result == actual_result
+        expectedResult == actual_result
       case Parsed.Failure(_, _, _) if result == "Failure" => true
       case _                                              => false
 
@@ -484,12 +484,12 @@ class ParserTest
       val opToErase = value.regions(0).blocks(0).operations(1)
 
       val block =
-        opToErase.container_block.getOrElse(throw new Exception("bruh"))
+        opToErase.containerBlock.getOrElse(throw new Exception("bruh"))
 
       val exception = intercept[Exception](
-        block.erase_op(opToErase)
+        block.eraseOp(opToErase)
       ).getMessage shouldBe "Attempting to erase a Value that has uses in other operations."
 
-      opToErase.container_block shouldEqual None
+      opToErase.containerBlock shouldEqual None
     }
   }

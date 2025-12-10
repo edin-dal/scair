@@ -39,7 +39,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
     val block = new Block(operations = Seq(filler1, filler2, terminator))
 
-    terminator.container_block = Some(block)
+    terminator.containerBlock = Some(block)
     block.verify()
   }
 
@@ -51,7 +51,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
       val block = new Block(operations = Seq(filler1, terminator, filler2))
 
-      terminator.container_block = Some(block)
+      terminator.containerBlock = Some(block)
 
       val exception = block.verify()
 
