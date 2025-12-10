@@ -43,8 +43,8 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
-  def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
-  def constraint_verify(adtOp: T): Either[String, Operation]
+  def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit
+  def constraintVerify(adtOp: T): Either[String, Operation]
 
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
@@ -61,7 +61,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
         operands: Seq[Value[Attribute]] = operands,
         successors: Seq[Block] = successors,
         results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-        regions: Seq[Region] = detached_regions,
+        regions: Seq[Region] = detachedRegions,
         properties: Map[String, Attribute] = properties,
         attributes: DictType[String, Attribute] = attributes
     ): Operation =

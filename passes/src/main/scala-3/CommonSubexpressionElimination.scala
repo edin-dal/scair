@@ -60,7 +60,7 @@ case class CSE(
       case free: NoMemoryEffect =>
         knownOps.get(OperationInfo(op)) match
           case Some(known) =>
-            (op.results zip known.results).foreach(rewriter.replace_value)
+            (op.results zip known.results).foreach(rewriter.replaceValue)
             toErase.add(op)
           case None => knownOps(OperationInfo(op)) = op
       case _ => ()
@@ -77,7 +77,7 @@ case class CSE(
       op.regions.foreach(region => driver.simplify(region))
       simplify(op)
     }
-    toErase.foreach(rewriter.erase_op(_))
+    toErase.foreach(rewriter.eraseOp(_))
     toErase.clear()
 
   def simplify(region: Region): Unit =

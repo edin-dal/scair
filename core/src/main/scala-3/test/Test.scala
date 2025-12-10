@@ -24,7 +24,7 @@ case class TestOp(
       operands: Seq[Value[Attribute]] = operands,
       successors: Seq[Block] = successors,
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-      regions: Seq[Region] = detached_regions,
+      regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
       attributes: DictType[String, Attribute] = attributes
   ) =

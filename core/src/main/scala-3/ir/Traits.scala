@@ -13,8 +13,8 @@ package scair.ir
 
 trait IsTerminator extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
-    this.container_block match
+  override def traitVerify(): Either[String, Operation] = {
+    this.containerBlock match
       case Some(b) =>
         if this ne b.operations.last then
           Left(
@@ -25,7 +25,7 @@ trait IsTerminator extends Operation:
         Left(
           s"Operation '${name}' marked as a terminator, but is not contained in any block."
         )
-  }.flatMap(_ => super.trait_verify())
+  }.flatMap(_ => super.traitVerify())
 
 /*≡==---=≡≡≡≡≡=---=≡≡*\
 ||   NO TERMINATOR   ||
@@ -33,19 +33,19 @@ trait IsTerminator extends Operation:
 
 trait NoTerminator extends Operation:
 
-  override def trait_verify(): Either[String, Operation] = {
+  override def traitVerify(): Either[String, Operation] = {
     if regions.filter(x => x.blocks.length != 1).length != 0 then
       Left(
         s"NoTerminator Operation '${name}' requires single-block regions"
       )
     else Right(this)
-  }.flatMap(_ => super.trait_verify())
+  }.flatMap(_ => super.traitVerify())
 
 trait NoMemoryEffect extends Operation
 
 trait IsolatedFromAbove extends Operation:
 
-  final def verify_rec(regs: Seq[Region]): Either[String, Operation] =
+  final def verifyRec(regs: Seq[Region]): Either[String, Operation] =
     val r = regs match
       case region :: tail =>
         region.blocks.foldLeft[Either[String, Operation]](Right(this))(
@@ -54,7 +54,7 @@ trait IsolatedFromAbove extends Operation:
               block.operations.foldLeft[Either[String, Operation]](r)((r, op) =>
                 op.operands
                   .foldLeft(r)((r, o) =>
-                    if !this.is_ancestor(
+                    if !this.isAncestor(
                         o.owner.getOrElse(throw new Exception(s"${op.name}"))
                       )
                     then
@@ -63,15 +63,15 @@ trait IsolatedFromAbove extends Operation:
                       )
                     else r
                   )
-                  .flatMap(_ => verify_rec(tail ++ op.regions))
+                  .flatMap(_ => verifyRec(tail ++ op.regions))
               )
             )
         )
       case Nil => Right(this)
-    r.flatMap(_ => super.trait_verify())
+    r.flatMap(_ => super.traitVerify())
 
-  override def trait_verify(): Either[String, Operation] =
-    verify_rec(regions)
+  override def traitVerify(): Either[String, Operation] =
+    verifyRec(regions)
 
 trait Commutative extends Operation
 

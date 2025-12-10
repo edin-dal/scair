@@ -181,7 +181,7 @@ def customPrintMacro(
     p: Expr[Printer],
     indentLevel: Expr[Int]
 )(using Quotes): Expr[Unit] =
-  opDef.assembly_format match
+  opDef.assemblyFormat match
     case Some(format) =>
       format.print(adtOpExpr, p)
     case None =>
@@ -198,7 +198,7 @@ def parseMacro[O <: Operation: Type](
 )(using
     Quotes
 ): Expr[P[Any] ?=> P[O]] =
-  opDef.assembly_format match
+  opDef.assemblyFormat match
     case Some(format) =>
       format.parse(opDef, p, resNames)
     case None =>
@@ -422,7 +422,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       a == Variadicity.Optional
     )
   val following = defs.length - preceeding - 1
-  val preceeding_exprs = defs
+  val preceedingExprs = defs
     .slice(0, preceeding)
     .zipWithIndex
     .map((d, i) =>
@@ -436,7 +436,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       }
     )
 
-  val variadic_expr = '{
+  val variadicExpr = '{
     (
         properties: Map[String, Attribute],
         flat: Seq[DefinedInput[Def]]
@@ -445,7 +445,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
         .slice(${ Expr(preceeding) }, flat.length - ${ Expr(following) })
   }
 
-  val following_exprs = defs
+  val followingExprs = defs
     .slice(preceeding + 1, defs.length)
     .zipWithIndex
     .map((d, i) =>
@@ -460,7 +460,7 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
       }
     )
 
-  (preceeding_exprs :+ variadic_expr) ++ following_exprs
+  (preceedingExprs :+ variadicExpr) ++ followingExprs
 
 /** Partition a construct sequence, in the case of multiple variadic definitions
   *
@@ -739,7 +739,7 @@ def fromUnstructuredOperationMacro[T <: Operation: Type](
     opDef,
     '{ $genExpr.operands },
     '{ $genExpr.results },
-    '{ $genExpr.detached_regions },
+    '{ $genExpr.detachedRegions },
     '{ $genExpr.successors },
     '{ $genExpr.properties }
   )
@@ -867,10 +867,10 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       def name: String = ${ Expr(opDef.name) }
 
-      def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
+      def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
-      def constraint_verify(adtOp: T): Either[String, Operation] =
+      def constraintVerify(adtOp: T): Either[String, Operation] =
         ${
           verifyMacro(opDef, '{ adtOp })
         }

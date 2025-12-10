@@ -100,11 +100,11 @@ given AttributeCompanion[FastMathFlagsAttr]:
       "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
         sep = ","
       ) ~ ">"
-    ).flatMap { parsed_flags =>
-      if parsed_flags.isEmpty then
+    ).flatMap { parsedFlags =>
+      if parsedFlags.isEmpty then
         Fail("FastMathFlagsAttr expects at least one flag")
       else
-        val flags = parsed_flags
+        val flags = parsedFlags
           .map(_ match
             case "none"     => FastMathFlags.none
             case "reassoc"  => FastMathFlags.reassoc
@@ -124,7 +124,7 @@ given AttributeCompanion[FastMathFlagsAttr]:
 case class FastMathFlagsAttr(val flags: FastMathFlags)
     extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags):
 
-  override def custom_print(p: Printer) =
+  override def customPrint(p: Printer) =
     p.print("#arith.fastmath<")
     flags match
       case FastMathFlags.none =>
@@ -180,7 +180,7 @@ type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 
 trait SameOperandsAndResultTypes extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): Either[String, Operation] =
     val params = this.operands.typ ++ this.results.typ
     if params.isEmpty then Right(this)
     else
@@ -193,7 +193,7 @@ trait SameOperandsAndResultTypes extends Operation:
 
 trait SameOperandsAndResultShape extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): Either[String, Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
@@ -211,7 +211,7 @@ trait SameOperandsAndResultShape extends Operation:
 
 trait SameInputOutputTensorDims extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): Either[String, Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
@@ -229,7 +229,7 @@ trait SameInputOutputTensorDims extends Operation:
 
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): Either[String, Operation] =
     if values.isEmpty then Right(this)
     else
       val first = values.head
@@ -242,7 +242,7 @@ trait AllTypesMatch(values: Attribute*) extends Operation:
 trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
     extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): Either[String, Operation] =
     condition match
       case IntegerType(IntData(1), Signless) => Right(this)
       case x: ShapedType                     =>
@@ -346,7 +346,6 @@ case class CmpI(
     val rhs: Operand[AnyIntegerType],
     val result: Result[I1],
     val predicate: CmpIPredicate
-    // assembly_format: "$predicate `,` $lhs `,` $rhs `:` type($lhs) `,` type($rhs) `,` type($result)"
 ) extends DerivedOperation["arith.cmpi", CmpI]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -433,7 +432,6 @@ case class FPToUI(
 case class IndexCast(
     val in: Operand[IndexCastTypeConstraint],
     val result: Result[IndexCastTypeConstraint]
-    // assembly_format: "$in `:` type($in) `to` type($out)"
 ) extends DerivedOperation["arith.index_cast", IndexCast]
     with SameOperandsAndResultShape
     with SameInputOutputTensorDims
@@ -658,7 +656,6 @@ case class ShRUI(
 case class SIToFP(
     in: Operand[SignlessFixedWidthIntegerLike],
     out: Result[FloatType]
-    // assembly_format: "$in `:` type($in) `to` type($out)"
 ) extends DerivedOperation["arith.sitofp", SIToFP]
     with NoMemoryEffect
     with SameOperandsAndResultShape

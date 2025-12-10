@@ -64,12 +64,12 @@ case class AffineConstantExpr(val value: BigInt) extends AffineExpr:
 case class AffineMap(
     val dimensions: Seq[String],
     val symbols: Seq[String],
-    val affine_exprs: Seq[AffineExpr]
+    val affineExprs: Seq[AffineExpr]
 ):
 
   override def toString =
     s"(${dimensions.mkString(", ")})${symbols.mkString("[", ", ", "]")}" +
-      s" -> (${affine_exprs.mkString(", ")})"
+      s" -> (${affineExprs.mkString(", ")})"
 
 /*≡==---==≡≡≡≡==---=≡≡*\
 ||     AFFINE SET     ||
@@ -92,9 +92,9 @@ case class AffineConstraintExpr(
 case class AffineSet(
     val dimensions: Seq[String],
     val symbols: Seq[String],
-    val affine_constraints: Seq[AffineConstraintExpr]
+    val affineConstraints: Seq[AffineConstraintExpr]
 ):
 
   override def toString =
     s"(${dimensions.mkString(", ")})${symbols.mkString("[", ", ", "]")}" +
-      s": (${affine_constraints.mkString(", ")})"
+      s": (${affineConstraints.mkString(", ")})"

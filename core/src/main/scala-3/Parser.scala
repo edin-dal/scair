@@ -459,14 +459,14 @@ final class Parser(
 
     // Get the error's line's content
     val length = traced.input.length
-    val input_line = traced.input.slice(0, length).split("\n")(line - 1)
+    val inputLine = traced.input.slice(0, length).split("\n")(line - 1)
 
     // Build a visual indicator of where the error is.
     val indicator = " " * (col - 1) + "^"
 
     // Build the error message.
     val msg =
-      s"Parse error at ${inputPath.getOrElse("-")}:${line + lineOffset}:$col:\n\n$input_line\n$indicator\n${traced.label}"
+      s"Parse error at ${inputPath.getOrElse("-")}:${line + lineOffset}:$col:\n\n$inputLine\n$indicator\n${traced.label}"
 
     if parsingDiagnostics then msg
     else
@@ -507,9 +507,9 @@ final class Parser(
         val region = Region(block)
         val moduleOp = ModuleOp(region)
 
-        for op <- toplevel do op.container_block = Some(block)
-        block.container_region = Some(region)
-        region.container_operation = Some(moduleOp)
+        for op <- toplevel do op.containerBlock = Some(block)
+        block.containerRegion = Some(region)
+        region.containerOperation = Some(moduleOp)
 
         moduleOp
   )
@@ -605,9 +605,9 @@ final class Parser(
       )
 
   def Operations[$: P](
-      at_least_this_many: Int = 0
+      atLeastThisMany: Int = 0
   ): P[Seq[Operation]] =
-    P(OperationPat.rep(at_least_this_many))
+    P(OperationPat.rep(atLeastThisMany))
 
   def OperationPat[$: P]: P[Operation] = P(
     OpResultList.orElse(Seq())./.flatMap(Op(_)) ~/ TrailingLocation.?
@@ -616,7 +616,7 @@ final class Parser(
   def Op[$: P](resNames: Seq[String]) = P(
     GenericOperation(resNames) | CustomOperation(resNames)
   ).map(op =>
-    for region <- op.regions do region.container_operation = Some(op)
+    for region <- op.regions do region.containerOperation = Some(op)
     op
   )
 
@@ -747,7 +747,7 @@ final class Parser(
       ops: Seq[Operation]
   ): Block =
     block.operations ++= ops
-    ops.foreach(_.container_block = Some(block))
+    ops.foreach(_.containerBlock = Some(block))
     block
 
   def populateBlockArgs[$: P](
@@ -797,13 +797,13 @@ final class Parser(
     return parseResult._1.length match
       case 0 =>
         val region = Region(blocks = parseResult._2)
-        for block <- region.blocks do block.container_region = Some(region)
+        for block <- region.blocks do block.containerRegion = Some(region)
         region
       case _ =>
         val startblock =
-          new Block(operations = parseResult._1, arguments_types = ListType())
+          new Block(operations = parseResult._1, argumentsTypes = ListType())
         val region = Region(blocks = startblock +: parseResult._2)
-        for block <- region.blocks do block.container_region = Some(region)
+        for block <- region.blocks do block.containerRegion = Some(region)
         region
 
   // EntryBlock might break - take out if it does...

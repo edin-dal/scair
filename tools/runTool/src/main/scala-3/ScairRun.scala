@@ -59,31 +59,31 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // Parse content
     // ONE CHUNK ONLY
 
-    val input_module =
+    val inputModule =
       val parser = new scair.Parser(ctx, inputPath = args.input)
       parser.parseThis(
         input.mkString,
         pattern = parser.TopLevel(using _)
       ) match
-        case fastparse.Parsed.Success(input_module, _) =>
-          Right(input_module)
+        case fastparse.Parsed.Success(inputModule, _) =>
+          Right(inputModule)
         case failure: fastparse.Parsed.Failure =>
           Left(parser.error(failure))
-    Array(input_module)
+    Array(inputModule)
 
   def main(args: Array[String]): Unit =
 
-    val parsed_args = parseArgs(args)
+    val parsedArgs = parseArgs(args)
 
     // Open the input file or stdin
-    val input = parsed_args.input match
+    val input = parsedArgs.input match
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
 
     // casted as moduleOp
-    val module = parse(parsed_args)(input).head.right.get.asInstanceOf[ModuleOp]
+    val module = parse(parsedArgs)(input).head.right.get.asInstanceOf[ModuleOp]
 
-    val module_block = module.body.blocks.head
+    val moduleBlock = module.body.blocks.head
 
     val interpreter = new Interpreter()
     var runtimeCtx =
@@ -91,7 +91,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
     interpreter.register_implementations()
 
-    val output = interpreter.interpret(module_block, runtimeCtx)
+    val output = interpreter.interpret(moduleBlock, runtimeCtx)
 
     if output.isDefined then
       if output.get == 1 then println("true")

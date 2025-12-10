@@ -20,7 +20,7 @@ trait Constraint
 
 class ConstraintContext():
 
-  val var_constraints: DictType[String, Attribute] =
+  val varConstraints: DictType[String, Attribute] =
     DictType.empty[String, Attribute]
 
 trait ConstraintImpl[c <: Constraint]:
@@ -64,12 +64,12 @@ class ConstraintImplVar[To <: String](name: To) extends ConstraintImpl[Var[To]]:
   override def verify(attr: Attribute)(using
       ctx: ConstraintContext
   ): Either[String, Unit] =
-    if ctx.var_constraints.contains(name) then
-      if ctx.var_constraints.apply(name) != attr then
-        Left(s"Expected ${ctx.var_constraints.apply(name)}, got ${attr}")
+    if ctx.varConstraints.contains(name) then
+      if ctx.varConstraints.apply(name) != attr then
+        Left(s"Expected ${ctx.varConstraints.apply(name)}, got ${attr}")
       else Right(())
     else
-      ctx.var_constraints += ((name, attr))
+      ctx.varConstraints += ((name, attr))
       Right(())
 
 inline given [To <: String] => ConstraintImpl[Var[To]] =
