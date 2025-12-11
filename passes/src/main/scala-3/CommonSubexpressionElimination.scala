@@ -39,10 +39,8 @@ final case class OperationInfo(val op: Operation):
   override def equals(obj: Any): Boolean = obj match
     case OperationInfo(b: Operation) =>
       val a = this.op
-      a.name == b.name &&
-      a.attributes == b.attributes &&
-      a.properties == b.properties &&
-      a.operands == b.operands &&
+      a.name == b.name && a.attributes == b.attributes &&
+      a.properties == b.properties && a.operands == b.operands &&
       a.results.typ == b.results.typ &&
       // TODO: Should be structural equivalence!
       a.regions == b.regions
@@ -51,7 +49,7 @@ final case class OperationInfo(val op: Operation):
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
       Map[OperationInfo, Operation](),
-    val toErase: Set[Operation] = Set[Operation]()
+    val toErase: Set[Operation] = Set[Operation](),
 )(using rewriter: Rewriter):
 
   def simplify(op: Operation): Unit =
@@ -60,7 +58,7 @@ case class CSE(
       case free: NoMemoryEffect =>
         knownOps.get(OperationInfo(op)) match
           case Some(known) =>
-            (op.results zip known.results).foreach(rewriter.replace_value)
+            (op.results zip known.results).foreach(rewriter.replaceValue)
             toErase.add(op)
           case None => knownOps(OperationInfo(op)) = op
       case _ => ()
@@ -77,7 +75,7 @@ case class CSE(
       op.regions.foreach(region => driver.simplify(region))
       simplify(op)
     }
-    toErase.foreach(rewriter.erase_op(_))
+    toErase.foreach(rewriter.eraseOp(_))
     toErase.clear()
 
   def simplify(region: Region): Unit =

@@ -120,12 +120,12 @@ object run_select extends OpImpl[arith.SelectOp]:
       case 0 =>
         ctx.vars.put(
           op.result,
-          interpreter.lookup_op(op.falseValue, ctx)
+          interpreter.lookup_op(op.falseValue, ctx),
         )
       case 1 =>
         ctx.vars.put(
           op.result,
-          interpreter.lookup_op(op.trueValue, ctx)
+          interpreter.lookup_op(op.trueValue, ctx),
         )
       case _ => throw new Exception("Select condition must be 0 or 1")
 
@@ -144,5 +144,5 @@ val InterpreterArithDialect: InterpreterDialect =
     run_shrsi,
     run_shrui,
     run_cmpi,
-    run_select
+    run_select,
   )

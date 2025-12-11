@@ -44,27 +44,27 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
-  def custom_print(adtOp: T, p: Printer)(using indentLevel: Int): Unit
-  def constraint_verify(adtOp: T): R[Operation]
+  def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit
+  def constraintVerify(adtOp: T): R[Operation]
 
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
       override val successors: Seq[Block] = Seq(),
       override val results: Seq[Result[Attribute]] = Seq(),
       override val regions: Seq[Region] = Seq(),
-      override val properties: Map[String, Attribute] =
-        Map.empty[String, Attribute],
-      override val attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+      override val properties: Map[String, Attribute] = Map
+        .empty[String, Attribute],
+      override val attributes: DictType[String, Attribute] = DictType
+        .empty[String, Attribute],
   ) extends Operation:
 
     override def updated(
         operands: Seq[Value[Attribute]] = operands,
         successors: Seq[Block] = successors,
         results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
-        regions: Seq[Region] = detached_regions,
+        regions: Seq[Region] = detachedRegions,
         properties: Map[String, Attribute] = properties,
-        attributes: DictType[String, Attribute] = attributes
+        attributes: DictType[String, Attribute] = attributes,
     ): Operation =
       UnstructuredOp(
         operands,
@@ -72,7 +72,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
         results,
         regions,
         properties,
-        attributes
+        attributes,
       )
 
     override def structured = Try(companion.structure(this)) match
@@ -90,8 +90,8 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+      attributes: DictType[String, Attribute] = DictType
+        .empty[String, Attribute],
   ): UnstructuredOp | T & Operation
 
   def destructure(adtOp: T): UnstructuredOp
@@ -109,12 +109,12 @@ def summonOperationCompanionsMacroRec[T <: Tuple: Type](using
   import quotes.reflect.*
   Type.of[T] match
     case '[type o <: Operation; o *: ts] =>
-      val dat = Expr
-        .summon[OperationCompanion[o]]
+      val dat = Expr.summon[OperationCompanion[o]]
         .getOrElse(
-          report.errorAndAbort(
-            f"Could not summon OperationCompanion for ${Type.show[o]}"
-          )
+          report
+            .errorAndAbort(
+              f"Could not summon OperationCompanion for ${Type.show[o]}"
+            )
         )
       dat +: summonOperationCompanionsMacroRec[ts]
 
@@ -131,12 +131,12 @@ def summonAttributeCompanionsMacroRec[T <: Tuple: Type](using
   import quotes.reflect.*
   Type.of[T] match
     case '[type a <: Attribute; `a` *: ts] =>
-      val dat = Expr
-        .summon[AttributeCompanion[a]]
+      val dat = Expr.summon[AttributeCompanion[a]]
         .getOrElse(
-          report.errorAndAbort(
-            f"Could not summon AttributeCompanion for ${Type.show[a]}"
-          )
+          report
+            .errorAndAbort(
+              f"Could not summon AttributeCompanion for ${Type.show[a]}"
+            )
         )
       dat +: summonAttributeCompanionsMacroRec[ts]
     case '[EmptyTuple] => Seq()
@@ -155,5 +155,5 @@ inline def summonOperationCompanions[T <: Tuple]: Seq[OperationCompanion[?]] =
 inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
   Dialect(
     summonOperationCompanions[Operations],
-    summonAttributeCompanions[Attributes]
+    summonAttributeCompanions[Attributes],
   )

@@ -17,7 +17,7 @@ case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
 
 case class Load(
     addr: Operand[Ptr],
-    res: Result[Attribute]
+    res: Result[Attribute],
 ) extends DerivedOperation["llvm.load", Load]
     with AssemblyFormat["$addr attr-dict `:` type($addr) `->` type($res)"]
     derives DerivedOperationCompanion
@@ -27,7 +27,7 @@ case class GetElementPtr(
     dynamicIndices: Seq[Operand[IntegerType]],
     res: Result[Ptr],
     rawConstantIndices: DenseArrayAttr,
-    elem_type: Attribute
+    elem_type: Attribute,
 ) extends DerivedOperation["llvm.getelementptr", GetElementPtr]
     with NoMemoryEffect derives DerivedOperationCompanion
 

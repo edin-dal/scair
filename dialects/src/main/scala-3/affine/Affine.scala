@@ -26,7 +26,7 @@ import scair.ir.*
 case class Apply(
     mapOperands: Seq[Operand[IndexType]],
     res: Result[IndexType],
-    map: AffineMapAttr
+    map: AffineMapAttr,
 ) extends DerivedOperation["affine.apply", Apply]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -42,7 +42,7 @@ case class For(
     lowerBoundMap: AffineMapAttr,
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
-    body: Region
+    body: Region,
 ) extends DerivedOperation["affine.for", For] derives DerivedOperationCompanion
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
@@ -50,7 +50,7 @@ case class For(
 \*≡==----==≡≡≡==----==≡*/
 
 case class Parallel(
-    map_operands: Seq[Operand[IndexType]],
+    mapOperands: Seq[Operand[IndexType]],
     steps: Option[ArrayAttribute[IntegerAttr]],
     reductions: Attribute,
     lowerBoundsMap: AffineMapAttr,
@@ -58,7 +58,7 @@ case class Parallel(
     upperBoundsMap: AffineMapAttr,
     upperBoundsGroups: DenseIntOrFPElementsAttr,
     res: Seq[Result[Attribute]],
-    body: Region
+    body: Region,
 ) extends DerivedOperation["affine.parallel", Parallel]
     derives DerivedOperationCompanion
 
@@ -70,8 +70,8 @@ case class If(
     args: Seq[Operand[Attribute]],
     res: Seq[Result[Attribute]],
     condition: AffineSetAttr,
-    then_region: Region,
-    else_region: Region
+    thenRegion: Region,
+    elseRegion: Region,
 ) extends DerivedOperation["affine.if", If] derives DerivedOperationCompanion
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -82,7 +82,7 @@ case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
-    map: AffineMapAttr
+    map: AffineMapAttr,
 ) extends DerivedOperation["affine.store", Store]
     derives DerivedOperationCompanion
 
@@ -94,7 +94,7 @@ case class Load(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
     result: Result[Attribute],
-    map: AffineMapAttr
+    map: AffineMapAttr,
 ) extends DerivedOperation["affine.load", Load]
     derives DerivedOperationCompanion
 
@@ -105,7 +105,7 @@ case class Load(
 case class Min(
     arguments: Seq[Operand[IndexType]],
     result: Result[IndexType],
-    map: AffineMapAttr
+    map: AffineMapAttr,
 ) extends DerivedOperation["affine.min", Min]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -121,5 +121,5 @@ case class Yield(
 
 val AffineDialect = summonDialect[
   EmptyTuple,
-  (Apply, For, Parallel, If, Store, Load, Min, Yield)
+  (Apply, For, Parallel, If, Store, Load, Min, Yield),
 ]

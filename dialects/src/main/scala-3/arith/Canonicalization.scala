@@ -15,21 +15,21 @@ val AddIFold = pattern {
   case AddI(
         Owner(SubI(a, b, _)),
         bb,
-        _
+        _,
       ) if b eq bb =>
     (Seq(), Seq(a))
   // addi(b, subi(a, b)) -> a
   case AddI(
         b,
         Owner(SubI(a, bb, _)),
-        _
+        _,
       ) if b eq bb =>
     (Seq(), Seq(a))
   // addi(c0, c1) -> c0 + c1
   case AddI(
         Owner(Constant(c0: IntegerAttr, _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     Constant(c0 + c1, Result(c0.typ))
 }
@@ -41,7 +41,7 @@ val AddIAddConstant = pattern {
   case AddI(
         Owner(AddI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 + c1, cv), AddI(x, cv, Result(x.typ)))
@@ -52,7 +52,7 @@ val AddISubConstantRHS = pattern {
   case AddI(
         Owner(SubI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 - c1, cv), AddI(x, cv, Result(x.typ)))
@@ -63,7 +63,7 @@ val AddIMulNegativeOneRhs = pattern {
   case AddI(
         x,
         Owner(MulI(y, Owner(Constant(IntegerAttr(IntData(-1), _), _)), _)),
-        _
+        _,
       ) =>
     Seq(SubI(x, y, Result(x.typ)))
 }
@@ -73,7 +73,7 @@ val AddIMulNegativeOneLhs = pattern {
   case AddI(
         Owner(MulI(x, Owner(Constant(IntegerAttr(IntData(-1), _), _)), _)),
         y,
-        _
+        _,
       ) =>
     Seq(SubI(y, x, Result(x.typ)))
 }
@@ -83,7 +83,7 @@ val AddISubConstantLHS = pattern {
   case AddI(
         Owner(SubI(Owner(Constant(c0: IntegerAttr, _)), x, _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
@@ -95,7 +95,7 @@ given CanonicalizationPatterns[AddI](
   AddISubConstantRHS,
   AddIMulNegativeOneRhs,
   AddIMulNegativeOneLhs,
-  AddISubConstantLHS
+  AddISubConstantLHS,
 )
 
 // muli(muli(x, c0), c1) -> muli(x, c0 * c1)
@@ -103,7 +103,7 @@ val MulIMulIConstant = pattern {
   case MulI(
         Owner(MulI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 * c1, cv), MulI(x, cv, Result(x.typ)))
@@ -121,14 +121,14 @@ val MulIFold = pattern {
   case MulI(
         Owner(Constant(c0: IntegerAttr, _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     Constant(c0 * c1, Result(c0.typ))
 }
 
 given CanonicalizationPatterns[MulI](
   MulIMulIConstant,
-  MulIFold
+  MulIFold,
 )
 
 // SubI folding patterns
@@ -143,21 +143,21 @@ val SubIFold = pattern {
   case SubI(
         Owner(AddI(a, b, _)),
         bb,
-        _
+        _,
       ) if b eq bb =>
     (Seq(), Seq(a))
   // subi(addi(a, b), a) -> b
   case SubI(
         Owner(AddI(a, b, _)),
         aa,
-        _
+        _,
       ) if a eq aa =>
     (Seq(), Seq(b))
   // subi(c0, c1) -> c0 - c1
   case SubI(
         Owner(Constant(c0: IntegerAttr, _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     Constant(c0 - c1, Result(c0.typ))
 }
@@ -168,7 +168,7 @@ val SubIRHSAddConstant = pattern {
   case SubI(
         Owner(AddI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 - c1, cv), AddI(x, cv, Result(x.typ)))
@@ -179,7 +179,7 @@ val SubILHSAddConstant = pattern {
   case SubI(
         Owner(Constant(c1: IntegerAttr, _)),
         Owner(AddI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c1 - c0, cv), SubI(cv, x, Result(x.typ)))
@@ -190,7 +190,7 @@ val SubIRHSSubConstantRHS = pattern {
   case SubI(
         Owner(SubI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 + c1, cv), SubI(x, cv, Result(x.typ)))
@@ -201,7 +201,7 @@ val SubIRHSSubConstantLHS = pattern {
   case SubI(
         Owner(SubI(Owner(Constant(c0: IntegerAttr, _)), x, _)),
         Owner(Constant(c1: IntegerAttr, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 - c1, cv), SubI(cv, x, Result(x.typ)))
@@ -212,7 +212,7 @@ val SubILHSSubConstantRHS = pattern {
   case SubI(
         Owner(Constant(c1: IntegerAttr, _)),
         Owner(SubI(x, Owner(Constant(c0: IntegerAttr, _)), _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
@@ -223,7 +223,7 @@ val SubILHSSubConstantLHS = pattern {
   case SubI(
         Owner(Constant(c1: IntegerAttr, _)),
         Owner(SubI(Owner(Constant(c0: IntegerAttr, _)), x, _)),
-        _
+        _,
       ) =>
     val cv = Result(x.typ)
     Seq(Constant(c1 - c0, cv), AddI(x, cv, Result(x.typ)))
@@ -235,7 +235,7 @@ val SubISubILHSRHSLHS = pattern {
     val cv = Result(a.typ)
     Seq(
       Constant(IntegerAttr(IntData(0), a.typ), cv),
-      SubI(cv, b, Result(b.typ))
+      SubI(cv, b, Result(b.typ)),
     )
 }
 
@@ -247,5 +247,5 @@ given CanonicalizationPatterns[SubI](
   SubIRHSSubConstantLHS,
   SubILHSSubConstantRHS,
   SubILHSSubConstantLHS,
-  SubISubILHSRHSLHS
+  SubISubILHSRHSLHS,
 )

@@ -40,10 +40,10 @@ abstract class AffineExpr() {}
 case class AffineBinaryOpExpr(
     val op: AffineBinaryOp,
     val lhs: AffineExpr,
-    val rhs: AffineExpr
+    val rhs: AffineExpr,
 ) extends AffineExpr:
 
-  override def toString = s"${lhs} ${op} ${rhs}"
+  override def toString = s"$lhs $op $rhs"
 
 case class AffineDimExpr(val position: String) extends AffineExpr:
 
@@ -55,7 +55,7 @@ case class AffineSymExpr(val position: String) extends AffineExpr:
 
 case class AffineConstantExpr(val value: BigInt) extends AffineExpr:
 
-  override def toString = s"${value}"
+  override def toString = s"$value"
 
 /*≡==---==≡≡≡≡==---=≡≡*\
 ||     AFFINE MAP     ||
@@ -64,12 +64,12 @@ case class AffineConstantExpr(val value: BigInt) extends AffineExpr:
 case class AffineMap(
     val dimensions: Seq[String],
     val symbols: Seq[String],
-    val affine_exprs: Seq[AffineExpr]
+    val affineExprs: Seq[AffineExpr],
 ):
 
   override def toString =
     s"(${dimensions.mkString(", ")})${symbols.mkString("[", ", ", "]")}" +
-      s" -> (${affine_exprs.mkString(", ")})"
+      s" -> (${affineExprs.mkString(", ")})"
 
 /*≡==---==≡≡≡≡==---=≡≡*\
 ||     AFFINE SET     ||
@@ -85,16 +85,16 @@ enum AffineConstraintKind(val symbol: String):
 case class AffineConstraintExpr(
     val kind: AffineConstraintKind,
     val lhs: AffineExpr,
-    val rhs: AffineExpr
+    val rhs: AffineExpr,
 ):
-  override def toString = s"${lhs} ${kind} ${rhs}"
+  override def toString = s"$lhs $kind $rhs"
 
 case class AffineSet(
     val dimensions: Seq[String],
     val symbols: Seq[String],
-    val affine_constraints: Seq[AffineConstraintExpr]
+    val affineConstraints: Seq[AffineConstraintExpr],
 ):
 
   override def toString =
     s"(${dimensions.mkString(", ")})${symbols.mkString("[", ", ", "]")}" +
-      s": (${affine_constraints.mkString(", ")})"
+      s": (${affineConstraints.mkString(", ")})"

@@ -35,16 +35,16 @@ case class Region(
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
   ): Region =
     Region(blocks.map(_.deepCopy))
 
-  final override def parent = container_operation
+  final override def parent = containerOperation
 
-  var container_operation: Option[Operation] = None
+  var containerOperation: Option[Operation] = None
 
-  blocks.foreach(attach_block)
+  blocks.foreach(attachBlock)
 
   def structured =
     blocks.foldLeft[R[Unit]](Right(()))((res, block) =>
@@ -61,21 +61,21 @@ case class Region(
 
   // Heavily debatable
   def detached =
-    container_operation = None
+    containerOperation = None
     this
 
-  private def attach_block(block: Block): Unit =
+  private def attachBlock(block: Block): Unit =
 
-    block.container_region match
+    block.containerRegion match
       case Some(x) =>
         throw new Exception(
           "Can't attach a block already attached to a region."
         )
       case None =>
-        block.is_ancestor(this) match
+        block.isAncestor(this) match
           case true =>
             throw new Exception(
               "Can't add a block to a region that is contained within that operation"
             )
           case false =>
-            block.container_region = Some(this)
+            block.containerRegion = Some(this)

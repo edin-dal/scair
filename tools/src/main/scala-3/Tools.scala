@@ -39,7 +39,7 @@ abstract class ScairToolBase[Args]:
 
     OParser.sequence(
       argbuilder.programName(toolName),
-      argbuilder.head(toolName, "0")
+      argbuilder.head(toolName, "0"),
     )
 
   def parseArgs(args: Array[String]): Args

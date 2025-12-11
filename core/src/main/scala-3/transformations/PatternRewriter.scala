@@ -26,7 +26,7 @@ import scala.collection.mutable.LinkedHashSet
 object InsertPoint:
 
   def before(op: Operation) =
-    op.container_block match
+    op.containerBlock match
       case None =>
         throw new Exception(
           "Operation insertion point must have a parent block."
@@ -34,7 +34,7 @@ object InsertPoint:
       case Some(block) => InsertPoint(block, Some(op))
 
   def after(op: Operation) =
-    op.container_block match
+    op.containerBlock match
       case None =>
         throw new Exception(
           "Operation insertion point must have a parent block."
@@ -42,14 +42,14 @@ object InsertPoint:
       case Some(block) =>
         InsertPoint(block, op.next)
 
-  def at_start_of(block: Block) =
+  def atStartOf(block: Block) =
     InsertPoint(block, block.operations.headOption)
 
-  def at_end_of(block: Block) = InsertPoint(block)
+  def atEndOf(block: Block) = InsertPoint(block)
 
 case class InsertPoint(
     val block: Block,
-    val insert_before: Option[Operation] = None
+    val insertBefore: Option[Operation] = None,
 )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -58,72 +58,72 @@ case class InsertPoint(
 
 trait Rewriter:
 
-  def operation_removal_handler: Operation => Unit = (op: Operation) => {
+  def operationRemovalHandler: Operation => Unit = (op: Operation) => {
     // default handler does nothing
   }
 
-  def operation_insertion_handler: (Operation) => Unit = (
+  def operationInsertionHandler: (Operation) => Unit = (
     op: Operation
   ) => {
     // default handler does nothing
   }
 
-  def erase_op(op: Operation, safe_erase: Boolean = true) =
-    op.container_block match
+  def eraseOp(op: Operation, safeErase: Boolean = true) =
+    op.containerBlock match
       case Some(block) =>
-        operation_removal_handler(op)
-        block.erase_op(op, safe_erase)
+        operationRemovalHandler(op)
+        block.eraseOp(op, safeErase)
       case _ =>
         throw new Exception("Cannot erase an operation that has no parents.")
 
-  def insert_ops_at(
-      insertion_point: InsertPoint,
-      ops: Operation | Seq[Operation]
+  def insertOpsAt(
+      insertionPoint: InsertPoint,
+      ops: Operation | Seq[Operation],
   ): Unit =
 
     val operations = ops match
       case x: Operation => Seq(x)
       case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
 
-    insertion_point.insert_before match
+    insertionPoint.insertBefore match
       case Some(op) =>
-        insertion_point.block.insert_ops_before(
+        insertionPoint.block.insertOpsBefore(
           op,
-          operations
+          operations,
         )
       case None =>
-        insertion_point.block.add_ops(operations)
+        insertionPoint.block.addOps(operations)
 
-    operations.foreach(operation_insertion_handler)
+    operations.foreach(operationInsertionHandler)
 
-  def insert_ops_before(
+  def insertOpsBefore(
       op: Operation,
-      new_ops: Operation | Seq[Operation]
+      newOps: Operation | Seq[Operation],
   ): Unit =
-    insert_ops_at(InsertPoint.before(op), new_ops)
+    insertOpsAt(InsertPoint.before(op), newOps)
 
-  def insert_ops_after(
+  def insertOpsAfter(
       op: Operation,
-      new_ops: Operation | Seq[Operation]
+      newOps: Operation | Seq[Operation],
   ): Unit =
-    insert_ops_at(InsertPoint.after(op), new_ops)
+    insertOpsAt(InsertPoint.after(op), newOps)
 
-  def replace_op(
+  def replaceOp(
       op: Operation,
-      new_ops: Operation | Seq[Operation],
-      new_results: Option[Seq[Value[Attribute]]] = None
+      newOps: Operation | Seq[Operation],
+      newResults: Option[Seq[Value[Attribute]]] = None,
   ): Unit =
 
-    val block = op.container_block match
+    val block = op.containerBlock match
       case Some(x) => x
       case None    =>
         throw new Exception("Cannot replace an operation without a parent")
 
-    val ops = new_ops match
+    val ops = newOps match
       case x: Operation => Seq(x)
       case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
 
-    val results = new_results match
+    val results = newResults match
       case Some(x) => x
       case None    =>
         if ops.length == 0 then ListType() else ops.last.results
@@ -133,36 +133,35 @@ trait Rewriter:
         s"Expected ${op.results.length} new results but got ${results.length}"
       )
 
-    RewriteMethods.insert_ops_before(op, ops)
+    RewriteMethods.insertOpsBefore(op, ops)
 
     for (old_res, new_res) <- (op.results zip results) do
-      replace_value(old_res, new_res)
+      replaceValue(old_res, new_res)
 
-    RewriteMethods.erase_op(op, safe_erase = false)
-    operation_removal_handler(op)
-    ops.foreach(operation_insertion_handler)
+    RewriteMethods.eraseOp(op, safeErase = false)
+    operationRemovalHandler(op)
+    ops.foreach(operationInsertionHandler)
 
-  def replace_value(
+  def replaceValue(
       value: Value[Attribute],
-      new_value: Value[Attribute]
+      newValue: Value[Attribute],
   ): Unit =
-    if !(new_value eq value) then
+    if !(newValue eq value) then
       for (op, uses) <- value.uses.groupBy(_.operation) do
         // TODO: This should be enforced by a nicer design!
-        if op.container_block.nonEmpty then
+        if op.containerBlock.nonEmpty then
           val indices = Set.from(uses.map(_.index))
-          val new_operands = op.operands.zipWithIndex.map((v, i) =>
-            if indices.contains(i) then new_value else v
-          )
-          val new_op =
+          val newOperands = op.operands.zipWithIndex
+            .map((v, i) => if indices.contains(i) then newValue else v)
+          val newOp =
             op.updated(
               results = op.results,
-              operands = new_operands
+              operands = newOperands,
             )
-          replace_op(
+          replaceOp(
             op = op,
-            new_ops = new_op,
-            new_results = Some(new_op.results)
+            newOps = newOp,
+            newResults = Some(newOp.results),
           )
 
 object RewriteMethods extends Rewriter
@@ -177,28 +176,28 @@ type PatternRewriter = PatternRewriteWalker#PatternRewriter
 
 abstract class RewritePattern:
 
-  def match_and_rewrite(op: Operation, rewriter: PatternRewriter): Unit
+  def matchAndRewrite(op: Operation, rewriter: PatternRewriter): Unit
 
 case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
     extends RewritePattern:
 
   @tailrec
-  private final def match_and_rewrite_rec(
+  private final def matchAndRewriteRec(
       op: Operation,
       rewriter: PatternRewriter,
-      patterns: Seq[RewritePattern]
+      patterns: Seq[RewritePattern],
   ): Unit =
     patterns match
       case Nil    => ()
       case h :: t =>
-        h.match_and_rewrite(op, rewriter)
-        if !rewriter.has_done_action then match_and_rewrite_rec(op, rewriter, t)
+        h.matchAndRewrite(op, rewriter)
+        if !rewriter.hasDoneAction then matchAndRewriteRec(op, rewriter, t)
 
-  override def match_and_rewrite(
+  override def matchAndRewrite(
       op: Operation,
-      rewriter: PatternRewriter
+      rewriter: PatternRewriter,
   ): Unit =
-    match_and_rewrite_rec(op, rewriter, patterns)
+    matchAndRewriteRec(op, rewriter, patterns)
 
 //    OPERATION REWRITE WALKER    //
 class PatternRewriteWalker(
@@ -206,133 +205,133 @@ class PatternRewriteWalker(
 ):
 
   class PatternRewriter(
-      var current_op: Operation
+      var currentOp: Operation
   ) extends Rewriter:
-    var has_done_action: Boolean = false
+    var hasDoneAction: Boolean = false
 
-    override def operation_removal_handler: Operation => Unit =
+    override def operationRemovalHandler: Operation => Unit =
       (op: Operation) =>
-        clear_worklist(op)
+        clearWorklist(op)
         op.operands.foreach((o) =>
           o.owner match
-            case Some(owner: Operation) => populate_worklist(owner)
+            case Some(owner: Operation) => populateWorklist(owner)
             case _                      => ()
         )
 
-    override def operation_insertion_handler: Operation => Unit =
-      populate_worklist
+    override def operationInsertionHandler: Operation => Unit =
+      populateWorklist
 
-    def erase_op(op: Operation): Unit =
-      super.erase_op(op)
+    def eraseOp(op: Operation): Unit =
+      super.eraseOp(op)
 
-    def erase_matched_op(): Unit =
-      super.erase_op(current_op)
+    def eraseMatchedOp(): Unit =
+      super.eraseOp(currentOp)
 
-    def insert_op_at_location(
-        insertion_point: InsertPoint,
+    def insertOpAtLocation(
+        insertionPoint: InsertPoint,
+        ops: Operation | Seq[Operation],
+    ): Unit =
+      super.insertOpsAt(insertionPoint, ops)
+
+    def insertOpBeforeMatchedOp(
         ops: Operation | Seq[Operation]
     ): Unit =
-      super.insert_ops_at(insertion_point, ops)
+      super.insertOpsBefore(currentOp, ops)
 
-    def insert_op_before_matched_op(
+    def insertOpAfterMatchedOp(
         ops: Operation | Seq[Operation]
     ): Unit =
-      super.insert_ops_before(current_op, ops)
+      super.insertOpsBefore(currentOp, ops)
 
-    def insert_op_after_matched_op(
-        ops: Operation | Seq[Operation]
-    ): Unit =
-      super.insert_ops_before(current_op, ops)
-
-    def insert_op_at_end_of(
+    def insertOpAtEndOf(
         block: Block,
-        ops: Operation | Seq[Operation]
+        ops: Operation | Seq[Operation],
     ): Unit =
-      insert_op_at_location(InsertPoint.at_end_of(block), ops)
+      insertOpAtLocation(InsertPoint.atEndOf(block), ops)
 
-    def insert_op_at_start_of(
+    def insertOpAtStartOf(
         block: Block,
-        ops: Operation | Seq[Operation]
+        ops: Operation | Seq[Operation],
     ): Unit =
-      insert_op_at_location(InsertPoint.at_start_of(block), ops)
+      insertOpAtLocation(InsertPoint.atStartOf(block), ops)
 
-    override def insert_ops_before(
+    override def insertOpsBefore(
         op: Operation,
-        new_ops: Operation | Seq[Operation]
+        newOps: Operation | Seq[Operation],
     ): Unit =
-      super.insert_ops_before(op, new_ops)
-      has_done_action = true
+      super.insertOpsBefore(op, newOps)
+      hasDoneAction = true
 
-    override def insert_ops_after(
+    override def insertOpsAfter(
         op: Operation,
-        new_ops: Operation | Seq[Operation]
+        newOps: Operation | Seq[Operation],
     ): Unit =
-      super.insert_ops_after(op, new_ops)
-      has_done_action = true
+      super.insertOpsAfter(op, newOps)
+      hasDoneAction = true
 
-    override def replace_op(
+    override def replaceOp(
         op: Operation,
-        new_ops: Operation | Seq[Operation],
-        new_results: Option[Seq[Value[Attribute]]] = None
+        newOps: Operation | Seq[Operation],
+        newResults: Option[Seq[Value[Attribute]]] = None,
     ): Unit =
-      super.replace_op(op, new_ops, new_results)
-      has_done_action = true
+      super.replaceOp(op, newOps, newResults)
+      hasDoneAction = true
 
   private val worklist: LinkedHashSet[Operation] = LinkedHashSet.empty
 
   def rewrite(op: Operation): Unit =
-    populate_worklist(op)
-    return process_worklist()
+    populateWorklist(op)
+    return processWorklist()
 
   def rewrite(block: Block): Unit =
-    populate_worklist(block)
-    return process_worklist()
+    populateWorklist(block)
+    return processWorklist()
 
   def rewrite(region: Region): Unit =
-    populate_worklist(region)
-    return process_worklist()
+    populateWorklist(region)
+    return processWorklist()
 
-  private def pop_worklist: Operation =
+  private def popWorklist: Operation =
     val op = worklist.head
     worklist.remove(op)
     op
 
-  inline private def populate_worklist(region: Region): Unit =
-    region.blocks.foreach(populate_worklist)
+  inline private def populateWorklist(region: Region): Unit =
+    region.blocks.foreach(populateWorklist)
 
-  inline private def populate_worklist(block: Block): Unit =
-    block.operations.foreach(populate_worklist)
+  inline private def populateWorklist(block: Block): Unit =
+    block.operations.foreach(populateWorklist)
 
-  private def populate_worklist(op: Operation): Unit =
+  private def populateWorklist(op: Operation): Unit =
     worklist += op
-    op.regions.foreach(populate_worklist)
+    op.regions.foreach(populateWorklist)
 
-  private def clear_worklist(op: Operation): Unit =
+  private def clearWorklist(op: Operation): Unit =
     worklist -= op
     op.regions.foreach((x: Region) =>
-      x.blocks.foreach((y: Block) => y.operations.foreach(clear_worklist(_)))
+      x.blocks.foreach((y: Block) => y.operations.foreach(clearWorklist(_)))
     )
 
-  private def process_worklist(): Boolean =
+  private def processWorklist(): Boolean =
 
     var rewriter_done_action = false
 
     if worklist.isEmpty then return rewriter_done_action
 
-    var op = pop_worklist
+    var op = popWorklist
     val rewriter = PatternRewriter(op)
 
     while true do
-      rewriter.has_done_action = false
-      rewriter.current_op = op
+      rewriter.hasDoneAction = false
+      rewriter.currentOp = op
 
-      try pattern.match_and_rewrite(op, rewriter)
+      try pattern.matchAndRewrite(op, rewriter)
       catch
         case e: Exception => throw e // throw new Exception("Caught exception!")
 
-      rewriter_done_action |= rewriter.has_done_action
+      rewriter_done_action |= rewriter.hasDoneAction
 
       if worklist.isEmpty then return rewriter_done_action
 
-      op = pop_worklist
+      op = popWorklist
     return rewriter_done_action

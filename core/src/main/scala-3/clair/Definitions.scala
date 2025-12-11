@@ -53,7 +53,7 @@ case class OperandDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None
+    val constraint: Option[Expr[ConstraintImpl[?]]] = None,
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
@@ -61,19 +61,19 @@ case class ResultDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None
+    val constraint: Option[Expr[ConstraintImpl[?]]] = None,
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
 case class RegionDef(
     override val name: String,
-    override val variadicity: Variadicity = Variadicity.Single
+    override val variadicity: Variadicity = Variadicity.Single,
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
 case class SuccessorDef(
     override val name: String,
-    override val variadicity: Variadicity = Variadicity.Single
+    override val variadicity: Variadicity = Variadicity.Single,
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
@@ -82,13 +82,13 @@ case class OpPropertyDef(
     val tpe: Type[?],
     override val variadicity: Variadicity.Single.type |
       Variadicity.Optional.type = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None
+    val constraint: Option[Expr[ConstraintImpl[?]]] = None,
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
 case class AttributeParamDef(
     val name: String,
-    val tpe: Type[?]
+    val tpe: Type[?],
 ) {}
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
@@ -103,14 +103,15 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val assembly_format: Option[AssemblyFormatDirective] = None
+    val assemblyFormat: Option[AssemblyFormatDirective] = None,
 ):
 
   def allDefs =
     operands ++ results ++ regions ++ successors ++ properties
 
   def allDefsWithIndex =
-    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
+    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++
+      successors.zipWithIndex ++ properties.zipWithIndex
 
   def hasMultiVariadicOperands =
     operands.count(_.variadicity == Variadicity.Variadic) > 1
@@ -130,7 +131,7 @@ case class OperationDef(
 
 case class AttributeDef(
     val name: String,
-    val attributes: Seq[AttributeParamDef] = Seq()
+    val attributes: Seq[AttributeParamDef] = Seq(),
 ):
 
   def allDefsWithIndex =
