@@ -18,7 +18,7 @@ case class Alloc(
     dynamicSizes: Seq[Operand[IndexType]],
     symbolOperands: Seq[Operand[IndexType]],
     memref: Result[MemrefType],
-    alignment: IntegerAttr
+    alignment: IntegerAttr,
 ) extends DerivedOperation["memref.alloc", Alloc]
     derives DerivedOperationCompanion
 
@@ -31,21 +31,21 @@ case class Dealloc(
 case class Dim(
     memref: Operand[MemrefType],
     index: Operand[IndexType],
-    result: Result[IndexType]
+    result: Result[IndexType],
 ) extends DerivedOperation["memref.dim", Dim]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 case class Load(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
-    result: Result[Attribute]
+    result: Result[Attribute],
 ) extends DerivedOperation["memref.load", Load]
     derives DerivedOperationCompanion
 
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType]]
+    indices: Seq[Operand[IndexType]],
 ) extends DerivedOperation["memref.store", Store]
     derives DerivedOperationCompanion
 

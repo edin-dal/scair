@@ -33,7 +33,7 @@ case class ScairOptArgs(
     val parsingDiagnostics: Boolean = false,
     val printGeneric: Boolean = false,
     val passes: Seq[String] = Seq(),
-    val verifyDiagnostics: Boolean = false
+    val verifyDiagnostics: Boolean = false,
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
@@ -56,11 +56,11 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
-        allowUnregisteredDialect = args.allowUnregistered
+        allowUnregisteredDialect = args.allowUnregistered,
       )
       val parsed = parser.parseThis(
         input,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)
@@ -80,44 +80,28 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       OParser.sequence(
         commonHeaders,
         // The input file - defaulting to stdin
-        arg[String]("file")
-          .optional()
-          .text("input file")
+        arg[String]("file").optional().text("input file")
           .action((x, c) => c.copy(input = Some(x))),
-        opt[Unit]('a', "allow-unregistered-dialect")
-          .optional()
-          .text(
-            "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
-          )
-          .action((_, c) => c.copy(allowUnregistered = true)),
-        opt[Unit]('s', "skip-verify")
-          .optional()
-          .text("Skip verification")
+        opt[Unit]('a', "allow-unregistered-dialect").optional().text(
+          "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
+        ).action((_, c) => c.copy(allowUnregistered = true)),
+        opt[Unit]('s', "skip-verify").optional().text("Skip verification")
           .action((_, c) => c.copy(skipVerify = true)),
-        opt[Unit]("split-input-file")
-          .optional()
+        opt[Unit]("split-input-file").optional()
           .text("Split input file on `// -----`")
           .action((_, c) => c.copy(splitInputFile = true)),
-        opt[Unit]("parsing-diagnostics")
-          .optional()
-          .text(
-            "Parsing diagnose mode, i.e parse errors are not fatal for the whole run"
-          )
-          .action((_, c) => c.copy(parsingDiagnostics = true)),
-        opt[Unit]('g', "print-generic")
-          .optional()
+        opt[Unit]("parsing-diagnostics").optional().text(
+          "Parsing diagnose mode, i.e parse errors are not fatal for the whole run"
+        ).action((_, c) => c.copy(parsingDiagnostics = true)),
+        opt[Unit]('g', "print-generic").optional()
           .text("Print Strictly in Generic format")
           .action((_, c) => c.copy(printGeneric = true)),
-        opt[Seq[String]]('p', "passes")
-          .optional()
+        opt[Seq[String]]('p', "passes").optional()
           .text("Specify passes to apply to the IR")
           .action((x, c) => c.copy(passes = x)),
-        opt[Unit]("verify-diagnostics")
-          .optional()
-          .text(
-            "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
-          )
-          .action((_, c) => c.copy(verifyDiagnostics = true))
+        opt[Unit]("verify-diagnostics").optional().text(
+          "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
+        ).action((_, c) => c.copy(verifyDiagnostics = true)),
       )
 
     // Parse the CLI args
@@ -146,11 +130,9 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
             module match
               case Right(op) =>
                 // apply the specified passes
-                parsedArgs.passes
-                  .map(ctx.getPass(_).get)
-                  .foldLeft(module)((module, pass) =>
-                    module.map(pass.transform)
-                  )
+                parsedArgs.passes.map(ctx.getPass(_).get).foldLeft(module)(
+                  (module, pass) => module.map(pass.transform)
+                )
               case Left(errorMsg) =>
                 if parsedArgs.verifyDiagnostics then Left(errorMsg + "\n")
                 else throw new VerifyException(errorMsg)
@@ -159,7 +141,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
             val printer = new Printer(parsedArgs.printGeneric)
             processedModule.fold(
               printer.print,
-              printer.printTopLevel
+              printer.printTopLevel,
             )
             printer.flush()
           }

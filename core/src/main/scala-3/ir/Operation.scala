@@ -33,8 +33,8 @@ trait IRNode:
 
   def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
   ): IRNode
 
 trait Operation extends IRNode with IntrusiveNode[Operation]:
@@ -43,8 +43,8 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
   ): Operation =
     val newResults = results.map(_.copy())
     valueMapper addAll (results zip newResults)
@@ -53,7 +53,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       operands = operands.map(o => valueMapper.getOrElse(o, o)),
       successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
       regions = regions.map(_.deepCopy),
-      attributes = LinkedHashMap.from(attributes)
+      attributes = LinkedHashMap.from(attributes),
     )
 
   regions.foreach(attachRegion)
@@ -75,7 +75,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes
+      attributes: DictType[String, Attribute] = attributes,
   ): Operation
 
   def operands: Seq[Value[Attribute]]
@@ -96,31 +96,24 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   def structured: Either[String, Operation] = regions
     .foldLeft[Either[String, Unit]](Right(()))((res, reg) =>
       res.flatMap(_ => reg.structured)
-    )
-    .map(_ => this)
+    ).map(_ => this)
 
   def verify(): Either[String, Operation] =
-    results
-      .foldLeft[Either[String, Unit]](Right(()))((res, result) =>
-        res.flatMap(_ => result.verify())
+    results.foldLeft[Either[String, Unit]](Right(()))((res, result) =>
+      res.flatMap(_ => result.verify())
+    ).flatMap(_ =>
+      regions.foldLeft[Either[String, Unit]](Right(()))((res, region) =>
+        res.flatMap(_ => region.verify())
       )
-      .flatMap(_ =>
-        regions.foldLeft[Either[String, Unit]](Right(()))((res, region) =>
-          res.flatMap(_ => region.verify())
-        )
+    ).flatMap(_ =>
+      properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+        (res, prop) => res.flatMap(_ => prop.customVerify())
       )
-      .flatMap(_ =>
-        properties.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, prop) => res.flatMap(_ => prop.customVerify())
-        )
+    ).flatMap(_ =>
+      attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
+        (res, attr) => res.flatMap(_ => attr.customVerify())
       )
-      .flatMap(_ =>
-        attributes.values.toSeq.foldLeft[Either[String, Unit]](Right(()))(
-          (res, attr) => res.flatMap(_ => attr.customVerify())
-        )
-      )
-      .flatMap(_ => traitVerify())
-      .flatMap(_ => customVerify())
+    ).flatMap(_ => traitVerify()).flatMap(_ => customVerify())
 
   final def dropAllReferences: Unit =
     containerBlock = None
@@ -164,8 +157,8 @@ object UnregisteredOperation:
           results: Seq[Result[Attribute]] = Seq(),
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] =
-            DictType.empty[String, Attribute]
+          attributes: DictType[String, Attribute] = DictType
+            .empty[String, Attribute],
       ): UnregisteredOperation =
         new UnregisteredOperation(
           name = _name,
@@ -174,7 +167,7 @@ object UnregisteredOperation:
           results = results,
           regions = regions,
           properties = properties,
-          attributes = attributes
+          attributes = attributes,
         )
 
 case class UnregisteredOperation private (
@@ -183,10 +176,10 @@ case class UnregisteredOperation private (
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] =
-      Map.empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] =
-      DictType.empty[String, Attribute]
+    override val properties: Map[String, Attribute] = Map
+      .empty[String, Attribute],
+    override val attributes: DictType[String, Attribute] = DictType
+      .empty[String, Attribute],
 ) extends Operation:
 
   override def updated(
@@ -195,7 +188,7 @@ case class UnregisteredOperation private (
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes
+      attributes: DictType[String, Attribute] = attributes,
   ) =
     UnregisteredOperation(name)(
       operands = operands,
@@ -203,16 +196,17 @@ case class UnregisteredOperation private (
       results = results,
       regions = regions,
       properties = properties,
-      attributes = attributes
+      attributes = attributes,
     )
 
 trait OperationCompanion[O <: Operation]:
   def name: String
 
   def parse[$: P](parser: Parser, resNames: Seq[String]): P[O] =
-    fastparse.Fail(
-      s"No custom Parser implemented for Operation '${name}'"
-    )
+    fastparse
+      .Fail(
+        s"No custom Parser implemented for Operation '$name'"
+      )
 
   def apply(
       operands: Seq[Value[Attribute]] = Seq(),
@@ -220,8 +214,8 @@ trait OperationCompanion[O <: Operation]:
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] =
-        DictType.empty[String, Attribute]
+      attributes: DictType[String, Attribute] = DictType
+        .empty[String, Attribute],
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()

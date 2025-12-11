@@ -51,7 +51,7 @@ def selectMember[T: Type](obj: Expr[?], name: String)(using
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Option[(String, Expr[Attribute])] =
   val name = s"${getConstructName[T]}SegmentSizes"
   hasMultiVariadic match
@@ -74,9 +74,9 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
             ${ arrayAttr }.map(x =>
               IntegerAttr(
                 IntData(x),
-                IntegerType(IntData(32), Signless)
+                IntegerType(IntData(32), Signless),
               )
-            )
+            ),
           )
         }
       )
@@ -92,13 +92,13 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
   */
 def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[DefinedInput[Def]]] =
   val stuff =
     opInputDefs.map((d: Def) =>
       selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
         adtOpExpr,
-        d.name
+        d.name,
       )
     )
   stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
@@ -109,52 +109,52 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
 
 def operandsMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Operand[Attribute]]] =
   ADTFlatInputMacro(opDef.operands, adtOpExpr)
 
 def successorsMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Successor]] =
   ADTFlatInputMacro(opDef.successors, adtOpExpr)
 
 def resultsMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Result[Attribute]]] =
   ADTFlatInputMacro(opDef.results, adtOpExpr)
 
 def regionsMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Region]] =
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
 def propertiesMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Map[String, Attribute]] =
 
   val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands,
     opDef.operands,
-    adtOpExpr
+    adtOpExpr,
   )
   val resSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicResults,
     opDef.results,
-    adtOpExpr
+    adtOpExpr,
   )
   val regSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicRegions,
     opDef.regions,
-    adtOpExpr
+    adtOpExpr,
   )
   val succSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicSuccessors,
     opDef.successors,
-    adtOpExpr
+    adtOpExpr,
   )
   // Populating a Dictionarty with the properties
   val definedProps =
@@ -167,19 +167,20 @@ def propertiesMacro(
         Map.from(${ propertyNames } zip ${ propertyExprs })
       }
 
-  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp).foldLeft(
-    definedProps
-  ) {
-    case (map, Some((name, segSize))) =>
-      '{ $map + (${ Expr(name) } -> $segSize) }
-    case (map, None) => map
-  }
+  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp)
+    .foldLeft(
+      definedProps
+    ) {
+      case (map, Some((name, segSize))) =>
+        '{ $map + (${ Expr(name) } -> $segSize) }
+      case (map, None) => map
+    }
 
 def customPrintMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
     p: Expr[Printer],
-    indentLevel: Expr[Int]
+    indentLevel: Expr[Int],
 )(using Quotes): Expr[Unit] =
   opDef.assemblyFormat match
     case Some(format) =>
@@ -194,7 +195,7 @@ def customPrintMacro(
 def parseMacro[O <: Operation: Type](
     opDef: OperationDef,
     p: Expr[Parser],
-    resNames: Expr[Seq[String]]
+    resNames: Expr[Seq[String]],
 )(using
     Quotes
 ): Expr[P[Any] ?=> P[O]] =
@@ -212,7 +213,7 @@ def parseMacro[O <: Operation: Type](
 
 def verifyMacro(
     opDef: OperationDef,
-    adtOpExpr: Expr[?]
+    adtOpExpr: Expr[?],
 )(using Quotes): Expr[Either[String, Operation]] =
 
   val a = opDef.operands // val xyz: Seq[Expr[Either[String, Unit]]] =
@@ -245,7 +246,7 @@ def verifyMacro(
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
-    propName: String
+    propName: String,
 )(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
   '{
@@ -268,7 +269,7 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
 
 def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
-    propName: String
+    propName: String,
 )(using Quotes): Expr[Option[A]] =
   val typeName = Type.of[A].toString()
   '{
@@ -393,7 +394,7 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     '{
       (
           properties: Map[String, Attribute],
-          flat: Seq[DefinedInput[Def]]
+          flat: Seq[DefinedInput[Def]],
       ) =>
         // TODO: This does not really belong here. Bigger fishes to fry at the time of
         // writing though. Conceptually this should end up in some kind of header.
@@ -418,47 +419,39 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
   val preceeding =
     defs.indexWhere(x =>
       val a = getConstructVariadicity(x)
-      a == Variadicity.Variadic ||
-      a == Variadicity.Optional
+      a == Variadicity.Variadic || a == Variadicity.Optional
     )
   val following = defs.length - preceeding - 1
-  val preceedingExprs = defs
-    .slice(0, preceeding)
-    .zipWithIndex
-    .map((d, i) =>
-      '{
+  val preceedingExprs = defs.slice(0, preceeding).zipWithIndex.map((d, i) =>
+    '{
 
-        (
-            properties: Map[String, Attribute],
-            flat: Seq[DefinedInput[Def]]
-        ) =>
-          flat.apply(${ Expr(i) })
-      }
-    )
+      (
+          properties: Map[String, Attribute],
+          flat: Seq[DefinedInput[Def]],
+      ) => flat.apply(${ Expr(i) })
+    }
+  )
 
   val variadicExpr = '{
     (
         properties: Map[String, Attribute],
-        flat: Seq[DefinedInput[Def]]
-    ) =>
-      flat
-        .slice(${ Expr(preceeding) }, flat.length - ${ Expr(following) })
+        flat: Seq[DefinedInput[Def]],
+    ) => flat.slice(${ Expr(preceeding) }, flat.length - ${ Expr(following) })
   }
 
-  val followingExprs = defs
-    .slice(preceeding + 1, defs.length)
-    .zipWithIndex
-    .map((d, i) =>
+  val followingExprs = defs.slice(preceeding + 1, defs.length).zipWithIndex.map(
+    (d, i) =>
       '{
         (
             properties: Map[String, Attribute],
-            flat: Seq[DefinedInput[Def]]
+            flat: Seq[DefinedInput[Def]],
         ) =>
-          flat.apply(flat.length - ${ Expr(following) } + ${
-            Expr(i)
-          })
+          flat
+            .apply(flat.length - ${ Expr(following) } + ${
+              Expr(i)
+            })
       }
-    )
+  )
 
   (preceedingExprs :+ variadicExpr) ++ followingExprs
 
@@ -476,7 +469,7 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
     // writing thoug. Conceptually this should end up in some kind of header.
     (
         properties: Map[String, Attribute],
-        flat: Seq[DefinedInput[Def]]
+        flat: Seq[DefinedInput[Def]],
     ) =>
       val sizes = ${ expectSegmentSizes[Def] }(properties)
       val segments = sizes.length
@@ -486,12 +479,12 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
         throw new Exception(
           s"Expected ${${ Expr(defs.length) }} entries in ${${
               Expr(getConstructName[Def])
-            }}SegmentSizes, got ${segments}."
+            }}SegmentSizes, got $segments."
         )
       // Check the segmentSizes' sum is coherent with the number of constructs
       if total != flat.length then
         throw new Exception(
-          s"${${ Expr(getConstructName[Def]) }}'s sum does not match the op's ${flat}.length} ${${
+          s"${${ Expr(getConstructName[Def]) }}'s sum does not match the op's $flat.length} ${${
               Expr(getConstructName[Def])
             }}s."
         )
@@ -504,14 +497,14 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
         '{
           (
               properties: Map[String, Attribute],
-              flat: Seq[DefinedInput[Def]]
+              flat: Seq[DefinedInput[Def]],
           ) => flat(${ Expr(i) })
         }
       case Variadicity.Variadic | Variadicity.Optional =>
         '{
           (
               properties: Map[String, Attribute],
-              flat: Seq[DefinedInput[Def]]
+              flat: Seq[DefinedInput[Def]],
           ) =>
             val sizes = ${ segmentSizes }(properties, flat)
             val start = sizes.slice(0, ${ Expr(i) }).sum
@@ -552,7 +545,7 @@ def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
                 Expr(Type.show[DefinedInputOf[Def, t]])
-              }}, got ${c}"
+              }}, got $c"
           )
         // This somehow fails to carry type information if not casted explicitely here.
         // Including the exact same asInstanceOf in the case above.
@@ -573,7 +566,7 @@ def variadicConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
           throw new Exception(
             s"Expected ${${ Expr(d.name) }} to be of type ${${
                 Expr(Type.show[Seq[DefinedInputOf[Def, t]]])
-              }}, got ${c}"
+              }}, got $c"
           )
         // Idem, see `singleConstructExtractor`
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
@@ -590,7 +583,7 @@ def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
       throw new Exception(
         s"Expected ${${ Expr(d.name) }} to be of type ${${
             Expr(Type.show[DefinedInputOf[Def, t]])
-          }}, got ${c}"
+          }}, got $c"
       )
     cs.headOption
       // Idem, see `singleConstructExtractor`
@@ -620,16 +613,14 @@ def constructExtractor[Def <: OpInputDef: Type](
 def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
     flat: Expr[Seq[DefinedInput[Def]]],
-    properties: Expr[Map[String, Attribute]]
+    properties: Expr[Map[String, Attribute]],
 )(using Quotes) =
   // partition the constructs according to their definitions
   val partitioned =
     constructPartitioner(defs).map(p => '{ ${ p }($properties, $flat) })
 
   // extract the constructs
-  (partitioned zip defs).map { (c, d) =>
-    '{ ${ constructExtractor(d) }(${ c }) }
-  }
+  (partitioned zip defs).map((c, d) => '{ ${ constructExtractor(d) }(${ c }) })
 
 /** Return all named arguments for the primary constructor of an ADT. Those are
   * checked, in the sense that they are checked to be of the correct types and
@@ -649,69 +640,71 @@ def tryConstruct[T: Type](
     results: Expr[Seq[Result[Attribute]]],
     regions: Expr[Seq[Region]],
     successors: Expr[Seq[Successor]],
-    properties: Expr[Map[String, Attribute]]
+    properties: Expr[Map[String, Attribute]],
 )(using Quotes) =
   import quotes.reflect.*
-  val args = (extractedConstructs(
-    opDef.operands,
-    operands,
-    properties
-  ) zip opDef.operands)
-    .map((e, d) => NamedArg(d.name, e.asTerm)) ++
-    (extractedConstructs(opDef.results, results, properties) zip opDef.results)
-      .map((e, d) => NamedArg(d.name, e.asTerm)) ++ (extractedConstructs(
-      opDef.regions,
-      regions,
-      properties
-    ) zip opDef.regions).map((e, d) =>
-      NamedArg(d.name, e.asTerm)
-    ) ++ (extractedConstructs(
-      opDef.successors,
-      successors,
-      properties
-    ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-    opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
-      val namedArg = tpe match
-        case '[type t <: scala.reflect.Enum; `t`] =>
-          val property = variadicity match
-            case Variadicity.Optional =>
-              enumFromPropertyOption[t](
-                properties,
-                name
-              )
-            case Variadicity.Single =>
-              enumFromProperty[t](
-                properties,
-                name
-              )
-            case Variadicity.Variadic =>
-              report.errorAndAbort(
-                s"Properties cannot be variadic in an ADT."
-              )
-          NamedArg(name, property.asTerm)
-        case '[type t <: Attribute; `t`] =>
-          val property = variadicity match
-            case Variadicity.Optional =>
-              generateOptionalCheckedPropertyArgument[t](
-                properties,
-                name
-              )
-            case Variadicity.Single =>
-              generateCheckedPropertyArgument[t](
-                properties,
-                name
-              )
-            case Variadicity.Variadic =>
-              report.errorAndAbort(
-                s"Properties cannot be variadic in an ADT."
-              )
-          NamedArg(name, property.asTerm)
-      namedArg
-    }
+  val args =
+    (extractedConstructs(
+      opDef.operands,
+      operands,
+      properties,
+    ) zip opDef.operands).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+      (extractedConstructs(opDef.results, results, properties) zip
+        opDef.results).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+      (extractedConstructs(
+        opDef.regions,
+        regions,
+        properties,
+      ) zip opDef.regions).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+      (extractedConstructs(
+        opDef.successors,
+        successors,
+        properties,
+      ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+      opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
+        val namedArg = tpe match
+          case '[type t <: scala.reflect.Enum; `t`] =>
+            val property = variadicity match
+              case Variadicity.Optional =>
+                enumFromPropertyOption[t](
+                  properties,
+                  name,
+                )
+              case Variadicity.Single =>
+                enumFromProperty[t](
+                  properties,
+                  name,
+                )
+              case Variadicity.Variadic =>
+                report
+                  .errorAndAbort(
+                    s"Properties cannot be variadic in an ADT."
+                  )
+            NamedArg(name, property.asTerm)
+          case '[type t <: Attribute; `t`] =>
+            val property = variadicity match
+              case Variadicity.Optional =>
+                generateOptionalCheckedPropertyArgument[t](
+                  properties,
+                  name,
+                )
+              case Variadicity.Single =>
+                generateCheckedPropertyArgument[t](
+                  properties,
+                  name,
+                )
+              case Variadicity.Variadic =>
+                report
+                  .errorAndAbort(
+                    s"Properties cannot be variadic in an ADT."
+                  )
+            NamedArg(name, property.asTerm)
+        namedArg
+      }
   // Return a call to the primary constructor of the ADT.
   Apply(
     Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args)
+    List.from(args),
   ).asExprOf[T]
 
   /** Attempt to create an ADT from an UnstructuredOp[ADT]
@@ -731,7 +724,7 @@ def tryConstruct[T: Type](
 
 def fromUnstructuredOperationMacro[T <: Operation: Type](
     opDef: OperationDef,
-    genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp]
+    genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp],
 )(using Quotes): Expr[T] =
 
   // Create named arguments for all of the ADT's constructor arguments.
@@ -741,12 +734,12 @@ def fromUnstructuredOperationMacro[T <: Operation: Type](
     '{ $genExpr.results },
     '{ $genExpr.detachedRegions },
     '{ $genExpr.successors },
-    '{ $genExpr.properties }
+    '{ $genExpr.properties },
   )
 
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
-    attributes: Expr[Seq[Attribute]]
+    attributes: Expr[Seq[Attribute]],
 )(using
     Quotes
 ): Expr[T] =
@@ -757,20 +750,21 @@ def getAttrConstructor[T: Type](
       '{
         if ${ Expr(attrDef.attributes.length) } != $attributes.length then
           throw new Exception(
-            s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes.length}"
+            s"Number of attributes ${${ Expr(attrDef.attributes.length) }} does not match the number of provided attributes ${$attributes
+                .length}"
           )
       }
     case _ =>
-      report.errorAndAbort(
-        s"Type ${Type.show[T]} needs to be a subtype of Attribute"
-      )
+      report
+        .errorAndAbort(
+          s"Type ${Type.show[T]} needs to be a subtype of Attribute"
+        )
 
   val defs = attrDef.attributes
 
-  val extractedConstructs = (defs.zipWithIndex.map((d, i) =>
-    '{ ${ attributes }(${ Expr(i) }) }
-  ) zip defs)
-    .map { (a, d) =>
+  val extractedConstructs =
+    (defs.zipWithIndex.map((d, i) => '{ ${ attributes }(${ Expr(i) }) }) zip
+      defs).map { (a, d) =>
       // expected type of the attribute
       val tpe = d.tpe
       tpe match
@@ -791,7 +785,7 @@ def getAttrConstructor[T: Type](
 
   val constructorCall = Apply(
     Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args)
+    List.from(args),
   ).asExprOf[T]
 
   '{
@@ -801,15 +795,16 @@ def getAttrConstructor[T: Type](
 
 def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     attrInputDefs: Seq[AttributeParamDef],
-    adtAttrExpr: Expr[?]
+    adtAttrExpr: Expr[?],
 )(using Quotes): Expr[Seq[Attribute]] =
-  Expr.ofList(
-    attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
-  )
+  Expr
+    .ofList(
+      attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
+    )
 
 def parametersMacro(
     attrDef: AttributeDef,
-    adtAttrExpr: Expr[?]
+    adtAttrExpr: Expr[?],
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
@@ -823,14 +818,15 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
     new DerivedAttributeCompanion[T]:
       override def name: String = ${ Expr(attrDef.name) }
       override def parse[$: P as ctx](p: AttrParser): P[T] = ${
-        getAttrCustomParse[T]('{ p }, '{ ctx }).getOrElse(
-          '{
-            P(
-              ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
-            ).orElse(Seq())
-              .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
-          }
-        )
+        getAttrCustomParse[T]('{ p }, '{ ctx })
+          .getOrElse(
+            '{
+              P(
+                ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
+              ).orElse(Seq())
+                .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
+            }
+          )
       }
       def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
         parametersMacro(attrDef, '{ attr })
@@ -877,7 +873,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       override def parse[$: P as ctx](
           p: Parser,
-          resNames: Seq[String]
+          resNames: Seq[String],
       ): P[T] =
         ${
           (getOpCustomParse[T]('{ p }, '{ resNames })
@@ -890,8 +886,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
           results: Seq[Result[Attribute]] = Seq(),
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] =
-            DictType.empty[String, Attribute]
+          attributes: DictType[String, Attribute] = DictType
+            .empty[String, Attribute],
       ): UnstructuredOp | T & Operation =
         try {
           val structured = ${
@@ -901,7 +897,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
               '{ results },
               '{ regions },
               '{ successors },
-              '{ properties }
+              '{ properties },
             )
           }
           structured.attributes.addAll(attributes)
@@ -913,7 +909,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
             results = results,
             regions = regions,
             properties = properties,
-            attributes = attributes
+            attributes = attributes,
           )
         }
 
@@ -924,7 +920,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
           results = results(adtOp),
           regions = regions(adtOp).map(_.detached),
           properties = properties(adtOp),
-          attributes = adtOp.attributes
+          attributes = adtOp.attributes,
         )
 
       def structure(unstrucOp: UnstructuredOp): T =
@@ -936,7 +932,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
             adt
           case _ =>
             throw new Exception(
-              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: ${unstrucOp}"
+              s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: $unstrucOp"
             )
 
   }

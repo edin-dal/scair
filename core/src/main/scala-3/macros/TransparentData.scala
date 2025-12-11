@@ -49,9 +49,9 @@ object TransparentData:
               Apply(
                 Select(
                   New(TypeTree.of[T]),
-                  TypeRepr.of[T].typeSymbol.primaryConstructor
+                  TypeRepr.of[T].typeSymbol.primaryConstructor,
                 ),
-                List('{ data }.asTerm)
+                List('{ data }.asTerm),
               ).asExprOf[T]
             }
         }

@@ -49,7 +49,7 @@ object InsertPoint:
 
 case class InsertPoint(
     val block: Block,
-    val insertBefore: Option[Operation] = None
+    val insertBefore: Option[Operation] = None,
 )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -78,7 +78,7 @@ trait Rewriter:
 
   def insertOpsAt(
       insertionPoint: InsertPoint,
-      ops: Operation | Seq[Operation]
+      ops: Operation | Seq[Operation],
   ): Unit =
 
     val operations = ops match
@@ -89,7 +89,7 @@ trait Rewriter:
       case Some(op) =>
         insertionPoint.block.insertOpsBefore(
           op,
-          operations
+          operations,
         )
       case None =>
         insertionPoint.block.addOps(operations)
@@ -98,20 +98,20 @@ trait Rewriter:
 
   def insertOpsBefore(
       op: Operation,
-      newOps: Operation | Seq[Operation]
+      newOps: Operation | Seq[Operation],
   ): Unit =
     insertOpsAt(InsertPoint.before(op), newOps)
 
   def insertOpsAfter(
       op: Operation,
-      newOps: Operation | Seq[Operation]
+      newOps: Operation | Seq[Operation],
   ): Unit =
     insertOpsAt(InsertPoint.after(op), newOps)
 
   def replaceOp(
       op: Operation,
       newOps: Operation | Seq[Operation],
-      newResults: Option[Seq[Value[Attribute]]] = None
+      newResults: Option[Seq[Value[Attribute]]] = None,
   ): Unit =
 
     val block = op.containerBlock match
@@ -144,25 +144,24 @@ trait Rewriter:
 
   def replaceValue(
       value: Value[Attribute],
-      newValue: Value[Attribute]
+      newValue: Value[Attribute],
   ): Unit =
     if !(newValue eq value) then
       for (op, uses) <- value.uses.groupBy(_.operation) do
         // TODO: This should be enforced by a nicer design!
         if op.containerBlock.nonEmpty then
           val indices = Set.from(uses.map(_.index))
-          val newOperands = op.operands.zipWithIndex.map((v, i) =>
-            if indices.contains(i) then newValue else v
-          )
+          val newOperands = op.operands.zipWithIndex
+            .map((v, i) => if indices.contains(i) then newValue else v)
           val newOp =
             op.updated(
               results = op.results,
-              operands = newOperands
+              operands = newOperands,
             )
           replaceOp(
             op = op,
             newOps = newOp,
-            newResults = Some(newOp.results)
+            newResults = Some(newOp.results),
           )
 
 object RewriteMethods extends Rewriter
@@ -186,7 +185,7 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
   private final def matchAndRewriteRec(
       op: Operation,
       rewriter: PatternRewriter,
-      patterns: Seq[RewritePattern]
+      patterns: Seq[RewritePattern],
   ): Unit =
     patterns match
       case Nil    => ()
@@ -196,7 +195,7 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
 
   override def matchAndRewrite(
       op: Operation,
-      rewriter: PatternRewriter
+      rewriter: PatternRewriter,
   ): Unit =
     matchAndRewriteRec(op, rewriter, patterns)
 
@@ -230,7 +229,7 @@ class PatternRewriteWalker(
 
     def insertOpAtLocation(
         insertionPoint: InsertPoint,
-        ops: Operation | Seq[Operation]
+        ops: Operation | Seq[Operation],
     ): Unit =
       super.insertOpsAt(insertionPoint, ops)
 
@@ -246,26 +245,26 @@ class PatternRewriteWalker(
 
     def insertOpAtEndOf(
         block: Block,
-        ops: Operation | Seq[Operation]
+        ops: Operation | Seq[Operation],
     ): Unit =
       insertOpAtLocation(InsertPoint.atEndOf(block), ops)
 
     def insertOpAtStartOf(
         block: Block,
-        ops: Operation | Seq[Operation]
+        ops: Operation | Seq[Operation],
     ): Unit =
       insertOpAtLocation(InsertPoint.atStartOf(block), ops)
 
     override def insertOpsBefore(
         op: Operation,
-        newOps: Operation | Seq[Operation]
+        newOps: Operation | Seq[Operation],
     ): Unit =
       super.insertOpsBefore(op, newOps)
       hasDoneAction = true
 
     override def insertOpsAfter(
         op: Operation,
-        newOps: Operation | Seq[Operation]
+        newOps: Operation | Seq[Operation],
     ): Unit =
       super.insertOpsAfter(op, newOps)
       hasDoneAction = true
@@ -273,7 +272,7 @@ class PatternRewriteWalker(
     override def replaceOp(
         op: Operation,
         newOps: Operation | Seq[Operation],
-        newResults: Option[Seq[Value[Attribute]]] = None
+        newResults: Option[Seq[Value[Attribute]]] = None,
     ): Unit =
       super.replaceOp(op, newOps, newResults)
       hasDoneAction = true

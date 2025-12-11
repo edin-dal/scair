@@ -29,7 +29,7 @@ import scala.quoted.*
   */
 def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
     list: Expr[Map[String, Attribute]],
-    propName: String
+    propName: String,
 )(using Quotes): Expr[Option[A]] =
   val typeName = Type.of[A].toString()
   '{
@@ -53,7 +53,7 @@ def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
   */
 def enumFromProperty[A <: scala.reflect.Enum: Type](
     list: Expr[Map[String, Attribute]],
-    propName: String
+    propName: String,
 )(using Quotes): Expr[A] =
   import quotes.reflect.*
   val typeName = TypeRepr.of[A].show

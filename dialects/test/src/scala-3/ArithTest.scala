@@ -24,7 +24,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
   "Such real ADT manipulation" should "flex how working it is" in {
     val zero = Constant(
       IntegerAttr(IntData(0), I32),
-      Result(I32)
+      Result(I32),
     )
     val module = ModuleOp(
       Region(
@@ -46,10 +46,10 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
                           zero.results.head.asInstanceOf[Result[IntegerType]]
                         val add = AddI(lhs, rhs, addres)
                         val ret = Return(Seq(addres))
-                        Seq(zero, add, ret)
+                        Seq(zero, add, ret),
                     )
                   )
-                )
+                ),
               )
             )
           )

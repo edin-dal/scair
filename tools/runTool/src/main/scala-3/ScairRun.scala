@@ -44,10 +44,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       OParser.sequence(
         commonHeaders,
         // The input file - defaulting to stdin
-        arg[String]("file")
-          .optional()
-          .text("input file")
-          .action((x, c) => c.copy(input = Some(x)))
+        arg[String]("file").optional().text("input file")
+          .action((x, c) => c.copy(input = Some(x))),
       )
 
     // Parse the CLI args
@@ -63,7 +61,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       val parser = new scair.Parser(ctx, inputPath = args.input)
       parser.parseThis(
         input.mkString,
-        pattern = parser.TopLevel(using _)
+        pattern = parser.TopLevel(using _),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)

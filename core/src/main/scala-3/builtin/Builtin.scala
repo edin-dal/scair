@@ -99,7 +99,7 @@ final case class IntegerType(width: IntData, sign: Signedness)
 
 case class IntegerAttr(
     value: IntData,
-    typ: IntegerType | IndexType = I64
+    typ: IntegerType | IndexType = I64,
 ) extends DerivedAttribute["builtin.integer_attr", IntegerAttr]
     derives DerivedAttributeCompanion:
 
@@ -122,7 +122,8 @@ case class IntegerAttr(
   infix def *(that: IntegerAttr): IntegerAttr =
     if this.typ != that.typ then
       throw new Exception(
-        s"Cannot multiply IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+        s"Cannot multiply IntegerAttrs of different types: ${this
+            .typ} and ${that.typ}"
       )
     // TODO: Make it correct
     IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
@@ -186,7 +187,7 @@ final case class ArrayAttribute[D <: Attribute](attrValues: Seq[D])
 final case class DictionaryAttr(entries: Map[String, Attribute])
     extends DataAttribute[Map[String, Attribute]](
       "builtin.dict_attr",
-      entries
+      entries,
     ):
 
   override def customPrint(p: Printer) =
@@ -215,7 +216,7 @@ final case class StringData(stringLiteral: String)
           case '"'  => "\\\""
           case _    => c.toString()
       ),
-      "\""
+      "\"",
     )(using 0)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -238,7 +239,7 @@ sealed trait TensorType extends ContainerType
 case class RankedTensorType(
     elementType: Attribute,
     shape: ArrayAttribute[IntData],
-    encoding: Option[Attribute] = None
+    encoding: Option[Attribute] = None,
 ) extends TensorType,
       ShapedType:
 
@@ -281,7 +282,7 @@ sealed trait MemrefType
 final case class RankedMemrefType(
     elementType: Attribute,
     shape: ArrayAttribute[IntData],
-    encoding: Option[Attribute] = None
+    encoding: Option[Attribute] = None,
 ) extends MemrefType,
       ShapedType:
 
@@ -318,7 +319,7 @@ final case class UnrankedMemrefType(elementType: Attribute)
 final case class VectorType(
     elementType: Attribute,
     shape: ArrayAttribute[IntData],
-    scalableDims: ArrayAttribute[IntData]
+    scalableDims: ArrayAttribute[IntData],
 ) extends DerivedAttribute["builtin.vector_type", VectorType]
     with ShapedType
     with ContainerType derives DerivedAttributeCompanion:
@@ -335,7 +336,7 @@ final case class VectorType(
         if scalable.data != 0 then
           p.print("[", size, "]")(using indentLevel = 0)
         else p.print(size),
-      sep = "x"
+      sep = "x",
     )
     p.print("x", elementType, ">")(using indentLevel = 0)
 
@@ -345,7 +346,7 @@ final case class VectorType(
 
 final case class SymbolRefAttr(
     rootRef: StringData,
-    nestedRefs: Seq[StringData] = Seq()
+    nestedRefs: Seq[StringData] = Seq(),
 ) extends ParametrizedAttribute:
 
   override def name: String = "builtin.symbol_ref"
@@ -357,7 +358,7 @@ final case class SymbolRefAttr(
     p.printListF(
       rootRef +: nestedRefs,
       ref => p.print("@", ref.data)(using indentLevel = 0),
-      sep = "::"
+      sep = "::",
     )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -366,7 +367,7 @@ final case class SymbolRefAttr(
 
 final case class DenseArrayAttr(
     typ: IntegerType | FloatType,
-    data: Seq[IntegerAttr] | Seq[FloatAttr]
+    data: Seq[IntegerAttr] | Seq[FloatAttr],
 ) extends ParametrizedAttribute
     with Seq[Attribute]:
 
@@ -388,7 +389,7 @@ final case class DenseArrayAttr(
       {
         case IntegerAttr(value, _) => p.print(value)
         case FloatAttr(value, _)   => p.print(value)
-      }
+      },
     )
     p.print(">")
 
@@ -405,7 +406,7 @@ final case class DenseArrayAttr(
 
 final case class FunctionType(
     inputs: Seq[Attribute],
-    outputs: Seq[Attribute]
+    outputs: Seq[Attribute],
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
@@ -431,7 +432,7 @@ type TensorLiteralArray =
 
 final case class DenseIntOrFPElementsAttr(
     typ: ContainerType,
-    data: TensorLiteralArray
+    data: TensorLiteralArray,
 ) extends DerivedAttribute["builtin.dense", DenseIntOrFPElementsAttr]
     derives DerivedAttributeCompanion:
 
@@ -443,34 +444,32 @@ final case class DenseIntOrFPElementsAttr(
       case ft: FloatType   => Right(ft)
       case _               =>
         Left(
-          s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: ${elementType}"
+          s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
         )
 
-    data.attrValues
-      .foldLeft[Either[String, Any]](
-        tpe
-      )((acc, elt) =>
-        acc.map(tpe =>
-          elt match
-            case IntegerAttr(_, etyp) =>
-              if tpe == etyp then acc
-              else
-                Left(
-                  s"DenseIntOrFPElementsAttr data element type ${etyp} does not match expected type ${tpe}"
-                )
-            case FloatAttr(_, etyp) =>
-              if tpe == etyp then acc
-              else
-                Left(
-                  s"DenseIntOrFPElementsAttr data element type ${etyp} does not match expected type ${tpe}"
-                )
-            case _ =>
+    data.attrValues.foldLeft[Either[String, Any]](
+      tpe
+    )((acc, elt) =>
+      acc.map(tpe =>
+        elt match
+          case IntegerAttr(_, etyp) =>
+            if tpe == etyp then acc
+            else
               Left(
-                s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: ${elt}"
+                s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
-        )
+          case FloatAttr(_, etyp) =>
+            if tpe == etyp then acc
+            else
+              Left(
+                s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
+              )
+          case _ =>
+            Left(
+              s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
+            )
       )
-      .map(_ => ())
+    ).map(_ => ())
 
   override def customPrint(p: Printer) =
     val values = data.attrValues(0) match
@@ -521,7 +520,7 @@ object ModuleOp:
   // ==--- Custom Parsing ---== //
   def parse[$: P](
       parser: Parser,
-      resNames: Seq[String]
+      resNames: Seq[String],
   ): P[ModuleOp] =
     P(
       parser.RegionP()
@@ -541,10 +540,10 @@ case class ModuleOp(
 
 case class UnrealizedConversionCastOp(
     inputs: Seq[Value[Attribute]] = Seq(),
-    outputs: Seq[Result[Attribute]] = Seq()
+    outputs: Seq[Result[Attribute]] = Seq(),
 ) extends DerivedOperation[
       "builtin.unrealized_conversion_cast",
-      UnrealizedConversionCastOp
+      UnrealizedConversionCastOp,
     ] derives DerivedOperationCompanion
 
 val BuiltinDialect =

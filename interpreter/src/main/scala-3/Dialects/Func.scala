@@ -19,11 +19,11 @@ object run_call extends OpImpl[func.Call]:
         for op <- func_ctx.body.operations do
           interpreter.interpret_op(
             op,
-            new_ctx
+            new_ctx,
           ) // create clone so function can run without modifying saved context
         ctx.vars.put(
           op._results.head,
-          new_ctx.result.getOrElse(None)
+          new_ctx.result.getOrElse(None),
         ) // assuming one return value for now
 
 object run_function extends OpImpl[func.Func]:
@@ -33,13 +33,13 @@ object run_function extends OpImpl[func.Func]:
       val main_ctx = FunctionCtx(
         name = op.sym_name,
         body = op.body.blocks.head,
-        saved_ctx = ctx
+        saved_ctx = ctx,
       )
       ctx.funcs.append(main_ctx)
       val new_call = func.Call(
         callee = SymbolRefAttr(op.sym_name),
         _operands = Seq(),
-        _results = op.function_type.outputs.map(res => Result(res))
+        _results = op.function_type.outputs.map(res => Result(res)),
       )
       // should it be external call like xDSL?
       run_call.run(new_call, interpreter, ctx)
@@ -52,5 +52,5 @@ val InterpreterFuncDialect: InterpreterDialect =
   Seq(
     run_return,
     run_call,
-    run_function
+    run_function,
   )

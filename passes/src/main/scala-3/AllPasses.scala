@@ -34,5 +34,5 @@ val allPasses: Seq[MLContext => ModulePass] =
     ReconcileUnrealizedCasts(_),
     TestInsertionPass(_),
     TestReplacementPass(_),
-    Canonicalize(_)
+    Canonicalize(_),
   )

@@ -22,7 +22,7 @@ object Block:
 
   def apply(
       argumentsTypes: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq()
+      operations: Iterable[Operation] | Operation = Seq(),
   ): Block = new Block(argumentsTypes, operations)
 
   def apply(operations: Iterable[Operation] | Operation): Block =
@@ -32,13 +32,13 @@ object Block:
 
   def apply(
       argumentsTypes: Iterable[Attribute],
-      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation]
+      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation],
   ): Block =
     new Block(argumentsTypes, operationsExpr)
 
   def apply(
       argumentsTypes: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation]
+      operationsExpr: Value[Attribute] => Iterable[Operation],
   ): Block =
     new Block(argumentsTypes, operationsExpr)
 
@@ -51,19 +51,19 @@ object Block:
   */
 case class Block private (
     val arguments: ListType[Value[Attribute]],
-    val operations: BlockOperations
+    val operations: BlockOperations,
 ) extends IRNode:
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] =
-        mutable.Map.empty
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
   ): Block =
     Block(
       argumentsTypes = arguments.map(_.typ),
       (args) =>
         valueMapper addAll (arguments zip args)
-        operations.map(_.deepCopy)
+        operations.map(_.deepCopy),
     )
 
   final override def parent: Option[Region] = containerRegion
@@ -89,18 +89,19 @@ case class Block private (
     */
   def this(
       argumentsTypes: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq()
+      operations: Iterable[Operation] | Operation = Seq(),
   ) =
     this(
       ListType.from((argumentsTypes match
         case single: Attribute     => Seq(single)
         case multiple: Iterable[?] => multiple.asInstanceOf[Iterable[Attribute]]
       ).map(Value(_))),
-      BlockOperations.from((operations match
-        case single: Operation     => Seq(single)
-        case multiple: Iterable[?] =>
-          multiple.asInstanceOf[Iterable[Operation]]
-      ))
+      BlockOperations
+        .from((operations match
+          case single: Operation     => Seq(single)
+          case multiple: Iterable[?] =>
+            multiple.asInstanceOf[Iterable[Operation]]
+        )),
     )
 
   /** Private tupled constructor mirroring the private primary constructor. Only
@@ -113,18 +114,20 @@ case class Block private (
   private def this(
       args: (
           Iterable[Value[Attribute]] | Value[Attribute],
-          Iterable[Operation] | Operation
+          Iterable[Operation] | Operation,
       )
   ) =
     this(
-      ListType.from(args._1 match
-        case single: Value[Attribute] => Seq(single)
-        case multiple: Iterable[?]    =>
-          multiple.asInstanceOf[Iterable[Value[Attribute]]]),
-      BlockOperations.from(args._2 match
-        case single: Operation     => Seq(single)
-        case multiple: Iterable[?] =>
-          multiple.asInstanceOf[Iterable[Operation]])
+      ListType
+        .from(args._1 match
+          case single: Value[Attribute] => Seq(single)
+          case multiple: Iterable[?]    =>
+            multiple.asInstanceOf[Iterable[Value[Attribute]]]),
+      BlockOperations
+        .from(args._2 match
+          case single: Operation     => Seq(single)
+          case multiple: Iterable[?] =>
+            multiple.asInstanceOf[Iterable[Operation]]),
     )
 
   /** Constructs a Block instance with the given operations and no block
@@ -148,7 +151,7 @@ case class Block private (
   def this(
       argumentType: Iterable[Attribute],
       operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation] |
-        Operation
+        Operation,
   ) =
     this({
       val args = argumentType.map(Value(_))
@@ -166,7 +169,7 @@ case class Block private (
     */
   def this(
       argumentType: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation] | Operation
+      operationsExpr: Value[Attribute] => Iterable[Operation] | Operation,
   ) =
     this({
       val arg = Value(argumentType)
@@ -202,63 +205,59 @@ case class Block private (
 
   def insertOpBefore(
       existingOp: Operation,
-      newOp: Operation
-  ): Unit =
-    (existingOp.containerBlock `equals` Some(this)) match
-      case true =>
-        attachOp(newOp)
-        operations.insert(existingOp, newOp)
-      case false =>
-        throw new Exception(
-          "Can't insert the new operation into the block, as the operation that was " +
-            "given as a point of reference does not exist in the current block."
-        )
+      newOp: Operation,
+  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+    case true =>
+      attachOp(newOp)
+      operations.insert(existingOp, newOp)
+    case false =>
+      throw new Exception(
+        "Can't insert the new operation into the block, as the operation that was " +
+          "given as a point of reference does not exist in the current block."
+      )
 
   def insertOpsBefore(
       existingOp: Operation,
-      newOps: Seq[Operation]
-  ): Unit =
-    (existingOp.containerBlock `equals` Some(this)) match
-      case true =>
-        for op <- newOps do attachOp(op)
-        operations.insertAll(existingOp, newOps)
-      case false =>
-        throw new Exception(
-          "Can't insert the new operation into the block, as the operation that was " +
-            "given as a point of reference does not exist in the current block."
-        )
+      newOps: Seq[Operation],
+  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+    case true =>
+      for op <- newOps do attachOp(op)
+      operations.insertAll(existingOp, newOps)
+    case false =>
+      throw new Exception(
+        "Can't insert the new operation into the block, as the operation that was " +
+          "given as a point of reference does not exist in the current block."
+      )
 
   def insertOpAfter(
       existingOp: Operation,
-      newOp: Operation
-  ): Unit =
-    (existingOp.containerBlock `equals` Some(this)) match
-      case true =>
-        attachOp(newOp)
-        existingOp.next match
-          case Some(n) => operations.insert(n, newOp)
-          case None    => operations.addOne(newOp)
-      case false =>
-        throw new Exception(
-          "Can't insert the new operation into the block, as the operation that was " +
-            "given as a point of reference does not exist in the current block."
-        )
+      newOp: Operation,
+  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+    case true =>
+      attachOp(newOp)
+      existingOp.next match
+        case Some(n) => operations.insert(n, newOp)
+        case None    => operations.addOne(newOp)
+    case false =>
+      throw new Exception(
+        "Can't insert the new operation into the block, as the operation that was " +
+          "given as a point of reference does not exist in the current block."
+      )
 
   def insertOpsAfter(
       existingOp: Operation,
-      newOps: Seq[Operation]
-  ): Unit =
-    (existingOp.containerBlock `equals` Some(this)) match
-      case true =>
-        for op <- newOps do attachOp(op)
-        existingOp.next match
-          case Some(n) => operations.insertAll(n, newOps)
-          case None    => operations.addAll(newOps)
-      case false =>
-        throw new Exception(
-          "Can't insert the new operation into the block, as the operation that was " +
-            "given as a point of reference does not exist in the current block."
-        )
+      newOps: Seq[Operation],
+  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+    case true =>
+      for op <- newOps do attachOp(op)
+      existingOp.next match
+        case Some(n) => operations.insertAll(n, newOps)
+        case None    => operations.addAll(newOps)
+    case false =>
+      throw new Exception(
+        "Can't insert the new operation into the block, as the operation that was " +
+          "given as a point of reference does not exist in the current block."
+      )
 
   def detachOp(op: Operation): Operation =
     (op.containerBlock `equals` Some(this)) match
@@ -278,24 +277,21 @@ case class Block private (
   def structured: Either[String, Unit] =
     operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
       res.flatMap(_ =>
-        op.structured
-          .map(v =>
-            operations(op) = v
-            v.containerBlock = Some(this)
-          )
+        op.structured.map(v =>
+          operations(op) = v
+          v.containerBlock = Some(this)
+        )
       )
     )
 
   def verify(): Either[String, Unit] =
-    arguments
-      .foldLeft[Either[String, Unit]](Right(()))((res, arg) =>
-        res.flatMap(_ => arg.verify())
+    arguments.foldLeft[Either[String, Unit]](Right(()))((res, arg) =>
+      res.flatMap(_ => arg.verify())
+    ).flatMap(_ =>
+      operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
+        res.flatMap(_ => op.verify().map(_ => ()))
       )
-      .flatMap(_ =>
-        operations.foldLeft[Either[String, Unit]](Right(()))((res, op) =>
-          res.flatMap(_ => op.verify().map(_ => ()))
-        )
-      )
+    )
 
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]
