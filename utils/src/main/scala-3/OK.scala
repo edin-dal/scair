@@ -7,4 +7,4 @@ package scair.utils
   *   Implemented in terms of Either right now; only defined for readability for
   *   now.
   */
-type R[+T] = Either[String, T]
+type OK[+T] = Either[String, T]

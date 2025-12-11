@@ -1,6 +1,6 @@
 package scair.ir
 
-import scair.utils.R
+import scair.utils.OK
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -15,7 +15,7 @@ import scair.utils.R
 
 trait IsTerminator extends Operation:
 
-  override def traitVerify(): R[Operation] = {
+  override def traitVerify(): OK[Operation] = {
     this.containerBlock match
       case Some(b) =>
         if this ne b.operations.last then
@@ -35,7 +35,7 @@ trait IsTerminator extends Operation:
 
 trait NoTerminator extends Operation:
 
-  override def traitVerify(): R[Operation] = {
+  override def traitVerify(): OK[Operation] = {
     if regions.filter(x => x.blocks.length != 1).length != 0 then
       Left(
         s"NoTerminator Operation '$name' requires single-block regions"
@@ -47,12 +47,12 @@ trait NoMemoryEffect extends Operation
 
 trait IsolatedFromAbove extends Operation:
 
-  final def verifyRec(regs: Seq[Region]): R[Operation] =
+  final def verifyRec(regs: Seq[Region]): OK[Operation] =
     val r = regs match
       case region :: tail =>
-        region.blocks.foldLeft[R[Operation]](Right(this))((r, block) =>
+        region.blocks.foldLeft[OK[Operation]](Right(this))((r, block) =>
           r.flatMap(_ =>
-            block.operations.foldLeft[R[Operation]](r)((r, op) =>
+            block.operations.foldLeft[OK[Operation]](r)((r, op) =>
               op.operands.foldLeft(r)((r, o) =>
                 if !this
                     .isAncestor(
@@ -72,7 +72,7 @@ trait IsolatedFromAbove extends Operation:
       case Nil => Right(this)
     r.flatMap(_ => super.traitVerify())
 
-  override def traitVerify(): R[Operation] =
+  override def traitVerify(): OK[Operation] =
     verifyRec(regions)
 
 trait Commutative extends Operation

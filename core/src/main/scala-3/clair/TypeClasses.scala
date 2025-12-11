@@ -4,7 +4,7 @@ import fastparse.ParsingRun
 import scair.AttrParser
 import scair.Printer
 import scair.ir.*
-import scair.utils.R
+import scair.utils.OK
 
 import scala.quoted.*
 import scala.util.Failure
@@ -45,7 +45,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
   def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit
-  def constraintVerify(adtOp: T): R[Operation]
+  def constraintVerify(adtOp: T): OK[Operation]
 
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
@@ -79,7 +79,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
       case Failure(e)  => Left(e.toString())
       case Success(op) => op.asInstanceOf[Operation].structured
 
-    override def verify(): R[Operation] =
+    override def verify(): OK[Operation] =
       structured.flatMap(op => op.verify())
 
     override def name = companion.name

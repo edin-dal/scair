@@ -8,7 +8,7 @@ import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.ir.*
-import scair.utils.R
+import scair.utils.OK
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -375,7 +375,7 @@ final case class DenseArrayAttr(
   override def name: String = "builtin.dense_array"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
 
-  override def customVerify(): R[Unit] =
+  override def customVerify(): OK[Unit] =
     if !data.forall(_ match
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ)
@@ -439,7 +439,7 @@ final case class DenseIntOrFPElementsAttr(
 
   def elementType = typ.elementType
 
-  override def customVerify(): R[Unit] =
+  override def customVerify(): OK[Unit] =
     val tpe = elementType match
       case it: IntegerType => Right(it)
       case ft: FloatType   => Right(ft)
@@ -448,7 +448,7 @@ final case class DenseIntOrFPElementsAttr(
           s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
         )
 
-    data.attrValues.foldLeft[R[Any]](
+    data.attrValues.foldLeft[OK[Any]](
       tpe
     )((acc, elt) =>
       acc.map(tpe =>

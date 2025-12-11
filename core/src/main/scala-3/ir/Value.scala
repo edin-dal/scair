@@ -1,7 +1,7 @@
 package scair.ir
 
 import scair.ir.*
-import scair.utils.R
+import scair.utils.OK
 
 //
 // ██╗░░░██╗ ░█████╗░ ██╗░░░░░ ██╗░░░██╗ ███████╗
@@ -33,7 +33,7 @@ final case class Value[+T <: Attribute](
         "Attempting to erase a Value that has uses in other operations."
       )
 
-  def verify(): R[Unit] = typ.customVerify()
+  def verify(): OK[Unit] = typ.customVerify()
 
   override final def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]

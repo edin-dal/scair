@@ -13,7 +13,7 @@ import scair.enums.macros.*
 import scair.ir.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
-import scair.utils.R
+import scair.utils.OK
 
 import scala.annotation.switch
 import scala.quoted.*
@@ -215,9 +215,9 @@ def parseMacro[O <: Operation: Type](
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
-)(using Quotes): Expr[R[Operation]] =
+)(using Quotes): Expr[OK[Operation]] =
 
-  val a = opDef.operands // val xyz: Seq[Expr[R[Unit]]] =
+  val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
     .filter(_.variadicity == Variadicity.Single)
     .collect(_ match
       case OperandDef(name, _, _, Some(constraint)) =>
@@ -230,7 +230,7 @@ def verifyMacro(
     given ctx: scair.core.constraints.ConstraintContext =
       scair.core.constraints.ConstraintContext()
     ${
-      val chain = a.foldLeft[Expr[R[Unit]]](
+      val chain = a.foldLeft[Expr[OK[Unit]]](
         '{ Right(()) }
       )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
       '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
@@ -867,7 +867,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
       def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
         ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
 
-      def constraintVerify(adtOp: T): R[Operation] =
+      def constraintVerify(adtOp: T): OK[Operation] =
         ${
           verifyMacro(opDef, '{ adtOp })
         }

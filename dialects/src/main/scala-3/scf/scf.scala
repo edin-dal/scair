@@ -4,7 +4,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.utils.R
+import scair.utils.OK
 
 // ░██████╗ ░█████╗░ ███████╗
 // ██╔════╝ ██╔══██╗ ██╔════╝
@@ -32,7 +32,7 @@ type Index = IndexType
 
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
-  override def traitVerify(): R[Operation] =
+  override def traitVerify(): OK[Operation] =
     if values.isEmpty then Right(this)
     else
       val firstClass = values.head.getClass
