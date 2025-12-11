@@ -75,6 +75,35 @@ private inline def AttributeAlias[$: P](using p: AttrParser) =
         Fail(s"Attribute alias ${name} not defined.")
   )
 
+transparent inline def AttributeOfOrP[A <: Attribute](inline default: A)(using AttrParser)(using inline p: P[Any]) =
+  AttributeP.orElse(default)
+    .flatMap(_ match
+      case attr: A => Pass(attr)
+      case _ => Fail("Expected sumin, got sumin else")
+  )
+
+transparent inline def AttributeOfP[A <: Attribute](using AttrParser)(using inline p: P[Any]) =
+  AttributeP
+    .flatMap(_ match
+      case attr: A => Pass(attr)
+      case _ => Fail("Expected sumin, got sumin else")
+  )
+
+
+transparent inline def TypeOfOrP[T <: TypeAttribute](inline default: T)(using AttrParser)(using inline p: P[Any]) =
+  TypeP.orElse(default)
+    .flatMap(_ match
+      case tpe: T => Pass(tpe)
+      case _ => Fail("Expected sumin, got sumin else")
+  )
+
+transparent inline def TypeOfP[T <: TypeAttribute](using AttrParser)(using inline p: P[Any]) =
+  TypeP
+    .flatMap(_ match
+      case tpe: T => Pass(tpe)
+      case _ => Fail("Expected sumin, got sumin else")
+  )
+
 /*≡==--==≡≡≡==--=≡≡*\
 ||      TYPES      ||
 \*≡==---==≡==---==≡*/

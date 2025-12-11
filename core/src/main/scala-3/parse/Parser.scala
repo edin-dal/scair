@@ -330,30 +330,30 @@ final class Parser(
       Console.err.println(msg)
       sys.exit(1)
 
-def operand[$: P](name: String, typ: Attribute)(using
+def operand[$: P, A <: Attribute](name: String, typ: A)(using
     p: Parser
-): P[Value[Attribute]] =
+): P[Value[A]] =
   p.scopes.collectFirst {
     case scope if scope.valueMap.contains(name) =>
       scope.valueMap(name)
   } match
-    case Some(value) if value.typ == typ => Pass(value)
+    case Some(value) if value.typ == typ => Pass(value.asInstanceOf[Value[A]])
     case Some(value)                     =>
       Fail(
         s"Value %${name} defined with type ${value.typ}, but used with type ${typ}."
       )
     case None =>
-      val forwardValue = Value[Attribute](typ)
+      val forwardValue = Value(typ)
       p.scopes.top.valueMap(name) = forwardValue
       p.scopes.top.forwardValues += name
       Pass(forwardValue)
 
-def result[$: P](
+def result[$: P, A <: Attribute](
     name: String,
-    typ: Attribute
-)(using p: Parser): P[Result[Attribute]] =
+    typ: A
+)(using p: Parser): P[Result[A]] =
   P(
-    p.scopes.top.defineValue(name, typ).map(_.asInstanceOf[Result[Attribute]])
+    p.scopes.top.defineValue(name, typ).map(_.asInstanceOf[Result[A]])
   )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\

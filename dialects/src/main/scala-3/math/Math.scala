@@ -35,25 +35,16 @@ given OperationCustomParser[AbsfOp]:
   )(using p: Parser): P[AbsfOp] =
     P(
       OperandName.flatMap(operandName =>
-          (AttributeP.orElse(
+          (AttributeOfOrP[FastMathFlagsAttr](
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ TypeP.flatMap(tpe =>
+          ) ~ ":" ~ TypeOfP[FloatType].flatMap(tpe =>
             operand(operandName, tpe) ~
               result(resNames.head, tpe)
           ))
         )
-        .flatMap { case (flags, operandAndResult) =>
+        .map { case (flags, operandAndResult) =>
           val (operand, result) = operandAndResult
-          summon[DerivedOperationCompanion[AbsfOp]]
-            .apply(
-              operands = Seq(operand),
-              results = Seq(result),
-              properties = Map("fastmath" -> flags)
-            )
-            .structured match
-            case Right(op: AbsfOp) => Pass(op)
-            case Left(err)         => Fail(err)
-
+          AbsfOp(flags, operand, result)
         }
     )
 
@@ -76,31 +67,19 @@ given OperationCustomParser[FPowIOp]:
     P(
       OperandName.flatMap(lhsName =>
         ("," ~ OperandName.flatMap(rhsName =>
-          (AttributeP.orElse(
+          (AttributeOfOrP[FastMathFlagsAttr](
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ TypeP.flatMap(lhsType =>
+          ) ~ ":" ~ TypeOfP[FloatType].flatMap(lhsType =>
             operand(lhsName, lhsType) ~
               result(resNames.head, lhsType)
           )
-            ~ "," ~ TypeP.flatMap(
+            ~ "," ~ TypeOfP[IntegerType].flatMap(
               operand(rhsName, _)
             ))
-            .flatMap {
-              case (
-                    flags,
-                    lhsAndRes,
-                    rhs
-                  ) =>
-                println(f"Attempting construction")
-                val made = summon[DerivedOperationCompanion[FPowIOp]].apply(
-                  operands = Seq(lhsAndRes._1, rhs),
-                  results = Seq(lhsAndRes._2),
-                  properties = Map("fastmath" -> flags)
-                )
-                println(f"Made: $made")
-                made.structured match
-                  case Right(op: FPowIOp) => Pass(op)
-                  case Left(err)          => Fail(err)
+            .map {
+              case (flags, lhsAndRes, rhs) =>
+                val (lhs, res) = lhsAndRes
+                FPowIOp(lhs, rhs, flags, res)
 
             }
         ))
