@@ -52,18 +52,18 @@ trait IsolatedFromAbove extends Operation:
           (r, block) =>
             r.flatMap(_ =>
               block.operations.foldLeft[Either[String, Operation]](r)((r, op) =>
-                op.operands
-                  .foldLeft(r)((r, o) =>
-                    if !this.isAncestor(
+                op.operands.foldLeft(r)((r, o) =>
+                  if !this
+                      .isAncestor(
                         o.owner.getOrElse(throw new Exception(s"${op.name}"))
                       )
-                    then
-                      Left(
-                        s"Operation '$name' is not an ancestor of operand '$o' of '${op.name}'"
-                      )
-                    else r
-                  )
-                  .flatMap(_ => verifyRec(tail ++ op.regions))
+                  then
+                    Left(
+                      s"Operation '$name' is not an ancestor of operand '$o' of '${op
+                          .name}'"
+                    )
+                  else r
+                ).flatMap(_ => verifyRec(tail ++ op.regions))
               )
             )
         )

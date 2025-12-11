@@ -110,7 +110,8 @@ case class OperationDef(
     operands ++ results ++ regions ++ successors ++ properties
 
   def allDefsWithIndex =
-    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++ successors.zipWithIndex ++ properties.zipWithIndex
+    operands.zipWithIndex ++ results.zipWithIndex ++ regions.zipWithIndex ++
+      successors.zipWithIndex ++ properties.zipWithIndex
 
   def hasMultiVariadicOperands =
     operands.count(_.variadicity == Variadicity.Variadic) > 1

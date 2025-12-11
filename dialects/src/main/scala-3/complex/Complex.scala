@@ -107,7 +107,8 @@ object ComplexAttr:
 
   def parse[$: P](parser: AttrParser): P[ComplexAttr] =
     given Whitespace = scair.AttrParser.whitespace
-    ("<:" ~ parser.FloatTypeP ~ parser.FloatDataP ~ "," ~ parser.FloatDataP ~ ">" ~ (":" ~ parser.ComplexTypeP).?)
+    ("<:" ~ parser.FloatTypeP ~ parser.FloatDataP ~ "," ~ parser.FloatDataP ~
+      ">" ~ (":" ~ parser.ComplexTypeP).?)
       .map(
         (
             tpe: FloatType,

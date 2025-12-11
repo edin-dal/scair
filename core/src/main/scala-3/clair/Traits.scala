@@ -57,9 +57,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
     comp.customPrint(this, p)
 
   override def verify(): Either[String, Operation] =
-    super
-      .verify()
-      .flatMap(_ => constraintVerify())
+    super.verify().flatMap(_ => constraintVerify())
 
   def constraintVerify(): Either[String, Operation] =
     comp.constraintVerify(this)

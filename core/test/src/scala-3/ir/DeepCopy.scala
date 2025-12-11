@@ -91,6 +91,8 @@ class DeepCopyTest extends AnyFlatSpec:
               ),
             )
           )
-          if !(a eq ca0) && !(b eq ca1) && !(a.results.head eq ca0.results.head) && !(b.results.head eq ca1.results.head) =>
+          if !(a eq ca0) && !(b eq ca1) &&
+            !(a.results.head eq ca0.results.head) &&
+            !(b.results.head eq ca1.results.head) =>
         ()
     }

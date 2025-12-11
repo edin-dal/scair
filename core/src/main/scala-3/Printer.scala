@@ -18,8 +18,8 @@ case class Printer(
     val indent: String = "  ",
     var valueNextID: Int = 0,
     var blockNextID: Int = 0,
-    val valueNameMap: mutable.Map[Value[? <: Attribute], String] =
-      mutable.Map.empty,
+    val valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
+      .empty,
     val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
     private val p: PrintWriter = new PrintWriter(System.out),
     private var aliasesMap: Map[Attribute, String] = Map.empty,
@@ -99,10 +99,11 @@ case class Printer(
   inline def print(inline things: (Printable | IterableOnce[Printable])*)(using
       indentLevel: Int
   ): Unit =
-    things.foreach(_ match
-      case p: Printable               => print(p)
-      case i: IterableOnce[Printable] =>
-        printList(i))
+    things
+      .foreach(_ match
+        case p: Printable               => print(p)
+        case i: IterableOnce[Printable] =>
+          printList(i))
 
   inline def printList[T <: Printable](
       inline iterable: IterableOnce[T],
@@ -175,9 +176,10 @@ case class Printer(
           val alias = attr.alias
           val counter = aliasesCounters.getOrElseUpdate(alias, 0)
           aliasesCounters(alias) = counter + 1
-          val aliasName = attr.prefix + alias + (counter match
-            case 0 => ""
-            case c => c.toString)
+          val aliasName = attr.prefix + alias +
+            (counter match
+              case 0 => ""
+              case c => c.toString)
           print(aliasName)
           print(" = ")
           attr.customPrint(this)
@@ -267,8 +269,8 @@ case class Printer(
 class AliasPrinter(
     strictlyGeneric: Boolean = false,
     private val p: PrintWriter = new PrintWriter(System.out),
-    val toAlias: mutable.LinkedHashSet[AliasedAttribute] =
-      mutable.LinkedHashSet.empty,
+    val toAlias: mutable.LinkedHashSet[AliasedAttribute] = mutable.LinkedHashSet
+      .empty,
 ) extends Printer(strictlyGeneric = strictlyGeneric, p = p):
 
   override def copy(
@@ -276,8 +278,8 @@ class AliasPrinter(
       indent: String = "  ",
       valueNextID: Int = 0,
       blockNextID: Int = 0,
-      valueNameMap: mutable.Map[Value[? <: Attribute], String] =
-        mutable.Map.empty,
+      valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
+        .empty,
       blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
       p: PrintWriter = new PrintWriter(System.out),
       aliasesMap: Map[Attribute, String] = Map.empty,

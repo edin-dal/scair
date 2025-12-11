@@ -42,7 +42,8 @@ object TitleGen:
     val title_size = lower_title.size
     val letter_size = Letters.tuple_length
     val lines =
-      title_size * letter_size + 2 // + title_size + 1 to create horizontal \n lines in between words
+      title_size * letter_size +
+        2 // + title_size + 1 to create horizontal \n lines in between words
     val charMap = Letters.charMap
 
     val generated_title = ListType.fill(lines)(new StringBuilder(""))

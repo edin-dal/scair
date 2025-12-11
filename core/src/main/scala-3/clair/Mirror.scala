@@ -44,9 +44,11 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
                 case s: ImplicitSearchSuccess =>
                   Some(s.tree.asExprOf[ConstraintImpl[t]])
                 case f: ImplicitSearchFailure =>
-                  report.errorAndAbort(
-                    s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
-                  )
+                  report
+                    .errorAndAbort(
+                      s"Could not find an implementation for constraint ${Type
+                          .show[t]}:\n${f.explanation}"
+                    )
     case _ =>
       None
 
@@ -118,10 +120,11 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
     case '[Attribute] =>
       variadicity match
         case Variadicity.Variadic =>
-          report.errorAndAbort(
-            s"Variadic properties are not supported; use ArrayAttribute[${Type
-                .show(using elem)}] instead."
-          )
+          report
+            .errorAndAbort(
+              s"Variadic properties are not supported; use ArrayAttribute[${Type
+                  .show(using elem)}] instead."
+            )
         case v @ (Variadicity.Single | Variadicity.Optional) =>
           OpPropertyDef(
             name = name,
@@ -183,10 +186,8 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] =
 
   Type.of[Elems] match
     case '[elem *: elems] =>
-      Type
-        .valueOfConstant[elem]
-        .get
-        .asInstanceOf[String] :: stringifyLabels[elems]
+      Type.valueOfConstant[elem].get.asInstanceOf[String] ::
+        stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 
 def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
@@ -243,27 +244,21 @@ def getOpCustomParse[T <: Operation: Type](
   import quotes.reflect.*
 
   val comp = getCompanion(using Type.of[T])
-  val sig = TypeRepr
-    .of[OperationCompanion[T]]
-    .typeSymbol
-    .declaredMethod("parse")
-    .head
-    .signature
+  val sig = TypeRepr.of[OperationCompanion[T]].typeSymbol
+    .declaredMethod("parse").head.signature
   comp.methodMember("parse").filter(_.signature == sig) match
     case Seq(m) =>
-      val callTerm = Select
-        .unique(Ref(comp), m.name)
-        .appliedToType(TypeRepr.of[Any])
-        .appliedTo(p.asTerm, resNames.asTerm)
-        .etaExpand(comp)
-        .asExprOf[P[Any] => P[T]]
+      val callTerm = Select.unique(Ref(comp), m.name)
+        .appliedToType(TypeRepr.of[Any]).appliedTo(p.asTerm, resNames.asTerm)
+        .etaExpand(comp).asExprOf[P[Any] => P[T]]
       Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })
     case Seq() =>
       None
     case d: Seq[?] =>
-      report.errorAndAbort(
-        s"Multiple companion parse methods not supported at this point."
-      )
+      report
+        .errorAndAbort(
+          s"Multiple companion parse methods not supported at this point."
+        )
 
 def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
     quotes: Quotes
@@ -271,28 +266,21 @@ def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
   import quotes.reflect.*
 
   val comp = getCompanion(using Type.of[T])
-  val sig = TypeRepr
-    .of[AttributeCompanion]
-    .typeSymbol
-    .declaredMethod("parse")
-    .head
-    .signature
+  val sig = TypeRepr.of[AttributeCompanion].typeSymbol.declaredMethod("parse")
+    .head.signature
   comp.methodMember("parse").filter(_.signature == sig) match
     case Seq(m) =>
-      val callTerm = Select
-        .unique(Ref(comp), m.name)
-        .appliedToType(TypeRepr.of[Any])
-        .appliedTo(p.asTerm)
-        .appliedTo(ctx.asTerm)
-        .etaExpand(comp)
-        .asExprOf[P[T]]
+      val callTerm = Select.unique(Ref(comp), m.name)
+        .appliedToType(TypeRepr.of[Any]).appliedTo(p.asTerm)
+        .appliedTo(ctx.asTerm).etaExpand(comp).asExprOf[P[T]]
       Some(callTerm)
     case Seq() =>
       None
     case d: Seq[?] =>
-      report.errorAndAbort(
-        s"Multiple companion parse methods not supported at this point."
-      )
+      report
+        .errorAndAbort(
+          s"Multiple companion parse methods not supported at this point."
+        )
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
   import quotes.reflect.*

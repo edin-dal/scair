@@ -44,9 +44,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       OParser.sequence(
         commonHeaders,
         // The input file - defaulting to stdin
-        arg[String]("file")
-          .optional()
-          .text("input file")
+        arg[String]("file").optional().text("input file")
           .action((x, c) => c.copy(input = Some(x))),
       )
 

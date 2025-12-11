@@ -97,9 +97,11 @@ given AttributeCompanion[FastMathFlagsAttr]:
 
     import scair.AttrParser.whitespace
     P(
-      "<" ~ ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" | "afn" | "fast").!.rep(
-        sep = ","
-      ) ~ ">"
+      "<" ~
+        ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" |
+          "afn" | "fast").!.rep(
+          sep = ","
+        ) ~ ">"
     ).flatMap { parsedFlags =>
       if parsedFlags.isEmpty then
         Fail("FastMathFlagsAttr expects at least one flag")
@@ -188,7 +190,8 @@ trait SameOperandsAndResultTypes extends Operation:
       if params.tail.forall(_ == first) then Right(this)
       else
         Left(
-          "All parameters of TypeConstraint must be of the same type in operation " + this.name
+          "All parameters of TypeConstraint must be of the same type in operation " +
+            this.name
         )
 
 trait SameOperandsAndResultShape extends Operation:
@@ -236,7 +239,8 @@ trait AllTypesMatch(values: Attribute*) extends Operation:
       if values.tail.forall(_ == first) then Right(this)
       else
         Left(
-          "All parameters of AllTypesMatch must be of the same type in operation " + this.name
+          "All parameters of AllTypesMatch must be of the same type in operation " +
+            this.name
         )
 
 trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
@@ -251,15 +255,19 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
             if x.getShape == y.getShape then Right(this)
             else
               Left(
-                s"Condition must be a I1 boolean, or the result of operation '${this.name}' must have the same shape as the condition, but got ${x.getShape} and ${y.getShape}"
+                s"Condition must be a I1 boolean, or the result of operation '${this
+                    .name}' must have the same shape as the condition, but got ${x
+                    .getShape} and ${y.getShape}"
               )
           case _ =>
             Left(
-              s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
+              s"Condition must be a I1 boolean, or a shaped type in operation '${this
+                  .name}'"
             )
       case _ =>
         Left(
-          s"Condition must be a I1 boolean, or a shaped type in operation '${this.name}'"
+          s"Condition must be a I1 boolean, or a shaped type in operation '${this
+              .name}'"
         )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\

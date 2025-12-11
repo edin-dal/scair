@@ -173,15 +173,57 @@ class ParserTest
     }
   }
 
-  "Block - Unit Tests" should "parse correctly" in
-    withClue("Test 1: ") {
-      parser.parseThis(
-        text =
-          "^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-        pattern = parser.Block(using _),
-      ) should matchPattern {
-        case Parsed.Success(
+  "Block - Unit Tests" should "parse correctly" in withClue("Test 1: ") {
+    parser.parseThis(
+      text = "^bb0(%5: i32):\n" +
+        "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+        "\"test.op\"(%1, %0) : (i64, i32) -> ()",
+      pattern = parser.Block(using _),
+    ) should matchPattern {
+      case Parsed.Success(
+            Block(
+              ListType(Value(I32)),
+              BlockOperations(
+                UnregisteredOperation(
+                  "test.op",
+                  Seq(),
+                  Seq(),
+                  Seq(
+                    Result(I32),
+                    Result(I64),
+                    Result(I32),
+                  ),
+                  Seq(),
+                  _,
+                  _,
+                ),
+                UnregisteredOperation(
+                  "test.op",
+                  Seq(Value(I64), Value(I32)),
+                  Seq(),
+                  Seq(),
+                  Seq(),
+                  _,
+                  _,
+                ),
+              ),
+            ),
+            100,
+          ) =>
+    }
+  }
+
+  "Region - Unit Tests" should "parse correctly" in withClue("Test 1: ") {
+    parser.parseThis(
+      text = "{^bb0(%5: i32):\n" +
+        "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+        "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" +
+        "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
+        "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
+      pattern = parser.RegionP()(using _),
+    ) should matchPattern {
+      case Parsed.Success(
+            Region(
               Block(
                 ListType(Value(I32)),
                 BlockOperations(
@@ -209,89 +251,45 @@ class ParserTest
                   ),
                 ),
               ),
-              100,
-            ) =>
-      }
-    }
-
-  "Region - Unit Tests" should "parse correctly" in
-    withClue("Test 1: ") {
-      parser.parseThis(
-        text =
-          "{^bb0(%5: i32):\n" + "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" + "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
-            "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-        pattern = parser.RegionP()(using _),
-      ) should matchPattern {
-        case Parsed.Success(
-              Region(
-                Block(
-                  ListType(Value(I32)),
-                  BlockOperations(
-                    UnregisteredOperation(
-                      "test.op",
-                      Seq(),
-                      Seq(),
-                      Seq(
-                        Result(I32),
-                        Result(I64),
-                        Result(I32),
-                      ),
-                      Seq(),
-                      _,
-                      _,
+              Block(
+                ListType(Value(I32)),
+                BlockOperations(
+                  UnregisteredOperation(
+                    "test.op",
+                    Seq(),
+                    Seq(),
+                    Seq(
+                      Result(I32),
+                      Result(I64),
+                      Result(I32),
                     ),
-                    UnregisteredOperation(
-                      "test.op",
-                      Seq(Value(I64), Value(I32)),
-                      Seq(),
-                      Seq(),
-                      Seq(),
-                      _,
-                      _,
-                    ),
+                    Seq(),
+                    _,
+                    _,
                   ),
-                ),
-                Block(
-                  ListType(Value(I32)),
-                  BlockOperations(
-                    UnregisteredOperation(
-                      "test.op",
-                      Seq(),
-                      Seq(),
-                      Seq(
-                        Result(I32),
-                        Result(I64),
-                        Result(I32),
-                      ),
-                      Seq(),
-                      _,
-                      _,
+                  UnregisteredOperation(
+                    "test.op",
+                    Seq(
+                      Value(I64),
+                      Value(I32),
                     ),
-                    UnregisteredOperation(
-                      "test.op",
-                      Seq(
-                        Value(I64),
-                        Value(I32),
-                      ),
-                      Seq(),
-                      Seq(),
-                      Seq(),
-                      _,
-                      _,
-                    ),
+                    Seq(),
+                    Seq(),
+                    Seq(),
+                    _,
+                    _,
                   ),
                 ),
               ),
-              202,
-            ) =>
-      }
+            ),
+            202,
+          ) =>
     }
+  }
 
-  "Region2 - Unit Tests" should "parse correctly" in
-    withClue("Test 2: ") {
-      parser.parseThis(
-        text = """{
+  "Region2 - Unit Tests" should "parse correctly" in withClue("Test 2: ") {
+    parser.parseThis(
+      text = """{
 ^bb0(%5: i32):
   %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)
   "test.op"(%1, %0) : (i64, i32) -> ()
@@ -299,16 +297,16 @@ class ParserTest
   %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
   "test.op"(%8, %7) : (i64, i32) -> ()
 }""",
-        pattern = parser.RegionP()(using _),
-        verboseFailures = true,
-      ) should matchPattern {
-        case Parsed.Failure(
-              "Block cannot be defined twice within the same scope - ^bb0",
-              _,
-              _,
-            ) =>
-      }
+      pattern = parser.RegionP()(using _),
+      verboseFailures = true,
+    ) should matchPattern {
+      case Parsed.Failure(
+            "Block cannot be defined twice within the same scope - ^bb0",
+            _,
+            _,
+          ) =>
     }
+  }
 
   "Operation  Test - Failure" should "Test faulty Operation IR" in
     withClue("Test 2: ") {
@@ -358,48 +356,49 @@ class ParserTest
       }
     }
 
-  "TopLevel Tests" should "Test full programs" in
-    withClue("Test 1: ") {
-      parser.parseThis(
-        text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-        pattern = parser.TopLevel(using _),
-      ) should matchPattern {
-        case Parsed.Success(
-              ModuleOp(
-                Region(
-                  Block(
-                    ListType(),
-                    BlockOperations(
-                      UnregisteredOperation(
-                        "test.op",
-                        Seq(),
-                        Seq(),
-                        Seq(
-                          Result(I32),
-                          Result(I64),
-                          Result(I32),
-                        ),
-                        Seq(),
-                        _,
-                        _,
-                      )
-                    ),
-                  )
+  "TopLevel Tests" should "Test full programs" in withClue("Test 1: ") {
+    parser.parseThis(
+      text = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
+      pattern = parser.TopLevel(using _),
+    ) should matchPattern {
+      case Parsed.Success(
+            ModuleOp(
+              Region(
+                Block(
+                  ListType(),
+                  BlockOperations(
+                    UnregisteredOperation(
+                      "test.op",
+                      Seq(),
+                      Seq(),
+                      Seq(
+                        Result(I32),
+                        Result(I64),
+                        Result(I32),
+                      ),
+                      Seq(),
+                      _,
+                      _,
+                    )
+                  ),
                 )
-              ),
-              48,
-            ) =>
-      }
+              )
+            ),
+            48,
+          ) =>
     }
+  }
 
-  "Value Uses assignment test forward ref" should "Test Operation's  forward-referenced Operand uses" in
+  "Value Uses assignment test forward ref" should
+    "Test Operation's  forward-referenced Operand uses" in
     withClue("Operand Uses: ") {
 
       val text = """  "op1"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op2"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op3"(%0, %1, %2) : (i32, i64, i32) -> ()
                     | "op4"(%0, %1, %2) : (i32, i64, i32) -> ()
-                    | %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)""".stripMargin
+                    | %0, %1, %2 = "test.op"() : () -> (i32, i64, i32)"""
+        .stripMargin
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
@@ -478,7 +477,8 @@ class ParserTest
 
       val exception = intercept[Exception](
         block.eraseOp(opToErase)
-      ).getMessage shouldBe "Attempting to erase a Value that has uses in other operations."
+      ).getMessage shouldBe
+        "Attempting to erase a Value that has uses in other operations."
 
       opToErase.containerBlock shouldEqual None
     }

@@ -10,9 +10,10 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 // global implementation dictionary for interpreter
-val impl_dict = mutable.Map[Class[? <: Operation], OpImpl[
-  ? <: Operation
-]]()
+val impl_dict = mutable
+  .Map[Class[? <: Operation], OpImpl[
+    ? <: Operation
+  ]]()
 
 // global external function dictionary for interpreter
 val ext_func_dict = mutable.Map[String, FunctionCtx]()

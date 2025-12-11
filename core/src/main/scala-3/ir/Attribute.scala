@@ -67,8 +67,7 @@ abstract trait ParametrizedAttribute() extends Attribute:
   override def equals(attr: Any): Boolean =
     attr match
       case x: ParametrizedAttribute =>
-        x.name == this.name &&
-        x.getClass == this.getClass &&
+        x.name == this.name && x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
         (for ((i, j) <- x.parameters zip this.parameters)
           yield i == j).foldLeft(true)((i, j) => i && j)
@@ -89,8 +88,7 @@ abstract class DataAttribute[D](
   override def equals(attr: Any): Boolean =
     attr match
       case x: DataAttribute[?] =>
-        x.name == this.name &&
-        x.getClass == this.getClass &&
+        x.name == this.name && x.getClass == this.getClass &&
         x.data == this.data
       case _ => false
 

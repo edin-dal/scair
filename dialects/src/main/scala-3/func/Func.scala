@@ -36,33 +36,33 @@ object Func:
       parser: Parser,
       resNames: Seq[String],
   ): P[Func] =
-    ("private".!.? ~ parser.SymbolRefAttrP ~ (parser.BlockArgList.flatMap(
-      (args: Seq[(String, Attribute)]) =>
+    ("private".!.? ~ parser.SymbolRefAttrP ~
+      (parser.BlockArgList.flatMap((args: Seq[(String, Attribute)]) =>
         Pass(args.map(_._2)) ~ parseResultTypes(
           parser
-        ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ parser
-          .RegionP(args)
-    ) | (
-      parser.ParenTypeList ~ parseResultTypes(
-        parser
-      ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(
-        Region()
-      )
-    )))
-      .map {
-        case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
-          val f = Func(
-            sym_name = symbol.rootRef,
-            function_type = FunctionType(
-              inputs = argTypes,
-              outputs = resTypes,
-            ),
-            sym_visibility = visibility.map(StringData(_)),
-            body = body,
+        ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~
+          parser.RegionP(args)
+      ) |
+        (
+          parser.ParenTypeList ~ parseResultTypes(
+            parser
+          ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(
+            Region()
           )
-          f.attributes.addAll(attributes)
-          f
-      }
+        ))).map {
+      case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
+        val f = Func(
+          sym_name = symbol.rootRef,
+          function_type = FunctionType(
+            inputs = argTypes,
+            outputs = resTypes,
+          ),
+          sym_visibility = visibility.map(StringData(_)),
+          body = body,
+        )
+        f.attributes.addAll(attributes)
+        f
+    }
 
 case class Func(
     sym_name: StringData,

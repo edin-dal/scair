@@ -104,21 +104,17 @@ def DimSymUseListP[$: P]: P[(Seq[String], Seq[String])] =
 
 def AffineSinglesP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
   P(
-    "(" ~ AffineExprP(dims, symbs) ~ ")" |
-      "-" ~ AffineSinglesP(dims, symbs) |
-      AffineDimExprP(dims, symbs) |
-      AffineSymExprP(dims, symbs) |
+    "(" ~ AffineExprP(dims, symbs) ~ ")" | "-" ~ AffineSinglesP(dims, symbs) |
+      AffineDimExprP(dims, symbs) | AffineSymExprP(dims, symbs) |
       AffineConstantP(dims, symbs)
   )
 
 def AffineDimExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
-  P(DimUseP)
-    .flatMap(validateAffineExpr("dimension", _, dims))
+  P(DimUseP).flatMap(validateAffineExpr("dimension", _, dims))
     .map(AffineDimExpr(_))
 
 def AffineSymExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
-  P(SymUseP)
-    .flatMap(validateAffineExpr("symbol", _, symbs))
+  P(SymUseP).flatMap(validateAffineExpr("symbol", _, symbs))
     .map(AffineSymExpr(_))
 
 def AffineConstantP[$: P](
@@ -129,12 +125,9 @@ def AffineConstantP[$: P](
 
 def AffineExprP[$: P](dims: Seq[String], symbs: Seq[String]): P[AffineExpr] =
   P(
-    AffineAddExpr(dims, symbs) |
-      AffineMinusExpr(dims, symbs) |
-      AffineMultiplyExpr(dims, symbs) |
-      AffineCeilDivExpr(dims, symbs) |
-      AffineFloorDivExpr(dims, symbs) |
-      AffineModExpr(dims, symbs) |
+    AffineAddExpr(dims, symbs) | AffineMinusExpr(dims, symbs) |
+      AffineMultiplyExpr(dims, symbs) | AffineCeilDivExpr(dims, symbs) |
+      AffineFloorDivExpr(dims, symbs) | AffineModExpr(dims, symbs) |
       AffineSinglesP(dims, symbs)
   )
 
@@ -161,8 +154,7 @@ def AffineMultiplyExpr[$: P](
       dims,
       symbs,
     ) | AffineSinglesP(dims, symbs) ~ "*" ~ AffineConstantP(dims, symbs)
-  )
-    .map(AffineBinaryOpExpr(multiply, _, _))
+  ).map(AffineBinaryOpExpr(multiply, _, _))
 
 def AffineCeilDivExpr[$: P](
     dims: Seq[String],
@@ -241,25 +233,28 @@ def GreaterEqualP[$: P](
     dims: Seq[String],
     symbs: Seq[String],
 ): P[AffineConstraintExpr] =
-  P(AffineExprP(dims, symbs) ~ ">=" ~ AffineExprP(dims, symbs)).map(
-    AffineConstraintExpr(greaterequal, _, _)
-  )
+  P(AffineExprP(dims, symbs) ~ ">=" ~ AffineExprP(dims, symbs))
+    .map(
+      AffineConstraintExpr(greaterequal, _, _)
+    )
 
 def LessEqualP[$: P](
     dims: Seq[String],
     symbs: Seq[String],
 ): P[AffineConstraintExpr] =
-  P(AffineExprP(dims, symbs) ~ "<=" ~ AffineExprP(dims, symbs)).map(
-    AffineConstraintExpr(lessequal, _, _)
-  )
+  P(AffineExprP(dims, symbs) ~ "<=" ~ AffineExprP(dims, symbs))
+    .map(
+      AffineConstraintExpr(lessequal, _, _)
+    )
 
 def EqualP[$: P](
     dims: Seq[String],
     symbs: Seq[String],
 ): P[AffineConstraintExpr] =
-  P(AffineExprP(dims, symbs) ~ "==" ~ AffineExprP(dims, symbs)).map(
-    AffineConstraintExpr(equal, _, _)
-  )
+  P(AffineExprP(dims, symbs) ~ "==" ~ AffineExprP(dims, symbs))
+    .map(
+      AffineConstraintExpr(equal, _, _)
+    )
 
 object TestAffine:
 

@@ -32,7 +32,8 @@ class TransformationsTest
     printer = new Printer(true)
   }
 
-  "Operation Erasure" should "Test that operation does not get erased and throws error :)" in
+  "Operation Erasure" should
+    "Test that operation does not get erased and throws error :)" in
     withClue("Operand Erasure: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
@@ -54,12 +55,14 @@ class TransformationsTest
 
       val exception = intercept[Exception](
         block.eraseOp(opToErase)
-      ).getMessage shouldBe "Attempting to erase a Value that has uses in other operations."
+      ).getMessage shouldBe
+        "Attempting to erase a Value that has uses in other operations."
 
       opToErase.containerBlock shouldEqual None
     }
 
-  "Operation Adding" should "Test that adding op to it's own block does not work :)" in
+  "Operation Adding" should
+    "Test that adding op to it's own block does not work :)" in
     withClue("Operand Adding: ") {
 
       val text = """  
@@ -73,7 +76,8 @@ class TransformationsTest
         |       }) {attr = "this is it"} : () -> ()
         |   %6 = "cmath.norm"(%3) : (f32) -> f64
         |   %7 = "cmath.mul"(%4, %5) : (f32, f32) -> f32
-        | }) : () -> (!cmath.complex<f32>, !cmath.complex<index>, !cmath.complex<f32>)""".stripMargin
+        | }) : () -> (!cmath.complex<f32>, !cmath.complex<index>, !cmath.complex<f32>)"""
+        .stripMargin
 
       val Parsed.Success(value, _) = parser.parseThis(
         text = text,
@@ -89,10 +93,12 @@ class TransformationsTest
 
       val exception = intercept[Exception](
         blockToAddItTo.addOp(opToAdd)
-      ).getMessage shouldBe "Can't add an operation to a block that is contained within that operation"
+      ).getMessage shouldBe
+        "Can't add an operation to a block that is contained within that operation"
     }
 
-  "Operation Insertion" should "Test that operation does not get inserted into the wrong block and throws error :)" in
+  "Operation Insertion" should
+    "Test that operation does not get inserted into the wrong block and throws error :)" in
     withClue("Operand Insertion: ") {
 
       val text = """  %0, %1 = "test.op"() : () -> (i32, i64)
@@ -118,16 +124,12 @@ class TransformationsTest
 
       val refOp = value.regions(0).blocks(0).operations(0)
 
-      val opToInsert = value
-        .regions(0)
-        .blocks(0)
-        .operations(2)
-        .regions(0)
-        .blocks(0)
-        .operations(0)
+      val opToInsert = value.regions(0).blocks(0).operations(2).regions(0)
+        .blocks(0).operations(0)
 
       val exception = intercept[Exception](
         block.insertOpBefore(refOp, opToInsert)
-      ).getMessage shouldBe "Can't insert the new operation into the block, as the operation that was " +
+      ).getMessage shouldBe
+        "Can't insert the new operation into the block, as the operation that was " +
         "given as a point of reference does not exist in the current block."
     }

@@ -38,7 +38,8 @@ trait AllTypesMatch(values: Attribute*) extends Operation:
       if values.tail.forall(_.getClass == firstClass) then Right(this)
       else
         Left(
-          "All parameters of AllTypesMatch must be of the same type in operation " + this.name
+          "All parameters of AllTypesMatch must be of the same type in operation " +
+            this.name
         )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\

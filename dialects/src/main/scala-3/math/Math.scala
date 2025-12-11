@@ -38,28 +38,24 @@ object AbsfOp:
       resNames: Seq[String],
   ): P[AbsfOp] =
     P(
-      "" ~ Parser.ValueUse
-        .flatMap(operandName =>
-          (parser.Attribute.orElse(
-            FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ parser.Type.flatMap(tpe =>
-            parser.currentScope.useValue(operandName, tpe) ~
-              parser.currentScope.defineResult(resNames.head, tpe)
-          ))
-        )
-        .flatMap { case (flags, operandAndResult) =>
-          val (operand, result) = operandAndResult
-          summon[DerivedOperationCompanion[AbsfOp]]
-            .apply(
-              operands = Seq(operand),
-              results = Seq(result),
-              properties = Map("fastmath" -> flags),
-            )
-            .structured match
-            case Right(op: AbsfOp) => Pass(op)
-            case Left(err)         => Fail(err)
+      "" ~ Parser.ValueUse.flatMap(operandName =>
+        (parser.Attribute.orElse(
+          FastMathFlagsAttr(FastMathFlags.none)
+        ) ~ ":" ~ parser.Type.flatMap(tpe =>
+          parser.currentScope.useValue(operandName, tpe) ~
+            parser.currentScope.defineResult(resNames.head, tpe)
+        ))
+      ).flatMap { case (flags, operandAndResult) =>
+        val (operand, result) = operandAndResult
+        summon[DerivedOperationCompanion[AbsfOp]].apply(
+          operands = Seq(operand),
+          results = Seq(result),
+          properties = Map("fastmath" -> flags),
+        ).structured match
+          case Right(op: AbsfOp) => Pass(op)
+          case Left(err)         => Fail(err)
 
-        }
+      }
     )
 
 case class AbsfOp(
@@ -88,28 +84,26 @@ object FPowIOp:
           ) ~ ":" ~ parser.Type.flatMap(lhsType =>
             parser.currentScope.useValue(lhsName, lhsType) ~
               parser.currentScope.defineResult(resNames.head, lhsType)
-          )
-            ~ "," ~ parser.Type.flatMap(
-              parser.currentScope.useValue(rhsName, _)
-            ))
-            .flatMap {
-              case (
-                    flags,
-                    lhsAndRes,
-                    rhs,
-                  ) =>
-                println(f"Attempting construction")
-                val made = summon[DerivedOperationCompanion[FPowIOp]].apply(
-                  operands = Seq(lhsAndRes._1, rhs),
-                  results = Seq(lhsAndRes._2),
-                  properties = Map("fastmath" -> flags),
-                )
-                println(f"Made: $made")
-                made.structured match
-                  case Right(op: FPowIOp) => Pass(op)
-                  case Left(err)          => Fail(err)
+          ) ~ "," ~ parser.Type.flatMap(
+            parser.currentScope.useValue(rhsName, _)
+          )).flatMap {
+            case (
+                  flags,
+                  lhsAndRes,
+                  rhs,
+                ) =>
+              println(f"Attempting construction")
+              val made = summon[DerivedOperationCompanion[FPowIOp]].apply(
+                operands = Seq(lhsAndRes._1, rhs),
+                results = Seq(lhsAndRes._2),
+                properties = Map("fastmath" -> flags),
+              )
+              println(f"Made: $made")
+              made.structured match
+                case Right(op: FPowIOp) => Pass(op)
+                case Left(err)          => Fail(err)
 
-            }
+          }
         ))
       )
     )

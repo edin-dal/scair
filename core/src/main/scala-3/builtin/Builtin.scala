@@ -122,7 +122,8 @@ case class IntegerAttr(
   infix def *(that: IntegerAttr): IntegerAttr =
     if this.typ != that.typ then
       throw new Exception(
-        s"Cannot multiply IntegerAttrs of different types: ${this.typ} and ${that.typ}"
+        s"Cannot multiply IntegerAttrs of different types: ${this
+            .typ} and ${that.typ}"
       )
     // TODO: Make it correct
     IntegerAttr(IntData(this.value.value * that.value.value), this.typ)
@@ -446,31 +447,29 @@ final case class DenseIntOrFPElementsAttr(
           s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
         )
 
-    data.attrValues
-      .foldLeft[Either[String, Any]](
-        tpe
-      )((acc, elt) =>
-        acc.map(tpe =>
-          elt match
-            case IntegerAttr(_, etyp) =>
-              if tpe == etyp then acc
-              else
-                Left(
-                  s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
-                )
-            case FloatAttr(_, etyp) =>
-              if tpe == etyp then acc
-              else
-                Left(
-                  s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
-                )
-            case _ =>
+    data.attrValues.foldLeft[Either[String, Any]](
+      tpe
+    )((acc, elt) =>
+      acc.map(tpe =>
+        elt match
+          case IntegerAttr(_, etyp) =>
+            if tpe == etyp then acc
+            else
               Left(
-                s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
+                s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
-        )
+          case FloatAttr(_, etyp) =>
+            if tpe == etyp then acc
+            else
+              Left(
+                s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
+              )
+          case _ =>
+            Left(
+              s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
+            )
       )
-      .map(_ => ())
+    ).map(_ => ())
 
   override def customPrint(p: Printer) =
     val values = data.attrValues(0) match

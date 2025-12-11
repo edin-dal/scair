@@ -22,10 +22,7 @@ private val clairErr = s"[${RED}claierror$RESET]   "
 
 class ClairCustomException(name: String, message: String)
     extends Exception(
-      "\n" +
-        clairErr + name +
-        "\n" +
-        clairErr + " => " + message + "\n"
+      "\n" + clairErr + name + "\n" + clairErr + " => " + message + "\n"
     ):
   override def fillInStackTrace(): Throwable = this
 
