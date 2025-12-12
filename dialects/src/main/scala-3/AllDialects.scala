@@ -43,5 +43,5 @@ val allDialects: Seq[Dialect] =
     AffineDialect,
     FuncDialect,
     LLVMDialect,
-    SCFDialect
+    SCFDialect,
   )

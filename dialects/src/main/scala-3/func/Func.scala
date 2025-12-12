@@ -22,51 +22,52 @@ import scair.parse.Parser
 case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]]
+    _results: Seq[Result[Attribute]],
 ) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
 given OperationCustomParser[Func]:
 
   def parseResultTypes[$: P](using
       Parser
-  ): P[Seq[Attribute]] =
-    ("->" ~ (ParenTypeList | TypeP.map(Seq(_)))).orElse(Seq())
+  ): P[Seq[Attribute]] = ("->" ~ (ParenTypeList | TypeP.map(Seq(_))))
+    .orElse(Seq())
 
   def parse[$: P](
       resNames: Seq[String]
   )(using Parser): P[Func] =
-    ("private".!.? ~ SymbolRefAttrP ~ (("(" ~ ValueIdAndType
-      .rep(sep = ",") ~ ")").flatMap((args: Seq[(String, Attribute)]) =>
-      Pass(
-        args.map(_._2)
-      ) ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
-        .orElse(Map()) ~ RegionP(args)
-    ) | (
-      ParenTypeList ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
-        .orElse(Map()) ~ Pass(
-        Region()
-      )
-    )))
-      .map({
-        case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
-          val f = Func(
-            sym_name = symbol.rootRef,
-            function_type = FunctionType(
-              inputs = argTypes,
-              outputs = resTypes
-            ),
-            sym_visibility = visibility.map(StringData(_)),
-            body = body
-          )
-          f.attributes.addAll(attributes)
-          f
-      })
+    ("private".!.? ~ SymbolRefAttrP ~
+      (("(" ~ ValueIdAndType.rep(sep = ",") ~ ")")
+        .flatMap((args: Seq[(String, Attribute)]) =>
+          Pass(
+            args.map(_._2)
+          ) ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
+            .orElse(Map()) ~ RegionP(args)
+        ) |
+        (
+          ParenTypeList ~ parseResultTypes ~
+            ("attributes" ~ DictionaryAttribute).orElse(Map()) ~ Pass(
+              Region()
+            )
+        ))).map {
+      case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
+        val f = Func(
+          sym_name = symbol.rootRef,
+          function_type = FunctionType(
+            inputs = argTypes,
+            outputs = resTypes,
+          ),
+          sym_visibility = visibility.map(StringData(_)),
+          body = body,
+        )
+        f.attributes.addAll(attributes)
+        f
+    }
 
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
     sym_visibility: Option[StringData],
-    body: Region
+    body: Region,
 ) extends DerivedOperation["func.func", Func]
     with IsolatedFromAbove derives DerivedOperationCompanion:
 
@@ -88,7 +89,7 @@ case class Func(
           lprinter.printArgument,
           "(",
           ", ",
-          ")"
+          ")",
         )
         if function_type.outputs.nonEmpty then
           lprinter.print(" -> ")

@@ -4,6 +4,7 @@ import scair.MLContext
 import scair.ir.Dialect
 import scair.ir.Operation
 import scair.transformations.ModulePass
+import scair.utils.OK
 import scopt.OParser
 
 import scala.io.BufferedSource
@@ -38,9 +39,9 @@ abstract class ScairToolBase[Args]:
 
     OParser.sequence(
       argbuilder.programName(toolName),
-      argbuilder.head(toolName, "0")
+      argbuilder.head(toolName, "0"),
     )
 
   def parseArgs(args: Array[String]): Args
   def toolName: String
-  def parse(args: Args)(input: BufferedSource): Array[Either[String, Operation]]
+  def parse(args: Args)(input: BufferedSource): Array[OK[Operation]]

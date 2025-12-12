@@ -39,9 +39,8 @@ class BlockOperations extends IntrusiveList[Operation]:
     op.operands.zipWithIndex.foreach((o, i) => o.uses += Use(op, i))
 
   private inline def handleOperationRemoval(op: Operation) =
-    op.operands.zipWithIndex.foreach((o, i) =>
-      o.uses.filterInPlace(_.operation != op)
-    )
+    op.operands.zipWithIndex
+      .foreach((o, i) => o.uses.filterInPlace(_.operation != op))
 
   override final def addOne(elem: Operation): this.type =
     handleOperationInsertion(elem)

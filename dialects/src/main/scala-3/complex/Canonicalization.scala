@@ -46,7 +46,7 @@ val ReCreate = pattern { case Re(Owner(Create(a, b, _)), _) =>
 val ReNegCreate = pattern {
   case Re(
         Owner(Neg(Owner(Create(a @ Value(at: FloatType), _, _)), _, fastmath)),
-        _
+        _,
       ) =>
     arith.NegF(a.asInstanceOf[Value[FloatType]], Result(at), fastmath)
 }
@@ -54,7 +54,7 @@ val ReNegCreate = pattern {
 given CanonicalizationPatterns[Re](
   ReConstant,
   ReCreate,
-  ReNegCreate
+  ReNegCreate,
 )
 
 // complex.im(complex.constant(a, b)) -> b
@@ -72,7 +72,7 @@ val ImCreate = pattern { case Im(Owner(Create(a, b, _)), _) =>
 val ImNegCreate = pattern {
   case Im(
         Owner(Neg(Owner(Create(_, b @ Value(bt: FloatType), _)), _, fastmath)),
-        _
+        _,
       ) =>
     arith.NegF(b.asInstanceOf[Value[FloatType]], Result(bt), fastmath)
 }
@@ -80,7 +80,7 @@ val ImNegCreate = pattern {
 given CanonicalizationPatterns[Im](
   ImConstant,
   ImCreate,
-  ImNegCreate
+  ImNegCreate,
 )
 
 // complex.add(complex.sub(a, b), b) -> a
@@ -89,7 +89,7 @@ val AddSub = pattern {
         Owner(Sub(a, b, _, _)),
         bb,
         _,
-        _
+        _,
       ) if b eq bb =>
     (Seq(), Seq(a))
 }
@@ -100,7 +100,7 @@ val AddSubRHS = pattern {
         b,
         Owner(Sub(a, bb, _, _)),
         _,
-        _
+        _,
       ) if b eq bb =>
     (Seq(), Seq(a))
 }
@@ -114,11 +114,11 @@ val AddZero = pattern {
             ArrayAttribute(
               Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
             ),
-            _
+            _,
           )
         ),
         _,
-        _
+        _,
       ) if r == 0.0 && i == 0.0 =>
     (Seq(), Seq(a))
 }
@@ -126,7 +126,7 @@ val AddZero = pattern {
 given CanonicalizationPatterns[Add](
   AddSub,
   AddSubRHS,
-  AddZero
+  AddZero,
 )
 
 // complex.sub(complex.add(a, b), b) -> a
@@ -135,7 +135,7 @@ val SubAdd = pattern {
         Owner(Add(a, b, _, _)),
         bb,
         _,
-        _
+        _,
       ) if b eq bb =>
     (Seq(), Seq(a))
 }
@@ -149,18 +149,18 @@ val SubZero = pattern {
             ArrayAttribute(
               Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
             ),
-            _
+            _,
           )
         ),
         _,
-        _
+        _,
       ) if r == 0.0 && i == 0.0 =>
     (Seq(), Seq(a))
 }
 
 given CanonicalizationPatterns[Sub](
   SubAdd,
-  SubZero
+  SubZero,
 )
 
 // complex.neg(complex.neg(a)) -> a
@@ -181,11 +181,11 @@ val MulOne = pattern {
             ArrayAttribute(
               Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
             ),
-            _
+            _,
           )
         ),
         _,
-        _
+        _,
       ) if r == 1.0 && i == 0.0 =>
     (Seq(), Seq(a))
 }
@@ -199,11 +199,11 @@ val MulZero = pattern {
             ArrayAttribute(
               Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
             ),
-            _
+            _,
           )
         ),
         _,
-        _
+        _,
       ) if r == 0.0 && i == 0.0 =>
     (Seq(), Seq(zero))
 }
@@ -216,7 +216,7 @@ val MulConstant = pattern {
             ArrayAttribute(
               Seq(FloatAttr(FloatData(a), t), FloatAttr(FloatData(b), _))
             ),
-            _
+            _,
           )
         ),
         Owner(
@@ -224,25 +224,25 @@ val MulConstant = pattern {
             ArrayAttribute(
               Seq(FloatAttr(FloatData(c), _), FloatAttr(FloatData(d), _))
             ),
-            _
+            _,
           )
         ),
         Result(tpe),
-        _
+        _,
       ) =>
     Constant(
       ArrayAttribute(
         Seq(
           FloatAttr(FloatData(a * c - b * d), t),
-          FloatAttr((FloatData(a * d + b * c)), t)
+          FloatAttr((FloatData(a * d + b * c)), t),
         )
       ),
-      Result(tpe)
+      Result(tpe),
     )
 }
 
 given CanonicalizationPatterns[Mul](
   MulOne,
   MulZero,
-  MulConstant
+  MulConstant,
 )

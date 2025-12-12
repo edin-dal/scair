@@ -39,10 +39,8 @@ final case class OperationInfo(val op: Operation):
   override def equals(obj: Any): Boolean = obj match
     case OperationInfo(b: Operation) =>
       val a = this.op
-      a.name == b.name &&
-      a.attributes == b.attributes &&
-      a.properties == b.properties &&
-      a.operands == b.operands &&
+      a.name == b.name && a.attributes == b.attributes &&
+      a.properties == b.properties && a.operands == b.operands &&
       a.results.typ == b.results.typ &&
       // TODO: Should be structural equivalence!
       a.regions == b.regions
@@ -51,7 +49,7 @@ final case class OperationInfo(val op: Operation):
 case class CSE(
     val knownOps: Map[OperationInfo, Operation] =
       Map[OperationInfo, Operation](),
-    val toErase: Set[Operation] = Set[Operation]()
+    val toErase: Set[Operation] = Set[Operation](),
 )(using rewriter: Rewriter):
 
   def simplify(op: Operation): Unit =

@@ -20,7 +20,8 @@ class IRDLPrinterTest extends AnyFlatSpec:
   ctx.registerDialect(IRDL)
   var parser = new Parser(ctx)
 
-  val module = parser.parse("""
+  val module = parser
+    .parse("""
 "builtin.module"() ({
   "irdl.dialect"() <{sym_name = "cmath"}> ({
     "irdl.type"() <{sym_name = "complex"}> ({
@@ -46,8 +47,7 @@ class IRDLPrinterTest extends AnyFlatSpec:
   val writer = StringWriter()
   printIRDL(dialect)(using PrintWriter(writer))
 
-  writer.toString shouldEqual
-    """package scair.dialects.cmath
+  writer.toString shouldEqual """package scair.dialects.cmath
 
 import scair.dialects.builtin._
 import scair.ir._

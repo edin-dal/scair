@@ -65,9 +65,8 @@ inline val IdPunct = "$._\\-"
 def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
 
 def DecimalLiteral[$: P] =
-  P(("-" | "+").?.! ~ DecDigits.!).map((sign: String, literal: String) =>
-    BigInt(sign + literal)
-  )
+  P(("-" | "+").?.! ~ DecDigits.!)
+    .map((sign: String, literal: String) => BigInt(sign + literal))
 
 def HexadecimalLiteral[$: P] =
   P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
@@ -85,9 +84,8 @@ private def parseFloatNum(float: (String, String)): Double =
   *   float: (String, String)
   */
 def FloatLiteral[$: P] = P(
-  (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).!
-    ~~ (CharIn("eE")
-      ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
+  (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).! ~~
+    (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
 ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
 inline def nonExcludedCharacter(c: Char): Boolean =
@@ -96,22 +94,17 @@ inline def nonExcludedCharacter(c: Char): Boolean =
     case _          => true
 
 inline def EscapedP[$: P] = P(
-  ("\\" ~~ (
-    "n" ~~ Pass('\n')
-      | "t" ~~ Pass('\t')
-      | "\\" ~~ Pass('\\')
-      | "\"" ~~ Pass('\"')
-      | CharIn("a-fA-F0-9")
-        .repX(exactly = 2)
-        .!
-        .map(Integer.parseInt(_, 16).toChar)
-  )).repX.map(chars => String(chars.toArray))
+  ("\\" ~~
+    (
+      "n" ~~ Pass('\n') | "t" ~~ Pass('\t') | "\\" ~~ Pass('\\') |
+        "\"" ~~ Pass('\"') |
+        CharIn("a-fA-F0-9").repX(exactly = 2).!
+          .map(Integer.parseInt(_, 16).toChar)
+    )).repX.map(chars => String(chars.toArray))
 )
 
 def StringLiteral[$: P] = P(
-  "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP)
-    .map(_ + _)
-    .repX
+  "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP).map(_ + _).repX
     .map(_.mkString) ~~ "\""
 )
 
@@ -140,16 +133,17 @@ def ValueId[$: P] = P("%" ~~ SuffixId)
 
 // Alias can't have dots in their names for ambiguity with dialect names.
 def AliasName[$: P] = P(
-  CharIn(Letter + "_") ~~ (CharsWhileIn(
-    Letter + DecDigit + "_$",
-    min = 0
-  )) ~~ !"."
+  CharIn(Letter + "_") ~~
+    (CharsWhileIn(
+      Letter + DecDigit + "_$",
+      min = 0,
+    )) ~~ !"."
 ).!
 
 def SuffixId[$: P] = P(
   DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
     Letter + IdPunct + DecDigit,
-    min = 0
+    min = 0,
   )
 ).!
 

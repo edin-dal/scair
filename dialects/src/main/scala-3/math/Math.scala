@@ -35,23 +35,21 @@ given OperationCustomParser[AbsfOp]:
   )(using p: Parser): P[AbsfOp] =
     P(
       OperandName.flatMap(operandName =>
-          (AttributeOfOrP[FastMathFlagsAttr](
-            FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ TypeOfP[FloatType].flatMap(tpe =>
-            operand(operandName, tpe) ~
-              result(resNames.head, tpe)
-          ))
-        )
-        .map { case (flags, operandAndResult) =>
-          val (operand, result) = operandAndResult
-          AbsfOp(flags, operand, result)
-        }
+        (AttributeOfOrP[FastMathFlagsAttr](
+          FastMathFlagsAttr(FastMathFlags.none)
+        ) ~ ":" ~ TypeOfP[FloatType].flatMap(tpe =>
+          operand(operandName, tpe) ~ result(resNames.head, tpe)
+        ))
+      ).map { case (flags, operandAndResult) =>
+        val (operand, result) = operandAndResult
+        AbsfOp(flags, operand, result)
+      }
     )
 
 case class AbsfOp(
     fastmath: FastMathFlagsAttr,
     operand: Operand[FloatType],
-    result: Result[FloatType]
+    result: Result[FloatType],
 ) extends DerivedOperation["math.absf", AbsfOp]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -70,18 +68,14 @@ given OperationCustomParser[FPowIOp]:
           (AttributeOfOrP[FastMathFlagsAttr](
             FastMathFlagsAttr(FastMathFlags.none)
           ) ~ ":" ~ TypeOfP[FloatType].flatMap(lhsType =>
-            operand(lhsName, lhsType) ~
-              result(resNames.head, lhsType)
-          )
-            ~ "," ~ TypeOfP[IntegerType].flatMap(
-              operand(rhsName, _)
-            ))
-            .map {
-              case (flags, lhsAndRes, rhs) =>
-                val (lhs, res) = lhsAndRes
-                FPowIOp(lhs, rhs, flags, res)
+            operand(lhsName, lhsType) ~ result(resNames.head, lhsType)
+          ) ~ "," ~ TypeOfP[IntegerType].flatMap(
+            operand(rhsName, _)
+          )).map { case (flags, lhsAndRes, rhs) =>
+            val (lhs, res) = lhsAndRes
+            FPowIOp(lhs, rhs, flags, res)
 
-            }
+          }
         ))
       )
     )
@@ -90,7 +84,7 @@ case class FPowIOp(
     lhs: Operand[FloatType],
     rhs: Operand[IntegerType],
     fastmath: FastMathFlagsAttr,
-    result: Result[FloatType]
+    result: Result[FloatType],
 ) extends DerivedOperation["math.fpowi", FPowIOp]
     with NoMemoryEffect derives DerivedOperationCompanion
 

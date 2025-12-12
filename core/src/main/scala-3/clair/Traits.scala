@@ -2,6 +2,7 @@ package scair.clair.macros
 
 import scair.Printer
 import scair.ir.*
+import scair.utils.OK
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -35,7 +36,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
+      attributes: DictType[String, Attribute],
   ) =
     comp(
       operands = operands,
@@ -43,7 +44,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       results = results,
       regions = detachedRegions,
       properties = properties,
-      attributes = attributes
+      attributes = attributes,
     )
 
   def name: String = comp.name
@@ -56,10 +57,8 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     comp.customPrint(this, p)
 
-  override def verify(): Either[String, Operation] =
-    super
-      .verify()
-      .flatMap(_ => constraintVerify())
+  override def verify(): OK[Operation] =
+    super.verify().flatMap(_ => constraintVerify())
 
-  def constraintVerify(): Either[String, Operation] =
+  def constraintVerify(): OK[Operation] =
     comp.constraintVerify(this)

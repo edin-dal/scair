@@ -168,19 +168,17 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
   override def patchInPlace(
       from: Int,
       patch: IterableOnce[A],
-      replaced: Int
+      replaced: Int,
   ): this.type =
     var i = from
-    patch.iterator
-      .take(replaced)
-      .foreach(p =>
-        update(i, p)
-        i += 1
-      )
+    patch.iterator.take(replaced).foreach(p =>
+      update(i, p)
+      i += 1
+    )
     this
 
-  override def remove(idx: Int, count: Int): Unit =
-    (1 to count).foreach(_ => remove(idx))
+  override def remove(idx: Int, count: Int): Unit = (1 to count)
+    .foreach(_ => remove(idx))
 
 object IntrusiveList:
 

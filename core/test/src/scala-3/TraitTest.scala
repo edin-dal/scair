@@ -10,14 +10,14 @@ case class FillerOp(
     override val operands: Seq[Operand[Attribute]] = Seq(),
     override val successors: Seq[Successor] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq()
+    override val regions: Seq[Region] = Seq(),
 ) extends DerivedOperation["filler", FillerOp] derives DerivedOperationCompanion
 
 case class TerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq()
+    override val regions: Seq[Region] = Seq(),
 ) extends DerivedOperation["terminator", TerminatorOp]
     with IsTerminator derives DerivedOperationCompanion
 
@@ -25,7 +25,7 @@ case class NoTerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq()
+    override val regions: Seq[Region] = Seq(),
 ) extends DerivedOperation["noterminator", NoTerminatorOp]
     with NoTerminator derives DerivedOperationCompanion
 
@@ -43,7 +43,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
     block.verify()
   }
 
-  "IsTerminator Test2" should "not pass the test the IsTerminator trait" in {
+  "IsTerminator Test2" should "not pass the test the IsTerminator trait" in
     withClue("Terminator not last in block: ") {
       val filler1 = new FillerOp()
       val filler2 = new FillerOp()
@@ -59,9 +59,8 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
         "Operation 'terminator' marked as a terminator, but is not the last operation within its container block"
       )
     }
-  }
 
-  "IsTerminator Test3" should "not pass the test the IsTerminator trait" in {
+  "IsTerminator Test3" should "not pass the test the IsTerminator trait" in
     withClue("Terminator not contained in block: ") {
       val terminator = new TerminatorOp()
 
@@ -71,7 +70,6 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
         "Operation 'terminator' marked as a terminator, but is not contained in any block."
       )
     }
-  }
 
   "NoTerminator Test1" should "pass the test the NoTerminator trait" in {
 

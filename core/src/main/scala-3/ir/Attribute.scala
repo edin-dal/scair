@@ -4,6 +4,7 @@ import fastparse.*
 import scair.Printer
 import scair.dialects.builtin.IntegerAttr
 import scair.parse.AttrParser
+import scair.utils.OK
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -24,7 +25,7 @@ import java.io.StringWriter
 sealed trait Attribute:
   def name: String
   def prefix: String = "#"
-  def customVerify(): Either[String, Unit] = Right(())
+  def customVerify(): OK[Unit] = Right(())
   def printParameters(p: Printer): Unit
 
   def customPrint(p: Printer): Unit =
@@ -61,14 +62,13 @@ abstract trait ParametrizedAttribute() extends Attribute:
         p.print,
         "<",
         ", ",
-        ">"
+        ">",
       )
 
   override def equals(attr: Any): Boolean =
     attr match
       case x: ParametrizedAttribute =>
-        x.name == this.name &&
-        x.getClass == this.getClass &&
+        x.name == this.name && x.getClass == this.getClass &&
         x.parameters.length == this.parameters.length &&
         (for ((i, j) <- x.parameters zip this.parameters)
           yield i == j).foldLeft(true)((i, j) => i && j)
@@ -80,7 +80,7 @@ object DataAttribute:
 
 abstract class DataAttribute[D](
     override val name: String,
-    val data: D
+    val data: D,
 ) extends Attribute:
 
   override def printParameters(p: Printer) =
@@ -89,8 +89,7 @@ abstract class DataAttribute[D](
   override def equals(attr: Any): Boolean =
     attr match
       case x: DataAttribute[?] =>
-        x.name == this.name &&
-        x.getClass == this.getClass &&
+        x.name == this.name && x.getClass == this.getClass &&
         x.data == this.data
       case _ => false
 

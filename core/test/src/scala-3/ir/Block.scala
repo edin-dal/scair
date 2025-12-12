@@ -22,49 +22,49 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
       (
         Block(),
         """^bb0():
-"""
+""",
       ),
       (
         Block(Seq()),
         """^bb0():
-"""
+""",
       ),
       (
         Block(Seq(), Seq()),
         """^bb0():
-"""
+""",
       ),
       (
         Block(Seq(TestOp())),
         """^bb0():
   "test.op"() : () -> ()
-"""
+""",
       ),
       (
         Block(TestOp()),
         """^bb0():
   "test.op"() : () -> ()
-"""
+""",
       ),
       (
         Block(
           Seq(I32),
           (args: Iterable[Value[Attribute]]) =>
-            Seq(TestOp(operands = args.toSeq))
+            Seq(TestOp(operands = args.toSeq)),
         ),
         """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()
-"""
+""",
       ),
       (
         Block(
           I32,
-          (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg)))
+          (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg))),
         ),
         """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()
-"""
-      )
+""",
+      ),
     )
   ) { (block: Block, ir: String) =>
     val out = StringWriter()

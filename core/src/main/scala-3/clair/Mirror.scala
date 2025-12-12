@@ -44,9 +44,11 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
                 case s: ImplicitSearchSuccess =>
                   Some(s.tree.asExprOf[ConstraintImpl[t]])
                 case f: ImplicitSearchFailure =>
-                  report.errorAndAbort(
-                    s"Could not find an implementation for constraint ${Type.show[t]}:\n${f.explanation}"
-                  )
+                  report
+                    .errorAndAbort(
+                      s"Could not find an implementation for constraint ${Type
+                          .show[t]}:\n${f.explanation}"
+                    )
     case _ =>
       None
 
@@ -96,38 +98,39 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
         name = name,
         tpe = tpe,
         variadicity,
-        constraint
+        constraint,
       )
     case '[Value[t]] =>
       OperandDef(
         name = name,
         tpe = tpe,
         variadicity,
-        constraint
+        constraint,
       )
     case '[Region] =>
       RegionDef(
         name = name,
-        variadicity
+        variadicity,
       )
     case '[Successor] =>
       SuccessorDef(
         name = name,
-        variadicity
+        variadicity,
       )
     case '[Attribute] =>
       variadicity match
         case Variadicity.Variadic =>
-          report.errorAndAbort(
-            s"Variadic properties are not supported; use ArrayAttribute[${Type
-                .show(using elem)}] instead."
-          )
+          report
+            .errorAndAbort(
+              s"Variadic properties are not supported; use ArrayAttribute[${Type
+                  .show(using elem)}] instead."
+            )
         case v @ (Variadicity.Single | Variadicity.Optional) =>
           OpPropertyDef(
             name = name,
             tpe = tpe,
             v,
-            constraint
+            constraint,
           )
     case _: Type[?] =>
       report.errorAndAbort(
@@ -158,7 +161,7 @@ def getAttrDef[Label: Type, Elem: Type](using
     case '[Attribute] =>
       AttributeParamDef(
         name = name,
-        tpe = Type.of[Elem]
+        tpe = Type.of[Elem],
       )
     case _ =>
       throw new Exception(
@@ -183,10 +186,8 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] =
 
   Type.of[Elems] match
     case '[elem *: elems] =>
-      Type
-        .valueOfConstant[elem]
-        .get
-        .asInstanceOf[String] :: stringifyLabels[elems]
+      Type.valueOfConstant[elem].get.asInstanceOf[String] ::
+        stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 
 def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
@@ -209,7 +210,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         case _ =>
           report.errorAndAbort(
             s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
-            TypeRepr.of[T].typeSymbol.pos.get
+            TypeRepr.of[T].typeSymbol.pos.get,
           )
 
       val inputs = Type.of[(elemLabels, elemTypes)] match
@@ -222,7 +223,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
         properties = inputs.collect { case a: OpPropertyDef => a },
-        assemblyFormat = None
+        assemblyFormat = None,
       )
       val format = Type.of[T] match
         case '[AssemblyFormat[format]] =>
@@ -236,23 +237,20 @@ def getCompanion[T: Type](using quotes: Quotes) =
 
 def getOpCustomParse[T <: Operation: Type](
     p: Expr[Parser],
-    resNames: Expr[Seq[String]]
+    resNames: Expr[Seq[String]],
 )(using
     quotes: Quotes
 ) =
-  Expr
-    .summon[OperationCustomParser[T]]
-    .map(parser =>
-      '{ (ctx: P[Any]) ?=> $parser.parse($resNames)(using ctx, $p) }
-    )
+  Expr.summon[OperationCustomParser[T]].map(parser =>
+    '{ (ctx: P[Any]) ?=> $parser.parse($resNames)(using ctx, $p) }
+  )
 
 def getAttrCustomParse[T <: Attribute: Type](
     p: Expr[AttrParser],
-    ctx: Expr[P[Any]]
+    ctx: Expr[P[Any]],
 )(using
     quotes: Quotes
-) = Expr
-  .summon[AttributeCustomParser[T]]
+) = Expr.summon[AttributeCustomParser[T]]
   .map(parser => '{ $parser.parse(using $ctx, $p) })
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
@@ -276,12 +274,12 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
         case _ =>
           report.errorAndAbort(
             s"${Type.show[T]} should extend DerivedAttribute.DerivedOperation to derive DerivedAttributeCompanion.",
-            TypeRepr.of[T].typeSymbol.pos.get
+            TypeRepr.of[T].typeSymbol.pos.get,
           )
 
       val attributeDefs = summonAttrDefs[elemLabels, elemTypes]
 
       AttributeDef(
         name = name,
-        attributes = attributeDefs
+        attributes = attributeDefs,
       )

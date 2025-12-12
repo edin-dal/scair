@@ -6,6 +6,7 @@ import scair.interpreter.RuntimeCtx
 import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
+import scair.utils.OK
 import scopt.OParser
 
 import scala.collection.mutable
@@ -45,10 +46,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       OParser.sequence(
         commonHeaders,
         // The input file - defaulting to stdin
-        arg[String]("file")
-          .optional()
-          .text("input file")
-          .action((x, c) => c.copy(input = Some(x)))
+        arg[String]("file").optional().text("input file")
+          .action((x, c) => c.copy(input = Some(x))),
       )
 
     // Parse the CLI args
@@ -56,7 +55,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   override def parse(args: ScairRunArgs)(
       input: BufferedSource
-  ): Array[Either[String, Operation]] =
+  ): Array[OK[Operation]] =
     // Parse content
     // ONE CHUNK ONLY
 
@@ -64,7 +63,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       val parser = new Parser(ctx, inputPath = args.input)
       parser.parse(
         input = input.mkString,
-        parser = TopLevelP(using _, parser)
+        parser = TopLevelP(using _, parser),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)

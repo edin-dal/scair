@@ -42,14 +42,13 @@ final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx):
   override val name = "canonicalize"
 
   lazy val canonicalizationPatterns = ctx.dialectOpContext.valuesIterator
-    .flatMap(_.canonicalizationPatterns)
-    .toSeq
+    .flatMap(_.canonicalizationPatterns).toSeq
 
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(
       Seq(
         RemoveUnusedOperations,
-        Commute
+        Commute,
       ) ++ canonicalizationPatterns
     )
   )
