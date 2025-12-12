@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
-import scair.Parser
+import scair.parse.Parser
 import scair.Printer
 import scair.MLContext
 import java.io.*
@@ -15,7 +15,7 @@ class PatternRewriterTest extends AnyFlatSpec:
     // Create a simple module with an operation
     val ctx = MLContext()
     val parser = Parser(ctx, allowUnregisteredDialect = true)
-    val input = parser.parseThis("""
+    val input = parser.parse("""
 %0 = "test.op1"() : () -> i32
 %1 = "test.op2"(%0) : (i32) -> i32
 "test.op3"(%1) : (i32) -> ()

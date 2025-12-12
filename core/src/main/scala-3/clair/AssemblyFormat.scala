@@ -3,10 +3,11 @@ package scair.clair.macros
 import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
-import scair.Parser
+import scair.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.ir.*
+import scair.parse.*
 
 import scala.quoted.*
 
@@ -144,7 +145,7 @@ case class AttrDictDirective() extends Directive:
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ $p.OptionalAttributes(using $ctx) }
+    '{ optionalAttributesP(using $ctx, $p) }
 
 /** Directive for variables, handling operations' individual constructs
   * (operands, results, regions, successors or properties).
@@ -208,20 +209,22 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ Parser.ValueUse(using $ctx) }
+            '{ operandNameP(using $ctx) }
           case Variadicity.Variadic =>
-            '{ Parser.ValueUseList(using $ctx) }
+            '{ operandNamesP(using $ctx) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; Parser.ValueUse.? }
+            '{ given P[?] = $ctx; operandNameP.? }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
             '{
-              $p.Attribute(using $ctx)
+              attributeP(using $ctx, $p)
             }
           case Variadicity.Optional =>
             '{
-              given P[?] = $ctx; $p.Attribute.?
+              given P[?] = $ctx
+              given Parser = $p
+              attributeP.?
             }
 
   override def parsed(p: Expr[?])(using Quotes) =
@@ -287,11 +290,15 @@ case class TypeDirective(
       case MayVariadicOpInputDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ $p.Type(using $ctx) }
+            '{ typeP(using $ctx, $p) }
           case Variadicity.Variadic =>
-            '{ $p.TypeList(using $ctx) }
+            '{ typeListP(using $ctx, $p) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; $p.Type.? }
+            '{
+              given P[?] = $ctx
+              given Parser = $p
+              typeP.?
+            }
 
   // Ew; but works
   override def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
@@ -551,7 +558,7 @@ case class AssemblyFormatDirective(
     // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
     '{
-      $p.generateOperation(
+      $p.generateOperationP(
         opName = ${ Expr(opDef.name) },
         operandsNames = $flatOperandNames,
         operandsTypes = $flatOperandTypes,
@@ -672,7 +679,7 @@ def parseAssemblyFormat(
     opDef: OperationDef,
 ): AssemblyFormatDirective =
   given OperationDef = opDef
-  parse(format, (x: fastparse.P[?]) => assemblyFormat(using x)) match
+  fastparse.parse(format, assemblyFormat(using _)) match
     case Parsed.Success(value, index) =>
       value
     case failure: Parsed.Failure =>

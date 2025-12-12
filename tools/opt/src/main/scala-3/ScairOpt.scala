@@ -3,6 +3,7 @@ package scair.tools.opt
 import scair.Printer
 import scair.exceptions.VerifyException
 import scair.ir.*
+import scair.parse.*
 import scair.tools.ScairToolBase
 import scair.utils.OK
 import scopt.OParser
@@ -53,15 +54,15 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     var indexOffset = 0
     inputChunks.map(input =>
       // Parse content
-      val parser = new scair.Parser(
+      val parser = new Parser(
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
         allowUnregisteredDialect = args.allowUnregistered,
       )
-      val parsed = parser.parseThis(
+      val parsed = parser.parse(
         input,
-        pattern = parser.TopLevel(using _),
+        parser = topLevelP(using _, parser),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)

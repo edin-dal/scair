@@ -1,13 +1,13 @@
 package scair.dialects.builtin
 
 import fastparse.*
-import scair.Parser
 import scair.Printer
 import scair.clair.macros.*
 import scair.core.macros.*
 import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.ir.*
+import scair.parse.*
 import scair.utils.OK
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
@@ -516,15 +516,14 @@ final case class AffineSetAttr(affineSet: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-object ModuleOp:
+given OperationCustomParser[ModuleOp]:
 
   // ==--- Custom Parsing ---== //
   def parse[$: P](
-      parser: Parser,
-      resNames: Seq[String],
-  ): P[ModuleOp] =
+      resNames: Seq[String]
+  )(using Parser): P[ModuleOp] =
     P(
-      parser.RegionP()
+      regionP()
     ).map(ModuleOp.apply)
 
   // ==----------------------== //

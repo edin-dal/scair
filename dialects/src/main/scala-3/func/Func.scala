@@ -1,14 +1,14 @@
 package scair.dialects.func
 
 import fastparse.*
-import scair.AttrParser.whitespace
-import scair.Parser
-import scair.Parser.*
+import scair.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.parse.*
+import scair.parse.Parser
 
 //
 // ███████╗ ██╗░░░██╗ ███╗░░██╗ ░█████╗░
@@ -25,30 +25,29 @@ case class Call(
     _results: Seq[Result[Attribute]],
 ) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
 
-object Func:
+given OperationCustomParser[Func]:
 
-  def parseResultTypes[$: P](
-      parser: Parser
-  ): P[Seq[Attribute]] =
-    ("->" ~ (parser.ParenTypeList | parser.Type.map(Seq(_)))).orElse(Seq())
+  def parseResultTypes[$: P](using
+      Parser
+  ): P[Seq[Attribute]] = ("->" ~ (parenTypeListP | typeP.map(Seq(_))))
+    .orElse(Seq())
 
   def parse[$: P](
-      parser: Parser,
-      resNames: Seq[String],
-  ): P[Func] =
-    ("private".!.? ~ parser.SymbolRefAttrP ~
-      (parser.BlockArgList.flatMap((args: Seq[(String, Attribute)]) =>
-        Pass(args.map(_._2)) ~ parseResultTypes(
-          parser
-        ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~
-          parser.RegionP(args)
-      ) |
+      resNames: Seq[String]
+  )(using Parser): P[Func] =
+    ("private".!.? ~ symbolRefAttrP ~
+      (("(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")")
+        .flatMap((args: Seq[(String, Attribute)]) =>
+          Pass(
+            args.map(_._2)
+          ) ~ parseResultTypes ~ ("attributes" ~ attributeDictionaryP)
+            .orElse(Map()) ~ regionP(args)
+        ) |
         (
-          parser.ParenTypeList ~ parseResultTypes(
-            parser
-          ) ~ ("attributes" ~ parser.DictionaryAttribute).orElse(Map()) ~ Pass(
-            Region()
-          )
+          parenTypeListP ~ parseResultTypes ~
+            ("attributes" ~ attributeDictionaryP).orElse(Map()) ~ Pass(
+              Region()
+            )
         ))).map {
       case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
         val f = Func(

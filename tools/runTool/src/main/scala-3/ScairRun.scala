@@ -4,6 +4,7 @@ import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
 import scair.interpreter.RuntimeCtx
 import scair.ir.*
+import scair.parse.*
 import scair.tools.ScairToolBase
 import scair.utils.OK
 import scopt.OParser
@@ -59,10 +60,10 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // ONE CHUNK ONLY
 
     val inputModule =
-      val parser = new scair.Parser(ctx, inputPath = args.input)
-      parser.parseThis(
-        input.mkString,
-        pattern = parser.TopLevel(using _),
+      val parser = new Parser(ctx, inputPath = args.input)
+      parser.parse(
+        input = input.mkString,
+        parser = topLevelP(using _, parser),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)
