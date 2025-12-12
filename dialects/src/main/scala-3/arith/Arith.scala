@@ -9,6 +9,7 @@ import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.enums.enumattr.*
 import scair.ir.*
+import scair.utils.OK
 
 import scala.collection.immutable.*
 
@@ -182,7 +183,7 @@ type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 
 trait SameOperandsAndResultTypes extends Operation:
 
-  override def traitVerify(): Either[String, Operation] =
+  override def traitVerify(): OK[Operation] =
     val params = this.operands.typ ++ this.results.typ
     if params.isEmpty then Right(this)
     else
@@ -196,7 +197,7 @@ trait SameOperandsAndResultTypes extends Operation:
 
 trait SameOperandsAndResultShape extends Operation:
 
-  override def traitVerify(): Either[String, Operation] =
+  override def traitVerify(): OK[Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
@@ -214,7 +215,7 @@ trait SameOperandsAndResultShape extends Operation:
 
 trait SameInputOutputTensorDims extends Operation:
 
-  override def traitVerify(): Either[String, Operation] =
+  override def traitVerify(): OK[Operation] =
     // gets rid of all unranked types already
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
@@ -232,7 +233,7 @@ trait SameInputOutputTensorDims extends Operation:
 
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
-  override def traitVerify(): Either[String, Operation] =
+  override def traitVerify(): OK[Operation] =
     if values.isEmpty then Right(this)
     else
       val first = values.head
@@ -246,7 +247,7 @@ trait AllTypesMatch(values: Attribute*) extends Operation:
 trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
     extends Operation:
 
-  override def traitVerify(): Either[String, Operation] =
+  override def traitVerify(): OK[Operation] =
     condition match
       case IntegerType(IntData(1), Signless) => Right(this)
       case x: ShapedType                     =>

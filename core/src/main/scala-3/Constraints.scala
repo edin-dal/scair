@@ -1,6 +1,7 @@
 package scair.core.constraints
 
 import scair.ir.*
+import scair.utils.OK
 
 import scala.compiletime.constValue
 import scala.quoted.*
@@ -27,7 +28,7 @@ trait ConstraintImpl[c <: Constraint]:
 
   def verify(attr: Attribute)(using
       ctx: ConstraintContext
-  ): Either[String, Unit]
+  ): OK[Unit]
 
 infix type !>[A <: Attribute, C <: Constraint] = A
 
@@ -51,7 +52,7 @@ class ConstraintImplEqAttr[To <: Attribute](ref: To)
 
   override def verify(attr: Attribute)(using
       ctx: ConstraintContext
-  ): Either[String, Unit] =
+  ): OK[Unit] =
     if attr == ref then Right(())
     else Left(s"Expected $ref, got $attr")
 
@@ -63,7 +64,7 @@ class ConstraintImplVar[To <: String](name: To) extends ConstraintImpl[Var[To]]:
 
   override def verify(attr: Attribute)(using
       ctx: ConstraintContext
-  ): Either[String, Unit] =
+  ): OK[Unit] =
     if ctx.varConstraints.contains(name) then
       if ctx.varConstraints.apply(name) != attr then
         Left(s"Expected ${ctx.varConstraints.apply(name)}, got $attr")

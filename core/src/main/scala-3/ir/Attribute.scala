@@ -4,6 +4,7 @@ import fastparse.*
 import scair.AttrParser
 import scair.Printer
 import scair.dialects.builtin.IntegerAttr
+import scair.utils.OK
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -24,7 +25,7 @@ import java.io.StringWriter
 sealed trait Attribute:
   def name: String
   def prefix: String = "#"
-  def customVerify(): Either[String, Unit] = Right(())
+  def customVerify(): OK[Unit] = Right(())
   def printParameters(p: Printer): Unit
 
   def customPrint(p: Printer): Unit =
