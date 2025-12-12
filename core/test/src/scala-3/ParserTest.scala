@@ -109,42 +109,42 @@ class ParserTest
     ("name", "pattern", "tests"),
     (
       "Digit",
-      ((x: fastparse.P[?]) => DecDigits(using x)),
+      ((x: fastparse.P[?]) => decDigitsP(using x)),
       digitTests,
     ),
     (
       "HexDigit",
-      ((x: fastparse.P[?]) => HexDigits(using x)),
+      ((x: fastparse.P[?]) => hexDigitsP(using x)),
       hexTests,
     ),
     (
       "IntegerLiteral",
-      ((x: fastparse.P[?]) => IntegerLiteral(using x)),
+      ((x: fastparse.P[?]) => integerLiteralP(using x)),
       intLiteralTests,
     ),
     (
       "DecimalLiteral",
-      ((x: fastparse.P[?]) => DecimalLiteral(using x)),
+      ((x: fastparse.P[?]) => decimalLiteralP(using x)),
       decimalLiteralTests,
     ),
     (
       "HexadecimalLiteral",
-      ((x: fastparse.P[?]) => HexadecimalLiteral(using x)),
+      ((x: fastparse.P[?]) => hexadecimalLiteralP(using x)),
       hexadecimalLiteralTests,
     ),
     (
       "FloatLiteral",
-      ((x: fastparse.P[?]) => FloatLiteral(using x)),
+      ((x: fastparse.P[?]) => floatLiteralP(using x)),
       floatLiteralTests,
     ),
     (
       "StringLiteral",
-      ((x: fastparse.P[?]) => StringLiteral(using x)),
+      ((x: fastparse.P[?]) => stringLiteralP(using x)),
       stringLiteralTests,
     ),
     (
       "ValueId",
-      ((x: fastparse.P[?]) => ValueId(using x)),
+      ((x: fastparse.P[?]) => valueIdP(using x)),
       valueIdTests,
     ),
   )
@@ -167,7 +167,7 @@ class ParserTest
       input = "^bb0(%5: i32):\n" +
         "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)\n" +
         "\"test.op\"(%1, %0) : (i64, i32) -> ()",
-      parser = BlockP(using _, parser),
+      parser = blockP(using _, parser),
     ) should matchPattern {
       case Parsed.Success(
             Block(
@@ -209,7 +209,7 @@ class ParserTest
         "\"test.op\"(%1, %0) : (i64, i32) -> ()" + "^bb1(%4: i32):\n" +
         "%7, %8, %9 = \"test.op\"() : () -> (i32, i64, i32)\n" +
         "\"test.op\"(%8, %7) : (i64, i32) -> ()" + "}",
-      parser = RegionP()(using _, parser),
+      parser = regionP()(using _, parser),
     ) should matchPattern {
       case Parsed.Success(
             Region(
@@ -286,7 +286,7 @@ class ParserTest
   %7, %8, %9 = "test.op"() : () -> (i32, i64, i32)
   "test.op"(%8, %7) : (i64, i32) -> ()
 }""",
-      parser = RegionP()(using _, parser),
+      parser = regionP()(using _, parser),
       verboseFailures = true,
     ) should matchPattern {
       case Parsed.Failure(
@@ -311,7 +311,7 @@ class ParserTest
 
       parser.parse(
         input = text,
-        parser = TopLevelP(using _, parser),
+        parser = topLevelP(using _, parser),
         true,
       ) should matchPattern {
         case Parsed.Failure("Successor ^bb3 not defined within Scope", _, _) =>
@@ -340,7 +340,7 @@ class ParserTest
 
       parser.parse(
         input = text,
-        parser = OperationP(using _, parser),
+        parser = operationP(using _, parser),
       ) should matchPattern { case operation =>
       }
     }
@@ -348,7 +348,7 @@ class ParserTest
   "TopLevel Tests" should "Test full programs" in withClue("Test 1: ") {
     parser.parse(
       input = "%0, %1, %2 = \"test.op\"() : () -> (i32, i64, i32)",
-      parser = TopLevelP(using _, parser),
+      parser = topLevelP(using _, parser),
     ) should matchPattern {
       case Parsed.Success(
             ModuleOp(
@@ -391,7 +391,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parse(
         input = text,
-        parser = TopLevelP(using _, parser),
+        parser = topLevelP(using _, parser),
       ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(4).results(0).uses
@@ -422,7 +422,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parse(
         input = text,
-        parser = TopLevelP(using _, parser),
+        parser = topLevelP(using _, parser),
       ): @unchecked
 
       val uses0 = value.regions(0).blocks(0).operations(0).results(0).uses
@@ -454,7 +454,7 @@ class ParserTest
 
       val Parsed.Success(value, _) = parser.parse(
         input = text,
-        parser = TopLevelP(using _, parser),
+        parser = topLevelP(using _, parser),
       ): @unchecked
 
       val printer = new Printer(true)

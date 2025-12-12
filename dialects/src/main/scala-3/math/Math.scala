@@ -34,11 +34,11 @@ given OperationCustomParser[AbsfOp]:
       resNames: Seq[String]
   )(using p: Parser): P[AbsfOp] =
     P(
-      OperandName.flatMap(operandName =>
-        (AttributeOfOrP[FastMathFlagsAttr](
+      operandNameP.flatMap(operandName =>
+        (attributeOfOrP[FastMathFlagsAttr](
           FastMathFlagsAttr(FastMathFlags.none)
-        ) ~ ":" ~ TypeOfP[FloatType].flatMap(tpe =>
-          operand(operandName, tpe) ~ result(resNames.head, tpe)
+        ) ~ ":" ~ typeOfP[FloatType].flatMap(tpe =>
+          operandP(operandName, tpe) ~ resultP(resNames.head, tpe)
         ))
       ).map { case (flags, operandAndResult) =>
         val (operand, result) = operandAndResult
@@ -63,14 +63,14 @@ given OperationCustomParser[FPowIOp]:
       resNames: Seq[String]
   )(using p: Parser): P[FPowIOp] =
     P(
-      OperandName.flatMap(lhsName =>
-        ("," ~ OperandName.flatMap(rhsName =>
-          (AttributeOfOrP[FastMathFlagsAttr](
+      operandNameP.flatMap(lhsName =>
+        ("," ~ operandNameP.flatMap(rhsName =>
+          (attributeOfOrP[FastMathFlagsAttr](
             FastMathFlagsAttr(FastMathFlags.none)
-          ) ~ ":" ~ TypeOfP[FloatType].flatMap(lhsType =>
-            operand(lhsName, lhsType) ~ result(resNames.head, lhsType)
-          ) ~ "," ~ TypeOfP[IntegerType].flatMap(
-            operand(rhsName, _)
+          ) ~ ":" ~ typeOfP[FloatType].flatMap(lhsType =>
+            operandP(lhsName, lhsType) ~ resultP(resNames.head, lhsType)
+          ) ~ "," ~ typeOfP[IntegerType].flatMap(
+            operandP(rhsName, _)
           )).map { case (flags, lhsAndRes, rhs) =>
             val (lhs, res) = lhsAndRes
             FPowIOp(lhs, rhs, flags, res)

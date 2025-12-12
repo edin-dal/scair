@@ -145,7 +145,7 @@ case class AttrDictDirective() extends Directive:
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ OptionalAttributes(using $ctx, $p) }
+    '{ optionalAttributesP(using $ctx, $p) }
 
 /** Directive for variables, handling operations' individual constructs
   * (operands, results, regions, successors or properties).
@@ -209,22 +209,22 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ OperandName(using $ctx) }
+            '{ operandNameP(using $ctx) }
           case Variadicity.Variadic =>
-            '{ OperandNames(using $ctx) }
+            '{ operandNamesP(using $ctx) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; OperandName.? }
+            '{ given P[?] = $ctx; operandNameP.? }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
             '{
-              AttributeP(using $ctx, $p)
+              attributeP(using $ctx, $p)
             }
           case Variadicity.Optional =>
             '{
               given P[?] = $ctx
               given Parser = $p
-              AttributeP.?
+              attributeP.?
             }
 
   override def parsed(p: Expr[?])(using Quotes) =
@@ -290,14 +290,14 @@ case class TypeDirective(
       case MayVariadicOpInputDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ TypeP(using $ctx, $p) }
+            '{ typeP(using $ctx, $p) }
           case Variadicity.Variadic =>
-            '{ TypeList(using $ctx, $p) }
+            '{ typeListP(using $ctx, $p) }
           case Variadicity.Optional =>
             '{
               given P[?] = $ctx
               given Parser = $p
-              TypeP.?
+              typeP.?
             }
 
   // Ew; but works
@@ -558,7 +558,7 @@ case class AssemblyFormatDirective(
     // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
     '{
-      $p.generateOperation(
+      $p.generateOperationP(
         opName = ${ Expr(opDef.name) },
         operandsNames = $flatOperandNames,
         operandsTypes = $flatOperandTypes,

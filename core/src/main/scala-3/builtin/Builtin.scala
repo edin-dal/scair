@@ -523,7 +523,7 @@ given OperationCustomParser[ModuleOp]:
       resNames: Seq[String]
   )(using Parser): P[ModuleOp] =
     P(
-      RegionP()
+      regionP()
     ).map(ModuleOp.apply)
 
   // ==----------------------== //

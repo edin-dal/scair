@@ -822,7 +822,7 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
             '{
               given Whitespace = scair.parse.whitespace
               given AttrParser = p
-              ("<" ~/ AttributeP.rep(sep = ",") ~ ">").orElse(Seq())
+              ("<" ~/ attributeP.rep(sep = ",") ~ ">").orElse(Seq())
                 .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
             }
           )

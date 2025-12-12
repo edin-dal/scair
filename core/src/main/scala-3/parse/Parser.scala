@@ -99,7 +99,7 @@ private final class Scope(
     var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String],
 ):
 
-  def allBlocksAndValuesDefined[$: P] =
+  def allBlocksAndValuesDefinedP[$: P] =
     forwardValues.headOption match
       case Some(valueName) =>
         Fail(s"Value %$valueName not defined within Scope")
@@ -109,7 +109,7 @@ private final class Scope(
             Fail(s"Successor ^$blockName not defined within Scope")
           case None => Pass
 
-  def defineValue[$: P](
+  def defineValueP[$: P](
       name: String,
       typ: Attribute,
   ): P[Value[Attribute]] =
@@ -124,13 +124,13 @@ private final class Scope(
       valueMap(name) = v
       Pass(v)
 
-  inline def defineBlockArgument[$: P](
+  inline def defineBlockArgumentP[$: P](
       name: String,
       typ: Attribute,
   ): P[BlockArgument[Attribute]] =
-    defineValue(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
+    defineValueP(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
 
-  def defineBlock[$: P](
+  def defineBlockP[$: P](
       blockName: String
   ): P[Block] =
     if blockMap.contains(blockName) then
@@ -164,21 +164,21 @@ private final class Scope(
 // [x] successor             ::= caret-id (`:` block-arg-list)?
 // [x] trailing-location     ::= `loc` `(` location `)`
 
-private inline def OpResultList[$: P] = (OpResult.rep(1, sep = ",") ~ "=")
+private inline def opResultListP[$: P] = (opResultP.rep(1, sep = ",") ~ "=")
   .orElse(Seq()).map(_.flatten)
 
 private inline def sequenceValues(
-    value: (String, Option[BigInt])
+    inline value: (String, Option[BigInt])
 ): Seq[String] =
   value match
     case (name, Some(totalNo)) =>
       (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
     case (name, None) => Seq(name)
 
-private inline def OpResult[$: P] = (ValueId ~ (":" ~ DecimalLiteral).?)
+private inline def opResultP[$: P] = (valueIdP ~ (":" ~ decimalLiteralP).?)
   .map(sequenceValues)
 
-private inline def TrailingLocation[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
+private inline def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
 ||     PARSER CLASS     ||
@@ -196,16 +196,16 @@ final class Parser(
     private[parse] val scopes: mutable.Stack[Scope] = mutable.Stack(new Scope()),
 ) extends AttrParser(context, attributeAliases, typeAliases):
 
-  private[parse] inline def enterRegion[$: P] =
+  private[parse] inline def enterRegionP[$: P] =
     scopes.push(new Scope())
     Pass
 
-  private[parse] inline def exitRegion[$: P] =
-    scopes.pop.allBlocksAndValuesDefined
+  private[parse] inline def exitRegionP[$: P] =
+    scopes.pop.allBlocksAndValuesDefinedP
 
   inline def parse[T](
       inline input: ParserInputSource,
-      inline parser: P[?] => P[T] = TopLevelP(using _, this),
+      inline parser: P[?] => P[T] = topLevelP(using _, this),
       inline verboseFailures: Boolean = false,
       inline startIndex: Int = 0,
       inline instrument: fastparse.internal.Instrument = null,
@@ -242,7 +242,7 @@ final class Parser(
     * @return
     *   The generated operation.
     */
-  def generateOperation[$: P](
+  def generateOperationP[$: P](
       opName: String,
       resultsNames: Seq[String] = Seq(),
       operandsNames: Seq[String] = Seq(),
@@ -271,12 +271,12 @@ final class Parser(
     (operandsNames zip operandsTypes).foldLeft(
       Pass(Seq.empty[Value[Attribute]])
     )((l: P[Seq[Value[Attribute]]], r: (String, Attribute)) =>
-      (l ~ operand(r._1, r._2)).map(_ :+ _)
+      (l ~ operandP(r._1, r._2)).map(_ :+ _)
     ).flatMap(operands =>
       (resultsNames zip resultsTypes).foldLeft(
         Pass(Seq.empty[Result[Attribute]])
       )((l: P[Seq[Result[Attribute]]], r: (String, Attribute)) =>
-        (l ~ result(r._1, r._2)).map(_ :+ _)
+        (l ~ resultP(r._1, r._2)).map(_ :+ _)
       ).flatMap(results =>
         context.getOpCompanion(opName, allowUnregisteredDialect) match
           case Right(companion) =>
@@ -329,7 +329,7 @@ final class Parser(
       Console.err.println(msg)
       sys.exit(1)
 
-def operand[$: P, A <: Attribute](name: String, typ: A)(using
+def operandP[$: P, A <: Attribute](name: String, typ: A)(using
     p: Parser
 ): P[Value[A]] =
   p.scopes.collectFirst {
@@ -347,12 +347,12 @@ def operand[$: P, A <: Attribute](name: String, typ: A)(using
       p.scopes.top.forwardValues += name
       Pass(forwardValue)
 
-def result[$: P, A <: Attribute](
+def resultP[$: P, A <: Attribute](
     name: String,
     typ: A,
 )(using p: Parser): P[Result[A]] =
   P(
-    p.scopes.top.defineValue(name, typ).map(_.asInstanceOf[Result[A]])
+    p.scopes.top.defineValueP(name, typ).map(_.asInstanceOf[Result[A]])
   )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -362,13 +362,13 @@ def result[$: P, A <: Attribute](
 // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 // shortened definition TODO: finish...
 
-def TopLevelP[$: P](using p: Parser): P[Operation] = P(
-  Start ~ (OperationP | AttributeAliasDef | TypeAliasDef).rep
+def topLevelP[$: P](using p: Parser): P[Operation] = P(
+  Start ~ (operationP | attributeAliasDefP | typeAliasDefP).rep
     .map(
       _.collect { case o: Operation =>
         o
       }
-    ) ~/ p.exitRegion ~ End
+    ) ~/ p.exitRegionP ~ End
 ).map((toplevel: Seq[Operation]) =>
   toplevel.toList match
     case (head: ModuleOp) :: Nil => head
@@ -400,39 +400,39 @@ def TopLevelP[$: P](using p: Parser): P[Operation] = P(
 
 //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
 
-def OperationP[$: P](using Parser): P[Operation] = P(
-  OpResultList./.flatMap(resNames =>
-    GenericOperation(resNames) | CustomOperation(resNames)
-  ) ~/ TrailingLocation.?
+def operationP[$: P](using Parser): P[Operation] = P(
+  opResultListP./.flatMap(resNames =>
+    genericOperationP(resNames) | customOperationP(resNames)
+  ) ~/ trailingLocationP.?
 )./
 
-private def GenericOperandsTypesRec[$: P](using
+private def genericOperandsTypesRecP[$: P](using
     expected: Int,
     p: Parser,
 )(operandsNames: Seq[String], parsed: Int = 1): P[Seq[Value[Attribute]]] =
   operandsNames match
     case head :: Nil =>
-      TypeP.opaque(
+      typeP.opaque(
         f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed -
             1})."
-      ).flatMap(operand(head, _)).map(Seq(_))
+      ).flatMap(operandP(head, _)).map(Seq(_))
     case head :: tail =>
-      (TypeP.flatMap(operand(head, _)) ~ ",".opaque(
+      (typeP.flatMap(operandP(head, _)) ~ ",".opaque(
         f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
-      ) ~ GenericOperandsTypesRec(
+      ) ~ genericOperandsTypesRecP(
         tail,
         parsed + 1,
       )).map(_ +: _)
     case Nil => Pass(Seq())
 
-private inline def GenericOperandsTypes[$: P](
+private inline def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
-  "(" ~ GenericOperandsTypesRec(using operandsNames.length)(
+  "(" ~ genericOperandsTypesRecP(using operandsNames.length)(
     operandsNames
   ) ~ ")"
 
-private def GenericResultsTypesRec[$: P](using
+private def genericResultsTypesRecP[$: P](using
     expected: Int,
     p: Parser,
 )(
@@ -441,53 +441,53 @@ private def GenericResultsTypesRec[$: P](using
 ): P[Seq[Result[Attribute]]] =
   resultsNames match
     case head :: Nil =>
-      TypeP.opaque(
+      typeP.opaque(
         f"Number of results ($expected) does not match the number of the corresponding result types (${parsed -
             1})."
       ).flatMap(
-        result(head, _)
+        resultP(head, _)
       ).map(Seq(_))
     case head :: tail =>
-      (TypeP.flatMap(
-        result(head, _)
+      (typeP.flatMap(
+        resultP(head, _)
       ) ~ ",".opaque(
         f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
-      ) ~ GenericResultsTypesRec(tail, parsed + 1)).map(_ +: _)
+      ) ~ genericResultsTypesRecP(tail, parsed + 1)).map(_ +: _)
     case Nil => Pass(Seq())
 
-private inline def GenericResultsTypes[$: P](
+private inline def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
-  ("(" ~/ GenericResultsTypesRec(using resultsNames.length)(
+  ("(" ~/ genericResultsTypesRecP(using resultsNames.length)(
     resultsNames
   ).flatMap(resultsTypes =>
     ")".opaque(
       f"Number of results (${resultsNames.length}) does not match the number of the corresponding result types."
     ) ~ Pass(resultsTypes)
   )) | Pass(()).filter(_ => resultsNames.length == 1).flatMap(_ =>
-    GenericResultsTypesRec(using resultsNames.length)(resultsNames)
+    genericResultsTypesRecP(using resultsNames.length)(resultsNames)
   )
 
-private inline def GenericOperationName[$: P](using
+private inline def genericOperationNameP[$: P](using
     p: Parser
 ): P[OperationCompanion[?]] =
-  StringLiteral
+  stringLiteralP
     .flatMap(
       p.context.getOpCompanion(_, p.allowUnregisteredDialect) match
         case Right(companion) => Pass(companion)
         case Left(error)      => Fail(error)
     )
 
-private inline def GenericOperation[$: P](
+private inline def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
-  GenericOperationName.flatMapX((opCompanion: OperationCompanion[?]) =>
-    "(" ~ OperandNames.orElse(Seq()).flatMap((operandsNames: Seq[String]) =>
-      (")" ~/ SuccessorList.orElse(Seq()) ~/ properties.orElse(Map.empty) ~/
-        RegionList.orElse(Seq()) ~/ OptionalAttributes ~/ ":" ~/
-        GenericOperandsTypes(
+  genericOperationNameP.flatMapX((opCompanion: OperationCompanion[?]) =>
+    "(" ~ operandNamesP.orElse(Seq()).flatMap((operandsNames: Seq[String]) =>
+      (")" ~/ successorListP.orElse(Seq()) ~/ propertiesP.orElse(Map.empty) ~/
+        regionListP.orElse(Seq()) ~/ optionalAttributesP ~/ ":" ~/
+        genericOperandsTypesP(
           operandsNames
-        ) ~ "->" ~/ GenericResultsTypes(resultsNames)).map(
+        ) ~ "->" ~/ genericResultsTypesP(resultsNames)).map(
         (
             successors: Seq[Block],
             properties: Map[String, Attribute],
@@ -508,10 +508,10 @@ private inline def GenericOperation[$: P](
     )
   )
 
-private inline def CustomOperation[$: P](
+private inline def customOperationP[$: P](
     resNames: Seq[String]
 )(using p: Parser) =
-  PrettyDialectReferenceName./.flatMapTry { (x: String, y: String) =>
+  prettyDialectReferenceNameP./.flatMapTry { (x: String, y: String) =>
     p.context.getOpCompanion(s"$x.$y") match
       case Right(companion) =>
         Pass ~ companion.parse(resNames)
@@ -521,15 +521,15 @@ private inline def CustomOperation[$: P](
         )
   }
 
-private inline def RegionList[$: P](using Parser) =
-  "(" ~ RegionP().rep(sep = ",") ~ ")"
+private inline def regionListP[$: P](using Parser) =
+  "(" ~ regionP().rep(sep = ",") ~ ")"
 
 // // Type aliases
 // [x] type-alias-def ::= `!` alias-name `=` type
 // [x] type-alias ::= `!` alias-name
 
-private inline def TypeAliasDef[$: P](using p: Parser) =
-  ("!" ~~ AliasName ~ "=" ~ TypeP).flatMap((name: String, value: Attribute) =>
+private inline def typeAliasDefP[$: P](using p: Parser) =
+  ("!" ~~ aliasNameP ~ "=" ~ typeP).flatMap((name: String, value: Attribute) =>
     p.typeAliases.get(name) match
       case Some(t) =>
         Fail(
@@ -548,9 +548,9 @@ private inline def TypeAliasDef[$: P](using p: Parser) =
 // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
 // [x] - attribute-alias ::= `#` alias-name
 
-private inline def AttributeAliasDef[$: P](using p: Parser) =
+private inline def attributeAliasDefP[$: P](using p: Parser) =
   (
-    "#" ~~ AliasName ~ "=" ~ AttributeP
+    "#" ~~ aliasNameP ~ "=" ~ attributeP
   ).flatMap((name: String, value: Attribute) =>
     p.attributeAliases.get(name) match
       case Some(a) =>
@@ -577,35 +577,35 @@ private inline def populateBlockOps(
   ops.foreach(_.containerBlock = Some(block))
   block
 
-private inline def populateBlockArgs[$: P](
+private inline def populateBlockArgsP[$: P](
     block: Block,
     args: Seq[(String, Attribute)],
 )(using p: Parser) =
   args.foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
-    (l ~ p.scopes.top.defineBlockArgument(r._1, r._2)).map(_ :+ _)
+    (l ~ p.scopes.top.defineBlockArgumentP(r._1, r._2)).map(_ :+ _)
   ).map(args =>
     block.arguments ++= args
     block.arguments.foreach(_.owner = Some(block))
     block
   )
 
-private inline def BlockBody[$: P](block: Block)(using Parser) =
-  OperationP.rep.mapTry(populateBlockOps(block, _))
+private inline def blockBodyP[$: P](block: Block)(using Parser) =
+  operationP.rep.mapTry(populateBlockOps(block, _))
 
-def BlockP[$: P](using Parser) = P(
-  P(BlockLabel.flatMap(BlockBody))
+def blockP[$: P](using Parser) = P(
+  P(blockLabelP.flatMap(blockBodyP))
 )
 
-private inline def BlockLabel[$: P](using p: Parser) =
-  (BlockId.flatMap(p.scopes.top.defineBlock) ~ (BlockArgList.orElse(Seq())))
-    .flatMap(populateBlockArgs) ~ ":"
+private inline def blockLabelP[$: P](using p: Parser) =
+  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~ (blockArgListP.orElse(Seq())))
+    .flatMap(populateBlockArgsP) ~ ":"
 
-inline def SuccessorList[$: P](using Parser) = P(
-  "[" ~ Successor.rep(sep = ",") ~ "]"
+inline def successorListP[$: P](using Parser) = P(
+  "[" ~ successorP.rep(sep = ",") ~ "]"
 )
 
-inline def Successor[$: P](using p: Parser) = P(
-  P(CaretId).map(p.scopes.top.forwardBlock)
+inline def successorP[$: P](using p: Parser) = P(
+  P(caretIdP).map(p.scopes.top.forwardBlock)
 )
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||      REGIONS      ||
@@ -618,15 +618,15 @@ inline def Successor[$: P](using p: Parser) = P(
 //                   \/
 // [x] - region        ::= `{` operation* block* `}`
 
-def RegionP[$: P](
+def regionP[$: P](
     entryArgs: Seq[(String, Attribute)] = Seq()
 )(using p: Parser) = P(
-  "{" ~/ p.enterRegion ~/
-    (populateBlockArgs(new Block(), entryArgs).flatMap(BlockBody) ~/ BlockP.rep)
-      .map((entry: Block, blocks: Seq[Block]) =>
-        if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
-        else entry +: blocks
-      ) ~/ "}" ~/ p.exitRegion
+  "{" ~/ p.enterRegionP ~/
+    (populateBlockArgsP(new Block(), entryArgs).flatMap(blockBodyP) ~/
+      blockP.rep).map((entry: Block, blocks: Seq[Block]) =>
+      if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
+      else entry +: blocks
+    ) ~/ "}" ~/ p.exitRegionP
 ).map(Region(_))
 
 // [x] - value-id-and-type ::= value-id `:` type
@@ -636,14 +636,14 @@ def RegionP[$: P](
 
 // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
 
-inline def ValueIdAndType[$: P](using Parser) = P(ValueId ~ ":" ~ TypeP)
+inline def valueIdAndTypeP[$: P](using Parser) = P(valueIdP ~ ":" ~ typeP)
 
-private inline def ValueIdAndTypeList[$: P](using Parser) =
-  P(ValueIdAndType.rep(sep = ",")).orElse(Seq())
+private inline def valueIdAndTypeListP[$: P](using Parser) =
+  P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq())
 
-private inline def BlockArgList[$: P](using Parser) =
+private inline def blockArgListP[$: P](using Parser) =
   P(
-    "(" ~ ValueIdAndType.rep(sep = ",") ~ ")"
+    "(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")"
   )
 
 // [x] dictionary-properties ::= `<` dictionary-attribute `>`
@@ -655,8 +655,8 @@ private inline def BlockArgList[$: P](using Parser) =
   * @return
   *   A properties dictionary parser.
   */
-inline def properties[$: P](using Parser) = P(
-  "<" ~ DictionaryAttribute ~ ">"
+inline def propertiesP[$: P](using Parser) = P(
+  "<" ~ attributeDictionaryP ~ ">"
 )
 
 /** Parses an attributes dictionary.
@@ -664,8 +664,10 @@ inline def properties[$: P](using Parser) = P(
   * @return
   *   An attribute dictionary parser.
   */
-inline def DictionaryAttribute[$: P](using Parser) = P(
-  DictionaryAttributeP.map(_.entries)
+inline def attributeDictionaryP[$: P](using
+    AttrParser
+): P[Map[String, Attribute]] = P(
+  "{" ~ attributeEntryP.rep(sep = ",").map(Map.from) ~ "}"
 )
 
 /** Parses an optional properties dictionary from the input.
@@ -673,16 +675,16 @@ inline def DictionaryAttribute[$: P](using Parser) = P(
   * @return
   *   An optional dictionary of properties - empty if no dictionary is present.
   */
-inline def OptionalProperties[$: P](using Parser) =
-  (properties).orElse(DictType.empty)
+inline def optionalPropertiesP[$: P](using Parser) =
+  (propertiesP).orElse(DictType.empty)
 
 /** Parses an optional attributes dictionary from the input.
   *
   * @return
   *   An optional dictionary of attributes - empty if no dictionary is present.
   */
-inline def OptionalAttributes[$: P](using Parser) =
-  (DictionaryAttribute).orElse(Map.empty)
+inline def optionalAttributesP[$: P](using Parser) =
+  (attributeDictionaryP).orElse(Map.empty)
 
 /** Parses an optional attributes dictionary from the input, preceded by the
   * `attributes` keyword.
@@ -690,5 +692,5 @@ inline def OptionalAttributes[$: P](using Parser) =
   * @return
   *   An optional dictionary of attributes - empty if no keyword is present.
   */
-inline def OptionalKeywordAttributes[$: P](using Parser) =
-  ("attributes" ~/ DictionaryAttribute).orElse(Map.empty)
+inline def optionalKeywordAttributesP[$: P](using Parser) =
+  ("attributes" ~/ attributeDictionaryP).orElse(Map.empty)

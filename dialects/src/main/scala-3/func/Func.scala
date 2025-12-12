@@ -29,23 +29,23 @@ given OperationCustomParser[Func]:
 
   def parseResultTypes[$: P](using
       Parser
-  ): P[Seq[Attribute]] = ("->" ~ (ParenTypeList | TypeP.map(Seq(_))))
+  ): P[Seq[Attribute]] = ("->" ~ (parenTypeListP | typeP.map(Seq(_))))
     .orElse(Seq())
 
   def parse[$: P](
       resNames: Seq[String]
   )(using Parser): P[Func] =
-    ("private".!.? ~ SymbolRefAttrP ~
-      (("(" ~ ValueIdAndType.rep(sep = ",") ~ ")")
+    ("private".!.? ~ symbolRefAttrP ~
+      (("(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")")
         .flatMap((args: Seq[(String, Attribute)]) =>
           Pass(
             args.map(_._2)
-          ) ~ parseResultTypes ~ ("attributes" ~ DictionaryAttribute)
-            .orElse(Map()) ~ RegionP(args)
+          ) ~ parseResultTypes ~ ("attributes" ~ attributeDictionaryP)
+            .orElse(Map()) ~ regionP(args)
         ) |
         (
-          ParenTypeList ~ parseResultTypes ~
-            ("attributes" ~ DictionaryAttribute).orElse(Map()) ~ Pass(
+          parenTypeListP ~ parseResultTypes ~
+            ("attributes" ~ attributeDictionaryP).orElse(Map()) ~ Pass(
               Region()
             )
         ))).map {

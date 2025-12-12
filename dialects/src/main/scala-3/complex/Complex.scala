@@ -107,8 +107,8 @@ given AttributeCustomParser[ComplexAttr]:
 
   def parse[$: P](using AttrParser): P[ComplexAttr] =
     given Whitespace = scair.parse.whitespace
-    ("<:" ~ FloatTypeP ~ FloatDataP ~ "," ~ FloatDataP ~ ">" ~
-      (":" ~ ComplexTypeP).?)
+    ("<:" ~ floatTypeP ~ floatDataP ~ "," ~ floatDataP ~ ">" ~
+      (":" ~ complexTypeP).?)
       .map(
         (
             tpe: FloatType,

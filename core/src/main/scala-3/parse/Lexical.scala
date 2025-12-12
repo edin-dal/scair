@@ -55,21 +55,21 @@ given whitespace: Whitespace = new Whitespace:
 inline val DecDigit = "0-9"
 inline val HexDigit = "0-9a-fA-F"
 
-inline def DecDigits[$: P] = CharsWhileIn(DecDigit)
+inline def decDigitsP[$: P] = CharsWhileIn(DecDigit)
 
-inline def HexDigits[$: P] = CharsWhileIn(HexDigit)
+inline def hexDigitsP[$: P] = CharsWhileIn(HexDigit)
 
 inline val Letter = "a-zA-Z"
 inline val IdPunct = "$._\\-"
 
-def IntegerLiteral[$: P] = P(HexadecimalLiteral | DecimalLiteral)
+def integerLiteralP[$: P] = P(hexadecimalLiteralP | decimalLiteralP)
 
-def DecimalLiteral[$: P] =
-  P(("-" | "+").?.! ~ DecDigits.!)
+def decimalLiteralP[$: P] =
+  P(("-" | "+").?.! ~ decDigitsP.!)
     .map((sign: String, literal: String) => BigInt(sign + literal))
 
-def HexadecimalLiteral[$: P] =
-  P("0x" ~~ HexDigits.!).map((hex: String) => BigInt(hex, 16))
+def hexadecimalLiteralP[$: P] =
+  P("0x" ~~ hexDigitsP.!).map((hex: String) => BigInt(hex, 16))
 
 private def parseFloatNum(float: (String, String)): Double =
   val number = parseDouble(float._1)
@@ -83,9 +83,9 @@ private def parseFloatNum(float: (String, String)): Double =
   * @return
   *   float: (String, String)
   */
-def FloatLiteral[$: P] = P(
-  (CharIn("\\-\\+").? ~~ DecDigits ~~ "." ~~ DecDigits).! ~~
-    (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ DecDigits).!).orElse("0")
+def floatLiteralP[$: P] = P(
+  (CharIn("\\-\\+").? ~~ decDigitsP ~~ "." ~~ decDigitsP).! ~~
+    (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ decDigitsP).!).orElse("0")
 ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
 inline def nonExcludedCharacter(c: Char): Boolean =
@@ -93,7 +93,7 @@ inline def nonExcludedCharacter(c: Char): Boolean =
     case '"' | '\\' => false
     case _          => true
 
-inline def EscapedP[$: P] = P(
+inline def escapedP[$: P] = P(
   ("\\" ~~
     (
       "n" ~~ Pass('\n') | "t" ~~ Pass('\t') | "\\" ~~ Pass('\\') |
@@ -103,8 +103,8 @@ inline def EscapedP[$: P] = P(
     )).repX.map(chars => String(chars.toArray))
 )
 
-def StringLiteral[$: P] = P(
-  "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ EscapedP).map(_ + _).repX
+def stringLiteralP[$: P] = P(
+  "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ escapedP).map(_ + _).repX
     .map(_.mkString) ~~ "\""
 )
 
@@ -125,14 +125,14 @@ def StringLiteral[$: P] = P(
 // [x] value-use ::= value-id (`#` decimal-literal)?
 // [x] value-use-list ::= value-use (`,` value-use)*
 
-def BareId[$: P] = P(
+def bareIdP[$: P] = P(
   CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
 ).!
 
-def ValueId[$: P] = P("%" ~~ SuffixId)
+def valueIdP[$: P] = P("%" ~~ suffixIdP)
 
 // Alias can't have dots in their names for ambiguity with dialect names.
-def AliasName[$: P] = P(
+def aliasNameP[$: P] = P(
   CharIn(Letter + "_") ~~
     (CharsWhileIn(
       Letter + DecDigit + "_$",
@@ -140,20 +140,20 @@ def AliasName[$: P] = P(
     )) ~~ !"."
 ).!
 
-def SuffixId[$: P] = P(
-  DecimalLiteral | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+def suffixIdP[$: P] = P(
+  decimalLiteralP | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
     Letter + IdPunct + DecDigit,
     min = 0,
   )
 ).!
 
-def SymbolRefId[$: P] = P("@" ~~ (SuffixId | StringLiteral))
+def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP | stringLiteralP))
 
-def OperandName[$: P] =
-  P(ValueId ~ ("#" ~~ DecimalLiteral).?).!.map(_.tail)
+def operandNameP[$: P] =
+  P(valueIdP ~ ("#" ~~ decimalLiteralP).?).!.map(_.tail)
 
-def OperandNames[$: P] =
-  P(OperandName.rep(sep = ","))
+def operandNamesP[$: P] =
+  P(operandNameP.rep(sep = ","))
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||  DIALECT TYPES  ||
@@ -176,29 +176,29 @@ def OperandNames[$: P] =
 val excludedCharactersDTC: Set[Char] =
   Set('\\', '[', '<', '(', '{', '}', ')', '>', ']', '\u0000')
 
-def notExcludedDTC[$: P] = P(
+def notExcludedDTCP[$: P] = P(
   CharPred(char => !excludedCharactersDTC.contains(char))
 )
 
-def DialectBareId[$: P] = P(
+def dialectBareIdP[$: P] = P(
   CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$", min = 0)
 ).!
 
-def DialectNamespace[$: P] = P(DialectBareId)
+def dialectNamespaceP[$: P] = P(dialectBareIdP)
 
-def PrettyDialectReferenceName[$: P] = P(
-  (DialectNamespace ~ "." ~ PrettyDialectTypeOrAttReferenceName)
+def prettyDialectReferenceNameP[$: P] = P(
+  (dialectNamespaceP ~ "." ~ prettyDialectTypeOrAttReferenceNameP)
 )
 
-def OpaqueDialectReferenceName[$: P] = P(
-  (DialectNamespace ~ "<" ~ PrettyDialectTypeOrAttReferenceName)
+def opaqueDialectReferenceNameP[$: P] = P(
+  (dialectNamespaceP ~ "<" ~ prettyDialectTypeOrAttReferenceNameP)
 )
 
-def DialectReferenceName[$: P] = P(
-  PrettyDialectReferenceName | OpaqueDialectReferenceName
+def dialectReferenceNameP[$: P] = P(
+  prettyDialectReferenceNameP | opaqueDialectReferenceNameP
 )
 
-def PrettyDialectTypeOrAttReferenceName[$: P] = P(
+def prettyDialectTypeOrAttReferenceNameP[$: P] = P(
   (CharIn("a-zA-Z") ~~ CharsWhileIn("a-zA-Z0-9_")).!
 )
 
@@ -209,6 +209,6 @@ def PrettyDialectTypeOrAttReferenceName[$: P] = P(
 // [x] - block-id        ::= caret-id
 // [x] - caret-id        ::= `^` suffix-id
 
-def BlockId[$: P] = P(CaretId)
+def blockIdP[$: P] = P(caretIdP)
 
-def CaretId[$: P] = P("^" ~~/ SuffixId)
+def caretIdP[$: P] = P("^" ~~/ suffixIdP)
