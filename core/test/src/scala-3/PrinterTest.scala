@@ -40,7 +40,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
   "printBlock" should "return the correct string representation of a block" in {
     val block = Block(
       Seq(I32),
-      Seq(UnregisteredOperation("op1")())
+      Seq(UnregisteredOperation("op1")()),
     )
     val expected = """^bb0(%0: i32):
                      |  "op1"() : () -> ()
@@ -50,83 +50,88 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
     result shouldEqual expected
   }
 
-  "printValue" should "return the correct string representation of a value - 1" in {
-    val value = Value(I32)
-    printer.print(value)
-    "%0" shouldEqual out.toString()
-  }
+  "printValue" should
+    "return the correct string representation of a value - 1" in {
+      val value = Value(I32)
+      printer.print(value)
+      "%0" shouldEqual out.toString()
+    }
 
-  "printValue" should "return the correct string representation of a value - 2" in {
-    val value = Value(I32)
-    printer.print(value.typ)
-    "i32" shouldEqual out.toString()
-  }
+  "printValue" should
+    "return the correct string representation of a value - 2" in {
+      val value = Value(I32)
+      printer.print(value.typ)
+      "i32" shouldEqual out.toString()
+    }
 
-  "printValue" should "return the correct string representation of a value - 3" in {
-    val value = Value(I32)
-    printer.printArgument(value)
-    "%0: i32" shouldEqual out.toString()
-  }
+  "printValue" should
+    "return the correct string representation of a value - 3" in {
+      val value = Value(I32)
+      printer.printArgument(value)
+      "%0: i32" shouldEqual out.toString()
+    }
 
-  "printOperation" should "return the correct string representation of an operation" in {
-    val operation = UnregisteredOperation("op1")(
-      results = Seq(Result(F32)),
-      operands = Seq(Value(F32)),
-      regions = Seq(
-        Region(
-          Seq(
-            Block(
-              ListType(UnregisteredOperation("op2")())
-            )
-          )
-        )
-      )
-    )
-    val expected = """%0 = "op1"(%1) ({
-                     |  "op2"() : () -> ()
-                     |}) : (f32) -> f32
-                     |""".stripMargin
-    printer.print(operation)
-    val result = out.toString()
-    result shouldEqual expected
-  }
-
-  "printSuccessors" should "return the correct string representation of a operation with successors" in {
-
-    val val1 = Value(I32)
-    val val2 = Value(I64)
-    val val3 = Value(I32)
-    val val4 = Value(I64)
-
-    val successorTestBlock = Block(
-      ListType(),
-      ListType()
-    )
-
-    val program =
-      UnregisteredOperation("op1")(
+  "printOperation" should
+    "return the correct string representation of an operation" in {
+      val operation = UnregisteredOperation("op1")(
+        results = Seq(Result(F32)),
+        operands = Seq(Value(F32)),
         regions = Seq(
           Region(
             Seq(
-              successorTestBlock,
               Block(
-                Seq(
-                  UnregisteredOperation("test.op")(
-                    successors = Seq(successorTestBlock)
+                ListType(UnregisteredOperation("op2")())
+              )
+            )
+          )
+        ),
+      )
+      val expected = """%0 = "op1"(%1) ({
+                     |  "op2"() : () -> ()
+                     |}) : (f32) -> f32
+                     |""".stripMargin
+      printer.print(operation)
+      val result = out.toString()
+      result shouldEqual expected
+    }
+
+  "printSuccessors" should
+    "return the correct string representation of a operation with successors" in {
+
+      val val1 = Value(I32)
+      val val2 = Value(I64)
+      val val3 = Value(I32)
+      val val4 = Value(I64)
+
+      val successorTestBlock = Block(
+        ListType(),
+        ListType(),
+      )
+
+      val program =
+        UnregisteredOperation("op1")(
+          regions = Seq(
+            Region(
+              Seq(
+                successorTestBlock,
+                Block(
+                  Seq(
+                    UnregisteredOperation("test.op")(
+                      successors = Seq(successorTestBlock)
+                    )
                   )
-                )
+                ),
               )
             )
           )
         )
-      )
-    val expected = """"op1"() ({
+      val expected = """"op1"() ({
                      |^bb0():
                      |^bb1():
                      |  "test.op"()[^bb0] : () -> ()
                      |}) : () -> ()
                      |""".stripMargin
-    printer.print(program)
-    val result = out.toString()
-    result shouldEqual expected
-  }
+      printer.print(program)
+      val result = out.toString()
+      result shouldEqual expected
+    }

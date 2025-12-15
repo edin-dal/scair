@@ -7,6 +7,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.clair.macros.*
 import scair.enums.enumattr.I32Enum
+import scair.parse.*
 
 enum Color(name: String) extends I32Enum(name):
   case Red extends Color("red")
@@ -31,9 +32,9 @@ class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
   }
 
   "EnumAttr" should "print and parse correctly" in {
-    val parsed = parser.parseThis(
+    val parsed = parser.parse(
       """"enum.enum_op"() <{color = 0 : i32}> : () -> ()""",
-      parser.GenericOperation(Seq())(using _)
+      operationP(using _, parser),
     )
     parsed match
       case fastparse.Parsed.Success(value, _) =>

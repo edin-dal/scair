@@ -13,48 +13,48 @@ import scair.ir.*
 
 final case class Dialect(
     sym_name: StringData,
-    body: Region
+    body: Region,
 ) extends DerivedOperation["irdl.dialect", Dialect]
     derives DerivedOperationCompanion
 
 final case class Operation(
     sym_name: StringData,
-    body: Region
+    body: Region,
 ) extends DerivedOperation["irdl.operation", Operation]
     derives DerivedOperationCompanion
 
 final case class Attribute(
     sym_name: StringData,
-    body: Region
+    body: Region,
 ) extends DerivedOperation["irdl.attribute", Attribute]
     derives DerivedOperationCompanion
 
 final case class Type(
     sym_name: StringData,
-    body: Region
+    body: Region,
 ) extends DerivedOperation["irdl.type", Type] derives DerivedOperationCompanion
 
 final case class Parameters(
     args: Seq[Operand[AttributeType]],
-    names: ArrayAttribute[StringData]
+    names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.parameters", Parameters]
     derives DerivedOperationCompanion
 
 final case class Operands(
     args: Seq[Operand[AttributeType]],
-    names: ArrayAttribute[StringData]
+    names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.operands", Operands]
     derives DerivedOperationCompanion
 
 final case class Results(
     args: Seq[Operand[AttributeType]],
-    names: ArrayAttribute[StringData]
+    names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.results", Results]
     derives DerivedOperationCompanion
 
 final case class Attributes(
     args: Seq[Operand[AttributeType]],
-    attribute_value_names: ArrayAttribute[StringData]
+    attribute_value_names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.attributes", Attributes]
     derives DerivedOperationCompanion
 
@@ -81,6 +81,6 @@ val IRDL = summonDialect[
       Operands,
       Attributes,
       Results,
-      Any
-  )
+      Any,
+  ),
 ]

@@ -38,12 +38,12 @@ extension (dt: DictType[String, Attribute])
 
   def checkandget(
       key: String,
-      op_name: String,
-      expected_type: String
+      opName: String,
+      expected_type: String,
   ): Attribute =
     dt.get(key) match
       case Some(b) => b
       case None    =>
         throw new Exception(
-          s"Operation '${op_name}' must include an attribute named '${key}' of type '${}'"
+          s"Operation '$opName' must include an attribute named '$key' of type '${}'"
         )

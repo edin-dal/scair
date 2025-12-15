@@ -21,7 +21,7 @@ class DeepCopyTest extends AnyFlatSpec:
     val a = TestOp(
       properties = Map("prop" -> I32),
       attributes = LinkedHashMap("attr" -> I64),
-      results = Seq(Result(I32))
+      results = Seq(Result(I32)),
     )
     val b = a.deepCopy
     a should not be b
@@ -33,7 +33,7 @@ class DeepCopyTest extends AnyFlatSpec:
             operands = Seq(),
             successors = Seq(),
             results = Seq(Result(I32)),
-            regions = Seq()
+            regions = Seq(),
           ) =>
         ()
     }
@@ -51,7 +51,7 @@ class DeepCopyTest extends AnyFlatSpec:
       case Block(
             operations = BlockOperations(
               TestOp(results = Seq(u)),
-              TestOp(operands = Seq(v))
+              TestOp(operands = Seq(v)),
             )
           ) if (u eq v) && !(v eq value) =>
         ()
@@ -64,8 +64,8 @@ class DeepCopyTest extends AnyFlatSpec:
     // Parent
     val pa = TestOp(
       regions = Seq(
-        Region(Block(arguments_types = Seq(I32), operations = Seq(ca0))),
-        Region(Block(arguments_types = Seq(I32), operations = Seq(ca1)))
+        Region(Block(argumentsTypes = Seq(I32), operations = Seq(ca0))),
+        Region(Block(argumentsTypes = Seq(I32), operations = Seq(ca1))),
       )
     )
 
@@ -88,9 +88,11 @@ class DeepCopyTest extends AnyFlatSpec:
                     b @ TestOp(results = Seq(Result(I32)))
                   )
                 )
-              )
+              ),
             )
           )
-          if !(a eq ca0) && !(b eq ca1) && !(a.results.head eq ca0.results.head) && !(b.results.head eq ca1.results.head) =>
+          if !(a eq ca0) && !(b eq ca1) &&
+            !(a.results.head eq ca0.results.head) &&
+            !(b.results.head eq ca1.results.head) =>
         ()
     }

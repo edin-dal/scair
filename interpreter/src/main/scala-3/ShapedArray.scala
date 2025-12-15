@@ -2,7 +2,7 @@ package scair.interpreter
 
 case class ShapedArray(
     private val data: Array[Any],
-    shape: Seq[Int]
+    shape: Seq[Int],
 ):
 
   lazy val strides: Seq[Int] =

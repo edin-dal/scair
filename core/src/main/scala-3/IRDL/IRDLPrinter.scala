@@ -2,11 +2,11 @@ package scair.core.irdl_printer
 
 import fastparse.Parsed
 import scair.MLContext
-import scair.Parser
 import scair.dialects.builtin.ArrayAttribute
 import scair.dialects.irdl.*
 import scair.dialects.irdl.IRDL
 import scair.ir.Value
+import scair.parse.*
 
 import java.io.PrintWriter
 import scala.io.Source
@@ -90,9 +90,9 @@ object IRDLPrinter:
     val ctx = MLContext()
     ctx.registerDialect(IRDL)
     val parser = Parser(ctx)
-    val dialect = parser.parseThis(
-      input.mkString,
-      pattern = parser.OperationPat(using _)
+    val dialect = parser.parse(
+      input = input.mkString,
+      parser = operationP(using _, parser),
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
       case Parsed.Success(_, _)                =>
@@ -119,16 +119,16 @@ object IRDLPrinter:
     p.println("import scair.ir._")
     p.println("import scair.clair.macros._")
     p.println()
-    dialect.body.blocks.head.operations.foreach({
+    dialect.body.blocks.head.operations.foreach {
       case op: Operation   => printOperation(op)
       case attr: Attribute => printAttribute(attr)
       case t: Type         => printType(t)
-    })
+    }
     p.print("val ")
     p.print(dialect.sym_name.data)
     p.print(" = ")
     p.print("summonDialect[")
-    dialect.body.blocks.head.operations.foreach({
+    dialect.body.blocks.head.operations.foreach {
       case attr: Attribute =>
         p.print(attr.sym_name.data.capitalize)
         p.print(" *: ")
@@ -136,15 +136,15 @@ object IRDLPrinter:
         p.print(t.sym_name.data.capitalize)
         p.print(" *: ")
       case _ =>
-    })
+    }
     p.print("EmptyTuple, ")
 
-    dialect.body.blocks.head.operations.foreach({
+    dialect.body.blocks.head.operations.foreach {
       case o: Operation =>
         p.print(o.sym_name.data.capitalize)
         p.print(" *: ")
       case _ =>
-    })
+    }
 
     p.println("EmptyTuple]")
 

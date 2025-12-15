@@ -8,6 +8,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.parse.*
 import java.io.*
 
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
@@ -57,19 +58,19 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       RankedTensorType(
         Float32Type(),
         ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
-        None
+        None,
       ),
       "Success",
-      "tensor<3x?x5xf32>"
+      "tensor<3x?x5xf32>",
     ),
     (UnrankedTensorType(Float32Type()), "Success", "tensor<*xf32>"),
     (
       ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
       "Success",
-      "[f64, [], \"hello\"]"
+      "[f64, [], \"hello\"]",
     ),
     (StringData("hello world!"), "Success", "\"hello world!\""),
-    (INDEX, "Success", "index")
+    (INDEX, "Success", "index"),
   )
 
   val strToAttributeTests = Table(
@@ -91,7 +92,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     (
       "[f64, [], \"hello\"]",
       "Success",
-      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello")))
+      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
     ),
     ("\"hello world!\"", "Success", StringData("hello world!")),
     (
@@ -100,11 +101,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       RankedTensorType(
         Float32Type(),
         ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
-        None
-      )
+        None,
+      ),
     ),
     ("tensor<*xf32>", "Success", UnrankedTensorType(Float32Type())),
-    ("fg12", "Failure", "")
+    ("fg12", "Failure", ""),
   )
 
   forAll(attrToStringTests) { (input, result, expected) =>
@@ -119,7 +120,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     val res = getResult(result, expected)
     "strToAttributeTests" should s"[ '$input' -> '$expected' = $result ]" in {
       // Run the pqrser on the input and check
-      parse(input, parser.Attribute(using _)) should matchPattern {
+      parse(input, attributeP(using _, parser)) should matchPattern {
         case res => // pass
       }
     }
@@ -131,72 +132,73 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
   val valI16 = Value[Attribute](I16)
   val valINDEX = Value[Attribute](INDEX)
 
-  "printDataibutesWithinOp" should "return the correct string representation of a Operation with blocks and different attributes" in {
-    val op = UnregisteredOperation("test.op")(
-      results = Seq(
-        F32,
-        F64,
-        F80
-      ).map(Result(_))
-    )
-    val block1 = Block(
-      ListType(F128),
-      ListType(
-        op,
-        UnregisteredOperation("test.op")(
-          operands = Seq(op.results(1), op.results(0))
-        )
+  "printDataibutesWithinOp" should
+    "return the correct string representation of a Operation with blocks and different attributes" in {
+      val op = UnregisteredOperation("test.op")(
+        results = Seq(
+          F32,
+          F64,
+          F80,
+        ).map(Result(_))
       )
-    )
-    val op2 = UnregisteredOperation("test.op")(
-      successors = Seq(block1),
-      results = Seq(
-        I1,
-        I16,
-        I32
-      ).map(Result(_))
-    )
-    val block2 = Block(
-      ListType(I32),
-      ListType(
-        op2,
-        UnregisteredOperation("test.op")(
-          operands = Seq(
-            op2.results(1),
-            op2.results(0)
-          )
-        )
+      val block1 = Block(
+        ListType(F128),
+        ListType(
+          op,
+          UnregisteredOperation("test.op")(
+            operands = Seq(op.results(1), op.results(0))
+          ),
+        ),
       )
-    )
-    val op3 = UnregisteredOperation("test.op")(
-      results = Seq(
-        INDEX
-      ).map(Result(_))
-    )
-    val block3 = Block(
-      ListType(I64),
-      ListType(
-        op3,
-        UnregisteredOperation("test.op")(
-          operands = Seq(op3.results(0))
-        )
+      val op2 = UnregisteredOperation("test.op")(
+        successors = Seq(block1),
+        results = Seq(
+          I1,
+          I16,
+          I32,
+        ).map(Result(_)),
       )
-    )
+      val block2 = Block(
+        ListType(I32),
+        ListType(
+          op2,
+          UnregisteredOperation("test.op")(
+            operands = Seq(
+              op2.results(1),
+              op2.results(0),
+            )
+          ),
+        ),
+      )
+      val op3 = UnregisteredOperation("test.op")(
+        results = Seq(
+          INDEX
+        ).map(Result(_))
+      )
+      val block3 = Block(
+        ListType(I64),
+        ListType(
+          op3,
+          UnregisteredOperation("test.op")(
+            operands = Seq(op3.results(0))
+          ),
+        ),
+      )
 
-    val program =
-      UnregisteredOperation("op1")(
-        regions = Seq(
-          Region(
-            Seq(
-              block1,
-              block2,
-              block3
+      val program =
+        UnregisteredOperation("op1")(
+          regions = Seq(
+            Region(
+              Seq(
+                block1,
+                block2,
+                block3,
+              )
             )
           )
         )
-      )
 
-    val expected = """"op1"() ({
+      val expected = """"op1"() ({
                      |^bb0(%0: f128):
                      |  %1, %2, %3 = "test.op"() : () -> (f32, f64, f80)
                      |  "test.op"(%2, %1) : (f64, f32) -> ()
@@ -208,81 +210,82 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |  "test.op"(%9) : (index) -> ()
                      |}) : () -> ()
                      |""".stripMargin
-    printer.print(program)(using 0)
-    val result = out.toString()
-    result shouldEqual expected
-  }
+      printer.print(program)(using 0)
+      val result = out.toString()
+      result shouldEqual expected
+    }
 
-  "parseDifferentAttributes" should "match parsed string against expected string" in {
+  "parseDifferentAttributes" should
+    "match parsed string against expected string" in {
 
-    val block1 = new Block(
-      ListType(F16),
-      ListType(
-        UnregisteredOperation("test.op")(
-          operands = Seq(
-            valF32,
-            valF64,
-            Value(F80)
-          )
+      val block1 = new Block(
+        ListType(F16),
+        ListType(
+          UnregisteredOperation("test.op")(
+            operands = Seq(
+              valF32,
+              valF64,
+              Value(F80),
+            )
+          ),
+          UnregisteredOperation("test.op")(
+            Seq(valF64, valF32)
+          ),
         ),
-        UnregisteredOperation("test.op")(
-          Seq(valF64, valF32)
-        )
       )
-    )
 
-    val op4 = UnregisteredOperation("test.op")(
-      successors = Seq(block1),
-      results = Seq(
-        I1,
-        I16,
-        I32
-      ).map(Result(_))
-    )
-
-    val block2 = new Block(
-      ListType(F128),
-      ListType(
-        op4,
-        UnregisteredOperation("test.op")(
-          operands = Seq(
-            op4.results(1),
-            op4.results(0)
-          )
-        )
+      val op4 = UnregisteredOperation("test.op")(
+        successors = Seq(block1),
+        results = Seq(
+          I1,
+          I16,
+          I32,
+        ).map(Result(_)),
       )
-    )
 
-    val op5 = UnregisteredOperation("test.op")(
-      results = Seq(
-        INDEX
-      ).map(Result(_))
-    )
-
-    val block3 = new Block(
-      ListType(I64),
-      ListType(
-        op5,
-        UnregisteredOperation("test.op")(
-          operands = Seq(op5.results(0))
-        )
+      val block2 = new Block(
+        ListType(F128),
+        ListType(
+          op4,
+          UnregisteredOperation("test.op")(
+            operands = Seq(
+              op4.results(1),
+              op4.results(0),
+            )
+          ),
+        ),
       )
-    )
 
-    val program =
-      UnregisteredOperation("op1")(
-        regions = Seq(
-          Region(
-            Seq(
-              block1,
-              block2,
-              block3
+      val op5 = UnregisteredOperation("test.op")(
+        results = Seq(
+          INDEX
+        ).map(Result(_))
+      )
+
+      val block3 = new Block(
+        ListType(I64),
+        ListType(
+          op5,
+          UnregisteredOperation("test.op")(
+            operands = Seq(op5.results(0))
+          ),
+        ),
+      )
+
+      val program =
+        UnregisteredOperation("op1")(
+          regions = Seq(
+            Region(
+              Seq(
+                block1,
+                block2,
+                block3,
+              )
             )
           )
         )
-      )
 
-    val input = """"op1"()({
+      val input = """"op1"()({
                      |  ^bb0(%0: f16):
                      |    %1, %2, %3 = "test.op"() : () -> (f32, f64, f80)
                      |    "test.op"(%2, %1) : (f64, f32) -> ()
@@ -294,10 +297,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |    "test.op"(%9) : (index) -> ()
                      |  }) : () -> ()""".stripMargin
 
-    parser.parseThis(
-      text = input
-    ) should matchPattern { case Parsed.Success(program, _) => }
-  }
+      parser.parse(
+        input = input
+      ) should matchPattern { case Parsed.Success(program, _) => }
+    }
 
   "parsingInteger" should "match parsed string against expected string" in {
 
@@ -306,11 +309,10 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
                      |  }) : () -> ()""".stripMargin
 
-    parser
-      .parseThis(
-        text = input,
-        pattern = parser.OperationPat(using _)
-      ) should matchPattern {
+    parser.parse(
+      input = input,
+      parser = operationP(using _, parser),
+    ) should matchPattern {
       case Parsed.Success(
             UnregisteredOperation(
               "op1",
@@ -329,20 +331,20 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                         Seq(
                           Result(IntegerType(IntData(32), Signless)),
                           Result(IntegerType(IntData(64), Signed)),
-                          Result(IntegerType(IntData(80), Unsigned))
+                          Result(IntegerType(IntData(80), Unsigned)),
                         ),
                         Seq(),
                         _,
-                        _
+                        _,
                       )
-                    )
+                    ),
                   )
                 )
               ),
               _,
-              _
+              _,
             ),
-            98
+            98,
           ) =>
     }
   }

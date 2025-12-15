@@ -34,7 +34,7 @@ import scala.annotation.tailrec
 val SameType = pattern {
   case UnrealizedConversionCastOp(
         inputs = operands,
-        outputs = results
+        outputs = results,
       ) if operands.typ == results.typ =>
     (Seq(), operands)
 }
@@ -47,7 +47,7 @@ val Unused = pattern {
 @tailrec
 def findCycleRootRec(
     cast: UnrealizedConversionCastOp,
-    target: Seq[Attribute]
+    target: Seq[Attribute],
 ): Option[UnrealizedConversionCastOp] = cast match
   case UnrealizedConversionCastOp(Seq(), _) => None
   case UnrealizedConversionCastOp(i, o)     =>
@@ -66,10 +66,10 @@ def findCycleRoot(
 
 val InputFuse = pattern { case matched: UnrealizedConversionCastOp =>
   findCycleRoot(matched) match
-    case Some(root) if root != matched && matched.container_block.isDefined =>
+    case Some(root) if root != matched && matched.containerBlock.isDefined =>
       UnrealizedConversionCastOp(
         inputs = root.inputs,
-        outputs = matched.outputs
+        outputs = matched.outputs,
       )
     case _ => PatternAction.Abort
 }

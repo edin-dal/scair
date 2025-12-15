@@ -4,6 +4,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.utils.OK
 
 // ░██████╗ ░█████╗░ ███████╗
 // ██╔════╝ ██╔══██╗ ██╔════╝
@@ -31,14 +32,15 @@ type Index = IndexType
 
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
-  override def trait_verify(): Either[String, Operation] =
+  override def traitVerify(): OK[Operation] =
     if values.isEmpty then Right(this)
     else
       val firstClass = values.head.getClass
       if values.tail.forall(_.getClass == firstClass) then Right(this)
       else
         Left(
-          "All parameters of AllTypesMatch must be of the same type in operation " + this.name
+          "All parameters of AllTypesMatch must be of the same type in operation " +
+            this.name
         )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -47,14 +49,14 @@ trait AllTypesMatch(values: Attribute*) extends Operation:
 
 case class Condition(
     condition: Operand[I1],
-    args: Seq[Operand[Attribute]]
+    args: Seq[Operand[Attribute]],
 ) extends DerivedOperation["scf.condition", Condition]
     with NoMemoryEffect
     with IsTerminator derives DerivedOperationCompanion
 
 case class ExecuteRegionOp(
     region: Region,
-    result: Seq[Result[Attribute]]
+    result: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.execute_region", ExecuteRegionOp]
     derives DerivedOperationCompanion
 
@@ -65,7 +67,7 @@ case class ForOp(
     step: Operand[AnySignlessIntegerOrIndex],
     initArgs: Seq[Operand[Attribute]],
     region: Region,
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.for", ForOp]
     with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
     derives DerivedOperationCompanion
@@ -81,7 +83,7 @@ case class ForallOp(
     // TODO: Should be array of "DeviceMappingAttribute", but we're not interested yet.
     mapping: Option[ArrayAttribute[Attribute]],
     region: Region,
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.forall", ForallOp]
     derives DerivedOperationCompanion
 
@@ -95,7 +97,7 @@ case class IfOp(
     condition: Operand[I1],
     thenRegion: Region,
     elseRegion: Region,
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.if", IfOp] derives DerivedOperationCompanion
 
 case class ParallelOp(
@@ -104,14 +106,14 @@ case class ParallelOp(
     step: Seq[Operand[Index]],
     initVals: Seq[Operand[Attribute]],
     region: Region,
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.parallel", ParallelOp]
     derives DerivedOperationCompanion
 
 case class ReduceOp(
     operandss: Seq[Operand[Attribute]],
     // TODO: variadic regions
-    reductions: Region
+    reductions: Region,
 ) extends DerivedOperation["scf.reduce", ReduceOp]
     with IsTerminator derives DerivedOperationCompanion
 
@@ -125,7 +127,7 @@ case class WhileOp(
     inits: Seq[Operand[Attribute]],
     before: Region,
     after: Region,
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.while", WhileOp]
     derives DerivedOperationCompanion
 
@@ -135,7 +137,7 @@ case class IndexSwitchOp(
     defaultRegion: Region,
     // TODO: variadic regions
     caseRegions: Region,
-    resultss: Seq[Result[Attribute]]
+    resultss: Seq[Result[Attribute]],
 ) extends DerivedOperation["scf.index_switch", IndexSwitchOp]
     derives DerivedOperationCompanion
 
@@ -160,6 +162,6 @@ val SCFDialect =
         ReduceReturnOp,
         WhileOp,
         IndexSwitchOp,
-        YieldOp
-    )
+        YieldOp,
+    ),
   ]

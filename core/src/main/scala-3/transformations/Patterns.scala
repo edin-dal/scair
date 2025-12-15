@@ -31,34 +31,34 @@ inline def pattern(
     partial: PartialFunction[
       Operation,
       PatternAction | Operation | Seq[Operation] |
-        (Operation | Seq[Operation], Value[?] | Seq[Value[?]])
+        (Operation | Seq[Operation], Value[?] | Seq[Value[?]]),
     ]
 ): RewritePattern =
   val lifted = partial.lift
 
   object pattern extends RewritePattern:
-    override def match_and_rewrite(
+    override def matchAndRewrite(
         op: Operation,
-        rewriter: PatternRewriter
+        rewriter: PatternRewriter,
     ): Unit =
-      lifted(op).map({ (output) =>
+      lifted(op).map((output) =>
         output match
           case PatternAction.Erase =>
-            rewriter.erase_op(op)
+            rewriter.eraseOp(op)
           case PatternAction.Abort => ()
           case both: (Operation | Seq[Operation], Value[?] | Seq[Value[?]]) =>
-            rewriter.replace_op(
+            rewriter.replaceOp(
               op,
               both._1,
               Some(both._2 match
                 case r: Value[?]       => Seq(r)
-                case rs: Seq[Value[?]] => rs)
+                case rs: Seq[Value[?]] => rs),
             )
-          case new_op: Operation =>
-            rewriter.replace_op(op, new_op, None)
-          case new_ops: Seq[Operation @unchecked] =>
-            rewriter.replace_op(op, new_ops, None)
-      })
+          case newOp: Operation =>
+            rewriter.replaceOp(op, newOp, None)
+          case newOps: Seq[Operation @unchecked] =>
+            rewriter.replaceOp(op, newOps, None)
+      )
 
   pattern
 

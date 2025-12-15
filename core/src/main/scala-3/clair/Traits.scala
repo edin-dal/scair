@@ -2,6 +2,7 @@ package scair.clair.macros
 
 import scair.Printer
 import scair.ir.*
+import scair.utils.OK
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -35,15 +36,15 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute]
+      attributes: DictType[String, Attribute],
   ) =
     comp(
       operands = operands,
       successors = successors,
       results = results,
-      regions = detached_regions,
+      regions = detachedRegions,
       properties = properties,
-      attributes = attributes
+      attributes = attributes,
     )
 
   def name: String = comp.name
@@ -53,13 +54,11 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
   def regions: Seq[Region] = comp.regions(this)
   def properties: Map[String, Attribute] = comp.properties(this)
 
-  override def custom_print(p: Printer)(using indentLevel: Int): Unit =
-    comp.custom_print(this, p)
+  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+    comp.customPrint(this, p)
 
-  override def verify(): Either[String, Operation] =
-    super
-      .verify()
-      .flatMap(_ => constraint_verify())
+  override def verify(): OK[Operation] =
+    super.verify().flatMap(_ => constraintVerify())
 
-  def constraint_verify(): Either[String, Operation] =
-    comp.constraint_verify(this)
+  def constraintVerify(): OK[Operation] =
+    comp.constraintVerify(this)

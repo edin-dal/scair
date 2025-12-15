@@ -12,10 +12,10 @@
 // -----
 
 "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
-// CHECK: Parse error at [[FILE]]:14:31:
+// CHECK: Parse error at [[FILE]]:14:45:
 // CHECK: "test.op"() {"invalid_type" = !cmath.complex} : () -> ()
-// CHECK:                               ^
-// CHECK-NEXT:  (Attribute | Type)
+// CHECK:                                             ^
+// CHECK-NEXT: Number of attributes 1 does not match the number of provided attributes 0
 
 // -----
 
