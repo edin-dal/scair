@@ -23,7 +23,7 @@ import scala.collection.mutable
 || COMMON FUNCTIONS ||
 \*≡==---==≡≡==---==≡*/
 
-extension [T](p: P[T])
+extension [T](inline p: P[T])
 
   /** Make the parser optional, parsing defaults if otherwise failing.
     *
@@ -36,7 +36,7 @@ extension [T](p: P[T])
     * @return
     *   An optional parser, defaulting to default.
     */
-  def orElse[$: P](default: T): P[T] = P(
+  inline def orElse[$: P](inline default: T): P[T] = P(
     p | Pass(default)
   )
 
@@ -52,7 +52,7 @@ extension [T](p: P[T])
     *   A parser that applies f to the parsed value, catching exceptions and
     *   turning them into parse errors.
     */
-  def flatMapTry[$: P, V](f: T => P[V]): P[V] = P(
+  inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
     p.flatMapX(parsed =>
       try f(parsed)
       catch
@@ -75,7 +75,7 @@ extension [T](p: P[T])
     *   A parser that applies f to the parsed value, catching exceptions and
     *   turning them into parse errors.
     */
-  def mapTry[$: P, V](f: T => V): P[V] = P(
+  inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
     p.flatMapX(parsed =>
       try Pass(f(parsed))
       catch
@@ -99,7 +99,7 @@ private final class Scope(
     var forwardBlocks: mutable.Set[String] = mutable.Set.empty[String],
 ):
 
-  def allBlocksAndValuesDefinedP[$: P] =
+  inline def allBlocksAndValuesDefinedP[$: P] =
     forwardValues.headOption match
       case Some(valueName) =>
         Fail(s"Value %$valueName not defined within Scope")
@@ -109,7 +109,7 @@ private final class Scope(
             Fail(s"Successor ^$blockName not defined within Scope")
           case None => Pass
 
-  def defineValueP[$: P](
+  inline def defineValueP[$: P](
       name: String,
       typ: Attribute,
   ): P[Value[Attribute]] =
@@ -130,7 +130,7 @@ private final class Scope(
   ): P[BlockArgument[Attribute]] =
     defineValueP(name, typ).map(_.asInstanceOf[BlockArgument[Attribute]])
 
-  def defineBlockP[$: P](
+  inline def defineBlockP[$: P](
       blockName: String
   ): P[Block] =
     if blockMap.contains(blockName) then
@@ -144,7 +144,7 @@ private final class Scope(
       blockMap(blockName) = newBlock
       Pass(newBlock)
 
-  def forwardBlock(
+  inline def forwardBlock(
       blockName: String
   ): Block =
     blockMap.getOrElseUpdate(
