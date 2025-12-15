@@ -603,20 +603,20 @@ case class Anchor(directive: Directive)
   * rules, for maximum compatibility with the ADT fields; this is an
   * approximation.
   */
-transparent inline def assemblyId[$: P]: P[String] =
+inline def assemblyId[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
 /** Parser for the complete assembly format. Parses one or more directives into
   * an AssemblyFormatDirective.
   */
-transparent inline def assemblyFormat[$: P](using
+inline def assemblyFormat[$: P](using
     opDef: OperationDef
 ): P[AssemblyFormatDirective] = (directive.rep(1) ~ End)
   .map(AssemblyFormatDirective.apply)
 
 /** Parser for any directive.
   */
-transparent inline def directive[$: P](using
+inline def directive[$: P](using
     opDef: OperationDef
 ): P[Directive] =
   typeDirective | literalDirective | variableDirective | attrDictDirective |
@@ -625,20 +625,20 @@ transparent inline def directive[$: P](using
 /** Parser for literal directives. Parses text enclosed in backticks as a
   * literal directive.
   */
-transparent inline def literalDirective[$: P]: P[LiteralDirective] =
+inline def literalDirective[$: P]: P[LiteralDirective] =
   ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
 
 /** Parser for variable directives. Parses a dollar sign followed by an
   * identifier, which references a construct of the Operation.
   */
-transparent inline def variableDirective[$: P](using opDef: OperationDef) =
+inline def variableDirective[$: P](using opDef: OperationDef) =
   ("$" ~~ assemblyId).map(name => opDef.allDefs.find(_.name == name))
     .filter(_.nonEmpty).map(_.get).map(VariableDirective(_))
 
 /** Parser for type directives. Parses "type($var)" where $var is a variable
   * directive.
   */
-transparent inline def typeDirective[$: P](using opDef: OperationDef) =
+inline def typeDirective[$: P](using opDef: OperationDef) =
   ("type(" ~~ variableDirective ~~ ")").map(d =>
     d match
       case VariableDirective(c: OperandDef) => Some(TypeDirective(c))
@@ -649,10 +649,10 @@ transparent inline def typeDirective[$: P](using opDef: OperationDef) =
 /** Parser for attribute dictionary directives. Parses the keyword "attr-dict"
   * into an AttrDictDirective.
   */
-transparent inline def attrDictDirective[$: P]: P[AttrDictDirective] =
+inline def attrDictDirective[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
 
-transparent inline def possiblyAnchoredDirective[$: P](using
+inline def possiblyAnchoredDirective[$: P](using
     opDef: OperationDef
 ) = (directive ~~ "^").map(Anchor.apply) | directive
 
