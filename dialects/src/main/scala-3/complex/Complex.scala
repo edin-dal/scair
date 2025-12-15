@@ -105,7 +105,7 @@ case class Sub(
 
 given AttributeCustomParser[ComplexAttr]:
 
-  def parse[$: P](using AttrParser): P[ComplexAttr] =
+  def parse[$: P](using Parser): P[ComplexAttr] =
     given Whitespace = scair.parse.whitespace
     ("<:" ~ floatTypeP ~ floatDataP ~ "," ~ floatDataP ~ ">" ~
       (":" ~ complexTypeP).?)

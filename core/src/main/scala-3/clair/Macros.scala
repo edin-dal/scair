@@ -816,12 +816,12 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
   '{
     new DerivedAttributeCompanion[T]:
       override def name: String = ${ Expr(attrDef.name) }
-      override def parse[$: P as ctx](using p: AttrParser): P[T] = ${
+      override def parse[$: P as ctx](using p: Parser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx })
           .getOrElse(
             '{
               given Whitespace = scair.parse.whitespace
-              given AttrParser = p
+              given Parser = p
               ("<" ~/ attributeP.rep(sep = ",") ~ ">").orElse(Seq())
                 .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
             }

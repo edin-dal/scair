@@ -5,7 +5,6 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.core.constraints.*
 import scair.ir.*
-import scair.parse.AttrParser
 import scair.parse.Parser
 
 import scala.deriving.*
@@ -246,7 +245,7 @@ def getOpCustomParse[T <: Operation: Type](
   )
 
 def getAttrCustomParse[T <: Attribute: Type](
-    p: Expr[AttrParser],
+    p: Expr[Parser],
     ctx: Expr[P[Any]],
 )(using
     quotes: Quotes

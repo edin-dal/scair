@@ -9,7 +9,7 @@ import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.enums.enumattr.*
 import scair.ir.*
-import scair.parse.AttrParser
+import scair.parse.Parser
 import scair.utils.OK
 
 import scala.collection.immutable.*
@@ -95,7 +95,7 @@ object FastMathFlags:
 given AttributeCompanion[FastMathFlagsAttr]:
   override def name: String = "arith.fastmath"
 
-  override def parse[$: P](using AttrParser): P[FastMathFlagsAttr] =
+  override def parse[$: P](using Parser): P[FastMathFlagsAttr] =
     P(
       "<" ~
         ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" |

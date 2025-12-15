@@ -185,16 +185,17 @@ private inline def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
 final class Parser(
-    private[parse] context: MLContext,
+    private[parse] final val context: MLContext,
     private[parse] final val inputPath: Option[String] = None,
     private[parse] final val parsingDiagnostics: Boolean = false,
     private[parse] final val allowUnregisteredDialect: Boolean = false,
-    private[parse] attributeAliases: mutable.Map[String, Attribute] = mutable
-      .Map.empty,
-    private[parse] typeAliases: mutable.Map[String, Attribute] = mutable.Map
-      .empty,
-    private[parse] val scopes: mutable.Stack[Scope] = mutable.Stack(new Scope()),
-) extends AttrParser(context, attributeAliases, typeAliases):
+    private[parse] final val attributeAliases: mutable.Map[String, Attribute] =
+      mutable.Map.empty,
+    private[parse] final val typeAliases: mutable.Map[String, Attribute] =
+      mutable.Map.empty,
+    private[parse] final val scopes: mutable.Stack[Scope] = mutable
+      .Stack(new Scope()),
+):
 
   private[parse] inline def enterRegionP[$: P] =
     scopes.push(new Scope())
@@ -665,7 +666,7 @@ inline def propertiesP[$: P](using Parser) = P(
   *   An attribute dictionary parser.
   */
 inline def attributeDictionaryP[$: P](using
-    AttrParser
+    Parser
 ): P[Map[String, Attribute]] = P(
   "{" ~ attributeEntryP.rep(sep = ",").map(Map.from) ~ "}"
 )

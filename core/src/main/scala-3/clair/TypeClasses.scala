@@ -3,7 +3,6 @@ package scair.clair.macros
 import fastparse.P
 import scair.Printer
 import scair.ir.*
-import scair.parse.AttrParser
 import scair.parse.Parser
 import scair.utils.OK
 
@@ -30,12 +29,12 @@ trait AttributeCustomParser[T <: Attribute]:
   export scair.parse.whitespace
 
   def parse[$: P](using
-      AttrParser
+      Parser
   ): P[T]
 
 trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion[T]:
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
-  override def parse[$: P](using AttrParser): P[T]
+  override def parse[$: P](using Parser): P[T]
 
 object DerivedAttributeCompanion:
 
