@@ -67,28 +67,28 @@ private inline def attributeAliasP[$: P](using p: Parser) =
 
 inline def attrOfOrP[A <: Attribute](inline default: A)(using
     Parser
-)(using inline p: P[Any]) =
+)(using P[Any]) =
   attributeP.orElse(default).flatMap(_ match
     case attr: A => Pass(attr)
     case _       => Fail("Expected sumin, got sumin else"))
 
 inline def attrOfP[A <: Attribute](using
     Parser
-)(using inline p: P[Any]) =
+)(using P[Any]) =
   attributeP.flatMap(_ match
     case attr: A => Pass(attr)
     case _       => Fail("Expected sumin, got sumin else"))
 
 inline def typeOfOrP[T <: TypeAttribute](inline default: T)(using
     Parser
-)(using inline p: P[Any]) =
+)(using P[Any]) =
   typeP.orElse(default).flatMap(_ match
     case tpe: T => Pass(tpe)
     case _      => Fail("Expected sumin, got sumin else"))
 
 inline def typeOfP[T <: TypeAttribute](using
     Parser
-)(using inline p: P[Any]) =
+)(using P[Any]) =
   typeP.flatMap(_ match
     case tpe: T => Pass(tpe)
     case _      => Fail("Expected sumin, got sumin else"))
