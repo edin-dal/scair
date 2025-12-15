@@ -23,7 +23,7 @@ import scala.annotation.tailrec
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 
-private inline def dialectAttributeP[$: P](using p: Parser): P[Attribute] =
+private def dialectAttributeP[$: P](using p: Parser): P[Attribute] =
   "#" ~~ prettyDialectReferenceNameP./.flatMapTry {
     (dialect: String, attrName: String) =>
       p.context.getAttrCompanion(s"$dialect.$attrName") match
@@ -35,7 +35,7 @@ private inline def dialectAttributeP[$: P](using p: Parser): P[Attribute] =
           )
   }
 
-private inline def dialectTypeP[$: P](using p: Parser): P[Attribute] =
+private def dialectTypeP[$: P](using p: Parser): P[Attribute] =
   "!" ~~ prettyDialectReferenceNameP./.flatMapTry {
     (dialect: String, attrName: String) =>
       p.context.getAttrCompanion(s"$dialect.$attrName") match
@@ -50,14 +50,14 @@ private inline def dialectTypeP[$: P](using p: Parser): P[Attribute] =
 // [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
 // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
-private inline def attributeEntryP[$: P](using Parser) =
+private def attributeEntryP[$: P](using Parser) =
   (bareIdP | stringLiteralP) ~ "=" ~/ (attributeP)
 
 def attributeP[$: P](using Parser) = P(
   typeP | builtinAttrP | dialectAttributeP | attributeAliasP
 )
 
-private inline def attributeAliasP[$: P](using p: Parser) =
+private def attributeAliasP[$: P](using p: Parser) =
   "#" ~~ aliasNameP.flatMap((name: String) =>
     p.attributeAliases.get(name) match
       case Some(attr) => Pass(attr)
@@ -65,28 +65,28 @@ private inline def attributeAliasP[$: P](using p: Parser) =
         Fail(s"Attribute alias $name not defined.")
   )
 
-inline def attrOfOrP[A <: Attribute](inline default: A)(using
+def attrOfOrP[A <: Attribute](default: A)(using
     Parser
 )(using P[Any]) =
   attributeP.orElse(default).flatMap(_ match
     case attr: A => Pass(attr)
     case _       => Fail("Expected sumin, got sumin else"))
 
-inline def attrOfP[A <: Attribute](using
+def attrOfP[A <: Attribute](using
     Parser
 )(using P[Any]) =
   attributeP.flatMap(_ match
     case attr: A => Pass(attr)
     case _       => Fail("Expected sumin, got sumin else"))
 
-inline def typeOfOrP[T <: TypeAttribute](inline default: T)(using
+def typeOfOrP[T <: TypeAttribute](default: T)(using
     Parser
 )(using P[Any]) =
   typeP.orElse(default).flatMap(_ match
     case tpe: T => Pass(tpe)
     case _      => Fail("Expected sumin, got sumin else"))
 
-inline def typeOfP[T <: TypeAttribute](using
+def typeOfP[T <: TypeAttribute](using
     Parser
 )(using P[Any]) =
   typeP.flatMap(_ match
@@ -120,7 +120,7 @@ def parenTypeListP[$: P](using Parser) = P(
   "(" ~ typeListP ~ ")"
 )
 
-private inline def typeAliasP[$: P](using p: Parser) =
+private def typeAliasP[$: P](using p: Parser) =
   "!" ~~ aliasNameP.flatMap((name: String) =>
     p.typeAliases.get(name) match
       case Some(attr) => Pass(attr)
@@ -211,13 +211,13 @@ def floatAttrP[$: P](using Parser): P[FloatAttr] =
 ||    INDEX TYPE    ||
 \*≡==---==≡≡==---==≡*/
 
-inline def indexTypeP[$: P](using Parser): P[IndexType] =
+def indexTypeP[$: P](using Parser): P[IndexType] =
   P("index".map(_ => IndexType()))
 /*≡==--==≡≡≡≡≡≡==--=≡≡*\
 ||    COMPLEX TYPE    ||
 \*≡==---==≡≡≡≡==---==≡*/
 
-inline def complexTypeP[$: P](using Parser): P[ComplexType] =
+def complexTypeP[$: P](using Parser): P[ComplexType] =
   P("complex<" ~ (indexTypeP | integerTypeP | floatTypeP) ~ ">")
     .map((tpe: TypeAttribute) =>
       ComplexType(tpe.asInstanceOf[IntegerType | IndexType | FloatType])
@@ -439,11 +439,11 @@ def functionTypeP[$: P](using Parser): P[FunctionType] = P(
     .map(FunctionType.apply)
 )
 
-private inline def builtinTypeP[$: P](using Parser): P[Attribute] =
+private def builtinTypeP[$: P](using Parser): P[Attribute] =
   floatTypeP | integerTypeP | indexTypeP | complexTypeP | functionTypeP |
     tensorTypeP | memrefTypeP | vectorTypeP
 
-private inline def builtinAttrP[$: P](using Parser): P[Attribute] =
+private def builtinAttrP[$: P](using Parser): P[Attribute] =
   arrayAttributeP | denseArrayAttributeP | stringAttributeP | symbolRefAttrP |
     floatAttrP | integerAttrP | denseIntOrFPElementsAttrP | affineMapAttrP |
     affineSetAttrP

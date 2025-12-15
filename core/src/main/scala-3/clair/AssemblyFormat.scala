@@ -603,43 +603,43 @@ case class Anchor(directive: Directive)
   * rules, for maximum compatibility with the ADT fields; this is an
   * approximation.
   */
-inline def assemblyId[$: P]: P[String] =
+def assemblyIdP[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
 /** Parser for the complete assembly format. Parses one or more directives into
   * an AssemblyFormatDirective.
   */
-inline def assemblyFormat[$: P](using
+def assemblyFormatP[$: P](using
     opDef: OperationDef
-): P[AssemblyFormatDirective] = (directive.rep(1) ~ End)
+): P[AssemblyFormatDirective] = (directiveP.rep(1) ~ End)
   .map(AssemblyFormatDirective.apply)
 
 /** Parser for any directive.
   */
-inline def directive[$: P](using
+def directiveP[$: P](using
     opDef: OperationDef
 ): P[Directive] =
-  typeDirective | literalDirective | variableDirective | attrDictDirective |
-    optionalGroupDirective
+  typeDirectiveP | literalDirectiveP | variableDirectiveP | attrDictDirectiveP |
+    optionalGroupDirectiveP
 
 /** Parser for literal directives. Parses text enclosed in backticks as a
   * literal directive.
   */
-inline def literalDirective[$: P]: P[LiteralDirective] =
+def literalDirectiveP[$: P]: P[LiteralDirective] =
   ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
 
 /** Parser for variable directives. Parses a dollar sign followed by an
   * identifier, which references a construct of the Operation.
   */
-inline def variableDirective[$: P](using opDef: OperationDef) =
-  ("$" ~~ assemblyId).map(name => opDef.allDefs.find(_.name == name))
-    .filter(_.nonEmpty).map(_.get).map(VariableDirective(_))
+def variableDirectiveP[$: P](using opDef: OperationDef) = ("$" ~~ assemblyIdP)
+  .map(name => opDef.allDefs.find(_.name == name)).filter(_.nonEmpty).map(_.get)
+  .map(VariableDirective(_))
 
 /** Parser for type directives. Parses "type($var)" where $var is a variable
   * directive.
   */
-inline def typeDirective[$: P](using opDef: OperationDef) =
-  ("type(" ~~ variableDirective ~~ ")").map(d =>
+def typeDirectiveP[$: P](using opDef: OperationDef) =
+  ("type(" ~~ variableDirectiveP ~~ ")").map(d =>
     d match
       case VariableDirective(c: OperandDef) => Some(TypeDirective(c))
       case VariableDirective(c: ResultDef)  => Some(TypeDirective(c))
@@ -649,15 +649,15 @@ inline def typeDirective[$: P](using opDef: OperationDef) =
 /** Parser for attribute dictionary directives. Parses the keyword "attr-dict"
   * into an AttrDictDirective.
   */
-inline def attrDictDirective[$: P]: P[AttrDictDirective] =
+def attrDictDirectiveP[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
 
-inline def possiblyAnchoredDirective[$: P](using
+def possiblyAnchoredDirectiveP[$: P](using
     opDef: OperationDef
-) = (directive ~~ "^").map(Anchor.apply) | directive
+) = (directiveP ~~ "^").map(Anchor.apply) | directiveP
 
-def optionalGroupDirective[$: P](using opDef: OperationDef): P[Directive] =
-  ("(" ~ possiblyAnchoredDirective.rep(1) ~ ")" ~ "?")./
+def optionalGroupDirectiveP[$: P](using opDef: OperationDef): P[Directive] =
+  ("(" ~ possiblyAnchoredDirectiveP.rep(1) ~ ")" ~ "?")./
     .filter(
       _.count(_.isInstanceOf[Anchor]) == 1
     ).map(directives =>
@@ -679,7 +679,7 @@ def parseAssemblyFormat(
     opDef: OperationDef,
 ): AssemblyFormatDirective =
   given OperationDef = opDef
-  fastparse.parse(format, assemblyFormat(using _)) match
+  fastparse.parse(format, assemblyFormatP(using _)) match
     case Parsed.Success(value, index) =>
       value
     case failure: Parsed.Failure =>

@@ -23,7 +23,7 @@ import scala.collection.mutable
 || COMMON FUNCTIONS ||
 \*≡==---==≡≡==---==≡*/
 
-extension [T](inline p: P[T])
+extension [T](p: P[T])
 
   /** Make the parser optional, parsing defaults if otherwise failing.
     *
@@ -36,7 +36,7 @@ extension [T](inline p: P[T])
     * @return
     *   An optional parser, defaulting to default.
     */
-  inline def orElse[$: P](inline default: T): P[T] = P(
+  def orElse[$: P](default: T): P[T] = P(
     p | Pass(default)
   )
 
@@ -52,7 +52,7 @@ extension [T](inline p: P[T])
     *   A parser that applies f to the parsed value, catching exceptions and
     *   turning them into parse errors.
     */
-  inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
+  def flatMapTry[$: P, V](f: T => P[V]): P[V] = P(
     p.flatMapX(parsed =>
       try f(parsed)
       catch
@@ -75,7 +75,7 @@ extension [T](inline p: P[T])
     *   A parser that applies f to the parsed value, catching exceptions and
     *   turning them into parse errors.
     */
-  inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
+  def mapTry[$: P, V](f: T => V): P[V] = P(
     p.flatMapX(parsed =>
       try Pass(f(parsed))
       catch
@@ -124,7 +124,7 @@ private final class Scope(
       valueMap(name) = v
       Pass(v)
 
-  inline def defineBlockArgumentP[$: P](
+  def defineBlockArgumentP[$: P](
       name: String,
       typ: Attribute,
   ): P[BlockArgument[Attribute]] =
@@ -164,21 +164,21 @@ private final class Scope(
 // [x] successor             ::= caret-id (`:` block-arg-list)?
 // [x] trailing-location     ::= `loc` `(` location `)`
 
-private inline def opResultListP[$: P] = (opResultP.rep(1, sep = ",") ~ "=")
+private def opResultListP[$: P] = (opResultP.rep(1, sep = ",") ~ "=")
   .orElse(Seq()).map(_.flatten)
 
-private inline def sequenceValues(
-    inline value: (String, Option[BigInt])
+private def sequenceValues(
+    value: (String, Option[BigInt])
 ): Seq[String] =
   value match
     case (name, Some(totalNo)) =>
       (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
     case (name, None) => Seq(name)
 
-private inline def opResultP[$: P] = (valueIdP ~ (":" ~ decimalLiteralP).?)
+private def opResultP[$: P] = (valueIdP ~ (":" ~ decimalLiteralP).?)
   .map(sequenceValues)
 
-private inline def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
+private def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
 ||     PARSER CLASS     ||
@@ -197,19 +197,19 @@ final class Parser(
       .Stack(new Scope()),
 ):
 
-  private[parse] inline def enterRegionP[$: P] =
+  private[parse] def enterRegionP[$: P] =
     scopes.push(new Scope())
     Pass
 
-  private[parse] inline def exitRegionP[$: P] =
+  private[parse] def exitRegionP[$: P] =
     scopes.pop.allBlocksAndValuesDefinedP
 
-  inline def parse[T](
-      inline input: ParserInputSource,
-      inline parser: P[?] => P[T] = topLevelP(using _, this),
-      inline verboseFailures: Boolean = false,
-      inline startIndex: Int = 0,
-      inline instrument: fastparse.internal.Instrument = null,
+  def parse[T](
+      input: ParserInputSource,
+      parser: P[?] => P[T] = topLevelP(using _, this),
+      verboseFailures: Boolean = false,
+      startIndex: Int = 0,
+      instrument: fastparse.internal.Instrument = null,
   ) =
     fastparse.parse(
       input,
@@ -426,7 +426,7 @@ private def genericOperandsTypesRecP[$: P](using
       )).map(_ +: _)
     case Nil => Pass(Seq())
 
-private inline def genericOperandsTypesP[$: P](
+private def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
   "(" ~ genericOperandsTypesRecP(using operandsNames.length)(
@@ -456,7 +456,7 @@ private def genericResultsTypesRecP[$: P](using
       ) ~ genericResultsTypesRecP(tail, parsed + 1)).map(_ +: _)
     case Nil => Pass(Seq())
 
-private inline def genericResultsTypesP[$: P](
+private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
   ("(" ~/ genericResultsTypesRecP(using resultsNames.length)(
@@ -469,7 +469,7 @@ private inline def genericResultsTypesP[$: P](
     genericResultsTypesRecP(using resultsNames.length)(resultsNames)
   )
 
-private inline def genericOperationNameP[$: P](using
+private def genericOperationNameP[$: P](using
     p: Parser
 ): P[OperationCompanion[?]] =
   stringLiteralP
@@ -479,7 +479,7 @@ private inline def genericOperationNameP[$: P](using
         case Left(error)      => Fail(error)
     )
 
-private inline def genericOperationP[$: P](
+private def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
   genericOperationNameP.flatMapX((opCompanion: OperationCompanion[?]) =>
@@ -509,7 +509,7 @@ private inline def genericOperationP[$: P](
     )
   )
 
-private inline def customOperationP[$: P](
+private def customOperationP[$: P](
     resNames: Seq[String]
 )(using p: Parser) =
   prettyDialectReferenceNameP./.flatMapTry { (x: String, y: String) =>
@@ -522,14 +522,14 @@ private inline def customOperationP[$: P](
         )
   }
 
-private inline def regionListP[$: P](using Parser) =
+private def regionListP[$: P](using Parser) =
   "(" ~ regionP().rep(sep = ",") ~ ")"
 
 // // Type aliases
 // [x] type-alias-def ::= `!` alias-name `=` type
 // [x] type-alias ::= `!` alias-name
 
-private inline def typeAliasDefP[$: P](using p: Parser) =
+private def typeAliasDefP[$: P](using p: Parser) =
   ("!" ~~ aliasNameP ~ "=" ~ typeP).flatMap((name: String, value: Attribute) =>
     p.typeAliases.get(name) match
       case Some(t) =>
@@ -549,7 +549,7 @@ private inline def typeAliasDefP[$: P](using p: Parser) =
 // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
 // [x] - attribute-alias ::= `#` alias-name
 
-private inline def attributeAliasDefP[$: P](using p: Parser) =
+private def attributeAliasDefP[$: P](using p: Parser) =
   (
     "#" ~~ aliasNameP ~ "=" ~ attributeP
   ).flatMap((name: String, value: Attribute) =>
@@ -570,7 +570,7 @@ private inline def attributeAliasDefP[$: P](using p: Parser) =
 // [x] - block           ::= block-label operation+
 // [x] - block-label     ::= block-id block-arg-list? `:`
 
-private inline def populateBlockOps(
+private def populateBlockOps(
     block: Block,
     ops: Seq[Operation],
 )(using p: Parser): Block =
@@ -578,7 +578,7 @@ private inline def populateBlockOps(
   ops.foreach(_.containerBlock = Some(block))
   block
 
-private inline def populateBlockArgsP[$: P](
+private def populateBlockArgsP[$: P](
     block: Block,
     args: Seq[(String, Attribute)],
 )(using p: Parser) =
@@ -590,22 +590,22 @@ private inline def populateBlockArgsP[$: P](
     block
   )
 
-private inline def blockBodyP[$: P](block: Block)(using Parser) =
+private def blockBodyP[$: P](block: Block)(using Parser) =
   operationP.rep.mapTry(populateBlockOps(block, _))
 
 def blockP[$: P](using Parser) = P(
   P(blockLabelP.flatMap(blockBodyP))
 )
 
-private inline def blockLabelP[$: P](using p: Parser) =
+private def blockLabelP[$: P](using p: Parser) =
   (blockIdP.flatMap(p.scopes.top.defineBlockP) ~ (blockArgListP.orElse(Seq())))
     .flatMap(populateBlockArgsP) ~ ":"
 
-inline def successorListP[$: P](using Parser) = P(
+def successorListP[$: P](using Parser) = P(
   "[" ~ successorP.rep(sep = ",") ~ "]"
 )
 
-inline def successorP[$: P](using p: Parser) = P(
+def successorP[$: P](using p: Parser) = P(
   P(caretIdP).map(p.scopes.top.forwardBlock)
 )
 /*≡==--==≡≡≡≡≡==--=≡≡*\
@@ -637,12 +637,12 @@ def regionP[$: P](
 
 // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
 
-inline def valueIdAndTypeP[$: P](using Parser) = P(valueIdP ~ ":" ~ typeP)
+def valueIdAndTypeP[$: P](using Parser) = P(valueIdP ~ ":" ~ typeP)
 
-private inline def valueIdAndTypeListP[$: P](using Parser) =
+private def valueIdAndTypeListP[$: P](using Parser) =
   P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq())
 
-private inline def blockArgListP[$: P](using Parser) =
+private def blockArgListP[$: P](using Parser) =
   P(
     "(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")"
   )
@@ -656,7 +656,7 @@ private inline def blockArgListP[$: P](using Parser) =
   * @return
   *   A properties dictionary parser.
   */
-inline def propertiesP[$: P](using Parser) = P(
+def propertiesP[$: P](using Parser) = P(
   "<" ~ attributeDictionaryP ~ ">"
 )
 
@@ -665,7 +665,7 @@ inline def propertiesP[$: P](using Parser) = P(
   * @return
   *   An attribute dictionary parser.
   */
-inline def attributeDictionaryP[$: P](using
+def attributeDictionaryP[$: P](using
     Parser
 ): P[Map[String, Attribute]] = P(
   "{" ~ attributeEntryP.rep(sep = ",").map(Map.from) ~ "}"
@@ -676,7 +676,7 @@ inline def attributeDictionaryP[$: P](using
   * @return
   *   An optional dictionary of properties - empty if no dictionary is present.
   */
-inline def optionalPropertiesP[$: P](using Parser) =
+def optionalPropertiesP[$: P](using Parser) =
   (propertiesP).orElse(DictType.empty)
 
 /** Parses an optional attributes dictionary from the input.
@@ -693,5 +693,5 @@ def optionalAttributesP[$: P](using Parser) =
   * @return
   *   An optional dictionary of attributes - empty if no keyword is present.
   */
-inline def optionalKeywordAttributesP[$: P](using Parser) =
+def optionalKeywordAttributesP[$: P](using Parser) =
   ("attributes" ~/ attributeDictionaryP).orElse(Map.empty)
