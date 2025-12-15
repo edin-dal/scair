@@ -64,6 +64,11 @@ extension [T](inline p: P[T])
     )
   )
 
+  // Replacement for fastparse's .opaque, with a by-name message, so as not to build it in the happy case.
+  // TODO: Should that be contributed to fastparse's .opauqe or does it have a reason not to be?
+  inline def explain[$:P](inline msg: => String): P[T] =
+    p | Fail(msg)
+
   /** Like fastparse's mapX but capturing exceptions as standard parse errors.
     *
     * @note
@@ -407,31 +412,33 @@ def operationP[$: P](using Parser): P[Operation] = P(
   ) ~/ trailingLocationP.?
 )./
 
+import scala.collection.mutable.ArrayBuffer
+
 private def genericOperandsTypesRecP[$: P](using
     expected: Int,
     p: Parser,
-)(operandsNames: Seq[String], parsed: Int = 1): P[Seq[Value[Attribute]]] =
+)(operandsNames: Seq[String], parsed: Int = 1): P[ArrayBuffer[Value[Attribute]]] =
   operandsNames match
     case head :: Nil =>
-      typeP.opaque(
+      typeP.explain(
         f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed -
             1})."
-      ).flatMap(operandP(head, _)).map(Seq(_))
+      ).flatMap(operandP(head, _)).map(ArrayBuffer(_))
     case head :: tail =>
-      (typeP.flatMap(operandP(head, _)) ~ ",".opaque(
+      (typeP.flatMap(operandP(head, _)) ~ ",".explain(
         f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
       ) ~ genericOperandsTypesRecP(
         tail,
         parsed + 1,
       )).map(_ +: _)
-    case Nil => Pass(Seq())
+    case Nil => Pass(ArrayBuffer())
 
 private def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
   "(" ~ genericOperandsTypesRecP(using operandsNames.length)(
     operandsNames
-  ) ~ ")"
+  ).map(_.toSeq) ~ ")"
 
 private def genericResultsTypesRecP[$: P](using
     expected: Int,
@@ -439,34 +446,34 @@ private def genericResultsTypesRecP[$: P](using
 )(
     resultsNames: Seq[String],
     parsed: Int = 1,
-): P[Seq[Result[Attribute]]] =
+): P[ArrayBuffer[Result[Attribute]]] =
   resultsNames match
     case head :: Nil =>
-      typeP.opaque(
-        f"Number of results ($expected) does not match the number of the corresponding result types (${parsed -
+      typeP.explain(
+        s"Number of results ($expected) does not match the number of the corresponding result types (${parsed -
             1})."
       ).flatMap(
         resultP(head, _)
-      ).map(Seq(_))
+      ).map(ArrayBuffer(_))
     case head :: tail =>
       (typeP.flatMap(
         resultP(head, _)
-      ) ~ ",".opaque(
+      ) ~ ",".explain(
         f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
       ) ~ genericResultsTypesRecP(tail, parsed + 1)).map(_ +: _)
-    case Nil => Pass(Seq())
+    case Nil => Pass(ArrayBuffer())
 
 private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
   ("(" ~/ genericResultsTypesRecP(using resultsNames.length)(
     resultsNames
-  ).flatMap(resultsTypes =>
-    ")".opaque(
+  ).map(_.toSeq).flatMap(resultsTypes =>
+    ")".explain(
       f"Number of results (${resultsNames.length}) does not match the number of the corresponding result types."
     ) ~ Pass(resultsTypes)
   )) | Pass(()).filter(_ => resultsNames.length == 1).flatMap(_ =>
-    genericResultsTypesRecP(using resultsNames.length)(resultsNames)
+    genericResultsTypesRecP(using resultsNames.length)(resultsNames).map(_.toSeq)
   )
 
 private def genericOperationNameP[$: P](using

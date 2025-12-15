@@ -88,7 +88,7 @@ def floatLiteralP[$: P] = P(
     (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ decDigitsP).!).orElse("0")
 ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
-inline def nonExcludedCharacter(c: Char): Boolean =
+inline def nonExcludedCharacter(inline c: Char): Boolean =
   c: @switch match
     case '"' | '\\' => false
     case _          => true
