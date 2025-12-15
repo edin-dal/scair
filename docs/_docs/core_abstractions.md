@@ -1,12 +1,10 @@
-# Core Abstractions Tutorial
+---
+title: "Core Abstractions"
+---
+
+# Core Abstractions
 
 In this tutorial we will focus on the core compilation abstraction used in MLIR. 
-- [Static-Single Assignment](#static-single-assignment-ssa)
-- [Regions](#regions)
-	- [Blocks](#blocks)
-- [Dialect](#dialect)
-- [Attribute](#attribute)
-- [Operation](#operation)
 
 **`Note:`** The objective of this tutorial is to gain basic intuitions about the SSA form, Regions as well as the core compilation concepts introduced by MLIR. The tutorial will include brief informal definitions of each concept, complemented by some basic examples in the IR. As such, this tutorial does not serve as a comprehensive guide through each concept. 
 
@@ -23,7 +21,7 @@ In the SSA form, *each **`Value`** produced by some operation is assigned exactl
 However, one **value** can be used many times in the IR, which makes up the **def-use** and **use-def** chains, where each value tracks where it is used, and it's defining operation. 
 
 Let's say we have a simple integer addition operation in Scala, where values `a` and `b` are added to create a new value `c`:
-```scala
+```scala sc:nocompile
 ...
 val c = a + b
 ...
@@ -61,7 +59,7 @@ Notice here, that the old reference to `a` is written as `%a0`, and the newly cr
 Another core part of the MLIR IR are **`Regions`**, which are used to *express localized scoping in the IR*. 
 
 Let's look at a simple program here:
-```scala
+```scala sc:nocompile
 ...
 val c5 = 5
 val c10 = 10
