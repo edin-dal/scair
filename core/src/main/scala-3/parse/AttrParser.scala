@@ -75,14 +75,14 @@ private inline def attributeAliasP[$: P](using p: AttrParser) =
         Fail(s"Attribute alias $name not defined.")
   )
 
-transparent inline def attributeOfOrP[A <: Attribute](inline default: A)(using
+transparent inline def attrOfOrP[A <: Attribute](inline default: A)(using
     AttrParser
 )(using inline p: P[Any]) =
   attributeP.orElse(default).flatMap(_ match
     case attr: A => Pass(attr)
     case _       => Fail("Expected sumin, got sumin else"))
 
-transparent inline def attributeOfP[A <: Attribute](using
+transparent inline def attrOfP[A <: Attribute](using
     AttrParser
 )(using inline p: P[Any]) =
   attributeP.flatMap(_ match

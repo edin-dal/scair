@@ -35,8 +35,8 @@ given OperationCustomParser[AbsfOp]:
   )(using p: Parser): P[AbsfOp] =
     P(
       operandNameP.flatMap(operandName =>
-        (attributeOfOrP[FastMathFlagsAttr](
-          FastMathFlagsAttr(FastMathFlags.none)
+        (attrOfOrP[FastMathFlagsAttr](
+          FastMathFlags.none
         ) ~ ":" ~ typeOfP[FloatType].flatMap(tpe =>
           operandP(operandName, tpe) ~ resultP(resNames.head, tpe)
         ))
@@ -65,8 +65,8 @@ given OperationCustomParser[FPowIOp]:
     P(
       operandNameP.flatMap(lhsName =>
         ("," ~ operandNameP.flatMap(rhsName =>
-          (attributeOfOrP[FastMathFlagsAttr](
-            FastMathFlagsAttr(FastMathFlags.none)
+          (attrOfOrP[FastMathFlagsAttr](
+            FastMathFlags.none
           ) ~ ":" ~ typeOfP[FloatType].flatMap(lhsType =>
             operandP(lhsName, lhsType) ~ resultP(resNames.head, lhsType)
           ) ~ "," ~ typeOfP[IntegerType].flatMap(
