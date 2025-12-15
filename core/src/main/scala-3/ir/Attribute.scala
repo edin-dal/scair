@@ -1,9 +1,9 @@
 package scair.ir
 
 import fastparse.*
-import scair.AttrParser
 import scair.Printer
 import scair.dialects.builtin.IntegerAttr
+import scair.parse.Parser
 import scair.utils.OK
 
 import java.io.PrintWriter
@@ -95,6 +95,7 @@ abstract class DataAttribute[D](
 
 trait AttributeCompanion[T <: Attribute]:
   def name: String
-  def parse[$: P](p: AttrParser): P[T]
+  def parse[$: P](using Parser): P[T]
+  export scair.parse.whitespace
 
 trait AliasedAttribute(val alias: String) extends Attribute

@@ -1,14 +1,15 @@
 package scair.dialects.arith
 
 import fastparse.*
-import scair.AttrParser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
+import scair.core.macros.TransparentData
 import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.enums.enumattr.*
 import scair.ir.*
+import scair.parse.Parser
 import scair.utils.OK
 
 import scala.collection.immutable.*
@@ -94,9 +95,7 @@ object FastMathFlags:
 given AttributeCompanion[FastMathFlagsAttr]:
   override def name: String = "arith.fastmath"
 
-  override def parse[$: P](p: AttrParser): P[FastMathFlagsAttr] =
-
-    import scair.AttrParser.whitespace
+  override def parse[$: P](using Parser): P[FastMathFlagsAttr] =
     P(
       "<" ~
         ("none" | "reassoc" | "nnan" | "ninf" | "nsz" | "arcp" | "contract" |
@@ -125,7 +124,8 @@ given AttributeCompanion[FastMathFlagsAttr]:
     }
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
-    extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags):
+    extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags)
+    derives TransparentData:
 
   override def customPrint(p: Printer) =
     p.print("#arith.fastmath<")

@@ -2,11 +2,11 @@ package scair.core.irdl_printer
 
 import fastparse.Parsed
 import scair.MLContext
-import scair.Parser
 import scair.dialects.builtin.ArrayAttribute
 import scair.dialects.irdl.*
 import scair.dialects.irdl.IRDL
 import scair.ir.Value
+import scair.parse.*
 
 import java.io.PrintWriter
 import scala.io.Source
@@ -90,9 +90,9 @@ object IRDLPrinter:
     val ctx = MLContext()
     ctx.registerDialect(IRDL)
     val parser = Parser(ctx)
-    val dialect = parser.parseThis(
-      input.mkString,
-      pattern = parser.OperationPat(using _),
+    val dialect = parser.parse(
+      input = input.mkString,
+      parser = operationP(using _, parser),
     ) match
       case Parsed.Success(dialect: Dialect, _) => dialect
       case Parsed.Success(_, _)                =>

@@ -1,7 +1,6 @@
 package scair.dialects.complex
 
 import fastparse.*
-import scair.AttrParser
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.macros.*
@@ -9,6 +8,7 @@ import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.complex.canonicalization.given
 import scair.ir.*
+import scair.parse.*
 
 //
 // ░█████╗░ ░█████╗░ ███╗░░░███╗ ██████╗░ ██╗░░░░░ ███████╗ ██╗░░██╗
@@ -103,12 +103,12 @@ case class Sub(
 ) extends DerivedOperation["complex.sub", Sub]
     with NoMemoryEffect derives DerivedOperationCompanion
 
-object ComplexAttr:
+given AttributeCustomParser[ComplexAttr]:
 
-  def parse[$: P](parser: AttrParser): P[ComplexAttr] =
-    given Whitespace = scair.AttrParser.whitespace
-    ("<:" ~ parser.FloatTypeP ~ parser.FloatDataP ~ "," ~ parser.FloatDataP ~
-      ">" ~ (":" ~ parser.ComplexTypeP).?)
+  def parse[$: P](using Parser): P[ComplexAttr] =
+    given Whitespace = scair.parse.whitespace
+    ("<:" ~ floatTypeP ~ floatDataP ~ "," ~ floatDataP ~ ">" ~
+      (":" ~ complexTypeP).?)
       .map(
         (
             tpe: FloatType,

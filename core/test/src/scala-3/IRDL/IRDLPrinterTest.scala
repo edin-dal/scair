@@ -3,6 +3,7 @@ package scair
 import scair.dialects.irdl.*
 import scair.dialects.builtin.*
 import scair.core.irdl_printer.IRDLPrinter.printIRDL
+import scair.parse.*
 
 import fastparse.*
 import org.scalatest.*
@@ -20,7 +21,7 @@ class IRDLPrinterTest extends AnyFlatSpec:
   var parser = new Parser(ctx)
 
   val module = parser
-    .parseThis("""
+    .parse("""
 "builtin.module"() ({
   "irdl.dialect"() <{sym_name = "cmath"}> ({
     "irdl.type"() <{sym_name = "complex"}> ({

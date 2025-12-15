@@ -8,6 +8,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.parse.*
 import java.io.*
 
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
@@ -119,7 +120,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     val res = getResult(result, expected)
     "strToAttributeTests" should s"[ '$input' -> '$expected' = $result ]" in {
       // Run the pqrser on the input and check
-      parse(input, parser.Attribute(using _)) should matchPattern {
+      parse(input, attributeP(using _, parser)) should matchPattern {
         case res => // pass
       }
     }
@@ -296,8 +297,8 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |    "test.op"(%9) : (index) -> ()
                      |  }) : () -> ()""".stripMargin
 
-      parser.parseThis(
-        text = input
+      parser.parse(
+        input = input
       ) should matchPattern { case Parsed.Success(program, _) => }
     }
 
@@ -308,9 +309,9 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                      |    %1, %2, %3 = "test.op"() : () -> (i32, si64, ui80)
                      |  }) : () -> ()""".stripMargin
 
-    parser.parseThis(
-      text = input,
-      pattern = parser.OperationPat(using _),
+    parser.parse(
+      input = input,
+      parser = operationP(using _, parser),
     ) should matchPattern {
       case Parsed.Success(
             UnregisteredOperation(

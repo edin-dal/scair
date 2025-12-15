@@ -17,7 +17,7 @@
 
 // CHECK:       "test.op"(%1) : () -> ()
 // CHECK-NEXT:                   ^
-// CHECK-NEXT:  (BuiltinType | DialectType | TypeAlias)
+// CHECK-NEXT:  Number of operands (1) does not match the number of the corresponding operand types (0).
 
 // -----
 

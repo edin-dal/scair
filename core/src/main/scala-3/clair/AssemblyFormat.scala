@@ -3,10 +3,11 @@ package scair.clair.macros
 import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
-import scair.Parser
+import scair.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.ir.*
+import scair.parse.*
 
 import scala.quoted.*
 
@@ -144,7 +145,7 @@ case class AttrDictDirective() extends Directive:
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ $p.OptionalAttributes(using $ctx) }
+    '{ optionalAttributesP(using $ctx, $p) }
 
 /** Directive for variables, handling operations' individual constructs
   * (operands, results, regions, successors or properties).
@@ -208,20 +209,22 @@ case class VariableDirective(
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ Parser.ValueUse(using $ctx) }
+            '{ operandNameP(using $ctx) }
           case Variadicity.Variadic =>
-            '{ Parser.ValueUseList(using $ctx) }
+            '{ operandNamesP(using $ctx) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; Parser.ValueUse.? }
+            '{ given P[?] = $ctx; operandNameP.? }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
             '{
-              $p.Attribute(using $ctx)
+              attributeP(using $ctx, $p)
             }
           case Variadicity.Optional =>
             '{
-              given P[?] = $ctx; $p.Attribute.?
+              given P[?] = $ctx
+              given Parser = $p
+              attributeP.?
             }
 
   override def parsed(p: Expr[?])(using Quotes) =
@@ -287,11 +290,15 @@ case class TypeDirective(
       case MayVariadicOpInputDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ $p.Type(using $ctx) }
+            '{ typeP(using $ctx, $p) }
           case Variadicity.Variadic =>
-            '{ $p.TypeList(using $ctx) }
+            '{ typeListP(using $ctx, $p) }
           case Variadicity.Optional =>
-            '{ given P[?] = $ctx; $p.Type.? }
+            '{
+              given P[?] = $ctx
+              given Parser = $p
+              typeP.?
+            }
 
   // Ew; but works
   override def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
@@ -551,7 +558,7 @@ case class AssemblyFormatDirective(
     // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
     '{
-      $p.generateOperation(
+      $p.generateOperationP(
         opName = ${ Expr(opDef.name) },
         operandsNames = $flatOperandNames,
         operandsTypes = $flatOperandTypes,
@@ -596,43 +603,43 @@ case class Anchor(directive: Directive)
   * rules, for maximum compatibility with the ADT fields; this is an
   * approximation.
   */
-transparent inline def assemblyId[$: P]: P[String] =
+def assemblyIdP[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
 /** Parser for the complete assembly format. Parses one or more directives into
   * an AssemblyFormatDirective.
   */
-transparent inline def assemblyFormat[$: P](using
+def assemblyFormatP[$: P](using
     opDef: OperationDef
-): P[AssemblyFormatDirective] = (directive.rep(1) ~ End)
+): P[AssemblyFormatDirective] = (directiveP.rep(1) ~ End)
   .map(AssemblyFormatDirective.apply)
 
 /** Parser for any directive.
   */
-transparent inline def directive[$: P](using
+def directiveP[$: P](using
     opDef: OperationDef
 ): P[Directive] =
-  typeDirective | literalDirective | variableDirective | attrDictDirective |
-    optionalGroupDirective
+  typeDirectiveP | literalDirectiveP | variableDirectiveP | attrDictDirectiveP |
+    optionalGroupDirectiveP
 
 /** Parser for literal directives. Parses text enclosed in backticks as a
   * literal directive.
   */
-transparent inline def literalDirective[$: P]: P[LiteralDirective] =
+def literalDirectiveP[$: P]: P[LiteralDirective] =
   ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
 
 /** Parser for variable directives. Parses a dollar sign followed by an
   * identifier, which references a construct of the Operation.
   */
-transparent inline def variableDirective[$: P](using opDef: OperationDef) =
-  ("$" ~~ assemblyId).map(name => opDef.allDefs.find(_.name == name))
-    .filter(_.nonEmpty).map(_.get).map(VariableDirective(_))
+def variableDirectiveP[$: P](using opDef: OperationDef) = ("$" ~~ assemblyIdP)
+  .map(name => opDef.allDefs.find(_.name == name)).filter(_.nonEmpty).map(_.get)
+  .map(VariableDirective(_))
 
 /** Parser for type directives. Parses "type($var)" where $var is a variable
   * directive.
   */
-transparent inline def typeDirective[$: P](using opDef: OperationDef) =
-  ("type(" ~~ variableDirective ~~ ")").map(d =>
+def typeDirectiveP[$: P](using opDef: OperationDef) =
+  ("type(" ~~ variableDirectiveP ~~ ")").map(d =>
     d match
       case VariableDirective(c: OperandDef) => Some(TypeDirective(c))
       case VariableDirective(c: ResultDef)  => Some(TypeDirective(c))
@@ -642,15 +649,15 @@ transparent inline def typeDirective[$: P](using opDef: OperationDef) =
 /** Parser for attribute dictionary directives. Parses the keyword "attr-dict"
   * into an AttrDictDirective.
   */
-transparent inline def attrDictDirective[$: P]: P[AttrDictDirective] =
+def attrDictDirectiveP[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
 
-transparent inline def possiblyAnchoredDirective[$: P](using
+def possiblyAnchoredDirectiveP[$: P](using
     opDef: OperationDef
-) = (directive ~~ "^").map(Anchor.apply) | directive
+) = (directiveP ~~ "^").map(Anchor.apply) | directiveP
 
-def optionalGroupDirective[$: P](using opDef: OperationDef): P[Directive] =
-  ("(" ~ possiblyAnchoredDirective.rep(1) ~ ")" ~ "?")./
+def optionalGroupDirectiveP[$: P](using opDef: OperationDef): P[Directive] =
+  ("(" ~ possiblyAnchoredDirectiveP.rep(1) ~ ")" ~ "?")./
     .filter(
       _.count(_.isInstanceOf[Anchor]) == 1
     ).map(directives =>
@@ -672,7 +679,7 @@ def parseAssemblyFormat(
     opDef: OperationDef,
 ): AssemblyFormatDirective =
   given OperationDef = opDef
-  parse(format, (x: fastparse.P[?]) => assemblyFormat(using x)) match
+  fastparse.parse(format, assemblyFormatP(using _)) match
     case Parsed.Success(value, index) =>
       value
     case failure: Parsed.Failure =>

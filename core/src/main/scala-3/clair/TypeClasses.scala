@@ -1,9 +1,9 @@
 package scair.clair.macros
 
-import fastparse.ParsingRun
-import scair.AttrParser
+import fastparse.P
 import scair.Printer
 import scair.ir.*
+import scair.parse.Parser
 import scair.utils.OK
 
 import scala.quoted.*
@@ -25,15 +25,29 @@ import scala.util.Try
 // ╚█████╔╝ ███████╗ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ░╚════╝░ ╚══════╝ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
+trait AttributeCustomParser[T <: Attribute]:
+  export scair.parse.whitespace
+
+  def parse[$: P](using
+      Parser
+  ): P[T]
+
 trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion[T]:
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
-  override def parse[$: ParsingRun](p: AttrParser): ParsingRun[T]
+  override def parse[$: P](using Parser): P[T]
 
 object DerivedAttributeCompanion:
 
   inline def derived[T <: Attribute]: DerivedAttributeCompanion[T] = ${
     derivedAttributeCompanion[T]
   }
+
+trait OperationCustomParser[T <: Operation]:
+  export scair.parse.whitespace
+
+  def parse[$: P](
+      resNames: Seq[String]
+  )(using Parser): P[T]
 
 trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
 

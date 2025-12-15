@@ -1,12 +1,11 @@
 package scair.clair.mirrored
 
 import fastparse.*
-import scair.AttrParser
-import scair.Parser
 import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.core.constraints.*
 import scair.ir.*
+import scair.parse.Parser
 
 import scala.deriving.*
 import scala.quoted.*
@@ -241,46 +240,17 @@ def getOpCustomParse[T <: Operation: Type](
 )(using
     quotes: Quotes
 ) =
-  import quotes.reflect.*
+  Expr.summon[OperationCustomParser[T]].map(parser =>
+    '{ (ctx: P[Any]) ?=> $parser.parse($resNames)(using ctx, $p) }
+  )
 
-  val comp = getCompanion(using Type.of[T])
-  val sig = TypeRepr.of[OperationCompanion[T]].typeSymbol
-    .declaredMethod("parse").head.signature
-  comp.methodMember("parse").filter(_.signature == sig) match
-    case Seq(m) =>
-      val callTerm = Select.unique(Ref(comp), m.name)
-        .appliedToType(TypeRepr.of[Any]).appliedTo(p.asTerm, resNames.asTerm)
-        .etaExpand(comp).asExprOf[P[Any] => P[T]]
-      Some('{ (ctx: P[Any]) ?=> ${ callTerm }(ctx) })
-    case Seq() =>
-      None
-    case d: Seq[?] =>
-      report
-        .errorAndAbort(
-          s"Multiple companion parse methods not supported at this point."
-        )
-
-def getAttrCustomParse[T: Type](p: Expr[AttrParser], ctx: Expr[P[Any]])(using
+def getAttrCustomParse[T <: Attribute: Type](
+    p: Expr[Parser],
+    ctx: Expr[P[Any]],
+)(using
     quotes: Quotes
-) =
-  import quotes.reflect.*
-
-  val comp = getCompanion(using Type.of[T])
-  val sig = TypeRepr.of[AttributeCompanion].typeSymbol.declaredMethod("parse")
-    .head.signature
-  comp.methodMember("parse").filter(_.signature == sig) match
-    case Seq(m) =>
-      val callTerm = Select.unique(Ref(comp), m.name)
-        .appliedToType(TypeRepr.of[Any]).appliedTo(p.asTerm)
-        .appliedTo(ctx.asTerm).etaExpand(comp).asExprOf[P[T]]
-      Some(callTerm)
-    case Seq() =>
-      None
-    case d: Seq[?] =>
-      report
-        .errorAndAbort(
-          s"Multiple companion parse methods not supported at this point."
-        )
+) = Expr.summon[AttributeCustomParser[T]]
+  .map(parser => '{ $parser.parse(using $ctx, $p) })
 
 def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
   import quotes.reflect.*

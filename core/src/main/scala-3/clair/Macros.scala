@@ -1,16 +1,14 @@
 package scair.clair.macros
 
 import fastparse.*
-import scair.AttrParser
-import scair.AttrParser.whitespace
-import scair.Parser
-import scair.Parser.*
+import scair.*
 import scair.Printer
 import scair.clair.codegen.*
 import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.enums.macros.*
 import scair.ir.*
+import scair.parse.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 import scair.utils.OK
@@ -818,13 +816,13 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
   '{
     new DerivedAttributeCompanion[T]:
       override def name: String = ${ Expr(attrDef.name) }
-      override def parse[$: P as ctx](p: AttrParser): P[T] = ${
+      override def parse[$: P as ctx](using p: Parser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx })
           .getOrElse(
             '{
-              P(
-                ("<" ~/ p.Attribute.rep(sep = ",") ~ ">")
-              ).orElse(Seq())
+              given Whitespace = scair.parse.whitespace
+              given Parser = p
+              ("<" ~/ attributeP.rep(sep = ",") ~ ">").orElse(Seq())
                 .map(x => ${ getAttrConstructor[T](attrDef, '{ x }) })
             }
           )
@@ -873,9 +871,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
         }
 
       override def parse[$: P as ctx](
-          p: Parser,
-          resNames: Seq[String],
-      ): P[T] =
+          resNames: Seq[String]
+      )(using p: Parser): P[T] =
         ${
           (getOpCustomParse[T]('{ p }, '{ resNames })
             .getOrElse(parseMacro[T](opDef, '{ p }, '{ resNames })))
