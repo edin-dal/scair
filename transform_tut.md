@@ -1,14 +1,13 @@
-# Transformation & Pass Tutorial
-
 In this tutorial we will focus on writing optimizing transformations in ScaIR. 
-- [Constant Folding and Dead Code Elimination](#constant-folding-and-dead-code-elimination)
-	- [IR Example](#ir-example)
-	- [ScaIR Implementation](#scair-implementation)
-- [Footnotes](#footnotes)
+- [[#Constant Folding and Dead Code Elimination]]
+	- [[#Example]]
+	- [[#ScaIR Implementation]]
+	- [[#Connecting the Pass]]
+- [[#Footnotes]]
+	- 
+# Constant Folding and Dead Code Elimination
 
-## **Constant Folding and Dead Code Elimination**
-
-### **IR Example**
+### Example
 
 Say we have the following high-level program:
 ```python
@@ -48,7 +47,7 @@ func.call @print(%0) : (i32) -> ()
 **Great! Now, how can we implement this in ScaIR?**
 
 
-### **ScaIR Implementation**
+### ScaIR Implementation
 
 Let's start with our IR constructs, which we will borrow from the [Arith](https://mlir.llvm.org/docs/Dialects/ArithOps/) dialect (already defined in ScaIR) to express our basic arithmetic addition, and constants.
 	`Note`: You might notice that both Operation extend a trait **`NoMemoryEffect`**. We will come back to its exact function shortly.
@@ -95,7 +94,7 @@ val AddIfold = pattern {
 }
 ```
 
-In the pattern above, we first match on an **`AddI`** operation, whose operands' defining operations are both **`Constant`** operations containing an integer attribute. A new constant value is the constructed from the addition of the two integer attributes (via and infix **`+`** operator defined for **`IntegerAttr`** class).
+In the pattern above, we first match on an **`AddI`** operation, whose operands' defining operations are both **`Constant`** operations containing an integer attribute. A new constant value is the constructed from the addition of the two integer attributes (via and infix **`+`** operation defined for **`IntegerAttr`** class).
 
 
 Next, let's define our dead code elimination. And here is where our trait **`NoMemoryEffect`** comes in handy. Similar to MLIR, traits are used to further extend Operations with additional semantics, but also allows us to group Operations with the same semantics. **`NoMemoryEffect`** represents a group of Operations which, as you might have guessed, have no effect on memory. 
@@ -103,7 +102,7 @@ Next, let's define our dead code elimination. And here is where our trait **`NoM
 If an Operation has no effects on memory, then we can safely erase it after making sure that none of its results are used anywhere in the IR: 
 ```scala
 val DeadCodeElimination = pattern {
-	case op: NoMemoryEffect if op.results.forall(_.uses.length == 0) =>
+	case op: NoMemoryEffect if op.results.map(_.uses == 0).reduce(_ && _) =>
 		PatternAction.Erase
 }
 ```
@@ -127,32 +126,35 @@ final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
 WalkerPass is a kind of IR **`Pass`** that walks over all operations in the IR via **`PatternRewriteWalker`**, and applies a given pattern. 
 In this case a **`GreedyRewritePatternApplier`**, which itself is a pattern that takes an Operation and applies all given patterns greedily over it, until a change is seen, or all patterns are tried.  
 
-## **Footnotes**
+# Footnotes
+TODO: not sure whether to include this or not. 
 
-
-We can also pattern match and transform over Operations not defined within ScaIR. **`UnregisteredOperation`** class is used to instantiate all such Operations.
-
-Consider the following IR:
-```mlir
-%0 = "some.op-that-does-not-exist"() <{value = 10}> : () -> i32
-func.call @print(%0) : (i32) -> ()
+Here is the un-sugared **`pattern`** example for constant folding an addition. We can see the full method signature with [PatternRewriter](https://edin-dal.github.io/scair/scair/transformations/PatternRewriteWalker$PatternRewriter.html), our API for manipulating the IR.
+```scala
+// Rewrite pattern for constant folding an addition
+object AddIfold extends RewritePattern:
+	override def match_and_rewrite(
+		op: Operation,
+		rewriter: PatternRewriter
+	): Unit =
+		op match
+			case AddI(
+				Owner(Constant(c0: IntegerAttr, _)),
+				Owner(Constant(c1: IntegerAttr, _)),
+				_
+			) =>
+				val new_op = Constant(c0 + c1, Result(c0.typ))
+				rewriter.replace_op(op, new_op, None)
+			case _ => ()
 ```
-As you might guess, given the context of this example, `"some.op-that-does-not-exist"` is an operation that does not exist within ScaIR :o 
 
-However, we can still write a pattern over it ( :D ), like so: 
-
+We can also pattern match and transform over Operations not defined within ScaIR. **`UnregisteredOperation`** class is used to instantiate all such Operations. 
 ```Scala
-val ten = IntegerAttr(IntData(10), IntegerType(IntData(32), Signless) // 10 : i32
-
 val UnregPat = pattern {
-  case op: UnregisteredOperation if op.name == "some.op-that-does-not-exist" =>
-	val const = op.properties.get("value").orElse(ten)
-    Constant(const, Result(const.typ))
+  case UnregisteredOperation(
+        name = "some.opreatioafnasjfias"
+      ) =>
+    val const = StringData("some.opreatioafnasjfias")
+    Constant(StringData("some.opreatioafnasjfias"), Result(const))
 }
-```
-
-to produce the following IR after transformation, effectively translating an unknown operation into a known constant operation:
-```mlir
-%0 = "arith.constant"() <{value = 10}> : () -> i32
-func.call @print(%0) : (i32) -> ()
 ```

@@ -1,19 +1,26 @@
+# Core Abstractions Tutorial
+
 In this tutorial we will focus on the core compilation abstraction used in MLIR. 
-- [Static-Single Assignment](#static-single-assignment)
+- [Static-Single Assignment](#static-single-assignment-ssa)
 - [Regions](#regions)
+	- [Blocks](#blocks)
+- [Dialect](#dialect)
 - [Attribute](#attribute)
 - [Operation](#operation)
-- [Dialect](#dialect)
 
 **`Note:`** The objective of this tutorial is to gain basic intuitions about the SSA form, Regions as well as the core compilation concepts introduced by MLIR. The tutorial will include brief informal definitions of each concept, complemented by some basic examples in the IR. As such, this tutorial does not serve as a comprehensive guide through each concept. 
 
 For more formal introductions please refer to:
-- some link
+- TODO
 
-# Static-Single Assignment (SSA)
+## **Static-Single Assignment (SSA)**
 MLIR's Intermediate Representation (IR) maintains the SSA form. 
 
-In the SSA form, *each **`Value`** produced by some operation is assigned exactly once* within the same scope, and can not be mutated during the course of the program represented in the IR. 
+At its core, SSA form represents computations through the assignment and passing of **values** around the program.
+
+In the SSA form, *each **`Value`** produced by some operation is assigned exactly once* within the same scope, and **can not** be mutated during the course of the program represented in the IR. 
+
+However, one **value** can be used many times in the IR, which makes up the **def-use** and **use-def** chains, where each value tracks where it is used, and it's defining operation. 
 
 Let's say we have a simple integer addition operation in Scala, where values `a` and `b` are added to create a new value `c`:
 ```scala
@@ -48,12 +55,9 @@ func.call @print(%a1) : (i32) -> ()
 ```
 Notice here, that the old reference to `a` is written as `%a0`, and the newly created value `%a1` is used in the `print` function.
 
-TODO: 
-- mention that values can be used multiple times, and mention def-use chains and use-def chains
-- also that at its core, the way computations are represented is through the definitions of values, which are then passed around in the program.
-- maybe mention that values have types?
 
-# Regions
+
+## **Regions**
 Another core part of the MLIR IR are **`Regions`**, which are used to *express localized scoping in the IR*. 
 
 Let's look at a simple program here:
@@ -99,11 +103,37 @@ Like the branches in the Scala program, Regions in MLIR IR maintain 3 properties
 - Regions do not share any definitions, their scope is localized.
 - The outside scope cannot access any values defined within the Region.
 
-### Blocks
-TODO
+### **Blocks**
+Each Region in the IR contains a list of **Blocks**.
+
+Blocks represent basic units of control flow within the IR.
+
+Each **Block** contains a list of 0+ **block arguments**, that are explicitly passed into the block, and can be used within the block.
+
+Here is an example of block usage in the IR, **^entry**, **^loop**, **^body**, **^exit** are blocks:
+```mlir
+...
+^entry:
+  %n = arith.constant 10 : i32
+  %c1 = arith.constant 1 : i32
+  %c0 = arith.constant 0 : i32
+  cf.br ^loop(%c0 : i32)
+
+^loop(%i : i32):
+  %cond = arith.cmpi slt, %i, %n : i32
+  cf.cond_br %cond, ^body, ^exit
+
+^body:
+  %i_next = arith.addi %i, %c1 : i32
+  cf.br ^loop(%i_next : i32)
+
+^exit:
+  func.return
+...
+```
 
 
-# Dialect
+## **Dialect**
 Finally, we get to the core abstractions! Let's start simple: **`Dialect`**.
 
 Dialects are simply namespaces for **`attributes`** and **`operations`**. Conceptually, dialects represent a group of attributes and operations of a certain abstraction.
@@ -124,7 +154,7 @@ Or, the `scf` dialect, containing abstractions for expressions structured contro
   "scf.yield"(%1) : (i64) -> ()
 ```
 
-# Attribute
+## **Attribute**
 We have already seen a number of different attributes in previous examples!
 Generally, **`Attributes`** define any and all compile time information in the IR. Crucially, each SSA value defined by an operation must have an associated type attribute; in the example below, `%const5` has the type `i64`.
 ```mlir
@@ -144,12 +174,12 @@ Here is a more general example of a complex number attribute from the `complex` 
 ```
 Here `#complex.number<:f64 1.0, 0.0>` is an attribute representing a complex number of `f64` type.
 
-# Operation
+## **Operation**
 **`Operations`** represent abstract units of computation.
 
 Each Operation consists of:
 - **`name`** -> a uniquely identifiable name within the IR, and consists of a dialect name followed by the name of the operation within the dialect, like: `"arith.constant"`
-- **`operands`** -> a list of SSA values previously defined by other operations, and passed into a given operation.
+- **`operands`** -> a list of used SSA values by the given operation.
 - **`results`** -> a list of SSA values produced by the given operation.
 - **`regions`** -> a list of Regions contained within the given operation.
 - **`successors`** -> a list of blocks to which the operation can pass control-flow.
@@ -158,7 +188,7 @@ Each Operation consists of:
 
 There are two main benefits that derive from this generic representation:
 - It allows for expressing a wide range of different abstractions as an Operation.
-- Since every operation is a collection of all of these abstractions (TODO: find a better word), one can reason generically about each operation. This is particularly powerful during generic optimizing transformations (eg. CSE and DCE).
+- Since every operation is a collection of all of these fields, one can reason generically about each operation. This is particularly powerful during generic optimizing transformations (eg. CSE and DCE).
 
 The generic IR form of an operation is the following:
 **`results`** `=` `"` **`name`** `"` `(` **`operands`** `)` `[`**`successors`**`]` `<{`**`properties`**`}>` `(`**`regions`**`)` `{`**`attributes`**`}` `:` `(`**`operand_types`**`)` `->` `(`**`result_types`**`)` 
