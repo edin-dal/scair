@@ -247,6 +247,8 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
       override def moduleDeps = Seq(dialects, passes, tools)
 
       override def mainClass = Some("scair.tools.opt.ScairOpt")
+      // To enable JVM flight recorder for performance analysis
+      // override def forkArgs = super.forkArgs() ++ Seq("-XX:StartFlightRecording=filename=recording.jfr,settings=profile,dumponexit=true")
 
   // Top-level commands and helpers
 
