@@ -684,7 +684,7 @@ inline def optionalPropertiesP[$: P](using Parser) =
   * @return
   *   An optional dictionary of attributes - empty if no dictionary is present.
   */
-inline def optionalAttributesP[$: P](using Parser) =
+def optionalAttributesP[$: P](using Parser) =
   (attributeDictionaryP).orElse(Map.empty)
 
 /** Parses an optional attributes dictionary from the input, preceded by the
