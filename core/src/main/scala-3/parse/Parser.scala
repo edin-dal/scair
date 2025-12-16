@@ -587,14 +587,6 @@ private def attributeAliasDefP[$: P](using p: Parser) =
 // [x] - block           ::= block-label operation+
 // [x] - block-label     ::= block-id block-arg-list? `:`
 
-private def populateBlockOps(
-    block: Block,
-    ops: Seq[Operation],
-)(using p: Parser): Block =
-  block.operations ++= ops
-  ops.foreach(_.containerBlock = Some(block))
-  block
-
 private def populateBlockArgsP[$: P](
     block: Block,
     args: Seq[(String, Attribute)],
@@ -608,7 +600,10 @@ private def populateBlockArgsP[$: P](
   )
 
 private def blockBodyP[$: P](block: Block)(using Parser) =
-  operationP.rep.mapTry(populateBlockOps(block, _))
+  operationP.map(op =>
+    op.containerBlock = Some(block)
+    block.operations.addOne(op): Unit
+  ).rep ~ Pass(block)
 
 def blockP[$: P](using Parser) = P(
   P(blockLabelP.flatMap(blockBodyP))

@@ -69,9 +69,7 @@ abstract trait ParametrizedAttribute() extends Attribute:
     attr match
       case x: ParametrizedAttribute =>
         x.name == this.name && x.getClass == this.getClass &&
-        x.parameters.length == this.parameters.length &&
-        (for ((i, j) <- x.parameters zip this.parameters)
-          yield i == j).foldLeft(true)((i, j) => i && j)
+        x.parameters == this.parameters
       case _ => false
 
 object DataAttribute:
