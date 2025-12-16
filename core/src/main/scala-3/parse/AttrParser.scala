@@ -178,13 +178,11 @@ def integerTypeP[$: P](using Parser): P[IntegerType] = P(
 \*≡==---==≡≡==---==≡*/
 
 def integerAttrP[$: P](using Parser): P[IntegerAttr] =
-  P(
-    (intDataP ~
-      (":" ~ (indexTypeP | integerTypeP)
-        .asInstanceOf[P[IntegerType | IndexType]]).orElse(I64))
-      .map(IntegerAttr.apply) | "true".map(_ => IntegerAttr(IntData(1), I1)) |
-      "false".map(_ => IntegerAttr(IntData(0), I1))
-  )
+  (intDataP.flatMap(data =>
+    (":" ~ (indexTypeP | integerTypeP).asInstanceOf[P[IntegerType | IndexType]])
+      .orElse(I64).map(IntegerAttr.apply(data, _))
+  ) | "true".map(_ => IntegerAttr(IntData(1), I1)) |
+    "false".map(_ => IntegerAttr(IntData(0), I1)))
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    FLOAT DATA    ||

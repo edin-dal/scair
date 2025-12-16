@@ -36,7 +36,7 @@ extension [T](inline p: P[T])
     * @return
     *   An optional parser, defaulting to default.
     */
-  inline def orElse[$: P](inline default: T): P[T] = P(
+  inline def orElse[$: P](inline default: => T): P[T] = P(
     p | Pass(default)
   )
 
@@ -91,6 +91,14 @@ extension [T](inline p: P[T])
           Fail(e.getMessage())
     )
   )
+
+// See uses; enables .rep to concatenate parsed sequences
+// TODO: Expose as nicer helper, but could'nt get it just right for now
+def concatRepeater[T] = new Repeater[Seq[T], Seq[T]]:
+  type Acc = mutable.Buffer[T]
+  def initial = mutable.Buffer.empty[T]
+  def accumulate(t: Seq[T], acc: mutable.Buffer[T]) = acc ++= t
+  def result(acc: mutable.Buffer[T]) = acc.toSeq
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||      SCOPE      ||
@@ -169,19 +177,18 @@ private final class Scope(
 // [x] successor             ::= caret-id (`:` block-arg-list)?
 // [x] trailing-location     ::= `loc` `(` location `)`
 
-private def opResultListP[$: P] = (opResultP.rep(1, sep = ",") ~ "=")
-  .orElse(Seq()).map(_.flatten)
+private def opResultListP[$: P] =
+  (opResultP.rep(1, sep = ",")(using concatRepeater[String]) ~ "=")
+    .orElse(Seq())
 
-private def sequenceValues(
-    value: (String, Option[BigInt])
-): Seq[String] =
-  value match
-    case (name, Some(totalNo)) =>
-      (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
-    case (name, None) => Seq(name)
+private inline def sequenceValues(
+    name: String,
+    no: BigInt,
+): Seq[String] = (0 to (no.toInt - 1)).map(no => s"$name#$no")
 
-private def opResultP[$: P] = (valueIdP ~ (":" ~ decimalLiteralP).?)
-  .map(sequenceValues)
+private inline def opResultP[$: P] = (valueIdP.flatMap(name =>
+  (":" ~ decimalLiteralP.map(sequenceValues(name, _))).orElse(Seq(name))
+))
 
 private def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
 

@@ -6,7 +6,6 @@ import java.lang.Double.parseDouble
 import java.lang.Math.pow
 import scala.annotation.switch
 import scala.annotation.tailrec
-import scala.compiletime.ops.double
 
 /** Whitespace syntax that supports // line-comments, *without* /* */ comments,
   * as is the case in the MLIR Language Spec.
@@ -87,20 +86,6 @@ inline def floatLiteralP[$: P] =
     (CharIn("\\-\\+").? ~~ decDigitsP ~~ "." ~~ decDigitsP).! ~~
       (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ decDigitsP).!).orElse("0")
   ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
-
-inline def nonExcludedCharacter(inline c: Char): Boolean =
-  c: @switch match
-    case '"' | '\\' => false
-    case _          => true
-
-inline def escapedP[$: P] =
-  ("\\" ~~
-    (
-      "n" ~~ Pass('\n') | "t" ~~ Pass('\t') | "\\" ~~ Pass('\\') |
-        "\"" ~~ Pass('\"') |
-        CharIn("a-fA-F0-9").repX(exactly = 2).!
-          .map(Integer.parseInt(_, 16).toChar)
-    )).repX.map(chars => String(chars.toArray))
 
 @tailrec
 def stringLiteralBisRecP(using
@@ -201,7 +186,7 @@ def suffixIdP[$: P] =
 inline def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP | stringLiteralP))
 
 def operandNameP[$: P] =
-  "%" ~~ (suffixIdP ~ ("#" ~~ decimalLiteralP).?).!
+  "%" ~~ (suffixIdP ~ ("#" ~~ decimalLiteralP).?).!.map(_.intern())
 
 def operandNamesP[$: P] =
   P(operandNameP.rep(sep = ","))
