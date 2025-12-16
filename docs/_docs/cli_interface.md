@@ -66,3 +66,20 @@ Additionally, there are a number of flags currently available for `scair-opt`:
 - **`--passes`** -> a comma separated list of passes to apply to the IR.
 
 - **`--verify-diagnostics`** -> verification diagnose mode, i.e verification errors are not fatal for the whole run
+
+
+## **Footnotes**
+
+By default, the `scair-opt` executable is compiled with the Scala native compiler. 
+
+However, we also provide the option to compile the executable with JVM (GraalVM by default) or GraalVM Native Image compiler.
+
+**JVM:**
+```bash
+~/scair$ ./mill installJVM
+```
+
+**Graal Native Image:**
+```bash
+~/scair$ ./mill installGraal
+```
