@@ -368,7 +368,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
   object install extends install:
-    // by default it installs the jvm version, we can discuss this :D 
+    // by default it installs the nativeLink version, it was discussed!
     override def scairOpt = tools.opt.native.nativeLink
 
     object jvm extends install:
