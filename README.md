@@ -45,6 +45,7 @@ libraryDependencies += "io.github.edin-dal" % "scair-tools_3" % "<version>"
 Here are some tutorials explaining the core abstractions used in ScaIR, as well as the API's necesssary to define and transform IR within ScaIR:
 - [Core Abstractions in ScaIR](https://edin-dal.github.io/scair/docs/core_abstractions.html)
 - [Transformations](https://edin-dal.github.io/scair/docs/transformations.html)
+- [CLI Interface](https://edin-dal.github.io/scair/docs/cli_interface.html)
 
 We are actively working on more tutorials, this is what we have so far however more will be coming very soon!  
 
@@ -62,8 +63,10 @@ To use the command you would need to have defined a new main class somewhere in 
 ```
 # No main class specified or found!
 ./mill run
+
 # To run the main CLI:
 ./mill tools.opt.run
+ 
 # To run the titlegen:
 ./mill clair.run
 ```

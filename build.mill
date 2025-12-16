@@ -368,14 +368,44 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     }
 
   object install extends install:
-    // by default it installs the nativeLink version, it was discussed!
+    // by default it installs the nativeLink version, ie compiled with the scala native compiler 
+    // it was discussed!
     override def scairOpt = tools.opt.native.nativeLink
 
-    object jvm extends install:
-      def fileName = "scair-opt-jvm"
-      override def scairOpt = tools.opt.launcher
+  object installJVM extends install:
+    override def scairOpt = tools.opt.launcher
 
-    object graal extends install:
-      def fileName = "scair-opt-graal"
-      override def scairOpt = tools.opt.nativeImage
-    
+  object installGraal extends install:
+    override def scairOpt = tools.opt.nativeImage
+
+  object benchmarkInstall extends DefaultTaskModule:
+    def fileNameJVM = "bench-opt-jvm"
+    def fileNameGraal = "bench-opt-graal"
+    def fileNameNative = "bench-opt-native"
+    def scairOptJVM = tools.opt.launcher
+    def scairOptGraal = tools.opt.nativeImage
+    def scairOptNative = tools.opt.native.nativeLink
+
+    override def defaultTask(): String = "run"
+
+    def run() = Task.Command(exclusive = true) {
+      os
+      .copy(
+        from = scairOptJVM().path,
+        to = os.home / ".local/bin" / fileNameJVM,
+        replaceExisting = true
+      )
+      os
+      .copy(
+        from = scairOptGraal().path,
+        to = os.home / ".local/bin" / fileNameGraal,
+        replaceExisting = true
+      )
+      os
+      .copy(
+        from = scairOptNative().path,
+        to = os.home / ".local/bin" / fileNameNative,
+        replaceExisting = true
+      )
+    }
+  

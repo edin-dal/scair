@@ -1,5 +1,5 @@
 ---
-title: "Transormations and Pass"
+title: "Transformations and Pass"
 ---
 
 [NoMemoryEffect]: scair.ir.NoMemoryEffect
