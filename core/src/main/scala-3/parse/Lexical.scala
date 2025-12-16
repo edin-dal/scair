@@ -62,19 +62,18 @@ inline def hexDigitsP[$: P] = CharsWhileIn(HexDigit)
 inline val Letter = "a-zA-Z"
 inline val IdPunct = "$._\\-"
 
-def integerLiteralP[$: P] = P(hexadecimalLiteralP | decimalLiteralP)
+inline def integerLiteralP[$: P] = hexadecimalLiteralP | decimalLiteralP
 
 def decimalLiteralP[$: P] =
-  P(("-" | "+").?.! ~ decDigitsP.!)
-    .map((sign: String, literal: String) => BigInt(sign + literal))
+  (("-" | "+").? ~ decDigitsP).!.map(BigInt(_))
 
-def hexadecimalLiteralP[$: P] =
-  P("0x" ~~ hexDigitsP.!).map((hex: String) => BigInt(hex, 16))
+inline def hexadecimalLiteralP[$: P] =
+  "0x" ~~ hexDigitsP.!.map(BigInt(_, 16))
 
-private def parseFloatNum(float: (String, String)): Double =
+private inline def parseFloatNum(float: (String, String)): Double =
   val number = parseDouble(float._1)
   val power = parseDouble(float._2)
-  return number * pow(10, power)
+  number * pow(10, power)
 
 /** Parses a floating-point number from its string representation. NOTE: This is
   * only a float approximation, and in its current form should not be trusted
@@ -83,7 +82,7 @@ private def parseFloatNum(float: (String, String)): Double =
   * @return
   *   float: (String, String)
   */
-def floatLiteralP[$: P] = P(
+inline def floatLiteralP[$: P] = (
   (CharIn("\\-\\+").? ~~ decDigitsP ~~ "." ~~ decDigitsP).! ~~
     (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ decDigitsP).!).orElse("0")
 ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
@@ -93,7 +92,7 @@ inline def nonExcludedCharacter(inline c: Char): Boolean =
     case '"' | '\\' => false
     case _          => true
 
-inline def escapedP[$: P] = P(
+inline def escapedP[$: P] = 
   ("\\" ~~
     (
       "n" ~~ Pass('\n') | "t" ~~ Pass('\t') | "\\" ~~ Pass('\\') |
@@ -101,12 +100,10 @@ inline def escapedP[$: P] = P(
         CharIn("a-fA-F0-9").repX(exactly = 2).!
           .map(Integer.parseInt(_, 16).toChar)
     )).repX.map(chars => String(chars.toArray))
-)
 
-def stringLiteralP[$: P] = P(
+def stringLiteralP[$: P] =
   "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ escapedP).map(_ + _).repX
     .map(_.mkString) ~~ "\""
-)
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||   IDENTIFIERS   ||
@@ -125,14 +122,14 @@ def stringLiteralP[$: P] = P(
 // [x] value-use ::= value-id (`#` decimal-literal)?
 // [x] value-use-list ::= value-use (`,` value-use)*
 
-def bareIdP[$: P] = P(
+inline def bareIdP[$: P] = (
   CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
 ).!
 
-def valueIdP[$: P] = P("%" ~~ suffixIdP)
+inline def valueIdP[$: P] = P("%" ~~ suffixIdP)
 
 // Alias can't have dots in their names for ambiguity with dialect names.
-def aliasNameP[$: P] = P(
+inline def aliasNameP[$: P] = (
   CharIn(Letter + "_") ~~
     (CharsWhileIn(
       Letter + DecDigit + "_$",
@@ -140,17 +137,17 @@ def aliasNameP[$: P] = P(
     )) ~~ !"."
 ).!
 
-def suffixIdP[$: P] = P(
+def suffixIdP[$: P] = (
   decimalLiteralP | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
     Letter + IdPunct + DecDigit,
     min = 0,
   )
 ).!
 
-def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP | stringLiteralP))
+inline def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP | stringLiteralP))
 
 def operandNameP[$: P] =
-  P(valueIdP ~ ("#" ~~ decimalLiteralP).?).!.map(_.tail)
+  "%" ~~ (suffixIdP ~ ("#" ~~ decimalLiteralP).?).!
 
 def operandNamesP[$: P] =
   P(operandNameP.rep(sep = ","))

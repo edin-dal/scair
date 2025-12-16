@@ -416,29 +416,35 @@ import scala.collection.mutable.ArrayBuffer
 
 private def genericOperandsTypesRecP[$: P](using
     expected: Int,
-    p: Parser,
-)(operandsNames: Seq[String], parsed: Int = 1): P[ArrayBuffer[Value[Attribute]]] =
+    p: Parser
+)(operandsNames: Seq[String], 
+    parsed: ArrayBuffer[Value[Attribute]]): P[Unit] =
   operandsNames match
-    case head :: Nil =>
-      typeP.explain(
-        f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed -
-            1})."
-      ).flatMap(operandP(head, _)).map(ArrayBuffer(_))
     case head :: tail =>
-      (typeP.flatMap(operandP(head, _)) ~ ",".explain(
-        f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
-      ) ~ genericOperandsTypesRecP(
+      ",".explain(
+        f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed.length})."
+      ) ~ typeP.flatMap(operandP(head, _)).map(parsed.addOne(_): Unit) ~ genericOperandsTypesRecP(
         tail,
-        parsed + 1,
-      )).map(_ +: _)
-    case Nil => Pass(ArrayBuffer())
+        parsed
+      )
+    case Nil => Pass(())
 
 private def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
-  "(" ~ genericOperandsTypesRecP(using operandsNames.length)(
-    operandsNames
-  ).map(_.toSeq) ~ ")"
+  "(" ~
+  {
+    operandsNames match
+      case Nil => Pass(Seq.empty[Value[Attribute]])
+      case head :: tail =>
+        val buffer = ArrayBuffer.empty[Value[Attribute]]
+        buffer.sizeHint(operandsNames.size)
+        typeP.flatMap(operandP(head, _)).map(buffer.addOne(_): Unit) ~
+        genericOperandsTypesRecP(using operandsNames.length)(
+          tail,
+          buffer
+        ).map(_ => buffer.toSeq)
+  } ~ ")"
 
 private def genericResultsTypesRecP[$: P](using
     expected: Int,
