@@ -147,7 +147,8 @@ inline def float128TypeP[$: P](using Parser): P[Float128Type] =
   "128".map(_ => Float128Type())
 
 def floatTypeP[$: P](using Parser): P[FloatType] = P(
-  "f" ~~/ (float16TypeP | float32TypeP | float64TypeP | float80TypeP | float128TypeP)
+  "f" ~~/
+    (float16TypeP | float32TypeP | float64TypeP | float80TypeP | float128TypeP)
 )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
