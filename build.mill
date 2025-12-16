@@ -369,13 +369,13 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
 
   object install extends install:
     // by default it installs the jvm version, we can discuss this :D 
-    override def scairOpt = tools.opt.launcher
+    override def scairOpt = tools.opt.native.nativeLink
+
+    object jvm extends install:
+      def fileName = "scair-opt-jvm"
+      override def scairOpt = tools.opt.launcher
 
     object graal extends install:
       def fileName = "scair-opt-graal"
       override def scairOpt = tools.opt.nativeImage
-
-    object native extends install:
-      def fileName = "scair-opt-native"
-      override def scairOpt = tools.opt.native.nativeLink
     
