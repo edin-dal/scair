@@ -457,39 +457,34 @@ private def genericOperandsTypesP[$: P](
 private def genericResultsTypesRecP[$: P](using
     expected: Int,
     p: Parser,
-)(
-    resultsNames: Seq[String],
-    parsed: Int = 1,
-): P[ArrayBuffer[Result[Attribute]]] =
+)(resultsNames: Seq[String], parsed: ArrayBuffer[Result[Attribute]]): P[Unit] =
   resultsNames match
-    case head :: Nil =>
-      typeP.explain(
-        s"Number of results ($expected) does not match the number of the corresponding result types (${parsed -
-            1})."
-      ).flatMap(
-        resultP(head, _)
-      ).map(ArrayBuffer(_))
     case head :: tail =>
-      (typeP.flatMap(
-        resultP(head, _)
-      ) ~ ",".explain(
-        f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
-      ) ~ genericResultsTypesRecP(tail, parsed + 1)).map(_ +: _)
-    case Nil => Pass(ArrayBuffer())
+      ",".explain(
+        f"Number of results ($expected) does not match the number of the corresponding operand types (${parsed
+            .length})."
+      ) ~ typeP.flatMap(resultP(head, _)).map(parsed.addOne(_): Unit) ~
+        genericResultsTypesRecP(
+          tail,
+          parsed,
+        )
+    case Nil => Pass(())
 
 private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
-  ("(" ~/ genericResultsTypesRecP(using resultsNames.length)(
-    resultsNames
-  ).map(_.toSeq).flatMap(resultsTypes =>
-    ")".explain(
-      f"Number of results (${resultsNames.length}) does not match the number of the corresponding result types."
-    ) ~ Pass(resultsTypes)
-  )) | Pass(()).filter(_ => resultsNames.length == 1).flatMap(_ =>
-    genericResultsTypesRecP(using resultsNames.length)(resultsNames)
-      .map(_.toSeq)
-  )
+  "(" ~ {
+    resultsNames match
+      case Nil          => Pass(Seq.empty[Result[Attribute]])
+      case head :: tail =>
+        val buffer = ArrayBuffer.empty[Result[Attribute]]
+        buffer.sizeHint(resultsNames.size)
+        typeP.flatMap(resultP(head, _)).map(buffer.addOne(_): Unit) ~
+          genericResultsTypesRecP(using resultsNames.length)(
+            tail,
+            buffer,
+          ).map(_ => buffer.toSeq)
+  } ~ ")" | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
 
 private def genericOperationNameP[$: P](using
     p: Parser
