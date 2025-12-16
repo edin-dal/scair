@@ -68,8 +68,8 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
           Right(inputModule)
         case failure: fastparse.Parsed.Failure =>
           Left(parser.error(failure, indexOffset))
-
-      indexOffset += input.count(_ == '\n') + 2
+      if args.splitInputFile && !(input eq inputChunks.last) then
+        indexOffset += input.count(_ == '\n') + 2
 
       parsed
     )
