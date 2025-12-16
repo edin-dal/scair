@@ -218,7 +218,7 @@ final class Parser(
 
   def parse[T](
       input: ParserInputSource,
-      parser: P[?] => P[T] = topLevelP(using _, this),
+      parser: P[?] => P[T] = moduleP(using _, this),
       verboseFailures: Boolean = false,
       startIndex: Int = 0,
       instrument: fastparse.internal.Instrument = null,
@@ -375,8 +375,8 @@ def resultP[$: P, A <: Attribute](
 // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 // shortened definition TODO: finish...
 
-def topLevelP[$: P](using p: Parser): P[Operation] = P(
-  Start ~ (operationP | attributeAliasDefP | typeAliasDefP).rep
+def moduleP[$: P](using p: Parser): P[Operation] = P(
+  Start ~ p.enterRegionP ~ (operationP | attributeAliasDefP | typeAliasDefP).rep
     .map(
       _.collect { case o: Operation =>
         o

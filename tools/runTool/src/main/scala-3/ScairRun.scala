@@ -63,7 +63,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       val parser = new Parser(ctx, inputPath = args.input)
       parser.parse(
         input = input.mkString,
-        parser = topLevelP(using _, parser),
+        parser = moduleP(using _, parser),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
           Right(inputModule)
