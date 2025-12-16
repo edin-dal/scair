@@ -186,8 +186,9 @@ private inline def sequenceValues(
     no: BigInt,
 ): Seq[String] = (0 to (no.toInt - 1)).map(no => s"$name#$no")
 
-private inline def opResultP[$: P] = (valueIdP.flatMap(name =>
-  (":" ~ decimalLiteralP.map(sequenceValues(name, _))).orElse(Seq(name))
+private inline def opResultP[$: P] = (valueIdP.flatMapX(name =>
+  (":" ~~ decDigitsP.!.map(d => sequenceValues(name, d.toInt)))
+    .orElse(Seq(name))
 ))
 
 private def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"

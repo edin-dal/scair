@@ -169,7 +169,7 @@ inline def intDataP[$: P](using Parser): P[IntData] =
 
 def integerTypeP[$: P](using Parser): P[IntegerType] = P(
   (("i".map(_ => Signless) | "si".map(_ => Signed) | "ui".map(_ => Unsigned)) ~~
-    decimalLiteralP./.map(IntData.apply))
+    decDigitsP.!./.map(d => IntData(d.toInt)))
     .map((sign, bits) => IntegerType.apply(bits, sign))
 )
 

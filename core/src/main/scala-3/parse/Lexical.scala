@@ -163,7 +163,7 @@ inline def bareIdP[$: P] =
     CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
   ).!
 
-inline def valueIdP[$: P] = P("%" ~~ suffixIdP)
+inline def valueIdP[$: P] = P("%" ~~ suffixIdP.!)
 
 // Alias can't have dots in their names for ambiguity with dialect names.
 inline def aliasNameP[$: P] =
@@ -177,16 +177,16 @@ inline def aliasNameP[$: P] =
 
 def suffixIdP[$: P] =
   (
-    decimalLiteralP | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+    decDigitsP | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
       Letter + IdPunct + DecDigit,
       min = 0,
     )
-  ).!
+  )
 
-inline def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP | stringLiteralP))
+inline def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP.! | stringLiteralP))
 
 def operandNameP[$: P] =
-  "%" ~~ (suffixIdP ~ ("#" ~~ decimalLiteralP).?).!.map(_.intern())
+  "%" ~~ (suffixIdP ~ ("#" ~~ decDigitsP).?).!
 
 def operandNamesP[$: P] =
   P(operandNameP.rep(sep = ","))
@@ -247,4 +247,4 @@ def prettyDialectTypeOrAttReferenceNameP[$: P] = P(
 
 def blockIdP[$: P] = P(caretIdP)
 
-def caretIdP[$: P] = P("^" ~~/ suffixIdP)
+def caretIdP[$: P] = P("^" ~~/ suffixIdP.!)
