@@ -160,13 +160,14 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     case m: ScairModule => m
   }
 
+  def rootPath = moduleDir
+
   override def unidocOptions =
-    super.unidocOptions() ++ Seq("-snippet-compiler:compile")
+    super.unidocOptions() ++ Seq("-snippet-compiler:compile", "-siteroot", (rootPath/"docs").toString())
 
   override def unidocVersion = Task { Some("0.6.0") }
-  override def unidocDocumentTitle = Task { "ScaIR Unidoc" }
+  override def unidocDocumentTitle = Task { "ScaIR" }
 
-  def rootPath = moduleDir
 
   object utils extends ScairModule
 

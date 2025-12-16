@@ -8,6 +8,7 @@ Please see [Scala Workshop talk](https://2025.workshop.scala-lang.org/details/sc
 
 ## Navigation
 - [Installation](#installation)
+- [Getting Started](#getting-started)
 - [Contributing to the Project](#contributing-to-the-project)
     - [Running](#running)
     - [Testing](#testing)  
@@ -39,6 +40,14 @@ libraryDependencies += "io.github.edin-dal" % "scair-tools_3" % "<version>"
 ```
 
 ---
+
+## Getting Started
+Here are some tutorials explaining the core abstractions used in ScaIR, as well as the API's necesssary to define and transform IR within ScaIR:
+- [Core Abstractions in ScaIR](https://edin-dal.github.io/scair/docs/core_abstractions.html)
+- [Transformations](https://edin-dal.github.io/scair/docs/transformations.html)
+
+We are actively working on more tutorials, this is what we have so far however more will be coming very soon!  
+
 
 ## Contributing to the project
 
