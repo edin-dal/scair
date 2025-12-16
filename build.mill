@@ -350,3 +350,31 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
       override def scairOpt = tools.opt.nativeOpt.nativeLink
       override def scairRun = tools.runTool.nativeOpt.nativeLink
 
+
+  trait install extends DefaultTaskModule:
+    def fileName = "scair-opt"
+    def scairOpt: Task[PathRef]
+
+    override def defaultTask(): String = "run"
+
+    def run() = Task.Command(exclusive = true) {
+      os
+      .copy(
+        from = scairOpt().path,
+        to = os.home / ".local/bin" / fileName,
+        replaceExisting = true
+      )
+    }
+
+  object install extends install:
+    // by default it installs the jvm version, we can discuss this :D 
+    override def scairOpt = tools.opt.launcher
+
+    object graal extends install:
+      def fileName = "scair-opt-graal"
+      override def scairOpt = tools.opt.nativeImage
+
+    object native extends install:
+      def fileName = "scair-opt-native"
+      override def scairOpt = tools.opt.native.nativeLink
+    
