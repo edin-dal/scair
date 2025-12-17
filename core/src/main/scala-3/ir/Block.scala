@@ -280,8 +280,9 @@ case class Block private (
     operations.foldLeft[OK[Unit]](Right(()))((res, op) =>
       res.flatMap(_ =>
         op.structured.map(v =>
-          operations(op) = v
-          v.containerBlock = Some(this)
+          if !(v eq op) then
+            operations(op) = v
+            v.containerBlock = Some(this)
         )
       )
     )
