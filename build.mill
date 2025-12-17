@@ -352,6 +352,11 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
       override def scairRun = tools.runTool.nativeOpt.nativeLink
 
 
+  private def isLinux = {
+    val name = System.getProperty("os.name").toLowerCase
+    name.contains("nux")
+  }
+
   trait install extends DefaultTaskModule:
     def fileName = "scair-opt"
     def scairOpt: Task[PathRef]
@@ -359,12 +364,16 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def defaultTask(): String = "run"
 
     def run() = Task.Command(exclusive = true) {
-      os
-      .copy(
-        from = scairOpt().path,
-        to = os.home / ".local/bin" / fileName,
-        replaceExisting = true
-      )
+      if isLinux then {
+        os
+        .copy(
+          from = scairOpt().path,
+          to = os.home / ".local/bin" / fileName,
+          replaceExisting = true
+        )
+      } else {
+        println("Installation is only supported on Linux systems.")
+      }
     }
 
   object install extends install:
@@ -389,23 +398,27 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
     override def defaultTask(): String = "run"
 
     def run() = Task.Command(exclusive = true) {
-      os
-      .copy(
-        from = scairOptJVM().path,
-        to = os.home / ".local/bin" / fileNameJVM,
-        replaceExisting = true
-      )
-      os
-      .copy(
-        from = scairOptGraal().path,
-        to = os.home / ".local/bin" / fileNameGraal,
-        replaceExisting = true
-      )
-      os
-      .copy(
-        from = scairOptNative().path,
-        to = os.home / ".local/bin" / fileNameNative,
-        replaceExisting = true
-      )
+      if isLinux then {
+        os
+        .copy(
+          from = scairOptJVM().path,
+          to = os.home / ".local/bin" / fileNameJVM,
+          replaceExisting = true
+        )
+        os
+        .copy(
+          from = scairOptGraal().path,
+          to = os.home / ".local/bin" / fileNameGraal,
+          replaceExisting = true
+        )
+        os
+        .copy(
+          from = scairOptNative().path,
+          to = os.home / ".local/bin" / fileNameNative,
+          replaceExisting = true
+        )
+      } else {
+        println("Installation is only supported on Linux systems.")
+      }
     }
   
