@@ -49,7 +49,7 @@ trait IsolatedFromAbove extends Operation:
 
   final def verifyRec(regs: Seq[Region]): OK[Operation] =
     val r = regs match
-      case region :: tail =>
+      case region +: tail =>
         region.blocks.foldLeft[OK[Operation]](Right(this))((r, block) =>
           r.flatMap(_ =>
             block.operations.foldLeft[OK[Operation]](r)((r, op) =>
