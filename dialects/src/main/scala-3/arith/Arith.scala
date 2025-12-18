@@ -184,11 +184,11 @@ type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 trait SameOperandsAndResultTypes extends Operation:
 
   override def traitVerify(): OK[Operation] =
-    val params = this.operands.typ ++ this.results.typ
+    val params = (this.operands ++ this.results)
     if params.isEmpty then Right(this)
     else
-      val first = params.head
-      if params.tail.forall(_ == first) then Right(this)
+      val first = params.head.typ
+      if params.tail.forall(_.typ == first) then Right(this)
       else
         Left(
           "All parameters of TypeConstraint must be of the same type in operation " +
