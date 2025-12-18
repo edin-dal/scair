@@ -100,17 +100,15 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
         d.name,
       )
     )
-  opInputDefs.count(_
-  match
+  opInputDefs.count(_ match
     case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single
-    case _ => false
-  ) match
+    case _                        => false) match
     // Special cases for better performance
     // TODO: Further cases
 
     case 0 =>
-        // All non-variadic: just return Seq(...)
-        Expr.ofSeq(stuff.asInstanceOf[Seq[Expr[DefinedInput[Def]]]])
+      // All non-variadic: just return Seq(...)
+      Expr.ofSeq(stuff.asInstanceOf[Seq[Expr[DefinedInput[Def]]]])
     case _ =>
       // A default, naive case implementation. Terrible runtime performance.
       stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>

@@ -499,29 +499,30 @@ private def genericOperationNameP[$: P](using
 private def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
-  genericOperationNameP.flatMapX((opCompanion: OperationCompanion[?]) =>
+  genericOperationNameP.flatMap((opCompanion: OperationCompanion[?]) =>
     "(" ~ operandNamesP.orElse(Seq()).flatMap((operandsNames: Seq[String]) =>
-      (")" ~/ successorListP.orElse(Seq()) ~/ propertiesP.orElse(Map.empty) ~/
-        regionListP.orElse(Seq()) ~/ optionalAttributesP ~/ ":" ~/
-        genericOperandsTypesP(
-          operandsNames
-        ) ~ "->" ~/ genericResultsTypesP(resultsNames)).map(
-        (
-            successors: Seq[Block],
-            properties: Map[String, Attribute],
-            regions: Seq[Region],
-            attributes: Map[String, Attribute],
-            operands: Seq[Value[Attribute]],
-            results: Seq[Result[Attribute]],
-        ) =>
-          opCompanion(
-            operands,
-            successors,
-            results,
-            regions,
-            properties,
-            attributes.to(DictType),
+      ")" ~/ successorListP.orElse(Seq()).flatMap(successors =>
+        propertiesP.orElse(Map.empty).flatMap(properties =>
+          regionListP.orElse(Seq()).flatMap(regions =>
+            optionalAttributesP.flatMap(attributes =>
+              ":" ~/ genericOperandsTypesP(
+                operandsNames
+              ).flatMap(operands =>
+                ("->" ~/ genericResultsTypesP(resultsNames))
+                  .map((results: Seq[Result[Attribute]]) =>
+                    opCompanion(
+                      operands,
+                      successors,
+                      results,
+                      regions,
+                      properties,
+                      attributes.to(DictType),
+                    )
+                  )
+              )
+            )
           )
+        )
       )
     )
   )
