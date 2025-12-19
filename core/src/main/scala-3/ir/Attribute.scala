@@ -25,7 +25,7 @@ import java.io.StringWriter
 sealed trait Attribute:
   def name: String
   def prefix: String = "#"
-  def customVerify(): OK[Unit] = Right(())
+  def customVerify(): OK[Unit] = OK()
   def printParameters(p: Printer): Unit
 
   def customPrint(p: Printer): Unit =

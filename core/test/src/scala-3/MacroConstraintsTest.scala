@@ -7,6 +7,7 @@ import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.core.constraints.{*, given}
+import scair.utils.*
 
 val f32 = Float32Type()
 
@@ -37,9 +38,9 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
       )
 
       val res = x.verify()
-      assert(res.isLeft)
+      assert(res.isError)
       assert(
-        res.left.get
+        res.getError.msg
           .contains(
             s"Expected $f32, got ${Float64Type()}"
           )
@@ -55,7 +56,7 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
       )
 
       val res = x.verify()
-      assert(res.isRight)
+      assert(res.isOK)
     }
 
   "A derived operation with var-def constraints" should
@@ -67,9 +68,9 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
       )
 
       val res = x.verify()
-      assert(res.isLeft)
+      assert(res.isError)
       assert(
-        res.left.get
+        res.getError.msg
           .contains(
             s"Expected ${Float32Type()}, got ${Float64Type()}"
           )
@@ -84,9 +85,9 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     )
 
     val res = x.verify()
-    assert(res.isLeft)
+    assert(res.isError)
     assert(
-      res.left.get
+      res.getError.msg
         .contains(
           s"Expected ${Float64Type()}, got ${Float32Type()}"
         )
@@ -101,9 +102,9 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
     )
 
     val res = x.verify()
-    assert(res.isLeft)
+    assert(res.isError)
     assert(
-      res.left.get
+      res.getError.msg
         .contains(
           s"Expected ${Float32Type()}, got ${Float64Type()}"
         )
@@ -119,5 +120,5 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
       )
 
       val res = x.verify()
-      assert(res.isRight)
+      assert(res.isOK)
     }

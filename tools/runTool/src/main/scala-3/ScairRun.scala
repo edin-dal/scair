@@ -6,7 +6,7 @@ import scair.interpreter.RuntimeCtx
 import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
-import scair.utils.OK
+import scair.utils.*
 import scopt.OParser
 
 import scala.collection.mutable
@@ -66,9 +66,9 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
         parser = moduleP(using _, parser),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
-          Right(inputModule)
+          OK(inputModule)
         case failure: fastparse.Parsed.Failure =>
-          Left(parser.error(failure))
+          Err(parser.error(failure))
     Array(inputModule)
 
   def main(args: Array[String]): Unit =
@@ -81,7 +81,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case None       => Source.stdin
 
     // casted as moduleOp
-    val module = parse(parsedArgs)(input).head.right.get.asInstanceOf[ModuleOp]
+    val module = parse(parsedArgs)(input).head.get.asInstanceOf[ModuleOp]
 
     val moduleBlock = module.body.blocks.head
 
