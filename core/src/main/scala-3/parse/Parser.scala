@@ -500,31 +500,32 @@ private def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
   genericOperationNameP.flatMap((opCompanion: OperationCompanion[?]) =>
-    "(" ~ operandNamesP.orElse(Seq.empty).flatMap((operandsNames: Seq[String]) =>
-      ")" ~/ successorListP.orElse(Seq.empty).flatMap(successors =>
-        propertiesP.orElse(Map.empty).flatMap(properties =>
-          regionListP.orElse(Seq.empty).flatMap(regions =>
-            optionalAttributesP.flatMap(attributes =>
-              ":" ~/ genericOperandsTypesP(
-                operandsNames
-              ).flatMap(operands =>
-                ("->" ~/ genericResultsTypesP(resultsNames))
-                  .map((results: Seq[Result[Attribute]]) =>
-                    opCompanion(
-                      operands,
-                      successors,
-                      results,
-                      regions,
-                      properties,
-                      attributes.to(DictType),
+    "(" ~ operandNamesP.orElse(Seq.empty)
+      .flatMap((operandsNames: Seq[String]) =>
+        ")" ~/ successorListP.orElse(Seq.empty).flatMap(successors =>
+          propertiesP.orElse(Map.empty).flatMap(properties =>
+            regionListP.orElse(Seq.empty).flatMap(regions =>
+              optionalAttributesP.flatMap(attributes =>
+                ":" ~/ genericOperandsTypesP(
+                  operandsNames
+                ).flatMap(operands =>
+                  ("->" ~/ genericResultsTypesP(resultsNames))
+                    .map((results: Seq[Result[Attribute]]) =>
+                      opCompanion(
+                        operands,
+                        successors,
+                        results,
+                        regions,
+                        properties,
+                        attributes.to(DictType),
+                      )
                     )
-                  )
+                )
               )
             )
           )
         )
       )
-    )
   )
 
 private def customOperationP[$: P](
@@ -611,8 +612,8 @@ def blockP[$: P](using Parser) = P(
 )
 
 private def blockLabelP[$: P](using p: Parser) =
-  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~ (blockArgListP.orElse(Seq.empty)))
-    .flatMap(populateBlockArgsP) ~ ":"
+  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~
+    (blockArgListP.orElse(Seq.empty))).flatMap(populateBlockArgsP) ~ ":"
 
 def successorListP[$: P](using Parser) = P(
   "[" ~ successorP.rep(sep = ",") ~ "]"

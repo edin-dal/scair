@@ -182,27 +182,29 @@ def propertiesMacro(
       case OpPropertyDef(name = name, variadicity = Variadicity.Optional) =>
         (Expr(name), selectMember[Option[Attribute]](adtOpExpr, name))
     }
-  if mandatoryProps.isEmpty && optionalProps.isEmpty then '{Map.empty[String, Attribute]} else 
-  ValDef.let(
-    Symbol.spliceOwner,
-    "propsBuilder",
-    '{ Map.newBuilder[String, Attribute] }.asTerm,
-  )(builderTerm =>
-    val builder = builderTerm
-      .asExprOf[Builder[(String, Attribute), Map[String, Attribute]]]
-    val mandatoryAdds = mandatoryProps
-      .map(prop => '{ $builder.addOne($prop) }.asTerm)
-    val optionalAdds = optionalProps.map(prop =>
-      '{
-        if ${ prop._2 }.isDefined then
-          $builder.addOne(${ prop._1 } -> ${ prop._2 }.get)
-      }.asTerm
-    )
-    Block(
-      (mandatoryAdds ++ optionalAdds).toList,
-      '{ $builder.result() }.asTerm,
-    )
-  ).asExprOf[Map[String, Attribute]]
+  if mandatoryProps.isEmpty && optionalProps.isEmpty then
+    '{ Map.empty[String, Attribute] }
+  else
+    ValDef.let(
+      Symbol.spliceOwner,
+      "propsBuilder",
+      '{ Map.newBuilder[String, Attribute] }.asTerm,
+    )(builderTerm =>
+      val builder = builderTerm
+        .asExprOf[Builder[(String, Attribute), Map[String, Attribute]]]
+      val mandatoryAdds = mandatoryProps
+        .map(prop => '{ $builder.addOne($prop) }.asTerm)
+      val optionalAdds = optionalProps.map(prop =>
+        '{
+          if ${ prop._2 }.isDefined then
+            $builder.addOne(${ prop._1 } -> ${ prop._2 }.get)
+        }.asTerm
+      )
+      Block(
+        (mandatoryAdds ++ optionalAdds).toList,
+        '{ $builder.result() }.asTerm,
+      )
+    ).asExprOf[Map[String, Attribute]]
 
 def customPrintMacro(
     opDef: OperationDef,

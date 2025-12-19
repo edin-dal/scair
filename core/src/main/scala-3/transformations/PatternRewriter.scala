@@ -1,7 +1,7 @@
 package scair.transformations
 
-import scair.ir.*
 import scair.helpers.*
+import scair.ir.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable.LinkedHashSet
