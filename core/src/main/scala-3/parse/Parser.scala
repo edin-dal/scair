@@ -93,18 +93,24 @@ extension [T](inline p: P[T])
     )
   )
 
+@tailrec
 def flatRepRec[$: P, V, T](
     i: Seq[T],
     f: T => P[V],
-    builder: Builder[V, Seq[V]],
+    running: P[Builder[V, Seq[V]]],
     sep: => P[Unit] = null,
 )(using
     whitespace: Whitespace
 ): P[Builder[V, Seq[V]]] =
   i match
     case head :: tail =>
-      sep ~ f(head).map(builder.addOne).flatMap(flatRepRec(tail, f, _, sep))
-    case Nil => Pass(builder)
+      flatRepRec(
+        tail,
+        f,
+        running.flatMap(builder => sep ~ f(head).map(builder.addOne)),
+        sep,
+      )
+    case Nil => running
 
 extension [T](inline i: Seq[T])
 
@@ -117,8 +123,7 @@ extension [T](inline i: Seq[T])
     i match
       case head :: tail =>
         val builder = Seq.newBuilder[V]
-        f(head).map(builder.addOne).flatMap(flatRepRec(tail, f, _, sep))
-          .map(_.result())
+        flatRepRec(tail, f, f(head).map(builder.addOne), sep).map(_.result())
       case Nil => Pass(Seq.empty[V])
 
 // See uses; enables .rep to concatenate parsed sequences
@@ -452,7 +457,8 @@ def operationP[$: P](using Parser): P[Operation] = P(
 def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
-  "(" ~ operandsNames.flatRep(name => typeP.flatMap(operandP(name, _)), sep = ",") ~
+  "(" ~
+    operandsNames.flatRep(name => typeP.flatMap(operandP(name, _)), sep = ",") ~
     ")"
 
 private def genericResultsTypesP[$: P](
