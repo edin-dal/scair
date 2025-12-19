@@ -252,10 +252,10 @@ def dictionaryAttributeP[$: P](using Parser): P[DictionaryAttr] =
 def denseArrayAttributeP[$: P](using Parser): P[DenseArrayAttr] = P(
   "array<" ~
     (((integerTypeP) ~ (":" ~ intDataP.rep(sep = ",")).orElse(
-      Seq()
+      Seq.empty
     )).map((typ: IntegerType, x: Seq[IntData]) =>
       DenseArrayAttr(typ, x.map(IntegerAttr(_, typ)))
-    ) | ((floatTypeP) ~ (":" ~ floatDataP.rep(sep = ",")).orElse(Seq()))
+    ) | ((floatTypeP) ~ (":" ~ floatDataP.rep(sep = ",")).orElse(Seq.empty))
       .map((typ: FloatType, x: Seq[FloatData]) =>
         DenseArrayAttr(typ, x.map(FloatAttr(_, typ)))
       )) ~ ">"
@@ -413,7 +413,7 @@ def multipleFloatTensorLiteralP[$: P](using
   )
 
 def emptyTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
-  P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr](Seq()))
+  P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr](Seq.empty))
 
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||   AFFINE MAP ATTR   ||
@@ -443,6 +443,6 @@ private def builtinTypeP[$: P](using Parser): P[Attribute] =
     tensorTypeP | memrefTypeP | vectorTypeP
 
 private def builtinAttrP[$: P](using Parser): P[Attribute] =
-  arrayAttributeP | denseArrayAttributeP | stringAttributeP | symbolRefAttrP |
+  arrayAttributeP | denseArrayAttributeP | symbolRefAttrP |
     floatAttrP | integerAttrP | denseIntOrFPElementsAttrP | affineMapAttrP |
-    affineSetAttrP
+    affineSetAttrP | stringAttributeP

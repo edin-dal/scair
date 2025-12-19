@@ -179,7 +179,7 @@ private final class Scope(
 
 private def opResultListP[$: P] =
   (opResultP.rep(1, sep = ",")(using concatRepeater[String]) ~ "=")
-    .orElse(Seq())
+    .orElse(Seq.empty)
 
 private inline def sequenceValues(
     name: String,
@@ -258,14 +258,14 @@ final class Parser(
     */
   def generateOperationP[$: P](
       opName: String,
-      resultsNames: Seq[String] = Seq(),
-      operandsNames: Seq[String] = Seq(),
-      successors: Seq[Block] = Seq(),
+      resultsNames: Seq[String] = Seq.empty,
+      operandsNames: Seq[String] = Seq.empty,
+      successors: Seq[Block] = Seq.empty,
       properties: Map[String, Attribute] = Map(),
-      regions: Seq[Region] = Seq(),
+      regions: Seq[Region] = Seq.empty,
       attributes: Map[String, Attribute] = Map(),
-      resultsTypes: Seq[Attribute] = Seq(),
-      operandsTypes: Seq[Attribute] = Seq(),
+      resultsTypes: Seq[Attribute] = Seq.empty,
+      operandsTypes: Seq[Attribute] = Seq.empty,
   ): P[Operation] =
 
     given Parser = this
@@ -500,10 +500,10 @@ private def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
   genericOperationNameP.flatMap((opCompanion: OperationCompanion[?]) =>
-    "(" ~ operandNamesP.orElse(Seq()).flatMap((operandsNames: Seq[String]) =>
-      ")" ~/ successorListP.orElse(Seq()).flatMap(successors =>
+    "(" ~ operandNamesP.orElse(Seq.empty).flatMap((operandsNames: Seq[String]) =>
+      ")" ~/ successorListP.orElse(Seq.empty).flatMap(successors =>
         propertiesP.orElse(Map.empty).flatMap(properties =>
-          regionListP.orElse(Seq()).flatMap(regions =>
+          regionListP.orElse(Seq.empty).flatMap(regions =>
             optionalAttributesP.flatMap(attributes =>
               ":" ~/ genericOperandsTypesP(
                 operandsNames
@@ -611,7 +611,7 @@ def blockP[$: P](using Parser) = P(
 )
 
 private def blockLabelP[$: P](using p: Parser) =
-  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~ (blockArgListP.orElse(Seq())))
+  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~ (blockArgListP.orElse(Seq.empty)))
     .flatMap(populateBlockArgsP) ~ ":"
 
 def successorListP[$: P](using Parser) = P(
@@ -633,7 +633,7 @@ def successorP[$: P](using p: Parser) = P(
 // [x] - region        ::= `{` operation* block* `}`
 
 def regionP[$: P](
-    entryArgs: Seq[(String, Attribute)] = Seq()
+    entryArgs: Seq[(String, Attribute)] = Seq.empty
 )(using p: Parser) = P(
   "{" ~/ p.enterRegionP ~/
     (populateBlockArgsP(new Block(), entryArgs).flatMap(blockBodyP) ~/
@@ -653,7 +653,7 @@ def regionP[$: P](
 def valueIdAndTypeP[$: P](using Parser) = P(valueIdP ~ ":" ~ typeP)
 
 private def valueIdAndTypeListP[$: P](using Parser) =
-  P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq())
+  P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq.empty)
 
 private def blockArgListP[$: P](using Parser) =
   P(
