@@ -5,7 +5,7 @@ import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
-import scair.utils.OK
+import scair.utils.*
 import scopt.OParser
 
 import scala.io.BufferedSource
@@ -62,14 +62,14 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
       )
       val parsed = parser.parse(
         input,
-        parser = topLevelP(using _, parser),
+        parser = moduleP(using _, parser),
       ) match
         case fastparse.Parsed.Success(inputModule, _) =>
-          Right(inputModule)
+          OK(inputModule)
         case failure: fastparse.Parsed.Failure =>
-          Left(parser.error(failure, indexOffset))
-
-      indexOffset += input.count(_ == '\n') + 2
+          Err(parser.error(failure, indexOffset))
+      if args.splitInputFile && !(input eq inputChunks.last) then
+        indexOffset += input.count(_ == '\n') + 2
 
       parsed
     )
@@ -123,31 +123,31 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     parsedModules.foreach(parsedModule =>
 
       parsedModule match
-        case Right(inputModule) =>
+        case OK(inputModule) =>
           val processedModule: OK[Operation] =
             var module =
-              if parsedArgs.skipVerify then Right(inputModule)
+              if parsedArgs.skipVerify then OK(inputModule)
               else inputModule.structured.flatMap(_.verify())
             // verify parsed content
             module match
-              case Right(op) =>
+              case OK(op) =>
                 // apply the specified passes
                 parsedArgs.passes.map(ctx.getPass(_).get).foldLeft(module)(
                   (module, pass) => module.map(pass.transform)
                 )
-              case Left(errorMsg) =>
-                if parsedArgs.verifyDiagnostics then Left(errorMsg + "\n")
+              case Err(errorMsg) =>
+                if parsedArgs.verifyDiagnostics then Err(errorMsg + "\n")
                 else throw new VerifyException(errorMsg)
 
           {
             val printer = new Printer(parsedArgs.printGeneric)
             processedModule.fold(
-              printer.print,
+              err => printer.print(err.msg),
               printer.printTopLevel,
             )
             printer.flush()
           }
-        case Left(errorMsg) =>
+        case Err(errorMsg) =>
           if parsedArgs.parsingDiagnostics then println(errorMsg)
           else throw new Exception(errorMsg)
 

@@ -1,6 +1,6 @@
 package scair.ir
 
-import scair.utils.OK
+import scair.utils.*
 
 import scala.annotation.targetName
 import scala.collection.mutable
@@ -47,12 +47,12 @@ case class Region(
   blocks.foreach(attachBlock)
 
   def structured =
-    blocks.foldLeft[OK[Unit]](Right(()))((res, block) =>
+    blocks.foldLeft[OK[Unit]](OK())((res, block) =>
       res.flatMap(_ => block.structured)
     )
 
   def verify(): OK[Unit] =
-    blocks.foldLeft[OK[Unit]](Right(()))((res, block) =>
+    blocks.foldLeft[OK[Unit]](OK())((res, block) =>
       res.flatMap(_ => block.verify())
     )
 

@@ -11,7 +11,7 @@ import scair.ir.*
 import scair.parse.*
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
-import scair.utils.OK
+import scair.utils.*
 
 import scala.annotation.switch
 import scala.quoted.*
@@ -51,7 +51,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?],
-)(using Quotes): Option[(String, Expr[Attribute])] =
+)(using Quotes): Option[Expr[(String, Attribute)]] =
   val name = s"${getConstructName[T]}SegmentSizes"
   hasMultiVariadic match
     case true =>
@@ -67,8 +67,8 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
           )
         )
       Some(
-        name -> '{
-          DenseArrayAttr(
+        '{
+          ${ Expr(name) } -> DenseArrayAttr(
             IntegerType(IntData(32), Signless),
             ${ arrayAttr }.map(x =>
               IntegerAttr(
@@ -100,11 +100,22 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
         d.name,
       )
     )
-  stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
-    next match
-      case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
-      case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
-  )
+  opInputDefs.count(_ match
+    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single
+    case _                        => false) match
+    // Special cases for better performance
+    // TODO: Further cases
+
+    case 0 =>
+      // All non-variadic: just return Seq(...)
+      Expr.ofSeq(stuff.asInstanceOf[Seq[Expr[DefinedInput[Def]]]])
+    case _ =>
+      // A default, naive case implementation. Terrible runtime performance.
+      stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
+        next match
+          case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
+          case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
+      )
 
 def operandsMacro(
     opDef: OperationDef,
@@ -130,10 +141,14 @@ def regionsMacro(
 )(using Quotes): Expr[Seq[Region]] =
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
+import scala.collection.mutable.Builder
+
 def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Map[String, Attribute]] =
+
+  import quotes.reflect.*
 
   val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands,
@@ -155,25 +170,41 @@ def propertiesMacro(
     opDef.successors,
     adtOpExpr,
   )
-  // Populating a Dictionarty with the properties
-  val definedProps =
-    if opDef.properties.isEmpty then '{ Map.empty[String, Attribute] }
-    else
-      // extracting property instances from the ADT
-      val propertyExprs = ADTFlatInputMacro(opDef.properties, adtOpExpr)
-      val propertyNames = Expr.ofList(opDef.properties.map((d) => Expr(d.name)))
-      '{
-        Map.from(${ propertyNames } zip ${ propertyExprs })
-      }
+  // Populating a Dictionary with the properties
+  val mandatoryProps =
+    opDef.properties.collect {
+      case OpPropertyDef(name = name, variadicity = Variadicity.Single) =>
+        '{ ${ Expr(name) } -> ${ selectMember[Attribute](adtOpExpr, name) } }
+    } ++ opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp
 
-  Seq(opSegSizeProp, resSegSizeProp, regSegSizeProp, succSegSizeProp)
-    .foldLeft(
-      definedProps
-    ) {
-      case (map, Some((name, segSize))) =>
-        '{ $map + (${ Expr(name) } -> $segSize) }
-      case (map, None) => map
+  val optionalProps =
+    opDef.properties.collect {
+      case OpPropertyDef(name = name, variadicity = Variadicity.Optional) =>
+        (Expr(name), selectMember[Option[Attribute]](adtOpExpr, name))
     }
+  if mandatoryProps.isEmpty && optionalProps.isEmpty then
+    '{ Map.empty[String, Attribute] }
+  else
+    ValDef.let(
+      Symbol.spliceOwner,
+      "propsBuilder",
+      '{ Map.newBuilder[String, Attribute] }.asTerm,
+    )(builderTerm =>
+      val builder = builderTerm
+        .asExprOf[Builder[(String, Attribute), Map[String, Attribute]]]
+      val mandatoryAdds = mandatoryProps
+        .map(prop => '{ $builder.addOne($prop) }.asTerm)
+      val optionalAdds = optionalProps.map(prop =>
+        '{
+          if ${ prop._2 }.isDefined then
+            $builder.addOne(${ prop._1 } -> ${ prop._2 }.get)
+        }.asTerm
+      )
+      Block(
+        (mandatoryAdds ++ optionalAdds).toList,
+        '{ $builder.result() }.asTerm,
+      )
+    ).asExprOf[Map[String, Attribute]]
 
 def customPrintMacro(
     opDef: OperationDef,
@@ -229,7 +260,7 @@ def verifyMacro(
       scair.core.constraints.ConstraintContext()
     ${
       val chain = a.foldLeft[Expr[OK[Unit]]](
-        '{ Right(()) }
+        '{ OK() }
       )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
       '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
     }

@@ -4,8 +4,8 @@ import fastparse.P
 import scair.Printer
 import scair.parse.Parser
 import scair.transformations.RewritePattern
+import scair.utils.*
 import scair.utils.IntrusiveNode
-import scair.utils.OK
 
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashMap
@@ -87,30 +87,30 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   def properties: Map[String, Attribute]
   val attributes: DictType[String, Attribute] = DictType.empty
   var containerBlock: Option[Block] = None
-  def traitVerify(): OK[Operation] = Right(this)
+  def traitVerify(): OK[Operation] = OK(this)
 
   def customPrint(p: Printer)(using indentLevel: Int) =
     p.printGenericMLIROperation(this)
 
-  def customVerify(): OK[Operation] = Right(this)
+  def customVerify(): OK[Operation] = OK(this)
 
-  def structured: OK[Operation] = regions.foldLeft[OK[Unit]](Right(()))(
-    (res, reg) => res.flatMap(_ => reg.structured)
-  ).map(_ => this)
+  def structured: OK[Operation] = regions
+    .foldLeft[OK[Unit]](OK())((res, reg) => res.flatMap(_ => reg.structured))
+    .map(_ => this)
 
   def verify(): OK[Operation] =
-    results.foldLeft[OK[Unit]](Right(()))((res, result) =>
+    results.foldLeft[OK[Unit]](OK())((res, result) =>
       res.flatMap(_ => result.verify())
     ).flatMap(_ =>
-      regions.foldLeft[OK[Unit]](Right(()))((res, region) =>
+      regions.foldLeft[OK[Unit]](OK())((res, region) =>
         res.flatMap(_ => region.verify())
       )
     ).flatMap(_ =>
-      properties.values.toSeq.foldLeft[OK[Unit]](Right(()))((res, prop) =>
+      properties.values.toSeq.foldLeft[OK[Unit]](OK())((res, prop) =>
         res.flatMap(_ => prop.customVerify())
       )
     ).flatMap(_ =>
-      attributes.values.toSeq.foldLeft[OK[Unit]](Right(()))((res, attr) =>
+      attributes.values.toSeq.foldLeft[OK[Unit]](OK())((res, attr) =>
         res.flatMap(_ => attr.customVerify())
       )
     ).flatMap(_ => traitVerify()).flatMap(_ => customVerify())

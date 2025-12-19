@@ -2,7 +2,7 @@ package scair.clair.macros
 
 import scair.Printer
 import scair.ir.*
-import scair.utils.OK
+import scair.utils.*
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝

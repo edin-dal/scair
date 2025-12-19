@@ -5,6 +5,7 @@ import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.func.*
 import scair.Printer
+import scair.utils.*
 
 import org.scalatest.*
 import org.scalatest.flatspec.*
@@ -75,7 +76,7 @@ builtin.module {
     RewriteMethods.eraseOp(zero)
 
     out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module.structured.right.get)
+    Printer(p = PrintWriter(out)).print(module.structured.get)
     out.toString().trim() shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {

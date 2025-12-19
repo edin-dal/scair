@@ -5,6 +5,7 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scala.collection.mutable.LinkedHashMap
+import scair.utils.*
 
 case class RegionOp(
     wowregions: Seq[Region]
@@ -560,7 +561,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
     val structured = op.structured
     structured should matchPattern {
-      case Right(
+      case OK(
             RegionOp(
               Seq(
                 Region(
@@ -579,7 +580,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
     val structured = unstrucOp.structured
     structured should matchPattern {
-      case Left("java.lang.Exception: Expected 2 operands, got 0.") =>
+      case Err("java.lang.Exception: Expected 2 operands, got 0.") =>
     }
   }
 
