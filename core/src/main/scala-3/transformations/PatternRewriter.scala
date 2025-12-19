@@ -152,7 +152,8 @@ trait Rewriter:
         // TODO: This should be enforced by a nicer design!
         if op.containerBlock.nonEmpty then
           val indices = Set.from(uses.map(_.index))
-          val newOperands = op.operands.mapWithIndex((v, i) => if indices.contains(i) then newValue else v)
+          val newOperands = op.operands
+            .mapWithIndex((v, i) => if indices.contains(i) then newValue else v)
           val newOp =
             op.updated(
               results = op.results,

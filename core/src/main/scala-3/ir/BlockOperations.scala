@@ -1,7 +1,7 @@
 package scair.ir
 
-import scair.ir.*
 import scair.helpers.*
+import scair.ir.*
 import scair.utils.IntrusiveList
 
 //
