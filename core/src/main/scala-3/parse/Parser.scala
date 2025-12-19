@@ -11,6 +11,7 @@ import scair.ir.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.mutable.Builder
 
 // ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
@@ -91,6 +92,34 @@ extension [T](inline p: P[T])
           Fail(e.getMessage())
     )
   )
+
+def flatRepRec[$: P, V, T](
+    i: Seq[T],
+    f: T => P[V],
+    builder: Builder[V, Seq[V]],
+    sep: => P[Unit] = null,
+)(using
+    whitespace: Whitespace
+): P[Builder[V, Seq[V]]] =
+  i match
+    case head :: tail =>
+      sep ~ f(head).map(builder.addOne).flatMap(flatRepRec(tail, f, _, sep))
+    case Nil => Pass(builder)
+
+extension [T](inline i: Seq[T])
+
+  inline def flatRep[$: P, V](
+      inline f: T => P[V],
+      inline sep: => P[Unit] = null,
+  )(using
+      whitespace: Whitespace
+  ): P[Seq[V]] =
+    i match
+      case head :: tail =>
+        val builder = Seq.newBuilder[V]
+        f(head).map(builder.addOne).flatMap(flatRepRec(tail, f, _, sep))
+          .map(_.result())
+      case Nil => Pass(Seq.empty[V])
 
 // See uses; enables .rep to concatenate parsed sequences
 // TODO: Expose as nicer helper, but could'nt get it just right for now
@@ -420,71 +449,19 @@ def operationP[$: P](using Parser): P[Operation] = P(
   ) ~/ trailingLocationP.?
 )./
 
-import scala.collection.mutable.ArrayBuffer
-
-private def genericOperandsTypesRecP[$: P](using
-    expected: Int,
-    p: Parser,
-)(operandsNames: Seq[String], parsed: ArrayBuffer[Value[Attribute]]): P[Unit] =
-  operandsNames match
-    case head :: tail =>
-      ",".explain(
-        f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed
-            .length})."
-      ) ~ typeP.flatMap(operandP(head, _)).map(parsed.addOne(_): Unit) ~
-        genericOperandsTypesRecP(
-          tail,
-          parsed,
-        )
-    case Nil => Pass(())
-
-private def genericOperandsTypesP[$: P](
+def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
-  "(" ~ {
-    operandsNames match
-      case Nil          => Pass(Seq.empty[Value[Attribute]])
-      case head :: tail =>
-        val buffer = ArrayBuffer.empty[Value[Attribute]]
-        buffer.sizeHint(operandsNames.size)
-        typeP.flatMap(operandP(head, _)).map(buffer.addOne(_): Unit) ~
-          genericOperandsTypesRecP(using operandsNames.length)(
-            tail,
-            buffer,
-          ).map(_ => buffer.toSeq)
-  } ~ ")"
-
-private def genericResultsTypesRecP[$: P](using
-    expected: Int,
-    p: Parser,
-)(resultsNames: Seq[String], parsed: ArrayBuffer[Result[Attribute]]): P[Unit] =
-  resultsNames match
-    case head :: tail =>
-      ",".explain(
-        f"Number of results ($expected) does not match the number of the corresponding operand types (${parsed
-            .length})."
-      ) ~ typeP.flatMap(resultP(head, _)).map(parsed.addOne(_): Unit) ~
-        genericResultsTypesRecP(
-          tail,
-          parsed,
-        )
-    case Nil => Pass(())
+  "(" ~ operandsNames.flatRep(name => typeP.flatMap(operandP(name, _)), sep = ",") ~
+    ")"
 
 private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
-  "(" ~ {
-    resultsNames match
-      case Nil          => Pass(Seq.empty[Result[Attribute]])
-      case head :: tail =>
-        val buffer = ArrayBuffer.empty[Result[Attribute]]
-        buffer.sizeHint(resultsNames.size)
-        typeP.flatMap(resultP(head, _)).map(buffer.addOne(_): Unit) ~
-          genericResultsTypesRecP(using resultsNames.length)(
-            tail,
-            buffer,
-          ).map(_ => buffer.toSeq)
-  } ~ ")" | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
+  "(" ~ resultsNames.flatRep(
+    name => typeP.flatMap(resultP(name, _)),
+    sep = ",",
+  ) ~ ")" | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
 
 private def genericOperationNameP[$: P](using
     p: Parser
