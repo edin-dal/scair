@@ -9,11 +9,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.Parser
-import scair.dialects.complex.Create
-import java.util.Dictionary
-import java.lang.invoke.MethodHandles.Lookup
 
-/*
 /*
 sum (x in d) e
 becomes
@@ -28,27 +24,41 @@ case class SumOp(
 ) extends DerivedOperation["sdql.sum", SumOp]
     derives DerivedOperationCompanion
 
-
-/* 
-let x = op1(a, b) in op2(x, c)
-
-becomes
-
-%rhs = op1 %a, %b : !dictionary
-
-%res = sdql.let %rhs -> !dictionary {
-^bb0(%x: !dictionary):
-  %out = op2 %x, %c : !dictionary
-  sdql.yield %out : !dictionary
-}
- */
-case class LetInOp(
+case class LetIn(
     arg: Operand[Attribute],
     region: Region,
     result: Result[Attribute],
-) extends DerivedOperation["sdql.letin", LetInOp]
+) extends DerivedOperation["sdql.let_in", LetIn]
+    // with AssemblyFormat["$arg `->` type($result) `{` $region `}`"]
     derives DerivedOperationCompanion
-*/
+
+case class Yield(
+    arg: Operand[Attribute]
+) extends DerivedOperation["sdql.yield", Yield]
+    with AssemblyFormat["attr-dict $arg `:` type($arg)"]
+    derives DerivedOperationCompanion
+
+given OperationCustomParser[LetIn]:
+
+  def parseResultTypes[$: P](using
+      Parser
+  ): P[Attribute] = ("->" ~ typeP)
+
+  def parse[$: P](
+      resNames: Seq[String]
+  )(using p: Parser): P[LetIn] =
+    (valueIdP ~ parseResultTypes ~ regionP()).flatMap {
+      case (attributeName, resTypes, body) =>
+        val attrTyp = body.blocks.head.arguments.apply(0).typ
+
+        // TODO: is this a safe way of obtaining (arg: Operand[Attribute])?
+        operandP(attributeName, attrTyp).map(LetIn(
+            _,
+            body,
+            Result(resTypes),
+        ))
+    }
+
 final case class EmptyDictionary(
     result: Result[DictionaryType]
 ) extends DerivedOperation["sdql.empty_dictionary", EmptyDictionary]
@@ -85,4 +95,4 @@ final case class AccessRecord(
     with AssemblyFormat["attr-dict $record $field `:` type($record) `->` type($result)"]
     derives DerivedOperationCompanion
 
-val SdqlDialect = summonDialect[EmptyTuple, (EmptyDictionary, CreateDictionary, LookupDictionary, CreateRecord, AccessRecord)]
+val SdqlDialect = summonDialect[EmptyTuple, (EmptyDictionary, CreateDictionary, LookupDictionary, CreateRecord, AccessRecord, LetIn, Yield)]
