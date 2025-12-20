@@ -353,6 +353,10 @@ def vectorTypeP[$: P](using Parser): P[VectorType] = P(
   )
 )
 
+def dictionaryTypeP[$: P](using Parser): P[DictionaryType] = P(
+  "dictionary<" ~/ typeP ~/ "," ~/ typeP ~/ ">"
+).map(DictionaryType.apply)
+
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||   SYMBOL REF ATTR   ||
 \*≡==---==≡≡≡≡≡==---==≡*/
@@ -441,7 +445,7 @@ def functionTypeP[$: P](using Parser): P[FunctionType] = P(
 
 private def builtinTypeP[$: P](using Parser): P[Attribute] =
   floatTypeP | integerTypeP | indexTypeP | complexTypeP | functionTypeP |
-    tensorTypeP | memrefTypeP | vectorTypeP
+    tensorTypeP | memrefTypeP | vectorTypeP | dictionaryTypeP
 
 private def builtinAttrP[$: P](using Parser): P[Attribute] =
   arrayAttributeP | denseArrayAttributeP | stringAttributeP | symbolRefAttrP |
