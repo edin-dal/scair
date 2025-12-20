@@ -69,5 +69,20 @@ final case class LookupDictionary(
 ) extends DerivedOperation["sdql.lookup_dictionary", LookupDictionary]
     with AssemblyFormat["$dict `[` $key `:` type($key) `]` attr-dict `:` type($dict) `->` type($valueType)"]
     derives DerivedOperationCompanion
+ 
+final case class CreateRecord(
+    values: Seq[Operand[Attribute]],
+    result: Result[RecordType],
+) extends DerivedOperation["sdql.create_record", CreateRecord]
+    with AssemblyFormat["attr-dict ($values^ `:` type($values))? `->` type($result)"]
+    derives DerivedOperationCompanion
 
-val SdqlDialect = summonDialect[EmptyTuple, (EmptyDictionary, CreateDictionary, LookupDictionary)]
+final case class AccessRecord(
+    record: Operand[RecordType],
+    field: StringData,
+    result: Result[Attribute],
+) extends DerivedOperation["sdql.access_record", AccessRecord]
+    with AssemblyFormat["attr-dict $record $field `:` type($record) `->` type($result)"]
+    derives DerivedOperationCompanion
+
+val SdqlDialect = summonDialect[EmptyTuple, (EmptyDictionary, CreateDictionary, LookupDictionary, CreateRecord, AccessRecord)]

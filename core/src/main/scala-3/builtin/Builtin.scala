@@ -567,3 +567,20 @@ final case class DictionaryType(
   override def customPrint(p: Printer): Unit =
     p.print("dict<", keyType, ", ", valueType, ">")(using indentLevel = 0)
 }
+
+final case class RecordType(
+    entries: Seq[(StringData, Attribute)]
+) extends ParametrizedAttribute, TypeAttribute {
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] = entries.map(_._2)
+
+  override def name: String = "sdql.record"
+
+  override def customPrint(p: Printer) =
+    p.print("record<")
+    p.printListF(entries, {
+      case (fieldName, fieldType) =>
+        p.print(fieldName, ": ", fieldType)(using indentLevel = 0)
+    })
+    p.print(">")
+}
