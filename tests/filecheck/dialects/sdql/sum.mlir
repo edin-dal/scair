@@ -1,12 +1,15 @@
 // RUN: scair-opt %s | filecheck %s
 
+// sum (x in d) x.val
+
 %0 = sdql.empty_dictionary : dictionary<i32, f16>
 
-%letin = sdql.let_in %0 -> record<"field": dictionary<i32, f16>> {
-^bb0(%x: dictionary<i32, f16>):
-  %out = sdql.create_record {fields = ["field"]} %x : dictionary<i32, f16> -> record<"field": dictionary<i32, f16>>
-  sdql.yield %out : record<"field": dictionary<i32, f16>>
+%1 = sdql.sum %0 : dictionary<i32, f16> -> f16 {
+^bb0(%x: record<"key": i32, "value": f16>):
+  %tmp = sdql.access_record %x "value" : record<"key": i32, "value": f16> -> f16
+  sdql.yield %tmp : f16
 }
+
 // CHECK: builtin.module {
 // CHECK:     %0 = sdql.empty_dictionary : dict<i32, f16>
 // CHECK:     %1 = "sdql.let_in"(%0) ({

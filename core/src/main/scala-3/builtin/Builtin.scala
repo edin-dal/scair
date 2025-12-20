@@ -558,7 +558,7 @@ final case class DictionaryType(
       TypeAttribute,
       ContainerType {
 
-  override def name: String = "Dictionary"
+  override def name: String = "dictionary"
 
   override def elementType: Attribute = valueType
 
@@ -574,7 +574,7 @@ final case class RecordType(
 
   override def parameters: Seq[Attribute | Seq[Attribute]] = entries.map(_._2)
 
-  override def name: String = "sdql.record"
+  override def name: String = "record"
 
   override def customPrint(p: Printer) =
     p.print("record<")

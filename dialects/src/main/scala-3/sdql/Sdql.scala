@@ -11,18 +11,45 @@ import scair.parse.*
 import scair.parse.Parser
 
 /*
-sum (x in d) e
+sum (x in e1) e2(x),
+where e2 is a function of x (x is of type record<key: T1, value: T2>)
+
 becomes
 
-
+%ev1 = $e1 : dictionary<T1, T2>
+%res = sdql.sum %ev1 -> T2 {
+^bb0(%x : record<"key": T1, "value": T2>):
+    %ev2 = // compute e1 given x
+    sdql.sum.yield %ev2
+}
  */
 
-case class SumOp(
+case class Sum(
     arg: Operand[Attribute],
+    // type of e1
+    inType: Attribute,
     region: Region,
     result: Result[Attribute],
-) extends DerivedOperation["sdql.sum", SumOp]
+) extends DerivedOperation["sdql.sum", Sum]
     derives DerivedOperationCompanion
+
+given OperationCustomParser[Sum]:
+
+  def parse[$: P](
+      resNames: Seq[String]
+  )(using p: Parser): P[Sum] =
+    (valueIdP ~ (":" ~ typeP) ~ ("->" ~ typeP) ~ regionP()).flatMap {
+      case (attributeName, inType, resTypes, body) =>
+        val attrTyp = body.blocks.head.arguments.apply(0).typ
+        operandP(attributeName, inType).map(
+            Sum(
+            _,
+            inType,
+            body,
+            Result(resTypes),
+        )
+        )
+    }
 
 case class LetIn(
     arg: Operand[Attribute],
@@ -40,14 +67,10 @@ case class Yield(
 
 given OperationCustomParser[LetIn]:
 
-  def parseResultTypes[$: P](using
-      Parser
-  ): P[Attribute] = ("->" ~ typeP)
-
   def parse[$: P](
       resNames: Seq[String]
   )(using p: Parser): P[LetIn] =
-    (valueIdP ~ parseResultTypes ~ regionP()).flatMap {
+    (valueIdP ~ ("->" ~ typeP) ~ regionP()).flatMap {
       case (attributeName, resTypes, body) =>
         val attrTyp = body.blocks.head.arguments.apply(0).typ
 
@@ -95,4 +118,4 @@ final case class AccessRecord(
     with AssemblyFormat["attr-dict $record $field `:` type($record) `->` type($result)"]
     derives DerivedOperationCompanion
 
-val SdqlDialect = summonDialect[EmptyTuple, (EmptyDictionary, CreateDictionary, LookupDictionary, CreateRecord, AccessRecord, LetIn, Yield)]
+val SdqlDialect = summonDialect[EmptyTuple, (EmptyDictionary, CreateDictionary, LookupDictionary, CreateRecord, AccessRecord, LetIn, Yield, Sum)]
