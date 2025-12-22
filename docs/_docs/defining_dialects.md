@@ -2,13 +2,16 @@
 title: "Defining a Dialect"
 ---
 
-[Attributes]: scair.ir.Attibute
-[Operations]: scair.ir.Operation
+[Attribute]: scair.ir.Attibute
+[Operation]: scair.ir.Operation
 [Traits]: sacir.ir.Traits
-[DerivedAttribute, DerivedOperation]: scair.clair.Traits
+[DerivedAttribute]: scair.clair.Traits
+[DerivedOperation]: scair.clair.Traits
+[derives DerivedOperationCompanion]: scair.clair.Traits
+[derives DerivedAttributeCompanion]: scair.clair.Traits
 
 # Defining a Dialect
-This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect. These are the fundamental building blocks used to model computation in the IR and closely follow the MLIR design.
+This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect.
 
 ## Defining Attributes
 
@@ -18,30 +21,31 @@ Attributes represent compile-time information in the IR. They are immutable and 
 * as constant values
 * as metadata attached to operations
 
-In ScaIR, all attributes extend the base `Attribute` hierarchy.
+In ScaIR, all attributes extend the base [Attribute] hierarchy.
 
-### Base Attributes
+### Attributes vs Types
 
-Base attributes represent atomic data values. Typical examples are integers, floats, and strings.
+In MLIR and ScaIR types are a specialized kind of attribute.
 
-```scala
-final case class MyIntAttr(value: Int)
-  extends DataAttribute[Int]("mydialect.int", value)
-```
+Attributes represent general compile-time information, while type attributes are used exclusively to describe the types of SSA values. Every SSA value must have exactly one [TypeAttribute].
 
-Use base attributes when the attribute:
+This distinction is reflected in the IR syntax:
 
-* wraps a single value
-* does not reference other attributes
+- `#dialect.attr<...>` — general attributes
+- `!dialect.type<...>` — type attributes
+
+Although both are implemented as attributes internally, only type attributes may appear in SSA type positions.
+
+In ScaIR, this distinction is expressed explicitly in Scala: type attributes extend TypeAttribute, while other attributes do not.
 
 ### Type Attributes
 
-Type attributes describe the types of SSA values. Every SSA value must have exactly one type attribute.
+`TypeAttribute` describes the types of SSA values. Every SSA value must have exactly one type attribute.
 
 ```scala
 final case class MyType()
-  extends TypeAttribute
-  with DerivedAttribute["mydialect.type", MyType]
+  extends DerivedAttribute["mydialect.type", MyType]
+  with TypeAttribute
   derives DerivedAttributeCompanion
 ```
 
@@ -51,16 +55,18 @@ Type attributes are printed in the IR type position:
 %0 : !mydialect.type
 ```
 
-`DerivedAttribute` is the typed base for attributes whose IR name and parameters are provided by a derived companion. `derives DerivedAttributeCompanion` generates the glue code needed for printing/parsing and parameter handling.
+[DerivedAttribute] is the typed base for attributes whose IR name and parameters are provided by a derived companion. 
+
+[derives DerivedAttributeCompanion] generates the glue code needed for printing/parsing and parameter handling.
 
 ### Data Attributes
 
 Data attributes store constant compile-time data, such as numbers or structured constants.
 
-ScaIR provides many built-in examples (e.g. `IntegerAttr`). You can define your own:
+ScaIR provides many built-in examples (e.g. `IntData`, `FloatData`). You can define your own:
 
 ```scala
-final case class RangeAttr(min: Int, max: Int)
+case class RangeAttr(min: Int, max: Int)
   extends DataAttribute[(Int, Int)]("mydialect.range", (min, max))
 ```
 
@@ -75,27 +81,29 @@ Use data attributes for:
 Parametrized attributes are composed of other attributes.
 
 ```scala
-final case class VectorType(
-  length: Attribute,
-  elementType: Attribute
+final case class FunctionType(
+    inputs: Seq[Attribute],
+    outputs: Seq[Attribute],
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
-  override def name = "mydialect.vector"
-  override def parameters = Seq(length, elementType)
+  override def name: String = "builtin.function_type"
+
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(inputs, outputs)
 ```
 
 These are ideal for:
 
+* function types
 * container types
-* dependent or structured types
 * composite metadata
 
 ## Defining Operations
 
 Operations represent units of computation in the IR.
 
-Every operation has:
+Every Operation has:
 
 * a name
 * operands
@@ -103,13 +111,13 @@ Every operation has:
 * optional regions
 * optional traits
 
-### Typed Operations and the DerivedOperation System
+### Typed Operations and the DerivedOperationCompanion
 
-In ScaIR, operations are defined as strongly typed Scala `case class`es. This replaces MLIR’s TableGen-generated C++ with ordinary Scala code that is checked at compile time.
+In ScaIR, Operations are defined as strongly typed Scala `case class`es. This replaces MLIR’s TableGen-generated C++ with ordinary Scala code that is checked at compile time.
 
-Each operation definition consists of two parts:
+Each Operation definition consists of two parts:
 
-- **`DerivedOperation`**: defines the typed shape of the operation (its name, operands, results, regions, and verification logic).
+- **`DerivedOperation`**: defines the typed shape of the Operation (its name, operands, results, regions, and verification logic).
 - **`DerivedOperationCompanion`**: connects the typed Scala definition to the generic IR, providing construction, parsing, and printing support.
 
 Together, these two parts bridge the typed Scala API and the generic IR representation used by parsers, printers, and transformation passes.
@@ -142,7 +150,9 @@ This defines an operation printed as:
 %r = "mydialect.add"(%a, %b) : (i32, i32) -> i32
 ```
 
-`DerivedOperation` is the typed base for operations and fixes the operation’s IR name. `derives DerivedOperationCompanion` generates the bridge between the typed case class and the generic IR (construction, printing/parsing, and additional verification constraints).
+[DerivedOperation] is the typed base for Operations and fixes the operations IR name.
+
+[derives DerivedOperationCompanion] generates the bridge between the typed case class and the generic IR (construction, printing/parsing, and additional verification constraints).
 
 ### Operations with Regions
 
@@ -157,15 +167,11 @@ case class MyIf(
   derives DerivedOperationCompanion
 ```
 
-Regions are commonly used for:
-
-* control flow
-* lambdas
-* loops
+Regions are commonly used for control flow and loops.
 
 ### Traits
 
-Traits attach semantic guarantees to operations.
+[Traits] attach semantic guarantees to Operations.
 
 Common examples:
 
