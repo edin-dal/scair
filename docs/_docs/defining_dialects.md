@@ -3,12 +3,15 @@ title: "Defining a Dialect"
 ---
 
 [Attribute]: scair.ir.Attibute
+[TypeAttribute]: scair.ir.TypeAttribute
 [Operation]: scair.ir.Operation
-[Traits]: sacir.ir.Traits
-[DerivedAttribute]: scair.clair.Traits
-[DerivedOperation]: scair.clair.Traits
-[derives DerivedOperationCompanion]: scair.clair.Traits
-[derives DerivedAttributeCompanion]: scair.clair.Traits
+[NoMemoryEffect]: scair.ir.NoMemoryEffect
+[IsTerminator]: scair.ir.IsTerminator
+[IsolatedFromAbove]: scair.ir.IsolatedFromAbove
+[DerivedAttribute]: scair.clair.macros.DerivedAttribute
+[DerivedOperation]: scair.clair.macros.DerivedOperation
+[derives DerivedOperationCompanion]: scair.clair.macros.DerivedOperationCompanion
+[derives DerivedAttributeCompanion]: scair.clair.macros.DerivedAttributeCompanion
 
 # Defining a Dialect
 This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect.
@@ -36,7 +39,7 @@ This distinction is reflected in the IR syntax:
 
 Although both are implemented as attributes internally, only type attributes may appear in SSA type positions.
 
-In ScaIR, this distinction is expressed explicitly in Scala: type attributes extend TypeAttribute, while other attributes do not.
+In ScaIR, this distinction is expressed explicitly in Scala: type attributes extend `TypeAttribute`, while other attributes do not.
 
 ### Type Attributes
 
@@ -66,8 +69,8 @@ Data attributes store constant compile-time data, such as numbers or structured 
 ScaIR provides many built-in examples (e.g. `IntData`, `FloatData`). You can define your own:
 
 ```scala
-case class RangeAttr(min: Int, max: Int)
-  extends DataAttribute[(Int, Int)]("mydialect.range", (min, max))
+case class RangeAttr(min: IntData, max: IntData)
+  extends DataAttribute[(IntData, IntData)]("mydialect.range", (min, max))
 ```
 
 Use data attributes for:
@@ -113,7 +116,7 @@ Every Operation has:
 
 ### Typed Operations and the DerivedOperationCompanion
 
-In ScaIR, Operations are defined as strongly typed Scala `case class`es. This replaces MLIR’s TableGen-generated C++ with ordinary Scala code that is checked at compile time.
+As with attributes, ScaIR defines operations using a typed definition plus a derived companion. Operations are defined as strongly typed Scala case classes.
 
 Each Operation definition consists of two parts:
 
@@ -132,7 +135,6 @@ case class Add(...)
 
 This derived companion plays the same role as MLIR’s TableGen-generated boilerplate, but without a separate code-generation step.
 
-
 ### A Simple Operation
 
 ```scala
@@ -149,10 +151,6 @@ This defines an operation printed as:
 ```mlir
 %r = "mydialect.add"(%a, %b) : (i32, i32) -> i32
 ```
-
-[DerivedOperation] is the typed base for Operations and fixes the operations IR name.
-
-[derives DerivedOperationCompanion] generates the bridge between the typed case class and the generic IR (construction, printing/parsing, and additional verification constraints).
 
 ### Operations with Regions
 
@@ -171,13 +169,13 @@ Regions are commonly used for control flow and loops.
 
 ### Traits
 
-[Traits] attach semantic guarantees to Operations.
+Traits attach semantic guarantees to Operations.
 
 Common examples:
 
-* `NoMemoryEffect`
-* `IsTerminator`
-* `IsolatedFromAbove`
+* [NoMemoryEffect]
+* [IsTerminator]
+* [IsolatedFromAbove]
 
 ```scala
 case class PureOp(
