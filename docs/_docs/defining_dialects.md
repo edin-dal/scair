@@ -2,10 +2,15 @@
 title: "Defining a Dialect"
 ---
 
-# Defining a Dialect
-This tutorial explains how to define new attributes and operations in ScaIR and how to package thse into a dialect. These are the fundamental building blocks used to model computation in the IR and closely follow the MLIR design.
+[Attributes]: scair.ir.Attibute
+[Operations]: scair.ir.Operation
+[Traits]: sacir.ir.Traits
+[DerivedAttribute, DerivedOperation]: scair.clair.Traits
 
-## 1. Defining Attributes
+# Defining a Dialect
+This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect. These are the fundamental building blocks used to model computation in the IR and closely follow the MLIR design.
+
+## Defining Attributes
 
 Attributes represent compile-time information in the IR. They are immutable and may appear:
 
@@ -15,7 +20,7 @@ Attributes represent compile-time information in the IR. They are immutable and 
 
 In ScaIR, all attributes extend the base `Attribute` hierarchy.
 
-### 1.1 Base Attributes
+### Base Attributes
 
 Base attributes represent atomic data values. Typical examples are integers, floats, and strings.
 
@@ -29,7 +34,7 @@ Use base attributes when the attribute:
 * wraps a single value
 * does not reference other attributes
 
-### 1.2 Type Attributes
+### Type Attributes
 
 Type attributes describe the types of SSA values. Every SSA value must have exactly one type attribute.
 
@@ -46,7 +51,9 @@ Type attributes are printed in the IR type position:
 %0 : !mydialect.type
 ```
 
-### 1.3 Data Attributes
+`DerivedAttribute` is the typed base for attributes whose IR name and parameters are provided by a derived companion. `derives DerivedAttributeCompanion` generates the glue code needed for printing/parsing and parameter handling.
+
+### Data Attributes
 
 Data attributes store constant compile-time data, such as numbers or structured constants.
 
@@ -63,7 +70,7 @@ Use data attributes for:
 * annotations
 * configuration metadata
 
-### 1.4 Parametrized Attributes
+### Parametrized Attributes
 
 Parametrized attributes are composed of other attributes.
 
@@ -84,7 +91,7 @@ These are ideal for:
 * dependent or structured types
 * composite metadata
 
-## 2. Defining Operations
+## Defining Operations
 
 Operations represent units of computation in the IR.
 
@@ -96,7 +103,29 @@ Every operation has:
 * optional regions
 * optional traits
 
-### 2.1 A Simple Operation
+### Typed Operations and the DerivedOperation System
+
+In ScaIR, operations are defined as strongly typed Scala `case class`es. This replaces MLIR’s TableGen-generated C++ with ordinary Scala code that is checked at compile time.
+
+Each operation definition consists of two parts:
+
+- **`DerivedOperation`**: defines the typed shape of the operation (its name, operands, results, regions, and verification logic).
+- **`DerivedOperationCompanion`**: connects the typed Scala definition to the generic IR, providing construction, parsing, and printing support.
+
+Together, these two parts bridge the typed Scala API and the generic IR representation used by parsers, printers, and transformation passes.
+
+In most cases, the companion is derived automatically using macros:
+
+```scala
+case class Add(...) 
+  extends DerivedOperation["mydialect.add", Add]
+  derives DerivedOperationCompanion
+```
+
+This derived companion plays the same role as MLIR’s TableGen-generated boilerplate, but without a separate code-generation step.
+
+
+### A Simple Operation
 
 ```scala
 case class Add(
@@ -113,7 +142,9 @@ This defines an operation printed as:
 %r = "mydialect.add"(%a, %b) : (i32, i32) -> i32
 ```
 
-### 2.2 Operations with Regions
+`DerivedOperation` is the typed base for operations and fixes the operation’s IR name. `derives DerivedOperationCompanion` generates the bridge between the typed case class and the generic IR (construction, printing/parsing, and additional verification constraints).
+
+### Operations with Regions
 
 Operations may contain regions, which define nested scopes.
 
@@ -132,7 +163,7 @@ Regions are commonly used for:
 * lambdas
 * loops
 
-### 2.3 Traits
+### Traits
 
 Traits attach semantic guarantees to operations.
 
@@ -150,9 +181,9 @@ case class PureOp(
   derives DerivedOperationCompanion
 ```
 
-Traits are heavily used by transformations and verification passes.
+Traits are used by transformations and verification passes.
 
-### 2.4 Verification
+### Verification
 
 Operations can define a `verify()` method to enforce invariants:
 
@@ -162,9 +193,9 @@ override def verify() =
   else Left("type mismatch")
 ```
 
-Verification is run automatically during parsing and transformation passes.
+Verification is run automatically during parsing and transformation passes. Verification combines generic IR checks with operation- and trait-specific constraints.
 
-## 3. What is a Dialect?
+## What is a Dialect?
 
 A dialect is a namespace that groups:
 
@@ -179,7 +210,7 @@ Examples:
 * `arith` — arithmetic operations
 * `scf` — structured control flow
 
-### 3.1 Registering a Dialect
+### Registering a Dialect
 
 In ScaIR, dialects are registered declaratively using `summonDialect`.
 
@@ -199,7 +230,7 @@ Once registered, the IR parser can recognize:
 * operation names
 * printing and parsing logic
 
-### 3.2 How to Connect a Dialect
+### How to Connect a Dialect
 
 To make a dialect available:
 
