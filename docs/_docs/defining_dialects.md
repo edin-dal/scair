@@ -1,14 +1,13 @@
 ---
-title: "Define Attributes and Operations"
+title: "Defining a Dialect"
 ---
 
-# Attributes and Operations
-
-This tutorial explains how to define new attributes and operations in ScaIR. These are the fundamental building blocks used to model computation in the IR and closely follow the MLIR design.
+# Defining a Dialect
+This tutorial explains how to define new attributes and operations in ScaIR and how to package thse into a dialect. These are the fundamental building blocks used to model computation in the IR and closely follow the MLIR design.
 
 ## 1. Defining Attributes
 
-Attributes represent **compile-time information** in the IR. They are immutable and may appear:
+Attributes represent compile-time information in the IR. They are immutable and may appear:
 
 * as SSA types
 * as constant values
@@ -30,11 +29,9 @@ Use base attributes when the attribute:
 * wraps a single value
 * does not reference other attributes
 
----
-
 ### 1.2 Type Attributes
 
-Type attributes describe the **types of SSA values**. Every SSA value must have exactly one type attribute.
+Type attributes describe the types of SSA values. Every SSA value must have exactly one type attribute.
 
 ```scala
 final case class MyType()
@@ -48,8 +45,6 @@ Type attributes are printed in the IR type position:
 ```mlir
 %0 : !mydialect.type
 ```
-
----
 
 ### 1.3 Data Attributes
 
@@ -68,11 +63,9 @@ Use data attributes for:
 * annotations
 * configuration metadata
 
----
-
 ### 1.4 Parametrized Attributes
 
-Parametrized attributes are composed of **other attributes**.
+Parametrized attributes are composed of other attributes.
 
 ```scala
 final case class VectorType(
@@ -91,11 +84,9 @@ These are ideal for:
 * dependent or structured types
 * composite metadata
 
----
-
 ## 2. Defining Operations
 
-Operations represent **units of computation** in the IR.
+Operations represent units of computation in the IR.
 
 Every operation has:
 
@@ -122,11 +113,9 @@ This defines an operation printed as:
 %r = "mydialect.add"(%a, %b) : (i32, i32) -> i32
 ```
 
----
-
 ### 2.2 Operations with Regions
 
-Operations may contain **regions**, which define nested scopes.
+Operations may contain regions, which define nested scopes.
 
 ```scala
 case class MyIf(
@@ -142,8 +131,6 @@ Regions are commonly used for:
 * control flow
 * lambdas
 * loops
-
----
 
 ### 2.3 Traits
 
@@ -165,9 +152,7 @@ case class PureOp(
 
 Traits are heavily used by transformations and verification passes.
 
----
-
-## 3. Verification
+### 2.4 Verification
 
 Operations can define a `verify()` method to enforce invariants:
 
@@ -178,3 +163,51 @@ override def verify() =
 ```
 
 Verification is run automatically during parsing and transformation passes.
+
+## 3. What is a Dialect?
+
+A dialect is a namespace that groups:
+
+* operations
+* attributes
+* types
+
+Dialects represent a coherent abstraction level in the IR.
+
+Examples:
+
+* `arith` — arithmetic operations
+* `scf` — structured control flow
+
+### 3.1 Registering a Dialect
+
+In ScaIR, dialects are registered declaratively using `summonDialect`.
+
+```scala
+val MyDialect = summonDialect[
+  // Attributes
+  (MyType, VectorType, RangeAttr),
+
+  // Operations
+  (Add, PureOp)
+]
+```
+
+Once registered, the IR parser can recognize:
+
+* attribute names
+* operation names
+* printing and parsing logic
+
+### 3.2 How to Connect a Dialect
+
+To make a dialect available:
+
+1. Import the dialect object
+2. Ensure it is linked into the binary
+
+```scala
+import scair.dialects.mydialect.*
+```
+
+After this, IR containing `"mydialect.*"` operations can be parsed and printed.
