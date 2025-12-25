@@ -12,7 +12,7 @@
 // CHECK: builtin.module {
 // CHECK:   %0 = sdql.empty_dictionary : dictionary<i32, f16>
 // CHECK:   %1 = "sdql.sum"(%0) <{inType = dictionary<i32, f16>}> ({
-// CHECK:   ^bb0(%2: i, %3: f16):
+// CHECK:   ^bb0(%2: i32, %3: f16):
 // CHECK:     sdql.yield %3 : f16
 // CHECK:   }) : (dictionary<i32, f16>) -> f16
 // CHECK: }

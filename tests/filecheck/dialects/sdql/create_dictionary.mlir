@@ -5,7 +5,7 @@
 %k2 = "arith.constant"() <{value = 6 : i32}> : () -> i32
 %v2 = "arith.constant"() <{value = 0.1 : f32}> : () -> f32
 
-%res = sdql.create_dictionary %k1, %v1, %k2, %v2 : i32, f32, i32, f32 -> memref<i32>
+%res = sdql.create_dictionary %k1, %v1, %k2, %v2 : i32, f32, i32, f32 -> dictionary<i32, f32>
 
 // CHECK: builtin.module {
 // CHECK:   %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
