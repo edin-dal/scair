@@ -361,7 +361,7 @@ def dictionaryTypeP[$: P](using Parser): P[DictionaryType] = P(
 record-type ::= `!llvm.struct<` `(` type-list `)` `>`
 field-list ::= <maybe empty comma-separated list of field names and types>
 field ::= string-literal `:` type
-*/
+ */
 
 def fieldTypedP[$: P](using Parser): P[(String, Attribute)] = P(
   stringLiteralP ~/ ":" ~/ typeP

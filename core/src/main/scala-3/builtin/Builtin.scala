@@ -554,21 +554,22 @@ final case class DictionaryType(
     valueType: Attribute,
 ) extends ParametrizedAttribute,
       TypeAttribute,
-      ContainerType {
+      ContainerType:
 
   override def name: String = "dictionary"
 
   override def elementType: Attribute = valueType
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(keyType, valueType)
+  override def parameters: Seq[Attribute | Seq[Attribute]] =
+    Seq(keyType, valueType)
 
   override def customPrint(p: Printer): Unit =
     p.print("dictionary<", keyType, ", ", valueType, ">")(using indentLevel = 0)
-}
 
 final case class RecordType(
     entries: Seq[(StringData, Attribute)]
-) extends ParametrizedAttribute, TypeAttribute {
+) extends ParametrizedAttribute,
+      TypeAttribute:
 
   override def parameters: Seq[Attribute | Seq[Attribute]] = entries.map(_._2)
 
@@ -576,9 +577,10 @@ final case class RecordType(
 
   override def customPrint(p: Printer) =
     p.print("record<")
-    p.printListF(entries, {
-      case (fieldName, fieldType) =>
+    p.printListF(
+      entries,
+      { case (fieldName, fieldType) =>
         p.print(fieldName, ": ", fieldType)(using indentLevel = 0)
-    })
+      },
+    )
     p.print(">")
-}

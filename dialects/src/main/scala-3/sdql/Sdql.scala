@@ -86,7 +86,7 @@ final case class CreateDictionary(
 
   override def customVerify(): OK[Operation] =
     if !result.typ.isInstanceOf[DictionaryType] then
-        return Left("Return type of create_dictionary must be a dictionary")
+      return Left("Return type of create_dictionary must be a dictionary")
 
     // TODO: verify that _operands is exactly [keyTyp, valTyp, keyTyp, ...]
     Right(this)
