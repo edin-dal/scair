@@ -549,8 +549,6 @@ case class UnrealizedConversionCastOp(
 val BuiltinDialect =
   summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)]
 
-
-
 final case class DictionaryType(
     keyType: Attribute,
     valueType: Attribute,
@@ -565,7 +563,7 @@ final case class DictionaryType(
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(keyType, valueType)
 
   override def customPrint(p: Printer): Unit =
-    p.print("dict<", keyType, ", ", valueType, ">")(using indentLevel = 0)
+    p.print("dictionary<", keyType, ", ", valueType, ">")(using indentLevel = 0)
 }
 
 final case class RecordType(
