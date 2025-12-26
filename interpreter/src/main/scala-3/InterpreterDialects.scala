@@ -9,4 +9,5 @@ val allInterpreterDialects: Seq[InterpreterDialect] =
     InterpreterFuncDialect,
     InterpreterArithDialect,
     InterpreterMemrefDialect,
+    InterpreterSdqlDialect,
   )

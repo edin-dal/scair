@@ -57,7 +57,7 @@ given OperationCustomParser[Sum]:
   def parse[$: P](resNames: Seq[String])(using p: Parser): P[Sum] =
     (valueIdP ~ (":" ~ typeP) ~ ("->" ~ typeP) ~ regionP()).flatMap {
       case (argName, inType, resType, region) =>
-        // declare the resulting val
+        // capture argument and register return
         (operandP(argName, inType) ~ resultP(resNames.head, resType)).map {
           case (arg, res) =>
             Sum(arg, inType.asInstanceOf[DictionaryType], region, res)
