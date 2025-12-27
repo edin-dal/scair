@@ -1,4 +1,4 @@
-[error] java.lang.Exception: Error: ¯\_(ツ)_/¯ Promote(TropicalSemiRingType(true,false,None),Sym(v))
+[error] java.lang.Exception: Error: Unsupported expression in MLIR codegen: Promote(TropicalSemiRingType(true,false,None),Sym(v))
 [error] 	at sdql.package$.raise(package.scala:4)
 [error] 	at sdql.backend.MlirCodegen$.bindToName(MlirCodegen.scala:533)
 [error] 	at sdql.backend.MlirCodegen$.$anonfun$bindToName$16(MlirCodegen.scala:208)
@@ -12,4 +12,4 @@
 [error] 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
 [error] 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
 [error] stack trace is suppressed; run 'last Compile / run' for the full output
-[error] (Compile / run) java.lang.Exception: Error: ¯\_(ツ)_/¯ Promote(TropicalSemiRingType(true,false,None),Sym(v))
+[error] (Compile / run) java.lang.Exception: Error: Unsupported expression in MLIR codegen: Promote(TropicalSemiRingType(true,false,None),Sym(v))
