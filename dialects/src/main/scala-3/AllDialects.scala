@@ -11,6 +11,7 @@ import scair.dialects.llvm.LLVMDialect
 import scair.dialects.math.MathDialect
 import scair.dialects.memref.MemrefDialect
 import scair.dialects.scf.SCFDialect
+import scair.dialects.sdql.SdqlDialect
 import scair.dialects.test.Test
 import scair.ir.Dialect
 
@@ -44,4 +45,5 @@ val allDialects: Seq[Dialect] =
     FuncDialect,
     LLVMDialect,
     SCFDialect,
+    SdqlDialect,
   )

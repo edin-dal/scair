@@ -353,6 +353,27 @@ def vectorTypeP[$: P](using Parser): P[VectorType] = P(
   )
 )
 
+def dictionaryTypeP[$: P](using Parser): P[DictionaryType] = P(
+  "dictionary<" ~/ typeP ~/ "," ~/ typeP ~/ ">"
+).map(DictionaryType.apply)
+
+/*
+record-type ::= `!llvm.struct<` `(` type-list `)` `>`
+field-list ::= <maybe empty comma-separated list of field names and types>
+field ::= string-literal `:` type
+ */
+
+def fieldTypedP[$: P](using Parser): P[(String, Attribute)] = P(
+  stringLiteralP ~/ ":" ~/ typeP
+)
+
+def recordFieldsP[$: P](using Parser): P[Seq[(StringData, Attribute)]] = P(
+  "record<" ~/ fieldTypedP.rep(sep = ",") ~/ ">"
+).map(c => c.map(_._1).map(StringData.apply).zip(c.map(_._2)))
+
+def recordTypeP[$: P](using Parser): P[RecordType] =
+  recordFieldsP.map(RecordType.apply)
+
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||   SYMBOL REF ATTR   ||
 \*≡==---==≡≡≡≡≡==---==≡*/
@@ -441,7 +462,7 @@ def functionTypeP[$: P](using Parser): P[FunctionType] = P(
 
 private def builtinTypeP[$: P](using Parser): P[Attribute] =
   floatTypeP | integerTypeP | indexTypeP | complexTypeP | functionTypeP |
-    tensorTypeP | memrefTypeP | vectorTypeP
+    tensorTypeP | memrefTypeP | vectorTypeP | dictionaryTypeP | recordTypeP
 
 private def builtinAttrP[$: P](using Parser): P[Attribute] =
   arrayAttributeP | denseArrayAttributeP | stringAttributeP | symbolRefAttrP |

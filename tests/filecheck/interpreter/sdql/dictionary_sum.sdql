@@ -1,0 +1,24 @@
+// RUN: scair-run %s | filecheck %s
+
+builtin.module {
+  func.func @main() -> dictionary<i32, i32> {
+    %a = "arith.constant"() <{value = 65 : i32}> : () -> i32
+    %b = "arith.constant"() <{value = 66 : i32}> : () -> i32
+    %2 = "arith.constant"() <{value = 2 : i32}> : () -> i32
+    %3 = "arith.constant"() <{value = 3 : i32}> : () -> i32    
+
+    %in = sdql.create_dictionary %a, %2, %b, %3 : i32, i32, i32, i32 -> dictionary<i32, i32>
+
+    %dict = sdql.sum %in : dictionary<i32, i32> -> dictionary<i32, i32> {
+    ^bb0(%k: i32, %v: i32):
+      %new_v = "arith.muli"(%v, %2) : (i32, i32) -> i32
+      %res = sdql.create_dictionary %k, %new_v : i32, i32 -> dictionary<i32, i32>
+      sdql.yield %res : dictionary<i32, i32>
+    }
+
+    func.return %dict : dictionary<i32, i32>
+  }
+}
+// let d = { "a" -> 2, "b" -> 3 } in sum(<k,v> in d) { k -> v * 2 } 
+// should equal { "a" -> 4, "b" -> 6 }
+// CHECK: Map(65 -> 4, 66 -> 6)
