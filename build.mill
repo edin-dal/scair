@@ -355,7 +355,6 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
   private def isLinux = {
     val name = System.getProperty("os.name").toLowerCase
     name.contains("nux")
-    true
   }
 
   trait install extends DefaultTaskModule:
