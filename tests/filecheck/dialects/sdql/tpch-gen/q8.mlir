@@ -7,7 +7,7 @@ func.func @range_builtin(%n: i32) -> dictionary<i32, i32> {
   }, {
     %one = "arith.constant"() <{value = 1}> : () -> i32
     %smaller_n = "arith.subi"(%n, %one) : (i32, i32) -> i32
-    %prev_range = "func.call"(%smaller_n) <{callee = @range}> : (i32) -> dictionary<i32, i32>
+    %prev_range = "func.call"(%smaller_n) <{callee = @range_builtin}> : (i32) -> dictionary<i32, i32>
     %true = "arith.constant"() <{value = 1}> : () -> i32
     %extension = sdql.create_dictionary %smaller_n, %true : i32, i32 -> dictionary<i32, i32>
 
