@@ -19,29 +19,27 @@ object run_call extends OpImpl[func.Call]:
       val print_value = interpreter.lookup_op(op._operands.head, ctx)
       println(print_value)
     else
-    for func_ctx <- ctx.funcs do
-      if func_ctx.name == op.callee.rootRef.stringLiteral then
-        val new_ctx = func_ctx.saved_ctx.deep_clone_ctx()
-        for op <- func_ctx.body.operations do
-          interpreter.interpret_op(
-            op,
-            new_ctx,
-          ) // create clone so function can run without modifying saved context
-        ctx.vars.put(
-          op._results.head,
-          new_ctx.result.getOrElse(None),
-        ) // assuming one return value for now
+      val new_ctx = ctx.push_scope()
+      val callee = ctx.symbols.get(op.callee.rootRef.stringLiteral).get
+          .asInstanceOf[func.Func] // presume func if called
+      for op <- callee.body.blocks.head.operations do
+        interpreter.interpret_op(
+          op,
+          new_ctx,
+        ) // create clone so function can run without modifying saved context
+      ctx.vars.put(
+        op._results.head,
+        new_ctx.result.getOrElse(None),
+      ) // assuming one return value for now
 
 object run_function extends OpImpl[func.Func]:
 
   def run(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+    // add function to symbol table
+    ctx.symbols.put(op.sym_name.stringLiteral, op)
+
+    // if main function, call it immediately
     if op.sym_name.stringLiteral == "main" then
-      val main_ctx = FunctionCtx(
-        name = op.sym_name,
-        body = op.body.blocks.head,
-        saved_ctx = ctx,
-      )
-      ctx.funcs.append(main_ctx)
       val new_call = func.Call(
         callee = SymbolRefAttr(op.sym_name),
         _operands = Seq(),
@@ -52,7 +50,6 @@ object run_function extends OpImpl[func.Func]:
       // get return value from main call and add to context
       val return_result = interpreter.lookup_op(new_call._results.head, ctx)
       ctx.result = Some(return_result)
-    else ctx.add_func_ctx(op)
 
 val InterpreterFuncDialect: InterpreterDialect =
   Seq(

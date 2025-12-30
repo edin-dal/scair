@@ -15,44 +15,25 @@ val impl_dict = mutable
     ? <: Operation
   ]]()
 
-// global external function dictionary for interpreter
-val ext_func_dict = mutable.Map[String, FunctionCtx]()
-
 // OpImpl class representing operation implementation, mainly for accessing implementation type information
 trait OpImpl[T <: Operation: ClassTag]:
   def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
   def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
 
-// function context class for saving a context at the function's definition (cannot use values defined after the function itself)
-case class FunctionCtx(
-    name: String,
-    saved_ctx: RuntimeCtx,
-    body: Block,
-)
-
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val vars: mutable.Map[Value[Attribute], Any],
-    val funcs: ListBuffer[FunctionCtx],
+    val symbols: mutable.Map[String, Operation], // for now operations only
     var result: Option[Any] = None,
 ):
 
   // creates independent context
-  def deep_clone_ctx(): RuntimeCtx =
+  def push_scope(): RuntimeCtx =
     RuntimeCtx(
       mutable.Map() ++ this.vars,
-      ListBuffer() ++ this.funcs,
+      mutable.Map() ++ this.symbols,
       None,
     )
-
-  // helper function for adding a function to the context
-  def add_func_ctx(function: func.Func): Unit =
-    val func_ctx = FunctionCtx(
-      name = function.sym_name,
-      saved_ctx = this.deep_clone_ctx(),
-      body = function.body.blocks.head,
-    )
-    this.funcs.append(func_ctx)
 
 //
 // ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░ ██████╗░ ██████╗░ ███████╗ ████████╗ ███████╗ ██████╗░
