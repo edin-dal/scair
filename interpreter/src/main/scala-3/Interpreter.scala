@@ -23,6 +23,12 @@ trait OpImpl[T <: Operation: ClassTag]:
   def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
   def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
 
+trait ExtFuncImpl:
+  def name: String
+  
+  // do i need complex context or just simple passed args?
+  def run(args: Seq[Value[Attribute]], interpreter: Interpreter, ctx: RuntimeCtx): Unit
+
 // function context class for saving a context at the function's definition (cannot use values defined after the function itself)
 case class FunctionCtx(
     name: String,
