@@ -83,17 +83,22 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // casted as moduleOp
     val module = parse(parsedArgs)(input).head.right.get.asInstanceOf[ModuleOp]
 
+    // get main block of module
     val moduleBlock = module.body.blocks.head
 
+    // construct interpreter and runtime context
     val interpreter = new Interpreter()
     var runtimeCtx =
       new RuntimeCtx(mutable.Map(), ListBuffer(), None)
 
+    // register all implementations of dialects selected
     interpreter.register_implementations()
 
+    // call interpret function and return result
     val output = interpreter.interpret(moduleBlock, runtimeCtx)
 
     if output.isDefined then
+      // encode boolean outputs as true/false
       if output.get == 1 then println("true")
       else if output.get == 0 then println("false")
       else println(output.get)
