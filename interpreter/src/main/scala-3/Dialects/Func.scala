@@ -13,6 +13,12 @@ object run_return extends OpImpl[func.Return]:
 object run_call extends OpImpl[func.Call]:
 
   def run(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+    // if call for print, print
+    // later there may be a print operation instead
+    if op.callee.rootRef.stringLiteral == "print" then
+      val print_value = interpreter.lookup_op(op._operands.head, ctx)
+      println(print_value)
+    else
     for func_ctx <- ctx.funcs do
       if func_ctx.name == op.callee.rootRef.stringLiteral then
         val new_ctx = func_ctx.saved_ctx.deep_clone_ctx()

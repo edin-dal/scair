@@ -2,7 +2,7 @@
 
 builtin.module {
     %0 = "arith.constant"() <{value = 42 : i64}> : () -> i64
-    func.call @print(%0) : (i64) -> ()
+    "func.call"(%0) <{"callee" = @print}> : (i64) -> ()
 }
 
-// CHECK:
+// CHECK: 42
