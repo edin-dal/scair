@@ -10,7 +10,6 @@ import scair.utils.OK
 import scopt.OParser
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.io.BufferedSource
 import scala.io.Source
 
@@ -84,7 +83,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val module = parse(parsedArgs)(input).head.right.get.asInstanceOf[ModuleOp]
 
     // get main block of module
-    val moduleBlock = module.body.blocks.head
+    val module_block = module.body.blocks.head
 
     // construct interpreter and runtime context
     val interpreter = new Interpreter()
@@ -95,7 +94,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     interpreter.register_implementations()
 
     // call interpret function and return result
-    val output = interpreter.interpret(moduleBlock, runtimeCtx)
+    val output = interpreter.interpret(module_block, runtimeCtx)
 
     if output.isDefined then
       // encode boolean outputs as true/false

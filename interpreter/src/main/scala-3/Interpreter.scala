@@ -1,12 +1,10 @@
 package scair.interpreter
 
 import scair.dialects.builtin.*
-import scair.dialects.func
 import scair.interpreter.ShapedArray
 import scair.ir.*
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 // global implementation dictionary for interpreter
