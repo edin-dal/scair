@@ -11,6 +11,7 @@ import scair.ir.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.mutable.Builder
 
 // ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
@@ -36,7 +37,7 @@ extension [T](inline p: P[T])
     * @return
     *   An optional parser, defaulting to default.
     */
-  inline def orElse[$: P](inline default: T): P[T] = P(
+  inline def orElse[$: P](inline default: => T): P[T] = P(
     p | Pass(default)
   )
 
@@ -64,6 +65,23 @@ extension [T](inline p: P[T])
     )
   )
 
+  // Replacement for fastparse's .opaque, with a by-name message, so as not to build it in the happy case.
+  // TODO: Should that be contributed to fastparse's .opauqe or does it have a reason not to be?
+  inline def explain[$: P as ctx](inline msg: => String): P[T] =
+    val oldIndex = ctx.index
+    val startTerminals = ctx.terminalMsgs
+    val res = p
+
+    val res2 =
+      if res.isSuccess then ctx.freshSuccess(ctx.successValue)
+      else ctx.freshFailure(oldIndex)
+
+    if ctx.verboseFailures then
+      ctx.terminalMsgs = startTerminals
+      ctx.reportTerminalMsg(oldIndex, () => msg)
+
+    res2.asInstanceOf[P[T]]
+
   /** Like fastparse's mapX but capturing exceptions as standard parse errors.
     *
     * @note
@@ -86,6 +104,58 @@ extension [T](inline p: P[T])
           Fail(e.getMessage())
     )
   )
+
+@tailrec
+def flatRepRec[$: P, V, T](
+    i: Seq[T],
+    f: T => P[V],
+    running: P[Builder[V, Seq[V]]],
+    sep: => P[Unit] = null,
+    error: Int => String,
+)(using
+    whitespace: Whitespace
+): P[Builder[V, Seq[V]]] =
+  i match
+    case head :: tail =>
+      flatRepRec(
+        tail,
+        f,
+        running.flatMap(builder =>
+          (sep ~ f(head).map(builder.addOne)).explain(error(builder.knownSize))
+        ),
+        sep,
+        error,
+      )
+    case Nil => running
+
+extension [T](inline i: Seq[T])
+
+  inline def flatRep[$: P, V](
+      inline f: T => P[V],
+      inline sep: => P[Unit] = null,
+      inline error: Int => String,
+  )(using
+      whitespace: Whitespace
+  ): P[Seq[V]] =
+    i match
+      case head :: tail =>
+        val builder = Seq.newBuilder[V]
+        flatRepRec(
+          tail,
+          f,
+          f(head).map(builder.addOne).explain(error(0)),
+          sep,
+          error,
+        ).map(_.result())
+      case Nil => Pass(Seq.empty[V])
+
+// See uses; enables .rep to concatenate parsed sequences
+// TODO: Expose as nicer helper, but could'nt get it just right for now
+def concatRepeater[T] = new Repeater[Seq[T], Seq[T]]:
+  type Acc = mutable.Buffer[T]
+  def initial = mutable.Buffer.empty[T]
+  def accumulate(t: Seq[T], acc: mutable.Buffer[T]) = acc ++= t
+  def result(acc: mutable.Buffer[T]) = acc.toSeq
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||      SCOPE      ||
@@ -164,19 +234,19 @@ private final class Scope(
 // [x] successor             ::= caret-id (`:` block-arg-list)?
 // [x] trailing-location     ::= `loc` `(` location `)`
 
-private def opResultListP[$: P] = (opResultP.rep(1, sep = ",") ~ "=")
-  .orElse(Seq()).map(_.flatten)
+private def opResultListP[$: P] =
+  (opResultP.rep(1, sep = ",")(using concatRepeater[String]) ~ "=")
+    .orElse(Seq.empty)
 
-private def sequenceValues(
-    value: (String, Option[BigInt])
-): Seq[String] =
-  value match
-    case (name, Some(totalNo)) =>
-      (0 to (totalNo.toInt - 1)).map(no => s"$name#$no")
-    case (name, None) => Seq(name)
+private inline def sequenceValues(
+    name: String,
+    no: BigInt,
+): Seq[String] = (0 to (no.toInt - 1)).map(no => s"$name#$no")
 
-private def opResultP[$: P] = (valueIdP ~ (":" ~ decimalLiteralP).?)
-  .map(sequenceValues)
+private inline def opResultP[$: P] = (valueIdP.flatMapX(name =>
+  (":" ~~ decDigitsP.!.map(d => sequenceValues(name, d.toInt)))
+    .orElse(Seq(name))
+))
 
 private def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
 
@@ -206,7 +276,7 @@ final class Parser(
 
   def parse[T](
       input: ParserInputSource,
-      parser: P[?] => P[T] = topLevelP(using _, this),
+      parser: P[?] => P[T] = moduleP(using _, this),
       verboseFailures: Boolean = false,
       startIndex: Int = 0,
       instrument: fastparse.internal.Instrument = null,
@@ -245,14 +315,14 @@ final class Parser(
     */
   def generateOperationP[$: P](
       opName: String,
-      resultsNames: Seq[String] = Seq(),
-      operandsNames: Seq[String] = Seq(),
-      successors: Seq[Block] = Seq(),
+      resultsNames: Seq[String] = Seq.empty,
+      operandsNames: Seq[String] = Seq.empty,
+      successors: Seq[Block] = Seq.empty,
       properties: Map[String, Attribute] = Map(),
-      regions: Seq[Region] = Seq(),
+      regions: Seq[Region] = Seq.empty,
       attributes: Map[String, Attribute] = Map(),
-      resultsTypes: Seq[Attribute] = Seq(),
-      operandsTypes: Seq[Attribute] = Seq(),
+      resultsTypes: Seq[Attribute] = Seq.empty,
+      operandsTypes: Seq[Attribute] = Seq.empty,
   ): P[Operation] =
 
     given Parser = this
@@ -363,8 +433,8 @@ def resultP[$: P, A <: Attribute](
 // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 // shortened definition TODO: finish...
 
-def topLevelP[$: P](using p: Parser): P[Operation] = P(
-  Start ~ (operationP | attributeAliasDefP | typeAliasDefP).rep
+def moduleP[$: P](using p: Parser): P[Operation] = P(
+  Start ~ p.enterRegionP ~ (operationP | attributeAliasDefP | typeAliasDefP).rep
     .map(
       _.collect { case o: Operation =>
         o
@@ -407,72 +477,40 @@ def operationP[$: P](using Parser): P[Operation] = P(
   ) ~/ trailingLocationP.?
 )./
 
-private def genericOperandsTypesRecP[$: P](using
-    expected: Int,
-    p: Parser,
-)(operandsNames: Seq[String], parsed: Int = 1): P[Seq[Value[Attribute]]] =
-  operandsNames match
-    case head :: Nil =>
-      typeP.opaque(
-        f"Number of operands ($expected) does not match the number of the corresponding operand types (${parsed -
-            1})."
-      ).flatMap(operandP(head, _)).map(Seq(_))
-    case head :: tail =>
-      (typeP.flatMap(operandP(head, _)) ~ ",".opaque(
-        f"Number of operands ($expected) does not match the number of the corresponding operand types ($parsed)."
-      ) ~ genericOperandsTypesRecP(
-        tail,
-        parsed + 1,
-      )).map(_ +: _)
-    case Nil => Pass(Seq())
-
-private def genericOperandsTypesP[$: P](
+def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
-  "(" ~ genericOperandsTypesRecP(using operandsNames.length)(
-    operandsNames
-  ) ~ ")"
-
-private def genericResultsTypesRecP[$: P](using
-    expected: Int,
-    p: Parser,
-)(
-    resultsNames: Seq[String],
-    parsed: Int = 1,
-): P[Seq[Result[Attribute]]] =
-  resultsNames match
-    case head :: Nil =>
-      typeP.opaque(
-        f"Number of results ($expected) does not match the number of the corresponding result types (${parsed -
-            1})."
-      ).flatMap(
-        resultP(head, _)
-      ).map(Seq(_))
-    case head :: tail =>
-      (typeP.flatMap(
-        resultP(head, _)
-      ) ~ ",".opaque(
-        f"Number of results ($expected) does not match the number of the corresponding result types ($parsed)."
-      ) ~ genericResultsTypesRecP(tail, parsed + 1)).map(_ +: _)
-    case Nil => Pass(Seq())
+  val error = (i: Int) =>
+    f"Number of operands (${operandsNames.size}) does not match the number of the corresponding operand types ($i)."
+  "(" ~ operandsNames.flatRep(
+    name => typeP.flatMap(operandP(name, _)),
+    sep = ",",
+    error = error,
+  ).flatMap(types =>
+    ")".explain(
+      f"Number of operands (${operandsNames.size}) does not match the number of the corresponding operand types."
+    ).map(_ => types)
+  )
 
 private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
-  ("(" ~/ genericResultsTypesRecP(using resultsNames.length)(
-    resultsNames
-  ).flatMap(resultsTypes =>
-    ")".opaque(
-      f"Number of results (${resultsNames.length}) does not match the number of the corresponding result types."
-    ) ~ Pass(resultsTypes)
-  )) | Pass(()).filter(_ => resultsNames.length == 1).flatMap(_ =>
-    genericResultsTypesRecP(using resultsNames.length)(resultsNames)
-  )
+  val error = (i: Int) =>
+    f"Number of results (${resultsNames.size}) does not match the number of the corresponding result types ($i)."
+  "(" ~ resultsNames.flatRep(
+    name => typeP.flatMap(resultP(name, _)),
+    sep = ",",
+    error = error,
+  ).flatMap(types =>
+    ")".explain(
+      f"Number of results (${resultsNames.size}) does not match the number of the corresponding result types."
+    ).map(_ => types)
+  ) | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
 
 private def genericOperationNameP[$: P](using
     p: Parser
 ): P[OperationCompanion[?]] =
-  stringLiteralP
+  stringLiteralP./
     .flatMap(
       p.context.getOpCompanion(_, p.allowUnregisteredDialect) match
         case Right(companion) => Pass(companion)
@@ -482,31 +520,33 @@ private def genericOperationNameP[$: P](using
 private def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
-  genericOperationNameP.flatMapX((opCompanion: OperationCompanion[?]) =>
-    "(" ~ operandNamesP.orElse(Seq()).flatMap((operandsNames: Seq[String]) =>
-      (")" ~/ successorListP.orElse(Seq()) ~/ propertiesP.orElse(Map.empty) ~/
-        regionListP.orElse(Seq()) ~/ optionalAttributesP ~/ ":" ~/
-        genericOperandsTypesP(
-          operandsNames
-        ) ~ "->" ~/ genericResultsTypesP(resultsNames)).map(
-        (
-            successors: Seq[Block],
-            properties: Map[String, Attribute],
-            regions: Seq[Region],
-            attributes: Map[String, Attribute],
-            operands: Seq[Value[Attribute]],
-            results: Seq[Result[Attribute]],
-        ) =>
-          opCompanion(
-            operands,
-            successors,
-            results,
-            regions,
-            properties,
-            attributes.to(DictType),
+  genericOperationNameP.flatMap((opCompanion: OperationCompanion[?]) =>
+    "(" ~ operandNamesP.orElse(Seq.empty)
+      .flatMap((operandsNames: Seq[String]) =>
+        ")" ~/ successorListP.orElse(Seq.empty).flatMap(successors =>
+          propertiesP.orElse(Map.empty).flatMap(properties =>
+            regionListP.orElse(Seq.empty).flatMap(regions =>
+              optionalAttributesP.flatMap(attributes =>
+                ":" ~/ genericOperandsTypesP(
+                  operandsNames
+                ).flatMap(operands =>
+                  ("->" ~/ genericResultsTypesP(resultsNames))
+                    .map((results: Seq[Result[Attribute]]) =>
+                      opCompanion(
+                        operands,
+                        successors,
+                        results,
+                        regions,
+                        properties,
+                        attributes.to(DictType),
+                      )
+                    )
+                )
+              )
+            )
           )
+        )
       )
-    )
   )
 
 private def customOperationP[$: P](
@@ -570,14 +610,6 @@ private def attributeAliasDefP[$: P](using p: Parser) =
 // [x] - block           ::= block-label operation+
 // [x] - block-label     ::= block-id block-arg-list? `:`
 
-private def populateBlockOps(
-    block: Block,
-    ops: Seq[Operation],
-)(using p: Parser): Block =
-  block.operations ++= ops
-  ops.foreach(_.containerBlock = Some(block))
-  block
-
 private def populateBlockArgsP[$: P](
     block: Block,
     args: Seq[(String, Attribute)],
@@ -591,15 +623,18 @@ private def populateBlockArgsP[$: P](
   )
 
 private def blockBodyP[$: P](block: Block)(using Parser) =
-  operationP.rep.mapTry(populateBlockOps(block, _))
+  operationP.map(op =>
+    op.containerBlock = Some(block)
+    block.operations.addOne(op): Unit
+  ).rep ~ Pass(block)
 
 def blockP[$: P](using Parser) = P(
   P(blockLabelP.flatMap(blockBodyP))
 )
 
 private def blockLabelP[$: P](using p: Parser) =
-  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~ (blockArgListP.orElse(Seq())))
-    .flatMap(populateBlockArgsP) ~ ":"
+  (blockIdP.flatMap(p.scopes.top.defineBlockP) ~
+    (blockArgListP.orElse(Seq.empty))).flatMap(populateBlockArgsP) ~ ":"
 
 def successorListP[$: P](using Parser) = P(
   "[" ~ successorP.rep(sep = ",") ~ "]"
@@ -620,7 +655,7 @@ def successorP[$: P](using p: Parser) = P(
 // [x] - region        ::= `{` operation* block* `}`
 
 def regionP[$: P](
-    entryArgs: Seq[(String, Attribute)] = Seq()
+    entryArgs: Seq[(String, Attribute)] = Seq.empty
 )(using p: Parser) = P(
   "{" ~/ p.enterRegionP ~/
     (populateBlockArgsP(new Block(), entryArgs).flatMap(blockBodyP) ~/
@@ -640,7 +675,7 @@ def regionP[$: P](
 def valueIdAndTypeP[$: P](using Parser) = P(valueIdP ~ ":" ~ typeP)
 
 private def valueIdAndTypeListP[$: P](using Parser) =
-  P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq())
+  P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq.empty)
 
 private def blockArgListP[$: P](using Parser) =
   P(

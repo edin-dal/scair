@@ -4,7 +4,7 @@ import scair.clair.codegen.*
 import scair.clair.macros.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.utils.OK
+import scair.utils.*
 
 // ░██████╗ ░█████╗░ ███████╗
 // ██╔════╝ ██╔══██╗ ██╔════╝
@@ -33,12 +33,12 @@ type Index = IndexType
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
   override def traitVerify(): OK[Operation] =
-    if values.isEmpty then Right(this)
+    if values.isEmpty then OK(this)
     else
       val firstClass = values.head.getClass
-      if values.tail.forall(_.getClass == firstClass) then Right(this)
+      if values.tail.forall(_.getClass == firstClass) then OK(this)
       else
-        Left(
+        Err(
           "All parameters of AllTypesMatch must be of the same type in operation " +
             this.name
         )
