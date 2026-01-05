@@ -20,6 +20,9 @@ object run_call extends OpImpl[func.Call]:
       interpreter.interpreter_print(print_value)
     else
       val new_ctx = ctx.push_scope()
+      for operands <- op._operands do
+        val operand_value = interpreter.lookup_op(operands, ctx)
+        new_ctx.scopedDict.update(operands, operand_value)
       val callee = ctx.symbols.get(op.callee.rootRef.stringLiteral).get
           .asInstanceOf[func.Func] // presume func if called
       for op <- callee.body.blocks.head.operations do
@@ -27,7 +30,7 @@ object run_call extends OpImpl[func.Call]:
           op,
           new_ctx,
         ) // create clone so function can run without modifying saved context
-      ctx.vars.put(
+      ctx.scopedDict.update(
         op._results.head,
         new_ctx.result.getOrElse(None),
       ) // assuming one return value for now

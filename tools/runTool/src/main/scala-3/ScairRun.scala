@@ -3,6 +3,7 @@ package scair.tools.runTool
 import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
 import scair.interpreter.RuntimeCtx
+import scair.interpreter.ScopedDict
 import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
@@ -88,7 +89,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // construct interpreter and runtime context
     val interpreter = new Interpreter()
     var runtimeCtx =
-      new RuntimeCtx(mutable.Map(), mutable.Map(), None)
+      new RuntimeCtx(ScopedDict(None, mutable.Map()), mutable.Map(), None)
 
     // register all implementations of dialects selected
     interpreter.register_implementations()

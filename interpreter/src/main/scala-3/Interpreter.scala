@@ -20,7 +20,7 @@ trait OpImpl[T <: Operation: ClassTag]:
 
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
-    val vars: mutable.Map[Value[Attribute], Any],
+    val scopedDict: ScopedDict,
     val symbols: mutable.Map[String, Operation], // for now operations only
     var result: Option[Any] = None,
 ):
@@ -28,7 +28,7 @@ class RuntimeCtx(
   // creates independent context
   def push_scope(): RuntimeCtx =
     RuntimeCtx(
-      mutable.Map() ++ this.vars,
+      ScopedDict(Some(this.scopedDict), mutable.Map()),
       mutable.Map() ++ this.symbols,
       None,
     )
@@ -54,12 +54,12 @@ class Interpreter:
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for ImplOf
   def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): ImplOf[T] =
-    ctx.vars.get(value) match
+    ctx.scopedDict.get(value) match
       case Some(v) => v.asInstanceOf[ImplOf[T]]
       case _ => throw new Exception(s"Variable $value not found in context")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
-    ctx.vars.get(value) match
+    ctx.scopedDict.get(value) match
       case Some(v: Int) => v
       case _ => throw new Exception(s"Bool-like $value not found in context")
 
