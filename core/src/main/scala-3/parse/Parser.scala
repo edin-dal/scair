@@ -67,8 +67,20 @@ extension [T](inline p: P[T])
 
   // Replacement for fastparse's .opaque, with a by-name message, so as not to build it in the happy case.
   // TODO: Should that be contributed to fastparse's .opauqe or does it have a reason not to be?
-  inline def explain[$: P](inline msg: => String): P[T] =
-    p | Fail(msg)
+  inline def explain[$: P as ctx](inline msg: => String): P[T] =
+    val oldIndex = ctx.index
+    val startTerminals = ctx.terminalMsgs
+    val res = p
+
+    val res2 =
+      if res.isSuccess then ctx.freshSuccess(ctx.successValue)
+      else ctx.freshFailure(oldIndex)
+
+    if ctx.verboseFailures then
+      ctx.terminalMsgs = startTerminals
+      ctx.reportTerminalMsg(oldIndex, () => msg)
+
+    res2.asInstanceOf[P[T]]
 
   /** Like fastparse's mapX but capturing exceptions as standard parse errors.
     *
@@ -99,6 +111,7 @@ def flatRepRec[$: P, V, T](
     f: T => P[V],
     running: P[Builder[V, Seq[V]]],
     sep: => P[Unit] = null,
+    error: Int => String,
 )(using
     whitespace: Whitespace
 ): P[Builder[V, Seq[V]]] =
@@ -107,8 +120,11 @@ def flatRepRec[$: P, V, T](
       flatRepRec(
         tail,
         f,
-        running.flatMap(builder => sep ~ f(head).map(builder.addOne)),
+        running.flatMap(builder =>
+          (sep ~ f(head).map(builder.addOne)).explain(error(builder.knownSize))
+        ),
         sep,
+        error,
       )
     case Nil => running
 
@@ -117,13 +133,20 @@ extension [T](inline i: Seq[T])
   inline def flatRep[$: P, V](
       inline f: T => P[V],
       inline sep: => P[Unit] = null,
+      inline error: Int => String,
   )(using
       whitespace: Whitespace
   ): P[Seq[V]] =
     i match
       case head :: tail =>
         val builder = Seq.newBuilder[V]
-        flatRepRec(tail, f, f(head).map(builder.addOne), sep).map(_.result())
+        flatRepRec(
+          tail,
+          f,
+          f(head).map(builder.addOne).explain(error(0)),
+          sep,
+          error,
+        ).map(_.result())
       case Nil => Pass(Seq.empty[V])
 
 // See uses; enables .rep to concatenate parsed sequences
@@ -457,22 +480,37 @@ def operationP[$: P](using Parser): P[Operation] = P(
 def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
 )(using Parser): P[Seq[Value[Attribute]]] =
-  "(" ~
-    operandsNames.flatRep(name => typeP.flatMap(operandP(name, _)), sep = ",") ~
-    ")"
+  val error = (i: Int) =>
+    f"Number of operands (${operandsNames.size}) does not match the number of the corresponding operand types ($i)."
+  "(" ~ operandsNames.flatRep(
+    name => typeP.flatMap(operandP(name, _)),
+    sep = ",",
+    error = error,
+  ).flatMap(types =>
+    ")".explain(
+      f"Number of operands (${operandsNames.size}) does not match the number of the corresponding operand types."
+    ).map(_ => types)
+  )
 
 private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Seq[Result[Attribute]]] =
+  val error = (i: Int) =>
+    f"Number of results (${resultsNames.size}) does not match the number of the corresponding result types ($i)."
   "(" ~ resultsNames.flatRep(
     name => typeP.flatMap(resultP(name, _)),
     sep = ",",
-  ) ~ ")" | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
+    error = error,
+  ).flatMap(types =>
+    ")".explain(
+      f"Number of results (${resultsNames.size}) does not match the number of the corresponding result types."
+    ).map(_ => types)
+  ) | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
 
 private def genericOperationNameP[$: P](using
     p: Parser
 ): P[OperationCompanion[?]] =
-  stringLiteralP
+  stringLiteralP./
     .flatMap(
       p.context.getOpCompanion(_, p.allowUnregisteredDialect) match
         case Right(companion) => Pass(companion)
