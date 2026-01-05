@@ -4,7 +4,7 @@ import fastparse.P
 import scair.Printer
 import scair.ir.*
 import scair.parse.Parser
-import scair.utils.OK
+import scair.utils.*
 
 import scala.quoted.*
 import scala.util.Failure
@@ -90,7 +90,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
       )
 
     override def structured = Try(companion.structure(this)) match
-      case Failure(e)  => Left(e.toString())
+      case Failure(e)  => Err(e.toString())
       case Success(op) => op.asInstanceOf[Operation].structured
 
     override def verify(): OK[Operation] =

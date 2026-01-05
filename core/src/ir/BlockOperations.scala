@@ -1,5 +1,6 @@
 package scair.ir
 
+import scair.helpers.*
 import scair.ir.*
 import scair.utils.IntrusiveList
 
@@ -36,11 +37,11 @@ object BlockOperations:
 class BlockOperations extends IntrusiveList[Operation]:
 
   private inline def handleOperationInsertion(op: Operation) =
-    op.operands.zipWithIndex.foreach((o, i) => o.uses += Use(op, i))
+    op.operands.foreachWithIndex((o, i) => o.uses += Use(op, i))
 
   private inline def handleOperationRemoval(op: Operation) =
-    op.operands.zipWithIndex
-      .foreach((o, i) => o.uses.filterInPlace(_.operation != op))
+    op.operands
+      .foreachWithIndex((o, i) => o.uses.filterInPlace(_.operation != op))
 
   override final def addOne(elem: Operation): this.type =
     handleOperationInsertion(elem)
