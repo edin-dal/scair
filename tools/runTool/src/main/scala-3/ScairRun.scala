@@ -96,11 +96,9 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // call interpret function and return result
     val output = interpreter.interpret(module_block, runtimeCtx)
 
-    if output.isDefined then
-      // encode boolean outputs as true/false
-      if output.get == 1 then println("true")
-      else if output.get == 0 then println("false")
-      else println(output.get)
+    output match
+      case Some(value) => interpreter.interpreter_print(value)
+      case None => None
 
 object ScairRun extends ScairRunBase:
   def toolName = "scair-run"

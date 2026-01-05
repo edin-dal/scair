@@ -17,7 +17,7 @@ object run_call extends OpImpl[func.Call]:
     // later there may be a print operation instead
     if op.callee.rootRef.stringLiteral == "print" then
       val print_value = interpreter.lookup_op(op._operands.head, ctx)
-      println(print_value)
+      interpreter.interpreter_print(print_value)
     else
       val new_ctx = ctx.push_scope()
       val callee = ctx.symbols.get(op.callee.rootRef.stringLiteral).get
