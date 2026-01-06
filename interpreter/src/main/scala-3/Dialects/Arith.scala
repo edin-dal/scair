@@ -38,7 +38,6 @@ object run_muli extends OpImpl[arith.MulI]:
 
 object run_divsi extends OpImpl[arith.DivSI]:
 
-
 // TODO: signed division
   def run(op: arith.DivSI, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
     val lhs = interpreter.lookup_op(op.lhs, ctx)

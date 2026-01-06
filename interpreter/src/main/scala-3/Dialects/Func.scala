@@ -3,8 +3,8 @@ package scair.interpreter
 import scair.dialects.builtin.SymbolRefAttr
 import scair.dialects.func
 import scair.ir.Result
+
 import scala.collection.mutable
-import scala.compiletime.ops.double
 
 // assume one return value for now
 object run_return extends OpImpl[func.Return]:
@@ -22,16 +22,18 @@ object run_call extends OpImpl[func.Call]:
       interpreter.interpreter_print(print_value)
     else
       // new context with new scoped dict containing function operands but shared symbol table
-      val new_ctx = RuntimeCtx(ScopedDict(None, mutable.Map()), ctx.symbols, None)
+      val new_ctx =
+        RuntimeCtx(ScopedDict(None, mutable.Map()), ctx.symbols, None)
       val callee = ctx.symbols.get(op.callee.rootRef.stringLiteral).get
-          .asInstanceOf[func.Func] // presume func if called
+        .asInstanceOf[func.Func] // presume func if called
 
-      // adds function argument to scoped dict since they have the reference 
+      // adds function argument to scoped dict since they have the reference
       // that will be matched during lookup and maps it to the defined operand value
-      for (operand, arg) <- op._operands.zip(callee.body.blocks.head.arguments) do
+      for (operand, arg) <- op._operands.zip(callee.body.blocks.head.arguments)
+      do
         val operand_value = interpreter.lookup_op(operand, ctx)
         new_ctx.scopedDict.update(arg, operand_value)
-      
+
       for op <- callee.body.blocks.head.operations do
         interpreter.interpret_op(
           op,

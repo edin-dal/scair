@@ -80,7 +80,7 @@ class Interpreter:
       case None       =>
         throw new Exception("Unsupported operation when interpreting")
 
-  def interpreter_print(value: Any): Unit = 
+  def interpreter_print(value: Any): Unit =
     value match
       case 0 => println("false")
       case 1 => println("true")
