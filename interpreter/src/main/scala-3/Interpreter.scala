@@ -3,6 +3,7 @@ package scair.interpreter
 import scair.dialects.builtin.*
 import scair.interpreter.ShapedArray
 import scair.ir.*
+import scair.dialects.func
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -21,7 +22,6 @@ trait OpImpl[T <: Operation: ClassTag]:
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val scopedDict: ScopedDict,
-    val symbols: mutable.Map[String, Operation], // for now operations only
     var result: Option[Any] = None,
 ):
 
@@ -29,7 +29,6 @@ class RuntimeCtx(
   def push_scope(): RuntimeCtx =
     RuntimeCtx(
       ScopedDict(Some(this.scopedDict), mutable.Map()),
-      mutable.Map() ++ this.symbols,
       None,
     )
 
@@ -44,15 +43,25 @@ class RuntimeCtx(
 
 class Interpreter(
     val module: ModuleOp,
-    val dialects: Seq[InterpreterDialect] = allInterpreterDialects
+    val symbolTable: mutable.Map[String, Operation] = mutable.Map(), // for now operations only
 ):
 
   initialise_interpreter()
 
   def initialise_interpreter(): Unit =
     register_implementations()
+    get_symbols_from_module()
 
-  def module_pass(): Unit = 0
+  def get_symbols_from_module(): Unit =
+    for op <- module.body.blocks.head.operations do
+      op match
+        case func_op: func.Func =>
+          // add function to symbol table if not main
+          if func_op.sym_name.stringLiteral != "main" then
+            symbolTable.put(func_op.sym_name.stringLiteral, func_op)
+            module.body.blocks.head.operations.subtractOne(op)
+        case _ => () // ignore other ops, global vars not yet supported prob...
+      
 
   // type maps from operation to its resulting lookup type
   // base case is Int (may have issues later)
