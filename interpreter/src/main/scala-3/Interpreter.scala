@@ -25,7 +25,7 @@ class RuntimeCtx(
     var result: Option[Any] = None,
 ):
 
-  // creates independent context
+  // creates new runtime ctx with new scope but shared symbol table
   def push_scope(): RuntimeCtx =
     RuntimeCtx(
       ScopedDict(Some(this.scopedDict), mutable.Map()),
@@ -42,8 +42,17 @@ class RuntimeCtx(
 // ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝ ╚═╝░░░░░ ╚═╝░░╚═╝ ╚══════╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
 //
 
-// INTERPRETER CLASS
-class Interpreter:
+class Interpreter(
+    val module: ModuleOp,
+    val dialects: Seq[InterpreterDialect] = allInterpreterDialects
+):
+
+  initialise_interpreter()
+
+  def initialise_interpreter(): Unit =
+    register_implementations()
+
+  def module_pass(): Unit = 0
 
   // type maps from operation to its resulting lookup type
   // base case is Int (may have issues later)
