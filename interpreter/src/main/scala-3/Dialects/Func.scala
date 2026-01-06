@@ -49,7 +49,7 @@ object run_call extends OpImpl[func.Call]:
 
 object run_function extends OpImpl[func.Func]:
 
-  // technically no need as func ops are removed from the operations that get interpreted
+  // technically no need for function as func ops are removed from the operations that get interpreted
   def run(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
     // add function to symbol table
     interpreter.symbolTable.put(op.sym_name.stringLiteral, op)
