@@ -10,7 +10,7 @@ import scair.dialects.builtin.*
 import scair.enums.enumattr.*
 import scair.ir.*
 import scair.parse.Parser
-import scair.utils.OK
+import scair.utils.*
 
 import scala.collection.immutable.*
 
@@ -184,13 +184,13 @@ type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 trait SameOperandsAndResultTypes extends Operation:
 
   override def traitVerify(): OK[Operation] =
-    val params = this.operands.typ ++ this.results.typ
-    if params.isEmpty then Right(this)
+    val params = (this.operands ++ this.results)
+    if params.isEmpty then OK(this)
     else
-      val first = params.head
-      if params.tail.forall(_ == first) then Right(this)
+      val first = params.head.typ
+      if params.tail.forall(_.typ == first) then OK(this)
       else
-        Left(
+        Err(
           "All parameters of TypeConstraint must be of the same type in operation " +
             this.name
         )
@@ -202,14 +202,13 @@ trait SameOperandsAndResultShape extends Operation:
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
-    if params.isEmpty then Right(this)
+    if params.isEmpty then OK(this)
     else
       val firstDim = params.head.getNumDims
       // check ranks of all parameters
-      if params.map(_.getNumDims == firstDim).reduceLeft(_ && _) then
-        Right(this)
+      if params.map(_.getNumDims == firstDim).reduceLeft(_ && _) then OK(this)
       else
-        Left(
+        Err(
           s"All parameters of operation '${this.name}' must have the same rank"
         )
 
@@ -220,26 +219,25 @@ trait SameInputOutputTensorDims extends Operation:
     val params = (this.operands ++ this.results).map(_.typ).collect {
       case a: ShapedType => a
     }
-    if params.isEmpty then Right(this)
+    if params.isEmpty then OK(this)
     else
       val firstShape = params.head.getShape
       // checks if all parameters have the same shape
-      if params.map(_.getShape == firstShape).reduceLeft(_ && _) then
-        Right(this)
+      if params.map(_.getShape == firstShape).reduceLeft(_ && _) then OK(this)
       else
-        Left(
+        Err(
           s"All parameters of operation '${this.name}' must have compatible shape"
         )
 
 trait AllTypesMatch(values: Attribute*) extends Operation:
 
   override def traitVerify(): OK[Operation] =
-    if values.isEmpty then Right(this)
+    if values.isEmpty then OK(this)
     else
       val first = values.head
-      if values.tail.forall(_ == first) then Right(this)
+      if values.tail.forall(_ == first) then OK(this)
       else
-        Left(
+        Err(
           "All parameters of AllTypesMatch must be of the same type in operation " +
             this.name
         )
@@ -249,24 +247,24 @@ trait BooleanConditionOrMatchingShape(condition: Attribute, result: Attribute)
 
   override def traitVerify(): OK[Operation] =
     condition match
-      case IntegerType(IntData(1), Signless) => Right(this)
+      case IntegerType(IntData(1), Signless) => OK(this)
       case x: ShapedType                     =>
         result match
           case y: ShapedType =>
-            if x.getShape == y.getShape then Right(this)
+            if x.getShape == y.getShape then OK(this)
             else
-              Left(
+              Err(
                 s"Condition must be a I1 boolean, or the result of operation '${this
                     .name}' must have the same shape as the condition, but got ${x
                     .getShape} and ${y.getShape}"
               )
           case _ =>
-            Left(
+            Err(
               s"Condition must be a I1 boolean, or a shaped type in operation '${this
                   .name}'"
             )
       case _ =>
-        Left(
+        Err(
           s"Condition must be a I1 boolean, or a shaped type in operation '${this
               .name}'"
         )
