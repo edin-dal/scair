@@ -62,19 +62,17 @@ inline def hexDigitsP[$: P] = CharsWhileIn(HexDigit)
 inline val Letter = "a-zA-Z"
 inline val IdPunct = "$._\\-"
 
-def integerLiteralP[$: P] = P(hexadecimalLiteralP | decimalLiteralP)
+inline def integerLiteralP[$: P] = hexadecimalLiteralP | decimalLiteralP
 
-def decimalLiteralP[$: P] =
-  P(("-" | "+").?.! ~ decDigitsP.!)
-    .map((sign: String, literal: String) => BigInt(sign + literal))
+def decimalLiteralP[$: P] = (("-" | "+").? ~ decDigitsP).!.map(BigInt(_))
 
-def hexadecimalLiteralP[$: P] =
-  P("0x" ~~ hexDigitsP.!).map((hex: String) => BigInt(hex, 16))
+inline def hexadecimalLiteralP[$: P] =
+  "0x" ~~ hexDigitsP.!.map(BigInt(_, 16))
 
-private def parseFloatNum(float: (String, String)): Double =
+private inline def parseFloatNum(float: (String, String)): Double =
   val number = parseDouble(float._1)
   val power = parseDouble(float._2)
-  return number * pow(10, power)
+  number * pow(10, power)
 
 /** Parses a floating-point number from its string representation. NOTE: This is
   * only a float approximation, and in its current form should not be trusted
@@ -83,30 +81,65 @@ private def parseFloatNum(float: (String, String)): Double =
   * @return
   *   float: (String, String)
   */
-def floatLiteralP[$: P] = P(
-  (CharIn("\\-\\+").? ~~ decDigitsP ~~ "." ~~ decDigitsP).! ~~
-    (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ decDigitsP).!).orElse("0")
-).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
+inline def floatLiteralP[$: P] =
+  (
+    (CharIn("\\-\\+").? ~~ decDigitsP ~~ "." ~~ decDigitsP).! ~~
+      (CharIn("eE") ~~ (CharIn("\\-\\+").? ~~ decDigitsP).!).orElse("0")
+  ).map(parseFloatNum(_)) // substituted [0-9]* with [0-9]+
 
-inline def nonExcludedCharacter(c: Char): Boolean =
-  c: @switch match
-    case '"' | '\\' => false
-    case _          => true
+@tailrec
+def stringLiteralBisRecP(using
+    ctx: ParsingRun[?],
+    input: ParserInput,
+    str: java.lang.StringBuilder,
+)(index: Int): ParsingRun[String] =
+  if !input.isReachable(index) then ctx.freshFailure()
+  else
+    val c0 = input(index)
+    (c0: @switch) match
+      case '"' => ctx.freshSuccess[String](str.toString(), index + 1)
+      case '\n' | 11 | '\f' => Fail("expected '\"' in string literal")
+      case '\\'             =>
+        val c1 = input(index + 1)
+        (c1: @switch) match
+          case '"' =>
+            str.append('"')
+            stringLiteralBisRecP(index + 2)
+          case '\\' =>
+            str.append('\\')
+            stringLiteralBisRecP(index + 2)
+          case 'n' =>
+            str.append('\n')
+            stringLiteralBisRecP(index + 2)
+          case 't' =>
+            str.append('\t')
+            stringLiteralBisRecP(index + 2)
+          case 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' |
+              'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' =>
+            val c2 = input(index + 2)
+            (c2: @switch) match
+              case 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' |
+                  'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' |
+                  '8' | '9' =>
+                str
+                  .append(
+                    Integer.parseInt(String(Array[Char](c1, c2)), 16).toChar
+                  )
+                stringLiteralBisRecP(index + 3)
+              case _ =>
+                Fail("unknown escape in string literal")
+          case _ =>
+            Fail("unknown escape in string literal")
+      case _ =>
+        str.append(c0)
+        stringLiteralBisRecP(index + 1)
 
-inline def escapedP[$: P] = P(
-  ("\\" ~~
-    (
-      "n" ~~ Pass('\n') | "t" ~~ Pass('\t') | "\\" ~~ Pass('\\') |
-        "\"" ~~ Pass('\"') |
-        CharIn("a-fA-F0-9").repX(exactly = 2).!
-          .map(Integer.parseInt(_, 16).toChar)
-    )).repX.map(chars => String(chars.toArray))
-)
-
-def stringLiteralP[$: P] = P(
-  "\"" ~~/ (CharsWhile(nonExcludedCharacter).! ~~ escapedP).map(_ + _).repX
-    .map(_.mkString) ~~ "\""
-)
+def stringLiteralP(using ctx: ParsingRun[?]): ParsingRun[String] =
+  val input = ctx.input
+  var index = ctx.index
+  if !input.isReachable(index) || input(index) != '"' then ctx.freshFailure()
+  else
+    stringLiteralBisRecP(using ctx, input, java.lang.StringBuilder())(index + 1)
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||   IDENTIFIERS   ||
@@ -125,32 +158,35 @@ def stringLiteralP[$: P] = P(
 // [x] value-use ::= value-id (`#` decimal-literal)?
 // [x] value-use-list ::= value-use (`,` value-use)*
 
-def bareIdP[$: P] = P(
-  CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
-).!
+inline def bareIdP[$: P] =
+  (
+    CharIn(Letter + "_") ~~ CharsWhileIn(Letter + DecDigit + "_$.", min = 0)
+  ).!
 
-def valueIdP[$: P] = P("%" ~~ suffixIdP)
+inline def valueIdP[$: P] = P("%" ~~ suffixIdP.!)
 
 // Alias can't have dots in their names for ambiguity with dialect names.
-def aliasNameP[$: P] = P(
-  CharIn(Letter + "_") ~~
-    (CharsWhileIn(
-      Letter + DecDigit + "_$",
+inline def aliasNameP[$: P] =
+  (
+    CharIn(Letter + "_") ~~
+      (CharsWhileIn(
+        Letter + DecDigit + "_$",
+        min = 0,
+      )) ~~ !"."
+  ).!
+
+def suffixIdP[$: P] =
+  (
+    decDigitsP | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
+      Letter + IdPunct + DecDigit,
       min = 0,
-    )) ~~ !"."
-).!
-
-def suffixIdP[$: P] = P(
-  decimalLiteralP | CharIn(Letter + IdPunct) ~~ CharsWhileIn(
-    Letter + IdPunct + DecDigit,
-    min = 0,
+    )
   )
-).!
 
-def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP | stringLiteralP))
+inline def symbolRefIdP[$: P] = P("@" ~~ (suffixIdP.! | stringLiteralP))
 
 def operandNameP[$: P] =
-  P(valueIdP ~ ("#" ~~ decimalLiteralP).?).!.map(_.tail)
+  "%" ~~ (suffixIdP ~ ("#" ~~ decDigitsP).?).!
 
 def operandNamesP[$: P] =
   P(operandNameP.rep(sep = ","))
@@ -211,4 +247,4 @@ def prettyDialectTypeOrAttReferenceNameP[$: P] = P(
 
 def blockIdP[$: P] = P(caretIdP)
 
-def caretIdP[$: P] = P("^" ~~/ suffixIdP)
+def caretIdP[$: P] = P("^" ~~/ suffixIdP.!)

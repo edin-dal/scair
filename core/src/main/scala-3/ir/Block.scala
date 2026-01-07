@@ -1,6 +1,6 @@
 package scair.ir
 
-import scair.utils.OK
+import scair.utils.*
 
 import scala.collection.mutable
 
@@ -277,23 +277,24 @@ case class Block private (
     op.erase(safeErase)
 
   def structured: OK[Unit] =
-    operations.foldLeft[OK[Unit]](Right(()))((res, op) =>
+    operations.foldLeft[OK[Unit]](OK())((res, op) =>
       res.flatMap(_ =>
         op.structured.map(v =>
-          operations(op) = v
-          v.containerBlock = Some(this)
+          if !(v eq op) then
+            operations(op) = v
+            v.containerBlock = Some(this)
         )
       )
     )
 
   def verify(): OK[Unit] =
-    arguments.foldLeft[OK[Unit]](Right(()))((res, arg) =>
-      res.flatMap(_ => arg.verify())
-    ).flatMap(_ =>
-      operations.foldLeft[OK[Unit]](Right(()))((res, op) =>
-        res.flatMap(_ => op.verify().map(_ => ()))
+    arguments
+      .foldLeft[OK[Unit]](OK())((res, arg) => res.flatMap(_ => arg.verify()))
+      .flatMap(_ =>
+        operations.foldLeft[OK[Unit]](OK())((res, op) =>
+          res.flatMap(_ => op.verify().map(_ => ()))
+        )
       )
-    )
 
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]

@@ -8,7 +8,7 @@ import scair.dialects.affine.AffineMap
 import scair.dialects.affine.AffineSet
 import scair.ir.*
 import scair.parse.*
-import scair.utils.OK
+import scair.utils.*
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
 // ██╔══██╗ ██║░░░██║ ██║ ██║░░░░░ ╚══██╔══╝ ██║ ████╗░██║
@@ -379,8 +379,8 @@ final case class DenseArrayAttr(
     if !data.forall(_ match
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ)
-    then Left("Element types do not match the dense array type")
-    else Right(())
+    then Err("Element types do not match the dense array type")
+    else OK()
 
   override def customPrint(p: Printer) =
     p.print("array<", typ)(using indentLevel = 0)
@@ -441,10 +441,10 @@ final case class DenseIntOrFPElementsAttr(
 
   override def customVerify(): OK[Unit] =
     val tpe = elementType match
-      case it: IntegerType => Right(it)
-      case ft: FloatType   => Right(ft)
+      case it: IntegerType => OK(it)
+      case ft: FloatType   => OK(ft)
       case _               =>
-        Left(
+        Err(
           s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
         )
 
@@ -456,17 +456,17 @@ final case class DenseIntOrFPElementsAttr(
           case IntegerAttr(_, etyp) =>
             if tpe == etyp then acc
             else
-              Left(
+              Err(
                 s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
           case FloatAttr(_, etyp) =>
             if tpe == etyp then acc
             else
-              Left(
+              Err(
                 s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
           case _ =>
-            Left(
+            Err(
               s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
             )
       )

@@ -5,6 +5,7 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
 import scair.clair.macros.*
+import scair.utils.*
 
 case class FillerOp(
     override val operands: Seq[Operand[Attribute]] = Seq(),
@@ -55,7 +56,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
       val exception = block.verify()
 
-      exception shouldBe Left(
+      exception shouldBe Err(
         "Operation 'terminator' marked as a terminator, but is not the last operation within its container block"
       )
     }
@@ -66,7 +67,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
       val exception = terminator.verify()
 
-      exception shouldBe Left(
+      exception shouldBe Err(
         "Operation 'terminator' marked as a terminator, but is not contained in any block."
       )
     }
@@ -115,7 +116,7 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
     val exception = noterminator.verify()
 
-    exception shouldBe Left(
+    exception shouldBe Err(
       "NoTerminator Operation 'noterminator' requires single-block regions"
     )
   }
