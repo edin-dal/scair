@@ -24,8 +24,8 @@ object run_call extends OpImpl[func.Call]:
       // new context with new scoped dict containing function operands but shared symbol table
       val new_ctx =
         RuntimeCtx(ScopedDict(None, mutable.Map()), None)
-      val callee = interpreter.symbolTable.get(op.callee.rootRef.stringLiteral).get
-        .asInstanceOf[func.Func] // presume func if called
+      val callee = interpreter.symbolTable.get(op.callee.rootRef.stringLiteral)
+        .get.asInstanceOf[func.Func] // presume func if called
 
       // adds function argument to scoped dict since they have the reference
       // that will be matched during lookup and maps it to the defined operand value
@@ -39,7 +39,7 @@ object run_call extends OpImpl[func.Call]:
           op,
           new_ctx,
         ) // create clone so function can run without modifying saved context
-      
+
       if op._results.nonEmpty then
         ctx.scopedDict.update(
           op._results.head,
@@ -49,10 +49,8 @@ object run_call extends OpImpl[func.Call]:
 
 object run_function extends OpImpl[func.Func]:
 
-  // technically no need for function as func ops are removed from the operations that get interpreted
+  // only needed for main
   def run(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    // add function to symbol table
-    interpreter.symbolTable.put(op.sym_name.stringLiteral, op)
 
     // if main function, call it immediately
     if op.sym_name.stringLiteral == "main" then

@@ -1,9 +1,9 @@
 package scair.interpreter
 
 import scair.dialects.builtin.*
+import scair.dialects.func
 import scair.interpreter.ShapedArray
 import scair.ir.*
-import scair.dialects.func
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -43,12 +43,13 @@ class RuntimeCtx(
 
 class Interpreter(
     val module: ModuleOp,
-    val symbolTable: mutable.Map[String, Operation] = mutable.Map(), // for now operations only
+    val symbolTable: mutable.Map[String, Operation] = mutable
+      .Map(), // for now operations only
 ):
 
-  initialise_interpreter()
+  initialize_interpreter()
 
-  def initialise_interpreter(): Unit =
+  def initialize_interpreter(): Unit =
     register_implementations()
     get_symbols_from_module()
 
@@ -57,11 +58,8 @@ class Interpreter(
       op match
         case func_op: func.Func =>
           // add function to symbol table if not main
-          if func_op.sym_name.stringLiteral != "main" then
-            symbolTable.put(func_op.sym_name.stringLiteral, func_op)
-            module.body.blocks.head.operations.subtractOne(op)
+          symbolTable.put(func_op.sym_name.stringLiteral, func_op)
         case _ => () // ignore other ops, global vars not yet supported prob...
-      
 
   // type maps from operation to its resulting lookup type
   // base case is Int (may have issues later)

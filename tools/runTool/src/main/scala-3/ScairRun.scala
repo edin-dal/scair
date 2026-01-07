@@ -92,9 +92,6 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // construct interpreter and runtime context
     val interpreter = new Interpreter(module, mutable.Map())
 
-    // register all implementations of dialects selected
-    interpreter.register_implementations()
-
     // call interpret function and return result
     val output = interpreter.interpret(module_block, runtimeCtx)
 
