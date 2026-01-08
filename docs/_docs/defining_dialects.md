@@ -243,7 +243,7 @@ Examples:
 
 ### Declare the Dialect
 
-In ScaIR, dialects are declared declaratively using `summonDialect`.
+In ScaIR, dialects are declared using `summonDialect`.
 
 ```scala
 val MyDialect = summonDialect[
