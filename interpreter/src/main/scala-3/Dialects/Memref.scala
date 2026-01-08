@@ -17,7 +17,7 @@ object run_alloc extends OpImpl[memref.Alloc]:
 
     // initialising a zero array to represent allocated memory
     // multi-dimensional objects are packed into a 1-D array
-    ctx.vars.put(
+    ctx.scopedDict.update(
       alloc_op.memref,
       ShapedArray(Array.fill(shapeSeq.product)(0), shapeSeq),
     )
@@ -46,7 +46,7 @@ object run_load extends OpImpl[memref.Load]:
     val memref = interpreter.lookup_op(load_op.memref, ctx)
     val indices =
       for index <- load_op.indices yield interpreter.lookup_op(index, ctx)
-    ctx.vars.put(load_op.result, memref(indices))
+    ctx.scopedDict.update(load_op.result, memref(indices))
 
 // constructing memref dialect
 val InterpreterMemrefDialect: InterpreterDialect =

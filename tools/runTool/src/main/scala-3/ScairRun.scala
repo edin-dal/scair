@@ -3,6 +3,7 @@ package scair.tools.runTool
 import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
 import scair.interpreter.RuntimeCtx
+import scair.interpreter.ScopedDict
 import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
@@ -10,7 +11,6 @@ import scair.utils.*
 import scopt.OParser
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.io.BufferedSource
 import scala.io.Source
 
@@ -83,20 +83,21 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // casted as moduleOp
     val module = parse(parsedArgs)(input).head.get.asInstanceOf[ModuleOp]
 
-    val moduleBlock = module.body.blocks.head
+    // get main block of module
+    val module_block = module.body.blocks.head
 
-    val interpreter = new Interpreter()
     var runtimeCtx =
-      new RuntimeCtx(mutable.Map(), ListBuffer(), None)
+      new RuntimeCtx(ScopedDict(None, mutable.Map()), None)
 
-    interpreter.register_implementations()
+    // construct interpreter and runtime context
+    val interpreter = new Interpreter(module, mutable.Map())
 
-    val output = interpreter.interpret(moduleBlock, runtimeCtx)
+    // call interpret function and return result
+    val output = interpreter.interpret(module_block, runtimeCtx)
 
-    if output.isDefined then
-      if output.get == 1 then println("true")
-      else if output.get == 0 then println("false")
-      else println(output.get)
+    output match
+      case Some(value) => interpreter.interpreter_print(value)
+      case None        => None
 
 object ScairRun extends ScairRunBase:
   def toolName = "scair-run"
