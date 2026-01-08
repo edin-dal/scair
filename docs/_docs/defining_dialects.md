@@ -2,7 +2,7 @@
 title: "Defining a Dialect"
 ---
 
-[Attribute]: scair.ir.Attibute
+[Attribute]: scair.ir.Attribute
 [TypeAttribute]: scair.ir.TypeAttribute
 [Operation]: scair.ir.Operation
 [NoMemoryEffect]: scair.ir.NoMemoryEffect
@@ -28,9 +28,13 @@ In ScaIR, all attributes extend the base [Attribute] hierarchy.
 
 ### Attributes vs Types
 
-In MLIR and ScaIR types are a specialized kind of attribute.
+In MLIR (and conceptually in ScaIR), types are a specialized kind of attribute.
 
-Attributes represent general compile-time information, while type attributes are used exclusively to describe the types of SSA values. Every SSA value must have exactly one [TypeAttribute].
+Attributes represent general compile-time information. Type attributes are used to describe the types of SSA values.
+
+MLIR: Every SSA value has exactly one type (represented using a `Type` / `TypeAttribute`, and printed with `!`).
+
+ScaIR: The distinction between `Attribute` and `TypeAttribute` is primarily maintained for MLIR IR compatibility (e.g., printing `#` vs `!` for MLIR dialects). SSA values in ScaIR do not strictly require a `TypeAttribute`; in some cases a regular `Attribute` may be used instead.
 
 This distinction is reflected in the IR syntax:
 
@@ -43,7 +47,7 @@ In ScaIR, this distinction is expressed explicitly in Scala: type attributes ext
 
 ### Type Attributes
 
-`TypeAttribute` describes the types of SSA values. Every SSA value must have exactly one type attribute.
+`TypeAttribute` describes the types of SSA values. While MLIR requires every SSA value to have exactly one type attribute, ScaIR allows SSA values to be typed using regular attributes as well.
 
 ```scala
 final case class MyType()
@@ -109,10 +113,12 @@ Operations represent units of computation in the IR.
 Every Operation has:
 
 * a name
-* operands
 * results
-* optional regions
-* optional traits
+* operands
+* successors
+* regions
+* properties
+* attributes
 
 ### Typed Operations and the DerivedOperationCompanion
 
@@ -169,7 +175,9 @@ Regions are commonly used for control flow and loops.
 
 ### Traits
 
-Traits attach semantic guarantees to Operations.
+Traits in ScaIR are simply Scala traits. Most operation traits extend `Operation` directly. When an operation mixes in such a trait, the operation itself becomes an instance of that trait. This allows trait implementations to directly access operation properties such as operands, results, and the containing block via `this`.
+
+Traits are commonly used to express additional constraints, shared behavior, and structural properties of operations, and may participate in operation verification.
 
 Common examples:
 
@@ -185,7 +193,29 @@ case class PureOp(
   derives DerivedOperationCompanion
 ```
 
-Traits are used by transformations and verification passes.
+Example trait Implementation:
+
+```scala
+trait IsTerminator extends Operation:
+
+  override def traitVerify(): OK[Operation] =
+    val verified =
+      this.containerBlock match
+        case Some(b) =>
+          if this ne b.operations.last then
+            Err(
+              s"Operation '$name' marked as a terminator, but is not the last operation within its container block"
+            )
+          else OK(this)
+        case None =>
+          Err(
+            s"Operation '$name' marked as a terminator, but is not contained in any block."
+          )
+
+    verified.flatMap(_ => super.traitVerify())
+```
+
+Traits are commonly used by [transformations](transformations.md) and verification passes.
 
 ### Verification
 
@@ -228,11 +258,39 @@ val MyDialect = summonDialect[
 ]
 ```
 
-Once registered, the IR parser can recognize:
+Calling `summonDialect` constructs a dialect definition, describing its attributes, operations, and associated parsing and printing logic. By itself, however, this does not make the dialect available to any tool or pass.
+
+ScaIR tools typically inherit from `ScairOptBase`, which defines the set of available dialects via the dialects field:
+
+```scala
+trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
+  override def dialects = scair.dialects.allDialects
+```
+
+which defaults to:
+
+```scala
+val allDialects: Seq[Dialect] =
+  Seq(
+    BuiltinDialect,
+    ...,
+    MyDialect
+  )
+```
+
+A dialect becomes usable once it is included in the sequence returned by dialects.
+
+There are two common ways to register a dialect:
+
+* When using ScaIR as a library: Create a custom `Opt` class inheriting from `ScairOptBase` and override `dialects` to include your dialect.
+
+* When working within ScaIR itself: Add the dialect directly to the `allDialects` sequence.
+
+Once a dialect is registered with a tool, the IR parser and printer can recognize:
 
 * attribute names
 * operation names
-* printing and parsing logic
+* dialect-specific parsing and printing logic
 
 ### How to Connect a Dialect
 
