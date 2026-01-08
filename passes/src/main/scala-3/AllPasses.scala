@@ -9,6 +9,7 @@ import scair.passes.cdt.TestReplacementPass
 import scair.passes.cse.CommonSubexpressionElimination
 import scair.passes.reconcile.ReconcileUnrealizedCasts
 import scair.transformations.ModulePass
+import scair.passes.MonomorphizePass
 
 //
 // ░█████╗░ ██╗░░░░░ ██╗░░░░░
@@ -31,6 +32,7 @@ val allPasses: Seq[MLContext => ModulePass] =
     BenchmarkConstantFolding(_),
     CommonSubexpressionElimination(_),
     DummyPass(_),
+    MonomorphizePass(_),
     ReconcileUnrealizedCasts(_),
     TestInsertionPass(_),
     TestReplacementPass(_),
