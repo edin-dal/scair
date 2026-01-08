@@ -241,9 +241,9 @@ Examples:
 * `arith` — arithmetic operations
 * `scf` — structured control flow
 
-### Registering a Dialect
+### Declare the Dialect
 
-In ScaIR, dialects are registered declaratively using `summonDialect`.
+In ScaIR, dialects are declared declaratively using `summonDialect`.
 
 ```scala
 val MyDialect = summonDialect[
@@ -256,6 +256,8 @@ val MyDialect = summonDialect[
 ```
 
 Calling `summonDialect` constructs a dialect definition, describing its attributes, operations, and associated parsing and printing logic. By itself, however, this does not make the dialect available to any tool or pass.
+
+### Register a Dialect
 
 ScaIR tools typically inherit from `ScairOptBase`, which defines the set of available dialects via the dialects field:
 
