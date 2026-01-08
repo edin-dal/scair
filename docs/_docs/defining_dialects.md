@@ -28,20 +28,17 @@ In ScaIR, all attributes extend the base [Attribute] hierarchy.
 
 ### Attributes vs Types
 
-In MLIR (and conceptually in ScaIR), types are a specialized kind of attribute.
+In MLIR (and conceptually in ScaIR), types are a specialized kind of attribute. Attributes represent general compile-time information. Type attributes are used to describe the types of SSA values.
 
-Attributes represent general compile-time information. Type attributes are used to describe the types of SSA values.
-
-MLIR: Every SSA value has exactly one type (represented using a `Type` / `TypeAttribute`, and printed with `!`).
-
-ScaIR: The distinction between `Attribute` and `TypeAttribute` is primarily maintained for MLIR IR compatibility (e.g., printing `#` vs `!` for MLIR dialects). SSA values in ScaIR do not strictly require a `TypeAttribute`; in some cases a regular `Attribute` may be used instead.
+In MLIR every SSA value has exactly one type. In ScaIR the distinction between `Attribute` and `TypeAttribute` is primarily maintained for MLIR IR compatibility (e.g., printing `#` vs `!` for MLIR dialects). 
+SSA values in ScaIR do not strictly require a `TypeAttribute`.
 
 This distinction is reflected in the IR syntax:
 
 - `#dialect.attr<...>` — general attributes
 - `!dialect.type<...>` — type attributes
 
-Although both are implemented as attributes internally, only type attributes may appear in SSA type positions.
+Although both are implemented as attributes internally, only type attributes should appear in SSA value type positions.
 
 In ScaIR, this distinction is expressed explicitly in Scala: type attributes extend `TypeAttribute`, while other attributes do not.
 
