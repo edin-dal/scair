@@ -174,7 +174,7 @@ Regions are commonly used for control flow and loops.
 
 Traits in ScaIR are simply Scala traits. Most operation traits extend `Operation` directly. When an operation mixes in such a trait, the operation itself becomes an instance of that trait. This allows trait implementations to directly access operation properties such as operands, results, and the containing block via `this`.
 
-Traits are commonly used to express additional constraints, shared behavior, and structural properties of operations, and may participate in operation verification.
+Traits are used to attach semantics or constraints (including structural properties and shared behavior) to operations and may optionally participate in operation verification.
 
 Common examples:
 
