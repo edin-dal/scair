@@ -1,4 +1,4 @@
-package scair.dialects.dlam_de_bruijn
+package scair.dialects.de_bruijn_type_params
 
 import scair.ir.*
 import scair.utils.*
@@ -12,55 +12,55 @@ import fastparse.*
 
 // ========================= Types (with de Bruijn) \=========================
 
-// A sealed "kind" for all dlam types
-sealed trait DlamType extends TypeAttribute
+// A sealed "kind" for all tlam types
+sealed trait tlamType extends TypeAttribute
 
-// !dlam.type  — the universe of dlam types
-final case class DlamTypeType()
-    extends DlamType
-    with DerivedAttribute["dlam.type", DlamTypeType]
+// !tlam.type  — the universe of tlam types
+final case class tlamTypeType()
+    extends tlamType
+    with DerivedAttribute["tlam.type", tlamTypeType]
     derives DerivedAttributeCompanion
 
-// !dlam.bvar<k>  — De Bruijn index (k is data)
-final case class DlamBVarType(k: IntegerAttr)
-    extends DlamType
-    with DerivedAttribute["dlam.bvar", DlamBVarType]
+// !tlam.bvar<k>  — De Bruijn index (k is data)
+final case class tlamBVarType(k: IntegerAttr)
+    extends tlamType
+    with DerivedAttribute["tlam.bvar", tlamBVarType]
     derives DerivedAttributeCompanion
 
-// !dlam.fun<in -> out> — function type
-final case class DlamFunType(in: TypeAttribute, out: TypeAttribute)
+// !tlam.fun<in -> out> — function type
+final case class tlamFunType(in: TypeAttribute, out: TypeAttribute)
     extends ParametrizedAttribute(),
-      DlamType:
-  override def name: String = "dlam.fun"
+      tlamType:
+  override def name: String = "tlam.fun"
   override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(in, out)
 
-given AttributeCompanion[DlamFunType]:
-  override def name = "dlam.fun"
+given AttributeCompanion[tlamFunType]:
+  override def name = "tlam.fun"
 
-  override def parse[$: P](using Parser): P[DlamFunType] =
+  override def parse[$: P](using Parser): P[tlamFunType] =
     P(
       "<" ~ typeP ~ "," ~ typeP ~ ">"
     ).map { (in, out) =>
-      DlamFunType(
+      tlamFunType(
         in.asInstanceOf[TypeAttribute],
         out.asInstanceOf[TypeAttribute],
       )
     }
 
-// !dlam.forall<body> — polymorphic type (body may reference bvar(0))
-final case class DlamForAllType(body: TypeAttribute)
-    extends DlamType
-    with DerivedAttribute["dlam.forall", DlamForAllType]
+// !tlam.forall<body> — polymorphic type (body may reference bvar(0))
+final case class tlamForAllType(body: TypeAttribute)
+    extends tlamType
+    with DerivedAttribute["tlam.forall", tlamForAllType]
     derives DerivedAttributeCompanion
 
-object DlamTy:
-  inline def `type`: DlamType = DlamTypeType()
-  inline def bvar(k: IntData): DlamType = DlamBVarType(IntegerAttr(k, I64))
+object tlamTy:
+  inline def `type`: tlamType = tlamTypeType()
+  inline def bvar(k: IntData): tlamType = tlamBVarType(IntegerAttr(k, I64))
 
-  inline def fun(in: TypeAttribute, out: TypeAttribute): DlamType =
-    DlamFunType(in, out)
+  inline def fun(in: TypeAttribute, out: TypeAttribute): tlamType =
+    tlamFunType(in, out)
 
-  inline def forall(body: TypeAttribute): DlamType = DlamForAllType(body)
+  inline def forall(body: TypeAttribute): tlamType = tlamForAllType(body)
 
 /** \========================= de Bruijn utilities \=========================
   *   - shift(d, c, t) — increase indices >= c by d (used when entering/leaving
@@ -68,32 +68,32 @@ object DlamTy:
   *   - subst(c, s, t) — substitute BVar(c) in t with s (capture-avoiding)
   */
 object DBI:
-  import DlamTy.*
+  import tlamTy.*
 
   // shift(d, c, t): increase all indices >= c by d
   def shift(d: Int, c: Int, t: TypeAttribute): TypeAttribute = t match
-    case DlamBVarType(IntegerAttr(k, t)) if k.data >= c =>
+    case tlamBVarType(IntegerAttr(k, t)) if k.data >= c =>
       bvar(IntData(k.data + d))
-    case b @ DlamBVarType(_)  => b
-    case DlamFunType(i, o)    => fun(shift(d, c, i), shift(d, c, o))
-    case DlamForAllType(body) => forall(shift(d, c + 1, body))
+    case b @ tlamBVarType(_)  => b
+    case tlamFunType(i, o)    => fun(shift(d, c, i), shift(d, c, o))
+    case tlamForAllType(body) => forall(shift(d, c + 1, body))
     case other                => other
 
   // subst(c, s, t): substitute bvar(c) := s
   def subst(c: Int, s: TypeAttribute, t: TypeAttribute): TypeAttribute = t match
-    case DlamBVarType(IntegerAttr(k, t)) if k.data == c => s
-    case DlamBVarType(IntegerAttr(k, t)) if k.data > c  =>
+    case tlamBVarType(IntegerAttr(k, t)) if k.data == c => s
+    case tlamBVarType(IntegerAttr(k, t)) if k.data > c  =>
       bvar(IntData(k.data - 1))
-    case b @ DlamBVarType(_)  => b
-    case DlamFunType(i, o)    => fun(subst(c, s, i), subst(c, s, o))
-    case DlamForAllType(body) =>
+    case b @ tlamBVarType(_)  => b
+    case tlamFunType(i, o)    => fun(subst(c, s, i), subst(c, s, o))
+    case tlamForAllType(body) =>
       forall(subst(c + 1, shift(1, 0, s), body)) // or maybe shift by c?
     case other => other
 
   // instantiate ∀.body with arg
   def instantiate(fa: TypeAttribute, arg: TypeAttribute): TypeAttribute =
     fa match
-      case DlamForAllType(body) => subst(0, arg, body)
+      case tlamForAllType(body) => subst(0, arg, body)
       case other                => other
 
 /** \========================= Operations \=========================
@@ -104,21 +104,21 @@ object DBI:
   * Regions carry the binders; the de Bruijn indices refer to region nesting.
   */
 
-/** dlam.vlambda %v = dlam.vlambda (%x : A) : !dlam.fun<A -> B> { ... }
+/** tlam.vlambda %v = tlam.vlambda (%x : A) : !tlam.fun<A -> B> { ... }
   * Invariants:
   *   - exactly one block with exactly one argument of type == funTyp.in
   *   - result type == funTyp
   */
 final case class VLambda(
-    funAttr: DlamType, // expect DlamFunType
+    funAttr: tlamType, // expect tlamFunType
     body: Region,
     res: Result[TypeAttribute],
-) extends DerivedOperation["dlam.vlambda", VLambda]
+) extends DerivedOperation["tlam.vlambda", VLambda]
     derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
     (funAttr, res.typ) match
-      case (f @ DlamFunType(in, _), r) if r == f =>
+      case (f @ tlamFunType(in, _), r) if r == f =>
         body.blocks match
           case Block(args, _) :: Nil
               if args.length == 1 && args.head.typ == in =>
@@ -127,28 +127,28 @@ final case class VLambda(
             Err("vlambda: one block with one arg of input type required")
       case _ => Err("vlambda: result type must equal function type")
 
-/** dlam.vreturn dlam.vreturn %x : T
+/** tlam.vreturn tlam.vreturn %x : T
   */
 final case class VReturn(
     value: Value[TypeAttribute],
     expected: TypeAttribute,
-) extends DerivedOperation["dlam.vreturn", VReturn]
+) extends DerivedOperation["tlam.vreturn", VReturn]
     with IsTerminator derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
     if value.typ == expected then OK(this)
     else Err("vreturn: type mismatch")
 
-/** dlam.tlambda (∀-introduction) %F = dlam.tlambda (%T : !dlam.type) :
-  * !dlam.forall< Body > { ... } Invariants:
+/** tlam.tlambda (∀-introduction) %F = tlam.tlambda (%T : !tlam.type) :
+  * !tlam.forall< Body > { ... } Invariants:
   *   - exactly one block
   *   - that block has zero arguments
   *   - result type is ForAllType(_)
   */
 final case class TLambda(
     tBody: Region,
-    res: Result[TypeAttribute], // expect DlamForAllType
-) extends DerivedOperation["dlam.tlambda", TLambda]
+    res: Result[TypeAttribute], // expect tlamForAllType
+) extends DerivedOperation["tlam.tlambda", TLambda]
     derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
@@ -156,38 +156,38 @@ final case class TLambda(
       case Block(args, _) :: Nil =>
         args.isEmpty
       case _ => false
-    val okRes = res.typ.isInstanceOf[DlamForAllType]
+    val okRes = res.typ.isInstanceOf[tlamForAllType]
     if okBinder && okRes then OK(this)
     else Err("tlambda: must have one block with zero args and a forall result")
 
-/** dlam.treturn dlam.treturn %v : T
+/** tlam.treturn tlam.treturn %v : T
   */
 final case class TReturn(
     value: Value[TypeAttribute],
     expected: TypeAttribute,
-) extends DerivedOperation["dlam.treturn", TReturn]
+) extends DerivedOperation["tlam.treturn", TReturn]
     with IsTerminator derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
     if value.typ == expected then OK(this)
     else Err("treturn: type mismatch")
 
-/** dlam.tapply (∀-elimination) %h = dlam.tapply %G <!Ty> : InstantiatedType
+/** tlam.tapply (∀-elimination) %h = tlam.tapply %G <!Ty> : InstantiatedType
   * Invariants:
   *   - polymorphicFun.typ == ForAllType(body)
   *   - res.typ == instantiate(ForAllType(body), argType) (de Bruijn-aware
   *     substitution)
   */
 final case class TApply(
-    polymorphicFun: Value[TypeAttribute], // expect DlamForAllType
+    polymorphicFun: Value[TypeAttribute], // expect tlamForAllType
     argType: TypeAttribute,
     res: Result[TypeAttribute],
-) extends DerivedOperation["dlam.tapply", TApply]
+) extends DerivedOperation["tlam.tapply", TApply]
     derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
     polymorphicFun.typ match
-      case fa @ DlamForAllType(_) =>
+      case fa @ tlamForAllType(_) =>
         val inst = DBI.instantiate(fa, argType)
         if res.typ == inst then OK(this)
         else Err(s"tapply: result ${res.typ} != instantiated $inst")
@@ -198,12 +198,12 @@ final case class VApply(
     fun: Value[TypeAttribute],
     arg: Value[TypeAttribute],
     res: Result[TypeAttribute],
-) extends DerivedOperation["dlam.vapply", VApply]
+) extends DerivedOperation["tlam.vapply", VApply]
     derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
     fun.typ match
-      case DlamFunType(in, out) =>
+      case tlamFunType(in, out) =>
         if arg.typ == in && res.typ == out then OK(this)
         else
           Err(
@@ -213,9 +213,9 @@ final case class VApply(
       case other => Err(s"vapply: fun not a function type: $other")
 
 // ========================= Dialect Registration \=========================
-val DlamDeBruijnDialect = summonDialect[
+val DeBruijnTypeParamsDialect = summonDialect[
   // Custom attributes
-  (DlamTypeType, DlamBVarType, DlamForAllType, DlamFunType),
+  (tlamTypeType, tlamBVarType, tlamForAllType, tlamFunType),
   // Operations
   (VLambda, VReturn, TLambda, TReturn, TApply, VApply),
 ]

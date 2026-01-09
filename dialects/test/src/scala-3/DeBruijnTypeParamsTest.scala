@@ -4,15 +4,15 @@ import scair.ir.*
 import scair.Printer
 import scair.utils.*
 import scair.dialects.builtin.*
-import scair.dialects.dlam_de_bruijn.*
-import scair.dialects.dlam_de_bruijn.DlamTy.*
+import scair.dialects.de_bruijn_type_params.*
+import scair.dialects.de_bruijn_type_params.tlamTy.*
 
 import org.scalatest.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.*
 import java.io.*
 
-class DlamDeBruijnTests extends AnyFlatSpec:
+class tlamDeBruijnTests extends AnyFlatSpec:
 
   private def printed(attr: Attribute): String =
     import java.io.{PrintWriter, StringWriter}
@@ -47,23 +47,23 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   --------------
   - Verifies successfully.
   - Printed IR contains the expected "tlambda", inner "vlambda", the binder block,
-    and the function type: !dlam.forall<!dlam.fun<!dlam.bvar<0>, !dlam.bvar<0>>>.
+    and the function type: !tlam.forall<!tlam.fun<!tlam.bvar<0>, !tlam.bvar<0>>>.
    */
   "A polymorphic identity (de Bruijn) IR" should
     "build, verify, and print the expected shape" in {
       //
       // Types:
-      //   body  = !dlam.fun<!dlam.bvar<0> -> !dlam.bvar<0>>
-      //   forall = !dlam.forall<body>
+      //   body  = !tlam.fun<!tlam.bvar<0> -> !tlam.bvar<0>>
+      //   forall = !tlam.forall<body>
       //
-      val bodyTy: DlamType = fun(bvar(IntData(0)), bvar(IntData(0)))
-      val forallTy: DlamType = forall(bodyTy)
+      val bodyTy: tlamType = fun(bvar(IntData(0)), bvar(IntData(0)))
+      val forallTy: tlamType = forall(bodyTy)
 
       //
       // Inner vlambda:
-      //   %v = dlam.vlambda (%x : !dlam.bvar<0>)
-      //          : !dlam.fun<!dlam.bvar<0> -> !dlam.bvar<0>> {
-      //       dlam.vreturn %x : !dlam.bvar<0>;
+      //   %v = tlam.vlambda (%x : !tlam.bvar<0>)
+      //          : !tlam.fun<!tlam.bvar<0> -> !tlam.bvar<0>> {
+      //       tlam.vreturn %x : !tlam.bvar<0>;
       //   }
       //
       val vLambdaFunTy = bodyTy
@@ -73,7 +73,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
         Region(
           Seq(
             Block(
-              // one argument of type !dlam.bvar<0>
+              // one argument of type !tlam.bvar<0>
               bvar(IntData(0)),
               (xVal: Value[Attribute]) =>
                 val x = xVal.asInstanceOf[Value[TypeAttribute]]
@@ -89,10 +89,10 @@ class DlamDeBruijnTests extends AnyFlatSpec:
 
       //
       // Outer tlambda + treturn:
-      //   %F = dlam.tlambda (%T : !dlam.type)
-      //          : !dlam.forall<!dlam.fun<!dlam.bvar<0> -> !dlam.bvar<0>>> {
+      //   %F = tlam.tlambda (%T : !tlam.type)
+      //          : !tlam.forall<!tlam.fun<!tlam.bvar<0> -> !tlam.bvar<0>>> {
       //       %v = (above vlambda)
-      //       dlam.treturn %v : !dlam.fun<!dlam.bvar<0> -> !dlam.bvar<0>>
+      //       tlam.treturn %v : !tlam.fun<!tlam.bvar<0> -> !tlam.bvar<0>>
       //   }
       //
       val tRet = TReturn(value = vLambdaRes, expected = bodyTy)
@@ -132,16 +132,16 @@ class DlamDeBruijnTests extends AnyFlatSpec:
 
       // Avoid overfitting to SSA numbering; just assert the essential structure.
       printed should include("builtin.module")
-      printed should include("dlam.tlambda")
+      printed should include("tlam.tlambda")
       printed should include(
-        "!dlam.forall<!dlam.fun<!dlam.bvar<0>, !dlam.bvar<0>>>"
+        "!tlam.forall<!tlam.fun<!tlam.bvar<0>, !tlam.bvar<0>>>"
       )
 
-      printed should include("dlam.vlambda")
+      printed should include("tlam.vlambda")
       printed should include("^bb0(") // inner value-lambda block
-      printed should include("!dlam.bvar<0>")
-      printed should include("dlam.vreturn")
-      printed should include("dlam.treturn")
+      printed should include("!tlam.bvar<0>")
+      printed should include("tlam.vreturn")
+      printed should include("tlam.treturn")
 
     }
 
@@ -169,13 +169,13 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   "Nested tlambda + tapply (de Bruijn) IR" should
     "instantiate ∀ with bvar(IntData(0)) and type-check" in {
       // Common types under the *current* type binder
-      val bodyTy: DlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
-      val forallTy: DlamType = forall(bodyTy) // ∀α. α -> α
+      val bodyTy: tlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
+      val forallTy: tlamType = forall(bodyTy) // ∀α. α -> α
 
       // Build the inner polymorphic function:
-      //   %G = dlam.tlambda (%U : !dlam.type) : ∀α. α -> α {
-      //     %v = dlam.vlambda (%x : α) : α -> α { vreturn %x : α }
-      //     dlam.treturn %v : α -> α
+      //   %G = tlam.tlambda (%U : !tlam.type) : ∀α. α -> α {
+      //     %v = tlam.vlambda (%x : α) : α -> α { vreturn %x : α }
+      //     tlam.treturn %v : α -> α
       //   }
       val inner_vLambdaRes = Result[TypeAttribute](bodyTy)
       val inner_vLambdaRegion =
@@ -210,11 +210,11 @@ class DlamDeBruijnTests extends AnyFlatSpec:
         TLambda(tBody = inner_tLambdaRegion, res = inner_tLambdaRes)
       inner_tLambda.verify().isOK shouldBe true
 
-      // Now the outer tlambda, which applies %G to !dlam.bvar<0> (the outer binder):
-      // %F = dlam.tlambda (%T : !dlam.type) : ∀α. α -> α {
+      // Now the outer tlambda, which applies %G to !tlam.bvar<0> (the outer binder):
+      // %F = tlam.tlambda (%T : !tlam.type) : ∀α. α -> α {
       //   %G = (above)
-      //   %h = dlam.tapply %G <!dlam.bvar<0>> : α -> α
-      //   dlam.treturn %h : α -> α
+      //   %h = tlam.tapply %G <!tlam.bvar<0>> : α -> α
+      //   tlam.treturn %h : α -> α
       // }
       val tapplyResultTy = bodyTy // instantiate ∀ with α gives α -> α
       val hRes = Result[TypeAttribute](tapplyResultTy)
@@ -254,16 +254,16 @@ class DlamDeBruijnTests extends AnyFlatSpec:
 
       // Structure checks (comma style)
       printed should include("builtin.module")
-      printed should include("dlam.tlambda") // outer
+      printed should include("tlam.tlambda") // outer
       printed should include(
-        "!dlam.forall<!dlam.fun<!dlam.bvar<0>, !dlam.bvar<0>>>"
+        "!tlam.forall<!tlam.fun<!tlam.bvar<0>, !tlam.bvar<0>>>"
       )
-      printed should include("dlam.tlambda") // inner
-      printed should include("dlam.vlambda")
-      printed should include("dlam.vreturn")
-      printed should include("dlam.tapply")
-      printed should include("!dlam.fun<!dlam.bvar<0>, !dlam.bvar<0>>")
-      printed should include("dlam.treturn")
+      printed should include("tlam.tlambda") // inner
+      printed should include("tlam.vlambda")
+      printed should include("tlam.vreturn")
+      printed should include("tlam.tapply")
+      printed should include("!tlam.fun<!tlam.bvar<0>, !tlam.bvar<0>>")
+      printed should include("tlam.treturn")
     }
 
   /*
@@ -276,7 +276,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
 
   Mechanics
   ---------
-  - DBI.instantiate substitutes the type binder with DlamConstType(I32).
+  - DBI.instantiate substitutes the type binder with tlamConstType(I32).
   - Also check via the TApply op’s verifier.
 
   What we assert
@@ -325,10 +325,10 @@ class DlamDeBruijnTests extends AnyFlatSpec:
     "return the same value" in {
 
       // ---- Types we use ----
-      val alphaId: DlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
-      val polyId: DlamType = forall(alphaId) // ∀α. α -> α
+      val alphaId: tlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
+      val polyId: tlamType = forall(alphaId) // ∀α. α -> α
       val i32Ty: TypeAttribute = I32
-      val i32Id: DlamType = fun(i32Ty, i32Ty)
+      val i32Id: tlamType = fun(i32Ty, i32Ty)
 
       // ---- Build G = Λα. λ(x: α). x  ----
       val vRes = Result[TypeAttribute](alphaId)
@@ -443,7 +443,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - Only indices >= cutoff are shifted; d=0 is identity.
    */
   "DBI.shift basic behavior" should "bump only indices >= cutoff" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
 
     // shift 1 at cutoff 0: 0 -> 1, 1 -> 2
     shift(1, 0, bvar(IntData(0))) shouldEqual bvar(IntData(1))
@@ -479,7 +479,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - Structural mapping and cutoff accounting are correct.
    */
   "DBI.shift structure laws" should "distribute over fun and respect binders" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
 
     val ty =
       fun(
@@ -515,7 +515,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - down == original after shifting up then down.
    */
   "DBI.shift round-trip" should "be reversible when shifts are valid" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
     val t = forall(
       fun(bvar(IntData(0)), fun(bvar(IntData(1)), bvar(IntData(0))))
     ) // ∀. (0 -> (1 -> 0))
@@ -546,7 +546,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - Uses shift(1,0,s) under the binder and avoids capture correctly.
    */
   "DBI.subst under a binder" should "use shift(1,0,s) and avoid capture" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
     // t = ∀. fun(bvar(IntData(2)), bvar(IntData(1)))   -- body sees one binder already
     val t = forall(fun(bvar(IntData(2)), bvar(IntData(1))))
     // Substitute at c=1 with s = bvar(IntData(0))  (a free var in the outer scope)
@@ -570,7 +570,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - Instantiation yields τ→τ.
    */
   "DBI.instantiate" should "instantiate ∀α. α→α to τ→τ for ground τ" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
     val poly = forall(fun(bvar(IntData(0)), bvar(IntData(0))))
     instantiate(poly, I32) shouldEqual fun(I32, I32)
   }
@@ -589,7 +589,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - VLambda.verify returns false.
    */
   "A VLambda with wrong block arg type" should "fail verify" in {
-    import DlamTy.*
+    import tlamTy.*
     val funTy = fun(bvar(IntData(0)), bvar(IntData(0)))
     val res = Result[TypeAttribute](funTy)
     val wrongRegion =
@@ -620,7 +620,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - TApply.verify returns false.
    */
   "A TApply on a non-forall" should "fail verify" in {
-    import DlamTy.*
+    import tlamTy.*
     val notForall =
       Result[TypeAttribute](fun(bvar(IntData(0)), bvar(IntData(0))))
     val res = Result[TypeAttribute](fun(bvar(IntData(0)), bvar(IntData(0))))
@@ -641,7 +641,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - VApply.verify returns false with a clear mismatch message.
    */
   "A VApply with mismatched argument/result types" should "fail verify" in {
-    import DlamTy.*
+    import tlamTy.*
     val fTy = fun(bvar(IntData(0)), bvar(IntData(0)))
     val argT = bvar(IntData(0))
     val resT = bvar(IntData(0))
@@ -681,7 +681,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - The (k > c) decrement path works.
    */
   "DBI.subst (k > c) branch" should "decrement indices above the hole" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
     // Replace bvar(IntData(0)) with τ in (1 -> 0) : the 1 shifts down to 0
     val t = fun(bvar(IntData(1)), bvar(IntData(0)))
     val tau = I32
@@ -703,7 +703,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - The inner body stays the same; outer structure preserved.
    */
   "DBI.shift across two nested binders" should "leave indices < 2 unchanged" in {
-    import DlamTy.*, DBI.*
+    import tlamTy.*, DBI.*
     val t =
       forall(forall(fun(bvar(IntData(1)), bvar(IntData(0))))) // ∀. ∀. (1 -> 0)
     shift(1, 0, t) shouldEqual t // cutoff becomes 2 inside
@@ -725,7 +725,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
    */
   "DBI.shift across two nested binders (index beyond both)" should
     "bump indices >= 2 inside the inner body" in {
-      import DlamTy.*, DBI.*
+      import tlamTy.*, DBI.*
       val t = forall(
         forall(fun(bvar(IntData(2)), bvar(IntData(1))))
       ) // ∀. ∀. (2 -> 1)
@@ -757,8 +757,8 @@ class DlamDeBruijnTests extends AnyFlatSpec:
     "instantiate ∀β. (α -> α) to (α -> α) where α is outer bvar(IntData(0))" in {
       // Types inside inner tlambda (β is inner, α is outer):
       // bodyInner = fun(bvar(IntData(1)), bvar(IntData(1)))   // both refer to the *outer* binder
-      val bodyInner: DlamType = fun(bvar(IntData(1)), bvar(IntData(1)))
-      val forallInner: DlamType = forall(bodyInner) // ∀β. (α -> α)
+      val bodyInner: tlamType = fun(bvar(IntData(1)), bvar(IntData(1)))
+      val forallInner: tlamType = forall(bodyInner) // ∀β. (α -> α)
 
       // Build inner vlambda: λ(x: α). x  (α = bvar(IntData(1)) under the inner binder)
       val innerVRes = Result[TypeAttribute](bodyInner)
@@ -861,13 +861,13 @@ class DlamDeBruijnTests extends AnyFlatSpec:
   - TApply count goes from 1 to 0.
   - TLambda count goes from 2 to 1 (inner erased).
   - There is a VLambda of type α→α in the outer block, before the final treturn.
-  - Verification still succeeds and printed IR contains no dlam.tapply.
+  - Verification still succeeds and printed IR contains no tlam.tapply.
    */
   "Monomorphize pass" should
     "replace tapply with a specialized vlam and remove the use" in {
       // Types under current binder: α → α and ∀β. β → β (but we’ll use α for instantiation)
-      val alphaFun: DlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
-      val forallAlphaFun: DlamType = forall(alphaFun) // ∀α. α -> α
+      val alphaFun: tlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
+      val forallAlphaFun: tlamType = forall(alphaFun) // ∀α. α -> α
 
       // Inner: G = Λβ. λ(x: β). x  (written with bvar(IntData(0)) under its own binder)
       val innerVRes =
@@ -945,7 +945,7 @@ class DlamDeBruijnTests extends AnyFlatSpec:
         walkOp(op)
         n
 
-      def findVLambdaWithType(block: Block, funTy: DlamType): Option[VLambda] =
+      def findVLambdaWithType(block: Block, funTy: tlamType): Option[VLambda] =
         block.operations.collectFirst {
           case v: VLambda if v.funAttr == funTy && v.res.typ == funTy => v
         }
@@ -958,12 +958,12 @@ class DlamDeBruijnTests extends AnyFlatSpec:
       // Run the pass
       import scair.MLContext
       import scair.dialects.builtin.BuiltinDialect
-      import scair.dialects.dlam_de_bruijn.DlamDeBruijnDialect
+      import scair.dialects.de_bruijn_type_params.DeBruijnTypeParamsDialect
       import scair.passes.MonomorphizePass
 
       val ctx = MLContext()
       ctx.registerDialect(BuiltinDialect)
-      ctx.registerDialect(DlamDeBruijnDialect)
+      ctx.registerDialect(DeBruijnTypeParamsDialect)
       val pass = new MonomorphizePass(ctx)
       val afterOp: Operation = pass.transform(module)
       val afterMod = afterOp match
@@ -986,8 +986,8 @@ class DlamDeBruijnTests extends AnyFlatSpec:
       Printer(p = new PrintWriter(sw)).print(afterMod)
       val out = sw.toString
 
-      out should include("dlam.vlambda")
-      out should not include ("dlam.tapply")
+      out should include("tlam.vlambda")
+      out should not include ("tlam.tapply")
 
       // Stronger check: the return in the outer body still returns α→α
       val outerAfter: TLambda =
@@ -1009,8 +1009,8 @@ class DlamDeBruijnTests extends AnyFlatSpec:
 
       val ops = outerBlock.operations
 
-      val tRetIdx = outerBlock.operations.indexWhere(_.name == "dlam.treturn")
-      if tRetIdx < 0 then fail("no dlam.treturn found in outer block")
+      val tRetIdx = outerBlock.operations.indexWhere(_.name == "tlam.treturn")
+      if tRetIdx < 0 then fail("no tlam.treturn found in outer block")
       val idxSpec = ops.indexOf(spec)
       // val idxSpec = outerBlock.getIndexOf(spec)
 

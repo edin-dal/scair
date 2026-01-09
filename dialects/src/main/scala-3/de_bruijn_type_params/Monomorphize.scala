@@ -2,13 +2,13 @@ package scair.passes
 
 import scair.ir.*
 import scair.transformations.*
-import scair.dialects.dlam_de_bruijn.*
+import scair.dialects.de_bruijn_type_params.*
 import scair.dialects.builtin.*
 import scair.MLContext
 
 object Monomorphize:
 
-  /** Substitute the type argument into any TypeAttribute (only our Dlam nodes
+  /** Substitute the type argument into any TypeAttribute (only our tlam nodes
     * change).
     */
   private def specType(t: TypeAttribute, arg: TypeAttribute): TypeAttribute =
@@ -23,11 +23,11 @@ object Monomorphize:
     * VReturn.
     */
   private def specializeVLambda(v: VLambda, arg: TypeAttribute): VLambda =
-    // Substitute in the function type. We expect it to stay a DlamFunType.
+    // Substitute in the function type. We expect it to stay a tlamFunType.
     val newFunTyTA: TypeAttribute = specType(v.funAttr, arg)
-    val newFunTy: DlamType = newFunTyTA match
-      case f: DlamFunType => f
-      case other => sys.error(s"expected DlamFunType after spec, got $other")
+    val newFunTy: tlamType = newFunTyTA match
+      case f: tlamFunType => f
+      case other => sys.error(s"expected tlamFunType after spec, got $other")
 
     // Rebuild the single-block body with substituted types.
     val oldBlock = v.body.blocks.head
