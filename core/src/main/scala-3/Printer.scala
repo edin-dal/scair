@@ -140,7 +140,8 @@ case class Printer(
 
   def print(block: Block)(using indentLevel: Int): Unit =
     print(indent * indentLevel, assignBlockName(block))
-    if block.arguments.nonEmpty then printListF(block.arguments, printArgument, "(", ", ", ")")
+    if block.arguments.nonEmpty then
+      printListF(block.arguments, printArgument, "(", ", ", ")")
     print(":\n")
     printList(block.operations, sep = "")(using indentLevel + 1)
 
