@@ -21,28 +21,28 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
       ("block", "ir"),
       (
         Block(),
-        """^bb0():
+        """^bb0:
 """,
       ),
       (
         Block(Seq()),
-        """^bb0():
+        """^bb0:
 """,
       ),
       (
         Block(Seq(), Seq()),
-        """^bb0():
+        """^bb0:
 """,
       ),
       (
         Block(Seq(TestOp())),
-        """^bb0():
+        """^bb0:
   "test.op"() : () -> ()
 """,
       ),
       (
         Block(TestOp()),
-        """^bb0():
+        """^bb0:
   "test.op"() : () -> ()
 """,
       ),
