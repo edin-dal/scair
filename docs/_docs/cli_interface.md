@@ -23,7 +23,7 @@ When no arguments are specified, `scair-opt` prompts you to write the IR manuall
 If no input is given, it will return an empty program:
 ```bash
 builtin.module {
-^bb0():
+^bb0:
 }
 ```
 
