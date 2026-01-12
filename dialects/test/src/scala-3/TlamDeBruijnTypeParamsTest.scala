@@ -4,8 +4,8 @@ import scair.ir.*
 import scair.Printer
 import scair.utils.*
 import scair.dialects.builtin.*
-import scair.dialects.de_bruijn_type_params.*
-import scair.dialects.de_bruijn_type_params.tlamTy.*
+import scair.dialects.tlam_de_bruijn.*
+import scair.dialects.tlam_de_bruijn.tlamTy.*
 
 import org.scalatest.*
 import org.scalatest.flatspec.AnyFlatSpec
@@ -958,12 +958,12 @@ class tlamDeBruijnTests extends AnyFlatSpec:
       // Run the pass
       import scair.MLContext
       import scair.dialects.builtin.BuiltinDialect
-      import scair.dialects.de_bruijn_type_params.DeBruijnTypeParamsDialect
+      import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
       import scair.passes.MonomorphizePass
 
       val ctx = MLContext()
       ctx.registerDialect(BuiltinDialect)
-      ctx.registerDialect(DeBruijnTypeParamsDialect)
+      ctx.registerDialect(TlamDeBruijnDialect)
       val pass = new MonomorphizePass(ctx)
       val afterOp: Operation = pass.transform(module)
       val afterMod = afterOp match

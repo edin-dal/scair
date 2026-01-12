@@ -1,4 +1,4 @@
-package scair.dialects.de_bruijn_type_params
+package scair.dialects.tlam_de_bruijn
 
 import scair.ir.*
 import scair.utils.*
@@ -213,7 +213,7 @@ final case class VApply(
       case other => Err(s"vapply: fun not a function type: $other")
 
 // ========================= Dialect Registration \=========================
-val DeBruijnTypeParamsDialect = summonDialect[
+val TlamDeBruijnDialect = summonDialect[
   // Custom attributes
   (tlamTypeType, tlamBVarType, tlamForAllType, tlamFunType),
   // Operations

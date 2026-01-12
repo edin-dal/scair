@@ -2,7 +2,7 @@ package scair.passes
 
 import scair.ir.*
 import scair.transformations.*
-import scair.dialects.de_bruijn_type_params.*
+import scair.dialects.tlam_de_bruijn.*
 import scair.dialects.builtin.*
 import scair.MLContext
 
