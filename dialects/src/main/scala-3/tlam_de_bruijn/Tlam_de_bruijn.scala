@@ -87,7 +87,7 @@ object DBI:
     case b @ tlamBVarType(_)  => b
     case tlamFunType(i, o)    => fun(subst(c, s, i), subst(c, s, o))
     case tlamForAllType(body) =>
-      forall(subst(c + 1, shift(1, 0, s), body)) // or maybe shift by c?
+      forall(subst(c + 1, shift(1, 0, s), body))
     case other => other
 
   // instantiate ∀.body with arg
