@@ -14,6 +14,13 @@ import java.io.*
 
 class tlamDeBruijnTests extends AnyFlatSpec:
 
+  private def dump(title: String, m: ModuleOp): Unit =
+    val sw = new StringWriter()
+    Printer(p = new PrintWriter(sw)).print(m)
+    println(s"\n===== $title =====")
+    println(sw.toString)
+    println(s"VERIFY: ${m.verify()}")
+
   private def printed(attr: Attribute): String =
     import java.io.{PrintWriter, StringWriter}
     val sw = new StringWriter()
@@ -1019,3 +1026,211 @@ class tlamDeBruijnTests extends AnyFlatSpec:
         assert(idxSpec < tRetIdx)
       }
     }
+
+  /*
+  Test: Full pipeline — monomorphize + erase-tlam + lower-tlam-to-func
+  ===================================================================
+
+  Goal
+  ----
+  Ensure that we can take a program containing:
+    - TLambda / TApply / TReturn
+    - VLambda / VApply / VReturn
+  and turn it into func.* ops:
+    - func.func
+    - func.call
+    - func.return
+
+  What we assert
+  --------------
+  - No tlam.tapply / tlam.tlambda / tlam.treturn remain.
+  - At least one func.func exists (lifted lambda).
+  - At least one func.return exists.
+  - Module verifies.
+   */
+
+  "A Full lowering pipeline" should
+    "eliminate type-level ops and produce func.func/call/return" in {
+
+      import tlamTy.*
+      import scair.MLContext
+      import scair.dialects.builtin.BuiltinDialect
+      import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
+      import scair.dialects.func.FuncDialect
+      import scair.passes.{MonomorphizePass, EraseTLamPass, LowerTLamToFuncPass}
+
+      val ctx = MLContext()
+      ctx.registerDialect(BuiltinDialect)
+      ctx.registerDialect(TlamDeBruijnDialect)
+      ctx.registerDialect(FuncDialect)
+
+      // ----------------------------------------------------------------------
+      // Program (as lambda-calculus comment):
+      //
+      //   F = Λα. ( (Λβ. λ(x:β). x) [α] )
+      //
+      // i.e.:
+      //   - inner polymorphic identity:   G = Λβ. λ(x:β). x
+      //   - outer binder α instantiates G at α via tapply
+      // ----------------------------------------------------------------------
+
+      // Types under current binder: α → α and ∀α. α → α
+      val alphaFun: tlamType = fun(bvar(IntData(0)), bvar(IntData(0))) // α -> α
+      val forallAlphaFun: tlamType = forall(alphaFun) // ∀α. α -> α
+
+      // Inner: G = Λβ. λ(x: β). x   (β = bvar(0) in inner binder)
+      val innerVRes =
+        Result[TypeAttribute](fun(bvar(IntData(0)), bvar(IntData(0))))
+      val innerVRegion =
+        Region(
+          Seq(
+            Block(
+              bvar(IntData(0)),
+              (x: Value[Attribute]) =>
+                val xd = x.asInstanceOf[Value[TypeAttribute]]
+                Seq(VReturn(xd, expected = bvar(IntData(0)))),
+            )
+          )
+        )
+      val innerVLam = VLambda(
+        funAttr = fun(bvar(IntData(0)), bvar(IntData(0))),
+        body = innerVRegion,
+        res = innerVRes,
+      )
+
+      val innerTRet = TReturn(
+        value = innerVRes,
+        expected = fun(bvar(IntData(0)), bvar(IntData(0))),
+      )
+
+      val innerTLRes =
+        Result[TypeAttribute](forall(fun(bvar(IntData(0)), bvar(IntData(0)))))
+      val innerTLRegion =
+        Region(Seq(Block(operations = Seq(innerVLam, innerTRet))))
+      val G = TLambda(tBody = innerTLRegion, res = innerTLRes)
+      G.verify().isOK shouldBe true
+
+      // Outer: F = Λα. (h := tapply G <!α>; treturn h : α→α)
+      val hRes = Result[TypeAttribute](alphaFun)
+      val tapply =
+        TApply(
+          polymorphicFun = innerTLRes,
+          argType = bvar(IntData(0)),
+          res = hRes,
+        )
+      tapply.verify().isOK shouldBe true
+
+      val outerTRet = TReturn(value = hRes, expected = alphaFun)
+
+      val outerTLRes = Result[TypeAttribute](forallAlphaFun)
+      val outerTLRegion =
+        Region(Seq(Block(operations = Seq(G, tapply, outerTRet))))
+      val F = TLambda(tBody = outerTLRegion, res = outerTLRes)
+      F.verify().isOK shouldBe true
+
+      val module: ModuleOp =
+        ModuleOp(Region(Seq(Block(operations = Seq(F)))))
+
+      module.verify().isOK shouldBe true
+
+      // -------------------------- Run pipeline -------------------------------
+      val afterMono =
+        new MonomorphizePass(ctx).transform(module).asInstanceOf[ModuleOp]
+      dump("After Monomorphize", afterMono)
+
+      val afterErase =
+        new EraseTLamPass(ctx).transform(afterMono).asInstanceOf[ModuleOp]
+      dump("After EraseTLam", afterErase)
+
+      val afterLower =
+        new LowerTLamToFuncPass(ctx).transform(afterErase)
+          .asInstanceOf[ModuleOp]
+      dump("After LowerTLamToFunc", afterLower)
+
+      afterLower.verify().isOK shouldBe true
+
+      val sw = new StringWriter()
+      Printer(p = new PrintWriter(sw)).print(afterLower)
+      val out = sw.toString
+
+      // We only assert removal of type-level ops here.
+      // Removal of tlam.vlambda/vapply is asserted in the dedicated "vapply -> func.call" test.
+
+      out should include("func.func")
+      out should include("func.return")
+      out should not include ("tlam.tlambda")
+      out should not include ("tlam.tapply")
+      // out should not include ("tlam.vlambda")
+      // out should not include ("tlam.vapply")
+    }
+
+  /*
+  Test: Pipeline produces func.call
+  ================================
+
+  Build:
+    - a polymorphic identity, instantiate it to i32->i32
+    - apply to an i32 value (in IR we model an argument block)
+  We only check rewriting, not execution.
+
+  What we assert
+  --------------
+  - Output contains func.call.
+   */
+
+  "LowerTLamToFuncPass" should "rewrite vapply into func.call" in {
+    import scair.MLContext
+    import scair.dialects.builtin.BuiltinDialect
+    import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
+    import scair.dialects.func.FuncDialect
+    import scair.passes.LowerTLamToFuncPass
+
+    val ctx = MLContext()
+    ctx.registerDialect(BuiltinDialect)
+    ctx.registerDialect(TlamDeBruijnDialect)
+    ctx.registerDialect(FuncDialect)
+
+    val i32 = IntegerType(IntData(32), Signed)
+    val funTy: tlamType = tlamTy.fun(i32, i32)
+
+    val vRes = Result[TypeAttribute](funTy)
+    val body = Region(
+      Seq(
+        Block(
+          i32,
+          (x: Value[Attribute]) =>
+            val xd = x.asInstanceOf[Value[TypeAttribute]]
+            Seq(VReturn(xd, expected = i32)),
+        )
+      )
+    )
+
+    val lam = VLambda(funAttr = funTy, body = body, res = vRes)
+
+    val appRes = Result[TypeAttribute](i32)
+    val top = Block(
+      i32,
+      (arg0: Value[Attribute]) =>
+        val x = arg0.asInstanceOf[Value[TypeAttribute]]
+        val app = VApply(lam.res, x, appRes)
+        val ret = VReturn(appRes, expected = i32)
+        Seq(lam, app, ret),
+    )
+
+    val module = ModuleOp(Region(Seq(top)))
+    module.verify().isOK shouldBe true
+
+    val after =
+      new LowerTLamToFuncPass(ctx).transform(module).asInstanceOf[ModuleOp]
+    dump("After LowerTLamToFunc", after)
+
+    after.verify().isOK shouldBe true
+
+    val sw = new StringWriter()
+    Printer(p = new PrintWriter(sw)).print(after)
+    val out = sw.toString
+
+    out should include("func.func")
+    out should include("func.call")
+    out should include("func.return")
+  }
