@@ -132,8 +132,18 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
             module match
               case OK(op) =>
                 // apply the specified passes
-                parsedArgs.passes.map(ctx.getPass(_).get).foldLeft(module)(
-                  (module, pass) => module.map(pass.transform)
+                parsedArgs.passes.foldLeft(module)((module, parsedPass) =>
+                  val pass = ctx.passContext.get(parsedPass) match
+                    case Some(pass) => pass
+                    case None       =>
+                      Console.err.println(
+                        f"error: '$parsedPass' does not refer to a registered pass."
+                      )
+                      Console.err.println(f"Currently registered passes are:")
+                      ctx.passContext.keysIterator
+                        .foreach(p => Console.println(f"  - $p"))
+                      sys.exit(1)
+                  module.map(pass.transform)
                 )
               case Err(errorMsg) =>
                 if parsedArgs.verifyDiagnostics then Err(errorMsg + "\n")
