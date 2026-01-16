@@ -45,7 +45,7 @@ class Interpreter(
     val module: ModuleOp,
     val symbolTable: mutable.Map[String, Operation] = mutable
       .Map(), // for now operations only
-    val dialects: Seq[InterpreterDialect]
+    val dialects: Seq[InterpreterDialect],
 ):
 
   initialize_interpreter()
