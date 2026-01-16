@@ -126,8 +126,8 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
           )
         )
       val expected = """"op1"() ({
-                     |^bb0():
-                     |^bb1():
+                     |^bb0:
+                     |^bb1:
                      |  "test.op"()[^bb0] : () -> ()
                      |}) : () -> ()
                      |""".stripMargin

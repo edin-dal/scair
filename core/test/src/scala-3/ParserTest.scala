@@ -323,7 +323,7 @@ class ParserTest
       val text = """"op1"()({
                  |  ^bb3():
                  |    "test.op"()[^bb4] : () -> ()
-                 |  ^bb4():
+                 |  ^bb4:
                  |    "test.op"() : () -> ()
                  |  }) : () -> ()""".stripMargin
 
