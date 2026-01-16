@@ -36,6 +36,8 @@ case class ScairRunArgs(
 
 trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
+  def interpreterDialects = scair.interpreter.allInterpreterDialects
+
   override def dialects = scair.dialects.allDialects
 
   override def parseArgs(args: Array[String]): ScairRunArgs =
