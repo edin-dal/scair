@@ -45,6 +45,7 @@ class Interpreter(
     val module: ModuleOp,
     val symbolTable: mutable.Map[String, Operation] = mutable
       .Map(), // for now operations only
+    val dialects: Seq[InterpreterDialect]
 ):
 
   initialize_interpreter()
@@ -80,7 +81,7 @@ class Interpreter(
       case _ => throw new Exception(s"Bool-like $value not found in context")
 
   def register_implementations(): Unit =
-    for dialect <- allInterpreterDialects do
+    for dialect <- dialects do
       for impl <- dialect do impl_dict.put(impl.opType, impl)
 
   // keeping buffer function for extensibility
