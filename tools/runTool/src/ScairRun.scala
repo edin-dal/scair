@@ -36,6 +36,8 @@ case class ScairRunArgs(
 
 trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
+  def interpreterDialects = scair.interpreter.allInterpreterDialects
+
   override def dialects = scair.dialects.allDialects
 
   override def parseArgs(args: Array[String]): ScairRunArgs =
@@ -90,7 +92,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       new RuntimeCtx(ScopedDict(None, mutable.Map()), None)
 
     // construct interpreter and runtime context
-    val interpreter = new Interpreter(module, mutable.Map())
+    val interpreter =
+      new Interpreter(module, mutable.Map(), interpreterDialects)
 
     // call interpret function and return result
     val output = interpreter.interpret(module_block, runtimeCtx)
