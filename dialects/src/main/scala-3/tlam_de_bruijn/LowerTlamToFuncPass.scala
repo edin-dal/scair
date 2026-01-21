@@ -19,23 +19,42 @@ final class LowerTLamToFuncPass(ctx: MLContext) extends ModulePass(ctx):
       case other => other
 
   private def lower(m: ModuleOp): Unit =
-    val lifted = scala.collection.mutable.Map
-      .empty[Value[TypeAttribute], SymbolRefAttr]
-    val liftedVLambdas = scala.collection.mutable.ArrayBuffer.empty[VLambda]
     var counter = 0
     val top = m.regions.head.blocks.head
 
-    // Phase 1: lift lambdas, DO NOT erase or rewrite returns
+    /** Replace all uses of `oldV` with `newV` by rebuilding each user operation
+      * and replacing it via RewriteMethods (so parent pointers stay valid).
+      */
+    def replaceAllUses(oldV: Value[Attribute], newV: Value[Attribute]): Unit =
+      val usesSnapshot = oldV.uses.toList
+      usesSnapshot.foreach { use =>
+        val userOp = use.operation
+        val idx = use.index
+        val newOperands = userOp.operands.updated(idx, newV)
+        val rebuilt = userOp.updated(operands = newOperands)
+        RewriteMethods.replaceOp(userOp, rebuilt)
+      }
+
+    // ---------------------------
+    // Phase 1: lift every VLambda
+    //   - create func.func @lifted_n with MOVED body
+    //   - create func.constant @lifted_n : builtin.function_type<...>
+    //   - replace uses of vl.res with constant result
+    //   - erase original VLambda
+    // ---------------------------
     def walkRegion(r: Region): Unit =
       r.blocks.foreach { b =>
-        b.operations.foreach { op =>
+        // snapshot, because we'll insert/erase while iterating
+        val opsSnapshot = b.operations.toList
+        opsSnapshot.foreach { op =>
           op match
             case vl: VLambda =>
               counter += 1
               val name = s"lifted_$counter"
-              val (inTy, outTy) = extractFun(vl.funAttr)
+              val (inTy, outTy) = extractFun(vl.res.typ)
 
-              val bodyMoved = vl.body.detached
+              // Move body into func.func (safe because we erase vl immediately).
+              val bodyMoved: Region = vl.body.detached
 
               val fn = Func(
                 sym_name = StringData(name),
@@ -44,13 +63,24 @@ final class LowerTLamToFuncPass(ctx: MLContext) extends ModulePass(ctx):
                 body = bodyMoved,
               )
 
-              RewriteMethods.insertOpsAt(
-                InsertPoint.atStartOf(top),
-                fn,
+              // Insert the function at module top
+              RewriteMethods.insertOpsAt(InsertPoint.atStartOf(top), fn)
+
+              // Materialize a first-class function value
+              val fnValTy = FunctionType(Seq(inTy), Seq(outTy))
+              val cst = Constant(
+                callee = SymbolRefAttr(name),
+                res = Result(fnValTy),
               )
 
-              lifted += (vl.res -> SymbolRefAttr(name))
-              liftedVLambdas += vl
+              // Insert constant right before the original VLambda
+              b.operations.insert(vl, cst)
+
+              // Replace all uses of the lambda value with the constant value
+              replaceAllUses(vl.res, cst.res)
+
+              // Erase the original VLambda
+              RewriteMethods.eraseOp(vl)
 
             case _ => ()
           op.regions.foreach(walkRegion)
@@ -59,17 +89,19 @@ final class LowerTLamToFuncPass(ctx: MLContext) extends ModulePass(ctx):
 
     walkRegion(m.regions.head)
 
-    // Phase 2: rewrite VApply + VReturn (SAFE)
+    // ---------------------------
+    // Phase 2: rewrite remaining tlam value-level ops
+    //   - vapply -> func.call_indirect
+    //   - vreturn -> func.return
+    // ---------------------------
     val p = GreedyRewritePatternApplier(
       Seq(
         pattern { case app: VApply =>
-          val sym = lifted.getOrElse(
-            app.fun,
-            throw new Exception("calling non-lifted lambda"),
-          )
-          Call(
-            callee = sym,
-            _operands = Seq(app.arg),
+          // app.fun is now a Value[tlamFunType] in tlam, but we replaced all
+          // VLambda results with func.constant whose result type is FunctionType,
+          // which is what call_indirect expects.
+          CallIndirect(
+            _operands = Seq(app.fun, app.arg),
             _results = Seq(Result(app.res.typ)),
           )
         },
@@ -78,40 +110,10 @@ final class LowerTLamToFuncPass(ctx: MLContext) extends ModulePass(ctx):
         },
       )
     )
+
     PatternRewriteWalker(p).rewrite(m)
 
-    // Phase 3: erase original VLambda ops (no uses remain)
-    liftedVLambdas
-      .foreach(vl => if vl.res.uses.isEmpty then RewriteMethods.eraseOp(vl))
-
-def extractFun(t: TypeAttribute): (TypeAttribute, TypeAttribute) =
+private def extractFun(t: TypeAttribute): (TypeAttribute, TypeAttribute) =
   t match
     case tlamFunType(in, out) => (in, out)
-    case _                    => throw new Exception("expected tlam.fun")
-
-// NOTE (Stage 1 / executability):
-// -------------------------------
-// This test program only defines a value-level lambda (%f = tlam.vlambda ...)
-// after monomorphize + erase-tlam. It does not call it (no tlam.vapply),
-// and it has no entry point like func.func @main.
-//
-// In our current runtime target (func dialect), calls are symbol-based:
-//   func.call @callee(args...)
-// i.e. func does NOT provide a first-class "function value" representation.
-// Therefore, lowering can always lift tlam.vlambda bodies into func.func symbols,
-// but it cannot always replace an SSA function value (%f) with an equivalent
-// runtime value unless the dialect provides something like func.constant/@sym
-// (a function-pointer-like value) or we introduce closure conversion.
-//
-// Consequence:
-// - For Stage 1, it is sufficient that:
-//   (1) type-level ops are eliminated (tlam.tlambda/tapply/treturn are gone)
-//   (2) lifted func.func exists (so any *call sites* can become func.call)
-// - A standalone tlam.vlambda value may remain if there are no call sites,
-//   because there is no runtime "function value" in func yet to replace it with.
-//
-// For actual evaluation/execution tests:
-// - We should use a separate test that includes a tlam.vapply call site.
-//   In that case, lowering rewrites:
-//     tlam.vapply %f %x  ->  func.call @lifted_n(%x)
-//   and the original tlam.vlambda becomes dead and can be erased.
+    case other => throw new Exception(s"expected tlam.fun, got $other")

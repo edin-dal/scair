@@ -23,35 +23,38 @@ object Monomorphize:
     * VReturn.
     */
   private def specializeVLambda(v: VLambda, arg: TypeAttribute): VLambda =
-    // Substitute in the function type. We expect it to stay a tlamFunType.
-    val newFunTyTA: TypeAttribute = specType(v.funAttr, arg)
-    val newFunTy: tlamType = newFunTyTA match
+    // 1) Specialize the function type. We expect it to stay a tlamFunType.
+    val newFunTyTA: TypeAttribute = specType(v.res.typ, arg)
+    val newFunTy: tlamFunType = newFunTyTA match
       case f: tlamFunType => f
       case other => sys.error(s"expected tlamFunType after spec, got $other")
 
-    // Rebuild the single-block body with substituted types.
+    // 2) Specialize the single block argument type (if you want to preserve the old block's annotation).
     val oldBlock = v.body.blocks.head
     val oldArgTyTA = oldBlock.arguments.head.typ.asInstanceOf[TypeAttribute]
-    val newArgTyTA = specType(oldArgTyTA, arg)
+    val newArgTyTA: TypeAttribute = specType(oldArgTyTA, arg)
 
-    // Find the original VReturn to substitute its 'expected' type.
-    val origRet = oldBlock.operations.collectFirst { case r: VReturn => r }.get
-    val newExpectedTA: TypeAttribute = specType(origRet.expected, arg)
+    if newArgTyTA != newFunTy.in then
+      sys.error(
+        s"specializeVLambda: block arg type $newArgTyTA does not match fun input ${newFunTy
+            .in}"
+      )
 
-    val newRes =
-      Result[TypeAttribute](newFunTy) // VLambda.res now carries TypeAttribute
+    // 3) Rebuild result + body. No expected on VReturn anymore.
+    val newRes = Result[tlamFunType](newFunTy)
+
     val newBody = Region(
       Seq(
         Block(
-          newArgTyTA, // block argument type after substitution
+          newArgTyTA,
           (x: Value[Attribute]) =>
             val xd = x.asInstanceOf[Value[TypeAttribute]]
-            Seq(VReturn(xd, newExpectedTA)),
+            Seq(VReturn(xd)), // <-- expected removed
         )
       )
     )
 
-    VLambda(newFunTy, newBody, newRes)
+    VLambda(newBody, newRes)
 
   /** Map from TLambda result values to the defining TLambda op. */
   private def indexTLambdas(
@@ -81,7 +84,7 @@ object Monomorphize:
   ): Unit =
     // Grab the vlambda returned by the TLambda (prototype dictates this shape).
     val (vlamReturned: VLambda) =
-      val Block(_, ops) = tlambda.tBody.blocks.head
+      val Block(_, ops) = tlambda.body.blocks.head
       ops.collectFirst { case v: VLambda => v }.get
 
     // Build the specialized vlam
@@ -120,13 +123,13 @@ object Monomorphize:
 
     // Rewrite each TApply we found
     applies.foreach { ta =>
-      tMap.get(ta.polymorphicFun) match
+      tMap.get(ta.fun) match
         case Some(tl) =>
           rewriteTApply(
             ta,
             tl,
-            ta.argType,
-          ) // argType is now any TypeAttribute (e.g., I32)
+            ta.tyArg,
+          ) // tyArg is now any TypeAttribute (e.g., I32)
           tryEraseDeadTLambda(tl)
         case None =>
           () // out of prototype shape, ignore

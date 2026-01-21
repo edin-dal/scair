@@ -22,7 +22,7 @@ final class EraseTLamPass(ctx: MLContext) extends ModulePass(ctx):
         val ops = b.operations.toSeq
         ops.foreach {
           case tl: TLambda =>
-            val bodyBlock = tl.tBody.blocks.head
+            val bodyBlock = tl.body.blocks.head
             val bodyOps = bodyBlock.operations.toSeq
 
             val tret = bodyOps.last match

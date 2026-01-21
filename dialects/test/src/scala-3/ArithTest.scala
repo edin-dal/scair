@@ -4,26 +4,23 @@ import scair.ir.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.func.*
-import scair.Printer
 import scair.utils.*
+import scair.dialects.testutils.IRTestKit.*
 
 import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.transformations.RewriteMethods
-import java.io.*
 
-/** In case not clear from style - not a serious test, just temporarily testing
-  * new infra at time of writing. Please remove if this seems useless at the
-  * time of reading ;)
+/** Regression test for generic rewrite utilities (Replace / Erase) on a small
+  * arith+func program.
   */
-
-class ArithTests extends AnyFlatSpec with BeforeAndAfter:
+final class ArithRewriteInfraSpec extends AnyFlatSpec with BeforeAndAfter:
 
   given indentLevel: Int = 0
 
-  "Such real ADT manipulation" should "flex how working it is" in {
-    val zero = Constant(
+  "RewriteMethods" should "replace and erase ops while keeping IR consistent" in {
+    val zero = scair.dialects.arith.Constant(
       IntegerAttr(IntData(0), I32),
       Result(I32),
     )
@@ -57,9 +54,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
         )
       )
     )
-    var out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module)
-    out.toString().trim() shouldEqual """
+    printIR(module) shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {
     %1 = "arith.constant"() <{value = 0 : i32}> : () -> i32
@@ -75,9 +70,7 @@ builtin.module {
     RewriteMethods.replaceOp(add, Seq(), Some(Seq(arg)))
     RewriteMethods.eraseOp(zero)
 
-    out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module.structured.get)
-    out.toString().trim() shouldEqual """
+    printIR(module.structured.get) shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {
     func.return %0 : i32
