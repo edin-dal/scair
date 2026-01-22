@@ -20,29 +20,6 @@ trait OpImpl[T <: Operation: ClassTag]:
   def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
   def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
 
-trait TypeMapper[T <: Value[Attribute]]:
-    type MappedType
-
-  object TypeMapper:
-
-    type Aux[T <: Value[Attribute], O] = TypeMapper[T] { type MappedType = O }
-
-    def apply[T <: Value[Attribute]](using tm: TypeMapper[T]): TypeMapper.Aux[T, tm.MappedType] = tm
-
-    def instance[T <: Value[Attribute], O]:  TypeMapper.Aux[T, O] = 
-    new TypeMapper[T] { type MappedType = O }
-
-    given memrefMapping: TypeMapper.Aux[Value[MemrefType], ShapedArray] = instance
-    given intAttrMapping: TypeMapper.Aux[Value[IntegerAttr], Int] = instance
-    given anyIntMapping: TypeMapper.Aux[Value[AnyIntegerType], Int] = instance
-    given floatAttrMapping: TypeMapper.Aux[Value[FloatAttr], Double] = instance
-    given floatDataMapping: TypeMapper.Aux[Value[FloatData], Double] = instance
-    given floatTypeMapping: TypeMapper.Aux[Value[FloatType], Double] = instance
-
-    given defaultMapping[T <: Value[Attribute]]: TypeMapper.Aux[T, Unit] = instance
-
-  type TestTypeMap[T <: Value[Attribute]] = TypeMapper[T]#MappedType
-
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val scopedDict: ScopedDict,
