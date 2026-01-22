@@ -7,6 +7,7 @@ import scair.ir.*
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
+import scair.dialects.arith.AnyIntegerType
 
 // global implementation dictionary for interpreter
 val impl_dict = mutable
@@ -18,6 +19,29 @@ val impl_dict = mutable
 trait OpImpl[T <: Operation: ClassTag]:
   def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
   def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
+
+trait TypeMapper[T <: Value[Attribute]]:
+    type MappedType
+
+  object TypeMapper:
+
+    type Aux[T <: Value[Attribute], O] = TypeMapper[T] { type MappedType = O }
+
+    def apply[T <: Value[Attribute]](using tm: TypeMapper[T]): TypeMapper.Aux[T, tm.MappedType] = tm
+
+    def instance[T <: Value[Attribute], O]:  TypeMapper.Aux[T, O] = 
+    new TypeMapper[T] { type MappedType = O }
+
+    given memrefMapping: TypeMapper.Aux[Value[MemrefType], ShapedArray] = instance
+    given intAttrMapping: TypeMapper.Aux[Value[IntegerAttr], Int] = instance
+    given anyIntMapping: TypeMapper.Aux[Value[AnyIntegerType], Int] = instance
+    given floatAttrMapping: TypeMapper. Aux[Value[FloatAttr], Double] = instance
+    given floatDataMapping: TypeMapper. Aux[Value[FloatData], Double] = instance
+    given floatTypeMapping: TypeMapper. Aux[Value[FloatType], Double] = instance
+
+    given defaultMapping[T <: Value[Attribute]]: TypeMapper.Aux[T, Unit] = instance
+
+  type TestTypeMap[T <: Value[Attribute]] = TypeMapper[T]#MappedType
 
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
@@ -62,17 +86,21 @@ class Interpreter(
           symbolTable.put(func_op.sym_name.stringLiteral, func_op)
         case _ => () // ignore other ops, global vars not yet supported prob...
 
-  // type maps from operation to its resulting lookup type
-  // base case is Int (may have issues later)
-  type ImplOf[T <: Value[Attribute]] = T match
-    case Value[MemrefType] => ShapedArray
-    case _                 => Int
+  // type maps from operation to its resulting lookup type for type-safe lookups
+  type TypeMap[T <: Value[Attribute]] = T match
+    case Value[MemrefType]       => ShapedArray
+    case Value[IntegerAttr]      => Int
+    case Value[AnyIntegerType]   => Int
+    case Value[FloatAttr]        => Double
+    case Value[FloatData]        => Double
+    case Value[FloatType]        => Double
+    case _                       => Unit
 
   // lookup function for context variables
-  // does not work for Bool-like vals due to inability to prove disjoint for ImplOf
-  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): ImplOf[T] =
+  // does not work for Bool-like vals due to inability to prove disjoint for TypeMap
+  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): TypeMap[T] =
     ctx.scopedDict.get(value) match
-      case Some(v) => v.asInstanceOf[ImplOf[T]]
+      case Some(v) => v.asInstanceOf[TypeMap[T]]
       case _ => throw new Exception(s"Variable $value not found in context")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
