@@ -35,9 +35,9 @@ trait TypeMapper[T <: Value[Attribute]]:
     given memrefMapping: TypeMapper.Aux[Value[MemrefType], ShapedArray] = instance
     given intAttrMapping: TypeMapper.Aux[Value[IntegerAttr], Int] = instance
     given anyIntMapping: TypeMapper.Aux[Value[AnyIntegerType], Int] = instance
-    given floatAttrMapping: TypeMapper. Aux[Value[FloatAttr], Double] = instance
-    given floatDataMapping: TypeMapper. Aux[Value[FloatData], Double] = instance
-    given floatTypeMapping: TypeMapper. Aux[Value[FloatType], Double] = instance
+    given floatAttrMapping: TypeMapper.Aux[Value[FloatAttr], Double] = instance
+    given floatDataMapping: TypeMapper.Aux[Value[FloatData], Double] = instance
+    given floatTypeMapping: TypeMapper.Aux[Value[FloatType], Double] = instance
 
     given defaultMapping[T <: Value[Attribute]]: TypeMapper.Aux[T, Unit] = instance
 
@@ -98,9 +98,9 @@ class Interpreter(
 
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for TypeMap
-  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): TypeMap[T] =
+  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx)(using tm: TypeMapper[T]): TestTypeMap[T] =
     ctx.scopedDict.get(value) match
-      case Some(v) => v.asInstanceOf[TypeMap[T]]
+      case Some(v) => v.asInstanceOf[TestTypeMap[T]]
       case _ => throw new Exception(s"Variable $value not found in context")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
