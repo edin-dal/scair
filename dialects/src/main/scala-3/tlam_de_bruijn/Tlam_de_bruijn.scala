@@ -9,10 +9,7 @@ import scair.Printer
 import scair.parse.*
 import fastparse.ParsingRun
 import fastparse.*
-
-// TODO:
-// - Use tlamType in forAllType?
-// - change IntAttr to IntData?
+import scair.dialects.tlam_de_bruijn.verify.DeBruijnIndicesCheck
 
 // ========================= Types (with de Bruijn) \=========================
 
@@ -271,7 +268,7 @@ final case class VApply(
       )
 
 // ========================= Dialect Registration \=========================
-val TlamDeBruijnDialect = summonDialect[
+val TlamDeBruijnDialect: Dialect = summonDialect[
   // Custom attributes
   (tlamTypeType, tlamBVarType, tlamForAllType, tlamFunType),
   // Operations
