@@ -98,83 +98,8 @@ object DBI:
     case other => other
 
   // instantiate forAll.body with arg
-  def instantiate(fa: TypeAttribute, arg: TypeAttribute): TypeAttribute =
-    fa match
-      case tlamForAllType(body) => subst(0, arg, body)
-      case other                => other
-
-/** ========================= de Bruijn utilities ==========================
-  *   - shift(d, c, t) — increase indices >= c by d (used when entering/leaving
-  *     binders)
-  *   - subst(c, s, t) — substitute BVar(c) in t with s (capture-avoiding)
-  *
-  * NOTE (tightened kinds):
-  *   - `shift` traverses only well-formed tlam type terms (`tlamType`) and
-  *     returns `tlamType`.
-  *   - `subst` may *inject* an arbitrary `TypeAttribute` (e.g. `si32`) for
-  *     `bvar(c)`, therefore it returns `TypeAttribute`.
-  *   - Helpers `shiftAny`/`substAny` lift traversal over general `TypeAttribute`
-  *     fields (e.g. fun in/out) by only recursing when the value is a `tlamType`.
-  */
-/*
-object DBI:
-  import tlamTy.*
-
-  /** Shift a general type attribute: only tlam types contain bvars. */
-  private def shiftAny(d: Int, c: Int, t: TypeAttribute): TypeAttribute =
-    t match
-      case tt: tlamType => shift(d, c, tt)
-      case other        => other
-
-  /** Substitute inside a general type attribute: only tlam types contain bvars. */
-  private def substAny(c: Int, s: TypeAttribute, t: TypeAttribute): TypeAttribute =
-    t match
-      case tt: tlamType => subst(c, s, tt)
-      case other        => other
-
-  /** shift(d, c, t): increase all indices >= c by d */
-  def shift(d: Int, c: Int, t: tlamType): tlamType = t match
-    case tlamBVarType(IntegerAttr(k, _)) if k.data >= c =>
-      bvar(IntData(k.data + d))
-    case b @ tlamBVarType(_) =>
-      b
-    case tlamFunType(i, o) =>
-      fun(shiftAny(d, c, i), shiftAny(d, c, o))
-    case tlamForAllType(body) =>
-      // Entering a binder: cutoff increases.
-      forall(shift(d, c + 1, body))
-    case other =>
-      other
-
-  /** subst(c, s, t): substitute bvar(c) := s
- *
-    * Returns `TypeAttribute` because `s` may be a non-tlam (e.g. builtin) type.
- */
-  def subst(c: Int, s: TypeAttribute, t: tlamType): TypeAttribute = t match
-    case tlamBVarType(IntegerAttr(k, _)) if k.data == c =>
-      s
-    case tlamBVarType(IntegerAttr(k, _)) if k.data > c =>
-      // One binder removed by substitution: decrement indices above the hole.
-      bvar(IntData(k.data - 1))
-    case b @ tlamBVarType(_) =>
-      b
-    case tlamFunType(i, o) =>
-      fun(substAny(c, s, i), substAny(c, s, o))
-    case tlamForAllType(body) =>
-      // Under a binder:
-      //  - increase cutoff
-      //  - shift `s` to avoid capture (only affects tlam types)
-      val s1 = shiftAny(1, 0, s)
-      // This returns a TypeAttribute, but for the forall body it will remain a tlamType
-      // for the intended use (instantiate uses c=0).
-      forall(subst(c + 1, s1, body).asInstanceOf[tlamType])
-    case other =>
-      other
-
-  /** Instantiate forall body with `arg` (i.e. substitute bvar(0) := arg). */
   def instantiate(fa: tlamForAllType, arg: TypeAttribute): TypeAttribute =
     subst(0, arg, fa.body)
- */
 
 /** ========================= Operations =========================
   *
@@ -338,14 +263,12 @@ final case class VApply(
     derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
-    fun.typ match
-      case tlamFunType(in, out) =>
-        if arg.typ == in && res.typ == out then OK(this)
-        else
-          Err(
-            s"vapply: expected arg $in and result $out, got ${arg.typ} and ${res
-                .typ}"
-          )
+    val tlamFunType(in, out) = fun.typ
+    if arg.typ == in && res.typ == out then OK(this)
+    else
+      Err(
+        s"vapply: expected arg $in and result $out, got ${arg.typ} and ${res.typ}"
+      )
 
 // ========================= Dialect Registration \=========================
 val TlamDeBruijnDialect = summonDialect[
