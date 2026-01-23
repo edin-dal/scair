@@ -8,12 +8,13 @@ import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.tlam_de_bruijn.*
 import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
 import scair.dialects.tlam_de_bruijn.tlamTy.*
-import scair.passes.VerifyDeBruijnIndicesPass
 import scair.testutils.tlamdebruijn.TlamTestIR.*
+import scair.verify.Verifier
+import scair.utils.Err
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-final class DeBruijnIndicesPassTest extends AnyFlatSpec:
+final class DeBruijnIndicesCheckTest extends AnyFlatSpec:
 
   // ------------------------------ shared runner ------------------------------
 
@@ -25,7 +26,9 @@ final class DeBruijnIndicesPassTest extends AnyFlatSpec:
 
   private def runDeBruijnVerify(m: ModuleOp): Unit =
     m.shouldVerify()
-    new VerifyDeBruijnIndicesPass(ctx).transform(m)
+    Verifier.verify(m, ctx) match
+      case e: Err => throw new Exception(e.msg)
+      case _      => ()
 
   // ------------------------------ Tests ------------------------------
 

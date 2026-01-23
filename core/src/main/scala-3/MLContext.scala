@@ -28,6 +28,8 @@ class MLContext():
   val dialectAttrContext: mutable.Map[String, AttributeCompanion[?]] =
     mutable.Map()
 
+  val verifierRegistry = new scair.verify.VerifierRegistry
+
   def getOpCompanion(
       name: String,
       allowUnregisteredDialect: Boolean = false,
