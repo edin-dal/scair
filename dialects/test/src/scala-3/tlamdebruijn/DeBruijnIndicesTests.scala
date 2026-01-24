@@ -6,6 +6,7 @@ import scair.dialects.testutils.IRTestKit.*
 import scair.dialects.builtin.*
 import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.tlam_de_bruijn.*
+import scair.dialects.tlam_de_bruijn.verify.*
 import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
 import scair.dialects.tlam_de_bruijn.tlamTy.*
 import scair.testutils.tlamdebruijn.TlamTestIR.*
@@ -22,6 +23,7 @@ final class DeBruijnIndicesCheckTest extends AnyFlatSpec:
     val c = MLContext()
     c.registerDialect(BuiltinDialect)
     c.registerDialect(TlamDeBruijnDialect)
+    c.registerVerifierCheck(DeBruijnIndicesCheck)
     c
 
   private def runDeBruijnVerify(m: ModuleOp): Unit =

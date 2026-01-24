@@ -1,6 +1,7 @@
 package scair
 
 import scair.ir.*
+import scair.verify.*
 import scair.transformations.ModulePass
 
 import scala.collection.mutable
@@ -28,7 +29,7 @@ class MLContext():
   val dialectAttrContext: mutable.Map[String, AttributeCompanion[?]] =
     mutable.Map()
 
-  val verifierRegistry = new scair.verify.VerifierRegistry
+  val verifierRegistry = new VerifierRegistry
 
   def getOpCompanion(
       name: String,
@@ -53,3 +54,6 @@ class MLContext():
       for dialectAttr <- dialect.attributes
       yield dialectAttr.name -> dialectAttr
     }
+
+  def registerVerifierCheck(verifierCheck: VerifierCheck) =
+    verifierRegistry.register(verifierCheck)
