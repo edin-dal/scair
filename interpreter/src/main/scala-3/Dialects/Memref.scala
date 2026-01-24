@@ -2,7 +2,7 @@ package scair.interpreter
 
 import scair.dialects.memref
 import scair.interpreter.ShapedArray
-
+/*
 object run_alloc extends OpImpl[memref.Alloc]:
 
   def run(
@@ -54,4 +54,4 @@ val InterpreterMemrefDialect: InterpreterDialect =
     run_alloc,
     run_store,
     run_load,
-  )
+  ) */

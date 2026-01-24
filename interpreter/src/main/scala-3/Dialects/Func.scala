@@ -9,12 +9,12 @@ import scala.collection.mutable
 // assume one return value for now
 object run_return extends OpImpl[func.Return]:
 
-  def run(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+  def compute(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx): Any =
     ctx.result = Some(interpreter.lookup_op(op._operands.head, ctx))
 
 object run_call extends OpImpl[func.Call]:
 
-  def run(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+  def compute(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Any =
     // if call for print, print
     // later there may be a print operation instead
     if op.callee.rootRef.stringLiteral == "print" then
@@ -41,16 +41,12 @@ object run_call extends OpImpl[func.Call]:
         ) // create clone so function can run without modifying saved context
 
       if op._results.nonEmpty then
-        ctx.scopedDict.update(
-          op._results.head,
-          new_ctx.result.getOrElse(None),
-        ) // assuming one return value for now
-      // else no return value and thus no variable to update in context
+          return new_ctx.result.getOrElse(None)
 
 object run_function extends OpImpl[func.Func]:
 
   // only needed for main
-  def run(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+  def compute(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx): Any =
 
     // if main function, call it immediately
     if op.sym_name.stringLiteral == "main" then

@@ -15,15 +15,43 @@ val impl_dict = mutable
     ? <: Operation
   ]]()
 
-// OpImpl class representing operation implementation, mainly for accessing implementation type information
-trait OpImpl[T <: Operation: ClassTag]:
-  def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-  def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
+    // type maps from operation to its resulting lookup type for type-safe lookups
+type TypeMap[T <: Value[Attribute]] = T match
+    case Value[MemrefType]       => ShapedArray
+    case Value[IntegerAttr]      => Int
+    case Value[AnyIntegerType]   => Int
+    case Value[FloatAttr]        => Double
+    case Value[FloatData]        => Double
+    case Value[FloatType]        => Double
+    case _                       => Unit
+
+// // OpImpl class representing operation implementation, mainly for accessing implementation type information
+// trait OpImpl[T <: Operation: ClassTag]:
+//   def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+//   def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
+
+trait OpImpl[O <: Operation: ClassTag]:
+  def opType: Class[O] = summon[ClassTag[O]].runtimeClass.asInstanceOf[Class[O]]
+
+  def compute(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Any
+
+  def get_operands(operands: Seq[Value[Attribute]], interpreter: Interpreter, ctx: RuntimeCtx): Seq[TypeMap[Value[Attribute]]] =
+    operands.map(op => interpreter.lookup_op(op, ctx)).toIndexedSeq.asInstanceOf[Seq[TypeMap[Value[Attribute]]]]
+  
+  final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+    val result = compute(op, interpreter, ctx)
+    if op.results.nonEmpty then
+      result match
+        case r: Seq[Any] =>
+          for (res, value) <- op.results.zip(r) do
+            ctx.scopedDict.update(res, value)
+        case _ =>
+          ctx.scopedDict.update(op.results.head, result)
 
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val scopedDict: ScopedDict,
-    var result: Option[Any] = None,
+    var result: Option[Any] = None
 ):
 
   // creates new runtime ctx with new scope but shared symbol table
@@ -63,21 +91,11 @@ class Interpreter(
           symbolTable.put(func_op.sym_name.stringLiteral, func_op)
         case _ => () // ignore other ops, global vars not yet supported prob...
 
-  // type maps from operation to its resulting lookup type for type-safe lookups
-  type TypeMap[T <: Value[Attribute]] = T match
-    case Value[MemrefType]       => ShapedArray
-    case Value[IntegerAttr]      => Int
-    case Value[AnyIntegerType]   => Int
-    case Value[FloatAttr]        => Double
-    case Value[FloatData]        => Double
-    case Value[FloatType]        => Double
-    case _                       => Unit
-
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for TypeMap
-  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx)(using tm: TypeMapper[T]): TestTypeMap[T] =
+  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): TypeMap[T] =
     ctx.scopedDict.get(value) match
-      case Some(v) => v.asInstanceOf[TestTypeMap[T]]
+      case Some(v) => v.asInstanceOf[TypeMap[T]]
       case _ => throw new Exception(s"Variable $value not found in context")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =

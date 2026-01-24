@@ -5,23 +5,39 @@ import scair.dialects.builtin.IntegerAttr
 import scair.ir.*
 
 given Conversion[Boolean, Int] = if _ then 1 else 0
+// 
+// object run_constant extends OpImpl[arith.Constant]:
+// 
+//   def run(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+//     op.value match
+//       case intAttr: IntegerAttr =>
+//         ctx.scopedDict.update(op.result, intAttr.value.toInt)
+//       case _ => throw new Exception("Unsupported constant attribute type")
+
+// // may extend bin ops to BigInt later
+// object run_addi extends OpImpl[arith.AddI]:
+// 
+//   def run(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+//     val lhs = interpreter.lookup_op(op.lhs, ctx)
+//     val rhs = interpreter.lookup_op(op.rhs, ctx)
+//     ctx.scopedDict.update(op.result, lhs + rhs)
 
 object run_constant extends OpImpl[arith.Constant]:
 
-  def run(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+  def compute(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx): Any =
     op.value match
       case intAttr: IntegerAttr =>
-        ctx.scopedDict.update(op.result, intAttr.value.toInt)
+        intAttr.value.toInt
       case _ => throw new Exception("Unsupported constant attribute type")
 
-// may extend bin ops to BigInt later
 object run_addi extends OpImpl[arith.AddI]:
 
-  def run(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    val lhs = interpreter.lookup_op(op.lhs, ctx)
-    val rhs = interpreter.lookup_op(op.rhs, ctx)
-    ctx.scopedDict.update(op.result, lhs + rhs)
-
+  def compute(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
+    get_operands(op.operands, interpreter, ctx) match
+      case Seq(a: Int, b: Int) => a + b
+      case _                          => throw new Exception("Unsupported operand types for AddI")
+    
+/*
 object run_subi extends OpImpl[arith.SubI]:
 
   def run(op: arith.SubI, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
@@ -128,22 +144,22 @@ object run_select extends OpImpl[arith.SelectOp]:
           op.result,
           interpreter.lookup_op(op.trueValue, ctx),
         )
-      case _ => throw new Exception("Select condition must be 0 or 1")
+      case _ => throw new Exception("Select condition must be 0 or 1") */
 
 val InterpreterArithDialect: InterpreterDialect =
   Seq(
     run_constant,
+    // run_subi,
+    // run_muli,
+    // run_divsi,
+    // run_divui,
+    // run_andi,
+    // run_ori,
+    // run_xori,
+    // run_shli,
+    // run_shrsi,
+    // run_shrui,
+    // run_cmpi,
+    // run_select,
     run_addi,
-    run_subi,
-    run_muli,
-    run_divsi,
-    run_divui,
-    run_andi,
-    run_ori,
-    run_xori,
-    run_shli,
-    run_shrsi,
-    run_shrui,
-    run_cmpi,
-    run_select,
   )
