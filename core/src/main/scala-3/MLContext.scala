@@ -55,5 +55,4 @@ class MLContext():
       yield dialectAttr.name -> dialectAttr
     }
 
-  def registerVerifierCheck(verifierCheck: VerifierCheck) =
-    verifierRegistry.register(verifierCheck)
+    verifierRegistry.registerAll(dialect.verifierChecks)

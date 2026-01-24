@@ -10,6 +10,7 @@ import scala.quoted.*
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scair.verify.VerifierCheck
 
 // ████████╗ ██╗░░░██╗ ██████╗░ ███████╗
 // ╚══██╔══╝ ╚██╗░██╔╝ ██╔══██╗ ██╔════╝
@@ -170,4 +171,16 @@ inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
   Dialect(
     summonOperationCompanions[Operations],
     summonAttributeCompanions[Attributes],
+  )
+
+inline def summonDialect[
+    Attributes <: Tuple,
+    Operations <: Tuple,
+](
+    verifierChecks: Seq[VerifierCheck]
+): Dialect =
+  Dialect(
+    operations = summonOperationCompanions[Operations],
+    attributes = summonAttributeCompanions[Attributes],
+    verifierChecks = verifierChecks,
   )

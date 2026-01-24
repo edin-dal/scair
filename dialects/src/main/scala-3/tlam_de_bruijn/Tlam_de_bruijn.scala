@@ -273,4 +273,4 @@ val TlamDeBruijnDialect: Dialect = summonDialect[
   (tlamTypeType, tlamBVarType, tlamForAllType, tlamFunType),
   // Operations
   (VLambda, VReturn, TLambda, TReturn, TApply, VApply),
-]
+](Seq(DeBruijnIndicesCheck))
