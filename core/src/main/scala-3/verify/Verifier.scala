@@ -3,6 +3,8 @@ package scair.verify
 import scair.MLContext
 import scair.ir.*
 import scair.utils.{Err, OK}
+import scala.util.boundary
+import scala.util.boundary.break
 
 object Verifier:
 
@@ -18,10 +20,11 @@ object Verifier:
     root.verify() match
       case e: Err => e
       case _      =>
-        val allChecks = cfg.genericChecks ++ ctx.verifierRegistry.all
-        allChecks.foreach { chk =>
-          chk.run(root) match
-            case e: Err => return Err(s"${chk.name}: ${e.msg}")
-            case _      => ()
+        boundary[OK[Operation]] {
+          val allChecks = cfg.genericChecks ++ ctx.verifierRegistry.all
+          for chk <- allChecks do
+            chk.run(root) match
+              case e: Err => break(Err(s"${chk.name}: ${e.msg}"): OK[Operation])
+              case _      => ()
+          OK(root)
         }
-        OK(root)

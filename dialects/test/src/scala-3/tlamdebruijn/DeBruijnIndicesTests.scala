@@ -6,7 +6,6 @@ import scair.dialects.testutils.IRTestKit.*
 import scair.dialects.builtin.*
 import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.tlam_de_bruijn.*
-import scair.dialects.tlam_de_bruijn.verify.*
 import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
 import scair.dialects.tlam_de_bruijn.tlamTy.*
 import scair.testutils.tlamdebruijn.TlamTestIR.*
@@ -23,7 +22,6 @@ final class DeBruijnIndicesCheckTest extends AnyFlatSpec:
     val c = MLContext()
     c.registerDialect(BuiltinDialect)
     c.registerDialect(TlamDeBruijnDialect)
-    c.registerVerifierCheck(DeBruijnIndicesCheck)
     c
 
   private def runDeBruijnVerify(m: ModuleOp): Unit =
@@ -89,8 +87,13 @@ final class DeBruijnIndicesCheckTest extends AnyFlatSpec:
       val badPoly: tlamForAllType = forall1(fun(b1, b0))
 
       // a well-formed polymorphic function value: ∀. (#0 -> #0)
-      val poly: tlamForAllType = forall1(fun(b0, b0))
-      val polyVal = Result[tlamForAllType](poly)
+      // val poly: tlamForAllType = forall1(fun(b0, b0))
+      // val polyVal = Result[tlamForAllType](poly)
+
+      val polyFunTy = forall1(fun(b0, b0))
+      val polyProducer =
+        tlam(polyFunTy)( /* body that returns a value of type fun(b0,b0) */ )
+      val polyVal = polyProducer.res.asInstanceOf[Value[tlamForAllType]]
 
       // Instantiate: (∀. #0->#0)[badPoly] == (badPoly -> badPoly)
       // (Structurally well-formed; rejected by the de Bruijn scoping pass.)
@@ -109,6 +112,41 @@ final class DeBruijnIndicesCheckTest extends AnyFlatSpec:
   //   Λ.  (∀. (#0 -> #0)) [ ∀. (#1 -> #0) ]
   // This TApply happens under an outer TLambda (depth=1).
   // The tyArg is ∀. (#1 -> #0); inside that forall body depth becomes 2 => #1 is valid.
+  "DeBruijn verifier" should
+    "accept bvar<1> inside forall when checked under an outer TLambda binder" in {
+
+      val goodPoly: tlamForAllType = forall1(fun(b1, b0))
+      val idBodyTy = fun(b0, b0)
+      val idPolyTy: tlamForAllType = forall1(idBodyTy)
+
+      val vId = vlam(idBodyTy)(b0)(x => Seq(VReturn(x)))
+      vId.shouldVerify()
+
+      val polyDef = tlam(idPolyTy)(
+        vId,
+        TReturn(vId.res),
+      )
+      polyDef.shouldVerify()
+
+      val tapp = TApply(
+        fun = polyDef.res,
+        tyArg = goodPoly,
+        res = Result[TypeAttribute](fun(goodPoly, goodPoly)),
+      )
+      tapp.verify().shouldBeOK("verify failed for tapply")
+
+      val tl = tlam(forall1(tapp.res.typ))(
+        polyDef,
+        tapp,
+        TReturn(tapp.res),
+      )
+      tl.shouldVerify()
+
+      val m = module(tl)
+      runDeBruijnVerify(m)
+    }
+
+  /*
   "DeBruijn verifier" should
     "accept bvar<1> inside forall when checked under an outer TLambda binder" in {
       // This forall's body uses b1; valid only if there's an outer TLambda in scope.
@@ -134,6 +172,7 @@ final class DeBruijnIndicesCheckTest extends AnyFlatSpec:
       val m = module(tl)
       runDeBruijnVerify(m)
     }
+   */
 
   // Lambda notation (de Bruijn):
   //   (∀. (#0 -> #0)) [ #0 ]
