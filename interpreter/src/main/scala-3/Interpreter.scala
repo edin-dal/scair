@@ -20,28 +20,39 @@ type TypeMap[T <: Value[Attribute]] = T match
     case Value[MemrefType]       => ShapedArray
     case Value[IntegerAttr]      => Int
     case Value[AnyIntegerType]   => Int
+    case Value[IndexType]        => Int
+    case Value[IntegerType]      => Int
+
     case Value[FloatAttr]        => Double
     case Value[FloatData]        => Double
     case Value[FloatType]        => Double
     case _                       => Unit
 
-// // OpImpl class representing operation implementation, mainly for accessing implementation type information
-// trait OpImpl[T <: Operation: ClassTag]:
-//   def opType: Class[T] = summon[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-//   def run(op: T, interpreter: Interpreter, ctx: RuntimeCtx): Unit
-
 trait OpImpl[O <: Operation: ClassTag]:
+
+  // get runtime class of operation type
   def opType: Class[O] = summon[ClassTag[O]].runtimeClass.asInstanceOf[Class[O]]
 
+  // compute function to be implemented by each operation implementation
+  // compute only needs to return result of operation, no need to worry about storing in context
+  // if multiple results, return as Seq[Any]
   def compute(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Any
 
-  def get_operands(operands: Seq[Value[Attribute]], interpreter: Interpreter, ctx: RuntimeCtx): Seq[TypeMap[Value[Attribute]]] =
-    operands.map(op => interpreter.lookup_op(op, ctx)).toIndexedSeq.asInstanceOf[Seq[TypeMap[Value[Attribute]]]]
+  // helper function to get operand values as TypeMap sequence
+  // operands must be same type
+  def lookup_operands[T <: Value[Attribute]](operands: Seq[T], interpreter: Interpreter, ctx: RuntimeCtx): IndexedSeq[TypeMap[T]] =
+    operands.map(op => interpreter.lookup_op(op, ctx)).toIndexedSeq
   
+  // run function that is automatically defined to store results in context after compute
   final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+
+    // call compute to get result
     val result = compute(op, interpreter, ctx)
+
+    // if operation has results, store them in context
     if op.results.nonEmpty then
       result match
+        // multiple results
         case r: Seq[Any] =>
           for (res, value) <- op.results.zip(r) do
             ctx.scopedDict.update(res, value)

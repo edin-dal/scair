@@ -33,10 +33,10 @@ object run_constant extends OpImpl[arith.Constant]:
 object run_addi extends OpImpl[arith.AddI]:
 
   def compute(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    get_operands(op.operands, interpreter, ctx) match
-      case Seq(a: Int, b: Int) => a + b
-      case _                          => throw new Exception("Unsupported operand types for AddI")
-    
+
+    val operands = Seq(op.lhs, op.rhs)
+    val a = lookup_operands(operands, interpreter, ctx)
+    a(0) + a(1)
 /*
 object run_subi extends OpImpl[arith.SubI]:
 
