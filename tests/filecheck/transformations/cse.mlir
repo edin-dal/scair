@@ -221,7 +221,7 @@ func.func @nested_isolated() -> i32 {
 /// Mentionning in case there is a good reason, but I guess this might just work better
 /// here!
 func.func @use_before_def() {
-  "test.graph_region"() ({
+  "test.graph_region"() <{region_kind = "graph"}> ({
     %0 = "arith.addi"(%1, %2) : (i32, i32) -> i32
     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
@@ -230,7 +230,7 @@ func.func @use_before_def() {
   func.return
 }
 // CHECK-NEXT:    func.func @use_before_def() {
-// CHECK-NEXT:      "test.graph_region"() ({
+// CHECK-NEXT:      "test.graph_region"() <{region_kind = "graph"}> ({
 // CHECK-NEXT:        %0 = "arith.addi"(%1, %1) : (i32, i32) -> i32
 // CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:        "foo.yield"(%0) : (i32) -> ()
