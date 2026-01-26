@@ -27,6 +27,7 @@ type TypeMap[T <: Value[Attribute]] = T match
     case Value[FloatType]        => Double
     case _                       => Unit
 
+// custom operations should implement this trait
 trait OpImpl[O <: Operation: ClassTag]:
 
   // get runtime class of operation type
