@@ -11,31 +11,38 @@ object SSADominanceCheck extends VerifierCheck:
   override def run(root: Operation): OK[Unit] =
     val dom = new DominanceInfo(root)
 
-    def walkOp(o: Operation): OK[Unit] =
-      // Check operand dominance at this use site
-      o.operands.foreach { v =>
-        val vv = v.asInstanceOf[Value[Attribute]]
-        if !dom.valueDominates(vv, o) then
-          return Err(s"value $v does not dominate its use in op `${o.name}`")
-      }
+    def walkRegion(r: Region): OK[Unit] =
+      if r.kind == RegionKind.Graph then OK(())
+      else
+        boundary[OK[Unit]] {
+          r.blocks.foreach { b =>
+            b.operations.foreach { op =>
+              // Check operand dominance at this use site
+              op.operands.foreach { v =>
+                if !dom.valueDominates(v, op) then
+                  break(
+                    Err(
+                      s"value $v does not dominate its use in op `${op.name}`"
+                    ): OK[Unit]
+                  )
+              }
 
-      // Recurse into nested regions
-      o.regions.foreach { r =>
+              // Recurse into nested regions
+              op.regions.foreach { rr =>
+                walkRegion(rr) match
+                  case e: Err => break(e: OK[Unit])
+                  case _      => ()
+              }
+            }
+          }
+          OK(())
+        }
+
+    boundary[OK[Unit]] {
+      root.regions.foreach { r =>
         walkRegion(r) match
-          case e: Err => return e
+          case e: Err => break(e: OK[Unit])
           case _      => ()
       }
       OK(())
-
-    def walkRegion(r: Region): OK[Unit] =
-      boundary:
-        r.blocks.foreach { b =>
-          b.operations.foreach { op =>
-            walkOp(op) match
-              case e: Err => break(e)
-              case _      => ()
-          }
-        }
-        OK(())
-
-    walkOp(root)
+    }

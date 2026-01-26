@@ -62,6 +62,9 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit
   def constraintVerify(adtOp: T): OK[Operation]
 
+  override def regionKinds(adtOp: T): Seq[RegionKind] =
+    Seq.fill(regions(adtOp).size)(RegionKind.SSACFG)
+
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
       override val successors: Seq[Block] = Seq(),

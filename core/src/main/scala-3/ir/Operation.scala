@@ -202,6 +202,9 @@ case class UnregisteredOperation private (
 trait OperationCompanion[O <: Operation]:
   def name: String
 
+  def regionKinds(op: O): Seq[RegionKind] =
+    Seq.fill(op.regions.size)(RegionKind.SSACFG)
+
   def parse[$: P](resNames: Seq[String])(using Parser): P[O] =
     fastparse
       .Fail(
