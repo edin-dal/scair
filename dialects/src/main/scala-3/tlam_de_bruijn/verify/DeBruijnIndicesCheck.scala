@@ -8,6 +8,10 @@ import scala.util.boundary, boundary.break
 import scair.verify.VerifierCheck
 
 /** Dialect-specific well-formedness check for DeBruijn indices.
+  *
+  * IMPORTANT: This check must be robust when other dialects are present.
+  * Therefore we only inspect types that are actually `TypeAttribute` (and we
+  * only recurse into TLam types). Everything else is ignored.
   */
 object DeBruijnIndicesCheck extends VerifierCheck:
   override val name: String = "debruijn"
@@ -22,9 +26,10 @@ object DeBruijnIndicesCheck extends VerifierCheck:
   private def walkRegion(r: Region, depth: Int): OK[Unit] =
     boundary:
       r.blocks.foreach { b =>
+
         // block arguments
         b.arguments.foreach { a =>
-          checkType(a.typ.asInstanceOf[TypeAttribute], depth) match
+          checkMaybeType(a.typ, depth) match
             case e: Err => break(e)
             case _      => ()
         }
@@ -33,12 +38,12 @@ object DeBruijnIndicesCheck extends VerifierCheck:
         b.operations.foreach { op =>
           // operands/results
           op.operands.foreach { v =>
-            checkType(v.typ.asInstanceOf[TypeAttribute], depth) match
+            checkMaybeType(v.typ, depth) match
               case e: Err => break(e)
               case _      => ()
           }
           op.results.foreach { rr =>
-            checkType(rr.typ.asInstanceOf[TypeAttribute], depth) match
+            checkMaybeType(rr.typ, depth) match
               case e: Err => break(e)
               case _      => ()
           }
@@ -46,6 +51,7 @@ object DeBruijnIndicesCheck extends VerifierCheck:
           // binder-aware recursion
           op match
             case tl: TLambda =>
+              // tl.res.typ is already a TypeAttribute
               checkType(tl.res.typ, depth) match
                 case e: Err => break(e)
                 case _      => ()
@@ -79,6 +85,12 @@ object DeBruijnIndicesCheck extends VerifierCheck:
         }
       }
       OK(())
+
+  /** Only check attributes that are actually types. Never cast. */
+  private def checkMaybeType(a: Attribute, depth: Int): OK[Unit] =
+    a match
+      case t: tlamType => checkType(t, depth)
+      case _           => OK(())
 
   private def checkType(t: TypeAttribute, depth: Int): OK[Unit] =
     t match
