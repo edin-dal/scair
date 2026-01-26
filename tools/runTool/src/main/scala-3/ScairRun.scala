@@ -13,6 +13,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.BufferedSource
 import scala.io.Source
+import scair.verify.Verifier
 
 //
 // ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
@@ -31,7 +32,8 @@ import scala.io.Source
 //
 
 case class ScairRunArgs(
-    val input: Option[String] = None
+    val input: Option[String] = None,
+    skipVerify: Boolean = false,
 )
 
 trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
@@ -82,6 +84,11 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
     // casted as moduleOp
     val module = parse(parsedArgs)(input).head.get.asInstanceOf[ModuleOp]
+
+    if !parsedArgs.skipVerify then
+      Verifier.verify(module, ctx) match
+        case e: scair.utils.Err => throw new Exception(e.msg)
+        case _                  => ()
 
     val moduleBlock = module.body.blocks.head
 

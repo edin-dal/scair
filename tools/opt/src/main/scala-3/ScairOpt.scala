@@ -10,7 +10,7 @@ import scopt.OParser
 
 import scala.io.BufferedSource
 import scala.io.Source
-
+import scair.verify.Verifier
 //
 // ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
 // ██╔════╝ ██╔══██╗ ██╔══██╗ ██║ ██╔══██╗
@@ -36,6 +36,7 @@ case class ScairOptArgs(
     val printGeneric: Boolean = false,
     val passes: Seq[String] = Seq(),
     val verifyDiagnostics: Boolean = false,
+    val verifyEach: Boolean = false,
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
@@ -104,6 +105,9 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         opt[Unit]("verify-diagnostics").optional().text(
           "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
         ).action((_, c) => c.copy(verifyDiagnostics = true)),
+        opt[Unit]("verify-each").optional()
+          .text("Run full verifier after each pass")
+          .action((_, c) => c.copy(verifyEach = true)),
       )
 
     // Parse the CLI args
@@ -127,7 +131,8 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
           val processedModule: OK[Operation] =
             var module =
               if parsedArgs.skipVerify then OK(inputModule)
-              else inputModule.structured.flatMap(_.verify())
+              else
+                inputModule.structured.flatMap(op => Verifier.verify(op, ctx))
             // verify parsed content
             module match
               case OK(op) =>
@@ -143,7 +148,21 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                       ctx.passContext.keysIterator
                         .foreach(p => Console.println(f"  - $p"))
                       sys.exit(1)
-                  module.map(pass.transform)
+                  // module.map(pass.transform)
+                  module.map { op =>
+                    val out = pass.transform(op)
+
+                    if !parsedArgs.skipVerify && parsedArgs.verifyEach then
+                      Verifier.verify(out, ctx) match
+                        case e: Err =>
+                          if parsedArgs.verifyDiagnostics then
+                            throw new VerifyException(e.msg)
+                          else throw new VerifyException(e.msg)
+                        case _ => ()
+
+                    out
+
+                  }
                 )
               case Err(errorMsg) =>
                 if parsedArgs.verifyDiagnostics then Err(errorMsg + "\n")
