@@ -15,14 +15,13 @@ val impl_dict = mutable
     ? <: Operation
   ]]()
 
-    // type maps from operation to its resulting lookup type for type-safe lookups
+// type maps from operation to its resulting lookup type for type-safe lookups
 type TypeMap[T <: Value[Attribute]] = T match
     case Value[MemrefType]       => ShapedArray
     case Value[IntegerAttr]      => Int
     case Value[AnyIntegerType]   => Int
     case Value[IndexType]        => Int
     case Value[IntegerType]      => Int
-
     case Value[FloatAttr]        => Double
     case Value[FloatData]        => Double
     case Value[FloatType]        => Double
@@ -84,7 +83,7 @@ class RuntimeCtx(
 class Interpreter(
     val module: ModuleOp,
     val symbolTable: mutable.Map[String, Operation] = mutable
-      .Map(), // for now operations only
+      .Map(),
     val dialects: Seq[InterpreterDialect],
 ):
 
