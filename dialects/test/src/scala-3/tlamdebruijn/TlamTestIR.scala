@@ -41,3 +41,11 @@ object TlamTestIR:
     val res = Result[tlamForAllType](resTy)
     val region = Region(Seq(Block(operations = ops.toSeq)))
     TLambda(body = region, res = res)
+
+  def polyIdDef(): TLambda =
+    val idBodyTy = fun(b0, b0)
+    val idPolyTy: tlamForAllType = forall1(idBodyTy)
+
+    val vId = vlam(idBodyTy)(b0)(x => Seq(VReturn(x)))
+
+    tlam(idPolyTy)(vId, TReturn(vId.res))

@@ -91,9 +91,11 @@ final class TlamDeBruijnTypeParamsTest extends AnyFlatSpec:
 
       inst shouldEqual fun(I32, I32)
 
-      val polyVal = Result[tlamForAllType](poly)
+      val polyDef = polyIdDef()
+      polyDef.shouldVerify()
+
       val appRes = Result[TypeAttribute](fun(I32, I32))
-      TApply(polyVal, I32, appRes).verify()
+      TApply(polyDef.res, I32, appRes).verify()
         .shouldBeOK("verify failed for tapply")
     }
 
@@ -146,10 +148,10 @@ final class TlamDeBruijnTypeParamsTest extends AnyFlatSpec:
     }
 
   "TApply.verify" should "fail when res.typ != instantiated type" in {
-    val poly = forall1(alphaToAlphaAt(0))
-    val polyVal = Result[tlamForAllType](poly)
+    val polyDef = polyIdDef()
+    polyDef.shouldVerify()
 
-    val bad = TApply(polyVal, I32, Result[TypeAttribute](fun(I32, I64)))
+    val bad = TApply(polyDef.res, I32, Result[TypeAttribute](fun(I32, I64)))
     bad.verify().isError shouldBe true
   }
 
@@ -218,7 +220,6 @@ final class TlamDeBruijnTypeParamsTest extends AnyFlatSpec:
       val alphaFun = alphaToAlphaAt(0)
       val forallAlphaFun = forall1(alphaFun)
 
-      // Same minimal program shape as before:
       val innerBody = alphaToAlphaAt(0)
       val innerForall = forall1(innerBody)
 
