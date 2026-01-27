@@ -193,8 +193,8 @@ The generic IR form of an operation is the following:
 
 and an example of an operation that contains all of these would be:
 ```mlir
-^bb0():
-^bb1():
+^bb0:
+^bb1:
 ...
 %2, %3 = "sample.op"(%0, %1) [^bb0, ^bb1] <{p1 = 1, p2 = i32}> ({
 	...
