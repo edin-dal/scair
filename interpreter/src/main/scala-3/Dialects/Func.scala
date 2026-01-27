@@ -9,12 +9,14 @@ import scala.collection.mutable
 // assume one return value for now
 object run_return extends OpImpl[func.Return]:
 
-  def compute(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    ctx.result = Some(interpreter.lookup_op(op._operands.head, ctx))
+  def compute(op: func.Return, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case Tuple1(v) => ctx.result = Some(v)
+      case _ => ctx.result = Some(args)
 
 object run_call extends OpImpl[func.Call]:
 
-  def compute(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx): Any =
+  def compute(op: func.Call, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
     // if call for print, print
     // later there may be a print operation instead
     if op.callee.rootRef.stringLiteral == "print" then
@@ -29,10 +31,9 @@ object run_call extends OpImpl[func.Call]:
 
       // adds function argument to scoped dict since they have the reference
       // that will be matched during lookup and maps it to the defined operand value
-      for (operand, arg) <- op._operands.zip(callee.body.blocks.head.arguments)
-      do
-        val operand_value = interpreter.lookup_op(operand, ctx)
-        new_ctx.scopedDict.update(arg, operand_value)
+      // TODO: check over
+      for (operand, param) <- args.productIterator.zip(callee.body.blocks.head.arguments) do
+        new_ctx.scopedDict.update(param, operand)
 
       for op <- callee.body.blocks.head.operations do
         interpreter.interpret_op(
@@ -46,7 +47,7 @@ object run_call extends OpImpl[func.Call]:
 object run_function extends OpImpl[func.Func]:
 
   // only needed for main
-  def compute(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx): Any =
+  def compute(op: func.Func, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
 
     // if main function, call it immediately
     if op.sym_name.stringLiteral == "main" then

@@ -2,30 +2,16 @@ package scair.interpreter
 
 import scair.dialects.builtin.*
 import scair.dialects.func
-import scair.interpreter.ShapedArray
 import scair.ir.*
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
-import scair.dialects.arith.AnyIntegerType
 
 // global implementation dictionary for interpreter
 val impl_dict = mutable
   .Map[Class[? <: Operation], OpImpl[
     ? <: Operation
   ]]()
-
-// type maps from operation to its resulting lookup type for type-safe lookups
-type TypeMap[T <: Value[Attribute]] = T match
-    case Value[MemrefType]       => ShapedArray
-    case Value[IntegerAttr]      => Int
-    case Value[AnyIntegerType]   => Int
-    case Value[IndexType]        => Int
-    case Value[IntegerType]      => Int
-    case Value[FloatAttr]        => Double
-    case Value[FloatData]        => Double
-    case Value[FloatType]        => Double
-    case _                       => Unit
 
 // custom operations should implement this trait
 trait OpImpl[O <: Operation: ClassTag]:
@@ -36,18 +22,26 @@ trait OpImpl[O <: Operation: ClassTag]:
   // compute function to be implemented by each operation implementation
   // compute only needs to return result of operation, no need to worry about storing in context
   // if multiple results, return as Seq[Any]
-  def compute(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Any
+  def compute(op: O, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any
 
   // helper function to get operand values as TypeMap sequence
   // operands must be same type
-  def lookup_operands[T <: Value[Attribute]](operands: Seq[T], interpreter: Interpreter, ctx: RuntimeCtx): IndexedSeq[TypeMap[T]] =
-    operands.map(op => interpreter.lookup_op(op, ctx)).toIndexedSeq
+  def lookup_operands(operands: Seq[Value[Attribute]], interpreter: Interpreter, ctx: RuntimeCtx): Tuple =
+    val values = operands.map(op => interpreter.lookup_op(op, ctx))
+    values match
+      case Seq() => Tuple()
+      case Seq(a)       => Tuple1(a)
+      case Seq(a, b)     => (a, b)
+      case Seq(a, b, c)  => (a, b, c)
+      case _ => throw new Exception("Too many operands for operation, max 3 supported")
+    
   
   // run function that is automatically defined to store results in context after compute
   final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
+    var args = lookup_operands(op.operands, interpreter, ctx)
 
     // call compute to get result
-    val result = compute(op, interpreter, ctx)
+    val result = compute(op, interpreter, ctx, args)
 
     // if operation has results, store them in context
     if op.results.nonEmpty then
@@ -104,9 +98,9 @@ class Interpreter(
 
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for TypeMap
-  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): TypeMap[T] =
+  def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): Any =
     ctx.scopedDict.get(value) match
-      case Some(v) => v.asInstanceOf[TypeMap[T]]
+      case Some(v) => v
       case _ => throw new Exception(s"Variable $value not found in context")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
@@ -136,3 +130,4 @@ class Interpreter(
       case 0 => println("false")
       case 1 => println("true")
       case _ => println(value)
+    

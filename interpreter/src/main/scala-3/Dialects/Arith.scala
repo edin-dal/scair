@@ -6,7 +6,7 @@ import scair.ir.*
 
 object run_constant extends OpImpl[arith.Constant]:
 
-  def compute(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx): Any =
+  def compute(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
     op.value match
       case intAttr: IntegerAttr =>
         intAttr.value.toInt
@@ -14,114 +14,123 @@ object run_constant extends OpImpl[arith.Constant]:
 
 object run_addi extends OpImpl[arith.AddI]:
 
-  def compute(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) + operands(1)
+  def compute(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs + rhs
+      case _ => throw new Exception("AddI operands must be integers")
+      
+    
 
 object run_subi extends OpImpl[arith.SubI]:
 
-  def compute(op: arith.SubI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) - operands(1)
+  def compute(op: arith.SubI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs - rhs
+      case _ => throw new Exception("SubI operands must be integers")
 
 object run_muli extends OpImpl[arith.MulI]:
 
-  def compute(op: arith.MulI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) * operands(1)
+  def compute(op: arith.MulI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs * rhs
+      case _ => throw new Exception("MulI operands must be integers")
 
 object run_divsi extends OpImpl[arith.DivSI]:
 
 // TODO: signed division
-  def compute(op: arith.DivSI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) / operands(1)
+  def compute(op: arith.DivSI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs / rhs
+      case _ => throw new Exception("DivSI operands must be integers")
 
 object run_divui extends OpImpl[arith.DivUI]:
 
-  def compute(op: arith.DivUI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) / operands(1)
+  def compute(op: arith.DivUI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs / rhs
+      case _ => throw new Exception("DivUI operands must be integers")
 
 object run_andi extends OpImpl[arith.AndI]:
 
-  def compute(op: arith.AndI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) & operands(1)
+  def compute(op: arith.AndI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs & rhs
+      case _ => throw new Exception("AndI operands must be integers")
 
 object run_ori extends OpImpl[arith.OrI]:
 
-  def compute(op: arith.OrI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) | operands(1)
+  def compute(op: arith.OrI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs | rhs
+      case _ => throw new Exception("OrI operands must be integers")
 
 object run_xori extends OpImpl[arith.XOrI]:
 
-  def compute(op: arith.XOrI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) ^ operands(1)
+  def compute(op: arith.XOrI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs ^ rhs
+      case _ => throw new Exception("XOrI operands must be integers")
 
 object run_shli extends OpImpl[arith.ShLI]:
 
-  def compute(op: arith.ShLI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) << operands(1)
+  def compute(op: arith.ShLI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs << rhs
+      case _ => throw new Exception("ShLI operands must be integers")
 
 object run_shrsi extends OpImpl[arith.ShRSI]:
 
-  def compute(op: arith.ShRSI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) >> operands(1)
+  def compute(op: arith.ShRSI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs >> rhs
+      case _ => throw new Exception("ShRSI operands must be integers")
 
 object run_shrui extends OpImpl[arith.ShRUI]:
 
-  def compute(op: arith.ShRUI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-    operands(0) >>> operands(1)
+  def compute(op: arith.ShRUI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        lhs >>> rhs
+      case _ => throw new Exception("ShRUI operands must be integers")
 
 object run_cmpi extends OpImpl[arith.CmpI]:
 
-  def compute(op: arith.CmpI, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-    val args = Seq(op.lhs, op.rhs)
-    val operands = lookup_operands(args, interpreter, ctx)
-
-    op.predicate.ordinal match
-      case 0 => // EQ
-        (operands(0) == operands(1))
-      case 1 => // NE
-        (operands(0) != operands(1))
-      case 2 | 6 => // SLT and ULT
-        (operands(0) < operands(1))
-      case 3 | 7 => // SLE and ULE
-        (operands(0) <= operands(1))
-      case 4 | 8 => // SGT and UGT
-        (operands(0) > operands(1))
-      case 5 | 9 => // SGE and UGE
-        (operands(0) >= operands(1))
-      case _ => throw new Exception("Unknown comparison predicate")
+  def compute(op: arith.CmpI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (lhs: Int, rhs: Int) =>
+        op.predicate.ordinal match
+        case 0 => // EQ
+          (lhs == rhs)
+        case 1 => // NE
+          (lhs != rhs)
+        case 2 | 6 => // SLT and ULT
+          (lhs < rhs)
+        case 3 | 7 => // SLE and ULE
+          (lhs <= rhs)
+        case 4 | 8 => // SGT and UGT
+          (lhs > rhs)
+        case 5 | 9 => // SGE and UGE
+          (lhs >= rhs)
+        case _ => throw new Exception("Unknown comparison predicate")
+      case _ => throw new Exception("CmpI operands must be integers")
 
 object run_select extends OpImpl[arith.SelectOp]:
 
-  def compute(op: arith.SelectOp, interpreter: Interpreter, ctx: RuntimeCtx): Any =
-
-    interpreter.lookup_boollike(op.condition, ctx) match
-      case 0 =>
-        interpreter.lookup_op(op.falseValue, ctx)
-      case 1 =>
-        interpreter.lookup_op(op.trueValue, ctx)
-      case _ => throw new Exception("Select condition must be 0 or 1")
+  def compute(op: arith.SelectOp, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+    args match
+      case (cond, trueVal, falseVal) =>
+        if cond == 1 then trueVal else falseVal
+      case _ => throw new Exception("Select operands must be (Boolean, Int, Int)")
 
 val InterpreterArithDialect: InterpreterDialect =
   Seq(
