@@ -12,7 +12,6 @@ import scair.dialects.math.MathDialect
 import scair.dialects.memref.MemrefDialect
 import scair.dialects.scf.SCFDialect
 import scair.dialects.test.Test
-import scair.dialects.tlam_de_bruijn.TlamDeBruijnDialect
 import scair.ir.Dialect
 
 //
@@ -35,7 +34,6 @@ val allDialects: Seq[Dialect] =
   Seq(
     BuiltinDialect,
     Complex,
-    TlamDeBruijnDialect,
     MathDialect,
     Test,
     IRDL,
