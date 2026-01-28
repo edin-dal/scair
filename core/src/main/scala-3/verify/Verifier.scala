@@ -2,7 +2,9 @@ package scair.verify
 
 import scair.MLContext
 import scair.ir.*
-import scair.utils.{Err, OK}
+import scair.utils.Err
+import scair.utils.OK
+
 import scala.util.boundary
 import scala.util.boundary.break
 

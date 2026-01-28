@@ -6,11 +6,11 @@ import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
 import scair.utils.*
+import scair.verify.Verifier
 import scopt.OParser
 
 import scala.io.BufferedSource
 import scala.io.Source
-import scair.verify.Verifier
 //
 // ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
 // ██╔════╝ ██╔══██╗ ██╔══██╗ ██║ ██╔══██╗

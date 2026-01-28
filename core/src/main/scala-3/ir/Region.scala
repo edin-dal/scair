@@ -1,10 +1,10 @@
 package scair.ir
 
+import scair.ir.RegionKind.*
 import scair.utils.*
 
 import scala.annotation.targetName
 import scala.collection.mutable
-import scair.ir.RegionKind.*
 //
 // ██████╗░ ███████╗ ░██████╗░ ██╗ ░█████╗░ ███╗░░██╗
 // ██╔══██╗ ██╔════╝ ██╔════╝░ ██║ ██╔══██╗ ████╗░██║

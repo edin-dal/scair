@@ -1,8 +1,8 @@
 package scair
 
 import scair.ir.*
-import scair.verify.*
 import scair.transformations.ModulePass
+import scair.verify.*
 
 import scala.collection.mutable
 

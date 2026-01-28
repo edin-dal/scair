@@ -5,12 +5,12 @@ import scair.Printer
 import scair.ir.*
 import scair.parse.Parser
 import scair.utils.*
+import scair.verify.VerifierCheck
 
 import scala.quoted.*
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scair.verify.VerifierCheck
 
 // ████████╗ ██╗░░░██╗ ██████╗░ ███████╗
 // ╚══██╔══╝ ╚██╗░██╔╝ ██╔══██╗ ██╔════╝

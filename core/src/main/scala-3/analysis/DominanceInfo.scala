@@ -1,6 +1,7 @@
 package scair.analysis
 
 import scair.ir.*
+
 import scala.collection.mutable
 
 /** A simple DominanceInfo-style analysis for ScaIR.

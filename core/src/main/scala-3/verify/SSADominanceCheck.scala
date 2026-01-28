@@ -2,8 +2,11 @@ package scair.verify
 
 import scair.analysis.DominanceInfo
 import scair.ir.*
-import scair.utils.{Err, OK}
-import scala.util.boundary, boundary.break
+import scair.utils.Err
+import scair.utils.OK
+
+import scala.util.boundary
+import scala.util.boundary.break
 
 object SSADominanceCheck extends VerifierCheck:
   override val name: String = "ssa-dominance"
