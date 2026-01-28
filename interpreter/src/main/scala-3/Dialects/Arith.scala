@@ -6,7 +6,12 @@ import scair.ir.*
 
 object run_constant extends OpImpl[arith.Constant]:
 
-  def compute(op: arith.Constant, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.Constant,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     op.value match
       case intAttr: IntegerAttr =>
         intAttr.value.toInt
@@ -14,17 +19,25 @@ object run_constant extends OpImpl[arith.Constant]:
 
 object run_addi extends OpImpl[arith.AddI]:
 
-  def compute(op: arith.AddI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.AddI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs + rhs
       case _ => throw new Exception("AddI operands must be integers")
-      
-    
 
 object run_subi extends OpImpl[arith.SubI]:
 
-  def compute(op: arith.SubI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.SubI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs - rhs
@@ -32,7 +45,12 @@ object run_subi extends OpImpl[arith.SubI]:
 
 object run_muli extends OpImpl[arith.MulI]:
 
-  def compute(op: arith.MulI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.MulI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs * rhs
@@ -41,7 +59,12 @@ object run_muli extends OpImpl[arith.MulI]:
 object run_divsi extends OpImpl[arith.DivSI]:
 
 // TODO: signed division
-  def compute(op: arith.DivSI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.DivSI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs / rhs
@@ -49,7 +72,12 @@ object run_divsi extends OpImpl[arith.DivSI]:
 
 object run_divui extends OpImpl[arith.DivUI]:
 
-  def compute(op: arith.DivUI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.DivUI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs / rhs
@@ -57,7 +85,12 @@ object run_divui extends OpImpl[arith.DivUI]:
 
 object run_andi extends OpImpl[arith.AndI]:
 
-  def compute(op: arith.AndI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.AndI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs & rhs
@@ -65,7 +98,12 @@ object run_andi extends OpImpl[arith.AndI]:
 
 object run_ori extends OpImpl[arith.OrI]:
 
-  def compute(op: arith.OrI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.OrI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs | rhs
@@ -73,7 +111,12 @@ object run_ori extends OpImpl[arith.OrI]:
 
 object run_xori extends OpImpl[arith.XOrI]:
 
-  def compute(op: arith.XOrI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.XOrI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs ^ rhs
@@ -81,7 +124,12 @@ object run_xori extends OpImpl[arith.XOrI]:
 
 object run_shli extends OpImpl[arith.ShLI]:
 
-  def compute(op: arith.ShLI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.ShLI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs << rhs
@@ -89,7 +137,12 @@ object run_shli extends OpImpl[arith.ShLI]:
 
 object run_shrsi extends OpImpl[arith.ShRSI]:
 
-  def compute(op: arith.ShRSI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.ShRSI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs >> rhs
@@ -97,7 +150,12 @@ object run_shrsi extends OpImpl[arith.ShRSI]:
 
 object run_shrui extends OpImpl[arith.ShRUI]:
 
-  def compute(op: arith.ShRUI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.ShRUI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         lhs >>> rhs
@@ -105,32 +163,43 @@ object run_shrui extends OpImpl[arith.ShRUI]:
 
 object run_cmpi extends OpImpl[arith.CmpI]:
 
-  def compute(op: arith.CmpI, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.CmpI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
         op.predicate.ordinal match
-        case 0 => // EQ
-          (lhs == rhs)
-        case 1 => // NE
-          (lhs != rhs)
-        case 2 | 6 => // SLT and ULT
-          (lhs < rhs)
-        case 3 | 7 => // SLE and ULE
-          (lhs <= rhs)
-        case 4 | 8 => // SGT and UGT
-          (lhs > rhs)
-        case 5 | 9 => // SGE and UGE
-          (lhs >= rhs)
-        case _ => throw new Exception("Unknown comparison predicate")
+          case 0 => // EQ
+            (lhs == rhs)
+          case 1 => // NE
+            (lhs != rhs)
+          case 2 | 6 => // SLT and ULT
+            (lhs < rhs)
+          case 3 | 7 => // SLE and ULE
+            (lhs <= rhs)
+          case 4 | 8 => // SGT and UGT
+            (lhs > rhs)
+          case 5 | 9 => // SGE and UGE
+            (lhs >= rhs)
+          case _ => throw new Exception("Unknown comparison predicate")
       case _ => throw new Exception("CmpI operands must be integers")
 
 object run_select extends OpImpl[arith.SelectOp]:
 
-  def compute(op: arith.SelectOp, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any =
+  def compute(
+      op: arith.SelectOp,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any =
     args match
       case (cond, trueVal, falseVal) =>
         if cond == 1 then trueVal else falseVal
-      case _ => throw new Exception("Select operands must be (Boolean, Int, Int)")
+      case _ =>
+        throw new Exception("Select operands must be (Boolean, Int, Int)")
 
 val InterpreterArithDialect: InterpreterDialect =
   Seq(

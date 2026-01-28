@@ -22,20 +22,29 @@ trait OpImpl[O <: Operation: ClassTag]:
   // compute function to be implemented by each operation implementation
   // compute only needs to return result of operation, no need to worry about storing in context
   // if multiple results, return as Seq[Any]
-  def compute(op: O, interpreter: Interpreter, ctx: RuntimeCtx, args: Tuple): Any
+  def compute(
+      op: O,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Tuple,
+  ): Any
 
   // helper function to get operand values as TypeMap sequence
   // operands must be same type
-  def lookup_operands(operands: Seq[Value[Attribute]], interpreter: Interpreter, ctx: RuntimeCtx): Tuple =
+  def lookup_operands(
+      operands: Seq[Value[Attribute]],
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+  ): Tuple =
     val values = operands.map(op => interpreter.lookup_op(op, ctx))
     values match
-      case Seq() => Tuple()
+      case Seq()        => Tuple()
       case Seq(a)       => Tuple1(a)
-      case Seq(a, b)     => (a, b)
-      case Seq(a, b, c)  => (a, b, c)
-      case _ => throw new Exception("Too many operands for operation, max 3 supported")
-    
-  
+      case Seq(a, b)    => (a, b)
+      case Seq(a, b, c) => (a, b, c)
+      case _            =>
+        throw new Exception("Too many operands for operation, max 3 supported")
+
   // run function that is automatically defined to store results in context after compute
   final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
     var args = lookup_operands(op.operands, interpreter, ctx)
@@ -56,7 +65,7 @@ trait OpImpl[O <: Operation: ClassTag]:
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val scopedDict: ScopedDict,
-    var result: Option[Any] = None
+    var result: Option[Any] = None,
 ):
 
   // creates new runtime ctx with new scope but shared symbol table
@@ -77,8 +86,7 @@ class RuntimeCtx(
 
 class Interpreter(
     val module: ModuleOp,
-    val symbolTable: mutable.Map[String, Operation] = mutable
-      .Map(),
+    val symbolTable: mutable.Map[String, Operation] = mutable.Map(),
     val dialects: Seq[InterpreterDialect],
 ):
 
@@ -130,4 +138,3 @@ class Interpreter(
       case 0 => println("false")
       case 1 => println("true")
       case _ => println(value)
-    
