@@ -5,6 +5,7 @@ import scair.Printer
 import scair.ir.*
 import scair.parse.Parser
 import scair.utils.*
+import scair.verify.VerifierCheck
 
 import scala.quoted.*
 import scala.util.Failure
@@ -60,6 +61,9 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def properties(adtOp: T): Map[String, Attribute]
   def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit
   def constraintVerify(adtOp: T): OK[Operation]
+
+  override def regionKinds(adtOp: T): Seq[RegionKind] =
+    Seq.fill(regions(adtOp).size)(RegionKind.SSACFG)
 
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]] = Seq(),
@@ -170,4 +174,16 @@ inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
   Dialect(
     summonOperationCompanions[Operations],
     summonAttributeCompanions[Attributes],
+  )
+
+inline def summonDialect[
+    Attributes <: Tuple,
+    Operations <: Tuple,
+](
+    verifierChecks: Seq[VerifierCheck]
+): Dialect =
+  Dialect(
+    operations = summonOperationCompanions[Operations],
+    attributes = summonAttributeCompanions[Attributes],
+    verifierChecks = verifierChecks,
   )

@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s --skip-verify | filecheck %s
 
 "test.op"() ({
   "test.op"(%0) : (i32) -> ()
