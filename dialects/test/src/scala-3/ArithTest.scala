@@ -23,7 +23,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
   given indentLevel: Int = 0
 
   "Such real ADT manipulation" should "flex how working it is" in {
-    val zero = Constant(
+    val zero = scair.dialects.arith.Constant(
       IntegerAttr(IntData(0), I32),
       Result(I32),
     )
