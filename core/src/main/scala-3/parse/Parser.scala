@@ -7,7 +7,6 @@ import fastparse.internal.Util
 import scair.MLContext
 import scair.clair.macros.DerivedOperationCompanion
 import scair.dialects.builtin.ModuleOp
-import scair.dialects.builtin.StringData
 import scair.ir.*
 
 import scala.annotation.tailrec
@@ -518,20 +517,6 @@ private def genericOperationNameP[$: P](using
         case Left(error)      => Fail(error)
     )
 
-private def applyRegionKindFromProperties(
-    regions: Seq[Region],
-    properties: Map[String, Attribute],
-): Seq[Region] =
-  properties.get("region_kind") match
-    case Some(StringData("graph")) =>
-      regions.foreach(_.kind = RegionKind.Graph)
-      regions
-    case Some(StringData("ssacfg")) =>
-      regions.foreach(_.kind = RegionKind.SSACFG)
-      regions
-    case _ =>
-      regions
-
 private def genericOperationP[$: P](
     resultsNames: Seq[String]
 )(using Parser): P[Operation] =
@@ -540,8 +525,7 @@ private def genericOperationP[$: P](
       .flatMap((operandsNames: Seq[String]) =>
         ")" ~/ successorListP.orElse(Seq.empty).flatMap(successors =>
           propertiesP.orElse(Map.empty).flatMap(properties =>
-            regionListP.orElse(Seq.empty).flatMap(regions0 =>
-              val regions = applyRegionKindFromProperties(regions0, properties)
+            regionListP.orElse(Seq.empty).flatMap(regions =>
               optionalAttributesP.flatMap(attributes =>
                 ":" ~/ genericOperandsTypesP(
                   operandsNames

@@ -1,5 +1,5 @@
 // RUN: scair-opt %s --skip-verify | filecheck %s
-
+// TODO: Reenable verification, when Graph Regions are available
 "test.op"() ({
   "test.op"(%0) : (i32) -> ()
   "test.op"()({
