@@ -143,16 +143,13 @@ given OperationCustomParser[Constant]:
     }
 
 case class CallIndirect(
-    _operands: Seq[Operand[Attribute]],
+    callee: Operand[FunctionType],
+    callee_operands: Seq[Operand[Attribute]]
     _results: Seq[Result[Attribute]],
 ) extends DerivedOperation["func.call_indirect", CallIndirect]
     derives DerivedOperationCompanion:
 
   override def verify(): OK[Operation] =
-    _operands match
-      case Seq() =>
-        Err("func.call_indirect: missing callee operand")
-      case callee +: args =>
         callee.typ match
           case ft: FunctionType =>
             val inTys = ft.inputs
