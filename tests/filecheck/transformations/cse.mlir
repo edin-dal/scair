@@ -26,7 +26,7 @@ func.func @simple_float_constant() -> (f32, f32) {
 // CHECK-NEXT:    func.func @simple_float_constant() -> (f32, f32) {
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 1.0 : f32}> : () -> f32
 // CHECK-NEXT:      func.return %0, %0 : f32, f32
-// CHECK-NEXT:    
+// CHECK-NEXT:    }
 
 func.func @basic() -> (index, index) {
   %0 = "arith.constant"() <{value = 0 : index}> : () -> index
