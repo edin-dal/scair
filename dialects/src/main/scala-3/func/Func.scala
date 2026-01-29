@@ -151,9 +151,7 @@ case class CallIndirect(
 
   override def verify(): OK[Operation] =
         callee.typ match
-          case ft: FunctionType =>
-            val inTys = ft.inputs
-            val outTys = ft.outputs
+          case FunctionType(inTys, outTys) =>
             if args.map(_.typ) != inTys then
               Err(
                 s"func.call_indirect: argument types ${args.map(_.typ)} do not match callee input types $inTys"
