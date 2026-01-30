@@ -3,6 +3,7 @@ package scair.interpreter
 import scair.dialects.arith
 import scair.dialects.builtin.IntegerAttr
 import scair.ir.*
+import scair.dialects.arith.CmpIPredicate
 
 object run_constant extends OpImpl[arith.Constant]:
 
@@ -161,6 +162,8 @@ object run_shrui extends OpImpl[arith.ShRUI]:
         lhs >>> rhs
       case _ => throw new Exception("ShRUI operands must be integers")
 
+
+// TODO: signedness
 object run_cmpi extends OpImpl[arith.CmpI]:
 
   def compute(
@@ -171,18 +174,18 @@ object run_cmpi extends OpImpl[arith.CmpI]:
   ): Any =
     args match
       case (lhs: Int, rhs: Int) =>
-        op.predicate.ordinal match
-          case 0 => // EQ
+        op.predicate match
+          case CmpIPredicate.eq =>
             (lhs == rhs)
-          case 1 => // NE
+          case CmpIPredicate.ne => 
             (lhs != rhs)
-          case 2 | 6 => // SLT and ULT
+          case CmpIPredicate.slt | CmpIPredicate.ult =>
             (lhs < rhs)
-          case 3 | 7 => // SLE and ULE
+          case CmpIPredicate.sle | CmpIPredicate.ule =>
             (lhs <= rhs)
-          case 4 | 8 => // SGT and UGT
+          case CmpIPredicate.sgt | CmpIPredicate.ugt =>
             (lhs > rhs)
-          case 5 | 9 => // SGE and UGE
+          case CmpIPredicate.sge | CmpIPredicate.uge =>
             (lhs >= rhs)
           case _ => throw new Exception("Unknown comparison predicate")
       case _ => throw new Exception("CmpI operands must be integers")
