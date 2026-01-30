@@ -26,7 +26,7 @@ trait OpImpl[O <: Operation: ClassTag]:
       op: O,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any
 
   // helper function to get operand values as TypeMap sequence
@@ -35,9 +35,8 @@ trait OpImpl[O <: Operation: ClassTag]:
       operands: Seq[Value[Attribute]],
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-  ): Tuple =
-    val values = operands.map(op => interpreter.lookup_op(op, ctx))
-    Tuple.fromArray(values.toArray)
+  ): Seq[Any] =
+    operands.map(op => interpreter.lookup_op(op, ctx))
 
   // run function that is automatically defined to store results in context after compute
   final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =

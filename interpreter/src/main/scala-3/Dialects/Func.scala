@@ -13,11 +13,11 @@ object run_return extends OpImpl[func.Return]:
       op: func.Return,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any =
     args match
-      case Tuple1(v) => ctx.result = Some(v)
-      case _         => ctx.result = Some(args)
+      case Seq(v) => ctx.result = Some(v)
+      case _      => ctx.result = Some(args)
 
 object run_call extends OpImpl[func.Call]:
 
@@ -25,7 +25,7 @@ object run_call extends OpImpl[func.Call]:
       op: func.Call,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any =
     // if call for print, print
     // later there may be a print operation instead
@@ -42,8 +42,7 @@ object run_call extends OpImpl[func.Call]:
       // adds function argument to scoped dict since they have the reference
       // that will be matched during lookup and maps it to the defined operand value
       // TODO: check over
-      for (operand, param) <- args.productIterator
-          .zip(callee.body.blocks.head.arguments)
+      for (operand, param) <- args.zip(callee.body.blocks.head.arguments)
       do new_ctx.scopedDict.update(param, operand)
 
       for op <- callee.body.blocks.head.operations do
@@ -61,7 +60,7 @@ object run_function extends OpImpl[func.Func]:
       op: func.Func,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any =
 
     // if main function, call it immediately
