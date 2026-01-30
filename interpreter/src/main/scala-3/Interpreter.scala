@@ -37,13 +37,7 @@ trait OpImpl[O <: Operation: ClassTag]:
       ctx: RuntimeCtx,
   ): Tuple =
     val values = operands.map(op => interpreter.lookup_op(op, ctx))
-    values match
-      case Seq()        => Tuple()
-      case Seq(a)       => Tuple1(a)
-      case Seq(a, b)    => (a, b)
-      case Seq(a, b, c) => (a, b, c)
-      case _            =>
-        throw new Exception("Too many operands for operation, max 3 supported")
+    Tuple.fromArray(values.toArray)
 
   // run function that is automatically defined to store results in context after compute
   final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
