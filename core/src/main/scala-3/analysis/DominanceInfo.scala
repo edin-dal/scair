@@ -14,8 +14,7 @@ import scala.collection.mutable
   *
   * Notes:
   *   - Entry block is taken as region.blocks.head (single-entry assumption).
-  *   - CFG edges are collected from op.successors for all ops in a block. (If
-  *     only terminators have successors in your IR, this still works.)
+  *   - CFG edges are collected from op.last.successors.
   */
 final class DominanceInfo(root: Operation):
 
@@ -106,11 +105,11 @@ final class DominanceInfo(root: Operation):
     val blocks = r.blocks.toVector
     val allBlocks = blocks.toSet
 
-    // Collect successors per block by scanning op.successors
+    // Collect successors per block from the block terminator.
     val succs: Map[Block, Vector[Block]] =
       blocks.map { b =>
-        val s = b.operations.iterator.flatMap(op => op.successors.iterator)
-          .toVector
+        // val s = b.operations.last.successors.toVector
+        val s = b.operations.lastOption.toVector.flatMap(_.successors)
         b -> s
       }.toMap
 
