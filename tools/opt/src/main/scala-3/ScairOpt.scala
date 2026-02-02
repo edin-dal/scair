@@ -128,8 +128,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
           val processedModule: OK[Operation] =
             var module =
               if parsedArgs.skipVerify then OK(inputModule)
-              else
-                inputModule.structured.flatMap(op => Verifier.verify(op, ctx))
+              else inputModule.structured.flatMap(op => Verifier.verify(op))
             // verify parsed content
             module match
               case OK(op) =>
@@ -149,7 +148,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                     val out = pass.transform(op)
 
                     if !parsedArgs.skipVerify then
-                      Verifier.verify(out, ctx) match
+                      Verifier.verify(out) match
                         case Err(errorMsg) =>
                           if parsedArgs.verifyDiagnostics then
                             Err(errorMsg + "\n")

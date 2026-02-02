@@ -88,7 +88,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val module = parse(parsedArgs)(input).head.get.asInstanceOf[ModuleOp]
 
     if !parsedArgs.skipVerify then
-      Verifier.verify(module, ctx) match
+      Verifier.verify(module) match
         case e: scair.utils.Err => throw new Exception(e.msg)
         case _                  => ()
 

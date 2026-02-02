@@ -1,6 +1,5 @@
 package scair.verify
 
-import scair.MLContext
 import scair.ir.*
 import scair.utils.Err
 import scair.utils.OK
@@ -16,7 +15,6 @@ object Verifier:
 
   def verify(
       root: Operation,
-      ctx: MLContext,
       cfg: Config = Config(),
   ): OK[Operation] =
     root.verify() match
