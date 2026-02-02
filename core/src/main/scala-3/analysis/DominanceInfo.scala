@@ -108,7 +108,6 @@ final class DominanceInfo(root: Operation):
     // Collect successors per block from the block terminator.
     val succs: Map[Block, Vector[Block]] =
       blocks.map { b =>
-        // val s = b.operations.last.successors.toVector
         val s = b.operations.lastOption.toVector.flatMap(_.successors)
         b -> s
       }.toMap
