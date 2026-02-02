@@ -11,7 +11,7 @@ object run_constant extends OpImpl[arith.Constant]:
       op: arith.Constant,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Any*
+      args: Seq[Any]
   ): Any =
     op.value match
       case intAttr: IntegerAttr =>
@@ -24,7 +24,7 @@ object run_addi extends OpImpl[arith.AddI]:
       op: arith.AddI,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Any*
+      args: Seq[Any]
   ): Any =
     args match
       case Seq(lhs: Int, rhs: Int) =>
