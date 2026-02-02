@@ -5,7 +5,6 @@ import scair.Printer
 import scair.ir.*
 import scair.parse.Parser
 import scair.utils.*
-import scair.verify.VerifierCheck
 
 import scala.quoted.*
 import scala.util.Failure
@@ -171,16 +170,4 @@ inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
   Dialect(
     summonOperationCompanions[Operations],
     summonAttributeCompanions[Attributes],
-  )
-
-inline def summonDialect[
-    Attributes <: Tuple,
-    Operations <: Tuple,
-](
-    verifierChecks: Seq[VerifierCheck]
-): Dialect =
-  Dialect(
-    operations = summonOperationCompanions[Operations],
-    attributes = summonAttributeCompanions[Attributes],
-    verifierChecks = verifierChecks,
   )

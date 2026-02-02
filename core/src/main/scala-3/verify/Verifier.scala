@@ -23,8 +23,7 @@ object Verifier:
       case e: Err => e
       case _      =>
         boundary[OK[Operation]] {
-          val allChecks = cfg.genericChecks ++ ctx.verifierRegistry.all
-          for chk <- allChecks do
+          for chk <- cfg.genericChecks do
             chk.run(root) match
               case e: Err => break(Err(s"${chk.name}: ${e.msg}"): OK[Operation])
               case _      => ()
