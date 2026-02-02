@@ -9,19 +9,26 @@ object run_alloc extends OpImpl[memref.Alloc]:
       alloc_op: memref.Alloc,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any =
 
     // initialising a zero array to represent allocated memory
     // multi-dimensional objects are packed into a 1-D array
     args match
-      case EmptyTuple      => ShapedArray(Array(0), Seq(1)) // 0-D memref
-      case Tuple1(indices) =>
+      case Seq()           => ShapedArray(Array(0), Seq(1)) // 0-D memref
+      case Seq(index: Int) => // 1-D memref
         ShapedArray(
-          Array.fill(indices.asInstanceOf[Seq[Int]].product)(0),
+          Array.fill(Seq(index).product)(0),
+          Seq(index),
+        )
+      case Seq(indices*) => // multi-D memref
+        ShapedArray(
+          Array
+            .fill(indices.asInstanceOf[Seq[Int]].product)(
+              0
+            ), // TODO: some way to remove asInstance
           indices.asInstanceOf[Seq[Int]],
         )
-      case _ => throw new Exception("Alloc operands must be Seq[Int]")
 
 object run_store extends OpImpl[memref.Store]:
 
@@ -29,12 +36,12 @@ object run_store extends OpImpl[memref.Store]:
       store_op: memref.Store,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any =
     args match
-      case (value: Int, memref: ShapedArray) =>
+      case Seq(value: Int, memref: ShapedArray) =>
         memref(Seq(0)) = value // storing in first index for 0-D memref
-      case (value: Int, memref: ShapedArray, indices) =>
+      case Seq(value: Int, memref: ShapedArray, indices*) =>
         memref(indices.asInstanceOf[Seq[Int]]) =
           value // storing in specified index for higher-D memref
       case _ =>
@@ -48,12 +55,12 @@ object run_load extends OpImpl[memref.Load]:
       load_op: memref.Load,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
-      args: Tuple,
+      args: Seq[Any],
   ): Any =
     args match
-      case Tuple1(memref: ShapedArray) =>
+      case Seq(memref: ShapedArray) =>
         memref(Seq(0))
-      case (memref: ShapedArray, indices) =>
+      case Seq(memref: ShapedArray, indices*) =>
         memref(indices.asInstanceOf[Seq[Int]])
       case _ =>
         throw new Exception("Load operands must be (ShapedArray, Seq[Int])")
