@@ -102,12 +102,12 @@ class Interpreter(
   def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): Any =
     ctx.scopedDict.get(value) match
       case Some(v) => v
-      case _ => throw new Exception(s"Variable $value not found in context")
+      case _ => throw new Exception(s"Variable $value not found in context: $ctx")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
     ctx.scopedDict.get(value) match
       case Some(v: Int) => v
-      case _ => throw new Exception(s"Bool-like $value not found in context")
+      case _ => throw new Exception(s"Bool-like $value not found in context: $ctx")
 
   def register_implementations(): Unit =
     for dialect <- dialects do
