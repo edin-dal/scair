@@ -2,8 +2,6 @@ package scair.tools.runTool
 
 import scair.dialects.builtin.ModuleOp
 import scair.interpreter.Interpreter
-import scair.interpreter.RuntimeCtx
-import scair.interpreter.ScopedDict
 import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
@@ -39,6 +37,8 @@ case class ScairRunArgs(
 trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   def interpreterDialects = scair.interpreter.allInterpreterDialects
+
+  def verbose = true
 
   override def dialects = scair.dialects.allDialects
 
@@ -95,15 +95,20 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // get main block of module
     val module_block = module.body.blocks.head
 
-    var runtimeCtx =
-      new RuntimeCtx(ScopedDict(None, mutable.Map()), None)
-
     // construct interpreter and runtime context
     val interpreter =
-      new Interpreter(module, mutable.Map(), interpreterDialects)
+      new Interpreter(module, mutable.Map(), mutable.ArrayBuffer(), interpreterDialects)
+      
+    println(interpreter.scopes)
 
     // call interpret function and return result
-    val output = interpreter.interpret(module_block, runtimeCtx)
+    val output = interpreter.interpret(module_block, interpreter.globalRuntimeCtx)
+
+    verbose match
+      case true =>
+        interpreter.scopes.foreach(_.pretty_print())
+      case false => ()
+    
 
     output match
       case Some(value) => interpreter.interpreter_print(value)

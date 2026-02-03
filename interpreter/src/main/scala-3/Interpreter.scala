@@ -65,9 +65,9 @@ class RuntimeCtx(
 ):
 
   // creates new runtime ctx with new scope but shared symbol table
-  def push_scope(): RuntimeCtx =
+  def push_scope(name: String): RuntimeCtx =
     RuntimeCtx(
-      ScopedDict(Some(this.scopedDict), mutable.Map()),
+      ScopedDict(Some(this.scopedDict),mutable.Map(), name),
       None,
     )
 
@@ -83,8 +83,11 @@ class RuntimeCtx(
 class Interpreter(
     val module: ModuleOp,
     val symbolTable: mutable.Map[String, Operation] = mutable.Map(),
+    val scopes: mutable.ArrayBuffer[ScopedDict] = mutable.ArrayBuffer(),
     val dialects: Seq[InterpreterDialect],
 ):
+
+  val globalRuntimeCtx = RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), None)
 
   initialize_interpreter()
 
