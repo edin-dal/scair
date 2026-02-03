@@ -4,8 +4,6 @@ import scair.dialects.builtin.SymbolRefAttr
 import scair.dialects.func
 import scair.ir.Result
 
-import scala.collection.mutable
-
 // assume one return value for now
 object run_return extends OpImpl[func.Return]:
 
@@ -35,7 +33,7 @@ object run_call extends OpImpl[func.Call]:
     else
       // new context with new scoped dict containing function operands but shared symbol table
       val new_ctx = ctx.push_scope(op.callee.rootRef.stringLiteral)
-      interpreter.scopes ++ Seq(new_ctx.scopedDict)
+      interpreter.scopes += new_ctx.scopedDict
       val callee = interpreter.symbolTable.get(op.callee.rootRef.stringLiteral)
         .get.asInstanceOf[func.Func] // presume func if called
 

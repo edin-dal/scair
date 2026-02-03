@@ -23,11 +23,6 @@ case class ScopedDict(
     scope.update(key, value)
 
   def pretty_print(): Unit =
-    println("ScopedDict:")
+    println(s"ScopedDict $name:")
     for (k, v) <- scope do
       println(s"  $k -> $v")
-    parent match
-      case Some(p) =>
-        println("Parent ScopedDict:")
-        p.pretty_print()
-      case None => ()
