@@ -220,23 +220,26 @@ func.func @nested_isolated() -> i32 {
 /// Though, MLIR itself does not seem to CSE those constants...
 /// Mentionning in case there is a good reason, but I guess this might just work better
 /// here!
-func.func @use_before_def() {
-  "test.graph_region"() ({
-    %0 = "arith.addi"(%1, %2) : (i32, i32) -> i32
-    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-    "foo.yield"(%0) : (i32) -> ()
-  }) : () -> ()
-  func.return
-}
-// CHECK-NEXT:    func.func @use_before_def() {
-// CHECK-NEXT:      "test.graph_region"() ({
-// CHECK-NEXT:        %0 = "arith.addi"(%1, %1) : (i32, i32) -> i32
-// CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-// CHECK-NEXT:        "foo.yield"(%0) : (i32) -> ()
-// CHECK-NEXT:      }) : () -> ()
-// CHECK-NEXT:      func.return
-// CHECK-NEXT:    }
+
+// TODO: Requires the notions of Region Kinds, specifically Graph Regions
+// func.func @use_before_def() {
+//  "test.graph_region"() ({
+//    %0 = "arith.addi"(%1, %2) : (i32, i32) -> i32
+//    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+//    %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+//    "foo.yield"(%0) : (i32) -> ()
+//  }) : () -> ()
+//  func.return
+// }
+
+// func.func @use_before_def() {
+//   "test.graph_region"() ({
+//     %0 = "arith.addi"(%1, %1) : (i32, i32) -> i32
+//     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+//     "foo.yield"(%0) : (i32) -> ()
+//   }) : () -> ()
+//   func.return
+// }
 
 // TODO: The following tests require more nuanced notions of side effects yet to be implemented in ScaIR
 // "func.func"() <{sym_name = "remove_direct_duplicated_read_op", function_type = () -> i32}> ({

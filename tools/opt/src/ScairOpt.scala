@@ -6,11 +6,11 @@ import scair.ir.*
 import scair.parse.*
 import scair.tools.ScairToolBase
 import scair.utils.*
+import scair.verify.Verifier
 import scopt.OParser
 
 import scala.io.BufferedSource
 import scala.io.Source
-
 //
 // ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
 // ██╔════╝ ██╔══██╗ ██╔══██╗ ██║ ██╔══██╗
@@ -124,10 +124,11 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
 
       parsedModule match
         case OK(inputModule) =>
+
           val processedModule: OK[Operation] =
             var module =
               if parsedArgs.skipVerify then OK(inputModule)
-              else inputModule.structured.flatMap(_.verify())
+              else inputModule.structured.flatMap(op => Verifier.verify(op))
             // verify parsed content
             module match
               case OK(op) =>
@@ -143,7 +144,20 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                       ctx.passContext.keysIterator
                         .foreach(p => Console.println(f"  - $p"))
                       sys.exit(1)
-                  module.map(pass.transform)
+                  module.map { op =>
+                    val out = pass.transform(op)
+
+                    if !parsedArgs.skipVerify then
+                      Verifier.verify(out) match
+                        case Err(errorMsg) =>
+                          if parsedArgs.verifyDiagnostics then
+                            Err(errorMsg + "\n")
+                          else throw new VerifyException(errorMsg)
+                        case _ => ()
+
+                    out
+
+                  }
                 )
               case Err(errorMsg) =>
                 if parsedArgs.verifyDiagnostics then Err(errorMsg + "\n")
