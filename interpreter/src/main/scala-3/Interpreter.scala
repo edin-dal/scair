@@ -49,9 +49,12 @@ trait OpImpl[O <: Operation: ClassTag]:
     if op.results.nonEmpty then
       result match
         // multiple results
-        case r: Seq[Any] =>
-          for (res, value) <- op.results.zip(r) do
-            ctx.scopedDict.update(res, value)
+        case s: Seq[Any] =>
+          if op.results.length != s.length then // must be an list-like expression
+            ctx.scopedDict.update(op.results.head, s)
+          else // multiple distinct results
+            for (res, value) <- op.results.zip(s) do
+              ctx.scopedDict.update(res, value)
         case _ =>
           ctx.scopedDict.update(op.results.head, result)
 
