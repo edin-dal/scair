@@ -4,6 +4,8 @@ case class ShapedArray(
     private val data: Array[Any],
     shape: Seq[Int],
 ):
+  require(shape.forall(_ >= 0), "Shape dimensions must be non-negative")
+  require(shape.product == data.length, s"Data length ${data.length} doesn't match shape $shape")
 
   lazy val strides: Seq[Int] =
     shape.scanRight(1)(_ * _).tail

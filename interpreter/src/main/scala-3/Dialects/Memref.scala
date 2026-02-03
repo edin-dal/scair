@@ -3,6 +3,7 @@ package scair.interpreter
 import scair.dialects.memref
 import scair.interpreter.ShapedArray
 
+// TODO: is indices representative of memref shape?
 object run_alloc extends OpImpl[memref.Alloc]:
 
   def compute(

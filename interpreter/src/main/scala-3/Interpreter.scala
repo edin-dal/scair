@@ -92,6 +92,7 @@ class Interpreter(
     register_implementations()
     get_symbols_from_module()
 
+  // TODO: how to make this behaviour extend for other dialect's functions?
   def get_symbols_from_module(): Unit =
     for op <- module.body.blocks.head.operations do
       op match
@@ -121,7 +122,6 @@ class Interpreter(
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
 
-  // note: results are put within implementations, may change later
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
     val impl = impl_dict.get(op.getClass)
     impl match
