@@ -124,7 +124,7 @@ class Interpreter(
     impl match
       case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
       case None       =>
-        throw new Exception("Unsupported operation when interpreting")
+        throw new Exception(s"Unsupported operation when interpreting: ${op.getClass}")
 
   def interpreter_print(value: Any): Unit =
     value match
