@@ -7,7 +7,7 @@ import scala.collection.mutable
 case class ScopedDict(
     val parent: Option[ScopedDict],
     scope: mutable.Map[Value[Attribute], Any],
-    name: String
+    name: String,
 ):
 
   // recursive get function to find variable in current or parent scopes
@@ -22,7 +22,6 @@ case class ScopedDict(
   def update(key: Value[Attribute], value: Any): Unit =
     scope.update(key, value)
 
-  def pretty_print(): Unit =
+  def prettyPrint(): Unit =
     println(s"ScopedDict $name:")
-    for (k, v) <- scope do
-      println(s"  $k -> $v")
+    for (k, v) <- scope do println(s"  $k -> $v")

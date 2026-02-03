@@ -50,7 +50,8 @@ trait OpImpl[O <: Operation: ClassTag]:
       result match
         // multiple results
         case s: Seq[Any] =>
-          if op.results.length != s.length then // must be an list-like expression
+          if op.results.length != s.length
+          then // must be an list-like expression
             ctx.scopedDict.update(op.results.head, s)
           else // multiple distinct results
             for (res, value) <- op.results.zip(s) do
@@ -67,7 +68,7 @@ class RuntimeCtx(
   // creates new runtime ctx with new scope but shared symbol table
   def push_scope(name: String): RuntimeCtx =
     RuntimeCtx(
-      ScopedDict(Some(this.scopedDict),mutable.Map(), name),
+      ScopedDict(Some(this.scopedDict), mutable.Map(), name),
       None,
     )
 
@@ -87,7 +88,8 @@ class Interpreter(
     val dialects: Seq[InterpreterDialect],
 ):
 
-  val globalRuntimeCtx = RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), None)
+  val globalRuntimeCtx =
+    RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), None)
 
   initialize_interpreter()
 
@@ -109,12 +111,14 @@ class Interpreter(
   def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): Any =
     ctx.scopedDict.get(value) match
       case Some(v) => v
-      case _ => throw new Exception(s"Variable $value not found in context: $ctx")
+      case _       =>
+        throw new Exception(s"Variable $value not found in context: $ctx")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
     ctx.scopedDict.get(value) match
       case Some(v: Int) => v
-      case _ => throw new Exception(s"Bool-like $value not found in context: $ctx")
+      case _            =>
+        throw new Exception(s"Bool-like $value not found in context: $ctx")
 
   def register_implementations(): Unit =
     for dialect <- dialects do
@@ -130,7 +134,9 @@ class Interpreter(
     impl match
       case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
       case None       =>
-        throw new Exception(s"Unsupported operation when interpreting: ${op.getClass}")
+        throw new Exception(
+          s"Unsupported operation when interpreting: ${op.getClass}"
+        )
 
   def interpreter_print(value: Any): Unit =
     value match
