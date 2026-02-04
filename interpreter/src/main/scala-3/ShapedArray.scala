@@ -1,9 +1,10 @@
 package scair.interpreter
 
 case class ShapedArray(
-    private val data: Array[Any],
     shape: Seq[Int],
 ):
+  private val data: Array[Any] = Array.fill(shape.product)(0) // default value of 0 for all elements
+
   require(shape.forall(_ >= 0), "Shape dimensions must be non-negative")
 
   require(

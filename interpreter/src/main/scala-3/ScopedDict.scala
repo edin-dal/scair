@@ -23,5 +23,5 @@ case class ScopedDict(
     scope.update(key, value)
 
   def prettyPrint(): Unit =
-    println(s"ScopedDict $name:")
+    println(s"Scope $name:")
     for (k, v) <- scope do println(s"  $k -> $v")

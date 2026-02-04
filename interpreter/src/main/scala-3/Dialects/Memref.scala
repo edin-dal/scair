@@ -16,19 +16,14 @@ object run_alloc extends OpImpl[memref.Alloc]:
     // initialising a zero array to represent allocated memory
     // multi-dimensional objects are packed into a 1-D array
     args match
-      case Seq()           => ShapedArray(Array(0), Seq(1)) // 0-D memref
+      case Seq()           => ShapedArray(Seq(1)) // 0-D memref
       case Seq(index: Int) => // 1-D memref
         ShapedArray(
-          Array.fill(Seq(index).product)(0),
           Seq(index),
         )
       case Seq(indices*) => // multi-D memref
         ShapedArray(
-          Array
-            .fill(indices.asInstanceOf[Seq[Int]].product)(
-              0
-            ), // TODO: some way to remove asInstance
-          indices.asInstanceOf[Seq[Int]],
+          indices.asInstanceOf[Seq[Int]], // TODO: some way to remove asInstance
         )
 
 object run_store extends OpImpl[memref.Store]:
