@@ -3,7 +3,7 @@ package scair.interpreter
 import scair.dialects.memref
 import scair.interpreter.ShapedArray
 
-// TODO: is indices representative of memref shape?
+// TODO: symbolOperand case
 object run_alloc extends OpImpl[memref.Alloc]:
 
   def compute(
@@ -17,13 +17,13 @@ object run_alloc extends OpImpl[memref.Alloc]:
     // multi-dimensional objects are packed into a 1-D array
     args match
       case Seq()           => ShapedArray(Seq(1)) // 0-D memref
-      case Seq(index: Int) => // 1-D memref
+      case Seq(size: Int) => // 1-D memref
         ShapedArray(
-          Seq(index),
+          Seq(size),
         )
-      case Seq(indices*) => // multi-D memref
+      case Seq(sizes*) => // multi-D memref
         ShapedArray(
-          indices.asInstanceOf[Seq[Int]], // TODO: some way to remove asInstance
+          sizes.asInstanceOf[Seq[Int]], // TODO: some way to remove asInstance
         )
 
 object run_store extends OpImpl[memref.Store]:
