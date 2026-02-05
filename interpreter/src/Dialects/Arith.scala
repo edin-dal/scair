@@ -20,16 +20,16 @@ object run_constant extends OpImpl[arith.Constant]:
 
 object run_addi extends OpImpl[arith.AddI]:
 
-   def compute(
-       op: arith.AddI,
-       interpreter: Interpreter,
-       ctx: RuntimeCtx,
-       args: Seq[Any],
-   ): Any =
-     args match
-       case Seq(lhs: Int, rhs: Int) =>
-         lhs + rhs
-       case _ => throw new Exception("AddI operands must be integers")
+  def compute(
+      op: arith.AddI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Seq[Any],
+  ): Any =
+    args match
+      case Seq(lhs: Int, rhs: Int) =>
+        lhs + rhs
+      case _ => throw new Exception("AddI operands must be integers")
 
 object run_subi extends OpImpl[arith.SubI]:
 
