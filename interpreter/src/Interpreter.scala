@@ -49,9 +49,13 @@ trait OpImpl[O <: Operation: ClassTag]:
     if op.results.nonEmpty then
       result match
         // multiple results
-        case r: Seq[Any] =>
-          for (res, value) <- op.results.zip(r) do
-            ctx.scopedDict.update(res, value)
+        case s: Seq[Any] =>
+          if op.results.length != s.length
+          then // must be an list-like expression
+            ctx.scopedDict.update(op.results.head, s)
+          else // multiple distinct results
+            for (res, value) <- op.results.zip(s) do
+              ctx.scopedDict.update(res, value)
         case _ =>
           ctx.scopedDict.update(op.results.head, result)
 
@@ -62,9 +66,9 @@ class RuntimeCtx(
 ):
 
   // creates new runtime ctx with new scope but shared symbol table
-  def push_scope(): RuntimeCtx =
+  def push_scope(name: String): RuntimeCtx =
     RuntimeCtx(
-      ScopedDict(Some(this.scopedDict), mutable.Map()),
+      ScopedDict(Some(this.scopedDict), mutable.Map(), name),
       None,
     )
 
@@ -80,8 +84,12 @@ class RuntimeCtx(
 class Interpreter(
     val module: ModuleOp,
     val symbolTable: mutable.Map[String, Operation] = mutable.Map(),
+    val scopes: mutable.ArrayBuffer[ScopedDict] = mutable.ArrayBuffer(),
     val dialects: Seq[InterpreterDialect],
 ):
+
+  val globalRuntimeCtx =
+    RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), None)
 
   initialize_interpreter()
 
@@ -89,6 +97,7 @@ class Interpreter(
     register_implementations()
     get_symbols_from_module()
 
+  // TODO: how to make this behaviour extend for other dialect's functions?
   def get_symbols_from_module(): Unit =
     for op <- module.body.blocks.head.operations do
       op match
@@ -102,12 +111,14 @@ class Interpreter(
   def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): Any =
     ctx.scopedDict.get(value) match
       case Some(v) => v
-      case _ => throw new Exception(s"Variable $value not found in context")
+      case _       =>
+        throw new Exception(s"Variable $value not found in context: $ctx")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
     ctx.scopedDict.get(value) match
       case Some(v: Int) => v
-      case _ => throw new Exception(s"Bool-like $value not found in context")
+      case _            =>
+        throw new Exception(s"Bool-like $value not found in context: $ctx")
 
   def register_implementations(): Unit =
     for dialect <- dialects do
@@ -118,16 +129,17 @@ class Interpreter(
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
 
-  // note: results are put within implementations, may change later
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
     val impl = impl_dict.get(op.getClass)
     impl match
       case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
       case None       =>
-        throw new Exception("Unsupported operation when interpreting")
+        throw new Exception(
+          s"Unsupported operation when interpreting: ${op.getClass}"
+        )
 
   def interpreter_print(value: Any): Unit =
     value match
       case 0 => println("false")
       case 1 => println("true")
-      case _ => println(value)
+      case _ => println(s"Output: $value")
