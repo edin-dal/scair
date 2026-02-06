@@ -1,6 +1,7 @@
 package scair.ir
 
 import scair.utils.*
+import scair.dialects.builtin.StringData
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -86,3 +87,7 @@ object ConstantLike:
     op match
       case c: ConstantLike => Some((value = c.getValue))
       case _               => None
+
+trait Symbol extends Operation:
+  def sym_name: StringData
+  def sym_visibility: Option[StringData]
