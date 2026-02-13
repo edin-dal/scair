@@ -111,9 +111,11 @@ object SymbolTable:
       case _ => false 
       } match 
         case Some(symbol: Symbol) => Some(symbol) // found symbol in current table
+        case Some(_) => throw new Exception("Found non-symbol in symbol table")
         case None => op.containerBlock.flatMap(_.containerRegion).flatMap(_.containerOperation) match
           case Some(s: SymbolTable) => lookupSymbol(s, name) // look in parent symbol table
-          case None => throw new exception("Reached top-level without finding symbol table ancestor")
+          case Some(_) => throw new Exception("Found non-symbol table ancestor")
+          case None => throw new Exception("Reached top-level without finding symbol table ancestor")
       
 
     
