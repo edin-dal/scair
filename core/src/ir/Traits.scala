@@ -2,7 +2,6 @@ package scair.ir
 
 import scair.utils.*
 import scair.dialects.builtin.StringData
-import scala.annotation.tailrec
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -91,7 +90,8 @@ object ConstantLike:
 
 trait Symbol extends Operation:
   def sym_name: StringData
-  def sym_visibility: Option[StringData] // TODO: integrate and refactor existing ops for visibility enum
+  // TODO: integrate and refactor existing ops for visibility enum
+  def sym_visibility: Option[StringData]
 
 object Symbol:
   enum Visibility {
