@@ -97,14 +97,12 @@ class Interpreter(
     register_implementations()
     get_symbols_from_module()
 
-  // TODO: how to make this behaviour extend for other dialect's functions?
   def get_symbols_from_module(): Unit =
     for op <- module.body.blocks.head.operations do
       op match
-        case func_op: func.Func =>
-          // add function to symbol table if not main
-          symbolTable.put(func_op.sym_name.stringLiteral, func_op)
-        case _ => () // ignore other ops, global vars not yet supported prob...
+        case sym_op: Symbol =>
+          symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
+        case _ => ()
 
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for TypeMap

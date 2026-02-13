@@ -2,6 +2,7 @@ package scair.ir
 
 import scair.utils.*
 import scair.dialects.builtin.StringData
+import scala.annotation.tailrec
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -90,4 +91,29 @@ object ConstantLike:
 
 trait Symbol extends Operation:
   def sym_name: StringData
-  def sym_visibility: Option[StringData]
+  def sym_visibility: Option[StringData] // TODO: integrate and refactor existing ops for visibility enum
+
+object Symbol:
+  enum Visibility {
+    case Public, Private, Nested
+  }
+
+trait SymbolTable extends Operation:
+  def body: Region
+
+// TODO: symbolRefAttr and StringAttr
+object SymbolTable:
+
+  // Look in itself first. Then look in parent symbol tables
+  def lookupSymbol(op: SymbolTable, name: String): Option[Operation] = 
+    op.body.blocks.head.operations.find { 
+      case s: Symbol if s.sym_name.stringLiteral == name => true 
+      case _ => false 
+      } match 
+        case Some(symbol: Symbol) => Some(symbol) // found symbol in current table
+        case None => op.containerBlock.flatMap(_.containerRegion).flatMap(_.containerOperation) match
+          case Some(s: SymbolTable) => lookupSymbol(s, name) // look in parent symbol table
+          case None => throw new exception("Reached top-level without finding symbol table ancestor")
+      
+
+    
