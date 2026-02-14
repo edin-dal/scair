@@ -90,23 +90,17 @@ object ConstantLike:
 
 trait Symbol extends Operation:
   def sym_name: StringData
-  // TODO: integrate and refactor existing ops for visibility enum
-  def sym_visibility: Option[StringData]
-
-object Symbol:
-  enum Visibility {
-    case Public, Private, Nested
-  }
 
 trait SymbolTable extends Operation:
-  def body: Region
+  def regions: Seq[Region]
+  require(regions.length == 1, "SymbolTable operations must have exactly one region")
+  // require(regions.head.blocks.length == 1, "SymbolTable operations must have exactly one block in their region")
 
-// TODO: symbolRefAttr and StringAttr
 object SymbolTable:
 
   // Look in itself first. Then look in parent symbol tables
   def lookupSymbol(op: SymbolTable, name: String): Option[Operation] = 
-    op.body.blocks.head.operations.find { 
+    op.regions.head.blocks.head.operations.find { 
       case s: Symbol if s.sym_name.stringLiteral == name => true 
       case _ => false 
       } match 
@@ -115,7 +109,7 @@ object SymbolTable:
         case None => op.containerBlock.flatMap(_.containerRegion).flatMap(_.containerOperation) match
           case Some(symTable: SymbolTable) => lookupSymbol(symTable, name) // look in parent symbol table
           case Some(_) => throw new Exception("Found non-symbol table ancestor")
-          case None => throw new Exception("Reached top-level without finding symbol table ancestor")
+          case None => throw new Exception("Reached top-level without finding symbol table ancestor") // reached top-level without finding symbol table ancestor
       
 
     
