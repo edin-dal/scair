@@ -1,5 +1,6 @@
 package scair.ir
 
+import scair.dialects.builtin.StringData
 import scair.utils.*
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
@@ -86,3 +87,38 @@ object ConstantLike:
     op match
       case c: ConstantLike => Some((value = c.getValue))
       case _               => None
+
+trait Symbol extends Operation:
+  def sym_name: StringData
+
+trait SymbolTable extends Operation:
+  def regions: Seq[Region]
+
+  require(
+    regions.length == 1,
+    "SymbolTable operations must have exactly one region",
+  )
+
+  // require(regions.head.blocks.length == 1, "SymbolTable operations must have exactly one block in their region")
+  // ^^ requirement is not enforced from the IR angle so hard to enforce here without breaking
+
+object SymbolTable:
+
+  // Look in itself first. Then look in parent symbol tables
+  def lookupSymbol(op: SymbolTable, name: String): Option[Operation] =
+    op.regions.head.blocks.head.operations.find {
+      case s: Symbol if s.sym_name.stringLiteral == name => true
+      case _                                             => false
+    } match
+      case Some(symbol: Symbol) => Some(symbol) // found symbol in current table
+      case Some(_) => throw new Exception("Found non-symbol in symbol table")
+      case None    =>
+        op.containerBlock.flatMap(_.containerRegion)
+          .flatMap(_.containerOperation) match
+          case Some(symTable: SymbolTable) =>
+            lookupSymbol(symTable, name) // look in parent symbol table
+          case Some(_) => throw new Exception("Found non-symbol table ancestor")
+          case None    =>
+            throw new Exception(
+              "Reached top-level without finding symbol table ancestor"
+            ) // reached top-level without finding symbol table ancestor
