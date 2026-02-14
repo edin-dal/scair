@@ -99,6 +99,18 @@ class Interpreter(
   def get_symbols_from_module(): Unit =
     for op <- module.body.blocks.head.operations do
       op match
+        case sym_and_table: (Symbol & SymbolTable) =>
+          symbolTable.put(sym_and_table.sym_name.stringLiteral, sym_and_table)
+          get_symbols_from_symbol_table(sym_and_table)
+        case sym_table: SymbolTable =>
+          get_symbols_from_symbol_table(sym_table)
+        case sym_op: Symbol =>
+          symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
+        case _ => ()
+
+  def get_symbols_from_symbol_table(sym_table: SymbolTable): Unit =
+    for op <- sym_table.regions.head.blocks.head.operations do
+      op match
         case sym_op: Symbol =>
           symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
         case _ => ()
