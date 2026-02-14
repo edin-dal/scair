@@ -100,6 +100,7 @@ trait SymbolTable extends Operation:
   )
 
   // require(regions.head.blocks.length == 1, "SymbolTable operations must have exactly one block in their region")
+  // ^^ requirement is not enforced from the IR angle so hard to enforce here without breaking
 
 object SymbolTable:
 
