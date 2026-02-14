@@ -531,8 +531,7 @@ given OperationCustomParser[ModuleOp]:
 case class ModuleOp(
     body: Region
 ) extends DerivedOperation["builtin.module", ModuleOp]
-    with SymbolTable
-    derives DerivedOperationCompanion:
+    with SymbolTable derives DerivedOperationCompanion:
 
   override def customPrint(
       p: Printer

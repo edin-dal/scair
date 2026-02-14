@@ -1,7 +1,6 @@
 package scair.interpreter
 
 import scair.dialects.builtin.*
-import scair.dialects.func
 import scair.ir.*
 
 import scala.collection.mutable
