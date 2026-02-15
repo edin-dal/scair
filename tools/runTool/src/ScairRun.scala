@@ -114,8 +114,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case false => ()
 
     output match
-      case Some(value) => interpreter.interpreter_print(value)
-      case None        => println("Result: ()")
+      case Some(value) => println(s"Result: $value")
+      case None        => println("Result: None")
 
 object ScairRun extends ScairRunBase:
   def toolName = "scair-run"
