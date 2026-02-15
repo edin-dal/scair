@@ -148,7 +148,8 @@ class Interpreter(
         )
 
   def interpret_region(region: Region, ctx: RuntimeCtx): Unit =
-    for operation <- region.blocks.head.operations do interpret_op(operation, ctx)
+    for operation <- region.blocks.head.operations do
+      interpret_op(operation, ctx)
 
   def interpreter_print(value: Any): Unit =
     value match
