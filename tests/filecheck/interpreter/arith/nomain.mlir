@@ -7,4 +7,4 @@ builtin.module {
     "func.call"(%2) <{"callee" = @print}> : (i64) -> ()
 }
 
-// CHECK: 5
+// CHECK: Result: 5
