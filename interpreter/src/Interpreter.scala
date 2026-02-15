@@ -147,6 +147,9 @@ class Interpreter(
           s"Unsupported operation when interpreting: ${op.getClass}"
         )
 
+  def interpret_region(region: Region, ctx: RuntimeCtx): Unit =
+    for operation <- region.blocks.head.operations do interpret_op(operation, ctx)
+
   def interpreter_print(value: Any): Unit =
     value match
       case 0 => println("false")
