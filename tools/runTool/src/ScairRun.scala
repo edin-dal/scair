@@ -114,7 +114,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case false => ()
 
     output match
-      case Some(value) => println(s"Result: $value")
+      case Some(value) => interpreter.interpreter_print(value)
       case None        => println("Result: None")
 
 object ScairRun extends ScairRunBase:
