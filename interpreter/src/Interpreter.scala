@@ -155,4 +155,5 @@ class Interpreter(
     value match
       case 0 => println("Result: false")
       case 1 => println("Result: true")
+      case None => println("Result: ()")
       case _ => println(s"Result: $value")
