@@ -49,7 +49,7 @@ object run_call extends OpImpl[func.Call]:
           new_ctx,
         ) // create clone so function can run without modifying saved context
 
-      new_ctx.result.getOrElse(None)
+      if op._results.nonEmpty then return new_ctx.result.getOrElse(None)
 
 object run_function extends OpImpl[func.Func]:
 

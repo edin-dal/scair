@@ -94,13 +94,12 @@ trait Symbol extends Operation:
 trait SymbolTable extends Operation:
   def regions: Seq[Region]
 
-  require(
-    regions.length == 1,
-    "SymbolTable operations must have exactly one region",
-  )
-
-  // require(regions.head.blocks.length == 1, "SymbolTable operations must have exactly one block in their region")
-  // ^^ requirement is not enforced from the IR angle so hard to enforce here without breaking
+  override def traitVerify(): OK[Operation] = {
+    if regions.length != 1 then
+      Err(s"SymbolTable operation '$name' must have exactly one region")
+    // else if regions.head.blocks.length != 1 then
+    //  Err(s"SymbolTable operation '$name' must have exactly one block in its region")
+    else OK(this)}.flatMap(_ => super.traitVerify())
 
 object SymbolTable:
 
