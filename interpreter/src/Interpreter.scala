@@ -153,6 +153,6 @@ class Interpreter(
 
   def interpreter_print(value: Any): Unit =
     value match
-      case 0    => println("Result: false")
-      case 1    => println("Result: true")
-      case _    => println(s"Result: $value")
+      case 0 => println("Result: false")
+      case 1 => println("Result: true")
+      case _ => println(s"Result: $value")

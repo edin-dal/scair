@@ -99,7 +99,8 @@ trait SymbolTable extends Operation:
       Err(s"SymbolTable operation '$name' must have exactly one region")
     // else if regions.head.blocks.length != 1 then
     //  Err(s"SymbolTable operation '$name' must have exactly one block in its region")
-    else OK(this)}.flatMap(_ => super.traitVerify())
+    else OK(this)
+  }.flatMap(_ => super.traitVerify())
 
 object SymbolTable:
 
