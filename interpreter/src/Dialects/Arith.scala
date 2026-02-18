@@ -12,10 +12,10 @@ object run_constant extends OpImpl[arith.Constant]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     op.value match
       case intAttr: IntegerAttr =>
-        intAttr.value.toInt
+        Some(intAttr.value.toInt)
       case _ => throw new Exception("Unsupported constant attribute type")
 
 object run_addi extends OpImpl[arith.AddI]:
@@ -25,10 +25,10 @@ object run_addi extends OpImpl[arith.AddI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs + rhs
+        Some(lhs + rhs)
       case _ => throw new Exception("AddI operands must be integers")
 
 object run_subi extends OpImpl[arith.SubI]:
@@ -38,10 +38,10 @@ object run_subi extends OpImpl[arith.SubI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs - rhs
+        Some(lhs - rhs)
       case _ => throw new Exception("SubI operands must be integers")
 
 object run_muli extends OpImpl[arith.MulI]:
@@ -51,10 +51,10 @@ object run_muli extends OpImpl[arith.MulI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs * rhs
+        Some(lhs * rhs)
       case _ => throw new Exception("MulI operands must be integers")
 
 object run_divsi extends OpImpl[arith.DivSI]:
@@ -65,10 +65,10 @@ object run_divsi extends OpImpl[arith.DivSI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs / rhs
+        Some(lhs / rhs)
       case _ => throw new Exception("DivSI operands must be integers")
 
 object run_divui extends OpImpl[arith.DivUI]:
@@ -78,10 +78,10 @@ object run_divui extends OpImpl[arith.DivUI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs / rhs
+        Some(lhs / rhs)
       case _ => throw new Exception("DivUI operands must be integers")
 
 object run_andi extends OpImpl[arith.AndI]:
@@ -91,10 +91,10 @@ object run_andi extends OpImpl[arith.AndI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs & rhs
+        Some(lhs & rhs)
       case _ => throw new Exception("AndI operands must be integers")
 
 object run_ori extends OpImpl[arith.OrI]:
@@ -104,10 +104,10 @@ object run_ori extends OpImpl[arith.OrI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs | rhs
+        Some(lhs | rhs)
       case _ => throw new Exception("OrI operands must be integers")
 
 object run_xori extends OpImpl[arith.XOrI]:
@@ -117,10 +117,10 @@ object run_xori extends OpImpl[arith.XOrI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs ^ rhs
+        Some(lhs ^ rhs)
       case _ => throw new Exception("XOrI operands must be integers")
 
 object run_shli extends OpImpl[arith.ShLI]:
@@ -130,10 +130,10 @@ object run_shli extends OpImpl[arith.ShLI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs << rhs
+        Some(lhs << rhs)
       case _ => throw new Exception("ShLI operands must be integers")
 
 object run_shrsi extends OpImpl[arith.ShRSI]:
@@ -143,10 +143,10 @@ object run_shrsi extends OpImpl[arith.ShRSI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs >> rhs
+        Some(lhs >> rhs)
       case _ => throw new Exception("ShRSI operands must be integers")
 
 object run_shrui extends OpImpl[arith.ShRUI]:
@@ -156,10 +156,10 @@ object run_shrui extends OpImpl[arith.ShRUI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
-        lhs >>> rhs
+        Some(lhs >>> rhs)
       case _ => throw new Exception("ShRUI operands must be integers")
 
 // TODO: signedness
@@ -170,22 +170,22 @@ object run_cmpi extends OpImpl[arith.CmpI]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(lhs: Int, rhs: Int) =>
         op.predicate match
           case CmpIPredicate.eq =>
-            (lhs == rhs)
+            Some(lhs == rhs)
           case CmpIPredicate.ne =>
-            (lhs != rhs)
+            Some(lhs != rhs)
           case CmpIPredicate.slt | CmpIPredicate.ult =>
-            (lhs < rhs)
+            Some(lhs < rhs)
           case CmpIPredicate.sle | CmpIPredicate.ule =>
-            (lhs <= rhs)
+            Some(lhs <= rhs)
           case CmpIPredicate.sgt | CmpIPredicate.ugt =>
-            (lhs > rhs)
+            Some(lhs > rhs)
           case CmpIPredicate.sge | CmpIPredicate.uge =>
-            (lhs >= rhs)
+            Some(lhs >= rhs)
       case _ => throw new Exception("CmpI operands must be integers")
 
 object run_select extends OpImpl[arith.SelectOp]:
@@ -195,10 +195,10 @@ object run_select extends OpImpl[arith.SelectOp]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any =
+  ): Option[Any] =
     args match
       case Seq(cond, trueVal, falseVal) =>
-        if cond == 1 then trueVal else falseVal
+        if cond == 1 then Some(trueVal) else Some(falseVal)
       case _ =>
         throw new Exception("Select operands must be (Boolean, Int, Int)")
 

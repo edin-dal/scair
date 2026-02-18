@@ -26,7 +26,7 @@ trait OpImpl[O <: Operation: ClassTag]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any
+  ): Option[Any]
 
   // helper function to get operand values as TypeMap sequence
   // operands must be same type
@@ -42,7 +42,7 @@ trait OpImpl[O <: Operation: ClassTag]:
     var args = lookup_operands(op.operands, interpreter, ctx)
 
     // call compute to get result
-    val result = compute(op, interpreter, ctx, args)
+    val result = compute(op, interpreter, ctx, args).getOrElse(None)
 
     // if operation has results, store them in context
     if op.results.nonEmpty then
