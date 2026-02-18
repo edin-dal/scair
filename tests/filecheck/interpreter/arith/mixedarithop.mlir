@@ -11,4 +11,4 @@ builtin.module {
   }
 }
 
-// CHECK: 21
+// CHECK: Result: 21

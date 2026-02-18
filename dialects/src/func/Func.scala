@@ -70,7 +70,9 @@ case class Func(
     sym_visibility: Option[StringData],
     body: Region,
 ) extends DerivedOperation["func.func", Func]
-    with IsolatedFromAbove derives DerivedOperationCompanion:
+    with IsolatedFromAbove
+    with Symbol
+    with SymbolTable derives DerivedOperationCompanion:
 
   override def customPrint(printer: Printer)(using indentLevel: Int) =
     val lprinter = printer.copy()

@@ -11,4 +11,4 @@ builtin.module {
   }
 }
 
-// CHECK: true
+// CHECK: Result: true

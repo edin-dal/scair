@@ -13,4 +13,4 @@ builtin.module {
   }
 }
 
-// CHECK: 81
+// CHECK: Result: 81

@@ -1,7 +1,6 @@
 package scair.interpreter
 
 import scair.dialects.builtin.*
-import scair.dialects.func
 import scair.ir.*
 
 import scala.collection.mutable
@@ -27,7 +26,7 @@ trait OpImpl[O <: Operation: ClassTag]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any
+  ): Option[Any]
 
   // helper function to get operand values as TypeMap sequence
   // operands must be same type
@@ -43,7 +42,7 @@ trait OpImpl[O <: Operation: ClassTag]:
     var args = lookup_operands(op.operands, interpreter, ctx)
 
     // call compute to get result
-    val result = compute(op, interpreter, ctx, args)
+    val result = compute(op, interpreter, ctx, args).getOrElse(None)
 
     // if operation has results, store them in context
     if op.results.nonEmpty then
@@ -97,14 +96,24 @@ class Interpreter(
     register_implementations()
     get_symbols_from_module()
 
-  // TODO: how to make this behaviour extend for other dialect's functions?
   def get_symbols_from_module(): Unit =
     for op <- module.body.blocks.head.operations do
       op match
-        case func_op: func.Func =>
-          // add function to symbol table if not main
-          symbolTable.put(func_op.sym_name.stringLiteral, func_op)
-        case _ => () // ignore other ops, global vars not yet supported prob...
+        case sym_and_table: (Symbol & SymbolTable) =>
+          symbolTable.put(sym_and_table.sym_name.stringLiteral, sym_and_table)
+          get_symbols_from_symbol_table(sym_and_table)
+        case sym_table: SymbolTable =>
+          get_symbols_from_symbol_table(sym_table)
+        case sym_op: Symbol =>
+          symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
+        case _ => ()
+
+  def get_symbols_from_symbol_table(sym_table: SymbolTable): Unit =
+    for op <- sym_table.regions.head.blocks.head.operations do
+      op match
+        case sym_op: Symbol =>
+          symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
+        case _ => ()
 
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for TypeMap
@@ -138,8 +147,12 @@ class Interpreter(
           s"Unsupported operation when interpreting: ${op.getClass}"
         )
 
+  def interpret_region(region: Region, ctx: RuntimeCtx): Unit =
+    for operation <- region.blocks.head.operations do
+      interpret_op(operation, ctx)
+
   def interpreter_print(value: Any): Unit =
     value match
-      case 0 => println("false")
-      case 1 => println("true")
-      case _ => println(s"Output: $value")
+      case 0 => println("Result: false")
+      case 1 => println("Result: true")
+      case _ => println(s"Result: $value")
