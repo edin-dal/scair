@@ -124,7 +124,7 @@ trait GraalScairModule extends ScairSettings with NativeImageModule:
   override def nativeImageOptions =
     Seq("--no-fallback", "--initialize-at-build-time", "-Ob")
 
-trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule
+trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule with SonatypeCentralPublishModule
     with PlatformScalaModule:
   override def enableBsp = false
   override def scalaNativeVersion = "0.5.9"
