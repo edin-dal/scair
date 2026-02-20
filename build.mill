@@ -152,7 +152,7 @@ trait ScairModule extends JvmScairModule with GraalScairModule:
   override def sources: Simple[Seq[PathRef]] =
     super.sources() :+ PathRef(moduleDir / "build")
 
-object `package` extends ScairSettings with ScoverageReport with UnidocModule:
+object `package` extends ScairSettings with ScoverageReport with UnidocModule with SonatypeCentralPublishModule:
 
   override def artifactName = "scair-all"
 
