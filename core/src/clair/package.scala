@@ -14,7 +14,7 @@ package scair
   * import scair.clair.macros.*
   * import scair.dialects.builtin.*
   * import scair.dialects.cmath.*
-  * import scair.enums.enumattr.I32Enum
+  * import scair.enums.I32Enum
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom I32 enum attribute   ||
@@ -79,7 +79,7 @@ package scair
   * ||   constraints over operation components   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * import scair.core.constraints.{*, given}
+  * import scair.constraints.{*, given}
   *
   * type T = Var["T"]
   * val i32 = IntegerType(IntData(32), Signless)

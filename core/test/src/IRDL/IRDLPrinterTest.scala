@@ -2,7 +2,7 @@ package scair
 
 import scair.dialects.irdl.*
 import scair.dialects.builtin.*
-import scair.core.irdl_printer.IRDLPrinter.printIRDL
+import scair.irdl.IRDLPrinter.printIRDL
 import scair.parse.*
 
 import fastparse.*
@@ -49,9 +49,9 @@ class IRDLPrinterTest extends AnyFlatSpec:
 
   writer.toString shouldEqual """package scair.dialects.cmath
 
-import scair.dialects.builtin._
-import scair.ir._
-import scair.clair.macros._
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.clair.*
 
 case class Complex(
   elem: Attribute,

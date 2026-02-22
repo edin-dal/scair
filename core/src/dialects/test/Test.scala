@@ -1,6 +1,6 @@
 package scair.dialects.test
 
-import scair.clair.macros.summonDialect
+import scair.clair.summonDialect
 import scair.ir.*
 
 object TestOp extends OperationCompanion[TestOp]:

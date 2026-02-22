@@ -4,7 +4,7 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
-import scair.clair.macros.*
+import scair.clair.*
 import scair.utils.*
 
 case class FillerOp(

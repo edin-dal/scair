@@ -3,8 +3,7 @@ package scair.dialects.func
 import fastparse.*
 import scair.*
 import scair.Printer
-import scair.clair.codegen.*
-import scair.clair.macros.*
+import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*

@@ -1,6 +1,6 @@
 package scair.dialects.irdl
 
-import scair.clair.macros.*
+import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 

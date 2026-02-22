@@ -111,7 +111,7 @@ Now, we can use ScaIR's **[pattern]** API to define a transformation via simple 
 	
 ```scala sc-name:addi-fold
 //{
-import scair.transformations.patterns.*
+import scair.transformations.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.		*
 import scair.ir.*
@@ -134,7 +134,7 @@ Next, let's define our dead code elimination. And here is where our trait **[NoM
 If an Operation has no effects on memory, then we can safely erase it after making sure that none of its results are used anywhere in the IR: 
 ```scala sc-name:dce
 //{
-import scair.transformations.patterns.*
+import scair.transformations.*
 import scair.ir.*
 //}
 val DeadCodeElimination = pattern {
@@ -184,7 +184,7 @@ However, we can still write a pattern over it ( :D ), like so:
 //{
 import scair.dialects.builtin.*
 import scair.dialects.arith.*
-import scair.transformations.patterns.*
+import scair.transformations.*
 import scair.ir.*
 //}
 val ten = IntegerAttr(IntData(10), IntegerType(IntData(32), Signless)) // 10 : i32

@@ -2,10 +2,7 @@ package scair.dialects.builtin
 
 import fastparse.*
 import scair.Printer
-import scair.clair.macros.*
-import scair.core.macros.*
-import scair.dialects.affine.AffineMap
-import scair.dialects.affine.AffineSet
+import scair.clair.*
 import scair.ir.*
 import scair.parse.*
 import scair.utils.*
