@@ -3,7 +3,6 @@ package scair.passes.canonicalization
 import scair.MLContext
 import scair.ir.*
 import scair.transformations.*
-import scair.transformations.*
 
 // ░██████╗░ ███████╗ ███╗░░██╗ ███████╗ ██████╗░ ██╗ ░█████╗░
 // ██╔════╝░ ██╔════╝ ████╗░██║ ██╔════╝ ██╔══██╗ ██║ ██╔══██╗

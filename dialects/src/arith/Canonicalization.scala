@@ -3,8 +3,8 @@ package scair.dialects.arith.canonicalization
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.transformations.CanonicalizationPatterns
 import scair.transformations.*
+import scair.transformations.CanonicalizationPatterns
 
 // AddI folding patterns
 val AddIFold = pattern {

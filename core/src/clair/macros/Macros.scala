@@ -4,7 +4,6 @@ import fastparse.*
 import scair.*
 import scair.Printer
 import scair.clair.*
-import scair.clair.mirrored.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
