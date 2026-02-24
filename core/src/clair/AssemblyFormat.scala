@@ -27,12 +27,25 @@ import scala.quoted.*
 // ╚═╝░░░░░ ░╚════╝░ ╚═╝░░╚═╝ ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░
 //
 
-/** Utility function to check if a character is alphabetic */
+/** Utility function to check if a character is alphabetic.
+  *
+  * @param c
+  *   The character to check.
+  * @return
+  *   True if the character is alphabetic (a-z or A-Z), false otherwise.
+  */
 private inline def isalpha(c: Char): Boolean =
   (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 
 /** Prints a space in the output if required by printing context. Manages
   * spacing rules based on punctuation and previous tokens.
+  *
+  * @param p
+  *   The Printer expression to emit space with.
+  * @param state
+  *   The current printing state tracking spacing context.
+  * @return
+  *   An expression that prints a space if needed, or an empty expression.
   */
 private def printSpace(p: Expr[Printer], state: PrintingState)(using Quotes) =
 
@@ -78,13 +91,28 @@ trait Directive:
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Any]]
 
-  // Did the directive parse something?
+  /** Checks if the directive parsed something from the input. Used for optional
+    * group detection.
+    *
+    * @param p
+    *   The parsed expression to check.
+    * @return
+    *   An expression evaluating to true if the directive parsed content.
+    */
   def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
     import quotes.reflect.*
     report.errorAndAbort(
       s"Directive $this is not supposed to be used as an optional group's leading element, or is not implemented yet."
     )
 
+  /** Checks if the directive's content is present in an operation. Used as an
+    * anchor for optional groups.
+    *
+    * @param op
+    *   The operation expression to check.
+    * @return
+    *   An expression evaluating to true if the directive's content exists.
+    */
   def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
     import quotes.reflect.*
     report.errorAndAbort(
@@ -94,11 +122,22 @@ trait Directive:
 /** Directive for literal text in the assembly format. Examples include
   * keywords, punctuation, and other fixed strings. Typically used to clarify
   * semantic or solve ambiguity.
+  *
+  * @param literal
+  *   The literal string to match or emit.
   */
 case class LiteralDirective(
     literal: String
 ) extends Directive:
 
+  /** Determines whether a space should be emitted before this literal.
+    * Punctuation and keywords have specific spacing rules.
+    *
+    * @param lastWasPunctuation
+    *   Whether the previous token was punctuation.
+    * @return
+    *   True if a space should precede this literal.
+    */
   private inline def shouldEmitSpaceBefore(
       inline lastWasPunctuation: Boolean
   ): Boolean =
@@ -149,6 +188,9 @@ case class AttrDictDirective() extends Directive:
 
 /** Directive for variables, handling operations' individual constructs
   * (operands, results, regions, successors or properties).
+  *
+  * @param construct
+  *   The operation construct definition this directive references.
   */
 case class VariableDirective(
     construct: OpInputDef
@@ -251,6 +293,9 @@ case class VariableDirective(
       case OpInputDef(name = n) => parsed(selectMember[Any](op, n))
 
 /** Directive for types of individual operands or results.
+  *
+  * @param construct
+  *   The operand or result definition whose type this directive references.
   */
 case class TypeDirective(
     construct: OperandDef | ResultDef
@@ -300,13 +345,34 @@ case class TypeDirective(
               typeP.?
             }
 
-  // Ew; but works
+  /** Delegates to the underlying VariableDirective for parsed check.
+    *
+    * @param p
+    *   The parsed expression to check.
+    * @return
+    *   True if the underlying construct was parsed.
+    */
   override def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
     VariableDirective(construct).parsed(p)
 
+  /** Delegates to the underlying VariableDirective for presence check.
+    *
+    * @param op
+    *   The operation to check.
+    * @return
+    *   True if the underlying construct is present.
+    */
   override def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
     VariableDirective(construct).isPresent(op)
 
+/** Directive for optional groups in the assembly format. A group is printed
+  * only if its anchor element is present.
+  *
+  * @param anchor
+  *   The directive that determines whether the group is present.
+  * @param directives
+  *   The sequence of directives within this optional group.
+  */
 case class OptionalGroupDirective(
     anchor: Directive,
     directives: Seq[Directive],
@@ -414,6 +480,11 @@ transparent inline def chainParsers(
       }
 
 /** Holds state during printer generation to manage spacing and punctuation.
+  *
+  * @param shouldEmitSpace
+  *   Whether the next token should be preceded by a space.
+  * @param lastWasPunctuation
+  *   Whether the last emitted token was punctuation.
   */
 case class PrintingState(
     var shouldEmitSpace: Boolean = true,
@@ -422,11 +493,23 @@ case class PrintingState(
 
 /** Declarative assembly format representation. Contains a sequence of
   * directives that define the format.
+  *
+  * @param directives
+  *   The sequence of directives that make up this assembly format.
   */
 case class AssemblyFormatDirective(
     directives: Seq[Directive]
 ):
 
+  /** Generates a complete printer for this assembly format.
+    *
+    * @param op
+    *   The operation expression to print.
+    * @param p
+    *   The Printer to use.
+    * @return
+    *   An expression that prints the operation according to this format.
+    */
   def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] =
     given PrintingState = PrintingState()
     Expr.block(
@@ -449,8 +532,11 @@ case class AssemblyFormatDirective(
       case '{ $default: P[d] } =>
         '{ $default.map(Tuple1(_)) }
 
-  /** The list of directives that parse into something, as opposed to literal.
-    * Helps with indexing the parsed tuple.
+  /** Returns the list of directives that parse into values, as opposed to
+    * literals. Helps with indexing the parsed tuple.
+    *
+    * @return
+    *   The filtered sequence of non-literal directives.
     */
   def parsedDirectives: Seq[Directive] =
     directives
@@ -462,8 +548,19 @@ case class AssemblyFormatDirective(
         case _: LiteralDirective => false
         case _                   => true)
 
-  /** Use the operation definition to generate logic to build the operation from
-    * the parsed tuple.
+  /** Generates code to construct an operation from a parsed tuple. Maps parsed
+    * values back to operation constructor arguments.
+    *
+    * @param opDef
+    *   The operation definition to build.
+    * @param p
+    *   The parser being used.
+    * @param parsed
+    *   The tuple of parsed values.
+    * @param resNames
+    *   The names of results.
+    * @return
+    *   An expression that builds the operation.
     */
   def buildOperation(
       opDef: OperationDef,
@@ -597,24 +694,42 @@ case class AssemblyFormatDirective(
       )
     }
 
+/** Wrapper for a directive that serves as an anchor for an optional group.
+  *
+  * @param directive
+  *   The directive serving as anchor.
+  */
 case class Anchor(directive: Directive)
 
 /** Parses an assembly format identifier. Those should match Scala's identifier
   * rules, for maximum compatibility with the ADT fields; this is an
   * approximation.
+  *
+  * @return
+  *   The parsed identifier string.
   */
 def assemblyIdP[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
 /** Parser for the complete assembly format. Parses one or more directives into
   * an AssemblyFormatDirective.
+  *
+  * @param opDef
+  *   The operation definition for context.
+  * @return
+  *   The parsed assembly format directive.
   */
 def assemblyFormatP[$: P](using
     opDef: OperationDef
 ): P[AssemblyFormatDirective] = (directiveP.rep(1) ~ End)
   .map(AssemblyFormatDirective.apply)
 
-/** Parser for any directive.
+/** Parser for any directive type. Tries each directive parser in turn.
+  *
+  * @param opDef
+  *   The operation definition for context.
+  * @return
+  *   The parsed directive.
   */
 def directiveP[$: P](using
     opDef: OperationDef
@@ -624,12 +739,20 @@ def directiveP[$: P](using
 
 /** Parser for literal directives. Parses text enclosed in backticks as a
   * literal directive.
+  *
+  * @return
+  *   A LiteralDirective containing the parsed literal text.
   */
 def literalDirectiveP[$: P]: P[LiteralDirective] =
   ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
 
 /** Parser for variable directives. Parses a dollar sign followed by an
   * identifier, which references a construct of the Operation.
+  *
+  * @param opDef
+  *   The operation definition to look up variable names in.
+  * @return
+  *   A VariableDirective for the referenced construct.
   */
 def variableDirectiveP[$: P](using opDef: OperationDef) = ("$" ~~ assemblyIdP)
   .map(name => opDef.allDefs.find(_.name == name)).filter(_.nonEmpty).map(_.get)
@@ -637,6 +760,11 @@ def variableDirectiveP[$: P](using opDef: OperationDef) = ("$" ~~ assemblyIdP)
 
 /** Parser for type directives. Parses "type($var)" where $var is a variable
   * directive.
+  *
+  * @param opDef
+  *   The operation definition for context.
+  * @return
+  *   A TypeDirective for the referenced operand or result.
   */
 def typeDirectiveP[$: P](using opDef: OperationDef) =
   ("type(" ~~ variableDirectiveP ~~ ")").map(d =>
@@ -648,14 +776,32 @@ def typeDirectiveP[$: P](using opDef: OperationDef) =
 
 /** Parser for attribute dictionary directives. Parses the keyword "attr-dict"
   * into an AttrDictDirective.
+  *
+  * @return
+  *   An AttrDictDirective.
   */
 def attrDictDirectiveP[$: P]: P[AttrDictDirective] =
   ("attr-dict").map(_ => AttrDictDirective())
 
+/** Parser for a directive that may be marked as an anchor with a caret (^).
+  *
+  * @param opDef
+  *   The operation definition for context.
+  * @return
+  *   Either an Anchor-wrapped directive or a plain directive.
+  */
 def possiblyAnchoredDirectiveP[$: P](using
     opDef: OperationDef
 ) = (directiveP ~~ "^").map(Anchor.apply) | directiveP
 
+/** Parser for optional group directives. Parses a group of directives wrapped
+  * in parentheses and followed by a question mark.
+  *
+  * @param opDef
+  *   The operation definition for context.
+  * @return
+  *   An OptionalGroupDirective with one anchor and associated directives.
+  */
 def optionalGroupDirectiveP[$: P](using opDef: OperationDef): P[Directive] =
   ("(" ~ possiblyAnchoredDirectiveP.rep(1) ~ ")" ~ "?")./
     .filter(
@@ -673,6 +819,15 @@ def optionalGroupDirectiveP[$: P](using opDef: OperationDef): P[Directive] =
 
 /** Parse a declarative assembly format string into an AssemblyFormatDirective,
   * its internal representation for implementation generation.
+  *
+  * @param format
+  *   The assembly format string to parse.
+  * @param opDef
+  *   The operation definition for context.
+  * @return
+  *   The parsed assembly format directive.
+  * @throws Exception
+  *   If the format string cannot be parsed.
   */
 def parseAssemblyFormat(
     format: String,

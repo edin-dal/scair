@@ -28,13 +28,15 @@ object SubTitleGen:
 
     return top + mid + bot
 
+/** Utility for generating ASCII art titles in big block letters. */
 object TitleGen:
 
   /** Generate a title in ascii art.
     *
     * @param title
+    *   The title text to convert to ASCII art.
     * @return
-    *   ascii art title
+    *   The ASCII art representation of the title.
     */
   def generate(title: String): String =
 
@@ -75,13 +77,16 @@ object TitleGen:
     * clair.run your string of your choice`
     *
     * @param args
+    *   Command line arguments to convert to ASCII art title.
     */
   def main(args: Array[String]): Unit =
     if args.length == 0 then print(generate("title generator and whatnot"))
     else print(generate(args.mkString(" ")))
 
+/** Mappings from characters to their ASCII art representations. */
 object Letters:
 
+  /** The number of lines in each letter representation. */
   val tuple_length = 6
 
   val letterA: Seq[String] =
@@ -252,6 +257,7 @@ object Letters:
   val number9: Seq[String] =
     Seq("░██████╗", "██╔══██╗", "╚██████║", "░╚═══██║", "░█████╔╝", "░╚════╝░")
 
+  /** Map from characters to their 6-line ASCII art representations. */
   val charMap: Map[Char, Seq[String]] = Map(
     ('a' -> letterA),
     ('b' -> letterB),

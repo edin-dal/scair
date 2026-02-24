@@ -35,10 +35,15 @@ import scala.quoted.*
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 /** Small helper to select a member of an expression.
+  *
+  * @tparam T
+  *   The expected type of the member.
   * @param obj
   *   The object to select the member from.
   * @param name
   *   The name of the member to select.
+  * @return
+  *   The selected member as an expression of type T.
   */
 def selectMember[T: Type](obj: Expr[?], name: String)(using
     Quotes
@@ -47,6 +52,21 @@ def selectMember[T: Type](obj: Expr[?], name: String)(using
 
   Select.unique(obj.asTerm, name).asExprOf[T]
 
+/** Creates a segment sizes property for variadic constructs. When an operation
+  * has multiple variadic inputs of the same kind, we need to track how many
+  * belong to each definition.
+  *
+  * @tparam T
+  *   The construct definition type (OperandDef, ResultDef, etc.).
+  * @param hasMultiVariadic
+  *   Whether there are multiple variadic constructs of this type.
+  * @param defs
+  *   The sequence of construct definitions.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   An optional property tuple (name, attribute) representing segment sizes.
+  */
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
@@ -82,12 +102,17 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     case false => None
 
 /** Get all constructs of the specified type flattened from the ADT expression.
+  * Handles single, variadic, and optional constructs, flattening them into a
+  * single sequence.
+  *
   * @tparam Def
   *   The construct definition type.
   * @param opInputDefs
   *   The construct definitions.
   * @param adtOpExpr
   *   The ADT expression.
+  * @return
+  *   A flattened sequence of the defined inputs.
   */
 def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
@@ -117,24 +142,60 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
           case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
       )
 
+/** Generates code to extract operands from an ADT operation.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   Expression evaluating to a sequence of operands.
+  */
 def operandsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Operand[Attribute]]] =
   ADTFlatInputMacro(opDef.operands, adtOpExpr)
 
+/** Generates code to extract successors from an ADT operation.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   Expression evaluating to a sequence of successors.
+  */
 def successorsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Successor]] =
   ADTFlatInputMacro(opDef.successors, adtOpExpr)
 
+/** Generates code to extract results from an ADT operation.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   Expression evaluating to a sequence of results.
+  */
 def resultsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[Result[Attribute]]] =
   ADTFlatInputMacro(opDef.results, adtOpExpr)
 
+/** Generates code to extract regions from an ADT operation.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   Expression evaluating to a sequence of regions.
+  */
 def regionsMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -143,6 +204,17 @@ def regionsMacro(
 
 import scala.collection.mutable.Builder
 
+/** Generates code to extract properties from an ADT operation. Handles both
+  * mandatory and optional properties, as well as segment sizes for variadic
+  * constructs.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   Expression evaluating to a map of property names to attributes.
+  */
 def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -206,6 +278,20 @@ def propertiesMacro(
       )
     ).asExprOf[Map[String, Attribute]]
 
+/** Generates custom print code for an ADT operation. Uses the custom assembly
+  * format if defined, otherwise falls back to generic MLIR printing.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @param p
+  *   The Printer to use.
+  * @param indentLevel
+  *   The current indentation level.
+  * @return
+  *   Expression that prints the operation.
+  */
 def customPrintMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -222,6 +308,20 @@ def customPrintMacro(
         )
       }
 
+/** Generates a parser for an ADT operation. Uses the custom assembly format if
+  * defined, otherwise returns a failing parser.
+  *
+  * @tparam O
+  *   The operation type.
+  * @param opDef
+  *   The operation definition.
+  * @param p
+  *   The parser to use.
+  * @param resNames
+  *   The names of results.
+  * @return
+  *   Expression that parses the operation.
+  */
 def parseMacro[O <: Operation: Type](
     opDef: OperationDef,
     p: Expr[Parser],
@@ -241,6 +341,16 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
+/** Generates verification code for an ADT operation. Checks constraints on
+  * operands and other components.
+  *
+  * @param opDef
+  *   The operation definition.
+  * @param adtOpExpr
+  *   The ADT operation expression.
+  * @return
+  *   Expression that verifies the operation and returns OK or error.
+  */
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -272,7 +382,19 @@ def verifyMacro(
 
 /*_____________*\
 \*-- HELPERS --*/
-/** Helper to check a property argument.
+/** Helper to check a property argument. Validates that the property exists and
+  * has the correct type.
+  *
+  * @tparam A
+  *   The expected attribute type.
+  * @param list
+  *   The map of properties.
+  * @param propName
+  *   The name of the property to check.
+  * @return
+  *   Expression that retrieves and type-checks the property.
+  * @throws IllegalArgumentException
+  *   If property is missing or has wrong type.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
@@ -297,6 +419,20 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
         )
   }
 
+/** Helper to check an optional property argument. Similar to
+  * generateCheckedPropertyArgument but returns None if property is absent.
+  *
+  * @tparam A
+  *   The expected attribute type.
+  * @param list
+  *   The map of properties.
+  * @param propName
+  *   The name of the property to check.
+  * @return
+  *   Expression that retrieves and type-checks the optional property.
+  * @throws IllegalArgumentException
+  *   If property exists but has wrong type.
+  */
 def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
     propName: String,
@@ -343,6 +479,11 @@ def getConstructSeq[Def <: OpInputDef: Type as d](
   ).asExprOf[Seq[DefinedInput[Def]]]
 
 /** Helper to get the name of a construct definition type.
+  *
+  * @tparam Def
+  *   The construct definition type.
+  * @return
+  *   A string name for the construct type ("result", "operand", etc.).
   */
 def getConstructName[Def <: OpInputDef: Type as d](using Quotes) =
   d match
@@ -353,6 +494,11 @@ def getConstructName[Def <: OpInputDef: Type as d](using Quotes) =
     case '[OpPropertyDef] => "property"
 
 /** Helper to get the expected type of a construct definition's construct.
+  *
+  * @param _def
+  *   The construct definition.
+  * @return
+  *   The Type representing the constraint on this construct.
   */
 def getConstructConstraint(_def: OpInputDef)(using Quotes) =
   _def match
@@ -363,6 +509,11 @@ def getConstructConstraint(_def: OpInputDef)(using Quotes) =
     case OpPropertyDef(name, tpe, _, _)        => tpe
 
 /** Helper to get the variadicity of a construct definition's construct.
+  *
+  * @param _def
+  *   The construct definition.
+  * @return
+  *   The Variadicity of this construct.
   */
 def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
   _def match
@@ -372,12 +523,14 @@ def getConstructVariadicity(_def: OpInputDef)(using Quotes) =
 \*-- STRUCTURING  --*/
 
 /** Expect a segmentSizes property of DenseArrayAttr type, and return it as a
-  * list of integers.
+  * list of integers. This is used to partition multi-variadic constructs.
   *
   * @tparam Def
   *   The construct definition type.
-  * @param op
-  *   The UnstructuredOp expression.
+  * @return
+  *   Expression returning the segment sizes as a sequence of integers.
+  * @throws Exception
+  *   If segmentSizes is missing or has wrong type.
   */
 def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
   val segmentSizesName = s"${getConstructName[Def]}SegmentSizes"
@@ -411,8 +564,15 @@ def expectSegmentSizes[Def <: OpInputDef: Type](using Quotes) =
     }
   }
 
-/** Partition a construct sequence, in the case of no variadic defintion.
+/** Partition a construct sequence, in the case of no variadic definition. Each
+  * construct is at a fixed index.
   *
+  * @tparam Def
+  *   The construct definition type.
+  * @param defs
+  *   The construct definitions.
+  * @return
+  *   Sequence of expressions that extract each construct by index.
   * @see
   *   [[constructPartitioner]]
   */
@@ -438,8 +598,17 @@ def uniadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(using
     }
   )
 
-/** Partition a construct sequence, in the case of a single variadic defintion.
+/** Partition a construct sequence, in the case of a single variadic definition.
+  * Constructs before the variadic are at fixed indices, the variadic takes a
+  * variable-length slice, and constructs after are at fixed offsets from the
+  * end.
   *
+  * @tparam Def
+  *   The construct definition type.
+  * @param defs
+  *   The construct definitions.
+  * @return
+  *   Sequence of expressions that extract each construct.
   * @see
   *   [[constructPartitioner]]
   */
@@ -485,8 +654,16 @@ def univariadicConstructPartitioner[Def <: OpInputDef: Type](defs: Seq[Def])(
 
   (preceedingExprs :+ variadicExpr) ++ followingExprs
 
-/** Partition a construct sequence, in the case of multiple variadic definitions
+/** Partition a construct sequence, in the case of multiple variadic
+  * definitions. Uses segmentSizes property to determine the size of each
+  * variadic construct.
   *
+  * @tparam Def
+  *   The construct definition type.
+  * @param defs
+  *   The construct definitions.
+  * @return
+  *   Sequence of expressions that extract each construct using segmentSizes.
   * @see
   *   [[constructPartitioner]]
   */
@@ -543,7 +720,7 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
         }
   }
 
-/** Partion constructs of a specified type. That is, check that they are in a
+/** Partition constructs of a specified type. That is, check that they are in a
   * coherent quantity, and partition them into the provided definitions.
   *
   * @tparam Def
@@ -551,8 +728,8 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
   * @param defs
   *   The construct definitions.
   * @return
-  *   A function of an operation and its flat sequence of constructs, returning
-  *   the sequence of partitions according to the definitions.
+  *   A sequence of functions that partition flat constructs according to
+  *   definitions.
   */
 def constructPartitioner[Def <: OpInputDef: Type](
     defs: Seq[Def]
@@ -563,8 +740,18 @@ def constructPartitioner[Def <: OpInputDef: Type](
     case 1 => univariadicConstructPartitioner(defs)
     case _ => multivariadicConstructPartitioner(defs)
 
-/* Return an extractor for a single-defined construct
- */
+/** Returns an extractor for a single-defined construct. Validates that the
+  * construct has the expected type.
+  *
+  * @tparam Def
+  *   The construct definition type.
+  * @tparam t
+  *   The expected attribute type.
+  * @param d
+  *   The construct definition.
+  * @return
+  *   Expression that validates and extracts a single construct.
+  */
 def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -583,8 +770,18 @@ def singleConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[DefinedInputOf[Def, t]]
   }
 
-/* Return an extractor for a variadic-defined construct
- */
+/** Returns an extractor for a variadic-defined construct. Validates that each
+  * element of the sequence has the expected type.
+  *
+  * @tparam Def
+  *   The construct definition type.
+  * @tparam t
+  *   The expected attribute type.
+  * @param d
+  *   The construct definition.
+  * @return
+  *   Expression that validates and extracts a sequence of constructs.
+  */
 def variadicConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -602,8 +799,18 @@ def variadicConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     ).asInstanceOf[Seq[DefinedInputOf[Def, t]]]
   }
 
-/* Return an extractor for an optional-defined construct
- */
+/** Returns an extractor for an optional-defined construct. Validates that at
+  * most one element exists and has the expected type.
+  *
+  * @tparam Def
+  *   The construct definition type.
+  * @tparam t
+  *   The expected attribute type.
+  * @param d
+  *   The construct definition.
+  * @return
+  *   Expression that validates and extracts an optional construct.
+  */
 def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
     d: Def
 )(using Quotes) =
@@ -621,11 +828,14 @@ def optionalConstructExtractor[Def <: OpInputDef: Type, t <: Attribute: Type](
   }
 
 /** Returns an extractor expression for the passed construct definition.
+  * Dispatches to the appropriate extractor based on variadicity.
   *
-  * @param defs
-  *   The constructs definitions.
-  * @returns
-  *   A function of a construct(s), returning the typed, extracted construct(s)
+  * @tparam Def
+  *   The construct definition type.
+  * @param d
+  *   The construct definition.
+  * @return
+  *   A function that extracts the typed construct from raw input.
   */
 def constructExtractor[Def <: OpInputDef: Type](
     d: Def
@@ -640,6 +850,20 @@ def constructExtractor[Def <: OpInputDef: Type](
         case Variadicity.Optional =>
           optionalConstructExtractor[Def, t](d)
 
+/** Extracts and type-checks all constructs of a given type from an unstructured
+  * operation.
+  *
+  * @tparam Def
+  *   The construct definition type.
+  * @param defs
+  *   The construct definitions.
+  * @param flat
+  *   The flat sequence of constructs.
+  * @param properties
+  *   The properties map (for segment sizes).
+  * @return
+  *   Sequence of expressions that extract and validate each construct.
+  */
 def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
     flat: Expr[Seq[DefinedInput[Def]]],
@@ -656,14 +880,23 @@ def extractedConstructs[Def <: OpInputDef: Type](
   * checked, in the sense that they are checked to be of the correct types and
   * numbers.
   *
+  * @tparam T
+  *   The ADT type.
   * @param opDef
   *   The OperationDef derived from the ADT.
-  * @param op
-  *   The UnstructuredOp instance.
+  * @param operands
+  *   Expression for the operands sequence.
+  * @param results
+  *   Expression for the results sequence.
+  * @param regions
+  *   Expression for the regions sequence.
+  * @param successors
+  *   Expression for the successors sequence.
+  * @param properties
+  *   Expression for the properties map.
   * @return
-  *   The checked named arguments for the primary constructor of the ADT.
+  *   Expression that constructs an instance of T from the validated inputs.
   */
-
 def tryConstruct[T: Type](
     opDef: OperationDef,
     operands: Expr[Seq[Operand[Attribute]]],
@@ -737,21 +970,20 @@ def tryConstruct[T: Type](
     List.from(args),
   ).asExprOf[T]
 
-  /** Attempt to create an ADT from an UnstructuredOp[ADT]
-    *
-    * @tparam T
-    *   The ADT Type.
-    * @param opDef
-    *   The OperationDef derived from the ADT.
-    * @param genExpr
-    *   The expression of the UnstructuredOp[ADT].
-    * @return
-    *   The ADT instance.
-    * @raises
-    *   Exception if the UnstructuredOp[ADT] is not valid to represent by the
-    *   ADT.
-    */
-
+/** Attempt to create an ADT from an UnstructuredOp[ADT]. Validates that all
+  * constructs match the expected types and counts.
+  *
+  * @tparam T
+  *   The ADT Type.
+  * @param opDef
+  *   The OperationDef derived from the ADT.
+  * @param genExpr
+  *   The expression of the UnstructuredOp[ADT].
+  * @return
+  *   The ADT instance.
+  * @throws Exception
+  *   if the UnstructuredOp[ADT] is not valid to represent by the ADT.
+  */
 def fromUnstructuredOperationMacro[T <: Operation: Type](
     opDef: OperationDef,
     genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp],
@@ -767,6 +999,20 @@ def fromUnstructuredOperationMacro[T <: Operation: Type](
     '{ $genExpr.properties },
   )
 
+/** Generates the constructor call for an attribute from a sequence of parsed
+  * attributes.
+  *
+  * @tparam T
+  *   The attribute type.
+  * @param attrDef
+  *   The attribute definition.
+  * @param attributes
+  *   Expression for the sequence of parsed attributes.
+  * @return
+  *   Expression that constructs the attribute.
+  * @throws Exception
+  *   If attribute count or types don't match.
+  */
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
     attributes: Expr[Seq[Attribute]],
@@ -823,6 +1069,17 @@ def getAttrConstructor[T: Type](
     $constructorCall
   }
 
+/** Flattens attributes from an ADT attribute into a sequence.
+  *
+  * @tparam Def
+  *   The attribute definition type.
+  * @param attrInputDefs
+  *   Sequence of attribute parameter definitions.
+  * @param adtAttrExpr
+  *   The ADT attribute expression.
+  * @return
+  *   Expression evaluating to a flattened sequence of attributes.
+  */
 def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
     attrInputDefs: Seq[AttributeParamDef],
     adtAttrExpr: Expr[?],
@@ -832,12 +1089,29 @@ def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
       attrInputDefs.map(d => selectMember[Attribute](adtAttrExpr, d.name))
     )
 
+/** Generates code to extract parameters from an ADT attribute.
+  *
+  * @param attrDef
+  *   The attribute definition.
+  * @param adtAttrExpr
+  *   The ADT attribute expression.
+  * @return
+  *   Expression evaluating to a sequence of attribute parameters.
+  */
 def parametersMacro(
     attrDef: AttributeDef,
     adtAttrExpr: Expr[?],
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
+/** Derives a DerivedAttributeCompanion for an attribute type. Generates code
+  * for parsing, printing, and parameter extraction.
+  *
+  * @tparam T
+  *   The attribute type.
+  * @return
+  *   Expression creating a DerivedAttributeCompanion[T].
+  */
 def derivedAttributeCompanion[T <: Attribute: Type](using
     Quotes
 ): Expr[DerivedAttributeCompanion[T]] =
@@ -863,6 +1137,15 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
       }
   }
 
+/** Derives a DerivedOperationCompanion for an operation type. Generates code
+  * for all operation companion methods: parsing, printing, verification,
+  * structuring, destructuring, etc.
+  *
+  * @tparam T
+  *   The operation type.
+  * @return
+  *   Expression creating a DerivedOperationCompanion[T].
+  */
 def deriveOperationCompanion[T <: Operation: Type](using
     Quotes
 ): Expr[DerivedOperationCompanion[T]] =
