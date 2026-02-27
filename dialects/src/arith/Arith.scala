@@ -2,12 +2,10 @@ package scair.dialects.arith
 
 import fastparse.*
 import scair.Printer
-import scair.clair.codegen.*
-import scair.clair.macros.*
-import scair.core.macros.TransparentData
+import scair.clair.*
 import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
-import scair.enums.enumattr.*
+import scair.enums.*
 import scair.ir.*
 import scair.parse.Parser
 import scair.utils.*

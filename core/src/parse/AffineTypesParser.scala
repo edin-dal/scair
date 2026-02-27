@@ -2,7 +2,7 @@ package scair.parse
 
 import fastparse.*
 import scair.*
-import scair.dialects.affine.*
+import scair.dialects.builtin.*
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝

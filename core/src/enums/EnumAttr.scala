@@ -1,4 +1,4 @@
-package scair.enums.enumattr
+package scair.enums
 
 import scair.dialects.builtin.I32
 import scair.dialects.builtin.I64

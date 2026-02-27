@@ -5,9 +5,10 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.clair.macros.*
-import scair.enums.enumattr.I32Enum
+import scair.clair.*
+import scair.enums.I32Enum
 import scair.parse.*
+import scair.enums.I32Enum
 
 enum Color(name: String) extends I32Enum(name):
   case Red extends Color("red")

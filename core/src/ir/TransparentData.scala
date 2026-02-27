@@ -1,4 +1,4 @@
-package scair.core.macros
+package scair.ir
 
 import scair.ir.DataAttribute
 

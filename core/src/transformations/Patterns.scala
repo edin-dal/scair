@@ -1,4 +1,4 @@
-package scair.transformations.patterns
+package scair.transformations
 
 import scair.ir.*
 import scair.transformations.*

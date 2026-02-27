@@ -196,7 +196,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
         Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) {
           classLoader =>
             val printerMethod = classLoader
-              .loadClass("scair.core.irdl_printer.IRDLPrinter")
+              .loadClass("scair.irdl.IRDLPrinter")
               .getMethod(
                 "IRDLFileToScalaFile",
                 classOf[String],

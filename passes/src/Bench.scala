@@ -7,10 +7,10 @@ import scair.dialects.builtin.IntegerAttr
 import scair.ir.Result
 import scair.passes.canonicalization.RemoveUnusedOperations
 import scair.transformations.GreedyRewritePatternApplier
+import scair.transformations.Owner
 import scair.transformations.PatternRewriteWalker
 import scair.transformations.WalkerPass
-import scair.transformations.patterns.Owner
-import scair.transformations.patterns.pattern
+import scair.transformations.pattern
 
 //
 // ██████╗░ ███████╗ ███╗░░██╗ ░█████╗░ ██╗░░██╗

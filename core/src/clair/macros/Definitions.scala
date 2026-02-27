@@ -1,7 +1,7 @@
-package scair.clair.codegen
+package scair.clair.macros
 
 import scair.clair.macros.AssemblyFormatDirective
-import scair.core.constraints.ConstraintImpl
+import scair.constraints.ConstraintImpl
 
 import scala.quoted.*
 import scala.reflect.*
