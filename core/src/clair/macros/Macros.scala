@@ -312,9 +312,7 @@ def verifyMacro(
     '{ OK() }
   )((acc, check) => '{ $acc.flatMap(_ => $check) })
 
-  val v = '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
-  println(s"Generated verification code for ${opDef.name}:\n${v.show}")
-  v
+  '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
