@@ -240,30 +240,77 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
+def loadConstraintCompanion(using Quotes)(
+    constraintType: Type[?]
+): Option[scair.constraints.ConstraintCompanion] =
+  import quotes.reflect.*
+  val typeRepr = TypeRepr.of(using constraintType)
+  val typeSymbol = typeRepr.typeSymbol
+  val companionSymbol = typeSymbol.companionModule
+  if companionSymbol == Symbol.noSymbol then return None
+  if !(companionSymbol.termRef <:< TypeRepr.of[
+    scair.constraints.ConstraintCompanion
+  ]) then return None
+  val fullName = companionSymbol.fullName
+  try
+    val cls = Thread
+      .currentThread()
+      .getContextClassLoader
+      .loadClass(fullName + "$")
+    val instance = cls.getField("MODULE$").get(null)
+    Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion])
+  catch case _: Exception => None
+
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
 
-  val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
+  import quotes.reflect.*
+
+  // Collect constrained single operands
+  val constrained: Seq[(String, Type[?])] = opDef.operands
     .filter(_.variadicity == Variadicity.Single)
     .collect(_ match
-      case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.constraints.ConstraintContext) =>
-          $constraint.verify($mem.typ)(using ctx)
-        })
+      case OperandDef(name, _, _, Some(ct)) => (name, ct))
 
-  '{
-    given ctx: scair.constraints.ConstraintContext =
-      scair.constraints.ConstraintContext()
-    ${
-      val chain = a.foldLeft[Expr[OK[Unit]]](
-        '{ OK() }
-      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
-      '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
-    }
-  }
+  var ctx = scair.constraints.MacroConstraintContext()
+  var checks = List.empty[Expr[OK[Unit]]]
+
+  for (fieldName, constraintType) <- constrained do
+    val mem = selectMember[Operand[Attribute]](adtOpExpr, fieldName)
+    val attrExpr: Expr[Attribute] = '{ $mem.typ }
+
+    loadConstraintCompanion(constraintType) match
+      case Some(companion) =>
+        val (check, newCtx) =
+          companion.macroVerify(constraintType, attrExpr, ctx)
+        ctx = newCtx
+        checks = checks :+ check
+      case None =>
+        // Fallback: summon ConstraintImpl for runtime dispatch
+        constraintType match
+          case '[type t <: scair.constraints.Constraint; `t`] =>
+            Expr.summon[scair.constraints.ConstraintImpl[t]] match
+              case Some(impl) =>
+                checks = checks :+ '{
+                  given c: scair.constraints.ConstraintContext =
+                    scair.constraints.ConstraintContext()
+                  $impl.verify($attrExpr)(using c)
+                }
+              case None =>
+                report.errorAndAbort(
+                  s"No ConstraintCompanion or ConstraintImpl found for ${Type.show[t]}"
+                )
+
+  // Chain all checks with flatMap
+  val chain = checks.foldLeft[Expr[OK[Unit]]](
+    '{ OK() }
+  )((acc, check) => '{ $acc.flatMap(_ => $check) })
+
+  val v = '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
+  println(s"Generated verification code for ${opDef.name}:\n${v.show}")
+  v
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
