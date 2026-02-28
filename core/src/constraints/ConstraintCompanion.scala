@@ -5,12 +5,14 @@ import scair.utils.OK
 
 import scala.quoted.*
 
-/** Compile-time context threaded through the macro's field iteration. Constraint
-  * companions use this to track state across fields (e.g., Var bindings).
+/** Compile-time context threaded through the macro's field iteration.
+  * Constraint companions use this to track state across fields (e.g., Var
+  * bindings).
   */
 class MacroConstraintContext(
     val bindings: Map[String, Any] = Map.empty
 ):
+
   def updated(key: String, value: Any): MacroConstraintContext =
     MacroConstraintContext(bindings + (key -> value))
 
@@ -35,7 +37,9 @@ trait ConstraintCompanion:
     * @return
     *   (verification code snippet, updated context)
     */
-  def macroVerify(using Quotes)(
+  def macroVerify(using
+      Quotes
+  )(
       constraintType: Type[?],
       attr: Expr[Attribute],
       ctx: MacroConstraintContext,

@@ -240,7 +240,9 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
-def loadConstraintCompanion(using Quotes)(
+def loadConstraintCompanion(using
+    Quotes
+)(
     constraintType: Type[?]
 ): Option[scair.constraints.ConstraintCompanion] =
   import quotes.reflect.*
@@ -248,14 +250,15 @@ def loadConstraintCompanion(using Quotes)(
   val typeSymbol = typeRepr.typeSymbol
   val companionSymbol = typeSymbol.companionModule
   if companionSymbol == Symbol.noSymbol then return None
-  if !(companionSymbol.termRef <:< TypeRepr.of[
-    scair.constraints.ConstraintCompanion
-  ]) then return None
+  if !(companionSymbol.termRef <:<
+      TypeRepr
+        .of[
+          scair.constraints.ConstraintCompanion
+        ])
+  then return None
   val fullName = companionSymbol.fullName
   try
-    val cls = Thread
-      .currentThread()
-      .getContextClassLoader
+    val cls = Thread.currentThread().getContextClassLoader
       .loadClass(fullName + "$")
     val instance = cls.getField("MODULE$").get(null)
     Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion])
@@ -270,8 +273,7 @@ def verifyMacro(
 
   // Collect constrained single operands
   val constrained: Seq[(String, Type[?])] = opDef.operands
-    .filter(_.variadicity == Variadicity.Single)
-    .collect(_ match
+    .filter(_.variadicity == Variadicity.Single).collect(_ match
       case OperandDef(name, _, _, Some(ct)) => (name, ct))
 
   var ctx = scair.constraints.MacroConstraintContext()
@@ -299,9 +301,11 @@ def verifyMacro(
                   $impl.verify($attrExpr)(using c)
                 }
               case None =>
-                report.errorAndAbort(
-                  s"No ConstraintCompanion or ConstraintImpl found for ${Type.show[t]}"
-                )
+                report
+                  .errorAndAbort(
+                    s"No ConstraintCompanion or ConstraintImpl found for ${Type
+                        .show[t]}"
+                  )
 
   // Chain all checks with flatMap
   val chain = checks.foldLeft[Expr[OK[Unit]]](
