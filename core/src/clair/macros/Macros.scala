@@ -269,7 +269,6 @@ def verifyMacro(
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
 
-  import quotes.reflect.*
 
   // Collect constrained single operands
   val constrained: Seq[(String, Type[?])] = opDef.operands
@@ -289,23 +288,6 @@ def verifyMacro(
           companion.macroVerify(constraintType, attrExpr, ctx)
         ctx = newCtx
         checks = checks :+ check
-      case None =>
-        // Fallback: summon ConstraintImpl for runtime dispatch
-        constraintType match
-          case '[type t <: scair.constraints.Constraint; `t`] =>
-            Expr.summon[scair.constraints.ConstraintImpl[t]] match
-              case Some(impl) =>
-                checks = checks :+ '{
-                  given c: scair.constraints.ConstraintContext =
-                    scair.constraints.ConstraintContext()
-                  $impl.verify($attrExpr)(using c)
-                }
-              case None =>
-                report
-                  .errorAndAbort(
-                    s"No ConstraintCompanion or ConstraintImpl found for ${Type
-                        .show[t]}"
-                  )
 
   // Chain all checks with flatMap
   val chain = checks.foldLeft[Expr[OK[Unit]]](

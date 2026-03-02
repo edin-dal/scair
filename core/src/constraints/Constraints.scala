@@ -3,7 +3,6 @@ package scair.constraints
 import scair.ir.*
 import scair.utils.*
 
-import scala.compiletime.constValue
 import scala.quoted.*
 
 // ░█████╗░ ░█████╗░ ███╗░░██╗ ░██████╗ ████████╗ ██████╗░ ░█████╗░ ██╗ ███╗░░██╗ ████████╗ ░██████╗
@@ -18,17 +17,6 @@ import scala.quoted.*
 \*≡==---==≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
 trait Constraint
-
-class ConstraintContext():
-
-  val varConstraints: DictType[String, Attribute] =
-    DictType.empty[String, Attribute]
-
-trait ConstraintImpl[c <: Constraint]:
-
-  def verify(attr: Attribute)(using
-      ctx: ConstraintContext
-  ): OK[Unit]
 
 infix type !>[A <: Attribute, C <: Constraint] = A
 
@@ -112,40 +100,3 @@ object Var extends ConstraintCompanion:
         (check, ctx)
       case None =>
         ('{ OK(()) }, ctx.updated(key, attr))
-
-/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||    CONSTRAINTIMPL GIVENS    ||
-\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
-
-inline def eqAttr[To <: Attribute]: To =
-  ${ eqAttrImpl[To] }
-
-class ConstraintImplEqAttr[To <: Attribute](ref: To)
-    extends ConstraintImpl[EqAttr[To]]:
-
-  override def verify(attr: Attribute)(using
-      ctx: ConstraintContext
-  ): OK[Unit] =
-    if attr == ref then OK()
-    else Err(s"Expected $ref, got $attr")
-
-inline given [To <: Attribute] => ConstraintImpl[EqAttr[To]] =
-  val ref = eqAttr[To]
-  new ConstraintImplEqAttr(ref)
-
-class ConstraintImplVar[To <: String](name: To) extends ConstraintImpl[Var[To]]:
-
-  override def verify(attr: Attribute)(using
-      ctx: ConstraintContext
-  ): OK[Unit] =
-    if ctx.varConstraints.contains(name) then
-      if ctx.varConstraints.apply(name) != attr then
-        Err(s"Expected ${ctx.varConstraints.apply(name)}, got $attr")
-      else OK()
-    else
-      ctx.varConstraints += ((name, attr))
-      OK()
-
-inline given [To <: String] => ConstraintImpl[Var[To]] =
-  val name = constValue[To]
-  new ConstraintImplVar(name)
