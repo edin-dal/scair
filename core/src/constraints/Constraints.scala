@@ -5,6 +5,26 @@ import scair.utils.*
 
 import scala.quoted.*
 
+def loadConstraintCompanion[C <: Constraint: Type](using
+    Quotes
+): Option[scair.constraints.ConstraintCompanion[C]] =
+  import quotes.reflect.*
+  val companionSymbol = TypeRepr.of[C].typeSymbol.companionModule
+  if !(companionSymbol.termRef <:<
+      TypeRepr
+        .of[
+          scair.constraints.ConstraintCompanion[?]
+        ])
+  then
+    report.errorAndAbort(
+      s"Constraint ${Type.show[C]} does not have a valid companion object extending ConstraintCompanion."
+    )
+  val fullName = companionSymbol.fullName
+  val cls = Thread.currentThread().getContextClassLoader
+    .loadClass(fullName + "$")
+  val instance = cls.getField("MODULE$").get(null)
+  Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]])
+
 // ░█████╗░ ░█████╗░ ███╗░░██╗ ░██████╗ ████████╗ ██████╗░ ░█████╗░ ██╗ ███╗░░██╗ ████████╗ ░██████╗
 // ██╔══██╗ ██╔══██╗ ████╗░██║ ██╔════╝ ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝
 // ██║░░╚═╝ ██║░░██║ ██╔██╗██║ ╚█████╗░ ░░░██║░░░ ██████╔╝ ███████║ ██║ ██╔██╗██║ ░░░██║░░░ ╚█████╗░
@@ -85,3 +105,33 @@ object Var extends ConstraintCompanion[Var[String]]:
       case None =>
         ctx.bindings(name) = attr
         '{ OK(()) }
+
+trait AllOf[A <: Constraint, B <: Constraint] extends Constraint
+
+object AllOf extends ConstraintCompanion[AllOf[Constraint, Constraint]]:
+
+  def macroVerify(using
+      Quotes
+  )(
+      constraintType: Type[AllOf[Constraint, Constraint]],
+      attr: Expr[Attribute],
+      ctx: MacroConstraintContext,
+  ): Expr[OK[Unit]] =
+    import quotes.reflect.*
+    constraintType match
+      case '[AllOf[a, b]] =>
+        val cA = loadConstraintCompanion[a].getOrElse(
+          report
+            .errorAndAbort(s"No companion found for constraint ${Type.show[a]}")
+        )
+        val cB = loadConstraintCompanion[b].getOrElse(
+          report
+            .errorAndAbort(s"No companion found for constraint ${Type.show[b]}")
+        )
+        val rA = cA.macroVerify(constraintType = Type.of[a], attr, ctx)
+        val rB = cB.macroVerify(constraintType = Type.of[b], attr, ctx)
+        '{
+          $rA match
+            case OK(())   => $rB
+            case Err(msg) => Err(msg)
+        }

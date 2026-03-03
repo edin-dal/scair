@@ -142,6 +142,7 @@ def regionsMacro(
 
 import scala.collection.mutable.Builder
 import scair.constraints.Constraint
+import scair.constraints.loadConstraintCompanion
 
 def propertiesMacro(
     opDef: OperationDef,
@@ -241,29 +242,6 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
-def loadConstraintCompanion[C <: Constraint](using
-    Quotes
-)(
-    constraintType: Type[C]
-): Option[scair.constraints.ConstraintCompanion[C]] =
-  import quotes.reflect.*
-  val companionSymbol = TypeRepr.of(using constraintType).typeSymbol
-    .companionModule
-  if !(companionSymbol.termRef <:<
-      TypeRepr
-        .of[
-          scair.constraints.ConstraintCompanion[?]
-        ])
-  then
-    report.errorAndAbort(
-      s"Constraint ${Type.show(using constraintType)} does not have a valid companion object extending ConstraintCompanion."
-    )
-  val fullName = companionSymbol.fullName
-  val cls = Thread.currentThread().getContextClassLoader
-    .loadClass(fullName + "$")
-  val instance = cls.getField("MODULE$").get(null)
-  Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]])
-
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -281,7 +259,7 @@ def verifyMacro(
     val mem = selectMember[Operand[Attribute]](adtOpExpr, fieldName)
     val attrExpr: Expr[Attribute] = '{ $mem.typ }
 
-    loadConstraintCompanion(constraintType) match
+    loadConstraintCompanion(using constraintType) match
       case Some(companion) =>
         val check =
           companion.macroVerify(constraintType, attrExpr, ctx)

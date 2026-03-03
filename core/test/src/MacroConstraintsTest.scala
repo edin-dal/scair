@@ -26,6 +26,13 @@ case class MulFVar(
 ) extends DerivedOperation["cmath.mul", MulFVar]
     derives DerivedOperationCompanion
 
+case class MulFAll(
+    lhs: Operand[FloatType !> T],
+    rhs: Operand[FloatType !> AllOf[T, EqAttr[f32.type]]],
+    result: Result[FloatType],
+) extends DerivedOperation["cmath.mul", MulFAll]
+    derives DerivedOperationCompanion
+
 class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
   "A derived operation with eq-attr constraints" should
@@ -121,3 +128,49 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
       val res = x.verify()
       assert(res.isOK)
     }
+
+  "A derived operation with var-def and all-of constraints" should
+    "verify if constraints are met" in {
+      val x = MulFAll(
+        Value[FloatType](Float32Type()),
+        Value[FloatType](Float32Type()),
+        Value[FloatType](Float32Type()),
+      )
+
+      val res = x.verify()
+      assert(res.isOK)
+    }
+
+  it should "fail verification if var constraints are not met" in {
+    val x = MulFAll(
+      Value[FloatType](Float32Type()),
+      Value[FloatType](Float64Type()),
+      Value[FloatType](Float32Type()),
+    )
+
+    val res = x.verify()
+    assert(res.isError)
+    assert(
+      res.getError.msg
+        .contains(
+          s"Expected ${Float32Type()}, got ${Float64Type()}"
+        )
+    )
+  }
+
+  it should "fail verification if all-of constraints are not met" in {
+    val x = MulFAll(
+      Value[FloatType](Float64Type()),
+      Value[FloatType](Float64Type()),
+      Value[FloatType](Float64Type()),
+    )
+
+    val res = x.verify()
+    assert(res.isError)
+    assert(
+      res.getError.msg
+        .contains(
+          s"Expected ${Float32Type()}, got ${Float64Type()}"
+        )
+    )
+  }
