@@ -34,7 +34,7 @@ object EqAttr extends ConstraintCompanion[EqAttr[Attribute]]:
       constraintType: Type[EqAttr[Attribute]],
       attr: Expr[Attribute],
       ctx: MacroConstraintContext,
-  ): (Expr[OK[Unit]], MacroConstraintContext) =
+  ): Expr[OK[Unit]] =
     import quotes.reflect.*
     val refType = constraintType match
       case '[EqAttr[ref]] => TypeRepr.of[ref]
@@ -47,15 +47,12 @@ object EqAttr extends ConstraintCompanion[EqAttr[Attribute]]:
           .errorAndAbort(
             s"EqAttr reference must be a singleton value, got: ${other.show}"
           )
-    (
-      '{
-        val _r: OK[Unit] =
-          if $attr != $refExpr then Err(s"Expected ${$refExpr}, got ${$attr}")
-          else OK(())
-        _r
-      },
-      ctx,
-    )
+    '{
+      val _r: OK[Unit] =
+        if $attr != $refExpr then Err(s"Expected ${$refExpr}, got ${$attr}")
+        else OK(())
+      _r
+    }
 
 trait Var[To <: String] extends Constraint
 
@@ -67,7 +64,7 @@ object Var extends ConstraintCompanion[Var[String]]:
       constraintType: Type[Var[String]],
       attr: Expr[Attribute],
       ctx: MacroConstraintContext,
-  ): (Expr[OK[Unit]], MacroConstraintContext) =
+  ): Expr[OK[Unit]] =
     import quotes.reflect.*
     val name = constraintType match
       case '[Var[name]] =>
@@ -79,12 +76,12 @@ object Var extends ConstraintCompanion[Var[String]]:
     ctx.bindings.get(name) match
       case Some(boundAny) =>
         val bound = boundAny.asInstanceOf[Expr[Attribute]]
-        val check = '{
+        '{
           val _r: OK[Unit] =
             if $attr != $bound then Err(s"Expected ${$bound}, got ${$attr}")
             else OK(())
           _r
         }
-        (check, ctx)
       case None =>
-        ('{ OK(()) }, ctx.updated(name, attr))
+        ctx.bindings(name) = attr
+        '{ OK(()) }

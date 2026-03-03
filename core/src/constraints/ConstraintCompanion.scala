@@ -3,18 +3,16 @@ package scair.constraints
 import scair.ir.Attribute
 import scair.utils.OK
 
+import scala.collection.mutable
 import scala.quoted.*
 
 /** Compile-time context threaded through the macro's field iteration.
   * Constraint companions use this to track state across fields (e.g., Var
   * bindings).
   */
-class MacroConstraintContext(
-    val bindings: Map[String, Any] = Map.empty
-):
-
-  def updated(key: String, value: Any): MacroConstraintContext =
-    MacroConstraintContext(bindings + (key -> value))
+case class MacroConstraintContext(
+    val bindings: mutable.Map[String, Any] = mutable.Map.empty
+)
 
 /** Protocol for constraint-driven compile-time code generation. Each
   * constraint's companion object may extend this trait to provide its own
@@ -43,4 +41,4 @@ trait ConstraintCompanion[C <: Constraint]:
       constraintType: Type[C],
       attr: Expr[Attribute],
       ctx: MacroConstraintContext,
-  ): (Expr[OK[Unit]], MacroConstraintContext)
+  ): Expr[OK[Unit]]

@@ -275,7 +275,7 @@ def verifyMacro(
     .filter(_.variadicity == Variadicity.Single).collect(_ match
       case OperandDef(name, _, _, Some(ct)) => (name, ct))
 
-  var ctx = scair.constraints.MacroConstraintContext()
+  val ctx = scair.constraints.MacroConstraintContext()
   var checks = List.empty[Expr[OK[Unit]]]
 
   for (fieldName, constraintType) <- constrained do
@@ -284,9 +284,8 @@ def verifyMacro(
 
     loadConstraintCompanion(constraintType) match
       case Some(companion) =>
-        val (check, newCtx) =
+        val check =
           companion.macroVerify(constraintType, attrExpr, ctx)
-        ctx = newCtx
         checks = checks :+ check
 
   // Chain all checks with flatMap
