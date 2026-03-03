@@ -247,23 +247,22 @@ def loadConstraintCompanion[C <: Constraint](using
     constraintType: Type[C]
 ): Option[scair.constraints.ConstraintCompanion[C]] =
   import quotes.reflect.*
-  val typeRepr = TypeRepr.of(using constraintType)
-  val typeSymbol = typeRepr.typeSymbol
-  val companionSymbol = typeSymbol.companionModule
-  if companionSymbol == Symbol.noSymbol then return None
+  val companionSymbol = TypeRepr.of(using constraintType).typeSymbol
+    .companionModule
   if !(companionSymbol.termRef <:<
       TypeRepr
         .of[
           scair.constraints.ConstraintCompanion[?]
         ])
-  then return None
+  then
+    report.errorAndAbort(
+      s"Constraint ${Type.show(using constraintType)} does not have a valid companion object extending ConstraintCompanion."
+    )
   val fullName = companionSymbol.fullName
-  try
-    val cls = Thread.currentThread().getContextClassLoader
-      .loadClass(fullName + "$")
-    val instance = cls.getField("MODULE$").get(null)
-    Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]])
-  catch case _: Exception => None
+  val cls = Thread.currentThread().getContextClassLoader
+    .loadClass(fullName + "$")
+  val instance = cls.getField("MODULE$").get(null)
+  Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]])
 
 def verifyMacro(
     opDef: OperationDef,
