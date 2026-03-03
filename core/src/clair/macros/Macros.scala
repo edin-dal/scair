@@ -259,11 +259,10 @@ def verifyMacro(
     val mem = selectMember[Operand[Attribute]](adtOpExpr, fieldName)
     val attrExpr: Expr[Attribute] = '{ $mem.typ }
 
-    loadConstraintCompanion(using constraintType) match
-      case Some(companion) =>
-        val check =
-          companion.macroVerify(constraintType, attrExpr, ctx)
-        checks = checks :+ check
+    val check =
+      loadConstraintCompanion(using constraintType)
+        .macroVerify(constraintType, attrExpr, ctx)
+    checks = checks :+ check
 
   // Chain all checks with flatMap
   val chain = checks.foldLeft[Expr[OK[Unit]]](

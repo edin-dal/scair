@@ -7,7 +7,7 @@ import scala.quoted.*
 
 def loadConstraintCompanion[C <: Constraint: Type](using
     Quotes
-): Option[scair.constraints.ConstraintCompanion[C]] =
+): scair.constraints.ConstraintCompanion[C] =
   import quotes.reflect.*
   val companionSymbol = TypeRepr.of[C].typeSymbol.companionModule
   if !(companionSymbol.termRef <:<
@@ -23,7 +23,7 @@ def loadConstraintCompanion[C <: Constraint: Type](using
   val cls = Thread.currentThread().getContextClassLoader
     .loadClass(fullName + "$")
   val instance = cls.getField("MODULE$").get(null)
-  Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]])
+  instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]]
 
 // ░█████╗░ ░█████╗░ ███╗░░██╗ ░██████╗ ████████╗ ██████╗░ ░█████╗░ ██╗ ███╗░░██╗ ████████╗ ░██████╗
 // ██╔══██╗ ██╔══██╗ ████╗░██║ ██╔════╝ ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝
@@ -117,17 +117,10 @@ object AllOf extends ConstraintCompanion[AllOf[Constraint, Constraint]]:
       attr: Expr[Attribute],
       ctx: MacroConstraintContext,
   ): Expr[OK[Unit]] =
-    import quotes.reflect.*
     constraintType match
       case '[AllOf[a, b]] =>
-        val cA = loadConstraintCompanion[a].getOrElse(
-          report
-            .errorAndAbort(s"No companion found for constraint ${Type.show[a]}")
-        )
-        val cB = loadConstraintCompanion[b].getOrElse(
-          report
-            .errorAndAbort(s"No companion found for constraint ${Type.show[b]}")
-        )
+        val cA = loadConstraintCompanion[a]
+        val cB = loadConstraintCompanion[b]
         val rA = cA.macroVerify(constraintType = Type.of[a], attr, ctx)
         val rB = cB.macroVerify(constraintType = Type.of[b], attr, ctx)
         '{
