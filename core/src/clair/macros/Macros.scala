@@ -141,6 +141,7 @@ def regionsMacro(
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
 import scala.collection.mutable.Builder
+import scair.constraints.Constraint
 
 def propertiesMacro(
     opDef: OperationDef,
@@ -240,11 +241,11 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
-def loadConstraintCompanion(using
+def loadConstraintCompanion[C <: Constraint](using
     Quotes
 )(
-    constraintType: Type[?]
-): Option[scair.constraints.ConstraintCompanion] =
+    constraintType: Type[C]
+): Option[scair.constraints.ConstraintCompanion[C]] =
   import quotes.reflect.*
   val typeRepr = TypeRepr.of(using constraintType)
   val typeSymbol = typeRepr.typeSymbol
@@ -253,7 +254,7 @@ def loadConstraintCompanion(using
   if !(companionSymbol.termRef <:<
       TypeRepr
         .of[
-          scair.constraints.ConstraintCompanion
+          scair.constraints.ConstraintCompanion[?]
         ])
   then return None
   val fullName = companionSymbol.fullName
@@ -261,7 +262,7 @@ def loadConstraintCompanion(using
     val cls = Thread.currentThread().getContextClassLoader
       .loadClass(fullName + "$")
     val instance = cls.getField("MODULE$").get(null)
-    Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion])
+    Some(instance.asInstanceOf[scair.constraints.ConstraintCompanion[C]])
   catch case _: Exception => None
 
 def verifyMacro(
@@ -269,9 +270,8 @@ def verifyMacro(
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
 
-
   // Collect constrained single operands
-  val constrained: Seq[(String, Type[?])] = opDef.operands
+  val constrained: Seq[(String, Type[Constraint])] = opDef.operands
     .filter(_.variadicity == Variadicity.Single).collect(_ match
       case OperandDef(name, _, _, Some(ct)) => (name, ct))
 

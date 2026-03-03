@@ -24,7 +24,7 @@ class MacroConstraintContext(
   * Out-of-tree constraints: define a companion extending this trait in a module
   * compiled before the operations that use it.
   */
-trait ConstraintCompanion:
+trait ConstraintCompanion[C <: Constraint]:
 
   /** Generate verification code for this constraint at macro expansion time.
     *
@@ -40,7 +40,7 @@ trait ConstraintCompanion:
   def macroVerify(using
       Quotes
   )(
-      constraintType: Type[?],
+      constraintType: Type[C],
       attr: Expr[Attribute],
       ctx: MacroConstraintContext,
   ): (Expr[OK[Unit]], MacroConstraintContext)

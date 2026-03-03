@@ -28,14 +28,14 @@ import scala.quoted.Type
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
 
-def getTypeConstraint(tpe: Type[?])(using Quotes): Option[Type[?]] =
+def getTypeConstraint(tpe: Type[?])(using Quotes): Option[Type[Constraint]] =
   import quotes.reflect.*
   val op = TypeRepr.of[!>]
   TypeRepr.of(using tpe) match
     case AppliedType(op, List(attr, constraint)) =>
       constraint.asType match
         case '[type t <: Constraint; `t`] =>
-          Some(Type.of[t])
+          Some(Type.of[t]).asInstanceOf[Option[Type[Constraint]]]
     case _ =>
       None
 
