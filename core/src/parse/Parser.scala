@@ -375,6 +375,8 @@ final class Parser(
     // TODO: More functional and fastparse-compatible state handling!
     scopes.popAll
     scopes.push(new Scope())
+    attributeAliases.clear()
+    typeAliases.clear()
 
     // Reparse for more context on error.
     val traced = failure.trace()
