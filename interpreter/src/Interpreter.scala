@@ -133,10 +133,9 @@ class Interpreter(
   def register_implementations(): Unit =
     for dialect <- dialects do
       for impl <- dialect do impl_dict.put(impl.opType, impl)
-
-  // main interpretation function
+      
   def interpret_module(ctx: RuntimeCtx): Option[Any] =
-    for block <- module.body.blocks do interpret_block(block, ctx)
+    for op <- module.body.blocks.head.operations do interpret_op(op, ctx)
     ctx.result
 
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
