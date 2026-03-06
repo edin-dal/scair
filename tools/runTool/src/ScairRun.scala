@@ -92,9 +92,6 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
         case e: scair.utils.Err => throw new Exception(e.msg)
         case _                  => ()
 
-    // get main block of module
-    val module_block = module.body.blocks.head
-
     // construct interpreter and runtime context
     val interpreter =
       new Interpreter(
