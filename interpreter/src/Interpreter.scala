@@ -55,6 +55,7 @@ trait OpImpl[O <: Operation: ClassTag]:
           else // multiple distinct results
             for (res, value) <- op.results.zip(s) do
               ctx.scopedDict.update(res, value)
+        case Some(None) => () // no result to store
         case _ =>
           ctx.scopedDict.update(op.results.head, result)
 
@@ -135,7 +136,7 @@ class Interpreter(
 
   // keeping buffer function for extensibility
   def interpret(ctx: RuntimeCtx): Option[Any] =
-    for op <- module.body.blocks.head.operations do interpret_op(op, ctx)
+    for block <- module.body.blocks do interpret_block(block, ctx)
     ctx.result
 
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
