@@ -134,8 +134,8 @@ class Interpreter(
       for impl <- dialect do impl_dict.put(impl.opType, impl)
 
   // keeping buffer function for extensibility
-  def interpret(block: Block, ctx: RuntimeCtx): Option[Any] =
-    for op <- block.operations do interpret_op(op, ctx)
+  def interpret(ctx: RuntimeCtx): Option[Any] =
+    for op <- module.body.blocks.head.operations do interpret_op(op, ctx)
     ctx.result
 
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =

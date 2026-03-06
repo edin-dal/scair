@@ -106,7 +106,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
     // call interpret function and return result
     val output = interpreter
-      .interpret(module_block, interpreter.globalRuntimeCtx)
+      .interpret(interpreter.globalRuntimeCtx)
 
     verboseInterpreter match
       case true =>
