@@ -151,6 +151,10 @@ class Interpreter(
     for operation <- region.blocks.head.operations do
       interpret_op(operation, ctx)
 
+  def interpret_block(block: Block, ctx: RuntimeCtx): Unit =
+    for operation <- block.operations do
+      interpret_op(operation, ctx)
+
   def interpreter_print(value: Any): Unit =
     value match
       case 0 => println("Result: false")
