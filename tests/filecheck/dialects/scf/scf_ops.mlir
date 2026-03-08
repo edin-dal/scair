@@ -23,7 +23,7 @@
 
 %23, %24 = "scf.parallel"(%11, %12, %13, %21, %22) <{operandSegmentSizes = array<i32: 1, 1, 1, 2>}> ({
   "scf.reduce"(%21, %22) ({
-    %25 = "scf.reduce.return"() : () -> i1
+    scf.reduce.return %0 : i1
   }) : (i1, i1) -> ()
 }) : (index, index, index, i1, i1) -> (i1, i1)
 
@@ -36,7 +36,7 @@
 }, {
 }) : (index) -> (i1, i1)
 
-"scf.yield"(%27) : (i1) -> ()
+scf.yield %27 : i1
 
 
 // CHECK:       builtin.module {
@@ -57,7 +57,7 @@
 // CHECK-NEXT:    }) : (i1) -> (i1, i1)
 // CHECK-NEXT:    %20, %21 = "scf.parallel"(%11, %12, %13, %18, %19) <{operandSegmentSizes = array<i32: 1, 1, 1, 2>}> ({
 // CHECK-NEXT:      "scf.reduce"(%18, %19) ({
-// CHECK-NEXT:        %22 = "scf.reduce.return"() : () -> i1
+// CHECK-NEXT:        scf.reduce.return %0 : i1
 // CHECK-NEXT:      }) : (i1, i1) -> ()
 // CHECK-NEXT:    }) : (index, index, index, i1, i1) -> (i1, i1)
 // CHECK-NEXT:    %22, %23 = "scf.while"(%20) ({
@@ -67,5 +67,5 @@
 // CHECK-NEXT:    %24, %25 = "scf.index_switch"(%13) <{cases = array<i1: 0, 1>}> ({
 // CHECK-NEXT:    }, {
 // CHECK-NEXT:    }) : (index) -> (i1, i1)
-// CHECK-NEXT:    "scf.yield"(%24) : (i1) -> ()
+// CHECK-NEXT:    scf.yield %24 : i1
 // CHECK-NEXT:  }

@@ -51,6 +51,7 @@ case class Condition(
     args: Seq[Operand[Attribute]],
 ) extends DerivedOperation["scf.condition", Condition]
     with NoMemoryEffect
+    // with AssemblyFormat["`(` $condition `)` attr-dict ($args^ `:` type($args))?"]
     with IsTerminator derives DerivedOperationCompanion
 
 case class ExecuteRegionOp(
@@ -112,13 +113,15 @@ case class ParallelOp(
 case class ReduceOp(
     operandss: Seq[Operand[Attribute]],
     // TODO: variadic regions
-    reductions: Region,
+    reductions: Seq[Region],
 ) extends DerivedOperation["scf.reduce", ReduceOp]
+//   with AssemblyFormat["(`(` $operandss^ `:` type($operandss) `)`)? $reductions attr-dict"]
     with IsTerminator derives DerivedOperationCompanion
 
 case class ReduceReturnOp(
-    resultss: Result[Attribute]
+    result: Operand[Attribute]
 ) extends DerivedOperation["scf.reduce.return", ReduceReturnOp]
+    with AssemblyFormat["$result attr-dict `:` type($result)"]
     with IsTerminator
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -143,6 +146,7 @@ case class IndexSwitchOp(
 case class YieldOp(
     resultss: Seq[Operand[Attribute]]
 ) extends DerivedOperation["scf.yield", YieldOp]
+    with AssemblyFormat["attr-dict ($resultss^ `:` type($resultss))?"]
     with IsTerminator
     with NoMemoryEffect derives DerivedOperationCompanion
 

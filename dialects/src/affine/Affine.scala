@@ -116,6 +116,7 @@ case class Yield(
     arguments: Seq[Operand[Attribute]]
 ) extends DerivedOperation["affine.yield", Yield]
     with IsTerminator
+    with AssemblyFormat["attr-dict ($arguments^ `:` type($arguments))?"]
     with NoMemoryEffect derives DerivedOperationCompanion
 
 val AffineDialect = summonDialect[
