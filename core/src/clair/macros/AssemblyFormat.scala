@@ -131,7 +131,7 @@ case class AttrDictDirective() extends Directive:
     '{
       $p.printOptionalAttrDict(${
         selectMember[DictType[String, Attribute]](op, "attributes")
-      }.toMap)(using 0)
+      }.toMap)
     }
 
   def parse(p: Expr[Parser])(using
@@ -157,15 +157,13 @@ case class VariableDirective(
             '{ $p.print(${ selectMember[Operand[Attribute]](op, n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })(
-                using 0
-              )
+              $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })
             }
           case Variadicity.Optional =>
             '{
               $p.printList(${
                 selectMember[Option[Operand[Attribute]]](op, n)
-              })(using 0)
+              })
             }
       case ResultDef(name = n, variadicity = v) =>
         v match
@@ -173,15 +171,11 @@ case class VariableDirective(
             '{ $p.print(${ selectMember[Result[Attribute]](op, n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember[Seq[Result[Attribute]]](op, n) })(
-                using 0
-              )
+              $p.printList(${ selectMember[Seq[Result[Attribute]]](op, n) })
             }
           case Variadicity.Optional =>
             '{
-              $p.printList(${ selectMember[Option[Result[Attribute]]](op, n) })(
-                using 0
-              )
+              $p.printList(${ selectMember[Option[Result[Attribute]]](op, n) })
             }
       case OpPropertyDef(name = n, variadicity = v) =>
         v match
@@ -200,7 +194,7 @@ case class VariableDirective(
             '{ (indent: Int) ?=> $p.print(${ selectMember[Region](op, n) }) }
           case Variadicity.Variadic =>
             '{
-              $p.printList(${ selectMember[Seq[Region]](op, n) })(using 0)
+              $p.printList(${ selectMember[Seq[Region]](op, n) })
             }
 
     Expr.block(List(space), printVar)
@@ -284,9 +278,7 @@ case class TypeDirective(
             variadicity = Variadicity.Variadic,
           ) =>
         '{
-          $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))(using
-            0
-          )
+          $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))
         }
       case MayVariadicOpInputDef(
             name = n,

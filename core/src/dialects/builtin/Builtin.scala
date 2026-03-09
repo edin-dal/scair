@@ -130,7 +130,7 @@ case class IntegerAttr(
     case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
     case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")
     case (_, IntegerType(IntData(64), Signless))         => p.print(value)
-    case (_, _) => p.print(value, " : ", typ)(using 0)
+    case (_, _) => p.print(value, " : ", typ)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    FLOAT DATA    ||
@@ -150,7 +150,7 @@ final case class FloatAttr(value: FloatData, typ: FloatType)
     derives DerivedAttributeCompanion:
 
   override def customPrint(p: Printer) =
-    p.print(value, " : ", typ)(using 0)
+    p.print(value, " : ", typ)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   INDEX TYPE     ||
@@ -166,7 +166,7 @@ final case class ComplexType(
 ) extends DerivedAttribute["builtin.complex", ComplexType]
     derives DerivedAttributeCompanion:
 
-  override def customPrint(p: Printer) = p.print("complex<", tpe, ">")(using 0)
+  override def customPrint(p: Printer) = p.print("complex<", tpe, ">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 || ARRAY ATTRIBUTE  ||
@@ -215,7 +215,7 @@ final case class StringData(stringLiteral: String)
           case _    => c.toString()
       ),
       "\"",
-    )(using 0)
+    )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   SHAPED TYPE    ||
@@ -258,7 +258,7 @@ case class RankedTensorType(
       p.print("x")
     )
     p.print(elementType)
-    if encoding.isDefined then p.print(", ", encoding)(using indentLevel = 0)
+    if encoding.isDefined then p.print(", ", encoding)
     p.print(">")
 
 final case class UnrankedTensorType(elementType: Attribute)
@@ -266,7 +266,7 @@ final case class UnrankedTensorType(elementType: Attribute)
     with TensorType derives DerivedAttributeCompanion:
 
   override def customPrint(p: Printer) =
-    p.print("tensor<*x", elementType, ">")(using indentLevel = 0)
+    p.print("tensor<*x", elementType, ">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   MEMREF TYPE    ||
@@ -301,14 +301,14 @@ final case class RankedMemrefType(
       p.print("x")
     )
 
-    p.print(elementType, ">")(using indentLevel = 0)
+    p.print(elementType, ">")
 
 final case class UnrankedMemrefType(elementType: Attribute)
     extends DerivedAttribute["builtin.unranked_memref", UnrankedMemrefType]
     with MemrefType derives DerivedAttributeCompanion:
 
   override def customPrint(p: Printer) =
-    p.print("tensor<*x", elementType, ">")(using indentLevel = 0)
+    p.print("tensor<*x", elementType, ">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   VECTOR TYPE    ||
@@ -331,12 +331,11 @@ final case class VectorType(
     p.printListF(
       shape zip scalableDims,
       (size, scalable) =>
-        if scalable.data != 0 then
-          p.print("[", size, "]")(using indentLevel = 0)
+        if scalable.data != 0 then p.print("[", size, "]")
         else p.print(size),
       sep = "x",
     )
-    p.print("x", elementType, ">")(using indentLevel = 0)
+    p.print("x", elementType, ">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 || SYMBOL REF ATTR  ||
@@ -355,7 +354,7 @@ final case class SymbolRefAttr(
   override def customPrint(p: Printer) =
     p.printListF(
       rootRef +: nestedRefs,
-      ref => p.print("@", ref.data)(using indentLevel = 0),
+      ref => p.print("@", ref.data),
       sep = "::",
     )
 
@@ -380,7 +379,7 @@ final case class DenseArrayAttr(
     else OK()
 
   override def customPrint(p: Printer) =
-    p.print("array<", typ)(using indentLevel = 0)
+    p.print("array<", typ)
     if data.nonEmpty then p.print(": ")
     p.printListF(
       data,
@@ -491,7 +490,7 @@ final case class AffineMapAttr(affineMap: AffineMap)
     with AliasedAttribute("map") derives TransparentData:
 
   override def customPrint(p: Printer) =
-    p.print("affine_map<", affineMap.toString, ">")(using indentLevel = 0)
+    p.print("affine_map<", affineMap.toString, ">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||  AFFINE SET ATTR ||
@@ -503,7 +502,7 @@ final case class AffineSetAttr(affineSet: AffineSet)
     with AliasedAttribute("set") derives TransparentData:
 
   override def customPrint(p: Printer) =
-    p.print("affine_set<", affineSet.toString, ">")(using indentLevel = 0)
+    p.print("affine_set<", affineSet.toString, ">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   OPERATIONS    ||
@@ -532,7 +531,7 @@ case class ModuleOp(
 
   override def customPrint(
       p: Printer
-  )(using indentLevel: Int) =
+  ) =
     p.print("builtin.module ", regions(0))
 
 case class UnrealizedConversionCastOp(
