@@ -64,7 +64,7 @@ trait Directive:
     */
   def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
-  )(using Quotes): Expr[Unit]
+  )(using Quotes): Expr[(Int ?=> Unit) | Unit]
 
   /** Generate a specialized parser for the directive's subset of an operation's
     * definition.
@@ -76,13 +76,6 @@ trait Directive:
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Any]]
-
-  // Did the directive parse something?
-  def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
-    import quotes.reflect.*
-    report.errorAndAbort(
-      s"Directive $this is not supposed to be used as an optional group's leading element, or is not implemented yet."
-    )
 
   def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
     import quotes.reflect.*
@@ -105,7 +98,7 @@ case class LiteralDirective(
     else if lastWasPunctuation then !">)}],".contains(literal.head)
     else !"<>(){}[],".contains(literal.head)
 
-  def print(op: Expr[?], p: Expr[Printer])(using
+  override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] =
     val toPrint =
@@ -131,7 +124,7 @@ case class LiteralDirective(
   */
 case class AttrDictDirective() extends Directive:
 
-  def print(op: Expr[?], p: Expr[Printer])(using
+  override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] =
     state.lastWasPunctuation = false
@@ -153,9 +146,9 @@ case class VariableDirective(
     construct: OpInputDef
 ) extends Directive:
 
-  def print(op: Expr[?], p: Expr[Printer])(using
+  override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
-  )(using Quotes): Expr[Unit] =
+  )(using Quotes): Expr[(Int ?=> Unit) | Unit] =
     val space = printSpace(p, state)
     val printVar = construct match
       case OperandDef(name = n, variadicity = v) =>
@@ -201,9 +194,20 @@ case class VariableDirective(
               ${ selectMember[Option[Attribute]](op, n) }.foreach($p.print)
             }
 
+      case RegionDef(name = n, variadicity = v) =>
+        v match
+          case Variadicity.Single =>
+            '{ (indent: Int) ?=> $p.print(${ selectMember[Region](op, n) }) }
+          case Variadicity.Variadic =>
+            '{
+              $p.printList(${ selectMember[Seq[Region]](op, n) })(using 0)
+            }
+
     Expr.block(List(space), printVar)
 
-  def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
+  override def parse(p: Expr[Parser])(using
+      ctx: Expr[P[Any]]
+  )(using quotes: Quotes) =
     construct match
       case OperandDef(name = n, variadicity = v) =>
         v match
@@ -225,9 +229,24 @@ case class VariableDirective(
               given Parser = $p
               attributeP.?
             }
+      case RegionDef(name, variadicity) =>
+        variadicity match
+          case Variadicity.Single =>
+            '{
+              given P[?] = $ctx
+              given Parser = $p
+              regionP(Seq())(using $ctx)
+            }
+          case Variadicity.Variadic =>
+            '{
+              given P[?] = $ctx
+              given Parser = $p
+              regionP(Seq())(using $ctx).rep(sep = ",")
+            }
 
-  override def parsed(p: Expr[?])(using Quotes) =
+  override def isPresent(op: Expr[?])(using Quotes) =
     import quotes.reflect.*
+    val p = selectMember[Any](op, construct.name)
     construct match
       case MayVariadicOpInputDef(
             name = n,
@@ -245,17 +264,13 @@ case class VariableDirective(
               .name}`."
         )
 
-  override def isPresent(op: Expr[?])(using Quotes) =
-    construct match
-      case OpInputDef(name = n) => parsed(selectMember[Any](op, n))
-
 /** Directive for types of individual operands or results.
   */
 case class TypeDirective(
     construct: OperandDef | ResultDef
 ) extends Directive:
 
-  def print(op: Expr[?], p: Expr[Printer])(using
+  override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] =
 
@@ -284,7 +299,9 @@ case class TypeDirective(
 
     Expr.block(List(space), printType)
 
-  def parse(p: Expr[Parser])(using ctx: Expr[P[Any]])(using quotes: Quotes) =
+  override def parse(p: Expr[Parser])(using
+      ctx: Expr[P[Any]]
+  )(using quotes: Quotes) =
     construct match
       case MayVariadicOpInputDef(name = n, variadicity = v) =>
         v match
@@ -299,10 +316,6 @@ case class TypeDirective(
               typeP.?
             }
 
-  // Ew; but works
-  override def parsed(p: Expr[?])(using Quotes): Expr[Boolean] =
-    VariableDirective(construct).parsed(p)
-
   override def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
     VariableDirective(construct).isPresent(op)
 
@@ -316,21 +329,17 @@ case class OptionalGroupDirective(
   )(using ctx: Expr[P[Any]])(using quotes: Quotes): Expr[P[Tuple]] =
     '{
       given P[?] = $ctx
-      ${ directives.head.parse(p) }.flatMap(v =>
-        if ${ directives.head.parsed('v) } then
-          ${ AssemblyFormatDirective(directives.tail).parseTuple(p) }
-            .map(v *: _)
-        else
-          Pass(${
-            Expr
-              .ofTupleFromSeq(
-                AssemblyFormatDirective(directives).parsedDirectives.map(empty)
-              )
-          })
-      )
+      (&(${ directives.head.parse(p) }) ~~ ${
+        AssemblyFormatDirective(directives).parseTuple(p)
+      }) | Pass(${
+        Expr
+          .ofTupleFromSeq(
+            AssemblyFormatDirective(directives).parsedDirectives.map(empty)
+          )
+      })
     }
 
-  def print(op: Expr[?], p: Expr[Printer])(using
+  override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes) =
     '{
