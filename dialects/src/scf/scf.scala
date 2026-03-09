@@ -51,7 +51,6 @@ case class Condition(
     args: Seq[Operand[Attribute]],
 ) extends DerivedOperation["scf.condition", Condition]
     with NoMemoryEffect
-    // with AssemblyFormat["`(` $condition `)` attr-dict ($args^ `:` type($args))?"]
     with IsTerminator derives DerivedOperationCompanion
 
 case class ExecuteRegionOp(
