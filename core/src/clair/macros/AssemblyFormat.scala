@@ -64,7 +64,7 @@ trait Directive:
     */
   def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
-  )(using Quotes): Expr[(Int ?=> Unit) | Unit]
+  )(using Quotes): Expr[Unit]
 
   /** Generate a specialized parser for the directive's subset of an operation's
     * definition.
@@ -148,7 +148,7 @@ case class VariableDirective(
 
   override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
-  )(using Quotes): Expr[(Int ?=> Unit) | Unit] =
+  )(using Quotes): Expr[Unit] =
     val space = printSpace(p, state)
     val printVar = construct match
       case OperandDef(name = n, variadicity = v) =>
@@ -191,7 +191,7 @@ case class VariableDirective(
       case RegionDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
-            '{ (indent: Int) ?=> $p.print(${ selectMember[Region](op, n) }) }
+            '{ $p.print(${ selectMember[Region](op, n) }) }
           case Variadicity.Variadic =>
             '{
               $p.printList(${ selectMember[Seq[Region]](op, n) })
