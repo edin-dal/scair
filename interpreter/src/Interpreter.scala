@@ -150,6 +150,8 @@ class Interpreter(
     for operation <- block.operations do
       interpret_op(operation, ctx)
 
+  // helper function to print values in interpreter
+  // useful if booleans are represented as 0 and 1
   def interpreter_print(value: Any): Unit =
     value match
       case 0 => println("Result: false")

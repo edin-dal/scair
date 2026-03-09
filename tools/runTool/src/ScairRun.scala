@@ -38,7 +38,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   def interpreterDialects = scair.interpreter.allInterpreterDialects
 
-  def verboseInterpreter = false
+  def verboseInterpreter = true
 
   def printScopes = false
 
@@ -116,7 +116,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case true =>
         output match
           case Seq() => println("Result: ()")
-          case Seq(value) => interpreter.interpreter_print(value)
+          case Seq(value) => println(s"Result: $value")
           case multiple =>
             print("Result: (")
             multiple.foreach(res => print(s"$res, "))
