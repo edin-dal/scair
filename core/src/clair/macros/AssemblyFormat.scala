@@ -192,6 +192,10 @@ case class VariableDirective(
         v match
           case Variadicity.Single =>
             '{ $p.print(${ selectMember[Region](op, n) }) }
+          case Variadicity.Optional =>
+            '{
+              ${ selectMember[Option[Region]](op, n) }.foreach($p.print)
+            }
           case Variadicity.Variadic =>
             '{
               $p.printList(${ selectMember[Seq[Region]](op, n) })
@@ -230,6 +234,12 @@ case class VariableDirective(
               given P[?] = $ctx
               given Parser = $p
               regionP(Seq())(using $ctx)
+            }
+          case Variadicity.Optional =>
+            '{
+              given P[?] = $ctx
+              given Parser = $p
+              regionP(Seq()).?
             }
           case Variadicity.Variadic =>
             '{
