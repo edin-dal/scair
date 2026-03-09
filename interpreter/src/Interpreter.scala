@@ -26,7 +26,7 @@ trait OpImpl[O <: Operation: ClassTag]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Option[Any]
+  ): Seq[Any]
 
   // helper function to get operand values as TypeMap sequence
   // operands must be same type
@@ -42,7 +42,7 @@ trait OpImpl[O <: Operation: ClassTag]:
     var args = lookup_operands(op.operands, interpreter, ctx)
 
     // call compute to get result
-    val result = compute(op, interpreter, ctx, args).getOrElse(None)
+    val result = compute(op, interpreter, ctx, args)
 
     // if operation has results, store them in context
     if op.results.nonEmpty then
@@ -62,14 +62,14 @@ trait OpImpl[O <: Operation: ClassTag]:
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
     val scopedDict: ScopedDict,
-    var result: Option[Any] = None,
+    var result: Seq[Any] = Seq(),
 ):
 
   // creates new runtime ctx with new scope but shared symbol table
   def push_scope(name: String): RuntimeCtx =
     RuntimeCtx(
       ScopedDict(Some(this.scopedDict), mutable.Map(), name),
-      None,
+      Seq(),
     )
 
 //
@@ -89,7 +89,7 @@ class Interpreter(
 ):
 
   val globalRuntimeCtx =
-    RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), None)
+    RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), Seq())
 
   initialize_interpreter()
 
@@ -134,7 +134,7 @@ class Interpreter(
     for dialect <- dialects do
       for impl <- dialect do impl_dict.put(impl.opType, impl)
       
-  def interpret_module(ctx: RuntimeCtx): Option[Any] =
+  def interpret_module(ctx: RuntimeCtx): Seq[Any] =
     for op <- module.body.blocks.head.operations do interpret_op(op, ctx)
     ctx.result
 

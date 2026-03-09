@@ -40,6 +40,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   def verboseInterpreter = false
 
+  def printScopes = false
+
   override def dialects = scair.dialects.allDialects
 
   override def parseArgs(args: Array[String]): ScairRunArgs =
@@ -105,11 +107,18 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val output = interpreter
       .interpret_module(interpreter.globalRuntimeCtx)
 
-    verboseInterpreter match
+    printScopes match
       case true =>
         interpreter.scopes.foreach(_.prettyPrint())
       case false => ()
 
+    verboseInterpreter match
+      case true =>
+        output match 
+          case Some(value) => interpreter.interpreter_print(value)
+          case None        => println("Result: ()")
+      case false => ()
+    
     output match
       case Some(value) => interpreter.interpreter_print(value)
       case None        => println("Result: ()")
