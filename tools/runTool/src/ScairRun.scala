@@ -86,7 +86,6 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
 
-    // casted as moduleOp
     val module = parse(parsedArgs)(input).head.get.asInstanceOf[ModuleOp]
 
     if !parsedArgs.skipVerify then
@@ -103,9 +102,12 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
         interpreterDialects,
       )
 
-    // call interpret function and return result
-    val output = interpreter
-      .interpret_module(interpreter.globalRuntimeCtx)
+    // TODO: Allow specifying the entry point symbol from args
+    val entry_op = interpreter.symbolTable.get("main").getOrElse(
+      throw new Exception("No main function found in module")
+    )
+
+    val output = interpreter.call_op(entry_op, interpreter.globalRuntimeCtx)
 
     printScopes match
       case true =>
@@ -116,7 +118,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case true =>
         output match
           case Seq() => println("Result: ()")
-          case Seq(value) => println(s"Result: $value")
+          case Seq(value) => print("Result: ")
+            interpreter.interpreter_print(value)
           case multiple =>
             print("Result: (")
             multiple.foreach(res => print(s"$res, "))

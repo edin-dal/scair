@@ -70,12 +70,12 @@ object run_function extends OpImpl[func.Func]:
         _operands = Seq(),
         _results = op.function_type.outputs.map(res => Result(res)),
       )
-      // should it be external call like xDSL?
       run_call.run(new_call, interpreter, ctx)
-      // get return value from main call and add to context
-      val return_results = new_call._results.map(res => interpreter.lookup_op(res, ctx))
-      ctx.result = return_results
-    Seq()
+      
+      if new_call._results.nonEmpty then
+        new_call._results.map(res => interpreter.lookup_op(res, ctx))
+      else Seq()
+    else Seq()
 
 val InterpreterFuncDialect: InterpreterDialect =
   Seq(

@@ -128,10 +128,6 @@ class Interpreter(
   def register_implementations(): Unit =
     for dialect <- dialects do
       for impl <- dialect do impl_dict.put(impl.opType, impl)
-      
-  def interpret_module(ctx: RuntimeCtx): Seq[Any] =
-    for op <- module.body.blocks.head.operations do interpret_op(op, ctx)
-    ctx.result
 
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
     val impl = impl_dict.get(op.getClass)
@@ -150,10 +146,25 @@ class Interpreter(
     for operation <- block.operations do
       interpret_op(operation, ctx)
 
+  def call_op(op: Operation, ctx: RuntimeCtx): Seq[Any] =
+    val impl = impl_dict.get(op.getClass)
+    impl match
+      case Some(impl) =>
+        impl.asInstanceOf[OpImpl[Operation]].compute(
+          op,
+          this,
+          ctx,
+          Seq(),
+        )
+      case None =>
+        throw new Exception(
+          s"Unsupported operation when interpreting: ${op.getClass}"
+        )
+
   // helper function to print values in interpreter
   // useful if booleans are represented as 0 and 1
   def interpreter_print(value: Any): Unit =
     value match
-      case 0 => println("Result: false")
-      case 1 => println("Result: true")
-      case _ => println(s"Result: $value")
+      case 0 => print("false\n")
+      case 1 => print("true\n")
+      case _ => print(s"$value\n")
