@@ -103,9 +103,10 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       )
 
     // TODO: Allow specifying the function for entry point and default to main if not specified
-    val entry_op = interpreter.symbolTable.get("main").getOrElse(
-      throw new Exception("No main function found in module")
-    )
+    val entry_op = interpreter.symbolTable.get("main")
+      .getOrElse(
+        throw new Exception("No main function found in module")
+      )
 
     val output = interpreter.call_op(entry_op, interpreter.globalRuntimeCtx)
 
@@ -117,8 +118,9 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     verboseInterpreter match
       case true =>
         output match
-          case Seq() => println("Result: ()")
-          case Seq(value) => print("Result: ")
+          case Seq()      => println("Result: ()")
+          case Seq(value) =>
+            print("Result: ")
             interpreter.interpreter_print(value)
           case multiple =>
             print("Result: (")

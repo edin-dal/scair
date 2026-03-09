@@ -47,7 +47,7 @@ trait OpImpl[O <: Operation: ClassTag]:
     // if operation has results, store them in context
     if op.results.nonEmpty then
       result match
-        case Seq() => () // no result to store
+        case Seq()       => () // no result to store
         case Seq(single) =>
           ctx.scopedDict.update(op.results.head, single) // store single result
         case multiple =>
@@ -143,8 +143,7 @@ class Interpreter(
       interpret_op(operation, ctx)
 
   def interpret_block(block: Block, ctx: RuntimeCtx): Unit =
-    for operation <- block.operations do
-      interpret_op(operation, ctx)
+    for operation <- block.operations do interpret_op(operation, ctx)
 
   def call_op(op: Operation, ctx: RuntimeCtx): Seq[Any] =
     val impl = impl_dict.get(op.getClass)

@@ -15,7 +15,8 @@ object run_return extends OpImpl[func.Return]:
     args match
       case Seq(v) => ctx.result = Seq(v)
       case Seq()  => ctx.result = Seq()
-      case _ => throw new Exception("Expected args to be a Seq of values, got: " + args)
+      case _      =>
+        throw new Exception("Expected args to be a Seq of values, got: " + args)
     Seq()
 
 object run_call extends OpImpl[func.Call]:
@@ -71,7 +72,7 @@ object run_function extends OpImpl[func.Func]:
         _results = op.function_type.outputs.map(res => Result(res)),
       )
       run_call.run(new_call, interpreter, ctx)
-      
+
       if new_call._results.nonEmpty then
         new_call._results.map(res => interpreter.lookup_op(res, ctx))
       else Seq()
