@@ -114,14 +114,14 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
     verboseInterpreter match
       case true =>
-        output match 
-          case Some(value) => 
-          case None        => println("Result: ()")
+        output match
+          case Seq() => println("Result: ()")
+          case Seq(value) => interpreter.interpreter_print(value)
+          case multiple =>
+            print("Result: (")
+            multiple.foreach(res => print(s"$res, "))
+            print(")")
       case false => ()
-    
-    output match
-      case Some(value) => interpreter.interpreter_print(value)
-      case None        => println("Result: ()")
 
 object ScairRun extends ScairRunBase:
   def toolName = "scair-run"

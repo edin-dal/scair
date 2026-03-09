@@ -47,17 +47,12 @@ trait OpImpl[O <: Operation: ClassTag]:
     // if operation has results, store them in context
     if op.results.nonEmpty then
       result match
-        // multiple results
-        case s: Seq[Any] =>
-          if op.results.length != s.length
-          then // must be an list-like expression
-            ctx.scopedDict.update(op.results.head, s)
-          else // multiple distinct results
-            for (res, value) <- op.results.zip(s) do
-              ctx.scopedDict.update(res, value)
-        case Some(None) => () // no result to store
-        case _ =>
-          ctx.scopedDict.update(op.results.head, result)
+        case Seq() => () // no result to store
+        case Seq(single) =>
+          ctx.scopedDict.update(op.results.head, single) // store single result
+        case multiple =>
+          for (res, value) <- op.results.zip(multiple) do
+            ctx.scopedDict.update(res, value) // store multiple results
 
 // interpreter context class stores variables, function definitions and the current result
 class RuntimeCtx(
