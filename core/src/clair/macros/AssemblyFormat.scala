@@ -530,6 +530,21 @@ case class AssemblyFormatDirective(
       )
     }
 
+    val regionsArg = Expr
+      .ofList(
+        parsedDirectives.zipWithIndex
+          .collect { case (VariableDirective(RegionDef(name = name)), i) =>
+            '{ $parsed(${ Expr(i) }) }.asExprOf[Any]
+          }
+      )
+    val flatRegionsArg = '{
+      $regionsArg.flatMap(op =>
+        op match
+          case op: Region      => Seq(op)
+          case op: Seq[Region] => op
+      )
+    }
+
     val attrDictIndex = parsedDirectives.zipWithIndex.find(_._1 match
       case _: AttrDictDirective => true
       case _                    => false) match
@@ -566,6 +581,7 @@ case class AssemblyFormatDirective(
         resultsTypes = $flatResultTypes,
         attributes = $attrDict,
         properties = $propertiesDict.asInstanceOf[Map[String, Attribute]],
+        regions = $flatRegionsArg,
       )(using $ctx)
     }
 

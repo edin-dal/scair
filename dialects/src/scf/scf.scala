@@ -115,7 +115,9 @@ case class ReduceOp(
     // TODO: variadic regions
     reductions: Seq[Region],
 ) extends DerivedOperation["scf.reduce", ReduceOp]
-//   with AssemblyFormat["(`(` $operandss^ `:` type($operandss) `)`)? $reductions attr-dict"]
+    with AssemblyFormat[
+      "(`(` $operandss^ `:` type($operandss) `)`)? $reductions attr-dict"
+    ]
     with IsTerminator derives DerivedOperationCompanion
 
 case class ReduceReturnOp(
