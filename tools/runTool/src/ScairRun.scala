@@ -115,7 +115,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     verboseInterpreter match
       case true =>
         output match 
-          case Some(value) => interpreter.interpreter_print(value)
+          case Some(value) => 
           case None        => println("Result: ()")
       case false => ()
     
