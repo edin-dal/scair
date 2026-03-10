@@ -102,7 +102,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
         interpreterDialects,
       )
 
-    // TODO: Allow specifying the function for entry point and default to main if not specified
+    // TODO: Allow specifying the function for entry point and default to main if not
     val entry_op = interpreter.symbolTable.get("main")
       .getOrElse(
         throw new Exception("No main function found in module")
