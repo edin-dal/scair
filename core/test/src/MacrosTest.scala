@@ -1,6 +1,6 @@
 import scair.ir.*
 import scair.dialects.builtin.*
-import scair.clair.macros.*
+import scair.clair.*
 import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*

@@ -2,11 +2,10 @@ package scair
 
 import org.scalatest.*
 import org.scalatest.flatspec.*
-import scair.clair.codegen.*
-import scair.clair.macros.*
+import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
-import scair.core.constraints.{*, given}
+import scair.constraints.{*, given}
 import scair.utils.*
 
 val f32 = Float32Type()

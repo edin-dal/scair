@@ -5,7 +5,7 @@ import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.MLContext
-import scair.clair.macros.DerivedOperationCompanion
+import scair.clair.DerivedOperationCompanion
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
@@ -375,6 +375,8 @@ final class Parser(
     // TODO: More functional and fastparse-compatible state handling!
     scopes.popAll
     scopes.push(new Scope())
+    attributeAliases.clear()
+    typeAliases.clear()
 
     // Reparse for more context on error.
     val traced = failure.trace()

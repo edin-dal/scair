@@ -1,7 +1,6 @@
 package scair.interpreter
 
 import scair.dialects.builtin.*
-import scair.dialects.func
 import scair.ir.*
 
 import scala.collection.mutable
@@ -27,7 +26,7 @@ trait OpImpl[O <: Operation: ClassTag]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Any
+  ): Option[Any]
 
   // helper function to get operand values as TypeMap sequence
   // operands must be same type
@@ -43,15 +42,19 @@ trait OpImpl[O <: Operation: ClassTag]:
     var args = lookup_operands(op.operands, interpreter, ctx)
 
     // call compute to get result
-    val result = compute(op, interpreter, ctx, args)
+    val result = compute(op, interpreter, ctx, args).getOrElse(None)
 
     // if operation has results, store them in context
     if op.results.nonEmpty then
       result match
         // multiple results
-        case r: Seq[Any] =>
-          for (res, value) <- op.results.zip(r) do
-            ctx.scopedDict.update(res, value)
+        case s: Seq[Any] =>
+          if op.results.length != s.length
+          then // must be an list-like expression
+            ctx.scopedDict.update(op.results.head, s)
+          else // multiple distinct results
+            for (res, value) <- op.results.zip(s) do
+              ctx.scopedDict.update(res, value)
         case _ =>
           ctx.scopedDict.update(op.results.head, result)
 
@@ -62,9 +65,9 @@ class RuntimeCtx(
 ):
 
   // creates new runtime ctx with new scope but shared symbol table
-  def push_scope(): RuntimeCtx =
+  def push_scope(name: String): RuntimeCtx =
     RuntimeCtx(
-      ScopedDict(Some(this.scopedDict), mutable.Map()),
+      ScopedDict(Some(this.scopedDict), mutable.Map(), name),
       None,
     )
 
@@ -80,8 +83,12 @@ class RuntimeCtx(
 class Interpreter(
     val module: ModuleOp,
     val symbolTable: mutable.Map[String, Operation] = mutable.Map(),
+    val scopes: mutable.ArrayBuffer[ScopedDict] = mutable.ArrayBuffer(),
     val dialects: Seq[InterpreterDialect],
 ):
+
+  val globalRuntimeCtx =
+    RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), None)
 
   initialize_interpreter()
 
@@ -92,22 +99,35 @@ class Interpreter(
   def get_symbols_from_module(): Unit =
     for op <- module.body.blocks.head.operations do
       op match
-        case func_op: func.Func =>
-          // add function to symbol table if not main
-          symbolTable.put(func_op.sym_name.stringLiteral, func_op)
-        case _ => () // ignore other ops, global vars not yet supported prob...
+        case sym_and_table: (Symbol & SymbolTable) =>
+          symbolTable.put(sym_and_table.sym_name.stringLiteral, sym_and_table)
+          get_symbols_from_symbol_table(sym_and_table)
+        case sym_table: SymbolTable =>
+          get_symbols_from_symbol_table(sym_table)
+        case sym_op: Symbol =>
+          symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
+        case _ => ()
+
+  def get_symbols_from_symbol_table(sym_table: SymbolTable): Unit =
+    for op <- sym_table.regions.head.blocks.head.operations do
+      op match
+        case sym_op: Symbol =>
+          symbolTable.put(sym_op.sym_name.stringLiteral, sym_op)
+        case _ => ()
 
   // lookup function for context variables
   // does not work for Bool-like vals due to inability to prove disjoint for TypeMap
   def lookup_op[T <: Value[Attribute]](value: T, ctx: RuntimeCtx): Any =
     ctx.scopedDict.get(value) match
       case Some(v) => v
-      case _ => throw new Exception(s"Variable $value not found in context")
+      case _       =>
+        throw new Exception(s"Variable $value not found in context: $ctx")
 
   def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
     ctx.scopedDict.get(value) match
       case Some(v: Int) => v
-      case _ => throw new Exception(s"Bool-like $value not found in context")
+      case _            =>
+        throw new Exception(s"Bool-like $value not found in context: $ctx")
 
   def register_implementations(): Unit =
     for dialect <- dialects do
@@ -118,16 +138,21 @@ class Interpreter(
     for op <- block.operations do interpret_op(op, ctx)
     ctx.result
 
-  // note: results are put within implementations, may change later
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
     val impl = impl_dict.get(op.getClass)
     impl match
       case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
       case None       =>
-        throw new Exception("Unsupported operation when interpreting")
+        throw new Exception(
+          s"Unsupported operation when interpreting: ${op.getClass}"
+        )
+
+  def interpret_region(region: Region, ctx: RuntimeCtx): Unit =
+    for operation <- region.blocks.head.operations do
+      interpret_op(operation, ctx)
 
   def interpreter_print(value: Any): Unit =
     value match
-      case 0 => println("false")
-      case 1 => println("true")
-      case _ => println(value)
+      case 0 => println("Result: false")
+      case 1 => println("Result: true")
+      case _ => println(s"Result: $value")

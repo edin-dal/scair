@@ -5,7 +5,6 @@ import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
 import scair.*
 import scair.Printer
-import scair.clair.codegen.*
 import scair.ir.*
 import scair.parse.*
 

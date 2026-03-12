@@ -1,7 +1,6 @@
 package scair.dialects.llvm
 
-import scair.clair.codegen.*
-import scair.clair.macros.*
+import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 

@@ -3,10 +3,9 @@ package scair.clair.macros
 import fastparse.*
 import scair.*
 import scair.Printer
-import scair.clair.codegen.*
-import scair.clair.mirrored.*
+import scair.clair.*
 import scair.dialects.builtin.*
-import scair.enums.macros.*
+import scair.enums.*
 import scair.ir.*
 import scair.parse.*
 import scair.transformations.CanonicalizationPatterns
@@ -251,13 +250,13 @@ def verifyMacro(
     .collect(_ match
       case OperandDef(name, _, _, Some(constraint)) =>
         val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.core.constraints.ConstraintContext) =>
+        '{ (ctx: scair.constraints.ConstraintContext) =>
           $constraint.verify($mem.typ)(using ctx)
         })
 
   '{
-    given ctx: scair.core.constraints.ConstraintContext =
-      scair.core.constraints.ConstraintContext()
+    given ctx: scair.constraints.ConstraintContext =
+      scair.constraints.ConstraintContext()
     ${
       val chain = a.foldLeft[Expr[OK[Unit]]](
         '{ OK() }

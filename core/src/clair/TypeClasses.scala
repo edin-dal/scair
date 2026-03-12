@@ -1,7 +1,9 @@
-package scair.clair.macros
+package scair.clair
 
 import fastparse.P
 import scair.Printer
+import scair.clair.macros.deriveOperationCompanion
+import scair.clair.macros.derivedAttributeCompanion
 import scair.ir.*
 import scair.parse.Parser
 import scair.utils.*

@@ -3,8 +3,7 @@ package scair.dialects.func
 import fastparse.*
 import scair.*
 import scair.Printer
-import scair.clair.codegen.*
-import scair.clair.macros.*
+import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
@@ -70,7 +69,9 @@ case class Func(
     sym_visibility: Option[StringData],
     body: Region,
 ) extends DerivedOperation["func.func", Func]
-    with IsolatedFromAbove derives DerivedOperationCompanion:
+    with IsolatedFromAbove
+    with Symbol
+    with SymbolTable derives DerivedOperationCompanion:
 
   override def customPrint(printer: Printer)(using indentLevel: Int) =
     val lprinter = printer.copy()

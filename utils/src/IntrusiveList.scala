@@ -55,12 +55,14 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
       case _ =>
         current.next match
           case Some(n) => applyRec(idx - 1, n)
-          case None    => throw new IndexOutOfBoundsException("Out of bounds")
+          case None    => throw new IndexOutOfBoundsException()
 
   override def apply(i: Int): A =
-    _head match
-      case Some(h) => applyRec(i, h)
-      case None    => throw new IndexOutOfBoundsException("Empty")
+    if i < 0 then throw new IndexOutOfBoundsException()
+    else
+      _head match
+        case Some(h) => applyRec(i, h)
+        case None    => throw new IndexOutOfBoundsException()
 
   override def clear(): Unit =
     _head = None
@@ -72,12 +74,14 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
     v
 
   override def subtractOne(x: A): this.type =
-    x.prev match
-      case Some(p) => p.next = x.next
-      case None    => _head = x.next
-    x.next match
-      case Some(n) => n.prev = x.prev
-      case None    => _last = x.prev
+    val prev = x.prev
+    val next = x.next
+    prev match
+      case Some(p) => p.next = next
+      case None    => _head = next
+    next match
+      case Some(n) => n.prev = prev
+      case None    => _last = prev
     this
 
   def update(c: A, e: A): Unit =
@@ -124,25 +128,27 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
     foreachRec(_head)(f)
 
   override def addOne(elem: A): this.type =
+    elem.next = None
+    elem.prev = _last
     _last match
       case None =>
-        _head = Some(elem)
-        _last = _head
-      case Some(last) =>
-        last.next = Some(elem)
-        elem.prev = Some(last)
         _last = Some(elem)
+        _head = _last
+      case Some(last) =>
+        _last = Some(elem)
+        last.next = _last
     this
 
   override def prepend(elem: A): this.type =
+    elem.prev = None
+    elem.next = _head
     _head match
       case None =>
         _head = Some(elem)
         _last = _head
       case Some(head) =>
-        head.prev = Some(elem)
-        elem.next = Some(head)
         _head = Some(elem)
+        head.prev = _head
     this
 
   override def insert(idx: Int, elem: A): Unit =

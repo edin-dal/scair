@@ -1,4 +1,4 @@
-package scair.enums.macros
+package scair.enums
 
 import scair.dialects.builtin.IntData
 import scair.dialects.builtin.IntegerAttr

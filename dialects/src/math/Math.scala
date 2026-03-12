@@ -2,10 +2,10 @@ package scair.dialects.math
 
 import fastparse.*
 import scair.*
-import scair.clair.macros.*
-import scair.clair.macros.DerivedOperation
-import scair.clair.macros.DerivedOperationCompanion
-import scair.clair.macros.summonDialect
+import scair.clair.*
+import scair.clair.DerivedOperation
+import scair.clair.DerivedOperationCompanion
+import scair.clair.summonDialect
 import scair.dialects.arith.FastMathFlags
 import scair.dialects.arith.FastMathFlagsAttr
 import scair.dialects.builtin.*

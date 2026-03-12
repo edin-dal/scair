@@ -1,4 +1,4 @@
-package scair.dialects.affine
+package scair.dialects.builtin
 
 // ██████╗░ ░█████╗░ ░██████╗ ██╗ ░█████╗░
 // ██╔══██╗ ██╔══██╗ ██╔════╝ ██║ ██╔══██╗

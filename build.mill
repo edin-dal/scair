@@ -124,7 +124,7 @@ trait GraalScairModule extends ScairSettings with NativeImageModule:
   override def nativeImageOptions =
     Seq("--no-fallback", "--initialize-at-build-time", "-Ob")
 
-trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule
+trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule with SonatypeCentralPublishModule
     with PlatformScalaModule:
   override def enableBsp = false
   override def scalaNativeVersion = "0.5.10"
@@ -152,7 +152,7 @@ trait ScairModule extends JvmScairModule with GraalScairModule:
   override def sources: Simple[Seq[PathRef]] =
     super.sources() :+ PathRef(moduleDir / "build")
 
-object `package` extends ScairSettings with ScoverageReport with UnidocModule:
+object `package` extends ScairSettings with ScoverageReport with UnidocModule with SonatypeCentralPublishModule:
 
   override def artifactName = "scair-all"
 
@@ -196,7 +196,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule:
         Jvm.withClassLoader(classPath = core.runClasspath().map(_.path)) {
           classLoader =>
             val printerMethod = classLoader
-              .loadClass("scair.core.irdl_printer.IRDLPrinter")
+              .loadClass("scair.irdl.IRDLPrinter")
               .getMethod(
                 "IRDLFileToScalaFile",
                 classOf[String],

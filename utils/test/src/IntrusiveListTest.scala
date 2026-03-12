@@ -21,9 +21,43 @@ class IntrusiveListTest extends AnyFlatSpec with Matchers:
     val list = IntrusiveList[I]().prepend(I(3)).prepend(I(2)).prepend(I(1))
     list shouldEqual IntrusiveList[I](I(1), I(2), I(3))
 
+  it should "allow prepending a removed middle element" in:
+    val e1 = I(1); val e2 = I(2); val e3 = I(3)
+    val list = IntrusiveList[I](e1, e2, e3)
+    list.remove(1) // remove e2
+    list shouldEqual Seq(I(1), I(3))
+    list.prepend(e2) // re-add e2 at beginning
+    list shouldEqual Seq(I(2), I(1), I(3))
+    list.size shouldEqual 3
+
+  it should "allow prepending a removed last element" in:
+    val e1 = I(1); val e2 = I(2); val e3 = I(3)
+    val list = IntrusiveList[I](e1, e2, e3)
+    list.remove(2)
+    list.prepend(e3)
+    list shouldEqual Seq(I(3), I(1), I(2))
+    list.size shouldEqual 3
+
   "addOne" should "add elements and maintain correct order" in:
     val list = IntrusiveList[I]().addOne(I(1)).addOne(I(2)).addOne(I(3))
     list shouldEqual IntrusiveList[I](I(1), I(2), I(3))
+
+  it should "allow appending a removed middle element" in:
+    val e1 = I(1); val e2 = I(2); val e3 = I(3)
+    val list = IntrusiveList[I](e1, e2, e3)
+    list.remove(1) // remove e2
+    list shouldEqual Seq(I(1), I(3))
+    list.addOne(e2) // re-add e2 at end
+    list shouldEqual Seq(I(1), I(3), I(2))
+    list.size shouldEqual 3
+
+  it should "allow appending a removed first element" in:
+    val e1 = I(1); val e2 = I(2); val e3 = I(3)
+    val list = IntrusiveList[I](e1, e2, e3)
+    list.remove(0)
+    list.addOne(e1)
+    list shouldEqual Seq(I(2), I(3), I(1))
+    list.size shouldEqual 3
 
   "remove" should "remove first element correctly" in:
     val list = IntrusiveList[I](I(1), I(2), I(3))
@@ -91,7 +125,7 @@ class IntrusiveListTest extends AnyFlatSpec with Matchers:
     list.contains(I(4)) shouldBe false
     list.contains(I(5)) shouldBe true
 
-  it should "clear all elements" in:
+  "clear" should "clear all elements" in:
     val list = IntrusiveList[I](I(1), I(2), I(3), I(4), I(5))
     list.clear()
     list shouldEqual Seq()
@@ -109,6 +143,18 @@ class IntrusiveListTest extends AnyFlatSpec with Matchers:
   it should "access last element" in:
     val list = IntrusiveList[I](I(1), I(2), I(3))
     list(2) shouldEqual I(3)
+
+  it should "throw on out of bounds on negative index" in:
+    val list = IntrusiveList[I](I(1), I(2))
+    intercept[IndexOutOfBoundsException](list(-1))
+
+  it should "throw on out of bounds empty access" in:
+    val list = IntrusiveList[I]()
+    intercept[IndexOutOfBoundsException](list(0))
+
+  it should "throw on out of bounds non-empty access" in:
+    val list = IntrusiveList[I](I(1), I(2))
+    intercept[IndexOutOfBoundsException](list(3))
 
   "update" should "update first element" in:
     val list = IntrusiveList[I](I(0), I(0), I(0))
@@ -159,6 +205,16 @@ class IntrusiveListTest extends AnyFlatSpec with Matchers:
     val list = IntrusiveList[I](I(1), I(2))
     list.insertAll(2, Seq(I(3), I(4), I(5)))
     list shouldEqual Seq(I(1), I(2), I(3), I(4), I(5))
+
+  "Multiple operations" should "allow removing and re-adding only element" in:
+    val (e1, e2, e3) = (I(1), I(2), I(3))
+    val list = IntrusiveList[I](e1, e2, e3)
+    list.clear()
+    list.addOne(e2)
+    list shouldEqual Seq(I(2))
+    list.size shouldEqual 1
+    e2.prev shouldEqual None
+    e2.next shouldEqual None
 
   "patchInPlace" should "patch at the beginning" in:
     val list = IntrusiveList[I](I(0), I(0), I(0), I(4), I(5))

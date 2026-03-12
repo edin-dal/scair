@@ -4,7 +4,6 @@ import scair.MLContext
 import scair.dialects.builtin.StringData
 import scair.ir.*
 import scair.transformations.*
-import scair.transformations.patterns.*
 
 val AddDummyAttributeToDict = pattern {
   case x: UnregisteredOperation =>

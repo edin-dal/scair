@@ -1,4 +1,4 @@
-package scair.core.irdl_printer
+package scair.irdl
 
 import fastparse.Parsed
 import scair.MLContext
@@ -115,9 +115,9 @@ object IRDLPrinter:
     p.print("package scair.dialects.")
     p.println(dialectName)
     p.println()
-    p.println("import scair.dialects.builtin._")
-    p.println("import scair.ir._")
-    p.println("import scair.clair.macros._")
+    p.println("import scair.dialects.builtin.*")
+    p.println("import scair.ir.*")
+    p.println("import scair.clair.*")
     p.println()
     dialect.body.blocks.head.operations.foreach {
       case op: Operation   => printOperation(op)

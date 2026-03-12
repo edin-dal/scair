@@ -10,4 +10,4 @@ builtin.module {
   }
 }
 
-// CHECK: 42
+// CHECK: Result: 42

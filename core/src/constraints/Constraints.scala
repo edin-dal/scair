@@ -1,4 +1,4 @@
-package scair.core.constraints
+package scair.constraints
 
 import scair.ir.*
 import scair.utils.*

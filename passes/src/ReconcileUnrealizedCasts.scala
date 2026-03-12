@@ -4,7 +4,6 @@ import scair.MLContext
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
-import scair.transformations.patterns.*
 
 import scala.annotation.tailrec
 

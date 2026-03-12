@@ -1,9 +1,8 @@
-package scair.clair.mirrored
+package scair.clair.macros
 
 import fastparse.*
-import scair.clair.codegen.*
-import scair.clair.macros.*
-import scair.core.constraints.*
+import scair.clair.*
+import scair.constraints.*
 import scair.ir.*
 import scair.parse.Parser
 

@@ -1,4 +1,4 @@
-package scair.clair.macros
+package scair.clair
 
 import scair.Printer
 import scair.ir.*

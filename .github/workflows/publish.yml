@@ -21,4 +21,4 @@ jobs:
             MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
             MILL_SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
             MILL_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          run: ./mill publishLocal + __:ScairModule.publishSonatypeCentral
+          run: ./mill publishSonatypeCentral + __:ScairModule.publishSonatypeCentral + __:ScairModule.nativeOpt.publishSonatypeCentral
