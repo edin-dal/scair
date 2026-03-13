@@ -141,6 +141,8 @@ def regionsMacro(
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
 import scala.collection.mutable.Builder
+import scair.constraints.Constraint
+import scair.constraints.loadConstraintCompanion
 
 def propertiesMacro(
     opDef: OperationDef,
@@ -245,25 +247,29 @@ def verifyMacro(
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
 
-  val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
-    .filter(_.variadicity == Variadicity.Single)
-    .collect(_ match
-      case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.constraints.ConstraintContext) =>
-          $constraint.verify($mem.typ)(using ctx)
-        })
+  // Collect constrained single operands
+  val constrained: Seq[(String, Type[Constraint])] = opDef.operands
+    .filter(_.variadicity == Variadicity.Single).collect(_ match
+      case OperandDef(name, _, _, Some(ct)) => (name, ct))
 
-  '{
-    given ctx: scair.constraints.ConstraintContext =
-      scair.constraints.ConstraintContext()
-    ${
-      val chain = a.foldLeft[Expr[OK[Unit]]](
-        '{ OK() }
-      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
-      '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
-    }
-  }
+  val ctx = scair.constraints.MacroConstraintContext()
+  var checks = List.empty[Expr[OK[Unit]]]
+
+  for (fieldName, constraintType) <- constrained do
+    val mem = selectMember[Operand[Attribute]](adtOpExpr, fieldName)
+    val attrExpr: Expr[Attribute] = '{ $mem.typ }
+
+    val check =
+      loadConstraintCompanion(using constraintType)
+        .macroVerify(constraintType, attrExpr, ctx)
+    checks = checks :+ check
+
+  // Chain all checks with flatMap
+  val chain = checks.foldLeft[Expr[OK[Unit]]](
+    '{ OK() }
+  )((acc, check) => '{ $acc.flatMap(_ => $check) })
+
+  '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
