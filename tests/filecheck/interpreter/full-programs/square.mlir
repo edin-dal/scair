@@ -2,7 +2,7 @@
 
 builtin.module {
   func.func @square(%x: i64) -> (i64) {
-    %result = "arith.muli"(%x, %x) : (i64, i64) -> i64
+    %result = "arith.muli"(%x, %x) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
     func.return %result : i64
   }
   

@@ -23,9 +23,8 @@ import scair.transformations.pattern
 
 val AddIfold = pattern {
   case AddI(
-        Owner(Constant(c0: IntegerAttr, _)),
-        Owner(Constant(c1: IntegerAttr, _)),
-        _,
+        lhs = Owner(Constant(c0: IntegerAttr, _)),
+        rhs = Owner(Constant(c1: IntegerAttr, _)),
       ) =>
     Constant(c0 + c1, Result(c0.typ))
 }

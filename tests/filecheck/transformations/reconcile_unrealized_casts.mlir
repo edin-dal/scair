@@ -39,7 +39,7 @@ builtin.module {
       %2 = "builtin.unrealized_conversion_cast"(%1) : (i1) -> i64
       %3 = "builtin.unrealized_conversion_cast" (%1) : (i1) -> i32
       %4 = "builtin.unrealized_conversion_cast"(%3) : (i32) -> i64
-      %5 = "arith.addi"(%2, %4) : (i64, i64) -> i64
+      %5 = "arith.addi"(%2, %4) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
       func.return %5 : i64
   }
   func.func @unusedBifurcation(%arg0: i64) -> i64 {
@@ -47,7 +47,7 @@ builtin.module {
       %1 = "builtin.unrealized_conversion_cast"(%0) : (i32) -> i1
       %2 = "builtin.unrealized_conversion_cast"(%1) : (i1) -> i64
       %3 = "builtin.unrealized_conversion_cast"(%0) : (i32) -> i64
-      %4 = "arith.addi"(%arg0, %3) : (i64, i64) -> i64
+      %4 = "arith.addi"(%arg0, %3) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
       func.return %4 : i64
   }
   func.func @liveSingleCast(%arg0: i64) -> i32 {
@@ -64,7 +64,7 @@ builtin.module {
       %1 = "builtin.unrealized_conversion_cast"(%0) : (i32) -> i64
       %2 = "builtin.unrealized_conversion_cast"(%0) : (i32) -> i1
       %3 = "arith.extsi"(%2) : (i1) -> i64
-      %4 = "arith.addi"(%1, %3) : (i64, i64) -> i64
+      %4 = "arith.addi"(%1, %3) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
       func.return %4 : i64
   }
   func.func @deadNToOneCast(%arg0: index, %arg1: index) {
@@ -136,11 +136,11 @@ builtin.module {
 // CHECK-NEXT:      func.return %0 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @bifurcation(%0: i64) -> i64 {
-// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) : (i64, i64) -> i64
+// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
 // CHECK-NEXT:      func.return %1 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @unusedBifurcation(%0: i64) -> i64 {
-// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) : (i64, i64) -> i64
+// CHECK-NEXT:      %1 = "arith.addi"(%0, %0) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
 // CHECK-NEXT:      func.return %1 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @liveSingleCast(%0: i64) -> i32 {
@@ -156,7 +156,7 @@ builtin.module {
 // CHECK-NEXT:      %1 = "builtin.unrealized_conversion_cast"(%0) : (i64) -> i32
 // CHECK-NEXT:      %2 = "builtin.unrealized_conversion_cast"(%1) : (i32) -> i1
 // CHECK-NEXT:      %3 = "arith.extsi"(%2) : (i1) -> i64
-// CHECK-NEXT:      %4 = "arith.addi"(%0, %3) : (i64, i64) -> i64
+// CHECK-NEXT:      %4 = "arith.addi"(%0, %3) <{overflowFlags = #arith.overflow<none>}> : (i64, i64) -> i64
 // CHECK-NEXT:      func.return %4 : i64
 // CHECK-NEXT:    }
 // CHECK-NEXT:    func.func @deadNToOneCast(%0: index, %1: index) {
