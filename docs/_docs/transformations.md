@@ -3,8 +3,8 @@ title: "Transformations and Pass"
 ---
 
 [NoMemoryEffect]: scair.ir.NoMemoryEffect
-[pattern]: scair.transformations.patterns.pattern
-[Owner]: scair.transformations.patterns.Owner
+[pattern]: scair.transformations.pattern
+[Owner]: scair.transformations.Owner
 [AddI]: scair.dialects.arith.AddI
 [Constant]: scair.dialects.arith.Constant
 [IntegerAttr]: scair.dialects.builtin.IntegerAttr
@@ -118,9 +118,8 @@ import scair.ir.*
 //}
 val AddIFold = pattern {
 	case AddI(
-		Owner(Constant(c0: IntegerAttr, _)),
-		Owner(Constant(c1: IntegerAttr, _)),
-		_
+		lhs = Owner(Constant(c0: IntegerAttr, _)),
+		rhs = Owner(Constant(c1: IntegerAttr, _)),
 	) =>
 		Constant(c0 + c1, Result(c0.typ))
 }
