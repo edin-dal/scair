@@ -30,11 +30,11 @@ memref.dealloc %m4 : memref<?x5x?xf32>
 
 // CHECK: builtin.module {
 // CHECK-NEXT:    %0, %1 = "test.op"() : () -> (index, index)
-// CHECK-NEXT:    %2 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<f32>
-// CHECK-NEXT:    %3 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<1xf32>
-// CHECK-NEXT:    %4 = "memref.alloc"(%0) <{alignment = 0, operandSegmentSizes = array<i32: 1, 0>}> : (index) -> memref<?xf32>
-// CHECK-NEXT:    %5 = "memref.alloc"(%1) <{alignment = 0, operandSegmentSizes = array<i32: 1, 0>}> : (index) -> memref<3x?x5xf32>
-// CHECK-NEXT:    %6 = "memref.alloc"(%0, %1) <{alignment = 0, operandSegmentSizes = array<i32: 2, 0>}> : (index, index) -> memref<?x5x?xf32>
+// CHECK-NEXT:    %2 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<f32>
+// CHECK-NEXT:    %3 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<1xf32>
+// CHECK-NEXT:    %4 = "memref.alloc"(%0) <{operandSegmentSizes = array<i32: 1, 0>}> : (index) -> memref<?xf32>
+// CHECK-NEXT:    %5 = "memref.alloc"(%1) <{operandSegmentSizes = array<i32: 1, 0>}> : (index) -> memref<3x?x5xf32>
+// CHECK-NEXT:    %6 = "memref.alloc"(%0, %1) <{operandSegmentSizes = array<i32: 2, 0>}> : (index, index) -> memref<?x5x?xf32>
 // CHECK-NEXT:    %7 = "memref.load"(%2) : (memref<f32>) -> f32
 // CHECK-NEXT:    "memref.store"(%7, %2) : (f32, memref<f32>) -> ()
 // CHECK-NEXT:    %8 = "memref.load"(%3, %0) : (memref<1xf32>, index) -> f32
