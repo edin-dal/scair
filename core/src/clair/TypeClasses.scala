@@ -60,7 +60,7 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def results(adtOp: T): Seq[Result[Attribute]]
   def regions(adtOp: T): Seq[Region]
   def properties(adtOp: T): Map[String, Attribute]
-  def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit
+  def customPrint(adtOp: T, p: Printer): Unit
   def constraintVerify(adtOp: T): OK[Operation]
 
   case class UnstructuredOp(

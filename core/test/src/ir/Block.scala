@@ -70,7 +70,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
     val out = StringWriter()
     printer = new Printer(true, p = PrintWriter(out))
     // Run the pqrser on the input and check
-    printer.print(block)(using 0)
+    printer.print(block)
     out.toString() shouldEqual ir
 
   }

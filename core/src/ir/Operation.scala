@@ -89,7 +89,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   var containerBlock: Option[Block] = None
   def traitVerify(): OK[Operation] = OK(this)
 
-  def customPrint(p: Printer)(using indentLevel: Int) =
+  def customPrint(p: Printer) =
     p.printGenericMLIROperation(this)
 
   def customVerify(): OK[Operation] = OK(this)
@@ -131,7 +131,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       case Some(x) =>
         throw new Exception(
           s"""Can't attach a region already attached to an operation:
-              ${Printer().print(region)(using 0)}"""
+              ${Printer().print(region)}"""
         )
       case None =>
         region.isAncestor(this) match
