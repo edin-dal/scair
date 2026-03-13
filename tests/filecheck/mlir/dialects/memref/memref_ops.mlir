@@ -1,11 +1,11 @@
 // RUN: scair-opt %s | scair-opt | filecheck %s
 
 %0, %1 = "test.op"() : () -> (index, index)
-%m0 = "memref.alloc"() <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 0, 0>}> : () -> memref<f32>
-%m1 = "memref.alloc"() <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 0, 0>}> : () -> memref<1xf32>
-%m2 = "memref.alloc"(%0) <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 1, 0>}> : (index) -> memref<?xf32>
-%m3 = "memref.alloc"(%1) <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 1, 0>}> : (index) -> memref<3x?x5xf32>
-%m4 = "memref.alloc"(%0, %1) <{"alignment" = 0 : i64, "operandSegmentSizes" = array<i32: 2, 0>}> : (index, index) -> memref<?x5x?xf32>
+%m0 = "memref.alloc"() <{"operandSegmentSizes" = array<i32: 0, 0>}> : () -> memref<f32>
+%m1 = "memref.alloc"() <{"operandSegmentSizes" = array<i32: 0, 0>}> : () -> memref<1xf32>
+%m2 = "memref.alloc"(%0) <{"operandSegmentSizes" = array<i32: 1, 0>}> : (index) -> memref<?xf32>
+%m3 = "memref.alloc"(%1) <{"operandSegmentSizes" = array<i32: 1, 0>}> : (index) -> memref<3x?x5xf32>
+%m4 = "memref.alloc"(%0, %1) <{"operandSegmentSizes" = array<i32: 2, 0>}> : (index, index) -> memref<?x5x?xf32>
 
 %2 = "memref.load"(%m0) : (memref<f32>) -> f32
 "memref.store"(%2, %m0) : (f32, memref<f32>) -> ()

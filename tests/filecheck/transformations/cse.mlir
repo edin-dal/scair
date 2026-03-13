@@ -189,11 +189,9 @@ func.func @up_propagate_for() -> i32 {
 /// properly handled.
 func.func @nested_isolated() -> i32 {
   %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-  builtin.module {
-    func.func @nested_func() {
-      %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
-      "foo.yield"(%1) : (i32) -> ()
-    }
+  func.func @nested_func() {
+    %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
+    "foo.yield"(%1) : (i32) -> ()
   }
   "foo.region"() ({
     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
