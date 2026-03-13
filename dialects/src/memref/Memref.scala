@@ -17,7 +17,7 @@ case class Alloc(
     dynamicSizes: Seq[Operand[IndexType]],
     symbolOperands: Seq[Operand[IndexType]],
     memref: Result[MemrefType],
-    alignment: IntegerAttr,
+    alignment: Option[IntegerAttr] = None,
 ) extends DerivedOperation["memref.alloc", Alloc]
     derives DerivedOperationCompanion
 

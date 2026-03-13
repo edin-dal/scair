@@ -94,13 +94,13 @@ func.func @different_attributes(%0: index, %1: index) -> (i1, i1, i1) {
 // CHECK-NEXT:    }
 
 func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
-  %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
-  %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+  %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+  %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
   func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
 }
 // CHECK-NEXT:    func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
-// CHECK-NEXT:      %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
-// CHECK-NEXT:      %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+// CHECK-NEXT:      %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+// CHECK-NEXT:      %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
 // CHECK-NEXT:      func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
 // CHECK-NEXT:    }
 
