@@ -193,24 +193,25 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] =
         stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 
-/** For a case class T, returns one Option[Expr[?]] per field (in Mirror order),
-  * None if the field has no default.
+/** For a case class T, returns a dictionary mapping field names to expressions
+  * representing the default value of that field, if defined.
   */
 def defaultExprs[T: Type](using Quotes): Map[String, Expr[Any]] =
   import quotes.reflect.*
 
   val sym = TypeRepr.of[T].typeSymbol
-  val comp = sym.companionModule // the companion *term* symbol
+  val companion = sym.companionModule
   val fields = sym.caseFields
 
   fields.zipWithIndex.flatMap { (f, i) =>
     val fieldName = f.name
+    // Scala generates those methods on the companion object of case classes for default parameters values.
     val methodName =
-      s"$$lessinit$$greater$$default$$${i + 1}" // apply$default$1, apply$default$2, …
-    comp.declaredMethod(methodName) match
+      s"$$lessinit$$greater$$default$$${i + 1}"
+    companion.declaredMethod(methodName) match
       case List(m) =>
         // Select the method off the companion object reference
-        Some(fieldName -> Ref(comp).select(m).asExpr)
+        Some(fieldName -> Ref(companion).select(m).asExpr)
       case _ =>
         None
 
