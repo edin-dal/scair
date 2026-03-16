@@ -28,7 +28,7 @@ case class Add(
     lhs: Operand[ComplexType],
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["complex.add", Add]
     with NoMemoryEffect
     // TODO: Should probably handle fastmath flags!
@@ -62,7 +62,7 @@ case class Div(
     lhs: Operand[ComplexType],
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["complex.div", Div]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -76,7 +76,7 @@ case class Mul(
     lhs: Operand[ComplexType],
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["complex.mul", Mul]
     with NoMemoryEffect
     with Commutative derives DerivedOperationCompanion
@@ -84,7 +84,7 @@ case class Mul(
 case class Neg(
     complex: Operand[ComplexType],
     result: Result[ComplexType],
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["complex.neg", Neg]
     with NoMemoryEffect derives DerivedOperationCompanion
 
@@ -98,7 +98,7 @@ case class Sub(
     lhs: Operand[ComplexType],
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["complex.sub", Sub]
     with NoMemoryEffect derives DerivedOperationCompanion
 
