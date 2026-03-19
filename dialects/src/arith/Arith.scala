@@ -339,15 +339,20 @@ case class AddF(
     with NoMemoryEffect
     with Commutative derives DerivedOperationCompanion
 
-case class AddI(
-    val lhs: Operand[AnyIntegerType],
-    val rhs: Operand[AnyIntegerType],
-    val result: Result[AnyIntegerType],
+object AddI:
+
+  given [T <: AnyIntegerType] => DerivedOperationCompanion[AddI[T]] =
+    DerivedOperationCompanion.derived
+
+case class AddI[T <: AnyIntegerType](
+    val lhs: Operand[T],
+    val rhs: Operand[T],
+    val result: Result[T],
     val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
-) extends DerivedOperation["arith.addi", AddI]
+) extends DerivedOperation["arith.addi", AddI[T]]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative derives DerivedOperationCompanion
+    with Commutative
 
 case class AddUIExtendedOp(
     val lhs: Operand[AnyIntegerType],
@@ -783,7 +788,7 @@ val ArithDialect =
     (FastMathFlagsAttr, OverflowFlagsAttr),
     (
         AddF,
-        AddI,
+        AddI[?],
         AddUIExtendedOp,
         AndI,
         BitCast,
