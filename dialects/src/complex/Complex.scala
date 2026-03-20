@@ -134,7 +134,7 @@ case class ComplexAttr(
       imaginary,
       "> : ",
       tpe,
-    )(using 0)
+    )
 
 val Complex = summonDialect[Tuple1[
   ComplexAttr
