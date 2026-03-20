@@ -209,16 +209,13 @@ def customPrintMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
     p: Expr[Printer],
-    indentLevel: Expr[Int],
 )(using Quotes): Expr[Unit] =
   opDef.assemblyFormat match
     case Some(format) =>
       format.print(adtOpExpr, p)
     case None =>
       '{
-        $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])(
-          using $indentLevel
-        )
+        $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])
       }
 
 def parseMacro[O <: Operation: Type](
@@ -276,17 +273,23 @@ def verifyMacro(
 def generateCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
     propName: String,
+    defaultValue: Option[Expr[Any]],
 )(using Quotes): Expr[A] =
   val typeName = Type.of[A].toString()
-  '{
-    val value: Option[Attribute] = $list.get(${ Expr(propName) })
-    value match
-      case None =>
+  val ifAbsent = defaultValue match
+    case Some(default) => default.asExprOf[A]
+    case None          =>
+      '{
         throw new IllegalArgumentException(
           s"Missing required property \"${${ Expr(propName) }}\" of type ${${
               Expr(typeName)
             }}"
         )
+      }
+  '{
+    val value: Option[Attribute] = $list.get(${ Expr(propName) })
+    value match
+      case None          => $ifAbsent
       case Some(prop: A) => prop
       case Some(_)       =>
         throw new IllegalArgumentException(
@@ -355,11 +358,11 @@ def getConstructName[Def <: OpInputDef: Type as d](using Quotes) =
   */
 def getConstructConstraint(_def: OpInputDef)(using Quotes) =
   _def match
-    case OperandDef(name, tpe, variadicity, _) => tpe
-    case ResultDef(name, tpe, variadicity, _)  => tpe
-    case RegionDef(name, variadicity)          => Type.of[Attribute]
-    case SuccessorDef(name, variadicity)       => Type.of[Attribute]
-    case OpPropertyDef(name, tpe, _, _)        => tpe
+    case OperandDef(tpe = tpe)    => tpe
+    case ResultDef(tpe = tpe)     => tpe
+    case _: RegionDef             => Type.of[Attribute]
+    case _: SuccessorDef          => Type.of[Attribute]
+    case OpPropertyDef(tpe = tpe) => tpe
 
 /** Helper to get the variadicity of a construct definition's construct.
   */
@@ -690,45 +693,47 @@ def tryConstruct[T: Type](
         successors,
         properties,
       ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-      opDef.properties.map { case OpPropertyDef(name, tpe, variadicity, _) =>
-        val namedArg = tpe match
-          case '[type t <: scala.reflect.Enum; `t`] =>
-            val property = variadicity match
-              case Variadicity.Optional =>
-                enumFromPropertyOption[t](
-                  properties,
-                  name,
-                )
-              case Variadicity.Single =>
-                enumFromProperty[t](
-                  properties,
-                  name,
-                )
-              case Variadicity.Variadic =>
-                report
-                  .errorAndAbort(
-                    s"Properties cannot be variadic in an ADT."
+      opDef.properties.map {
+        case OpPropertyDef(name, tpe, variadicity, _, defaultValue) =>
+          val namedArg = tpe match
+            case '[type t <: scala.reflect.Enum; `t`] =>
+              val property = variadicity match
+                case Variadicity.Optional =>
+                  enumFromPropertyOption[t](
+                    properties,
+                    name,
                   )
-            NamedArg(name, property.asTerm)
-          case '[type t <: Attribute; `t`] =>
-            val property = variadicity match
-              case Variadicity.Optional =>
-                generateOptionalCheckedPropertyArgument[t](
-                  properties,
-                  name,
-                )
-              case Variadicity.Single =>
-                generateCheckedPropertyArgument[t](
-                  properties,
-                  name,
-                )
-              case Variadicity.Variadic =>
-                report
-                  .errorAndAbort(
-                    s"Properties cannot be variadic in an ADT."
+                case Variadicity.Single =>
+                  enumFromProperty[t](
+                    properties,
+                    name,
                   )
-            NamedArg(name, property.asTerm)
-        namedArg
+                case Variadicity.Variadic =>
+                  report
+                    .errorAndAbort(
+                      s"Properties cannot be variadic in an ADT."
+                    )
+              NamedArg(name, property.asTerm)
+            case '[type t <: Attribute; `t`] =>
+              val property = variadicity match
+                case Variadicity.Optional =>
+                  generateOptionalCheckedPropertyArgument[t](
+                    properties,
+                    name,
+                  )
+                case Variadicity.Single =>
+                  generateCheckedPropertyArgument[t](
+                    properties,
+                    name,
+                    defaultValue,
+                  )
+                case Variadicity.Variadic =>
+                  report
+                    .errorAndAbort(
+                      s"Properties cannot be variadic in an ADT."
+                    )
+              NamedArg(name, property.asTerm)
+          namedArg
       }
   // Select the primary constructor of the ADT
   val constructorSelect =
@@ -905,8 +910,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       def name: String = ${ Expr(opDef.name) }
 
-      def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
-        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+      def customPrint(adtOp: T, p: Printer): Unit =
+        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }) }
 
       def constraintVerify(adtOp: T): OK[Operation] =
         ${

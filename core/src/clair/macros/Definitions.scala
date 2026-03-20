@@ -83,6 +83,7 @@ case class OpPropertyDef(
     override val variadicity: Variadicity.Single.type |
       Variadicity.Optional.type = Variadicity.Single,
     val constraint: Option[Expr[ConstraintImpl[?]]] = None,
+    val defaultValue: Option[Expr[Any]],
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 

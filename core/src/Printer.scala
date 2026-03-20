@@ -3,6 +3,7 @@ package scair
 import scair.ir.*
 
 import java.io.*
+import scala.annotation.targetName
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashSet
 
@@ -23,6 +24,7 @@ case class Printer(
     val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
     private val p: PrintWriter = new PrintWriter(System.out),
     private var aliasesMap: Map[Attribute, String] = Map.empty,
+    private var indentLevel: Int = 0,
 ):
 
   /*≡==--==≡≡≡==--=≡≡*\
@@ -61,6 +63,15 @@ case class Printer(
   ||    ATTRIBUTE PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
+  def indented(toPrint: => Unit): Unit =
+    indentLevel = indentLevel + 1
+    toPrint
+    indentLevel = indentLevel - 1
+
+  def withIndent(toPrint: => Unit): Unit =
+    for _ <- 0 until indentLevel do print(indent)
+    toPrint
+
   def print(attribute: Attribute): Unit =
     aliasesMap.get(attribute) match
       case Some(alias) => print(alias)
@@ -86,9 +97,8 @@ case class Printer(
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
-  inline def print(inline thing: Printable)(using
-      indentLevel: Int
-  ): Unit = thing match
+  @targetName("printDispatch")
+  inline def print(inline thing: Printable): Unit = thing match
     case s: String    => print(s)
     case v: Value[?]  => print(v)
     case b: Block     => print(b)
@@ -96,8 +106,9 @@ case class Printer(
     case o: Operation => print(o)
     case a: Attribute => print(a)
 
-  inline def print(inline things: (Printable | IterableOnce[Printable])*)(using
-      indentLevel: Int
+  @targetName("printVariadicHelper")
+  inline def print(
+      inline things: (Printable | IterableOnce[Printable])*
   ): Unit =
     things
       .foreach(_ match
@@ -110,8 +121,6 @@ case class Printer(
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = "",
-  )(using
-      indentLevel: Int = 0
   ): Unit =
     printListF(iterable, (x: Printable) => print(x), start, sep, end)
 
@@ -121,8 +130,6 @@ case class Printer(
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = "",
-  )(using
-      indentLevel: Int = 0
   ): Unit =
     inline if start != "" then print(start)
     inline if sep == "" then iterable.foreach(f)
@@ -135,24 +142,24 @@ case class Printer(
       )
     inline if end != "" then print(end)
 
-  def printArgument(value: Value[? <: Attribute])(using indentLevel: Int) =
+  def printArgument(value: Value[? <: Attribute]) =
     print(value, ": ", value.typ)
 
-  def print(block: Block)(using indentLevel: Int): Unit =
-    print(indent * indentLevel, assignBlockName(block))
+  def print(block: Block): Unit =
+    withIndent(print(assignBlockName(block)))
     if block.arguments.nonEmpty then
       printListF(block.arguments, printArgument, "(", ", ", ")")
     print(":\n")
-    printList(block.operations, sep = "")(using indentLevel + 1)
+    indented(printList(block.operations, sep = ""))
 
   /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-  def print(region: Region)(using indentLevel: Int): Unit =
+  def print(region: Region): Unit =
     this.copy()._printRegion(region)
 
-  private def _printRegion(region: Region)(using indentLevel: Int) =
+  private def _printRegion(region: Region) =
 
     print("{\n")
     region.blocks match
@@ -162,13 +169,13 @@ case class Printer(
         // Unless it is empty, which would make the next block read as the entry!
         if entry.arguments.nonEmpty || entry.operations.isEmpty then
           print(entry)
-        else printList(entry.operations, sep = "")(using indentLevel + 1)
+        else indented(printList(entry.operations, sep = ""))
         blocks.foreach(block => print(block))
-    print(indent * indentLevel + "}")
+    withIndent(print("}"))
 
   def printAliases(ops: Seq[Operation]) =
     val printer = AliasPrinter(strictlyGeneric = strictlyGeneric, p = p)
-    printer.print(ops)(using indentLevel = 0)
+    printer.print(ops)
     val aliasesMap = mutable.Map.empty[Attribute, String]
     val aliasesCounters = mutable.Map.empty[String, Int]
     printer.toAlias.foreach(attr =>
@@ -197,7 +204,7 @@ case class Printer(
 
   def printAttrDict(
       attrs: Map[String, Attribute]
-  )(using indentLevel: Int = 0): Unit =
+  ): Unit =
     printListF(
       attrs,
       (k, v) => print(k, " = ", v),
@@ -208,12 +215,10 @@ case class Printer(
 
   def printOptionalAttrDict(
       attrs: Map[String, Attribute]
-  )(using indentLevel: Int): Unit =
+  ): Unit =
     if attrs.nonEmpty then printAttrDict(attrs)
 
-  def printGenericMLIROperation(op: Operation)(using
-      indentLevel: Int
-  ) =
+  def printGenericMLIROperation(op: Operation) =
     print("\"", op.name, "\"(", op.operands, ")")
     if op.successors.nonEmpty then
       printListF(op.successors, b => print(assignBlockName(b)), "[", ", ", "]")
@@ -246,8 +251,8 @@ case class Printer(
         ")",
       )
 
-  def print(op: Operation)(using indentLevel: Int = 0): Unit =
-    print(indent * indentLevel)
+  def print(op: Operation): Unit =
+    withIndent(())
     if op.results.nonEmpty then
       printList(op.results)
       print(" = ")
@@ -265,7 +270,7 @@ case class Printer(
 
   def printTopLevel(ops: Seq[Operation]): Unit =
     printAliases(ops)
-    print(ops)(using indentLevel = 0)
+    print(ops)
 
 class AliasPrinter(
     strictlyGeneric: Boolean = false,
@@ -284,6 +289,7 @@ class AliasPrinter(
       blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
       p: PrintWriter = new PrintWriter(System.out),
       aliasesMap: Map[Attribute, String] = Map.empty,
+      indentLevel: Int = 0,
   ): AliasPrinter =
     new AliasPrinter(
       strictlyGeneric = strictlyGeneric,
