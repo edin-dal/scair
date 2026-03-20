@@ -209,16 +209,13 @@ def customPrintMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
     p: Expr[Printer],
-    indentLevel: Expr[Int],
 )(using Quotes): Expr[Unit] =
   opDef.assemblyFormat match
     case Some(format) =>
       format.print(adtOpExpr, p)
     case None =>
       '{
-        $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])(
-          using $indentLevel
-        )
+        $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])
       }
 
 def parseMacro[O <: Operation: Type](
@@ -900,8 +897,8 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
       def name: String = ${ Expr(opDef.name) }
 
-      def customPrint(adtOp: T, p: Printer)(using indentLevel: Int): Unit =
-        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }, '{ indentLevel }) }
+      def customPrint(adtOp: T, p: Printer): Unit =
+        ${ customPrintMacro(opDef, '{ adtOp }, '{ p }) }
 
       def constraintVerify(adtOp: T): OK[Operation] =
         ${
