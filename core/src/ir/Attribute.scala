@@ -82,7 +82,7 @@ abstract class DataAttribute[D](
 ) extends Attribute:
 
   override def printParameters(p: Printer) =
-    p.print("<", data.toString, ">")(using indentLevel = 0)
+    p.print("<", data.toString, ">")
 
   override def equals(attr: Any): Boolean =
     attr match

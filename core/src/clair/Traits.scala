@@ -54,7 +54,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
   def regions: Seq[Region] = comp.regions(this)
   def properties: Map[String, Attribute] = comp.properties(this)
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     comp.customPrint(this, p)
 
   override def verify(): OK[Operation] =
