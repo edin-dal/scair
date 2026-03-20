@@ -115,14 +115,14 @@ given AttributeCompanion[FastMathFlagsAttr]:
             case "contract" => FastMathFlags.contract
             case "afn"      => FastMathFlags.afn
             case "fast"     => FastMathFlags.fast
-            // Unreachable per above logic; I feel like FastParse could type this better with new types!
+            // Unreachable per above logic; cf https://github.com/com-lihaoyi/fastparse/pull/335
             case f => throw new Exception(s"Invalid fastmath flag '$f'"))
           .reduce(_ | _)
         Pass(FastMathFlagsAttr(flags))
     }
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
-    extends scair.ir.DataAttribute[FastMathFlags]("arith.fastmath", flags)
+    extends DataAttribute[FastMathFlags]("arith.fastmath", flags)
     derives TransparentData:
 
   override def customPrint(p: Printer) =
@@ -144,6 +144,64 @@ case class FastMathFlagsAttr(val flags: FastMathFlags)
               case FastMathFlag.arcp     => "arcp"
               case FastMathFlag.contract => "contract"
               case FastMathFlag.afn      => "afn"),
+          sep = ",",
+        )
+    p.print(">")
+
+enum OverflowFlag:
+  case nsw
+  case nuw
+
+given Ordering[OverflowFlag] = Ordering.by(_.ordinal)
+
+type OverflowFlags = SortedSet[OverflowFlag]
+
+object OverflowFlags:
+  val none: OverflowFlags = SortedSet.empty
+  val nsw: OverflowFlags = SortedSet(OverflowFlag.nsw)
+  val nuw: OverflowFlags = SortedSet(OverflowFlag.nuw)
+
+  def apply(flags: OverflowFlag*): OverflowFlags =
+    SortedSet(flags*)
+
+given AttributeCompanion[OverflowFlagsAttr]:
+  override def name: String = "arith.overflow"
+
+  override def parse[$: P](using Parser): P[OverflowFlagsAttr] =
+    P(
+      "<" ~ ("none" | "nsw" | "nuw").!.rep(
+        sep = ","
+      ) ~ ">"
+    ).flatMap { parsedFlags =>
+      if parsedFlags.isEmpty then
+        Fail("OverflowFlagsAttr expects at least one flag")
+      else
+        val flags = parsedFlags.map(_ match
+          case "none" => OverflowFlags.none
+          case "nsw"  => OverflowFlags.nsw
+          case "nuw"  => OverflowFlags.nuw
+          // Unreachable per above logic; cf https://github.com/com-lihaoyi/fastparse/pull/335
+          case f => throw new Exception(s"Invalid overflow flag '$f'"))
+          .reduce(_ | _)
+        Pass(OverflowFlagsAttr(flags))
+    }
+
+case class OverflowFlagsAttr(val flags: OverflowFlags)
+    extends DataAttribute[OverflowFlags]("arith.overflow", flags)
+    derives TransparentData:
+
+  override def customPrint(p: Printer) =
+    p.print("#arith.overflow<")
+    flags match
+      case OverflowFlags.none =>
+        p.print("none")
+      case _ =>
+        p.printListF(
+          flags,
+          f =>
+            p.print(f match
+              case OverflowFlag.nsw => "nsw"
+              case OverflowFlag.nuw => "nuw"),
           sep = ",",
         )
     p.print(">")
@@ -281,11 +339,11 @@ case class AddF(
     with NoMemoryEffect
     with Commutative derives DerivedOperationCompanion
 
-// TODO Apparently there's a new overflow flag here, overlooking for now.
 case class AddI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
+    val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
 ) extends DerivedOperation["arith.addi", AddI]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
@@ -539,6 +597,7 @@ case class MulI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
+    val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
 ) extends DerivedOperation["arith.muli", MulI]
     with NoMemoryEffect
     with Commutative derives DerivedOperationCompanion
@@ -638,7 +697,7 @@ case class ShLI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
-    // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
+    val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
 ) extends DerivedOperation["arith.shli", ShLI]
     with SameOperandsAndResultTypes derives DerivedOperationCompanion
 
@@ -679,7 +738,7 @@ case class SubI(
     lhs: Operand[AnyIntegerType],
     rhs: Operand[AnyIntegerType],
     result: Result[AnyIntegerType],
-    // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
+    val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
 ) extends DerivedOperation["arith.subi", SubI]
     with NoMemoryEffect
     with SameOperandsAndResultTypes derives DerivedOperationCompanion
@@ -697,7 +756,7 @@ case class TruncF(
 case class TruncI(
     val in: Operand[SignlessFixedWidthIntegerLike],
     val out: Result[SignlessFixedWidthIntegerLike],
-    // TODO: val overflowFlags: Option[IntegerOverflowFlags] = None
+    val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
 ) extends DerivedOperation["arith.trunci", TruncI]
     with NoMemoryEffect
     with SameOperandsAndResultTypes derives DerivedOperationCompanion
@@ -721,7 +780,7 @@ case class XOrI(
 
 val ArithDialect =
   summonDialect[
-    Tuple1[FastMathFlagsAttr],
+    (FastMathFlagsAttr, OverflowFlagsAttr),
     (
         AddF,
         AddI,

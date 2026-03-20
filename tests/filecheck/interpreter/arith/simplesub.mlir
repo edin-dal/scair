@@ -4,7 +4,7 @@ builtin.module {
   func.func @main() -> i64 {
     %0 = "arith.constant"() <{value = 40 : i64}> : () -> i64
     %1 = "arith.constant"() <{value = 29 : i64}> : () -> i64
-    %2 = "arith.subi"(%0, %1) : (i64, i64) -> i64
+    %2 = "arith.subi"(%0, %1) <{overflowFlags =#arith.overflow<none>}> : (i64, i64) -> i64
     func.return %2 : i64
   }
 }
