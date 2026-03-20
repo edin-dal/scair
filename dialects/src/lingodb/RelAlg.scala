@@ -39,8 +39,10 @@ enum SortSpec(name: String) extends I64Enum(name):
 final case class SortSpecificationAttr(colRef: ColumnRefAttr, spec: SortSpec)
     extends ParametrizedAttribute:
   override val name: String = "relalg.sort_spec"
+
   override val parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(colRef, spec)
+
   override def customPrint(p: Printer): Unit =
     p.print("(")
     p.print(colRef)
@@ -53,8 +55,7 @@ final case class SortSpecificationAttr(colRef: ColumnRefAttr, spec: SortSpec)
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 /** Print a region's body with block arguments shown inline before the brace,
-  * matching LingoDB's custom format:
-  * `(%arg0: !tuples.tuple) {\n  ops...\n}`
+  * matching LingoDB's custom format: `(%arg0: !tuples.tuple) {\n  ops...\n}`
   * instead of generic MLIR: `{\n^bb0(%0: !tuples.tuple):\n  ops...\n}`
   */
 private def printRegionWithInlineArgs(
@@ -90,7 +91,9 @@ case class BaseTable(
     p.print("} columns: {")
     p.printListF(
       columns.entries,
-      (k, v) => { p.print(k); p.print(" => "); p.print(v) },
+      (k, v) =>
+        p.print(k); p.print(" => "); p.print(v)
+      ,
       sep = ", ",
     )
     p.print("}")
@@ -285,7 +288,7 @@ case class RelAlgQuery(
 
 /** `relalg.query_return %val : type` — terminator for RelAlgQuery regions. */
 case class QueryReturn(
-    rel: Operand[Attribute],
+    rel: Operand[Attribute]
 ) extends DerivedOperation["relalg.query_return", QueryReturn]
     with IsTerminator derives DerivedOperationCompanion:
 

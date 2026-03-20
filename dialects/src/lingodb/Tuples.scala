@@ -23,9 +23,7 @@ final case class TupleStreamType()
   override val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
   override def customPrint(p: Printer): Unit = p.print("!tuples.tuplestream")
 
-final case class TupleType()
-    extends ParametrizedAttribute
-    with TypeAttribute:
+final case class TupleType() extends ParametrizedAttribute with TypeAttribute:
   override val name: String = "tuples.tuple"
   override val parameters: Seq[Attribute | Seq[Attribute]] = Seq()
   override def customPrint(p: Printer): Unit = p.print("!tuples.tuple")
@@ -37,8 +35,10 @@ final case class TupleType()
 final case class ColumnRefAttr(scope: StringData, colName: StringData)
     extends ParametrizedAttribute:
   override val name: String = "tuples.column_ref"
+
   override val parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(scope, colName)
+
   override def customPrint(p: Printer): Unit =
     p.print("@")
     p.print(scope.data)
@@ -52,8 +52,10 @@ final case class ColumnDefAttr(
     colType: Attribute,
 ) extends ParametrizedAttribute:
   override val name: String = "tuples.column_def"
+
   override val parameters: Seq[Attribute | Seq[Attribute]] =
     Seq(scope, colName, colType)
+
   override def customPrint(p: Printer): Unit =
     p.print("@")
     p.print(scope.data)
