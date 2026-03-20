@@ -47,7 +47,7 @@ given OperationCustomParser[AbsfOp]:
     )
 
 case class AbsfOp(
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
     operand: Operand[FloatType],
     result: Result[FloatType],
 ) extends DerivedOperation["math.absf", AbsfOp]
@@ -83,7 +83,7 @@ given OperationCustomParser[FPowIOp]:
 case class FPowIOp(
     lhs: Operand[FloatType],
     rhs: Operand[IntegerType],
-    fastmath: FastMathFlagsAttr,
+    fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
     result: Result[FloatType],
 ) extends DerivedOperation["math.fpowi", FPowIOp]
     with NoMemoryEffect derives DerivedOperationCompanion

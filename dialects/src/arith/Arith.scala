@@ -333,7 +333,7 @@ case class AddF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.addf", AddF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
@@ -423,7 +423,7 @@ case class DivF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.divf", DivF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect derives DerivedOperationCompanion
@@ -512,7 +512,7 @@ case class MaximumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.maximumf", MaximumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
@@ -522,7 +522,7 @@ case class MaxNumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.maxnumf", MaxNumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
@@ -550,7 +550,7 @@ case class MinimumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.minimumf", MinimumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
@@ -560,7 +560,7 @@ case class MinNumF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.minnumf", MinNumF]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
@@ -588,7 +588,7 @@ case class MulF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.mulf", MulF]
     with NoMemoryEffect
     with Commutative derives DerivedOperationCompanion
@@ -625,7 +625,7 @@ case class MulUIExtended(
 case class NegF(
     val operand: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.negf", NegF]
     with NoMemoryEffect
     with SameOperandsAndResultTypes derives DerivedOperationCompanion
@@ -642,7 +642,7 @@ case class RemF(
     val lhs: Operand[FloatType],
     val rhs: Operand[FloatType],
     val result: Result[FloatType],
-    val fastmath: FastMathFlagsAttr,
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.remf", RemF]
     with NoMemoryEffect
     with SameOperandsAndResultTypes derives DerivedOperationCompanion
@@ -667,7 +667,7 @@ case class ScalingExtF(
     val in: Operand[FloatType],
     val scale: Operand[FloatType],
     val out: Result[FloatType],
-    val fastmath: Option[FastMathFlagsAttr],
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.scaling_extf", ScalingExtF]
     with NoMemoryEffect
     with SameInputOutputTensorDims derives DerivedOperationCompanion
@@ -677,7 +677,7 @@ case class ScalingTruncF(
     val scale: Operand[FloatType],
     val out: Result[FloatType],
     // TODO: val roundingmode: Option[RoundingModeAttr],
-    val fastmath: Option[FastMathFlagsAttr],
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.scaling_truncf", ScalingTruncF]
     with NoMemoryEffect
     with SameInputOutputTensorDims derives DerivedOperationCompanion
@@ -747,7 +747,7 @@ case class TruncF(
     val in: Operand[FloatType],
     val out: Result[FloatType],
     // TODO: val roundingmode: Option[RoundingModeAttr],
-    val fastmath: Option[FastMathFlagsAttr],
+    val fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
 ) extends DerivedOperation["arith.truncf", TruncF]
     with SameOperandsAndResultShape
     with NoMemoryEffect

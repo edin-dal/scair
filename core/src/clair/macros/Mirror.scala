@@ -81,7 +81,9 @@ def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef
   */
-def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
+def getDefInput[Label: Type, Elem: Type](using
+    defaults: Map[String, Expr[Any]]
+)(using Quotes): OpInputDef =
   import quotes.reflect.*
   val name = Type.of[Label] match
     case '[String] =>
@@ -129,6 +131,7 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
             tpe = tpe,
             v,
             constraint,
+            defaults.get(name),
           )
     case _: Type[?] =>
       report.errorAndAbort(
@@ -141,7 +144,9 @@ def getDefInput[Label: Type, Elem: Type](using Quotes): OpInputDef =
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-def summonInput[Labels: Type, Elems: Type](using Quotes): List[OpInputDef] =
+def summonInput[Labels: Type, Elems: Type](using
+    defaults: Map[String, Expr[Any]]
+)(using Quotes): List[OpInputDef] =
 
   Type.of[(Labels, Elems)] match
     case '[(label *: labels, elem *: elems)] =>
@@ -188,6 +193,30 @@ def stringifyLabels[Elems: Type](using Quotes): List[String] =
         stringifyLabels[elems]
     case '[EmptyTuple] => Nil
 
+/** For a case class T, returns a dictionary mapping field names to expressions
+  * representing the default value of that field, if defined.
+  */
+def defaultExprs[T: Type](using Quotes): Map[String, Expr[Any]] =
+  import quotes.reflect.*
+
+  val sym = TypeRepr.of[T].typeSymbol
+  val companion = sym.companionModule
+  val fields = sym.caseFields
+
+  fields.zipWithIndex.flatMap { (f, i) =>
+    val fieldName = f.name
+    // Scala generates those methods on the companion object of case classes for default parameters values.
+    val methodName =
+      s"$$lessinit$$greater$$default$$${i + 1}"
+    companion.declaredMethod(methodName) match
+      case List(m) =>
+        // Select the method off the companion object reference
+        Some(fieldName -> Ref(companion).select(m).asExpr)
+      case _ =>
+        None
+
+  }.toMap
+
 def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
   import quotes.reflect.*
 
@@ -210,9 +239,10 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
             s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
             TypeRepr.of[T].typeSymbol.pos.get,
           )
-
+      val defaults = defaultExprs[T]
       val inputs = Type.of[(elemLabels, elemTypes)] match
-        case '[(Tuple, Tuple)] => summonInput[elemLabels, elemTypes]
+        case '[(Tuple, Tuple)] =>
+          summonInput[elemLabels, elemTypes](using defaults)
       val opDef = OperationDef(
         name = name,
         className = defname,
