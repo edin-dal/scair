@@ -738,7 +738,7 @@ def tryConstruct[T: Type](
   // Select the primary constructor of the ADT
   val constructorSelect =
     Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor)
-    
+
   // If it is a generic constructor, apply it to the ADT's type arguments.
   val constructor = constructorSelect.tpe.widen match
     case PolyType(typeParams, typeBounds, _) =>
