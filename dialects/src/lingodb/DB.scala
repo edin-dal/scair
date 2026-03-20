@@ -29,6 +29,7 @@ final case class NullableType(inner: Attribute)
     with TypeAttribute:
   override val name: String = "db.nullable"
   override val parameters: Seq[Attribute | Seq[Attribute]] = Seq(inner)
+
   override def customPrint(p: Printer): Unit =
     p.print("!db.nullable<")
     p.print(inner)
@@ -39,6 +40,7 @@ final case class DecimalType(prec: IntData, scale: IntData)
     with TypeAttribute:
   override val name: String = "db.decimal"
   override val parameters: Seq[Attribute | Seq[Attribute]] = Seq(prec, scale)
+
   override def customPrint(p: Printer): Unit =
     p.print("!db.decimal<")
     p.print(prec)
@@ -51,6 +53,7 @@ final case class DateType(unit: StringData)
     with TypeAttribute:
   override val name: String = "db.date"
   override val parameters: Seq[Attribute | Seq[Attribute]] = Seq(unit)
+
   override def customPrint(p: Printer): Unit =
     p.print("!db.date<")
     p.print(unit.data)
@@ -61,6 +64,7 @@ final case class CharType(len: IntData)
     with TypeAttribute:
   override val name: String = "db.char"
   override val parameters: Seq[Attribute | Seq[Attribute]] = Seq(len)
+
   override def customPrint(p: Printer): Unit =
     p.print("!db.char<")
     p.print(len)
@@ -117,8 +121,7 @@ case class DBCompare(
 case class DBAnd(
     vals: Seq[Operand[Attribute]],
     result: Result[Attribute],
-) extends DerivedOperation["db.and", DBAnd]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.and", DBAnd] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.and ")
@@ -126,12 +129,10 @@ case class DBAnd(
     p.print(":")
     p.printListF(vals, v => p.print(v.typ), sep = ",")
 
-
 case class DBOr(
     vals: Seq[Operand[Attribute]],
     result: Result[Attribute],
-) extends DerivedOperation["db.or", DBOr]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.or", DBOr] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.or ")
@@ -139,12 +140,10 @@ case class DBOr(
     p.print(":")
     p.printListF(vals, v => p.print(v.typ), sep = ",")
 
-
 case class DBNot(
     val_ : Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.not", DBNot]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.not", DBNot] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.not ")
@@ -156,8 +155,7 @@ case class DBAdd(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.add", DBAdd]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.add", DBAdd] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.add ")
@@ -173,8 +171,7 @@ case class DBSub(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.sub", DBSub]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.sub", DBSub] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.sub ")
@@ -190,8 +187,7 @@ case class DBMul(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.mul", DBMul]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.mul", DBMul] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.mul ")
@@ -207,8 +203,7 @@ case class DBDiv(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.div", DBDiv]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.div", DBDiv] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.div ")
@@ -223,8 +218,7 @@ case class DBDiv(
 case class DBCast(
     val_ : Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.cast", DBCast]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["db.cast", DBCast] derives DerivedOperationCompanion:
 
   override def customPrint(p: Printer)(using indentLevel: Int): Unit =
     p.print("db.cast ")
