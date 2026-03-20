@@ -58,7 +58,7 @@ case class SetResult(
 ) extends DerivedOperation["subop.set_result", SetResult]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("subop.set_result ")
     p.print(index.value.toString)
     p.print(" ")

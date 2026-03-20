@@ -61,18 +61,18 @@ final case class SortSpecificationAttr(colRef: ColumnRefAttr, spec: SortSpec)
 private def printRegionWithInlineArgs(
     lp: Printer,
     region: Region,
-)(using indentLevel: Int): Unit =
+): Unit =
   region.blocks.toList match
     case entry :: others =>
       lp.print("(")
       lp.printListF(entry.arguments, lp.printArgument)
       lp.print(") {\n")
-      entry.operations.foreach(lp.print(_)(using indentLevel + 1))
+      entry.operations.foreach(x => lp.indented(lp.print(x)))
       others.foreach(lp.print)
-      lp.print(lp.indent * indentLevel + "}")
+      lp.withIndent(lp.print("}"))
     case _ =>
       lp.print("{\n")
-      lp.print(lp.indent * indentLevel + "}")
+      lp.withIndent(lp.print("}"))
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  OPERATION DEFINITION  ||
@@ -85,7 +85,7 @@ case class BaseTable(
 ) extends DerivedOperation["relalg.basetable", BaseTable]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.basetable {table_identifier = ")
     p.print(tableId)
     p.print("} columns: {")
@@ -105,7 +105,7 @@ case class Selection(
 ) extends DerivedOperation["relalg.selection", Selection]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     val lp = p.copy()
     lp.print("relalg.selection ")
     lp.print(rel)
@@ -120,7 +120,7 @@ case class MapOp(
 ) extends DerivedOperation["relalg.map", MapOp]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     val lp = p.copy()
     lp.print("relalg.map ")
     lp.print(rel)
@@ -137,7 +137,7 @@ case class InnerJoin(
 ) extends DerivedOperation["relalg.join", InnerJoin]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     val lp = p.copy()
     lp.print("relalg.join ")
     lp.print(left)
@@ -153,7 +153,7 @@ case class CrossProduct(
 ) extends DerivedOperation["relalg.crossproduct", CrossProduct]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.crossproduct ")
     p.print(left)
     p.print(", ")
@@ -168,7 +168,7 @@ case class Aggregation(
 ) extends DerivedOperation["relalg.aggregation", Aggregation]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     val lp = p.copy()
     lp.print("relalg.aggregation ")
     lp.print(rel)
@@ -187,7 +187,7 @@ case class AggrFn(
 ) extends DerivedOperation["relalg.aggrfn", AggrFn]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.aggrfn ")
     p.print(fn.name)
     p.print(" ")
@@ -203,7 +203,7 @@ case class CountRows(
 ) extends DerivedOperation["relalg.count", CountRows]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.count ")
     p.print(rel)
 
@@ -214,7 +214,7 @@ case class Sort(
 ) extends DerivedOperation["relalg.sort", Sort]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.sort ")
     p.print(rel)
     p.print(" [")
@@ -228,7 +228,7 @@ case class Limit(
 ) extends DerivedOperation["relalg.limit", Limit]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.limit ")
     p.print(maxRows.value.toString)
     p.print(" ")
@@ -242,7 +242,7 @@ case class Projection(
 ) extends DerivedOperation["relalg.projection", Projection]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.projection ")
     p.print(setSemantic.name)
     p.print(" [")
@@ -258,7 +258,7 @@ case class Materialize(
 ) extends DerivedOperation["relalg.materialize", Materialize]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.materialize ")
     p.print(rel)
     p.print(" [")
@@ -275,15 +275,15 @@ case class RelAlgQuery(
 ) extends DerivedOperation["relalg.query", RelAlgQuery]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     val lp = p.copy()
     lp.print("relalg.query (){\n")
     body.blocks.toList match
       case entry :: others =>
-        entry.operations.foreach(lp.print(_)(using indentLevel + 1))
+        entry.operations.foreach(x => lp.indented(lp.print(x)))
         others.foreach(lp.print)
       case _ => ()
-    lp.print(lp.indent * indentLevel + "} -> ")
+    lp.withIndent(lp.print("} -> "))
     lp.print(result.typ)
 
 /** `relalg.query_return %val : type` — terminator for RelAlgQuery regions. */
@@ -292,7 +292,7 @@ case class QueryReturn(
 ) extends DerivedOperation["relalg.query_return", QueryReturn]
     with IsTerminator derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("relalg.query_return ")
     p.print(rel)
     p.print(" : ")

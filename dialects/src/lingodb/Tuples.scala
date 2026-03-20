@@ -77,7 +77,7 @@ case class GetCol(
 ) extends DerivedOperation["tuples.getcol", GetCol]
     derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("tuples.getcol ")
     p.print(tuple)
     p.print(" ")
@@ -90,7 +90,7 @@ case class TuplesReturn(
 ) extends DerivedOperation["tuples.return", TuplesReturn]
     with IsTerminator derives DerivedOperationCompanion:
 
-  override def customPrint(p: Printer)(using indentLevel: Int): Unit =
+  override def customPrint(p: Printer): Unit =
     p.print("tuples.return ")
     p.printList(results_)
     if results_.nonEmpty then
