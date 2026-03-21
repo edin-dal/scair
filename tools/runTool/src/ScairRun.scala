@@ -9,7 +9,6 @@ import scair.utils.*
 import scair.verify.Verifier
 import scopt.OParser
 
-import scala.collection.mutable
 import scala.io.BufferedSource
 import scala.io.Source
 
@@ -97,8 +96,6 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     val interpreter =
       new Interpreter(
         module,
-        mutable.Map(),
-        mutable.ArrayBuffer(),
         interpreterDialects,
       )
 
@@ -108,7 +105,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
         throw new Exception("No main function found in module")
       )
 
-    val output = interpreter.call_op(entry_op, interpreter.globalRuntimeCtx)
+    val output = interpreter.call_op(entry_op, interpreter.create_scope("global"))
 
     printScopes match
       case true =>

@@ -54,7 +54,8 @@ trait OpImpl[O <: Operation: ClassTag]:
           for (res, value) <- op.results.zip(multiple) do
             ctx.scopedDict.update(res, value) // store multiple results
 
-// interpreter context class stores variables, function definitions and the current result
+// interpreter context class stores variables and current result
+
 class RuntimeCtx(
     val scopedDict: ScopedDict,
     var result: Seq[Any] = Seq(),
@@ -78,13 +79,11 @@ class RuntimeCtx(
 
 class Interpreter(
     val module: ModuleOp,
-    val symbolTable: mutable.Map[String, Operation] = mutable.Map(),
-    val scopes: mutable.ArrayBuffer[ScopedDict] = mutable.ArrayBuffer(),
     val dialects: Seq[InterpreterDialect],
 ):
 
-  val globalRuntimeCtx =
-    RuntimeCtx(ScopedDict(None, mutable.Map(), "global"), Seq())
+  val symbolTable: mutable.Map[String, Operation] = mutable.Map()
+  val scopes: mutable.ArrayBuffer[ScopedDict] = mutable.ArrayBuffer()
 
   initialize_interpreter()
 
@@ -119,15 +118,12 @@ class Interpreter(
       case _       =>
         throw new Exception(s"Variable $value not found in context: $ctx")
 
-  def lookup_boollike(value: Value[Attribute], ctx: RuntimeCtx): Int =
-    ctx.scopedDict.get(value) match
-      case Some(v: Int) => v
-      case _            =>
-        throw new Exception(s"Bool-like $value not found in context: $ctx")
-
   def register_implementations(): Unit =
     for dialect <- dialects do
       for impl <- dialect do impl_dict.put(impl.opType, impl)
+
+  def create_scope(name: String): RuntimeCtx =
+    RuntimeCtx(ScopedDict(None, mutable.Map(), name), Seq())
 
   def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
     val impl = impl_dict.get(op.getClass)
