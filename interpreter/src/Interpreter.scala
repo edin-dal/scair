@@ -28,18 +28,9 @@ trait OpImpl[O <: Operation: ClassTag]:
       args: Seq[Any],
   ): Seq[Any]
 
-  // helper function to get operand values as TypeMap sequence
-  // operands must be same type
-  def lookup_operands(
-      operands: Seq[Value[Attribute]],
-      interpreter: Interpreter,
-      ctx: RuntimeCtx,
-  ): Seq[Any] =
-    operands.map(op => interpreter.lookup_op(op, ctx))
-
   // run function that is automatically defined to store results in context after compute
   final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    var args = lookup_operands(op.operands, interpreter, ctx)
+    var args = interpreter.get_values(op.operands, ctx)
 
     // call compute to get result
     val result = compute(op, interpreter, ctx, args)
@@ -141,7 +132,21 @@ class Interpreter(
   def interpret_block(block: Block, ctx: RuntimeCtx): Unit =
     for operation <- block.operations do interpret_op(operation, ctx)
 
-  def call_op(op: Operation, ctx: RuntimeCtx): Seq[Any] =
+  def run_ssacfg_region(region: Region, ctx: RuntimeCtx, name: String): Seq[Any] =
+    var results: Seq[Any] = Seq()
+
+    if region.blocks.isEmpty then return Seq() // no blocks to run
+    else
+      val new_ctx = ctx.push_scope(name)
+      for operation <- region.blocks.head.operations do
+        val inputs = get_values(operation.operands, new_ctx)
+        println(inputs)
+        if operation.isInstanceOf[IsTerminator] then
+          results = run_op(operation, new_ctx, inputs)
+        interpret_op(operation, new_ctx)
+      results
+
+  def run_op(op: Operation, ctx: RuntimeCtx, inputs: Seq[Any]): Seq[Any] =
     val impl = impl_dict.get(op.getClass)
     impl match
       case Some(impl) =>
@@ -149,12 +154,33 @@ class Interpreter(
           op,
           this,
           ctx,
-          Seq(),
+          inputs,
         )
       case None =>
         throw new Exception(
           s"Unsupported operation when interpreting: ${op.getClass}"
         )
+  
+  def call_op(name: String, ctx: RuntimeCtx): Seq[Any] =
+    val callee = symbolTable.get(name)
+      .getOrElse(
+        throw new Exception(s"Function ${name} not found")
+      )
+    run_ssacfg_region(callee.regions.head, ctx, name)
+
+  def get_values(
+      operands: Seq[Value[Attribute]],
+      ctx: RuntimeCtx,
+  ): Seq[Any] = 
+    operands.map(op => lookup_op(op, ctx))
+
+  def set_values(
+      results: Seq[Value[Attribute]],
+      values: Seq[Any],
+      ctx: RuntimeCtx,
+  ): Unit =
+    for (res, value) <- results.zip(values) do
+      ctx.scopedDict.update(res, value)
 
   // helper function to print values in interpreter
   // useful if booleans are represented as 0 and 1
