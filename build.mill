@@ -1,4 +1,4 @@
-//| mill-version: 1.1.3-native
+//| mill-version: 1.1.4-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
@@ -91,7 +91,6 @@ trait JvmScairModule
   // dependencies. This enforces that everything ScaIR is transitively compiled with
   // coverage when compiling a module with coverage.
   trait ScairScoverageData extends ScoverageData with ScairSettings:
-    override def enableBsp = false
 
     override def transitiveModuleRunModuleDeps =
       super.transitiveModuleRunModuleDeps.map {
@@ -117,7 +116,7 @@ trait JvmScairModule
   lazy val test = new ScairTests {}
 
 trait GraalScairModule extends ScairSettings with NativeImageModule:
-  override def jvmId = "graalvm-community:25.0.1"
+  override def jvmId = "graalvm-community:25.0.2"
 
   // Remove "-Ob" (fast build) to revert to default "-O2" (highest optimization available
   // before paywall)
