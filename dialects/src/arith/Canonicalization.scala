@@ -85,14 +85,15 @@ val AddISubConstantLHS = pattern {
     Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
 }
 
-given CanonicalizationPatterns[AddI](
-  AddIFold,
-  AddIAddConstant,
-  AddISubConstantRHS,
-  AddIMulNegativeOneRhs,
-  AddIMulNegativeOneLhs,
-  AddISubConstantLHS,
-)
+given [T <: AnyIntegerType]
+    => CanonicalizationPatterns[AddI[T]](
+      AddIFold,
+      AddIAddConstant,
+      AddISubConstantRHS,
+      AddIMulNegativeOneRhs,
+      AddIMulNegativeOneLhs,
+      AddISubConstantLHS,
+    )
 
 // muli(muli(x, c0), c1) -> muli(x, c0 * c1)
 val MulIMulIConstant = pattern {

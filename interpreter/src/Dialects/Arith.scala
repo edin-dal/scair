@@ -18,10 +18,10 @@ object run_constant extends OpImpl[arith.Constant]:
         Some(intAttr.value.toInt)
       case _ => throw new Exception("Unsupported constant attribute type")
 
-object run_addi extends OpImpl[arith.AddI]:
+object run_addi extends OpImpl[arith.AddI[?]]:
 
   def compute(
-      op: arith.AddI,
+      op: arith.AddI[?],
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],

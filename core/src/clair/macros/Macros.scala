@@ -735,9 +735,22 @@ def tryConstruct[T: Type](
               NamedArg(name, property.asTerm)
           namedArg
       }
+  // Select the primary constructor of the ADT
+  val constructorSelect =
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor)
+
+  // If it is a generic constructor, apply it to the ADT's type arguments.
+  val constructor = constructorSelect.tpe.widen match
+    case PolyType(typeParams, typeBounds, _) =>
+      TypeApply(
+        constructorSelect,
+        TypeRepr.of[T].typeArgs.map(arg => TypeTree.of(using arg.asType)),
+      )
+    case _: MethodType => constructorSelect
+
   // Return a call to the primary constructor of the ADT.
   Apply(
-    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
+    constructor,
     List.from(args),
   ).asExprOf[T]
 
