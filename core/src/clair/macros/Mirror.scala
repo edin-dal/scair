@@ -63,8 +63,10 @@ def getDefType(elem: Type[?])(using Quotes) =
     case t @ '[Attribute] =>
       t
 
-def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
-  Type.of[Elem] match
+def getDefVariadicityAndType(elem: Type[?])(using
+    Quotes
+): (Variadicity, Type[?]) =
+  elem match
     // This first case is to catch Attributes that would also implement Seq or Option.
     case '[type t <: Attribute; `t`] =>
       (Variadicity.Single, Type.of[t])
@@ -81,40 +83,37 @@ def getDefVariadicityAndType[Elem: Type](using Quotes): (Variadicity, Type[?]) =
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef
   */
-def getDefInput[Label: Type, Elem: Type](using
+def getDefInput(label: String, elem: Type[?])(using
     defaults: Map[String, Expr[Any]]
 )(using Quotes): OpInputDef =
   import quotes.reflect.*
-  val name = Type.of[Label] match
-    case '[String] =>
-      Type.valueOfConstant[Label].get.asInstanceOf[String]
-  val (variadicity, elem) = getDefVariadicityAndType[Elem]
-  val (tpe) = getDefType(elem)
+  val (variadicity, elemtpe) = getDefVariadicityAndType(elem)
+  val (tpe) = getDefType(elemtpe)
   val constraint = getTypeConstraint(tpe)
 
-  elem match
-    case '[Value[t]] if TypeRepr.of[Result[t]] =:= TypeRepr.of(using elem) =>
+  elemtpe match
+    case '[Value[t]] if TypeRepr.of[Result[t]] =:= TypeRepr.of(using elemtpe) =>
       ResultDef(
-        name = name,
+        name = label,
         tpe = tpe,
         variadicity,
         constraint,
       )
     case '[Value[t]] =>
       OperandDef(
-        name = name,
+        name = label,
         tpe = tpe,
         variadicity,
         constraint,
       )
     case '[Region] =>
       RegionDef(
-        name = name,
+        name = label,
         variadicity,
       )
     case '[Successor] =>
       SuccessorDef(
-        name = name,
+        name = label,
         variadicity,
       )
     case '[Attribute] =>
@@ -127,15 +126,15 @@ def getDefInput[Label: Type, Elem: Type](using
             )
         case v @ (Variadicity.Single | Variadicity.Optional) =>
           OpPropertyDef(
-            name = name,
+            name = label,
             tpe = tpe,
             v,
             constraint,
-            defaults.get(name),
+            defaults.get(label),
           )
     case _: Type[?] =>
       report.errorAndAbort(
-        s"Field ${Type.show[Label]} : ${Type.show[Elem]} is unsupported for MLIR derivation."
+        s"Field $label : ${Type.show(using elem)} is unsupported for MLIR derivation."
       )
 
 /** Loops through a Tuple of Input definitions and produces a List of inputs to
@@ -144,14 +143,14 @@ def getDefInput[Label: Type, Elem: Type](using
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-def summonInput[Labels: Type, Elems: Type](using
+def summonInput(labels: Seq[String], elems: Seq[Type[?]])(using
     defaults: Map[String, Expr[Any]]
 )(using Quotes): List[OpInputDef] =
 
-  Type.of[(Labels, Elems)] match
-    case '[(label *: labels, elem *: elems)] =>
-      getDefInput[label, elem] :: summonInput[labels, elems]
-    case '[(EmptyTuple, EmptyTuple)] => Nil
+  (labels, elems) match
+    case (label +: labels, elem +: elems) =>
+      getDefInput(label, elem) :: summonInput(labels, elems)
+    case (Nil, Nil) => Nil
 
 def getAttrDef[Label: Type, Elem: Type](using
     Quotes
@@ -220,44 +219,38 @@ def defaultExprs[T: Type](using Quotes): Map[String, Expr[Any]] =
 def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
   import quotes.reflect.*
 
-  val m = Expr.summon[Mirror.ProductOf[T]].get
-  m match
-    case '{
-          $m: Mirror.ProductOf[T] {
-            type MirroredLabel = label; type MirroredElemLabels = elemLabels;
-            type MirroredElemTypes = elemTypes
-          }
-        } =>
-      val defname = Type.valueOfConstant[label].get.asInstanceOf[String]
+  val typerepr = TypeRepr.of[T]
+  val defname = typerepr.typeSymbol.name
+  val fields = typerepr.typeSymbol.caseFields
 
-      val paramLabels = stringifyLabels[elemLabels]
-      val name = Type.of[T] match
-        case '[DerivedOperation[name]] =>
-          Type.valueOfConstant[name].get
-        case _ =>
-          report.errorAndAbort(
-            s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
-            TypeRepr.of[T].typeSymbol.pos.get,
-          )
-      val defaults = defaultExprs[T]
-      val inputs = Type.of[(elemLabels, elemTypes)] match
-        case '[(Tuple, Tuple)] =>
-          summonInput[elemLabels, elemTypes](using defaults)
-      val opDef = OperationDef(
-        name = name,
-        className = defname,
-        operands = inputs.collect { case a: OperandDef => a },
-        results = inputs.collect { case a: ResultDef => a },
-        regions = inputs.collect { case a: RegionDef => a },
-        successors = inputs.collect { case a: SuccessorDef => a },
-        properties = inputs.collect { case a: OpPropertyDef => a },
-        assemblyFormat = None,
+  val paramLabels = fields.map(_.name)
+  val paramTypes = fields.map(typerepr.memberType(_).asType)
+
+  val name = Type.of[T] match
+    case '[DerivedOperation[name]] =>
+      Type.valueOfConstant[name].get
+    case _ =>
+      report.errorAndAbort(
+        s"${Type.show[T]} should extend DerivedOperation to derive DerivedOperationCompanion.",
+        TypeRepr.of[T].typeSymbol.pos.get,
       )
-      val format = Type.of[T] match
-        case '[AssemblyFormat[format]] =>
-          Some(parseAssemblyFormat(Type.valueOfConstant[format].get, opDef))
-        case _ => None
-      opDef.copy(assemblyFormat = format)
+  val defaults = defaultExprs[T]
+  val inputs = summonInput(paramLabels, paramTypes)(using defaults)
+  val opDef = OperationDef(
+    name = name,
+    className = defname,
+    operands = inputs.collect { case a: OperandDef => a },
+    results = inputs.collect { case a: ResultDef => a },
+    regions = inputs.collect { case a: RegionDef => a },
+    successors = inputs.collect { case a: SuccessorDef => a },
+    properties = inputs.collect { case a: OpPropertyDef => a },
+    assemblyFormat = None,
+  )
+  val format = Type.of[T] match
+    case '[AssemblyFormat[format]] =>
+      Some(parseAssemblyFormat(Type.valueOfConstant[format].get, opDef))
+    case _ => None
+  opDef.copy(assemblyFormat = format)
 
 def getCompanion[T: Type](using quotes: Quotes) =
   import quotes.reflect.*
