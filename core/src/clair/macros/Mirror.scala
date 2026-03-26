@@ -50,20 +50,7 @@ def getTypeConstraint(tpe: Type[?])(using Quotes) =
     case _ =>
       None
 
-def getDefType(elem: Type[?])(using Quotes) =
-  elem match
-    case '[Result[t]] =>
-      Type.of[t]
-    case '[Operand[t]] =>
-      Type.of[t]
-    case '[Region] =>
-      Type.of[Attribute]
-    case '[Successor] =>
-      Type.of[Attribute]
-    case t @ '[Attribute] =>
-      t
-
-def getDefVariadicityAndType(elem: Type[?])(using
+def normalizeDefElem(elem: Type[?])(using
     Quotes
 ): (Variadicity, Type[?]) =
   elem match
@@ -83,28 +70,29 @@ def getDefVariadicityAndType(elem: Type[?])(using
   *   Input to OperationDef, either: OperandDef, ResultDef, RegionDef,
   *   SuccessorDef, OpPropertyDef
   */
-def getDefInput(label: String, elem: Type[?])(using
+def getInputDef(label: String, elem: Type[?])(using
     defaults: Map[String, Expr[Any]]
 )(using Quotes): OpInputDef =
   import quotes.reflect.*
-  val (variadicity, elemtpe) = getDefVariadicityAndType(elem)
-  val (tpe) = getDefType(elemtpe)
-  val constraint = getTypeConstraint(tpe)
+  val (variadicity, constructType) = normalizeDefElem(elem)
 
-  elemtpe match
-    case '[Value[t]] if TypeRepr.of[Result[t]] =:= TypeRepr.of(using elemtpe) =>
+  constructType match
+    case '[Value[t]]
+        if TypeRepr.of[Result[t]] =:= TypeRepr.of(using constructType) =>
+      val tpe = Type.of[t]
       ResultDef(
         name = label,
         tpe = tpe,
         variadicity,
-        constraint,
+        getTypeConstraint(tpe),
       )
     case '[Value[t]] =>
+      val tpe = Type.of[t]
       OperandDef(
         name = label,
         tpe = tpe,
         variadicity,
-        constraint,
+        getTypeConstraint(tpe),
       )
     case '[Region] =>
       RegionDef(
@@ -116,7 +104,7 @@ def getDefInput(label: String, elem: Type[?])(using
         name = label,
         variadicity,
       )
-    case '[Attribute] =>
+    case tpe @ '[Attribute] =>
       variadicity match
         case Variadicity.Variadic =>
           report
@@ -129,7 +117,7 @@ def getDefInput(label: String, elem: Type[?])(using
             name = label,
             tpe = tpe,
             v,
-            constraint,
+            getTypeConstraint(tpe),
             defaults.get(label),
           )
     case _: Type[?] =>
@@ -143,14 +131,11 @@ def getDefInput(label: String, elem: Type[?])(using
   * @return
   *   Lambda that produces an input to OperationDef, given a string
   */
-def summonInput(labels: Seq[String], elems: Seq[Type[?]])(using
+def getInputDefs(params: Seq[(name: String, tpe: Type[?])])(using
     defaults: Map[String, Expr[Any]]
-)(using Quotes): List[OpInputDef] =
+)(using Quotes): Seq[OpInputDef] =
 
-  (labels, elems) match
-    case (label +: labels, elem +: elems) =>
-      getDefInput(label, elem) :: summonInput(labels, elems)
-    case (Nil, Nil) => Nil
+  params.map(p => getInputDef(p.name, p.tpe))
 
 def getAttrDef[Label: Type, Elem: Type](using
     Quotes
@@ -223,8 +208,8 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
   val defname = typerepr.typeSymbol.name
   val fields = typerepr.typeSymbol.caseFields
 
-  val paramLabels = fields.map(_.name)
-  val paramTypes = fields.map(typerepr.memberType(_).asType)
+  val params = fields
+    .map(f => (name = f.name, tpe = typerepr.memberType(f).asType))
 
   val name = Type.of[T] match
     case '[DerivedOperation[name]] =>
@@ -235,7 +220,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         TypeRepr.of[T].typeSymbol.pos.get,
       )
   val defaults = defaultExprs[T]
-  val inputs = summonInput(paramLabels, paramTypes)(using defaults)
+  val inputs = getInputDefs(params)(using defaults)
   val opDef = OperationDef(
     name = name,
     className = defname,
