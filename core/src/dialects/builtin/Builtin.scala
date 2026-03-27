@@ -529,4 +529,4 @@ case class UnrealizedConversionCastOp(
 ) extends DerivedOperation["builtin.unrealized_conversion_cast"] derives OpDefs
 
 val BuiltinDialect =
-  summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)]
+  summonDialect[EmptyTuple](ModuleOp, UnrealizedConversionCastOp)

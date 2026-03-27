@@ -61,17 +61,14 @@ final case class Any(
     output: Result[AttributeType]
 ) extends DerivedOperation["irdl.any"] derives OpDefs
 
-val IRDL = summonDialect[
-  (AttributeType, RegionType),
-  (
-      Dialect,
-      Operation,
-      Attribute,
-      Type,
-      Parameters,
-      Operands,
-      Attributes,
-      Results,
-      Any,
-  ),
-]
+val IRDL = summonDialect[(AttributeType, RegionType)](
+  Dialect,
+  Operation,
+  Attribute,
+  Type,
+  Parameters,
+  Operands,
+  Attributes,
+  Results,
+  Any,
+)

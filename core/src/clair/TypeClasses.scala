@@ -121,27 +121,40 @@ object OpDefs:
     deriveOpDefs[T]
   }
 
-def summonOperationCompanionsMacroRec[T <: Tuple: Type](using
+def summonOperationCompanionsMacroRec(operations: Expr[Seq[Any]])(using
     Quotes
 ): Seq[Expr[OperationCompanion[?]]] =
   import quotes.reflect.*
-  Type.of[T] match
-    case '[type o <: Operation; o *: ts] =>
-      val dat = Expr.summon[OperationCompanion[o]]
-        .getOrElse(
-          report
-            .errorAndAbort(
-              f"Could not summon OperationCompanion for ${Type.show[o]}"
+
+  operations match
+    case Varargs(ops) =>
+      ops.map { op =>
+
+        val opTpeRef = op.asTerm match
+          case ident: Ident => ident.symbol.companionClass.typeRef
+          case _            =>
+            report.errorAndAbort(
+              s"Expected an op companion object, got: ${op.show}",
+              op.asTerm.pos,
             )
-        )
-      dat +: summonOperationCompanionsMacroRec[ts]
 
-    case '[EmptyTuple] => Seq()
+        opTpeRef.asType match
+          case '[type t <: Operation; `t`] =>
+            Expr.summon[OperationCompanion[t]]
+              .getOrElse(
+                report.errorAndAbort(
+                  f"Could not summon OperationCompanion for ${Type.show[t]}",
+                  op.asTerm.pos,
+                )
+              )
+      }
+    case _ =>
+      report.errorAndAbort("operations must be an inline sequence literal")
 
-def summonOperationCompanionsMacro[T <: Tuple: Type](using
+def summonOperationCompanionsMacro(operations: Expr[Seq[Any]])(using
     Quotes
 ): Expr[Seq[OperationCompanion[?]]] =
-  Expr.ofSeq(summonOperationCompanionsMacroRec[T])
+  Expr.ofSeq(summonOperationCompanionsMacroRec(operations))
 
 def summonAttributeCompanionsMacroRec[T <: Tuple: Type](using
     Quotes
@@ -167,11 +180,15 @@ def summonAttributeCompanionsMacro[T <: Tuple: Type](using
 inline def summonAttributeCompanions[T <: Tuple]: Seq[AttributeCompanion[?]] =
   ${ summonAttributeCompanionsMacro[T] }
 
-inline def summonOperationCompanions[T <: Tuple]: Seq[OperationCompanion[?]] =
-  ${ summonOperationCompanionsMacro[T] }
+inline def summonOperationCompanions(
+    inline operations: Seq[Any]
+): Seq[OperationCompanion[?]] =
+  ${ summonOperationCompanionsMacro('operations) }
 
-inline def summonDialect[Attributes <: Tuple, Operations <: Tuple]: Dialect =
+inline def summonDialect[Attributes <: Tuple](
+    inline operations: Any*
+): Dialect =
   Dialect(
-    summonOperationCompanions[Operations],
+    summonOperationCompanions(operations),
     summonAttributeCompanions[Attributes],
   )

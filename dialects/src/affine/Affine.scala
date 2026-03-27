@@ -116,7 +116,13 @@ case class Yield(
     with AssemblyFormat["attr-dict ($arguments^ `:` type($arguments))?"]
     with NoMemoryEffect derives OpDefs
 
-val AffineDialect = summonDialect[
-  EmptyTuple,
-  (Apply, For, Parallel, If, Store, Load, Min, Yield),
-]
+val AffineDialect = summonDialect[EmptyTuple](
+  Apply,
+  For,
+  Parallel,
+  If,
+  Store,
+  Load,
+  Min,
+  Yield,
+)

@@ -37,4 +37,4 @@ case class TestOp(
       attributes,
     )
 
-val Test: Dialect = summonDialect[EmptyTuple, Tuple1[TestOp]]
+val Test: Dialect = summonDialect[EmptyTuple](TestOp)

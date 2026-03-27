@@ -135,6 +135,15 @@ case class ComplexAttr(
       tpe,
     )
 
-val Complex = summonDialect[Tuple1[
-  ComplexAttr
-], (Abs, Add, Constant, Create, Div, Im, Mul, Neg, Re, Sub)]
+val Complex = summonDialect[Tuple1[ComplexAttr]](
+  Abs,
+  Add,
+  Constant,
+  Create,
+  Div,
+  Im,
+  Mul,
+  Neg,
+  Re,
+  Sub,
+)

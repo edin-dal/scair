@@ -97,4 +97,4 @@ case class TuplesReturn(
       p.printListF(results_, v => p.print(v.typ))
 
 val TuplesDialect =
-  summonDialect[EmptyTuple, (GetCol, TuplesReturn)]
+  summonDialect[EmptyTuple](GetCol, TuplesReturn)

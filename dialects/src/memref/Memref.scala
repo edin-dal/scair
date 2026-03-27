@@ -45,4 +45,4 @@ case class Store(
 ) extends DerivedOperation["memref.store"] derives OpDefs
 
 val MemrefDialect =
-  summonDialect[EmptyTuple, (Alloc, Dealloc, Load, Store, Dim)]
+  summonDialect[EmptyTuple](Alloc, Dealloc, Load, Store, Dim)

@@ -151,4 +151,4 @@ case class CallIndirect(
         )
 
 val FuncDialect =
-  summonDialect[EmptyTuple, (Call, CallIndirect, Constant, Func, Return)]
+  summonDialect[EmptyTuple](Call, CallIndirect, Constant, Func, Return)

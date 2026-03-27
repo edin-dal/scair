@@ -286,22 +286,19 @@ case class QueryReturn(
     p.print(rel.typ)
 
 val RelAlgDialect =
-  summonDialect[
-    EmptyTuple,
-    (
-        BaseTable,
-        Selection,
-        MapOp,
-        InnerJoin,
-        CrossProduct,
-        Aggregation,
-        AggrFn,
-        CountRows,
-        Sort,
-        Limit,
-        Projection,
-        Materialize,
-        RelAlgQuery,
-        QueryReturn,
-    ),
-  ]
+  summonDialect[EmptyTuple](
+    BaseTable,
+    Selection,
+    MapOp,
+    InnerJoin,
+    CrossProduct,
+    Aggregation,
+    AggrFn,
+    CountRows,
+    Sort,
+    Limit,
+    Projection,
+    Materialize,
+    RelAlgQuery,
+    QueryReturn,
+  )

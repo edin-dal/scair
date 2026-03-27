@@ -71,5 +71,5 @@ case class Mul(
 ) extends DerivedOperation["cmath.mul"]
   derives OpDefs
 
-val cmath = summonDialect[Complex *: EmptyTuple, Norm *: Mul *: EmptyTuple]
+val cmath = summonDialect[Complex *: EmptyTuple](Norm, Mul)
 """.stripMargin

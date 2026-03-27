@@ -137,16 +137,18 @@ object IRDLPrinter:
         p.print(" *: ")
       case _ =>
     }
-    p.print("EmptyTuple, ")
+    p.print("EmptyTuple](")
 
+    var firstOperation = true
     dialect.body.blocks.head.operations.foreach {
       case o: Operation =>
+        if !firstOperation then p.print(", ")
         p.print(o.sym_name.data.capitalize)
-        p.print(" *: ")
+        firstOperation = false
       case _ =>
     }
 
-    p.println("EmptyTuple]")
+    p.println(")")
 
   def printOperation(
       op: Operation

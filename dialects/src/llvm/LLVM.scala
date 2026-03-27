@@ -30,4 +30,4 @@ case class GetElementPtr(
 ) extends DerivedOperation["llvm.getelementptr"]
     with NoMemoryEffect derives OpDefs
 
-val LLVMDialect = summonDialect[Tuple1[Ptr], (Load, GetElementPtr)]
+val LLVMDialect = summonDialect[Tuple1[Ptr]](Load, GetElementPtr)

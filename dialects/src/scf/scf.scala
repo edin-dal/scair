@@ -146,20 +146,17 @@ case class YieldOp(
     with NoMemoryEffect derives OpDefs
 
 val SCFDialect =
-  summonDialect[
-    EmptyTuple,
-    (
-        Condition,
-        ExecuteRegionOp,
-        ForOp,
-        ForallOp,
-        InParallelOp,
-        IfOp,
-        ParallelOp,
-        ReduceOp,
-        ReduceReturnOp,
-        WhileOp,
-        IndexSwitchOp,
-        YieldOp,
-    ),
-  ]
+  summonDialect[EmptyTuple](
+    Condition,
+    ExecuteRegionOp,
+    ForOp,
+    ForallOp,
+    InParallelOp,
+    IfOp,
+    ParallelOp,
+    ReduceOp,
+    ReduceReturnOp,
+    WhileOp,
+    IndexSwitchOp,
+    YieldOp,
+  )

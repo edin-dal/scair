@@ -66,4 +66,4 @@ case class SetResult(
     p.print(rel.typ)
 
 val SubopDialect =
-  summonDialect[EmptyTuple, SetResult *: EmptyTuple]
+  summonDialect[EmptyTuple](SetResult)

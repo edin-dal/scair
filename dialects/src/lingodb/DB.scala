@@ -227,18 +227,15 @@ case class DBCast(
     p.print(result.typ)
 
 val DbDialect =
-  summonDialect[
-    EmptyTuple,
-    (
-        DBConstant,
-        DBCompare,
-        DBAnd,
-        DBOr,
-        DBNot,
-        DBAdd,
-        DBSub,
-        DBMul,
-        DBDiv,
-        DBCast,
-    ),
-  ]
+  summonDialect[EmptyTuple](
+    DBConstant,
+    DBCompare,
+    DBAnd,
+    DBOr,
+    DBNot,
+    DBAdd,
+    DBSub,
+    DBMul,
+    DBDiv,
+    DBCast,
+  )
