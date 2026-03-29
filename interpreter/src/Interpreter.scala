@@ -140,7 +140,6 @@ class Interpreter(
       val new_ctx = ctx.push_scope(name)
       for operation <- region.blocks.head.operations do
         val inputs = get_values(operation.operands, new_ctx)
-        println(inputs)
         if operation.isInstanceOf[IsTerminator] then
           results = run_op(operation, new_ctx, inputs)
         interpret_op(operation, new_ctx)
