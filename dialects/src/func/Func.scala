@@ -73,7 +73,7 @@ case class Func(
     with Symbol
     with SymbolTable derives DerivedOperationCompanion:
 
-  override def customPrint(printer: Printer)(using indentLevel: Int) =
+  override def customPrint(printer: Printer) =
     val lprinter = printer.copy()
     lprinter.print("func.func ")
     sym_visibility match
@@ -109,9 +109,9 @@ case class Func(
       case Seq()           => ()
       case entry :: others =>
         lprinter.print(" {\n")
-        entry.operations.foreach(lprinter.print(_)(using indentLevel + 1))
+        lprinter.indented(entry.operations.foreach(lprinter.print(_)))
         others.foreach(lprinter.print)
-        lprinter.print(lprinter.indent * indentLevel + "}")
+        lprinter.withIndent(lprinter.print("}"))
 
 case class Return(
     _operands: Seq[Operand[Attribute]]

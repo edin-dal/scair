@@ -1,8 +1,8 @@
-//| mill-version: 1.1.0-RC1-native
+//| mill-version: 1.1.4-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
-//|   - com.lihaoyi::mill-contrib-scoverage:1.1.0-RC1
+//|   - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 //| mill-jvm-opts: ["-Xss10m"]
 
 import com.goyeau.mill.scalafix.ScalafixModule
@@ -40,9 +40,9 @@ import java.lang.reflect.InvocationTargetException
 import mill.javalib.PlatformModuleBase
 
 trait ScairSettings extends ScalaModule with PublishModule:
-  def scoverageVersion = Task { "2.4.1" }
+  def scoverageVersion = Task { "2.5.2" }
 
-  override def scalaVersion = "3.7.4"
+  override def scalaVersion = "3.8.2"
 
   override def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
@@ -91,7 +91,6 @@ trait JvmScairModule
   // dependencies. This enforces that everything ScaIR is transitively compiled with
   // coverage when compiling a module with coverage.
   trait ScairScoverageData extends ScoverageData with ScairSettings:
-    override def enableBsp = false
 
     override def transitiveModuleRunModuleDeps =
       super.transitiveModuleRunModuleDeps.map {
@@ -117,7 +116,7 @@ trait JvmScairModule
   lazy val test = new ScairTests {}
 
 trait GraalScairModule extends ScairSettings with NativeImageModule:
-  override def jvmId = "graalvm-community:24.0.2"
+  override def jvmId = "graalvm-community:25.0.2"
 
   // Remove "-Ob" (fast build) to revert to default "-O2" (highest optimization available
   // before paywall)
@@ -127,7 +126,7 @@ trait GraalScairModule extends ScairSettings with NativeImageModule:
 trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule with SonatypeCentralPublishModule
     with PlatformScalaModule:
   override def enableBsp = false
-  override def scalaNativeVersion = "0.5.9"
+  override def scalaNativeVersion = "0.5.10"
   
   override def mvnDeps = scairModule().mvnDeps
   override def generatedSources: Simple[Seq[PathRef]] =

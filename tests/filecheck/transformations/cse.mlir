@@ -94,13 +94,13 @@ func.func @different_attributes(%0: index, %1: index) -> (i1, i1, i1) {
 // CHECK-NEXT:    }
 
 func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
-  %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
-  %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+  %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+  %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
   func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
 }
 // CHECK-NEXT:    func.func @side_effect() -> (memref<2x1xf32>, memref<2x1xf32>) {
-// CHECK-NEXT:      %0 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
-// CHECK-NEXT:      %1 = "memref.alloc"() <{alignment = 0, operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+// CHECK-NEXT:      %0 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
+// CHECK-NEXT:      %1 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<2x1xf32>
 // CHECK-NEXT:      func.return %0, %1 : memref<2x1xf32>, memref<2x1xf32>
 // CHECK-NEXT:    }
 
@@ -110,7 +110,7 @@ func.func @down_propagate_for() {
   ^bb0(%1: index):
     %2 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo"(%0, %2) : (i32, i32) -> ()
-    "affine.yield"() : () -> ()
+    affine.yield
   }) : () -> ()
   func.return
 }
@@ -119,7 +119,7 @@ func.func @down_propagate_for() {
 // CHECK-NEXT:      "affine.for"() <{lowerBoundMap = #map1, upperBoundMap = #map2, step = 1 : index, operandSegmentSizes = array<i32: 0, 0, 0>}> ({
 // CHECK-NEXT:      ^bb0(%1: index):
 // CHECK-NEXT:        "foo"(%0, %0) : (i32, i32) -> ()
-// CHECK-NEXT:        "affine.yield"() : () -> ()
+// CHECK-NEXT:        affine.yield
 // CHECK-NEXT:      }) : () -> ()
 // CHECK-NEXT:      func.return
 // CHECK-NEXT:    }
@@ -140,7 +140,7 @@ func.func @up_propagate_for() -> i32 {
   ^bb0(%0: index):
     %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
     "foo"(%1) : (i32) -> ()
-    "affine.yield"() : () -> ()
+    affine.yield
   }) : () -> ()
   %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
   func.return %0 : i32
@@ -150,7 +150,7 @@ func.func @up_propagate_for() -> i32 {
 // CHECK-NEXT:      ^bb0(%0: index):
 // CHECK-NEXT:        %1 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:        "foo"(%1) : (i32) -> ()
-// CHECK-NEXT:        "affine.yield"() : () -> ()
+// CHECK-NEXT:        affine.yield
 // CHECK-NEXT:      }) : () -> ()
 // CHECK-NEXT:      %0 = "arith.constant"() <{value = 1 : i32}> : () -> i32
 // CHECK-NEXT:      func.return %0 : i32

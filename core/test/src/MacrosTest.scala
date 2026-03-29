@@ -611,7 +611,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
     val out = java.io.StringWriter()
     val printer = new scair.Printer(p = java.io.PrintWriter(out))
-    printer.print(op, op2)(using 0)
+    printer.print(op, op2)
 
     out.toString() should be(
       "%0 = cmath.mulopt %1, %2 : (ui5, ui5) -> ui25\n%3 = cmath.mulopt %4 : ( ui5) -> ui25\n"

@@ -18,7 +18,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      MLIR-Version: 98e674c9f16d677d95c67bc130e267fae331e43c
+      MLIR-Version: llvmorg-22.1.1
 
     steps:
     - name: Checkout Scair
@@ -76,7 +76,7 @@ jobs:
       if: steps.cache-binary.outputs.cache-hit != 'true'
       run: |
         cd llvm-project/build
-        cmake --build . --target mlir-opt mlir-cpu-runner
+        cmake --build . --target mlir-opt mlir-runner
     
     ###########
     # TESTING #

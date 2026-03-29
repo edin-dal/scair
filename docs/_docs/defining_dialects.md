@@ -8,10 +8,10 @@ title: "Defining a Dialect"
 [NoMemoryEffect]: scair.ir.NoMemoryEffect
 [IsTerminator]: scair.ir.IsTerminator
 [IsolatedFromAbove]: scair.ir.IsolatedFromAbove
-[DerivedAttribute]: scair.clair.macros.DerivedAttribute
-[DerivedOperation]: scair.clair.macros.DerivedOperation
-[derives DerivedOperationCompanion]: scair.clair.macros.DerivedOperationCompanion
-[derives DerivedAttributeCompanion]: scair.clair.macros.DerivedAttributeCompanion
+[DerivedAttribute]: scair.clair.DerivedAttribute
+[DerivedOperation]: scair.clair.DerivedOperation
+[derives DerivedOperationCompanion]: scair.clair.DerivedOperationCompanion
+[derives DerivedAttributeCompanion]: scair.clair.DerivedAttributeCompanion
 
 # Defining a Dialect
 This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect.
