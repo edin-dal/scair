@@ -9,24 +9,21 @@ import scair.utils.*
 
 case class RegionOp(
     wowregions: Seq[Region]
-) extends DerivedOperation["test.region", RegionOp] derives OpDefs
+) extends DerivedOperation["test.region"] derives OpDefs
 
 case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: StringData,
-) extends DerivedOperation["cmath.mul", Mul] derives OpDefs
+) extends DerivedOperation["cmath.mul"] derives OpDefs
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
     rhs: Seq[Operand[IntegerType]],
     result: Seq[Result[IntegerType]],
     randProp: StringData,
-) extends DerivedOperation[
-      "cmath.mulsinglevariadic",
-      MulSingleVariadic,
-    ] derives OpDefs
+) extends DerivedOperation["cmath.mulsinglevariadic"] derives OpDefs
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
@@ -37,10 +34,7 @@ case class MulMultiVariadic(
     result3: Seq[Result[IntegerType]],
     operandSegmentSizes: DenseArrayAttr,
     resultSegmentSizes: DenseArrayAttr,
-) extends DerivedOperation[
-      "cmath.mulmultivariadic",
-      MulMultiVariadic,
-    ] derives OpDefs
+) extends DerivedOperation["cmath.mulmultivariadic"] derives OpDefs
 
 case class MulFull(
     operand1: Operand[IntegerType],
@@ -53,13 +47,13 @@ case class MulFull(
     reg2: Region,
     succ1: Successor,
     succ2: Successor,
-) extends DerivedOperation["cmath.mulfull", MulFull] derives OpDefs
+) extends DerivedOperation["cmath.mulfull"] derives OpDefs
 
 case class MulOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Operand[IntegerType],
     res: Result[IntegerType],
-) extends DerivedOperation["cmath.mulopt", MulOptional]
+) extends DerivedOperation["cmath.mulopt"]
     with AssemblyFormat[
       "($lhs^ `,`)? $rhs attr-dict `:` `(` (type($lhs)^ `,`)? type($rhs) `)` `->` type($res)"
     ] derives OpDefs
@@ -69,26 +63,20 @@ case class MulMultiOptional(
     rhs: Option[Operand[IntegerType]],
     additional: Option[Operand[IntegerType]],
     res: Result[IntegerType],
-) extends DerivedOperation["cmath.mulmultiopt", MulMultiOptional] derives OpDefs
+) extends DerivedOperation["cmath.mulmultiopt"] derives OpDefs
 
 case class MultiOptionalPropertyOp(
     prop1: Option[IntegerType],
     prop2: Option[IntegerType],
     prop3: Option[IntegerType],
-) extends DerivedOperation[
-      "cmath.multpropop",
-      MultiOptionalPropertyOp,
-    ] derives OpDefs
+) extends DerivedOperation["cmath.multpropop"] derives OpDefs
 
 case class MultiOptionalCompositionOp(
     operand: Option[Operand[IntegerType]],
     prop1: Option[IntegerType],
     prop2: IntegerType,
     result: Option[Result[IntegerType]],
-) extends DerivedOperation[
-      "cmath.multpropcompop",
-      MultiOptionalCompositionOp,
-    ] derives OpDefs
+) extends DerivedOperation["cmath.multpropcompop"] derives OpDefs
 
 val mulComp = summon[OpDefs[Mul]]
 val mulSVComp = summon[OpDefs[MulSingleVariadic]]

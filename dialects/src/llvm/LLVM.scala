@@ -11,13 +11,13 @@ import scair.ir.*
 // ███████╗ ███████╗ ░░╚██╔╝░░ ██║░╚═╝░██║
 // ╚══════╝ ╚══════╝ ░░░╚═╝░░░ ╚═╝░░░░░╚═╝
 
-case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
+case class Ptr() extends DerivedAttribute["llvm.ptr"] with TypeAttribute
     derives AttrDefs
 
 case class Load(
     addr: Operand[Ptr],
     res: Result[Attribute],
-) extends DerivedOperation["llvm.load", Load]
+) extends DerivedOperation["llvm.load"]
     with AssemblyFormat["$addr attr-dict `:` type($addr) `->` type($res)"]
     derives OpDefs
 
@@ -27,7 +27,7 @@ case class GetElementPtr(
     res: Result[Ptr],
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute,
-) extends DerivedOperation["llvm.getelementptr", GetElementPtr]
+) extends DerivedOperation["llvm.getelementptr"]
     with NoMemoryEffect derives OpDefs
 
 val LLVMDialect = summonDialect[Tuple1[Ptr], (Load, GetElementPtr)]

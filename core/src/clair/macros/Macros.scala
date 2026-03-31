@@ -960,7 +960,7 @@ def deriveOpDefs[T <: Operation: Type](using
         ${
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match
-          case adt: DerivedOperation[?, T] =>
+          case adt: DerivedOperation[?] =>
             adt.attributes.addAll(unstrucOp.attributes)
             adt
           case _ =>
