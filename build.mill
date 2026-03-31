@@ -42,10 +42,10 @@ import mill.javalib.PlatformModuleBase
 trait ScairSettings extends ScalaModule with PublishModule:
   def scoverageVersion = Task { "2.5.2" }
 
-  override def scalaVersion = "3.8.2"
+  override def scalaVersion = "3.8.3"
 
   override def scalacOptions =
-    super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
+    super.scalacOptions() ++ Seq("-Wunused:imports", "-explain", "-opt", "-opt-inline:**,!java.**")
 
   override def artifactName = s"scair-${super.artifactName()}"
 
