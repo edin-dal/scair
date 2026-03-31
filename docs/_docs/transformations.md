@@ -81,7 +81,7 @@ case class Constant(
     val result: Result[Attribute]
 ) extends DerivedOperation["arith.constant", Constant]
   with NoMemoryEffect
-  derives DerivedOperationCompanion
+  derives OpDefs
 
 case class AddI(
     val lhs: Operand[IntegerType],
@@ -89,7 +89,7 @@ case class AddI(
     val result: Result[IntegerType]
 ) extends DerivedOperation["arith.addi", AddI]
 	with NoMemoryEffect
-  derives DerivedOperationCompanion
+  derives OpDefs
 ```
 
 

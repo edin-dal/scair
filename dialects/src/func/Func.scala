@@ -23,7 +23,7 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]],
-) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
+) extends DerivedOperation["func.call", Call] derives OpDefs
 
 given OperationCustomParser[Func]:
 
@@ -71,7 +71,7 @@ case class Func(
 ) extends DerivedOperation["func.func", Func]
     with IsolatedFromAbove
     with Symbol
-    with SymbolTable derives DerivedOperationCompanion:
+    with SymbolTable derives OpDefs:
 
   override def customPrint(printer: Printer) =
     val lprinter = printer.copy()
@@ -118,21 +118,20 @@ case class Return(
 ) extends DerivedOperation["func.return", Return]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
     with NoMemoryEffect
-    with IsTerminator derives DerivedOperationCompanion
+    with IsTerminator derives OpDefs
 
 case class Constant(
     value: SymbolRefAttr,
     res: Result[FunctionType],
 ) extends DerivedOperation["func.constant", Constant]
     with AssemblyFormat["attr-dict $value `:` type($res)"]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect derives OpDefs
 
 case class CallIndirect(
     callee: Operand[FunctionType],
     callee_operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]],
-) extends DerivedOperation["func.call_indirect", CallIndirect]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["func.call_indirect", CallIndirect] derives OpDefs:
 
   override def verify(): OK[Operation] =
     callee.typ match

@@ -17,8 +17,7 @@ enum Color(name: String) extends I32Enum(name):
 
 case class EnumOperation(
     val color: Color
-) extends DerivedOperation["enum.enum_op", EnumOperation]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["enum.enum_op", EnumOperation] derives OpDefs
 
 val EnumTestDialect = summonDialect[EmptyTuple, Tuple1[EnumOperation]]
 

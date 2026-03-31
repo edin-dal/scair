@@ -10,8 +10,8 @@ title: "Defining a Dialect"
 [IsolatedFromAbove]: scair.ir.IsolatedFromAbove
 [DerivedAttribute]: scair.clair.DerivedAttribute
 [DerivedOperation]: scair.clair.DerivedOperation
-[derives DerivedOperationCompanion]: scair.clair.DerivedOperationCompanion
-[derives DerivedAttributeCompanion]: scair.clair.DerivedAttributeCompanion
+[derives OpDefs]: scair.clair.DerivedOperationCompanion
+[derives AttrDefs]: scair.clair.AttrDefs
 
 # Defining a Dialect
 This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect.
@@ -50,7 +50,7 @@ In ScaIR, this distinction is expressed explicitly in Scala: type attributes ext
 final case class MyType()
   extends DerivedAttribute["mydialect.type", MyType]
   with TypeAttribute
-  derives DerivedAttributeCompanion
+  derives AttrDefs
 ```
 
 Type attributes are printed in the IR type position:
@@ -61,7 +61,7 @@ Type attributes are printed in the IR type position:
 
 [DerivedAttribute] is the typed base for attributes whose IR name and parameters are provided by a derived companion. 
 
-[derives DerivedAttributeCompanion] generates the glue code needed for printing/parsing and parameter handling.
+[derives AttrDefs] generates the glue code needed for printing/parsing and parameter handling.
 
 ### Data Attributes
 
@@ -141,7 +141,7 @@ In most cases, the companion is derived automatically using macros:
 ```scala sc:nocompile
 case class Add(...) 
   extends DerivedOperation["mydialect.add", Add]
-  derives DerivedOperationCompanion
+  derives OpDefs
 ```
 
 This derived companion plays the same role as MLIR’s TableGen-generated boilerplate, but without a separate code-generation step.
@@ -154,7 +154,7 @@ case class Add(
   rhs: Operand[IntegerType],
   res: Result[IntegerType]
 ) extends DerivedOperation["mydialect.add", Add]
-  derives DerivedOperationCompanion
+  derives OpDefs
 ```
 
 This defines an operation printed as:
@@ -173,7 +173,7 @@ case class MyIf(
   thenRegion: Region,
   elseRegion: Region
 ) extends DerivedOperation["mydialect.if", MyIf]
-  derives DerivedOperationCompanion
+  derives OpDefs
 ```
 
 Regions are commonly used for control flow and loops.
@@ -195,7 +195,7 @@ case class PureOp(
   res: Result[IntegerType]
 ) extends DerivedOperation["mydialect.pure", PureOp]
   with NoMemoryEffect
-  derives DerivedOperationCompanion
+  derives OpDefs
 ```
 
 Example trait Implementation:

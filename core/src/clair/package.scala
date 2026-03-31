@@ -27,8 +27,7 @@ package scair
   *
   * case class EnumOperation(
   *     val color: Color
-  * ) extends DerivedOperation["arith.enum_op", EnumOperation]
-  *     derives DerivedOperationCompanion
+  * ) extends DerivedOperation["arith.enum_op", EnumOperation] derives OpDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom data attribute   ||
@@ -47,7 +46,7 @@ package scair
   * case class SampleAttr(
   *     val value: FloatType
   * ) extends DerivedAttribute["sample.sample_attr", SampleAttr]
-  *     derives DerivedAttributeCompanion
+  *     derives AttrDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom type attribute   ||
@@ -56,7 +55,7 @@ package scair
   * case class SampleType(
   *     val value: FloatType
   * ) extends DerivedAttribute["sample.sample_type", SampleType]
-  *     with TypeAttribute derives DerivedAttributeCompanion
+  *     with TypeAttribute derives AttrDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining custom operations   ||
@@ -66,14 +65,12 @@ package scair
   *     e1: Seq[Operand[IntegerAttr]],
   *     e2: Result[Attribute],
   *     e3: Region,
-  * ) extends DerivedOperation["sample.sampop1", SampOp1]
-  *     derives DerivedOperationCompanion
+  * ) extends DerivedOperation["sample.sampop1", SampOp1] derives OpDefs
   *
   * case class SampOp2(
   *     e1: Seq[Operand[Complex]],
   *     e2: Result[Attribute],
-  * ) extends DerivedOperation["sample.sampop2", SampOp2]
-  *     derives DerivedOperationCompanion
+  * ) extends DerivedOperation["sample.sampop2", SampOp2] derives OpDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   constraints over operation components   ||
@@ -88,15 +85,13 @@ package scair
   *     lhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     rhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     result: Result[IntegerType],
-  * ) extends DerivedOperation["samplecnstr.mulieq", MulIEq]
-  *     derives DerivedOperationCompanion
+  * ) extends DerivedOperation["samplecnstr.mulieq", MulIEq] derives OpDefs
   *
   * case class MulIVar(
   *     lhs: Operand[IntegerType !> T],
   *     rhs: Operand[IntegerType !> T],
   *     result: Result[IntegerType],
-  * ) extends DerivedOperation["samplecnstr.mulivar", MulIVar]
-  *     derives DerivedOperationCompanion
+  * ) extends DerivedOperation["samplecnstr.mulivar", MulIVar] derives OpDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   packaging into a dialect   ||
