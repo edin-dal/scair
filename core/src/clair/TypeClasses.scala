@@ -2,8 +2,8 @@ package scair.clair
 
 import fastparse.P
 import scair.Printer
-import scair.clair.macros.deriveOperationCompanion
-import scair.clair.macros.derivedAttributeCompanion
+import scair.clair.macros.deriveAttrDefs
+import scair.clair.macros.deriveOpDefs
 import scair.ir.*
 import scair.parse.Parser
 import scair.utils.*
@@ -34,14 +34,14 @@ trait AttributeCustomParser[T <: Attribute]:
       Parser
   ): P[T]
 
-trait DerivedAttributeCompanion[T <: Attribute] extends AttributeCompanion[T]:
+trait AttrDefs[T <: Attribute] extends AttributeCompanion[T]:
   def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
   override def parse[$: P](using Parser): P[T]
 
-object DerivedAttributeCompanion:
+object AttrDefs:
 
-  inline def derived[T <: Attribute]: DerivedAttributeCompanion[T] = ${
-    derivedAttributeCompanion[T]
+  inline def derived[T <: Attribute]: AttrDefs[T] = ${
+    deriveAttrDefs[T]
   }
 
 trait OperationCustomParser[T <: Operation]:
@@ -51,7 +51,7 @@ trait OperationCustomParser[T <: Operation]:
       resNames: Seq[String]
   )(using Parser): P[T]
 
-trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
+trait OpDefs[T <: Operation] extends OperationCompanion[T]:
 
   companion =>
 
@@ -113,10 +113,10 @@ trait DerivedOperationCompanion[T <: Operation] extends OperationCompanion[T]:
   def destructure(adtOp: T): UnstructuredOp
   def structure(unstrucOp: UnstructuredOp): T
 
-object DerivedOperationCompanion:
+object OpDefs:
 
-  inline def derived[T <: Operation]: DerivedOperationCompanion[T] = ${
-    deriveOperationCompanion[T]
+  inline def derived[T <: Operation]: OpDefs[T] = ${
+    deriveOpDefs[T]
   }
 
 def summonOperationCompanionsMacroRec[T <: Tuple: Type](using

@@ -12,7 +12,7 @@ import scair.utils.*
 // ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚═════╝░
 
 transparent trait DerivedAttribute[name <: String, T <: Attribute](using
-    private final val comp: DerivedAttributeCompanion[T]
+    private final val comp: AttrDefs[T]
 ) extends ParametrizedAttribute:
 
   this: T =>
@@ -25,7 +25,7 @@ transparent trait DerivedAttribute[name <: String, T <: Attribute](using
 trait AssemblyFormat[format <: String]
 
 abstract class DerivedOperation[name <: String, T <: Operation](using
-    private final val comp: DerivedOperationCompanion[T]
+    private final val comp: OpDefs[T]
 ) extends Operation:
 
   this: T =>

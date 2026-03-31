@@ -4,7 +4,7 @@ import fastparse.*
 import scair.*
 import scair.clair.*
 import scair.clair.DerivedOperation
-import scair.clair.DerivedOperationCompanion
+import scair.clair.OpDefs
 import scair.clair.summonDialect
 import scair.dialects.arith.FastMathFlags
 import scair.dialects.arith.FastMathFlagsAttr
@@ -51,7 +51,7 @@ case class AbsfOp(
     operand: Operand[FloatType],
     result: Result[FloatType],
 ) extends DerivedOperation["math.absf", AbsfOp]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect derives OpDefs
 
 // ==--------== //
 //   FPowIOp   //
@@ -86,7 +86,7 @@ case class FPowIOp(
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
     result: Result[FloatType],
 ) extends DerivedOperation["math.fpowi", FPowIOp]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect derives OpDefs
 
 /////////////
 // DIALECT //

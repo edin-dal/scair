@@ -301,7 +301,7 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(
-            s"${Type.show[T]} should extend DerivedAttribute.DerivedOperation to derive DerivedAttributeCompanion.",
+            s"${Type.show[T]} should extend DerivedAttribute.DerivedOperation to derive AttrDefs.",
             TypeRepr.of[T].typeSymbol.pos.get,
           )
 

@@ -334,7 +334,7 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type as d](
-    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
+    op: Expr[OpDefs[?]#UnstructuredOp]
 )(using Quotes) =
   (d match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -758,7 +758,7 @@ def tryConstruct[T: Type](
 
 def fromUnstructuredOperationMacro[T <: Operation: Type](
     opDef: OperationDef,
-    genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp],
+    genExpr: Expr[OpDefs[T]#UnstructuredOp],
 )(using Quotes): Expr[T] =
 
   // Create named arguments for all of the ADT's constructor arguments.
@@ -842,14 +842,14 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-def derivedAttributeCompanion[T <: Attribute: Type](using
+def deriveAttrDefs[T <: Attribute: Type](using
     Quotes
-): Expr[DerivedAttributeCompanion[T]] =
+): Expr[AttrDefs[T]] =
 
   val attrDef = getAttrDefImpl[T]
 
   '{
-    new DerivedAttributeCompanion[T]:
+    new AttrDefs[T]:
       override def name: String = ${ Expr(attrDef.name) }
       override def parse[$: P as ctx](using p: Parser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx })
@@ -867,9 +867,9 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
       }
   }
 
-def deriveOperationCompanion[T <: Operation: Type](using
+def deriveOpDefs[T <: Operation: Type](using
     Quotes
-): Expr[DerivedOperationCompanion[T]] =
+): Expr[OpDefs[T]] =
   val opDef = getDefImpl[T]
 
   val summonedPatterns = Expr.summon[CanonicalizationPatterns[T]] match
@@ -879,7 +879,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
   '{
 
-    new DerivedOperationCompanion[T]:
+    new OpDefs[T]:
 
       override def canonicalizationPatterns: Seq[RewritePattern] =
         $summonedPatterns
