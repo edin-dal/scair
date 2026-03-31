@@ -297,7 +297,7 @@ def getAttrDefImpl[T: Type](using quotes: Quotes): AttributeDef =
       val paramLabels = stringifyLabels[elemLabels]
 
       val name = Type.of[T] match
-        case '[DerivedAttribute[name, ?]] =>
+        case '[DerivedAttribute[name]] =>
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(

@@ -55,6 +55,8 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
 
   companion =>
 
+  type DerivingType = T
+
   def operands(adtOp: T): Seq[Value[Attribute]]
   def successors(adtOp: T): Seq[Block]
   def results(adtOp: T): Seq[Result[Attribute]]

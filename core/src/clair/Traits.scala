@@ -13,11 +13,12 @@ import scala.compiletime.deferred
 // ░░░██║░░░ ██║░░██║ ██║░░██║ ██║ ░░░██║░░░ ██████╔╝
 // ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚═════╝░
 
-transparent trait DerivedAttribute[name <: String, T <: Attribute](using
-    private final val comp: AttrDefs[T]
-) extends ParametrizedAttribute:
+transparent trait DerivedAttribute[name <: String]
+    extends ParametrizedAttribute:
 
-  this: T =>
+  // This enables summoning the right instance without an explicit type parameter
+  protected final given comp
+      : AttrDefs[? >: this.type <: DerivedAttribute[name]] = deferred
 
   override val name: String = comp.name
 
@@ -28,8 +29,9 @@ trait AssemblyFormat[format <: String]
 
 transparent trait DerivedOperation[name <: String] extends Operation:
 
-  // This enables summoning the companion without an explicit type parameter
-  given comp: OpDefs[? >: this.type <: Operation] = deferred
+  // This enables summoning the right instance without an explicit type parameter
+  protected final given comp: OpDefs[? >: this.type <: DerivedOperation[name]] =
+    deferred
 
   override def updated(
       operands: Seq[Value[Attribute]],

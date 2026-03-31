@@ -51,11 +51,11 @@ final case class Attributes(
     attribute_value_names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.attributes"] derives OpDefs
 
-final case class AttributeType()
-    extends DerivedAttribute["irdl.attribute", AttributeType] derives AttrDefs
+final case class AttributeType() extends DerivedAttribute["irdl.attribute"]
+    derives AttrDefs
 
-final case class RegionType()
-    extends DerivedAttribute["irdl.region", RegionType] derives AttrDefs
+final case class RegionType() extends DerivedAttribute["irdl.region"]
+    derives AttrDefs
 
 final case class Any(
     output: Result[AttributeType]

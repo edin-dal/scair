@@ -48,7 +48,7 @@ In ScaIR, this distinction is expressed explicitly in Scala: type attributes ext
 
 ```scala sc:nocompile
 final case class MyType()
-  extends DerivedAttribute["mydialect.type", MyType]
+  extends DerivedAttribute["mydialect.type"]
   with TypeAttribute
   derives AttrDefs
 ```

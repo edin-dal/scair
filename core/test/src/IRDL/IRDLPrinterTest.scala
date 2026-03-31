@@ -55,7 +55,7 @@ import scair.clair.*
 
 case class Complex(
   elem: Attribute,
-) extends DerivedAttribute["cmath.complex", Complex] with TypeAttribute
+) extends DerivedAttribute["cmath.complex"] with TypeAttribute
   derives AttrDefs
 
 case class Norm(

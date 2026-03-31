@@ -215,9 +215,7 @@ object IRDLPrinter:
 
     p.print(") extends DerivedAttribute[\"")
     p.print(name)
-    p.print("\", ")
-    p.print(className.capitalize)
-    p.println("] with TypeAttribute")
+    p.println("\"] with TypeAttribute")
     p.println("  derives AttrDefs")
     p.println()
 

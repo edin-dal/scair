@@ -121,7 +121,7 @@ case class ComplexAttr(
     real: FloatData,
     imaginary: FloatData,
     tpe: ComplexType,
-) extends DerivedAttribute["complex.number", ComplexAttr] derives AttrDefs:
+) extends DerivedAttribute["complex.number"] derives AttrDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print(

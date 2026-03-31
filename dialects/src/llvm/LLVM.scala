@@ -11,7 +11,7 @@ import scair.ir.*
 // ███████╗ ███████╗ ░░╚██╔╝░░ ██║░╚═╝░██║
 // ╚══════╝ ╚══════╝ ░░░╚═╝░░░ ╚═╝░░░░░╚═╝
 
-case class Ptr() extends DerivedAttribute["llvm.ptr", Ptr] with TypeAttribute
+case class Ptr() extends DerivedAttribute["llvm.ptr"] with TypeAttribute
     derives AttrDefs
 
 case class Load(

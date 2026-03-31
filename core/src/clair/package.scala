@@ -45,8 +45,7 @@ package scair
   *
   * case class SampleAttr(
   *     val value: FloatType
-  * ) extends DerivedAttribute["sample.sample_attr", SampleAttr]
-  *     derives AttrDefs
+  * ) extends DerivedAttribute["sample.sample_attr"] derives AttrDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom type attribute   ||
@@ -54,7 +53,7 @@ package scair
   *
   * case class SampleType(
   *     val value: FloatType
-  * ) extends DerivedAttribute["sample.sample_type", SampleType]
+  * ) extends DerivedAttribute["sample.sample_type"]
   *     with TypeAttribute derives AttrDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
