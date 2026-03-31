@@ -185,9 +185,7 @@ object IRDLPrinter:
 
     p.print(") extends DerivedOperation[\"")
     p.print(name)
-    p.print("\", ")
-    p.print(className.capitalize)
-    p.println("]")
+    p.println("\"]")
     p.println("  derives OpDefs")
     p.println()
 

@@ -89,7 +89,7 @@ enum CmpPredicate(name: String) extends I64Enum(name):
 case class DBConstant(
     value: StringData,
     result: Result[Attribute],
-) extends DerivedOperation["db.constant", DBConstant] derives OpDefs:
+) extends DerivedOperation["db.constant"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.constant(")
@@ -102,7 +102,7 @@ case class DBCompare(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.compare", DBCompare] derives OpDefs:
+) extends DerivedOperation["db.compare"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.compare ")
@@ -119,7 +119,7 @@ case class DBCompare(
 case class DBAnd(
     vals: Seq[Operand[Attribute]],
     result: Result[Attribute],
-) extends DerivedOperation["db.and", DBAnd] derives OpDefs:
+) extends DerivedOperation["db.and"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.and ")
@@ -130,7 +130,7 @@ case class DBAnd(
 case class DBOr(
     vals: Seq[Operand[Attribute]],
     result: Result[Attribute],
-) extends DerivedOperation["db.or", DBOr] derives OpDefs:
+) extends DerivedOperation["db.or"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.or ")
@@ -141,7 +141,7 @@ case class DBOr(
 case class DBNot(
     val_ : Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.not", DBNot] derives OpDefs:
+) extends DerivedOperation["db.not"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.not ")
@@ -153,7 +153,7 @@ case class DBAdd(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.add", DBAdd] derives OpDefs:
+) extends DerivedOperation["db.add"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.add ")
@@ -169,7 +169,7 @@ case class DBSub(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.sub", DBSub] derives OpDefs:
+) extends DerivedOperation["db.sub"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.sub ")
@@ -185,7 +185,7 @@ case class DBMul(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.mul", DBMul] derives OpDefs:
+) extends DerivedOperation["db.mul"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.mul ")
@@ -201,7 +201,7 @@ case class DBDiv(
     lhs: Operand[Attribute],
     rhs: Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.div", DBDiv] derives OpDefs:
+) extends DerivedOperation["db.div"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.div ")
@@ -216,7 +216,7 @@ case class DBDiv(
 case class DBCast(
     val_ : Operand[Attribute],
     result: Result[Attribute],
-) extends DerivedOperation["db.cast", DBCast] derives OpDefs:
+) extends DerivedOperation["db.cast"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("db.cast ")

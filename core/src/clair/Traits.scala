@@ -4,6 +4,8 @@ import scair.Printer
 import scair.ir.*
 import scair.utils.*
 
+import scala.compiletime.deferred
+
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
 // ░░░██║░░░ ██████╔╝ ███████║ ██║ ░░░██║░░░ ╚█████╗░
@@ -24,11 +26,10 @@ transparent trait DerivedAttribute[name <: String, T <: Attribute](using
 
 trait AssemblyFormat[format <: String]
 
-abstract class DerivedOperation[name <: String, T <: Operation](using
-    private final val comp: OpDefs[T]
-) extends Operation:
+transparent trait DerivedOperation[name <: String] extends Operation:
 
-  this: T =>
+  // This enables summoning the companion without an explicit type parameter
+  given comp: OpDefs[? >: this.type <: Operation] = deferred
 
   override def updated(
       operands: Seq[Value[Attribute]],

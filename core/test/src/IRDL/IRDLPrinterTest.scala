@@ -61,14 +61,14 @@ case class Complex(
 case class Norm(
   in: Operand[Attribute],
   out: Result[Attribute],
-) extends DerivedOperation["cmath.norm", Norm]
+) extends DerivedOperation["cmath.norm"]
   derives OpDefs
 
 case class Mul(
   lhs: Operand[Attribute],
   rhs: Operand[Attribute],
   res: Result[Attribute],
-) extends DerivedOperation["cmath.mul", Mul]
+) extends DerivedOperation["cmath.mul"]
   derives OpDefs
 
 val cmath = summonDialect[Complex *: EmptyTuple, Norm *: Mul *: EmptyTuple]

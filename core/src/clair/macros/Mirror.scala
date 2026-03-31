@@ -232,7 +232,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
 
       val paramLabels = stringifyLabels[elemLabels]
       val name = Type.of[T] match
-        case '[DerivedOperation[name, T]] =>
+        case '[DerivedOperation[name]] =>
           Type.valueOfConstant[name].get
         case _ =>
           report.errorAndAbort(

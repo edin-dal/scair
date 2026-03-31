@@ -55,7 +55,7 @@ final case class SubopLocalTableType(
 case class SetResult(
     index: IntData,
     rel: Operand[Attribute],
-) extends DerivedOperation["subop.set_result", SetResult] derives OpDefs:
+) extends DerivedOperation["subop.set_result"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("subop.set_result ")

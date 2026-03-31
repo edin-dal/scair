@@ -21,7 +21,7 @@ import scair.parse.*
 case class Abs(
     complex: Operand[ComplexType],
     result: Result[FloatType],
-) extends DerivedOperation["complex.abs", Abs]
+) extends DerivedOperation["complex.abs"]
     with NoMemoryEffect derives OpDefs
 
 case class Add(
@@ -29,7 +29,7 @@ case class Add(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
-) extends DerivedOperation["complex.add", Add]
+) extends DerivedOperation["complex.add"]
     with NoMemoryEffect
     // TODO: Should probably handle fastmath flags!
     with Commutative derives OpDefs
@@ -37,7 +37,7 @@ case class Add(
 case class Constant(
     value: ArrayAttribute[IntegerAttr | FloatAttr],
     complex: Result[ComplexType],
-) extends DerivedOperation["complex.constant", Constant]
+) extends DerivedOperation["complex.constant"]
     with AssemblyFormat["$value attr-dict `:` type($complex)"]
     with NoMemoryEffect
     with ConstantLike(value) derives OpDefs:
@@ -55,7 +55,7 @@ case class Create(
     real: Operand[IndexType | IntegerType | FloatType],
     imaginary: Operand[IndexType | IntegerType | FloatType],
     complex: Result[ComplexType],
-) extends DerivedOperation["complex.create", Create]
+) extends DerivedOperation["complex.create"]
     with NoMemoryEffect derives OpDefs
 
 case class Div(
@@ -63,13 +63,13 @@ case class Div(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
-) extends DerivedOperation["complex.div", Div]
+) extends DerivedOperation["complex.div"]
     with NoMemoryEffect derives OpDefs
 
 case class Im(
     complex: Operand[ComplexType],
     imaginary: Result[IndexType | IntegerType | FloatType],
-) extends DerivedOperation["complex.im", Im]
+) extends DerivedOperation["complex.im"]
     with NoMemoryEffect derives OpDefs
 
 case class Mul(
@@ -77,7 +77,7 @@ case class Mul(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
-) extends DerivedOperation["complex.mul", Mul]
+) extends DerivedOperation["complex.mul"]
     with NoMemoryEffect
     with Commutative derives OpDefs
 
@@ -85,13 +85,13 @@ case class Neg(
     complex: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
-) extends DerivedOperation["complex.neg", Neg]
+) extends DerivedOperation["complex.neg"]
     with NoMemoryEffect derives OpDefs
 
 case class Re(
     complex: Operand[ComplexType],
     real: Result[IndexType | IntegerType | FloatType],
-) extends DerivedOperation["complex.re", Re]
+) extends DerivedOperation["complex.re"]
     with NoMemoryEffect derives OpDefs
 
 case class Sub(
@@ -99,7 +99,7 @@ case class Sub(
     rhs: Operand[ComplexType],
     result: Result[ComplexType],
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
-) extends DerivedOperation["complex.sub", Sub]
+) extends DerivedOperation["complex.sub"]
     with NoMemoryEffect derives OpDefs
 
 given AttributeCustomParser[ComplexAttr]:

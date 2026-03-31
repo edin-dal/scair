@@ -140,7 +140,7 @@ In most cases, the companion is derived automatically using macros:
 
 ```scala sc:nocompile
 case class Add(...) 
-  extends DerivedOperation["mydialect.add", Add]
+  extends DerivedOperation["mydialect.add"]
   derives OpDefs
 ```
 
@@ -153,7 +153,7 @@ case class Add(
   lhs: Operand[IntegerType],
   rhs: Operand[IntegerType],
   res: Result[IntegerType]
-) extends DerivedOperation["mydialect.add", Add]
+) extends DerivedOperation["mydialect.add"]
   derives OpDefs
 ```
 
@@ -172,7 +172,7 @@ case class MyIf(
   cond: Operand[IntegerType],
   thenRegion: Region,
   elseRegion: Region
-) extends DerivedOperation["mydialect.if", MyIf]
+) extends DerivedOperation["mydialect.if"]
   derives OpDefs
 ```
 
@@ -193,7 +193,7 @@ Common examples:
 ```scala sc:nocompile
 case class PureOp(
   res: Result[IntegerType]
-) extends DerivedOperation["mydialect.pure", PureOp]
+) extends DerivedOperation["mydialect.pure"]
   with NoMemoryEffect
   derives OpDefs
 ```

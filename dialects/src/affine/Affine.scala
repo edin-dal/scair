@@ -26,7 +26,7 @@ case class Apply(
     mapOperands: Seq[Operand[IndexType]],
     res: Result[IndexType],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.apply", Apply]
+) extends DerivedOperation["affine.apply"]
     with NoMemoryEffect derives OpDefs
 
 /*≡==---=≡≡≡≡=---=≡≡*\
@@ -42,7 +42,7 @@ case class For(
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region,
-) extends DerivedOperation["affine.for", For] derives OpDefs
+) extends DerivedOperation["affine.for"] derives OpDefs
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -58,7 +58,7 @@ case class Parallel(
     upperBoundsGroups: DenseIntOrFPElementsAttr,
     res: Seq[Result[Attribute]],
     body: Region,
-) extends DerivedOperation["affine.parallel", Parallel] derives OpDefs
+) extends DerivedOperation["affine.parallel"] derives OpDefs
 
 /*≡==--=≡≡≡=--=≡≡*\
 ||     IF OP     ||
@@ -70,7 +70,7 @@ case class If(
     condition: AffineSetAttr,
     thenRegion: Region,
     elseRegion: Region,
-) extends DerivedOperation["affine.if", If] derives OpDefs
+) extends DerivedOperation["affine.if"] derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -81,7 +81,7 @@ case class Store(
     memref: Operand[MemrefType],
     indices: Seq[Operand[IndexType]],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.store", Store] derives OpDefs
+) extends DerivedOperation["affine.store"] derives OpDefs
 
 /*≡==---=≡≡≡=---=≡≡*\
 ||     LOAD OP     ||
@@ -92,7 +92,7 @@ case class Load(
     indices: Seq[Operand[IndexType]],
     result: Result[Attribute],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.load", Load] derives OpDefs
+) extends DerivedOperation["affine.load"] derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||     MIN OP     ||
@@ -102,7 +102,7 @@ case class Min(
     arguments: Seq[Operand[IndexType]],
     result: Result[IndexType],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.min", Min]
+) extends DerivedOperation["affine.min"]
     with NoMemoryEffect derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -111,7 +111,7 @@ case class Min(
 
 case class Yield(
     arguments: Seq[Operand[Attribute]]
-) extends DerivedOperation["affine.yield", Yield]
+) extends DerivedOperation["affine.yield"]
     with IsTerminator
     with AssemblyFormat["attr-dict ($arguments^ `:` type($arguments))?"]
     with NoMemoryEffect derives OpDefs

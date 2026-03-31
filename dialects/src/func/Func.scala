@@ -23,7 +23,7 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]],
-) extends DerivedOperation["func.call", Call] derives OpDefs
+) extends DerivedOperation["func.call"] derives OpDefs
 
 given OperationCustomParser[Func]:
 
@@ -68,7 +68,7 @@ case class Func(
     function_type: FunctionType,
     sym_visibility: Option[StringData],
     body: Region,
-) extends DerivedOperation["func.func", Func]
+) extends DerivedOperation["func.func"]
     with IsolatedFromAbove
     with Symbol
     with SymbolTable derives OpDefs:
@@ -115,7 +115,7 @@ case class Func(
 
 case class Return(
     _operands: Seq[Operand[Attribute]]
-) extends DerivedOperation["func.return", Return]
+) extends DerivedOperation["func.return"]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
     with NoMemoryEffect
     with IsTerminator derives OpDefs
@@ -123,7 +123,7 @@ case class Return(
 case class Constant(
     value: SymbolRefAttr,
     res: Result[FunctionType],
-) extends DerivedOperation["func.constant", Constant]
+) extends DerivedOperation["func.constant"]
     with AssemblyFormat["attr-dict $value `:` type($res)"]
     with NoMemoryEffect derives OpDefs
 
@@ -131,7 +131,7 @@ case class CallIndirect(
     callee: Operand[FunctionType],
     callee_operands: Seq[Operand[Attribute]],
     _results: Seq[Result[Attribute]],
-) extends DerivedOperation["func.call_indirect", CallIndirect] derives OpDefs:
+) extends DerivedOperation["func.call_indirect"] derives OpDefs:
 
   override def verify(): OK[Operation] =
     callee.typ match
