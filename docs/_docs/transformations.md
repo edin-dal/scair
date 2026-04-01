@@ -69,9 +69,9 @@ func.call @print(%0) : (i32) -> ()
 Let's start with our IR constructs, which we will borrow from the [Arith](https://mlir.llvm.org/docs/Dialects/ArithOps/) dialect (already defined in ScaIR) to express our basic arithmetic addition, and constants.
 
 @note You might notice that both Operation extend a trait **[NoMemoryEffect]**. We will come back to its exact function shortly.
-```scala sc:nocompile
+```scala
 //{
-import scair.clair.macros.*
+import scair.clair.*
 import scair.ir.*
 import scair.dialects.builtin.*
 //}

@@ -46,7 +46,7 @@ In ScaIR, this distinction is expressed explicitly in Scala: type attributes ext
 
 `TypeAttribute` describes the types of SSA values. While MLIR requires every SSA value to have exactly one type attribute, ScaIR allows SSA values to be typed using regular attributes as well.
 
-```scala
+```scala sc-name:MyType
 //{
 import scair.ir.TypeAttribute
 import scair.clair.*
@@ -73,7 +73,7 @@ Data attributes store constant compile-time data, such as numbers or structured 
 
 ScaIR provides many built-in examples (e.g. `IntData`, `FloatData`). You can define your own:
 
-```scala
+```scala sc-name:RangeAttr
 //{
 import scair.dialects.builtin.IntData
 import scair.ir.DataAttribute
@@ -92,7 +92,7 @@ Use data attributes for:
 
 Parametrized attributes are composed of other attributes.
 
-```scala 
+```scala sc-name:FunctionType
 //{
 import scair.clair.macros.*
 import scair.ir.*
@@ -155,7 +155,7 @@ This derived companion plays the same role as MLIR’s TableGen-generated boiler
 
 ### A Simple Operation
 
-```scala
+```scala sc-name:Add
 //{
 import scair.ir.*
 import scair.dialects.builtin.*
@@ -179,7 +179,7 @@ This defines an operation printed as:
 
 Operations may contain regions, which define nested scopes.
 
-```scala
+```scala sc-name:MyIf
 //{
 import scair.ir.*
 import scair.clair.*
@@ -207,7 +207,7 @@ Common examples:
 * [IsTerminator]
 * [IsolatedFromAbove]
 
-```scala
+```scala sc-name:PureOp
 //{
 import scair.ir.*
 import scair.clair.*
@@ -288,7 +288,7 @@ In ScaIR, dialects are declared using `summonDialect`.
 ```scala sc:nocompile
 val MyDialect = summonDialect[
   // Attributes
-  (MyType, VectorType, RangeAttr),
+  (MyType, FunctionType, RangeAttr),
 
   // Operations
   (Add, PureOp)
