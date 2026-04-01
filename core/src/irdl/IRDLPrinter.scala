@@ -185,9 +185,7 @@ object IRDLPrinter:
 
     p.print(") extends DerivedOperation[\"")
     p.print(name)
-    p.print("\", ")
-    p.print(className.capitalize)
-    p.println("]")
+    p.println("\"]")
     p.println("  derives OpDefs")
     p.println()
 
@@ -217,9 +215,7 @@ object IRDLPrinter:
 
     p.print(") extends DerivedAttribute[\"")
     p.print(name)
-    p.print("\", ")
-    p.print(className.capitalize)
-    p.println("] with TypeAttribute")
+    p.println("\"] with TypeAttribute")
     p.println("  derives AttrDefs")
     p.println()
 

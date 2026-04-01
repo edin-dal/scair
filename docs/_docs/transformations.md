@@ -79,7 +79,7 @@ import scair.dialects.builtin.*
 case class Constant(
     val value: Attribute,
     val result: Result[Attribute]
-) extends DerivedOperation["arith.constant", Constant]
+) extends DerivedOperation["arith.constant"]
   with NoMemoryEffect
   derives OpDefs
 
@@ -87,7 +87,7 @@ case class AddI(
     val lhs: Operand[IntegerType],
     val rhs: Operand[IntegerType],
     val result: Result[IntegerType]
-) extends DerivedOperation["arith.addi", AddI]
+) extends DerivedOperation["arith.addi"]
 	with NoMemoryEffect
   derives OpDefs
 ```

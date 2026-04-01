@@ -74,7 +74,7 @@ case class GetCol(
     tuple: Operand[TupleType],
     attr: ColumnRefAttr,
     result: Result[Attribute],
-) extends DerivedOperation["tuples.getcol", GetCol] derives OpDefs:
+) extends DerivedOperation["tuples.getcol"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("tuples.getcol ")
@@ -86,7 +86,7 @@ case class GetCol(
 
 case class TuplesReturn(
     results_ : Seq[Operand[Attribute]]
-) extends DerivedOperation["tuples.return", TuplesReturn]
+) extends DerivedOperation["tuples.return"]
     with IsTerminator derives OpDefs:
 
   override def customPrint(p: Printer): Unit =

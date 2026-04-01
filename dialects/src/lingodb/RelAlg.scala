@@ -82,7 +82,7 @@ case class BaseTable(
     tableId: StringData,
     columns: DictionaryAttr,
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.basetable", BaseTable] derives OpDefs:
+) extends DerivedOperation["relalg.basetable"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.basetable {table_identifier = ")
@@ -101,7 +101,7 @@ case class Selection(
     rel: Operand[TupleStreamType],
     predicate: Region,
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.selection", Selection] derives OpDefs:
+) extends DerivedOperation["relalg.selection"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     val lp = p.copy()
@@ -115,7 +115,7 @@ case class MapOp(
     computedCols: ArrayAttribute[ColumnDefAttr],
     lambda: Region,
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.map", MapOp] derives OpDefs:
+) extends DerivedOperation["relalg.map"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     val lp = p.copy()
@@ -131,7 +131,7 @@ case class InnerJoin(
     right: Operand[TupleStreamType],
     predicate: Region,
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.join", InnerJoin] derives OpDefs:
+) extends DerivedOperation["relalg.join"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     val lp = p.copy()
@@ -146,7 +146,7 @@ case class CrossProduct(
     left: Operand[TupleStreamType],
     right: Operand[TupleStreamType],
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.crossproduct", CrossProduct] derives OpDefs:
+) extends DerivedOperation["relalg.crossproduct"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.crossproduct ")
@@ -160,7 +160,7 @@ case class Aggregation(
     computedCols: ArrayAttribute[ColumnDefAttr],
     aggr: Region,
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.aggregation", Aggregation] derives OpDefs:
+) extends DerivedOperation["relalg.aggregation"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     val lp = p.copy()
@@ -178,7 +178,7 @@ case class AggrFn(
     fn: AggrFunc,
     attr: ColumnRefAttr,
     result: Result[Attribute],
-) extends DerivedOperation["relalg.aggrfn", AggrFn] derives OpDefs:
+) extends DerivedOperation["relalg.aggrfn"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.aggrfn ")
@@ -193,7 +193,7 @@ case class AggrFn(
 case class CountRows(
     rel: Operand[TupleStreamType],
     result: Result[Attribute],
-) extends DerivedOperation["relalg.count", CountRows] derives OpDefs:
+) extends DerivedOperation["relalg.count"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.count ")
@@ -203,7 +203,7 @@ case class Sort(
     rel: Operand[TupleStreamType],
     sortspecs: ArrayAttribute[SortSpecificationAttr],
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.sort", Sort] derives OpDefs:
+) extends DerivedOperation["relalg.sort"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.sort ")
@@ -216,7 +216,7 @@ case class Limit(
     rel: Operand[TupleStreamType],
     maxRows: IntData,
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.limit", Limit] derives OpDefs:
+) extends DerivedOperation["relalg.limit"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.limit ")
@@ -229,7 +229,7 @@ case class Projection(
     setSemantic: SetSemantic,
     cols: ArrayAttribute[ColumnRefAttr],
     result: Result[TupleStreamType],
-) extends DerivedOperation["relalg.projection", Projection] derives OpDefs:
+) extends DerivedOperation["relalg.projection"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.projection ")
@@ -244,7 +244,7 @@ case class Materialize(
     cols: ArrayAttribute[ColumnRefAttr],
     colNames: ArrayAttribute[StringData],
     result: Result[Attribute],
-) extends DerivedOperation["relalg.materialize", Materialize] derives OpDefs:
+) extends DerivedOperation["relalg.materialize"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("relalg.materialize ")
@@ -260,7 +260,7 @@ case class Materialize(
 case class RelAlgQuery(
     body: Region,
     result: Result[Attribute],
-) extends DerivedOperation["relalg.query", RelAlgQuery] derives OpDefs:
+) extends DerivedOperation["relalg.query"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     val lp = p.copy()
@@ -276,7 +276,7 @@ case class RelAlgQuery(
 /** `relalg.query_return %val : type` — terminator for RelAlgQuery regions. */
 case class QueryReturn(
     rel: Operand[Attribute]
-) extends DerivedOperation["relalg.query_return", QueryReturn]
+) extends DerivedOperation["relalg.query_return"]
     with IsTerminator derives OpDefs:
 
   override def customPrint(p: Printer): Unit =

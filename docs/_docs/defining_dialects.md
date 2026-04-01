@@ -52,7 +52,7 @@ import scair.ir.TypeAttribute
 import scair.clair.*
 //}
 final case class MyType()
-  extends DerivedAttribute["mydialect.type", MyType]
+  extends DerivedAttribute["mydialect.type"]
   with TypeAttribute
   derives AttrDefs
 ```
@@ -142,12 +142,9 @@ Together, these two parts bridge the typed Scala API and the generic IR represen
 
 In most cases, the companion is derived automatically using macros:
 
-```scala
-//{
-import scair.clair.*
-//}
-case class Add(/*...*/) 
-  extends DerivedOperation["mydialect.add", Add]
+```scala sc:nocompile
+case class Add(...) 
+  extends DerivedOperation["mydialect.add"]
   derives OpDefs
 ```
 
@@ -165,7 +162,7 @@ case class Add(
   lhs: Operand[IntegerType],
   rhs: Operand[IntegerType],
   res: Result[IntegerType]
-) extends DerivedOperation["mydialect.add", Add]
+) extends DerivedOperation["mydialect.add"]
   derives OpDefs
 ```
 
@@ -189,7 +186,7 @@ case class MyIf(
   cond: Operand[IntegerType],
   thenRegion: Region,
   elseRegion: Region
-) extends DerivedOperation["mydialect.if", MyIf]
+) extends DerivedOperation["mydialect.if"]
   derives OpDefs
 ```
 
@@ -215,7 +212,7 @@ import scair.dialects.builtin.*
 //}
 case class PureOp(
   res: Result[IntegerType]
-) extends DerivedOperation["mydialect.pure", PureOp]
+) extends DerivedOperation["mydialect.pure"]
   with NoMemoryEffect
   derives OpDefs
 ```
@@ -257,8 +254,8 @@ Operations can define a `verify()` method to enforce invariants:
 import scair.ir.*
 import scair.clair.*
 import scair.utils.*
-case class ExampleOp(lhs: Operand[Attribute], rhs: Operand[Attribute]) extends DerivedOperation["example", ExampleOp] derives OpDefs:
 ///}
+case class ExampleOp(lhs: Operand[Attribute], rhs: Operand[Attribute]) extends DerivedOperation["example"] derives OpDefs:
   override def verify() =
     if lhs.typ == rhs.typ then OK(this)
     else Err("type mismatch")

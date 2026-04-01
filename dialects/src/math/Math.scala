@@ -50,7 +50,7 @@ case class AbsfOp(
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
     operand: Operand[FloatType],
     result: Result[FloatType],
-) extends DerivedOperation["math.absf", AbsfOp]
+) extends DerivedOperation["math.absf"]
     with NoMemoryEffect derives OpDefs
 
 // ==--------== //
@@ -85,7 +85,7 @@ case class FPowIOp(
     rhs: Operand[IntegerType],
     fastmath: FastMathFlagsAttr = FastMathFlagsAttr(FastMathFlags.none),
     result: Result[FloatType],
-) extends DerivedOperation["math.fpowi", FPowIOp]
+) extends DerivedOperation["math.fpowi"]
     with NoMemoryEffect derives OpDefs
 
 /////////////

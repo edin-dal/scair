@@ -12,14 +12,14 @@ case class FillerOp(
     override val successors: Seq[Successor] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-) extends DerivedOperation["filler", FillerOp] derives OpDefs
+) extends DerivedOperation["filler"] derives OpDefs
 
 case class TerminatorOp(
     override val operands: Seq[Value[Attribute]] = Seq(),
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-) extends DerivedOperation["terminator", TerminatorOp]
+) extends DerivedOperation["terminator"]
     with IsTerminator derives OpDefs
 
 case class NoTerminatorOp(
@@ -27,7 +27,7 @@ case class NoTerminatorOp(
     override val successors: Seq[Block] = Seq(),
     override val results: Seq[Result[Attribute]] = Seq(),
     override val regions: Seq[Region] = Seq(),
-) extends DerivedOperation["noterminator", NoTerminatorOp]
+) extends DerivedOperation["noterminator"]
     with NoTerminator derives OpDefs
 
 class TraitTest extends AnyFlatSpec with BeforeAndAfter:
