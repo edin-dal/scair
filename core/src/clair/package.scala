@@ -15,6 +15,8 @@ package scair
   * import scair.dialects.builtin.*
   * import scair.dialects.cmath.*
   * import scair.enums.I32Enum
+  * import fastparse.*
+  * import scair.parse.*
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom I32 enum attribute   ||
@@ -33,8 +35,11 @@ package scair
   * ||   defining a custom data attribute   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * object SampleData extends AttributeCompanion:
+  * given AttributeCompanion[SampleData]:
   *   override def name: String = "sample"
+  *
+  *   override def parse[$: P](using Parser) =
+  *     "#sample<" ~ CharsWhile(_ != '>').!.map(SampleData.apply) ~ ">"
   *
   * case class SampleData(val d: String)
   *     extends DataAttribute[String]("sample", d)
