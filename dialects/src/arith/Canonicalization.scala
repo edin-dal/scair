@@ -85,7 +85,7 @@ val AddISubConstantLHS = pattern {
     Seq(Constant(c0 + c1, cv), SubI(cv, x, Result(x.typ)))
 }
 
-given CanonicalizationPatterns[AddI](
+given CanonicalizationPatterns[AddI[?]](
   AddIFold,
   AddIAddConstant,
   AddISubConstantRHS,

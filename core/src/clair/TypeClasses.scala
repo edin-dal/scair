@@ -131,14 +131,19 @@ def summonOperationCompanionsMacroRec(operations: Expr[Seq[Any]])(using
       ops.map { op =>
 
         val opTpeRef = op.asTerm match
-          case ident: Ident => ident.symbol.companionClass.typeRef
+          case ident: Ident => ident.symbol.companionClass
           case _            =>
             report.errorAndAbort(
               s"Expected an op companion object, got: ${op.show}",
               op.asTerm.pos,
             )
 
-        opTpeRef.asType match
+        val typeParams = opTpeRef.typeMembers.filter(_.flags.is(Flags.Param))
+        val highBounds = typeParams.map(opTpeRef.typeRef.memberType(_) match
+          case TypeBounds(_, hi) => hi)
+        val applied = opTpeRef.typeRef.appliedTo(highBounds)
+
+        applied.asType match
           case '[type t <: Operation; `t`] =>
             Expr.summon[OperationCompanion[t]]
               .getOrElse(

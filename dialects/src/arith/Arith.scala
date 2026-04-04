@@ -339,15 +339,17 @@ case class AddF(
     with NoMemoryEffect
     with Commutative derives OpDefs
 
-case class AddI(
-    val lhs: Operand[AnyIntegerType],
-    val rhs: Operand[AnyIntegerType],
-    val result: Result[AnyIntegerType],
+given OpDefs[AddI[AnyIntegerType]] = OpDefs.derived[AddI[AnyIntegerType]]
+
+case class AddI[+T <: AnyIntegerType](
+    val lhs: Operand[T],
+    val rhs: Operand[T],
+    val result: Result[T],
     val overflowFlags: OverflowFlagsAttr = OverflowFlagsAttr(OverflowFlags.none),
 ) extends DerivedOperation["arith.addi"]
     with SameOperandsAndResultTypes
     with NoMemoryEffect
-    with Commutative derives OpDefs
+    with Commutative
 
 case class AddUIExtendedOp(
     val lhs: Operand[AnyIntegerType],

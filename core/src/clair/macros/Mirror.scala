@@ -195,7 +195,10 @@ def defaultExprs[T: Type](using Quotes): Map[String, Expr[Any]] =
     companion.declaredMethod(methodName) match
       case List(m) =>
         // Select the method off the companion object reference
-        Some(fieldName -> Ref(companion).select(m).asExpr)
+        val defaultValueSymbol = Ref(companion).select(m)
+        val typeArgs = TypeRepr.of[T].typeArgs
+        val typeApplied = defaultValueSymbol.appliedToTypes(typeArgs)
+        Some(fieldName -> typeApplied.asExpr)
       case _ =>
         None
 

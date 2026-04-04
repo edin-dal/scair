@@ -736,10 +736,7 @@ def tryConstruct[T: Type](
           namedArg
       }
   // Return a call to the primary constructor of the ADT.
-  Apply(
-    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args),
-  ).asExprOf[T]
+  constructorCall(args)
 
   /** Attempt to create an ADT from an UnstructuredOp[ADT]
     *
@@ -770,6 +767,23 @@ def fromUnstructuredOperationMacro[T <: Operation: Type](
     '{ $genExpr.successors },
     '{ $genExpr.properties },
   )
+
+def constructorCall[T: Type](using
+    Quotes
+)(
+    args: Seq[quotes.reflect.Term]
+): Expr[T] =
+  import quotes.reflect.*
+
+  val select =
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor)
+  val typeArgs = TypeRepr.of[T].typeArgs
+  val symbol = select.appliedToTypes(typeArgs)
+
+  Apply(
+    symbol,
+    args.toList,
+  ).asExprOf[T]
 
 def getAttrConstructor[T: Type](
     attrDef: AttributeDef,
@@ -817,14 +831,10 @@ def getAttrConstructor[T: Type](
   val args = (extractedConstructs zip attrDef.attributes)
     .map((e, d) => NamedArg(d.name, e.asTerm))
 
-  val constructorCall = Apply(
-    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args),
-  ).asExprOf[T]
-
+  val call = constructorCall(args)
   '{
     $lengthCheck
-    $constructorCall
+    $call
   }
 
 def ADTFlatAttrInputMacro[Def <: AttributeDef: Type](
