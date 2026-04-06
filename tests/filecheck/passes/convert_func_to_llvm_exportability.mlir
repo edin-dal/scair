@@ -1,5 +1,4 @@
 // RUN: scair-opt %s -p convert-func-to-llvm | filecheck %s
-// RUN: scair-opt %s -p convert-func-to-llvm | /home/dominic/dev/llvm-source/build/bin/mlir-translate --mlir-to-llvmir > /dev/null
 
 builtin.module {
   func.func private @printNewline()
