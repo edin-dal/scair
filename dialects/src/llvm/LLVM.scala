@@ -147,28 +147,7 @@ case class GetElementPtr(
     elem_type: Attribute,
     gepFlags: Option[ArrayAttribute[StringData]] = None,
 ) extends DerivedOperation["llvm.getelementptr"]
-    with NoMemoryEffect derives OpDefs:
-
-  override def customPrint(printer: Printer): Unit =
-    printer.print(name, " ", base, "[")
-    val raw = rawConstantIndices.data.collect { case i: IntegerAttr => i.value.value }
-    var dynIdx = 0
-    printer.printListF(
-      raw,
-      { idx =>
-        if idx == BigInt(-2147483648L) then
-          val dyn = dynamicIndices(dynIdx)
-          dynIdx += 1
-          printer.print(dyn)
-        else printer.print(idx.toString)
-      },
-      sep = ", ",
-    )
-    printer.print("] : (", base.typ)
-    if dynamicIndices.nonEmpty then
-      printer.print(", ")
-      printer.printListF(dynamicIndices.map(_.typ), printer.print, sep = ", ")
-    printer.print(") -> ", res.typ, ", ", elem_type)
+    with NoMemoryEffect derives OpDefs
 
 case class ExtractValue(
     container: Operand[Attribute],
