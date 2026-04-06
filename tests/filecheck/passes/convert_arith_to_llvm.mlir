@@ -11,14 +11,13 @@ builtin.module {
   }
 }
 
-// CHECK-LABEL: builtin.module {
-// CHECK: func.func @plain(
-// CHECK: "llvm.mlir.constant"() <{value = 2 : i32}> : () -> i32
-// CHECK: "llvm.add"(%{{.*}}, %{{.*}}) : (i32, i32) -> i32
-// CHECK: "llvm.mul"(%{{.*}}, %{{.*}}) : (i32, i32) -> i32
-// CHECK: "llvm.fadd"(%{{.*}}, %{{.*}}) : (f32, f32) -> f32
-// CHECK: "llvm.fmul"(%{{.*}}, %{{.*}}) : (f32, f32) -> f32
-// CHECK-NOT: arith.addi
-// CHECK-NOT: arith.muli
-// CHECK-NOT: arith.addf
-// CHECK-NOT: arith.mulf
+// CHECK: builtin.module {
+// CHECK-NEXT:   func.func @plain(%0: i32, %1: i32, %2: f32, %3: f32) -> (i32, f32) {
+// CHECK-NEXT:     %4 = "llvm.mlir.constant"() <{value = 2 : i32}> : () -> i32
+// CHECK-NEXT:     %5 = "llvm.add"(%0, %1) : (i32, i32) -> i32
+// CHECK-NEXT:     %6 = "llvm.mul"(%5, %4) : (i32, i32) -> i32
+// CHECK-NEXT:     %7 = "llvm.fadd"(%2, %3) : (f32, f32) -> f32
+// CHECK-NEXT:     %8 = "llvm.fmul"(%7, %2) : (f32, f32) -> f32
+// CHECK-NEXT:     func.return %6, %8 : i32, f32
+// CHECK-NEXT:   }
+// CHECK-NEXT: }
