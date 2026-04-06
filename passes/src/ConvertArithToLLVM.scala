@@ -6,7 +6,10 @@ import scair.dialects.builtin.*
 import scair.dialects.func
 import scair.dialects.llvm
 import scair.ir.*
-import scair.transformations.{GreedyRewritePatternApplier, PatternRewriteWalker, WalkerPass, pattern}
+import scair.transformations.GreedyRewritePatternApplier
+import scair.transformations.PatternRewriteWalker
+import scair.transformations.WalkerPass
+import scair.transformations.pattern
 
 import scala.collection.mutable
 
@@ -25,13 +28,14 @@ private def convertLLVMValueType(attr: Attribute): Attribute =
 
 private def convertLLVMIntegerType(attr: Attribute): IntegerType | IndexType =
   attr match
-    case _: IndexType => llvmIndexType
+    case _: IndexType       => llvmIndexType
     case other: IntegerType => other
 
 private def convertLLVMConstantAttr(attr: Attribute): Attribute =
   attr match
-    case IntegerAttr(IntData(v), _: IndexType) => IntegerAttr(IntData(v), llvmIndexType)
-    case other                                 => other
+    case IntegerAttr(IntData(v), _: IndexType) =>
+      IntegerAttr(IntData(v), llvmIndexType)
+    case other => other
 
 // This builder performs a whole-function rebuild so arithmetic conversion can
 // preserve block order and SSA remapping without relying on full conversion
@@ -77,11 +81,19 @@ private final class Builder(val funcOp: func.Func):
         valueMap(mul.result) = lowered.res
         Seq(lowered)
       case add: arith.AddF =>
-        val lowered = llvm.FAdd(asFloat(remap(add.lhs)), asFloat(remap(add.rhs)), Result(add.result.typ))
+        val lowered = llvm.FAdd(
+          asFloat(remap(add.lhs)),
+          asFloat(remap(add.rhs)),
+          Result(add.result.typ),
+        )
         valueMap(add.result) = lowered.res
         Seq(lowered)
       case mul: arith.MulF =>
-        val lowered = llvm.FMul(asFloat(remap(mul.lhs)), asFloat(remap(mul.rhs)), Result(mul.result.typ))
+        val lowered = llvm.FMul(
+          asFloat(remap(mul.lhs)),
+          asFloat(remap(mul.rhs)),
+          Result(mul.result.typ),
+        )
         valueMap(mul.result) = lowered.res
         Seq(lowered)
       case other =>
@@ -99,7 +111,9 @@ private final class Builder(val funcOp: func.Func):
     funcOp.body.blocks.zip(newBlocks).foreach { case (oldBlock, newBlock) =>
       // Constants are emitted in source order within each block to keep the
       // lowering deterministic without introducing a pass-local ordering policy.
-      val constants = oldBlock.operations.collect { case c: arith.Constant => c }.toSeq
+      val constants = oldBlock.operations.collect { case c: arith.Constant =>
+        c
+      }.toSeq
       constants.foreach { c =>
         val lowered = lowerConstant(c, newBlock)
         newBlock.addOp(lowered)
@@ -109,14 +123,21 @@ private final class Builder(val funcOp: func.Func):
         case other             => newBlock.addOps(lowerOp(other))
       }
     }
-    val lowered = func.Func(funcOp.sym_name, funcOp.function_type, funcOp.sym_visibility, Region(newBlocks))
+    val lowered = func.Func(
+      funcOp.sym_name,
+      funcOp.function_type,
+      funcOp.sym_visibility,
+      Region(newBlocks),
+    )
     lowered.attributes.addAll(funcOp.attributes)
     lowered
 
 private val LowerFunc = pattern {
   case op: func.Func if op.body.blocks.exists(_.operations.exists {
-        case _: arith.Constant | _: arith.AddI | _: arith.MulI | _: arith.AddF | _: arith.MulF => true
-        case _                                                                                  => false
+        case _: arith.Constant | _: arith.AddI | _: arith.MulI | _: arith.AddF |
+            _: arith.MulF =>
+          true
+        case _ => false
       }) =>
     Builder(op).lower()
 }
@@ -126,5 +147,6 @@ private val LowerFunc = pattern {
 //   -> `llvm.constant` / `llvm.add` / `llvm.mul`.
 final class ConvertArithToLLVM(ctx: MLContext) extends WalkerPass(ctx):
   override val name: String = "convert-arith-to-llvm"
+
   override val walker: PatternRewriteWalker =
     PatternRewriteWalker(GreedyRewritePatternApplier(Seq(LowerFunc)))
