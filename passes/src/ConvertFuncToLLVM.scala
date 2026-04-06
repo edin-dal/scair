@@ -4,7 +4,10 @@ import scair.MLContext
 import scair.dialects.func
 import scair.dialects.llvm
 import scair.ir.*
-import scair.transformations.{GreedyRewritePatternApplier, PatternRewriteWalker, WalkerPass, pattern}
+import scair.transformations.GreedyRewritePatternApplier
+import scair.transformations.PatternRewriteWalker
+import scair.transformations.WalkerPass
+import scair.transformations.pattern
 
 import scala.collection.mutable
 
@@ -34,11 +37,17 @@ private final class Builder(val funcOp: func.Func):
           newBlock.addOp(lowered)
           valueMap.addAll(call.results.zip(lowered.results))
         case ret: func.Return =>
-          newBlock.addOp(
-            llvm.Return(ret._operands.map(v => remap(v).asInstanceOf[Operand[Attribute]]))
-          )
+          newBlock
+            .addOp(
+              llvm
+                .Return(
+                  ret._operands
+                    .map(v => remap(v).asInstanceOf[Operand[Attribute]])
+                )
+            )
         case other =>
-          val copied = other.deepCopy(using mutable.Map.from(blockMap), valueMap)
+          val copied = other
+            .deepCopy(using mutable.Map.from(blockMap), valueMap)
           newBlock.addOp(copied)
           valueMap.addAll(other.results.zip(copied.results))
       }
@@ -53,12 +62,12 @@ private final class Builder(val funcOp: func.Func):
     lowered.attributes.addAll(funcOp.attributes)
     lowered
 
-private val LowerFunc = pattern {
-  case op: func.Func =>
-    Builder(op).lower()
+private val LowerFunc = pattern { case op: func.Func =>
+  Builder(op).lower()
 }
 
 final class ConvertFuncToLLVM(ctx: MLContext) extends WalkerPass(ctx):
   override val name: String = "convert-func-to-llvm"
+
   override val walker: PatternRewriteWalker =
     PatternRewriteWalker(GreedyRewritePatternApplier(Seq(LowerFunc)))
