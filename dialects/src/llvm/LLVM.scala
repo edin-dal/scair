@@ -29,9 +29,8 @@ given AttributeCompanion[StructType]:
   override def name: String = "llvm.struct"
 
   override def parse[$: P](using Parser): P[StructType] =
-    P("<" ~ "(" ~ typeP.rep(sep = ",") ~ ")" ~ ">").map(elems =>
-      StructType(elems.map(_.asInstanceOf[TypeAttribute]))
-    )
+    P("<" ~ "(" ~ typeP.rep(sep = ",") ~ ")" ~ ">")
+      .map(elems => StructType(elems.map(_.asInstanceOf[TypeAttribute])))
 
 final case class ArrayType(
     size: IntData,
@@ -109,6 +108,7 @@ case class ICmp(
     printer.print(lhs, ", ", rhs, " : ", lhs.typ)
 
 given OperationCustomParser[ICmp]:
+
   def parse[$: P](resNames: Seq[String])(using Parser): P[ICmp] =
     P(
       stringLiteralP ~ operandNameP ~ "," ~ operandNameP ~ ":" ~
@@ -156,11 +156,14 @@ case class GetElementPtr(
     with NoMemoryEffect derives OpDefs:
 
   override def customVerify(): OK[Operation] =
-    val rawIndices = rawConstantIndices.data.collect { case i: IntegerAttr => i }
+    val rawIndices = rawConstantIndices.data.collect { case i: IntegerAttr =>
+      i
+    }
     val numDynamicMarkers = rawIndices.count(isDynamicGEPIndex)
     if numDynamicMarkers != dynamicIndices.size then
       Err(
-        s"llvm.getelementptr: rawConstantIndices contain $numDynamicMarkers dynamic markers but op has ${dynamicIndices.size} dynamic indices"
+        s"llvm.getelementptr: rawConstantIndices contain $numDynamicMarkers dynamic markers but op has ${dynamicIndices
+            .size} dynamic indices"
       )
     else OK(this)
 
