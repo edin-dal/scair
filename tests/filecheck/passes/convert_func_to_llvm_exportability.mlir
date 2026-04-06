@@ -16,11 +16,15 @@ builtin.module {
   }
 }
 
-// CHECK-LABEL: llvm.func @printNewline()
-// CHECK-LABEL: llvm.func @callee() -> i32 {
-// CHECK: "llvm.return"(%{{.*}}) : (i32) -> ()
-// CHECK-LABEL: llvm.func @main() -> i32 {
-// CHECK: llvm.call @callee() : () -> i32
-// CHECK: llvm.call @printNewline() : () -> ()
-// CHECK-NOT: func.func
-// CHECK-NOT: func.call
+// CHECK: builtin.module {
+// CHECK-NEXT:   llvm.func @printNewline()
+// CHECK-NEXT:   llvm.func @callee() -> i32 {
+// CHECK-NEXT:     %0 = "llvm.mlir.constant"() <{value = 7 : i32}> : () -> i32
+// CHECK-NEXT:     "llvm.return"(%0) : (i32) -> ()
+// CHECK-NEXT:   }
+// CHECK-NEXT:   llvm.func @main() -> i32 {
+// CHECK-NEXT:     %0 = llvm.call @callee() : () -> i32
+// CHECK-NEXT:     llvm.call @printNewline() : () -> ()
+// CHECK-NEXT:     "llvm.return"(%0) : (i32) -> ()
+// CHECK-NEXT:   }
+// CHECK-NEXT: }
