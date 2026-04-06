@@ -34,19 +34,17 @@ trait OpImpl[O <: Operation: ClassTag]:
 
     // call compute to get result
     val result = compute(op, interpreter, ctx, args)
+    val op_results = op.results
 
-    // if operation has results, store them in context
-    if op.results.nonEmpty then
-      result match
-        case Seq()       => () // no result to store
-        case Seq(single) =>
-          ctx.scopedDict.update(op.results.head, single) // store single result
-        case multiple =>
-          for (res, value) <- op.results.zip(multiple) do
-            ctx.scopedDict.update(res, value) // store multiple results
+    if op_results.size == 0 then () 
+    else if op_results.size == 1 then ctx.scopedDict.update(op_results.head, result.head) 
+    else
+      var i = 0
+       while i < op_results.length do
+            ctx.scopedDict.update(op_results(i), result(i))
+            i += 1
 
 // interpreter context class stores variables and current result
-
 class RuntimeCtx(
     val scopedDict: ScopedDict,
     var result: Seq[Any] = Seq(),
@@ -107,7 +105,7 @@ class Interpreter(
     ctx.scopedDict.get(value) match
       case Some(v) => v
       case _       =>
-        throw new Exception(s"Variable $value not found in context: $ctx")
+        throw new Exception(s"Variable $value not found in context: ${ctx.scopedDict.name}")
 
   def register_implementations(): Unit =
     for dialect <- dialects do
@@ -132,12 +130,13 @@ class Interpreter(
   def interpret_block(block: Block, ctx: RuntimeCtx): Unit =
     for operation <- block.operations do interpret_op(operation, ctx)
 
-  def run_ssacfg_region(region: Region, ctx: RuntimeCtx, name: String): Seq[Any] =
+  def run_ssacfg_region(region: Region, ctx: RuntimeCtx, name: String, inputs: Seq[Any]): Seq[Any] =
     var results: Seq[Any] = Seq()
 
     if region.blocks.isEmpty then return Seq() // no blocks to run
     else
       val new_ctx = ctx.push_scope(name)
+      set_values(region.blocks.head.arguments, inputs, new_ctx)
       for operation <- region.blocks.head.operations do
         val inputs = get_values(operation.operands, new_ctx)
         if operation.isInstanceOf[IsTerminator] then
@@ -160,12 +159,13 @@ class Interpreter(
           s"Unsupported operation when interpreting: ${op.getClass}"
         )
   
-  def call_op(name: String, ctx: RuntimeCtx): Seq[Any] =
+  def call_op(name: String, ctx: RuntimeCtx, inputs: Seq[Any]): Seq[Any] =
     val callee = symbolTable.get(name)
       .getOrElse(
         throw new Exception(s"Function ${name} not found")
       )
-    run_ssacfg_region(callee.regions.head, ctx, name)
+    set_values(callee.asInstanceOf[Operation].operands, inputs, ctx)
+    run_ssacfg_region(callee.regions.head, ctx, name, inputs)
 
   def get_values(
       operands: Seq[Value[Attribute]],
@@ -174,7 +174,7 @@ class Interpreter(
     operands.map(op => lookup_op(op, ctx))
 
   def set_values(
-      results: Seq[Value[Attribute]],
+      results: Iterable[Value[Attribute]],
       values: Seq[Any],
       ctx: RuntimeCtx,
   ): Unit =

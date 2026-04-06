@@ -198,7 +198,7 @@ object run_select extends OpImpl[arith.SelectOp]:
   ): Seq[Any] =
     args match
       case Seq(cond, trueVal, falseVal) =>
-        if cond == 1 then Seq(trueVal) else Seq(falseVal)
+        if cond == 1 || cond == true then Seq(trueVal) else Seq(falseVal)
       case _ =>
         throw new Exception("Select operands must be (Boolean, Int, Int)")
 

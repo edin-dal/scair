@@ -29,7 +29,7 @@ object run_call extends OpImpl[func.Call]:
       interpreter.interpreter_print(print_value)
       Seq()
     else
-      interpreter.call_op(op.callee.rootRef.stringLiteral, ctx)
+      interpreter.call_op(op.callee.rootRef.stringLiteral, ctx, args)
 
 object run_function extends OpImpl[func.Func]:
 

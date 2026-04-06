@@ -37,6 +37,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   def interpreterDialects = scair.interpreter.allInterpreterDialects
 
+  def entryPoint = "main"
+
   def verboseInterpreter = true
 
   def printScopes = false
@@ -100,7 +102,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       )
 
     // TODO: Allow specifying the function for entry point and default to main if not
-    val output = interpreter.call_op("main", interpreter.create_scope("main"))
+    val output = interpreter.call_op(entryPoint, interpreter.create_scope(entryPoint), Seq())
 
     printScopes match
       case true =>
