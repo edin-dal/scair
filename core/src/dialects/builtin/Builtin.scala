@@ -392,8 +392,8 @@ final case class DenseArrayAttr(
 \*≡==---==≡≡==---==≡*/
 
 final case class FunctionType(
-    inputs: Seq[Attribute],
-    outputs: Seq[Attribute],
+    inputs: Seq[Attribute] = Seq.empty,
+    outputs: Seq[Attribute] = Seq.empty,
 ) extends ParametrizedAttribute
     with TypeAttribute:
 

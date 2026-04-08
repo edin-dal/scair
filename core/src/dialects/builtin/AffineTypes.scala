@@ -62,9 +62,9 @@ case class AffineConstantExpr(val value: BigInt) extends AffineExpr:
 \*≡==----==≡≡==----==≡*/
 
 case class AffineMap(
-    val dimensions: Seq[String],
-    val symbols: Seq[String],
-    val affineExprs: Seq[AffineExpr],
+    val dimensions: Seq[String] = Seq.empty,
+    val symbols: Seq[String] = Seq.empty,
+    val affineExprs: Seq[AffineExpr] = Seq.empty,
 ):
 
   override def toString =
@@ -90,9 +90,9 @@ case class AffineConstraintExpr(
   override def toString = s"$lhs $kind $rhs"
 
 case class AffineSet(
-    val dimensions: Seq[String],
-    val symbols: Seq[String],
-    val affineConstraints: Seq[AffineConstraintExpr],
+    val dimensions: Seq[String] = Seq.empty,
+    val symbols: Seq[String] = Seq.empty,
+    val affineConstraints: Seq[AffineConstraintExpr] = Seq.empty,
 ):
 
   override def toString =

@@ -21,8 +21,8 @@ import scair.utils.*
 
 case class Call(
     callee: SymbolRefAttr,
-    _operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]],
+    _operands: Seq[Operand[Attribute]] = Seq.empty,
+    _results: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["func.call"] derives OpDefs
 
 given OperationCustomParser[Func]:
@@ -66,7 +66,7 @@ given OperationCustomParser[Func]:
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
-    sym_visibility: Option[StringData],
+    sym_visibility: Option[StringData] = None,
     body: Region,
 ) extends DerivedOperation["func.func"]
     with IsolatedFromAbove
@@ -114,7 +114,7 @@ case class Func(
         lprinter.withIndent(lprinter.print("}"))
 
 case class Return(
-    _operands: Seq[Operand[Attribute]]
+    _operands: Seq[Operand[Attribute]] = Seq.empty
 ) extends DerivedOperation["func.return"]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
     with NoMemoryEffect
@@ -129,8 +129,8 @@ case class Constant(
 
 case class CallIndirect(
     callee: Operand[FunctionType],
-    callee_operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]],
+    callee_operands: Seq[Operand[Attribute]] = Seq.empty,
+    _results: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["func.call_indirect"] derives OpDefs:
 
   override def verify(): OK[Operation] =

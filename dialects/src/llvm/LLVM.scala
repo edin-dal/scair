@@ -23,7 +23,7 @@ case class Load(
 
 case class GetElementPtr(
     base: Operand[Ptr],
-    dynamicIndices: Seq[Operand[IntegerType]],
+    dynamicIndices: Seq[Operand[IntegerType]] = Seq.empty,
     res: Result[Ptr],
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute,
