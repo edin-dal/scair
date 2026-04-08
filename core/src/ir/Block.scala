@@ -48,9 +48,9 @@ object Block:
     *   A function creating the contained operation(s) given the block argument.
     */
   @targetName("apply4")
-  def apply(
-      argumentsTypes: Iterable[Attribute],
-      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation],
+  def apply[A <: Attribute](
+      argumentsTypes: Iterable[A],
+      operationsExpr: Iterable[Value[A]] => Iterable[Operation],
   ): Block =
     val args = argumentsTypes.map(Value(_))
     val operations = operationsExpr(args)

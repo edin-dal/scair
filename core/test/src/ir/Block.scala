@@ -49,7 +49,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
       (
         Block(
           Seq(I32),
-          (args: Iterable[Value[Attribute]]) =>
+          (args: Iterable[Value[IntegerType]]) =>
             Seq(TestOp(operands = args.toSeq)),
         ),
         """^bb0(%0: i32):
