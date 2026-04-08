@@ -67,9 +67,9 @@ object Block:
     *   arguments.
     */
   @targetName("apply5")
-  def apply(
-      argumentType: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation],
+  def apply[A <: Attribute](
+      argumentType: A,
+      operationsExpr: Value[A] => Iterable[Operation],
   ): Block =
     val arg = Value(argumentType)
     val ops = operationsExpr(arg)
