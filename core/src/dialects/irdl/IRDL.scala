@@ -32,12 +32,12 @@ final case class Type(
 ) extends DerivedOperation["irdl.type"] derives OpDefs
 
 final case class Parameters(
-    args: Seq[Operand[AttributeType]],
+    args: Seq[Operand[AttributeType]] = Seq.empty,
     names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.parameters"] derives OpDefs
 
 final case class Operands(
-    args: Seq[Operand[AttributeType]],
+    args: Seq[Operand[AttributeType]] = Seq.empty,
     names: ArrayAttribute[StringData],
 ) extends DerivedOperation["irdl.operands"] derives OpDefs
 
