@@ -122,21 +122,42 @@ jobs:
         pip install --upgrade pip
         pip install lit filecheck
 
-    # # Restore Mill's incremental build cache
-    # - name: Cache Incremental Build
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: ./out
-    #     key: mill-incremental-tests-${{ github.run_id }}-${{ github.run_attempt }}
-    #     restore-keys: |
-    #       mill-incremental-tests-
+    # Restore Mill's incremental build cache
+    - name: Restore incremental cache
+      id: restore-mill-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: out
+        key: mill-incremental-tests-${{ matrix.task }}${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          mill-incremental-tests-${{ matrix.task }}
 
-    - name: Run test target
+    # Try to run the test, with the restored cache if any.
+    # If the cache was restored, failing this falls back to the next step
+    # Otherwise, it just fails the run
+    - name: Run test target (incremental)
+      id: cached-run
+      continue-on-error: ${{ steps.restore-mill-cache.outputs.cache-matched-key != '' }}
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
-        # I can't get it to work with just cleaning the coverage data, for some reason
-        # ./mill clean
         ./mill ${{ matrix.task }}
+
+    # This is ran only if the cache was restored and the initial attempt failed
+    # Just try again from a clean slate
+    - name: Run test target (clean attempt)
+      if: ${{ steps.restore-mill-cache.outputs.cache-matched-key != '' && steps.cached-run.outcome == 'failure' }}
+      run: |
+        export PATH=$PATH:$(pwd)/llvm-project/build/bin/
+        rm out -rf
+        ./mill ${{ matrix.task }}
+
+    # If tests passed, save the cache for the next run
+    - name: Save incremental cache
+      uses: actions/cache/save@v4
+      with:
+        path: out
+        key: mill-incremental-tests-${{ matrix.task }}${{ github.run_id }}-${{ github.run_attempt }}
+
     - name: Upload coverage report to Codecov
       if: matrix.task == 'scoverage'
       uses: codecov/codecov-action@v5
