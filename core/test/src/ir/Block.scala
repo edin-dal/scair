@@ -66,7 +66,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 """,
       ),
       (
-        Block.app(
+        Block.typed(
           (I32, IndexType()),
           (
               arg1: Value[IntegerType & Attribute],

@@ -87,7 +87,7 @@ object Block:
     case EmptyTuple => EmptyTuple
 
   @targetName("apply8")
-  inline def app[T <: Tuple](
+  inline def typed[T <: Tuple](
       argumentsTypes: T,
       operationsExpr: MapValues[T] => Iterable[Operation],
   ): Block =
