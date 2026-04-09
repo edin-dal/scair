@@ -67,7 +67,7 @@ case class Func(
     sym_name: StringData,
     function_type: FunctionType,
     sym_visibility: Option[StringData] = None,
-    body: Region,
+    body: Region = Region(),
 ) extends DerivedOperation["func.func"]
     with IsolatedFromAbove
     with Symbol
