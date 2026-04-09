@@ -218,7 +218,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
   "parseDifferentAttributes" should
     "match parsed string against expected string" in {
 
-      val block1 = new Block(
+      val block1 = Block(
         ListType(F16),
         ListType(
           UnregisteredOperation("test.op")(
@@ -243,7 +243,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         ).map(Result(_)),
       )
 
-      val block2 = new Block(
+      val block2 = Block(
         ListType(F128),
         ListType(
           op4,
@@ -262,7 +262,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         ).map(Result(_))
       )
 
-      val block3 = new Block(
+      val block3 = Block(
         ListType(I64),
         ListType(
           op5,

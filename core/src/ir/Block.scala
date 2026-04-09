@@ -2,6 +2,7 @@ package scair.ir
 
 import scair.utils.*
 
+import scala.annotation.targetName
 import scala.collection.mutable
 
 //
@@ -22,27 +23,108 @@ import scala.collection.mutable
   */
 object Block:
 
-  def apply(
-      argumentsTypes: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq(),
-  ): Block = new Block(argumentsTypes, operations)
+  private def applyArgs(
+      arguments: ListType[Value[Attribute]],
+      operations: BlockOperations,
+  ): Block = new Block(arguments, operations)
 
-  def apply(operations: Iterable[Operation] | Operation): Block =
-    new Block(
-      operations
-    )
+  private def applyArgs(
+      arguments: Iterable[Value[Attribute]],
+      operations: Iterable[Operation],
+  ): Block = Block(ListType.from(arguments), BlockOperations.from(operations))
 
+  @targetName("apply2")
   def apply(
       argumentsTypes: Iterable[Attribute],
-      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation],
-  ): Block =
-    new Block(argumentsTypes, operationsExpr)
+      operations: Iterable[Operation],
+  ): Block = Block.applyArgs(argumentsTypes.map(Value.apply), operations)
 
-  def apply(
-      argumentsTypes: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation],
+  /** Constructs a Block instance with the given argument type and a function to
+    * generate operations given the created block argument.
+    *
+    * @param argumentTypes
+    *   The type of the argument.
+    * @param operationsExpr
+    *   A function creating the contained operation(s) given the block argument.
+    */
+  @targetName("apply4")
+  def apply[A <: Attribute](
+      argumentsTypes: Iterable[A],
+      operationsExpr: Iterable[Value[A]] => Iterable[Operation],
   ): Block =
-    new Block(argumentsTypes, operationsExpr)
+    val args = argumentsTypes.map(Value(_))
+    val operations = operationsExpr(args)
+
+    Block.applyArgs(args, operations)
+
+  /** Constructs a Block instance with the given arguments type and function to
+    * generate operations given the created block arguments.
+    *
+    * @param argumentType
+    *   The types of the arguments as an Iterable of Attributes.
+    * @param operationsExpr
+    *   A function creating the contained operation(s) given the block
+    *   arguments.
+    */
+  @targetName("apply5")
+  def apply[A <: Attribute](
+      argumentType: A,
+      operationsExpr: Value[A] => Iterable[Operation],
+  ): Block =
+    val arg = Value(argumentType)
+    val ops = operationsExpr(arg)
+    Block.applyArgs(ListType(arg), ops)
+
+  /*
+   * Type-level helper, mapping a tuple of Attribute types to a tuple of value types of
+   * those types. Scala's Tuple.Map is assuming unbounded functors, which Value is not,
+   * as its parameter is bounded by Attribute.
+   */
+  type MapValues[T <: Tuple] <: Tuple = T match
+    case h *: t =>
+      h match
+        case Attribute => Value[h] *: MapValues[t]
+    case EmptyTuple => EmptyTuple
+
+  // This constructors requires the above type helper, but the above type helper is not
+  // reduced during overload resolution, so we need to give it a different name.
+  // It seems this one falls in a very doable subset of this issue though. It might be
+  // worth crafting a minimal example and opening a discussion with Scala developpers.
+  @targetName("apply8")
+  inline def typed[T <: Tuple](
+      argumentsTypes: T,
+      operationsExpr: MapValues[T] => Iterable[Operation],
+  ): Block =
+    val argsArray = argumentsTypes.toArray
+      .map(a => Value(a.asInstanceOf[Attribute]))
+    val args =
+      Tuple.fromArray(argsArray).asInstanceOf[MapValues[T]]
+    val ops = operationsExpr(args)
+    Block.applyArgs(argsArray, ops)
+
+  /** Constructs a Block instance with the given operations and no block
+    * arguments.
+    *
+    * @param operations
+    *   The operations, either as a single MLIROperation or an Iterable of
+    *   MLIROperations.
+    */
+  @targetName("apply3")
+  def apply(operations: Iterable[Operation]): Block =
+    Block.applyArgs(
+      arguments = ListType.empty,
+      operations = operations,
+    )
+
+  @targetName("apply4")
+  def apply(operation: Operation): Block =
+    Block.applyArgs(
+      arguments = ListType.empty,
+      operations = BlockOperations(operation),
+    )
+
+  def apply(): Block =
+    Block.applyArgs(ListType.empty[Value[Attribute]], BlockOperations.empty)
 
 /** A basic block.
   *
@@ -79,104 +161,6 @@ case class Block private (
       )
     else a.owner = Some(this)
   )
-
-  /** Constructs a Block instance with the given argument types and operations.
-    *
-    * @param argumentsTypes
-    *   The types of the arguments, either as a single Attribute or an Iterable
-    *   of Attributes.
-    * @param operations
-    *   The operations, either as a single MLIROperation or an Iterable of
-    *   MLIROperations.
-    */
-  def this(
-      argumentsTypes: Iterable[Attribute] | Attribute = Seq(),
-      operations: Iterable[Operation] | Operation = Seq(),
-  ) =
-    this(
-      ListType.from((argumentsTypes match
-        case single: Attribute     => Seq(single)
-        case multiple: Iterable[?] => multiple.asInstanceOf[Iterable[Attribute]]
-      ).map(Value(_))),
-      BlockOperations
-        .from((operations match
-          case single: Operation     => Seq(single)
-          case multiple: Iterable[?] =>
-            multiple.asInstanceOf[Iterable[Operation]]
-        )),
-    )
-
-  /** Private tupled constructor mirroring the private primary constructor. Only
-    * here for readability of other auxiliary constructors and strange
-    * constraints on their syntax.
-    *
-    * @param args
-    *   A tuple containing the argument values and operations.
-    */
-  private def this(
-      args: (
-          Iterable[Value[Attribute]] | Value[Attribute],
-          Iterable[Operation] | Operation,
-      )
-  ) =
-    this(
-      ListType
-        .from(args._1 match
-          case single: Value[Attribute] => Seq(single)
-          case multiple: Iterable[?]    =>
-            multiple.asInstanceOf[Iterable[Value[Attribute]]]),
-      BlockOperations
-        .from(args._2 match
-          case single: Operation     => Seq(single)
-          case multiple: Iterable[?] =>
-            multiple.asInstanceOf[Iterable[Operation]]),
-    )
-
-  /** Constructs a Block instance with the given operations and no block
-    * arguments.
-    *
-    * @param operations
-    *   The operations, either as a single MLIROperation or an Iterable of
-    *   MLIROperations.
-    */
-  def this(operations: Iterable[Operation] | Operation) =
-    this(Seq(), operations)
-
-  /** Constructs a Block instance with the given argument type and a function to
-    * generate operations given the created block argument.
-    *
-    * @param argumentType
-    *   The type of the argument.
-    * @param operationsExpr
-    *   A function creating the contained operation(s) given the block argument.
-    */
-  def this(
-      argumentType: Iterable[Attribute],
-      operationsExpr: Iterable[Value[Attribute]] => Iterable[Operation] |
-        Operation,
-  ) =
-    this({
-      val args = argumentType.map(Value(_))
-      (args, operationsExpr(args))
-    })
-
-  /** Constructs a Block instance with the given arguments type and function to
-    * generate operations given the created block arguments.
-    *
-    * @param argumentType
-    *   The types of the arguments as an Iterable of Attributes.
-    * @param operationsExpr
-    *   A function creating the contained operation(s) given the block
-    *   arguments.
-    */
-  def this(
-      argumentType: Attribute,
-      operationsExpr: Value[Attribute] => Iterable[Operation] | Operation,
-  ) =
-    this({
-      val arg = Value(argumentType)
-      (arg, operationsExpr(arg))
-    })
 
   var containerRegion: Option[Region] = None
 
