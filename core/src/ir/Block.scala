@@ -75,6 +75,29 @@ object Block:
     val ops = operationsExpr(arg)
     Block.applyArgs(ListType(arg), ops)
 
+  /*
+   * Type-level helper, mapping a tuple of Attribute types to a tuple of value types of
+   * those types. Scala's Tuple.Map is assuming unbounded functors, which Value is not,
+   * as its parameter is bounded by Attribute.
+   */
+  type MapValues[T <: Tuple] <: Tuple = T match
+    case h *: t =>
+      h match
+        case Attribute => Value[h] *: MapValues[t]
+    case EmptyTuple => EmptyTuple
+
+  @targetName("apply8")
+  inline def app[T <: Tuple](
+      argumentsTypes: T,
+      operationsExpr: MapValues[T] => Iterable[Operation],
+  ): Block =
+    val argsArray = argumentsTypes.toArray
+      .map(a => Value(a.asInstanceOf[Attribute]))
+    val args =
+      Tuple.fromArray(argsArray).asInstanceOf[MapValues[T]]
+    val ops = operationsExpr(args)
+    Block.applyArgs(argsArray, ops)
+
   /** Constructs a Block instance with the given operations and no block
     * arguments.
     *
