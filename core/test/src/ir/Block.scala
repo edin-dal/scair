@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
 import scair.Printer
-import scair.dialects.builtin.I32
+import scair.dialects.builtin.{I32, IntegerType, IndexType}
 import java.io.StringWriter
 import java.io.PrintWriter
 
@@ -49,7 +49,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
       (
         Block(
           Seq(I32),
-          (args: Iterable[Value[Attribute]]) =>
+          (args: Iterable[Value[IntegerType]]) =>
             Seq(TestOp(operands = args.toSeq)),
         ),
         """^bb0(%0: i32):
@@ -59,10 +59,22 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
       (
         Block(
           I32,
-          (arg: Value[Attribute]) => Seq(TestOp(operands = Seq(arg))),
+          (arg: Value[IntegerType]) => Seq(TestOp(operands = Seq(arg))),
         ),
         """^bb0(%0: i32):
   "test.op"(%0) : (i32) -> ()
+""",
+      ),
+      (
+        Block.typed(
+          (I32, IndexType()),
+          (
+              arg1: Value[IntegerType & Attribute],
+              arg2: Value[IndexType & Attribute],
+          ) => Seq(TestOp(operands = Seq(arg1, arg2))),
+        ),
+        """^bb0(%0: i32, %1: index):
+  "test.op"(%0, %1) : (i32, index) -> ()
 """,
       ),
     )

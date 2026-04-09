@@ -103,10 +103,7 @@ class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
       val val3 = Value(I32)
       val val4 = Value(I64)
 
-      val successorTestBlock = Block(
-        ListType(),
-        ListType(),
-      )
+      val successorTestBlock = Block()
 
       val program =
         UnregisteredOperation("op1")(
