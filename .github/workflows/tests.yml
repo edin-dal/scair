@@ -80,11 +80,18 @@ jobs:
   # Tests and coverage
   tests:
 
-    name: "Tests"
+    name: "Tests (${{ matrix.task }})"
 
     runs-on: ubuntu-latest
     needs:
       - ensure-mlir
+    strategy:
+      fail-fast: false
+      matrix:
+        task:
+          - scoverage
+          - filechecks.graal
+          - filechecks.native
 
     steps:
     - name: Checkout Scair
@@ -124,13 +131,14 @@ jobs:
     #     restore-keys: |
     #       mill-incremental-tests-
 
-    - name: Run all tests
+    - name: Run test target
       run: |
         export PATH=$PATH:$(pwd)/llvm-project/build/bin/
         # I can't get it to work with just cleaning the coverage data, for some reason
         # ./mill clean
-        ./mill scoverage + filechecks.graal + filechecks.native
+        ./mill ${{ matrix.task }}
     - name: Upload coverage report to Codecov
+      if: matrix.task == 'scoverage'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
