@@ -117,7 +117,7 @@ case class DBCompare(
     p.print(rhs.typ)
 
 case class DBAnd(
-    vals: Seq[Operand[Attribute]],
+    vals: Seq[Operand[Attribute]] = Seq.empty,
     result: Result[Attribute],
 ) extends DerivedOperation["db.and"] derives OpDefs:
 
@@ -128,7 +128,7 @@ case class DBAnd(
     p.printListF(vals, v => p.print(v.typ), sep = ",")
 
 case class DBOr(
-    vals: Seq[Operand[Attribute]],
+    vals: Seq[Operand[Attribute]] = Seq.empty,
     result: Result[Attribute],
 ) extends DerivedOperation["db.or"] derives OpDefs:
 
