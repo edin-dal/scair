@@ -45,7 +45,7 @@ trait ScairSettings extends ScalaModule with PublishModule:
   override def scalaVersion = "3.8.3"
 
   override def scalacOptions =
-    super.scalacOptions() ++ Seq("-Wunused:imports", "-explain", "-opt", "-opt-inline:**,!java.**")
+    super.scalacOptions() ++ Seq("-Wunused:imports", "-explain", "-opt", "-opt-inline:<sources>,scair.**")
 
   override def artifactName = s"scair-${super.artifactName()}"
 
