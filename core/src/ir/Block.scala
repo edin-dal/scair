@@ -86,6 +86,10 @@ object Block:
         case Attribute => Value[h] *: MapValues[t]
     case EmptyTuple => EmptyTuple
 
+  // This constructors requires the above type helper, but the above type helper is not
+  // reduced during overload resolution, so we need to give it a different name.
+  // It seems this one falls in a very doable subset of this issue though. It might be
+  // worth crafting a minimal example and opening a discussion with Scala developpers.
   @targetName("apply8")
   inline def typed[T <: Tuple](
       argumentsTypes: T,
