@@ -5,7 +5,6 @@ import scair.ir.*
 import java.io.*
 import scala.annotation.targetName
 import scala.collection.mutable
-import scala.collection.mutable.LinkedHashSet
 
 // ██████╗░ ██████╗░ ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
@@ -20,7 +19,6 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
 
   def copy: Printer
   def print(str: String): Unit = p.write(str)
-  
 
   def print(op: Operation): Unit =
     withIndent(())
@@ -222,27 +220,7 @@ case class IRPrinter(
   def printAliases(ops: Seq[Operation]) =
     val printer = AliasPrinter(strictlyGeneric = strictlyGeneric, p = p)
     printer.print(ops)
-    val aliasesMap = mutable.Map.empty[Attribute, String]
-    val aliasesCounters = mutable.Map.empty[String, Int]
-    printer.toAlias.foreach(attr =>
-      aliasesMap.getOrElseUpdate(
-        attr, {
-          val alias = attr.alias
-          val counter = aliasesCounters.getOrElseUpdate(alias, 0)
-          aliasesCounters(alias) = counter + 1
-          val aliasName = attr.prefix + alias +
-            (counter match
-              case 0 => ""
-              case c => c.toString)
-          print(aliasName)
-          print(" = ")
-          attr.customPrint(this)
-          print("\n")
-          aliasName
-        },
-      )
-    )
-    this.aliasesMap = aliasesMap.toMap
+    this.aliasesMap = printer.getAliases
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    OPERATION PRINTER    ||
@@ -291,9 +269,14 @@ case class IRPrinter(
 case class AliasPrinter(
     strictlyGeneric: Boolean = false,
     private val p: Writer = new PrintWriter(System.out),
-    val toAlias: mutable.LinkedHashSet[AliasedAttribute] = mutable.LinkedHashSet
-      .empty,
+    private val aliasesCounters: mutable.Map[String, Int] = mutable.Map.empty,
+    private val aliases: mutable.Map[Attribute, String] = mutable.Map.empty,
 ) extends Printer(strictlyGeneric, p):
+
+  private val irPrinter = IRPrinter(strictlyGeneric = strictlyGeneric, p = p)
+
+  def getAliases: Map[Attribute, String] =
+    aliases.toMap
 
   override def indented(toPrint: => Unit): Unit = toPrint
   override def withIndent(toPrint: => Unit): Unit = toPrint
@@ -321,5 +304,21 @@ case class AliasPrinter(
   override def print(attribute: Attribute): Unit =
     attribute.customPrint(this)
     attribute match
-      case aliased: AliasedAttribute => toAlias.add(aliased)
-      case _                         => ()
+      case aliased: AliasedAttribute =>
+        aliases.getOrElseUpdate(
+          attribute, {
+            val alias = aliased.alias
+            val counter = aliasesCounters.getOrElseUpdate(alias, 0)
+            aliasesCounters(alias) = counter + 1
+            val aliasName = aliased.prefix + alias +
+              (counter match
+                case 0 => ""
+                case c => c.toString)
+            irPrinter.print(aliasName)
+            irPrinter.print(" = ")
+            aliased.customPrint(irPrinter)
+            irPrinter.print("\n")
+            aliasName
+          },
+        )
+      case _ => ()
