@@ -14,13 +14,33 @@ import scala.collection.mutable.LinkedHashSet
 // ██║░░░░░ ██║░░██║ ██║ ██║░╚███║ ░░░██║░░░ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
 
-abstract class Printer:
+abstract class Printer(strictlyGeneric: Boolean, p: Writer):
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
   def copy: Printer
-  def print(str: String): Unit
-  def print(op: Operation): Unit
+  def print(str: String): Unit = p.write(str)
+  
+
+  def print(op: Operation): Unit =
+    withIndent(())
+    if op.results.nonEmpty then
+      printList(op.results)
+      print(" = ")
+    if strictlyGeneric then
+      printGenericMLIROperation(
+        op
+      )
+    else op.customPrint(this)
+
+    print("\n")
+    flush()
+
+  @deprecated(
+    "Just a first way to work with Java's Writer from Scala. Find better!"
+  )
+  final def flush() = p.flush()
+
   def print(attribute: Attribute): Unit
   def print(region: Region): Unit
   def print(block: Block): Unit
@@ -111,7 +131,7 @@ case class IRPrinter(
     private val p: Writer = new PrintWriter(System.out),
     private var aliasesMap: Map[Attribute, String] = Map.empty,
     private var indentLevel: Int = 0,
-) extends Printer:
+) extends Printer(strictlyGeneric, p):
 
   override def copy: IRPrinter = copy()
 
@@ -139,14 +159,6 @@ case class IRPrinter(
         blockNameMap(block) = name
         name
     return s"^bb$name"
-
-  def print(str: String): Unit =
-    p.write(str)
-
-  @deprecated(
-    "Just a first way to work with Java's Writer from Scala. Find better!"
-  )
-  def flush() = p.flush()
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    ATTRIBUTE PRINTER    ||
@@ -269,20 +281,6 @@ case class IRPrinter(
         ")",
       )
 
-  def print(op: Operation): Unit =
-    withIndent(())
-    if op.results.nonEmpty then
-      printList(op.results)
-      print(" = ")
-    if strictlyGeneric then
-      printGenericMLIROperation(
-        op
-      )
-    else op.customPrint(this)
-
-    print("\n")
-    flush()
-
   def printTopLevel(op: Operation): Unit =
     printTopLevel(Seq(op)): Unit
 
@@ -295,7 +293,7 @@ case class AliasPrinter(
     private val p: Writer = new PrintWriter(System.out),
     val toAlias: mutable.LinkedHashSet[AliasedAttribute] = mutable.LinkedHashSet
       .empty,
-) extends Printer:
+) extends Printer(strictlyGeneric, p):
 
   override def indented(toPrint: => Unit): Unit = toPrint
   override def withIndent(toPrint: => Unit): Unit = toPrint
@@ -306,9 +304,6 @@ case class AliasPrinter(
     op.attributes.values.foreach(print)
     op.operands.typ.foreach(print)
     op.results.typ.foreach(print)
-
-  override def print(op: Operation): Unit =
-    printGenericMLIROperation(op)
 
   override def print(region: Region): Unit =
     region.blocks.foreach(print)
