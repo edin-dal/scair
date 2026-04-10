@@ -22,7 +22,7 @@ case class Printer(
     val valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
       .empty,
     val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
-    private val p: PrintWriter = new PrintWriter(System.out),
+    private val p: Writer = new PrintWriter(System.out),
     private var aliasesMap: Map[Attribute, String] = Map.empty,
     private var indentLevel: Int = 0,
 ):
@@ -52,10 +52,11 @@ case class Printer(
         name
     return s"^bb$name"
 
-  def print(str: String): Unit = p.print(str)
+  def print(str: String): Unit =
+    p.write(str)
 
   @deprecated(
-    "Just a first way to work with Java's PrintWriter from Scala. Find better!"
+    "Just a first way to work with Java's Writer from Scala. Find better!"
   )
   def flush() = p.flush()
 
@@ -274,7 +275,7 @@ case class Printer(
 
 class AliasPrinter(
     strictlyGeneric: Boolean = false,
-    private val p: PrintWriter = new PrintWriter(System.out),
+    private val p: Writer = new PrintWriter(System.out),
     val toAlias: mutable.LinkedHashSet[AliasedAttribute] = mutable.LinkedHashSet
       .empty,
 ) extends Printer(strictlyGeneric = strictlyGeneric, p = p):
@@ -287,7 +288,7 @@ class AliasPrinter(
       valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
         .empty,
       blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
-      p: PrintWriter = new PrintWriter(System.out),
+      p: Writer = p,
       aliasesMap: Map[Attribute, String] = Map.empty,
       indentLevel: Int = 0,
   ): AliasPrinter =
