@@ -10,11 +10,11 @@ import java.io.*
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
 
   var out = StringWriter()
-  var printer = new Printer(true, p = PrintWriter(out));
+  var printer = new IRPrinter(true, p = PrintWriter(out));
 
   before {
     out = StringWriter()
-    printer = new Printer(true, p = PrintWriter(out))
+    printer = new IRPrinter(true, p = PrintWriter(out))
   }
 
   val F32 = Float32Type()

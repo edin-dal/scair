@@ -14,7 +14,93 @@ import scala.collection.mutable.LinkedHashSet
 // ██║░░░░░ ██║░░██║ ██║ ██║░╚███║ ░░░██║░░░ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
 
-case class Printer(
+abstract class Printer:
+
+  type Printable = Value[?] | Block | Region | Operation | Attribute | String
+
+  def copy: Printer
+  def print(str: String): Unit
+  def print(op: Operation): Unit
+  def print(attribute: Attribute): Unit
+  def print(region: Region): Unit
+  def print(block: Block): Unit
+  def print(value: Value[? <: Attribute]): Unit
+
+  def printGenericMLIROperation(op: Operation): Unit
+
+  def indented(toPrint: => Unit): Unit
+  def withIndent(toPrint: => Unit): Unit
+
+  def print(parameter: Attribute | Seq[Attribute]): Unit =
+    parameter match
+      case seq: Seq[?]     => printList(seq.asInstanceOf[Seq[Attribute]])
+      case attr: Attribute => print(attr)
+
+  def printArgument(value: Value[? <: Attribute]) =
+    print(value, ": ", value.typ)
+
+  def printAttrDict(
+      attrs: Map[String, Attribute]
+  ): Unit =
+    printListF(
+      attrs,
+      (k, v) => print(k, " = ", v),
+      " {",
+      ", ",
+      "}",
+    )
+
+  def printOptionalAttrDict(
+      attrs: Map[String, Attribute]
+  ): Unit =
+    if attrs.nonEmpty then printAttrDict(attrs)
+
+  @targetName("printVariadicHelper")
+  inline def print(
+      inline things: (Printable | IterableOnce[Printable])*
+  ): Unit =
+    things
+      .foreach(_ match
+        case p: Printable               => print(p)
+        case i: IterableOnce[Printable] =>
+          printList(i))
+
+  inline def printList[T <: Printable](
+      inline iterable: IterableOnce[T],
+      inline start: String = "",
+      inline sep: String = ", ",
+      inline end: String = "",
+  ): Unit =
+    printListF(iterable, (x: Printable) => print(x), start, sep, end)
+
+  inline def printListF[T](
+      inline iterable: IterableOnce[T],
+      f: T => Unit,
+      inline start: String = "",
+      inline sep: String = ", ",
+      inline end: String = "",
+  ): Unit =
+    inline if start != "" then print(start)
+    inline if sep == "" then iterable.foreach(f)
+    else if iterable.nonEmpty then
+      val it = iterable.iterator
+      f(it.next())
+      it.foreach(e =>
+        print(sep)
+        f(e)
+      )
+    inline if end != "" then print(end)
+
+  @targetName("printDispatch")
+  def print(thing: Printable): Unit = thing match
+    case s: String    => print(s)
+    case v: Value[?]  => print(v)
+    case b: Block     => print(b)
+    case r: Region    => print(r)
+    case o: Operation => print(o)
+    case a: Attribute => print(a)
+
+case class IRPrinter(
     val strictlyGeneric: Boolean = false,
     val indent: String = "  ",
     var valueNextID: Int = 0,
@@ -25,7 +111,9 @@ case class Printer(
     private val p: Writer = new PrintWriter(System.out),
     private var aliasesMap: Map[Attribute, String] = Map.empty,
     private var indentLevel: Int = 0,
-):
+) extends Printer:
+
+  override def copy: IRPrinter = copy()
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||
@@ -81,11 +169,6 @@ case class Printer(
   def print(attributes: Seq[Attribute]): Unit =
     printList(attributes, "[", ", ", "]")
 
-  def print(parameter: Attribute | Seq[Attribute]): Unit =
-    parameter match
-      case seq: Seq[?]     => printList(seq.asInstanceOf[Seq[Attribute]])
-      case attr: Attribute => print(attr)
-
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    VALUE PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
@@ -95,56 +178,6 @@ case class Printer(
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||    BLOCK PRINTER    ||
   \*≡==---==≡≡≡≡≡==---==≡*/
-
-  type Printable = Value[?] | Block | Region | Operation | Attribute | String
-
-  @targetName("printDispatch")
-  inline def print(inline thing: Printable): Unit = thing match
-    case s: String    => print(s)
-    case v: Value[?]  => print(v)
-    case b: Block     => print(b)
-    case r: Region    => print(r)
-    case o: Operation => print(o)
-    case a: Attribute => print(a)
-
-  @targetName("printVariadicHelper")
-  inline def print(
-      inline things: (Printable | IterableOnce[Printable])*
-  ): Unit =
-    things
-      .foreach(_ match
-        case p: Printable               => print(p)
-        case i: IterableOnce[Printable] =>
-          printList(i))
-
-  inline def printList[T <: Printable](
-      inline iterable: IterableOnce[T],
-      inline start: String = "",
-      inline sep: String = ", ",
-      inline end: String = "",
-  ): Unit =
-    printListF(iterable, (x: Printable) => print(x), start, sep, end)
-
-  inline def printListF[T](
-      inline iterable: IterableOnce[T],
-      f: T => Unit,
-      inline start: String = "",
-      inline sep: String = ", ",
-      inline end: String = "",
-  ): Unit =
-    inline if start != "" then print(start)
-    inline if sep == "" then iterable.foreach(f)
-    else if iterable.nonEmpty then
-      val it = iterable.iterator
-      f(it.next())
-      it.foreach(e =>
-        print(sep)
-        f(e)
-      )
-    inline if end != "" then print(end)
-
-  def printArgument(value: Value[? <: Attribute]) =
-    print(value, ": ", value.typ)
 
   def print(block: Block): Unit =
     withIndent(print(assignBlockName(block)))
@@ -202,22 +235,6 @@ case class Printer(
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    OPERATION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
-
-  def printAttrDict(
-      attrs: Map[String, Attribute]
-  ): Unit =
-    printListF(
-      attrs,
-      (k, v) => print(k, " = ", v),
-      " {",
-      ", ",
-      "}",
-    )
-
-  def printOptionalAttrDict(
-      attrs: Map[String, Attribute]
-  ): Unit =
-    if attrs.nonEmpty then printAttrDict(attrs)
 
   def printGenericMLIROperation(op: Operation) =
     print("\"", op.name, "\"(", op.operands, ")")
@@ -278,7 +295,7 @@ class AliasPrinter(
     private val p: Writer = new PrintWriter(System.out),
     val toAlias: mutable.LinkedHashSet[AliasedAttribute] = mutable.LinkedHashSet
       .empty,
-) extends Printer(strictlyGeneric = strictlyGeneric, p = p):
+) extends IRPrinter(strictlyGeneric = strictlyGeneric, p = p):
 
   override def copy(
       strictlyGeneric: Boolean = false,

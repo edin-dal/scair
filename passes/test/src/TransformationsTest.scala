@@ -26,11 +26,11 @@ class TransformationsTest
   ctx.registerDialect(cmath)
 
   var parser: Parser = new Parser(ctx, allowUnregisteredDialect = true)
-  var printer = new Printer(true)
+  var printer = new IRPrinter(true)
 
   before {
     parser = new Parser(ctx, allowUnregisteredDialect = true)
-    printer = new Printer(true)
+    printer = new IRPrinter(true)
   }
 
   "Operation Erasure" should

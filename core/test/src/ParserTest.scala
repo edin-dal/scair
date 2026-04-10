@@ -457,7 +457,7 @@ class ParserTest
         parser = moduleP(using _, parser),
       ): @unchecked
 
-      val printer = new Printer(true)
+      val printer = new IRPrinter(true)
 
       val opToErase = value.regions(0).blocks(0).operations(1)
 
