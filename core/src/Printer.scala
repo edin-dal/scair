@@ -290,30 +290,36 @@ case class IRPrinter(
     printAliases(ops)
     print(ops)
 
-class AliasPrinter(
+case class AliasPrinter(
     strictlyGeneric: Boolean = false,
     private val p: Writer = new PrintWriter(System.out),
     val toAlias: mutable.LinkedHashSet[AliasedAttribute] = mutable.LinkedHashSet
       .empty,
-) extends IRPrinter(strictlyGeneric = strictlyGeneric, p = p):
+) extends Printer:
 
-  override def copy(
-      strictlyGeneric: Boolean = false,
-      indent: String = "  ",
-      valueNextID: Int = 0,
-      blockNextID: Int = 0,
-      valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
-        .empty,
-      blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
-      p: Writer = p,
-      aliasesMap: Map[Attribute, String] = Map.empty,
-      indentLevel: Int = 0,
-  ): AliasPrinter =
-    new AliasPrinter(
-      strictlyGeneric = strictlyGeneric,
-      p = p,
-      toAlias = toAlias,
-    )
+  override def indented(toPrint: => Unit): Unit = toPrint
+  override def withIndent(toPrint: => Unit): Unit = toPrint
+
+  override def printGenericMLIROperation(op: Operation): Unit =
+    op.properties.values.foreach(print)
+    op.regions.foreach(print)
+    op.attributes.values.foreach(print)
+    op.operands.typ.foreach(print)
+    op.results.typ.foreach(print)
+
+  override def print(op: Operation): Unit =
+    printGenericMLIROperation(op)
+
+  override def print(region: Region): Unit =
+    region.blocks.foreach(print)
+
+  override def print(block: Block): Unit =
+    block.arguments.foreach(arg => print(arg.typ))
+    block.operations.foreach(print)
+
+  override def print(value: Value[?]): Unit = ()
+
+  override def copy: AliasPrinter = copy()
 
   override def print(string: String) = ()
 
