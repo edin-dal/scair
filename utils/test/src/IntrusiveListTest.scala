@@ -1,6 +1,6 @@
 package scair.utils.test
 
-import scair.utils.{IntrusiveNode, IntrusiveList}
+import scair.collection.{IntrusiveNode, IntrusiveList}
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

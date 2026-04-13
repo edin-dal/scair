@@ -6,7 +6,7 @@ import scair.print.AssemblyPrinter
 import scair.print.Printer
 import scair.transformations.RewritePattern
 import scair.utils.*
-import scair.utils.IntrusiveNode
+import scair.collection.IntrusiveNode
 
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashMap
