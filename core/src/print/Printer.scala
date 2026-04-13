@@ -16,7 +16,7 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
-  def copy: Printer
+  def scoped: Printer
   def print(str: String): Unit = p.write(str)
 
   def print(op: Operation): Unit =

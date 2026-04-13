@@ -74,7 +74,7 @@ case class Func(
     with SymbolTable derives OpDefs:
 
   override def customPrint(printer: Printer) =
-    val lprinter = printer.copy
+    val lprinter = printer.scoped
     lprinter.print("func.func ")
     sym_visibility match
       case Some(visibility) =>

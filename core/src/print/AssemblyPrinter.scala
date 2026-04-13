@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.Writer
 import scala.collection.mutable
 
-case class AssemblyPrinter(
+final case class AssemblyPrinter(
     val strictlyGeneric: Boolean = false,
     val indent: String = "  ",
     var valueNextID: Int = 0,
@@ -19,7 +19,7 @@ case class AssemblyPrinter(
     private var indentLevel: Int = 0,
 ) extends Printer(strictlyGeneric, p):
 
-  override def copy: AssemblyPrinter = copy()
+  override def scoped: AssemblyPrinter = copy()
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||

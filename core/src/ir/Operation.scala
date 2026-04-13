@@ -1,12 +1,12 @@
 package scair.ir
 
 import fastparse.P
+import scair.collection.IntrusiveNode
 import scair.parse.Parser
 import scair.print.AssemblyPrinter
 import scair.print.Printer
 import scair.transformations.RewritePattern
 import scair.utils.*
-import scair.collection.IntrusiveNode
 
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashMap
