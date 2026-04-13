@@ -40,6 +40,14 @@ sealed trait Attribute:
     p.flush()
     out.toString()
 
+  /*
+   * Return an error message wrapping this attribute. Purposefully shadowing the Err
+   * constructor in an Operation's body, to just automatically wrap the error message
+   * with the attribute that caused it, without having to explicitly pass 'this' every
+   * time.
+   */
+  def Err(msg: String) = scair.utils.Err(msg, Some(this))
+
 trait TypeAttribute extends Attribute:
   override def prefix: String = "!"
 
