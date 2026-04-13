@@ -1,7 +1,7 @@
 package scair.clair
 
-import scair.print.Printer
 import scair.ir.*
+import scair.print.Printer
 import scair.utils.*
 
 import scala.compiletime.deferred

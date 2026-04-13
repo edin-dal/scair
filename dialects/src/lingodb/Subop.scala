@@ -1,9 +1,9 @@
 package scair.dialects.lingodb
 
-import scair.print.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.print.Printer
 
 // ░██████╗ ██╗░░░██╗ ██████╗░ ░█████╗░ ██████╗░
 // ██╔════╝ ██║░░░██║ ██╔══██╗ ██╔══██╗ ██╔══██╗

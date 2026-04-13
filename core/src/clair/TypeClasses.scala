@@ -1,11 +1,11 @@
 package scair.clair
 
 import fastparse.P
-import scair.print.Printer
 import scair.clair.macros.deriveAttrDefs
 import scair.clair.macros.deriveOpDefs
 import scair.ir.*
 import scair.parse.Parser
+import scair.print.Printer
 import scair.utils.*
 
 import scala.quoted.*

@@ -1,10 +1,10 @@
 package scair.print
 
-import java.io.{Writer, PrintWriter}
+import scair.ir.*
 
+import java.io.PrintWriter
+import java.io.Writer
 import scala.collection.mutable
-
-import scair.ir.* 
 
 case class AssemblyPrinter(
     val strictlyGeneric: Boolean = false,

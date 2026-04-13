@@ -1,9 +1,9 @@
 package scair.tools.opt
 
-import scair.print.AssemblyPrinter
 import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.parse.*
+import scair.print.AssemblyPrinter
 import scair.tools.ScairToolBase
 import scair.utils.*
 import scair.verify.Verifier

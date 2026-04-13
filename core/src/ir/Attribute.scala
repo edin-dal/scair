@@ -1,10 +1,10 @@
 package scair.ir
 
 import fastparse.*
-import scair.print.AssemblyPrinter
-import scair.print.Printer
 import scair.dialects.builtin.IntegerAttr
 import scair.parse.Parser
+import scair.print.AssemblyPrinter
+import scair.print.Printer
 import scair.utils.OK
 
 import java.io.StringWriter

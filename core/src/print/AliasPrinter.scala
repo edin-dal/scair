@@ -1,10 +1,10 @@
 package scair.print
 
-import java.io.{Writer, PrintWriter}
-
-import scala.collection.mutable
-
 import scair.ir.*
+
+import java.io.PrintWriter
+import java.io.Writer
+import scala.collection.mutable
 
 case class AliasPrinter(
     strictlyGeneric: Boolean = false,
@@ -13,7 +13,8 @@ case class AliasPrinter(
     private val aliases: mutable.Map[Attribute, String] = mutable.Map.empty,
 ) extends Printer(strictlyGeneric, p):
 
-  private val irPrinter = AssemblyPrinter(strictlyGeneric = strictlyGeneric, p = p)
+  private val irPrinter =
+    AssemblyPrinter(strictlyGeneric = strictlyGeneric, p = p)
 
   def getAliases: Map[Attribute, String] =
     aliases.toMap

@@ -2,12 +2,12 @@ package scair.dialects.func
 
 import fastparse.*
 import scair.*
-import scair.print.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.Parser
+import scair.print.Printer
 import scair.utils.*
 
 //
