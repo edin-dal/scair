@@ -5,7 +5,7 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
-import scair.print.IRPrinter
+import scair.print.AssemblyPrinter
 import scair.dialects.builtin.{I32, IntegerType, IndexType}
 import java.io.StringWriter
 import java.io.PrintWriter
@@ -14,7 +14,7 @@ import scair.dialects.test.TestOp
 
 class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 
-  var printer = new IRPrinter(true);
+  var printer = new AssemblyPrinter(true);
 
   forAll(
     Table(
@@ -80,7 +80,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
     )
   ) { (block: Block, ir: String) =>
     val out = StringWriter()
-    printer = new IRPrinter(true, p = PrintWriter(out))
+    printer = new AssemblyPrinter(true, p = PrintWriter(out))
     // Run the pqrser on the input and check
     printer.print(block)
     out.toString() shouldEqual ir

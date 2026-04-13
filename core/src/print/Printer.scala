@@ -1,4 +1,4 @@
-package scair.print
+package scair.print 
 
 import scair.ir.*
 
@@ -118,7 +118,7 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
     case o: Operation => print(o)
     case a: Attribute => print(a)
 
-case class IRPrinter(
+case class AssemblyPrinter(
     val strictlyGeneric: Boolean = false,
     val indent: String = "  ",
     var valueNextID: Int = 0,
@@ -131,7 +131,7 @@ case class IRPrinter(
     private var indentLevel: Int = 0,
 ) extends Printer(strictlyGeneric, p):
 
-  override def copy: IRPrinter = copy()
+  override def copy: AssemblyPrinter = copy()
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||
@@ -273,7 +273,7 @@ case class AliasPrinter(
     private val aliases: mutable.Map[Attribute, String] = mutable.Map.empty,
 ) extends Printer(strictlyGeneric, p):
 
-  private val irPrinter = IRPrinter(strictlyGeneric = strictlyGeneric, p = p)
+  private val irPrinter = AssemblyPrinter(strictlyGeneric = strictlyGeneric, p = p)
 
   def getAliases: Map[Attribute, String] =
     aliases.toMap

@@ -11,11 +11,11 @@ import scair.print.*
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
 
   var out = StringWriter()
-  var printer = new IRPrinter(true, p = PrintWriter(out));
+  var printer = new AssemblyPrinter(true, p = PrintWriter(out));
 
   before {
     out = StringWriter()
-    printer = new IRPrinter(true, p = PrintWriter(out))
+    printer = new AssemblyPrinter(true, p = PrintWriter(out))
   }
 
   val F32 = Float32Type()

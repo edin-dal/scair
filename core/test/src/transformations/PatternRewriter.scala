@@ -5,7 +5,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
 import scair.parse.Parser
-import scair.print.IRPrinter
+import scair.print.AssemblyPrinter
 import scair.MLContext
 import java.io.*
 import java.io.StringWriter
@@ -38,7 +38,7 @@ class PatternRewriterTest extends AnyFlatSpec:
 
     walker.rewrite(input)
     val out = StringWriter()
-    IRPrinter(p = out).print(input)
+    AssemblyPrinter(p = out).print(input)
     out.toString() shouldEqual """builtin.module {
   %0 = "test.op1"() : () -> i64
   %1 = "test.op2"(%0) : (i64) -> i64
