@@ -1,6 +1,6 @@
 package scair.clair
 
-import scair.Printer
+import scair.print.Printer
 import scair.ir.*
 import scair.utils.*
 

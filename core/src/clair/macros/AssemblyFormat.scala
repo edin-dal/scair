@@ -4,7 +4,7 @@ import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
 import scair.*
-import scair.Printer
+import scair.print.Printer
 import scair.ir.*
 import scair.parse.*
 

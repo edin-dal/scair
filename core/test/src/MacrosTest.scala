@@ -595,7 +595,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     )
 
     val out = java.io.StringWriter()
-    val printer = new scair.IRPrinter(p = java.io.PrintWriter(out))
+    val printer = new scair.print.IRPrinter(p = java.io.PrintWriter(out))
     printer.print(op, op2)
 
     out.toString() should be(

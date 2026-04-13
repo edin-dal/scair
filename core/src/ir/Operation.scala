@@ -1,8 +1,8 @@
 package scair.ir
 
 import fastparse.P
-import scair.IRPrinter
-import scair.Printer
+import scair.print.IRPrinter
+import scair.print.Printer
 import scair.parse.Parser
 import scair.transformations.RewritePattern
 import scair.utils.*

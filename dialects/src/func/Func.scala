@@ -2,7 +2,7 @@ package scair.dialects.func
 
 import fastparse.*
 import scair.*
-import scair.Printer
+import scair.print.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*

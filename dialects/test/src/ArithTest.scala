@@ -4,7 +4,7 @@ import scair.ir.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.func.*
-import scair.Printer
+import scair.print.*
 import scair.utils.*
 
 import org.scalatest.*

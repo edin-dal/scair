@@ -8,6 +8,7 @@ import org.scalatest.prop.*
 import scair.dialects.builtin.*
 import scair.dialects.cmath.*
 import scair.parse.*
+import scair.print.*
 
 class TransformationsTest
     extends AnyFlatSpec

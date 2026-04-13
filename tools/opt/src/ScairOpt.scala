@@ -1,6 +1,6 @@
 package scair.tools.opt
 
-import scair.IRPrinter
+import scair.print.IRPrinter
 import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.parse.*

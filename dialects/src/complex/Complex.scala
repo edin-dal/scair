@@ -1,7 +1,7 @@
 package scair.dialects.complex
 
 import fastparse.*
-import scair.Printer
+import scair.print.Printer
 import scair.clair.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*

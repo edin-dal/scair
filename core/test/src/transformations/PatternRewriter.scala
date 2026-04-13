@@ -5,7 +5,7 @@ import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
 import scair.parse.Parser
-import scair.IRPrinter
+import scair.print.IRPrinter
 import scair.MLContext
 import java.io.*
 import java.io.StringWriter

@@ -1,7 +1,7 @@
 package scair.clair
 
 import fastparse.P
-import scair.Printer
+import scair.print.Printer
 import scair.clair.macros.deriveAttrDefs
 import scair.clair.macros.deriveOpDefs
 import scair.ir.*

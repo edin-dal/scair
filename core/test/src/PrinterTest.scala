@@ -6,6 +6,7 @@ import org.scalatest.matchers.should.Matchers.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import java.io.*
+import scair.print.*
 
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
 

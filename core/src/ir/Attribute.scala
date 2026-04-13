@@ -1,8 +1,8 @@
 package scair.ir
 
 import fastparse.*
-import scair.IRPrinter
-import scair.Printer
+import scair.print.IRPrinter
+import scair.print.Printer
 import scair.dialects.builtin.IntegerAttr
 import scair.parse.Parser
 import scair.utils.OK

@@ -1,4 +1,4 @@
-package scair
+package scair.print
 
 import scair.ir.*
 
