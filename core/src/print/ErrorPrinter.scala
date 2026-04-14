@@ -3,13 +3,12 @@ package scair.print
 import scair.ir.*
 import scair.utils.Err
 
-import java.io.FilterWriter
 import java.io.PrintWriter
 import java.io.Writer
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-private class ErrorPrinterFilter(writer: Writer) extends FilterWriter(writer):
+private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
 
   final val currentColumn = mutable.ListBuffer(0)
 
