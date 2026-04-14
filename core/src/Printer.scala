@@ -112,8 +112,8 @@ case class Printer(
   ): Unit =
     things
       .foreach(_ match
-        case p: Printable               => print(p)
-        case i: IterableOnce[Printable] =>
+        case p: Printable                          => print(p)
+        case i: IterableOnce[Printable @unchecked] =>
           printList(i))
 
   inline def printList[T <: Printable](

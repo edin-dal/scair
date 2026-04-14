@@ -145,10 +145,6 @@ case class CallIndirect(
             s"func.call_indirect: result types ${_results.map(_.typ)} do not match callee output types $outTys"
           )
         else OK(this)
-      case other =>
-        Err(
-          s"func.call_indirect: callee must have builtin.function_type, got $other"
-        )
 
 val FuncDialect =
   summonDialect[EmptyTuple, (Call, CallIndirect, Constant, Func, Return)]

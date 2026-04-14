@@ -15,8 +15,8 @@ object OK:
   def apply(): OK[Unit] = OK(())
 
   def unapply[T](ok: OK[T]): Option[T] = ok match
-    case err: Err => None
-    case t: T     => Some(t)
+    case err: Err        => None
+    case t: T @unchecked => Some(t)
 
   given error: [T] => Conversion[Err, OK[T]] = x => x
   given discard: [T] => Conversion[OK[T], OK[Unit]] = x => ()

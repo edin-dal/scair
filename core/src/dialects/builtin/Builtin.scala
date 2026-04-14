@@ -450,10 +450,6 @@ final case class DenseIntOrFPElementsAttr(
               Err(
                 s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
-          case _ =>
-            Err(
-              s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
-            )
       )
     ).map(_ => ())
 
