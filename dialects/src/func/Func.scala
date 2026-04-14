@@ -109,7 +109,7 @@ case class Func(
       case Seq()           => ()
       case entry :: others =>
         lprinter.print(" {\n")
-        lprinter.indented(entry.operations.foreach(lprinter.print(_)))
+        lprinter.printBlockBody(entry)
         others.foreach(lprinter.print)
         lprinter.withIndent(lprinter.print("}"))
 
