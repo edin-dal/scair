@@ -139,11 +139,11 @@ case class CallIndirect(
         if callee_operands.map(_.typ) != inTys then
           Err(
             s"func.call_indirect: argument types ${callee_operands.map(_.typ)} do not match callee input types $inTys"
-            // Some(callee)
           )
         else if _results.map(_.typ) != outTys then
           Err(
             s"func.call_indirect: result types ${_results.map(_.typ)} do not match callee output types $outTys",
+            // TODO: Really not ideal error localization, was done for demonstration purposes, feel free to change it.
             Some(callee),
           )
         else OK(this)
