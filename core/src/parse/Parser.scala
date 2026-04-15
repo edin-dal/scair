@@ -272,7 +272,7 @@ final class Parser(
     Pass
 
   private[parse] def exitRegionP[$: P] =
-    scopes.pop.allBlocksAndValuesDefinedP
+    scopes.pop().allBlocksAndValuesDefinedP
 
   def parse[T](
       input: ParserInputSource,
@@ -373,7 +373,7 @@ final class Parser(
     // it already had at the time of the catched error!
     // This is a workaround to get the error message with the correct state.
     // TODO: More functional and fastparse-compatible state handling!
-    scopes.popAll
+    scopes.popAll()
     scopes.push(new Scope())
     attributeAliases.clear()
     typeAliases.clear()
