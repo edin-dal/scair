@@ -46,7 +46,8 @@ sealed trait Attribute:
    * with the attribute that caused it, without having to explicitly pass 'this' every
    * time.
    */
-  def Err(msg: String) = scair.utils.Err(msg, Some(this))
+  def Err(msg: String, obj: Option[AnyRef] = Some(this)) = scair.utils
+    .Err(msg, obj)
 
 trait TypeAttribute extends Attribute:
   override def prefix: String = "!"

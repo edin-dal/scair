@@ -19,12 +19,12 @@ private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
     str.indexOf('\n', start) match
       case -1 =>
         currentColumn(currentColumn.length - 1) += str.length - start
-        super.write(str)
+        super.write(str, start, str.length - start)
       case i =>
         currentColumn(currentColumn.length - 1) += i - start
         currentColumn += 0
-        super.write(str, start, i - start)
-        msg.map(printMessage)
+        super.write(str, start, i - start + 1)
+        msg.map(msg => printMessage(msg._1, msg._2, msg._3))
         writeRec(str, i + 1)
 
   def nextMessage(content: String, start: Int, end: Int): Unit =
@@ -63,24 +63,24 @@ private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
 final class ErrorPrinter(
     error: Err,
     w: ErrorPrinterFilter = ErrorPrinterFilter(new PrintWriter(System.out)),
-    indent: String = "  ",
-    valueNextID: Int = 0,
-    blockNextID: Int = 0,
-    valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
+    _indent: String = "  ",
+    _valueNextID: Int = 0,
+    _blockNextID: Int = 0,
+    _valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
       .empty,
-    blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
-    aliasesMap: Map[Attribute, String] = Map.empty,
-    indentLevel: Int = 0,
+    _blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
+    _aliasesMap: Map[Attribute, String] = Map.empty,
+    _indentLevel: Int = 0,
 ) extends AssemblyPrinter(
       true,
-      indent,
-      valueNextID,
-      blockNextID,
-      valueNameMap,
-      blockNameMap,
+      _indent,
+      _valueNextID,
+      _blockNextID,
+      _valueNameMap,
+      _blockNameMap,
       w,
-      aliasesMap,
-      indentLevel,
+      _aliasesMap,
+      _indentLevel,
     ):
 
   val obj = error.obj.getOrElse(null)

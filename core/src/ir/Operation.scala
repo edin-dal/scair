@@ -49,7 +49,8 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
    * with the operation that caused it, without having to explicitly pass 'this' every
    * time.
    */
-  def Err(msg: String) = scair.utils.Err(msg, Some(this))
+  def Err(msg: String, obj: Option[AnyRef] = Some(this)) = scair.utils
+    .Err(msg, obj)
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
