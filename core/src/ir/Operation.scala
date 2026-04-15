@@ -1,12 +1,12 @@
 package scair.ir
 
 import fastparse.P
+import scair.collection.IntrusiveNode
 import scair.parse.Parser
 import scair.print.AssemblyPrinter
 import scair.print.Printer
 import scair.transformations.RewritePattern
 import scair.utils.*
-import scair.utils.IntrusiveNode
 
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashMap
@@ -42,6 +42,14 @@ trait IRNode:
 trait Operation extends IRNode with IntrusiveNode[Operation]:
 
   final override def parent = containerBlock
+
+  /*
+   * Return an error message wrapping this operation. Purposefully shadowing the Err
+   * constructor in an Operation's body, to just automatically wrap the error message
+   * with the operation that caused it, without having to explicitly pass 'this' every
+   * time.
+   */
+  def Err(msg: String) = scair.utils.Err(msg, Some(this))
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
