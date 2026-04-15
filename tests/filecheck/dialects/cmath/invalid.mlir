@@ -28,9 +28,13 @@
 // -----
 
 "cmath.norm"() : () -> ()
-// CHECK:  java.lang.Exception: Expected 1 operands, got 0.
+// CHECK:       "cmath.norm"() : () -> ()
+// CHECK-NEXT:  ^^^^^^^^^^^^^^^^^^^^^^^^^
+// CHECK-NEXT:  > Expected 1 operands, got 0.
 
 // -----
 
 "cmath.mul"() : () -> ()
-// CHECK:  java.lang.Exception: Expected 2 operands, got 0.
+// CHECK:       "cmath.mul"() : () -> ()
+// CHECK-NEXT:  ^^^^^^^^^^^^^^^^^^^^^^^^
+// CHECK-NEXT:  > Expected 2 operands, got 0.

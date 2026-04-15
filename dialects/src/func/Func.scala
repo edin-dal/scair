@@ -2,12 +2,12 @@ package scair.dialects.func
 
 import fastparse.*
 import scair.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.Parser
+import scair.print.Printer
 import scair.utils.*
 
 //
@@ -74,7 +74,7 @@ case class Func(
     with SymbolTable derives OpDefs:
 
   override def customPrint(printer: Printer) =
-    val lprinter = printer.copy()
+    val lprinter = printer.scoped
     lprinter.print("func.func ")
     sym_visibility match
       case Some(visibility) =>
@@ -109,7 +109,7 @@ case class Func(
       case Seq()           => ()
       case entry :: others =>
         lprinter.print(" {\n")
-        lprinter.indented(entry.operations.foreach(lprinter.print(_)))
+        lprinter.printBlockBody(entry)
         others.foreach(lprinter.print)
         lprinter.withIndent(lprinter.print("}"))
 

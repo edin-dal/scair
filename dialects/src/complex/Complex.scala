@@ -1,13 +1,13 @@
 package scair.dialects.complex
 
 import fastparse.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.complex.canonicalization.given
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 
 //
 // ░█████╗░ ░█████╗░ ███╗░░░███╗ ██████╗░ ██╗░░░░░ ███████╗ ██╗░░██╗

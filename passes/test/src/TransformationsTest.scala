@@ -8,6 +8,7 @@ import org.scalatest.prop.*
 import scair.dialects.builtin.*
 import scair.dialects.cmath.*
 import scair.parse.*
+import scair.print.*
 
 class TransformationsTest
     extends AnyFlatSpec
@@ -26,11 +27,11 @@ class TransformationsTest
   ctx.registerDialect(cmath)
 
   var parser: Parser = new Parser(ctx, allowUnregisteredDialect = true)
-  var printer = new Printer(true)
+  var printer = new AssemblyPrinter(true)
 
   before {
     parser = new Parser(ctx, allowUnregisteredDialect = true)
-    printer = new Printer(true)
+    printer = new AssemblyPrinter(true)
   }
 
   "Operation Erasure" should

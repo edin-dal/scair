@@ -1,10 +1,10 @@
 package scair.dialects.lingodb
 
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
+import scair.print.Printer
 
 // ██████╗░ ██████╗░
 // ██╔══██╗ ██╔══██╗

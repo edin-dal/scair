@@ -8,7 +8,7 @@ package scair.utils
   *   now.
   */
 opaque type OK[+T] = Err | T
-final case class Err(msg: String)
+final case class Err(msg: String, obj: Option[AnyRef] = None)
 
 object OK:
   def apply[T](t: T): OK[T] = t
