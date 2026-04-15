@@ -14,12 +14,14 @@ case class AssemblyPrinter(
     val valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
       .empty,
     val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
-    private val p: Writer = new PrintWriter(System.out),
+    protected val p: Writer = new PrintWriter(System.out),
     private var aliasesMap: Map[Attribute, String] = Map.empty,
     private var indentLevel: Int = 0,
 ) extends Printer(strictlyGeneric, p):
 
-  override def copy: AssemblyPrinter = copy()
+  protected def writer: Writer = p
+
+  override def scoped: AssemblyPrinter = copy()
 
   /*≡==--==≡≡≡==--=≡≡*\
   ||      TOOLS      ||
@@ -82,14 +84,14 @@ case class AssemblyPrinter(
     if block.arguments.nonEmpty then
       printListF(block.arguments, printArgument, "(", ", ", ")")
     print(":\n")
-    indented(printList(block.operations, sep = ""))
+    printBlockBody(block)
 
   /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
   ||    REGION PRINTER    ||
   \*≡==---==≡≡≡≡≡≡==---==≡*/
 
   def print(region: Region): Unit =
-    this.copy()._printRegion(region)
+    this.scoped._printRegion(region)
 
   private def _printRegion(region: Region) =
 
@@ -101,7 +103,7 @@ case class AssemblyPrinter(
         // Unless it is empty, which would make the next block read as the entry!
         if entry.arguments.nonEmpty || entry.operations.isEmpty then
           print(entry)
-        else indented(printList(entry.operations, sep = ""))
+        else printBlockBody(entry)
         blocks.foreach(block => print(block))
     withIndent(print("}"))
 

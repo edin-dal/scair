@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.Writer
 import scala.collection.mutable
 
-case class AliasPrinter(
+final class AliasPrinter(
     strictlyGeneric: Boolean = false,
     private val p: Writer = PrintWriter(System.out),
     private val aliasesCounters: mutable.Map[String, Int] = mutable.Map.empty,
@@ -38,7 +38,7 @@ case class AliasPrinter(
 
   override def print(value: Value[?]): Unit = ()
 
-  override def copy: AliasPrinter = copy()
+  override def scoped: AliasPrinter = this
 
   override def print(string: String) = ()
 

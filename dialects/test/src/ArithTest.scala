@@ -58,7 +58,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
       )
     )
     var out = StringWriter()
-    AssemblyPrinter(p = PrintWriter(out)).print(module)
+    AssemblyPrinter(p = out).print(module)
     out.toString().trim() shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {

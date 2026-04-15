@@ -16,11 +16,10 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
-  def copy: Printer
+  def scoped: Printer
   def print(str: String): Unit = p.write(str)
 
   def print(op: Operation): Unit =
-    withIndent(())
     if op.results.nonEmpty then
       printList(op.results)
       print(" = ")
@@ -65,6 +64,11 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
       " {",
       ", ",
       "}",
+    )
+
+  def printBlockBody(block: Block): Unit =
+    indented(
+      printListF(block.operations, op => withIndent(print(op)), sep = "")
     )
 
   def printOptionalAttrDict(

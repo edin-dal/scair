@@ -94,7 +94,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
       )
 
     override def structured = Try(companion.structure(this)) match
-      case Failure(e)  => Err(e.toString())
+      case Failure(e)  => Err(e.getMessage())
       case Success(op) => op.asInstanceOf[Operation].structured
 
     override def verify(): OK[Operation] =
