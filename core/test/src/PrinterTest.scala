@@ -6,15 +6,16 @@ import org.scalatest.matchers.should.Matchers.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import java.io.*
+import scair.print.*
 
 class PrinterTest extends AnyFlatSpec with BeforeAndAfter:
 
   var out = StringWriter()
-  var printer = new Printer(true, p = PrintWriter(out));
+  var printer = new AssemblyPrinter(true, p = PrintWriter(out));
 
   before {
     out = StringWriter()
-    printer = new Printer(true, p = PrintWriter(out))
+    printer = new AssemblyPrinter(true, p = PrintWriter(out))
   }
 
   val F32 = Float32Type()

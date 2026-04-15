@@ -1,9 +1,9 @@
 package scair.tools.opt
 
-import scair.Printer
 import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.parse.*
+import scair.print.AssemblyPrinter
 import scair.tools.ScairToolBase
 import scair.utils.*
 import scair.verify.Verifier
@@ -164,7 +164,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                 else throw new VerifyException(errorMsg)
 
           {
-            val printer = new Printer(parsedArgs.printGeneric)
+            val printer = new AssemblyPrinter(parsedArgs.printGeneric)
             processedModule.fold(
               err => printer.print(err.msg),
               printer.printTopLevel,

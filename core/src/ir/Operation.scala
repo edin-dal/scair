@@ -1,8 +1,9 @@
 package scair.ir
 
 import fastparse.P
-import scair.Printer
 import scair.parse.Parser
+import scair.print.AssemblyPrinter
+import scair.print.Printer
 import scair.transformations.RewritePattern
 import scair.utils.*
 import scair.utils.IntrusiveNode
@@ -131,7 +132,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       case Some(x) =>
         throw new Exception(
           s"""Can't attach a region already attached to an operation:
-              ${Printer().print(region)}"""
+              ${AssemblyPrinter().print(region)}"""
         )
       case None =>
         region.isAncestor(this) match

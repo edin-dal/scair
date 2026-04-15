@@ -1,10 +1,10 @@
 package scair.dialects.lingodb
 
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
+import scair.print.Printer
 
 // ██████╗░ ███████╗ ██╗░░░░░ ░█████╗░ ██╗░░░░░ ░██████╗░
 // ██╔══██╗ ██╔════╝ ██║░░░░░ ██╔══██╗ ██║░░░░░ ██╔════╝░
@@ -104,7 +104,7 @@ case class Selection(
 ) extends DerivedOperation["relalg.selection"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
-    val lp = p.copy()
+    val lp = p.copy
     lp.print("relalg.selection ")
     lp.print(rel)
     lp.print(" ")
@@ -118,7 +118,7 @@ case class MapOp(
 ) extends DerivedOperation["relalg.map"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
-    val lp = p.copy()
+    val lp = p.copy
     lp.print("relalg.map ")
     lp.print(rel)
     lp.print(" computes : [")
@@ -134,7 +134,7 @@ case class InnerJoin(
 ) extends DerivedOperation["relalg.join"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
-    val lp = p.copy()
+    val lp = p.copy
     lp.print("relalg.join ")
     lp.print(left)
     lp.print(", ")
@@ -163,7 +163,7 @@ case class Aggregation(
 ) extends DerivedOperation["relalg.aggregation"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
-    val lp = p.copy()
+    val lp = p.copy
     lp.print("relalg.aggregation ")
     lp.print(rel)
     lp.print(" [")
@@ -263,7 +263,7 @@ case class RelAlgQuery(
 ) extends DerivedOperation["relalg.query"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
-    val lp = p.copy()
+    val lp = p.copy
     lp.print("relalg.query (){\n")
     body.blocks.toList match
       case entry :: others =>

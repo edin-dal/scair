@@ -1,10 +1,10 @@
 package scair.dialects.builtin
 
 import fastparse.*
-import scair.Printer
 import scair.clair.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 import scair.utils.*
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗

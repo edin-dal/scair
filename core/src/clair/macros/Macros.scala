@@ -2,12 +2,12 @@ package scair.clair.macros
 
 import fastparse.*
 import scair.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 import scair.utils.*

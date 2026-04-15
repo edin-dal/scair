@@ -8,6 +8,7 @@ import org.scalatest.prop.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.*
 
 class ParserTest
     extends AnyFlatSpec
@@ -457,7 +458,7 @@ class ParserTest
         parser = moduleP(using _, parser),
       ): @unchecked
 
-      val printer = new Printer(true)
+      val printer = new AssemblyPrinter(true)
 
       val opToErase = value.regions(0).blocks(0).operations(1)
 

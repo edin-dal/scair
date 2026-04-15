@@ -1,12 +1,12 @@
 package scair.ir
 
 import fastparse.*
-import scair.Printer
 import scair.dialects.builtin.IntegerAttr
 import scair.parse.Parser
+import scair.print.AssemblyPrinter
+import scair.print.Printer
 import scair.utils.OK
 
-import java.io.PrintWriter
 import java.io.StringWriter
 
 //
@@ -35,7 +35,7 @@ sealed trait Attribute:
 
   override def toString(): String =
     val out = StringWriter()
-    val p = Printer(p = PrintWriter(out))
+    val p = AssemblyPrinter(p = out)
     customPrint(p)
     p.flush()
     out.toString()
