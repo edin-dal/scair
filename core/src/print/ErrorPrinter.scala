@@ -8,14 +8,15 @@ import java.io.Writer
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
+private final class ErrorPrinterFilter(writer: Writer)
+    extends PrintWriter(writer):
 
   final val currentColumn = mutable.ListBuffer(0)
 
   var msg: Option[(String, Int, Int)] = None
 
   @tailrec
-  private final def writeRec(str: String, start: Int): Unit =
+  def writeRec(str: String, start: Int): Unit =
     str.indexOf('\n', start) match
       case -1 =>
         currentColumn(currentColumn.length - 1) += str.length - start
@@ -24,16 +25,18 @@ private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
         currentColumn(currentColumn.length - 1) += i - start
         currentColumn += 0
         super.write(str, start, i - start + 1)
-        msg.map(msg => printMessage(msg._1, msg._2, msg._3))
+        msg.map(printMessage)
         writeRec(str, i + 1)
 
-  def nextMessage(content: String, start: Int, end: Int): Unit =
-    // scala.Console.println(s"Received message, current: $lastLength")
+  def withUnderlinedMessage(toPrint: => Unit, message: String): Unit =
+    val startColumn = lastLength
+    toPrint
+    val end = lastLength
     currentColumn.last match
       case 0 => // new line, just print the message
-        printMessage(content, start, end)
-      case _ =>
-        msg = Some((content, start, end))
+        printMessage(message, startColumn, end)
+      case _ => // Otherwise print it after the current line
+        msg = Some((message, startColumn, end))
 
   final def printMessage(content: String, start: Int, end: Int): Unit =
     msg = None
@@ -56,9 +59,7 @@ private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
       case l => l
 
   override def write(str: String): Unit =
-    // scala.Console.println(s"Printing: '$str'")
     writeRec(str, 0)
-    // scala.Console.println(s"Finished printing, current: $lastLength")
 
 final class ErrorPrinter(
     error: Err,
@@ -98,32 +99,16 @@ final class ErrorPrinter(
       indentLevel,
     )
 
-  final private def printMessage(content: String, start: Int, end: Int): Unit =
-    1 to start foreach (_ => super.print(" "))
-    start + 1 to end foreach (_ => super.print("^"))
-    super.print("\n")
-    error.msg.linesIterator.foreach(l =>
-      1 to start foreach (_ => super.print(" "))
-      super.print("> ")
-      super.print(l)
-      super.print("\n")
-    )
-    flush()
-
-  final private def withUnderlinedMessage(toPrint: => Unit): Unit =
-    val startColumn = w.lastLength
-    toPrint
-    val endColumn = w.lastLength
-    w.nextMessage(error.msg, startColumn, endColumn)
-
   override def print(operation: Operation): Unit =
-    if obj eq operation then withUnderlinedMessage(super.print(operation))
+    if obj eq operation then
+      w.withUnderlinedMessage(super.print(operation), error.msg)
     else super.print(operation)
 
   override def print(attribute: Attribute): Unit =
-    if obj eq attribute then withUnderlinedMessage(super.print(attribute))
+    if obj eq attribute then
+      w.withUnderlinedMessage(super.print(attribute), error.msg)
     else super.print(attribute)
 
   override def print(value: Value[? <: Attribute]): Unit =
-    if obj eq value then withUnderlinedMessage(super.print(value))
+    if obj eq value then w.withUnderlinedMessage(super.print(value), error.msg)
     else super.print(value)
