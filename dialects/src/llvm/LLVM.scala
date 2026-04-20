@@ -4,6 +4,7 @@ import fastparse.*
 import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
+import scair.enums.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.given
@@ -11,6 +12,22 @@ import scair.utils.*
 
 case class Ptr() extends DerivedAttribute["llvm.ptr"] with TypeAttribute
     derives AttrDefs
+
+enum ICmpPredicate(name: String) extends I64Enum(name):
+  case eq extends ICmpPredicate("eq")
+  case ne extends ICmpPredicate("ne")
+  case slt extends ICmpPredicate("slt")
+  case sle extends ICmpPredicate("sle")
+  case sgt extends ICmpPredicate("sgt")
+  case sge extends ICmpPredicate("sge")
+  case ult extends ICmpPredicate("ult")
+  case ule extends ICmpPredicate("ule")
+  case ugt extends ICmpPredicate("ugt")
+  case uge extends ICmpPredicate("uge")
+
+object ICmpPredicate:
+  def fromString(value: String): Option[ICmpPredicate] =
+    values.find(_.name == value)
 
 final case class StructType(
     elems: Seq[TypeAttribute]
@@ -98,13 +115,13 @@ case class FMul(
 case class ICmp(
     lhs: Operand[IntegerType | IndexType],
     rhs: Operand[IntegerType | IndexType],
-    predicate: StringData,
     res: Result[IntegerType],
+    predicate: ICmpPredicate,
 ) extends DerivedOperation["llvm.icmp"] derives OpDefs:
 
   override def customPrint(printer: Printer): Unit =
     printer.print(name, " ")
-    printer.print("\"", predicate.data, "\" ")
+    printer.print("\"", predicate.name, "\" ")
     printer.print(lhs, ", ", rhs, " : ", lhs.typ)
 
 given OperationCustomParser[ICmp]:
@@ -114,18 +131,21 @@ given OperationCustomParser[ICmp]:
       stringLiteralP ~ operandNameP ~ "," ~ operandNameP ~ ":" ~
         (typeOfP[IntegerType] | typeOfP[IndexType])
     ).flatMap((pred, lhsName, rhsName, typ) =>
-      operandP(lhsName, typ).flatMap(lhs =>
-        operandP(rhsName, typ).flatMap(rhs =>
-          resultP(resNames.head, I1).map(res =>
-            ICmp(
-              lhs.asInstanceOf[Operand[IntegerType | IndexType]],
-              rhs.asInstanceOf[Operand[IntegerType | IndexType]],
-              StringData(pred),
-              res,
+      ICmpPredicate.fromString(pred) match
+        case None => Fail(s"unknown llvm.icmp predicate '$pred'")
+        case Some(predicate) =>
+          operandP(lhsName, typ).flatMap(lhs =>
+            operandP(rhsName, typ).flatMap(rhs =>
+              resultP(resNames.head, I1).map(res =>
+                ICmp(
+                  lhs.asInstanceOf[Operand[IntegerType | IndexType]],
+                  rhs.asInstanceOf[Operand[IntegerType | IndexType]],
+                  res,
+                  predicate,
+                )
+              )
             )
           )
-        )
-      )
     )
 
 case class Load(
