@@ -1,7 +1,7 @@
 package scair.dialects.llvm
 
 import fastparse.*
-import scair.Printer
+import scair.print.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
@@ -310,7 +310,7 @@ case class Func(
     with SymbolTable derives OpDefs:
 
   override def customPrint(printer: Printer): Unit =
-    val lprinter = printer.copy()
+    val lprinter = printer.scoped
     lprinter.print("llvm.func ")
     sym_visibility.foreach { visibility =>
       lprinter.print(visibility.data)
