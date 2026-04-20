@@ -210,7 +210,7 @@ private final class Scope(
         )
       else Pass(blockMap(blockName))
     else
-      val newBlock = new Block()
+      val newBlock = Block()
       blockMap(blockName) = newBlock
       Pass(newBlock)
 
@@ -220,7 +220,7 @@ private final class Scope(
     blockMap.getOrElseUpdate(
       blockName, {
         forwardBlocks += blockName
-        new Block()
+        Block()
       },
     )
 
@@ -272,7 +272,7 @@ final class Parser(
     Pass
 
   private[parse] def exitRegionP[$: P] =
-    scopes.pop.allBlocksAndValuesDefinedP
+    scopes.pop().allBlocksAndValuesDefinedP
 
   def parse[T](
       input: ParserInputSource,
@@ -373,7 +373,7 @@ final class Parser(
     // it already had at the time of the catched error!
     // This is a workaround to get the error message with the correct state.
     // TODO: More functional and fastparse-compatible state handling!
-    scopes.popAll
+    scopes.popAll()
     scopes.push(new Scope())
     attributeAliases.clear()
     typeAliases.clear()
@@ -448,7 +448,7 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
     case (head: OpDefs[ModuleOp]#UnstructuredOp) :: Nil =>
       head
     case _ =>
-      val block = new Block(operations = toplevel)
+      val block = Block(operations = toplevel)
       val region = Region(block)
       val moduleOp = ModuleOp(region)
 
@@ -660,11 +660,11 @@ def regionP[$: P](
     entryArgs: Seq[(String, Attribute)] = Seq.empty
 )(using p: Parser) = P(
   "{" ~/ p.enterRegionP ~/
-    (populateBlockArgsP(new Block(), entryArgs).flatMap(blockBodyP) ~/
-      blockP.rep).map((entry: Block, blocks: Seq[Block]) =>
-      if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
-      else entry +: blocks
-    ) ~/ "}" ~/ p.exitRegionP
+    (populateBlockArgsP(Block(), entryArgs).flatMap(blockBodyP) ~/ blockP.rep)
+      .map((entry: Block, blocks: Seq[Block]) =>
+        if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
+        else entry +: blocks
+      ) ~/ "}" ~/ p.exitRegionP
 ).map(Region(_))
 
 // [x] - value-id-and-type ::= value-id `:` type

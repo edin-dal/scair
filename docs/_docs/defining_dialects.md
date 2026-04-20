@@ -46,7 +46,11 @@ In ScaIR, this distinction is expressed explicitly in Scala: type attributes ext
 
 `TypeAttribute` describes the types of SSA values. While MLIR requires every SSA value to have exactly one type attribute, ScaIR allows SSA values to be typed using regular attributes as well.
 
-```scala sc:nocompile
+```scala sc-name:MyType
+//{
+import scair.ir.TypeAttribute
+import scair.clair.*
+//}
 final case class MyType()
   extends DerivedAttribute["mydialect.type"]
   with TypeAttribute
@@ -69,7 +73,7 @@ Data attributes store constant compile-time data, such as numbers or structured 
 
 ScaIR provides many built-in examples (e.g. `IntData`, `FloatData`). You can define your own:
 
-```scala
+```scala sc-name:RangeAttr
 //{
 import scair.dialects.builtin.IntData
 import scair.ir.DataAttribute
@@ -88,7 +92,7 @@ Use data attributes for:
 
 Parametrized attributes are composed of other attributes.
 
-```scala 
+```scala sc-name:FunctionType
 //{
 import scair.clair.macros.*
 import scair.ir.*
@@ -148,7 +152,12 @@ This derived companion plays the same role as MLIR’s TableGen-generated boiler
 
 ### A Simple Operation
 
-```scala sc:nocompile
+```scala sc-name:Add
+//{
+import scair.ir.*
+import scair.dialects.builtin.*
+import scair.clair.*
+//}
 case class Add(
   lhs: Operand[IntegerType],
   rhs: Operand[IntegerType],
@@ -167,7 +176,12 @@ This defines an operation printed as:
 
 Operations may contain regions, which define nested scopes.
 
-```scala sc:nocompile
+```scala sc-name:MyIf
+//{
+import scair.ir.*
+import scair.clair.*
+import scair.dialects.builtin.*
+//}
 case class MyIf(
   cond: Operand[IntegerType],
   thenRegion: Region,
@@ -190,7 +204,12 @@ Common examples:
 * [IsTerminator]
 * [IsolatedFromAbove]
 
-```scala sc:nocompile
+```scala sc-name:PureOp
+//{
+import scair.ir.*
+import scair.clair.*
+import scair.dialects.builtin.*
+//}
 case class PureOp(
   res: Result[IntegerType]
 ) extends DerivedOperation["mydialect.pure"]
@@ -230,10 +249,16 @@ Traits are commonly used by [transformations](transformations.md) and verificati
 
 Operations can define a `verify()` method to enforce invariants:
 
-```scala sc:nocompile
-override def verify() =
-  if lhs.typ == rhs.typ then Right(this)
-  else Left("type mismatch")
+```scala
+///{
+import scair.ir.*
+import scair.clair.*
+import scair.utils.*
+///}
+case class ExampleOp(lhs: Operand[Attribute], rhs: Operand[Attribute]) extends DerivedOperation["example"] derives OpDefs:
+  override def verify() =
+    if lhs.typ == rhs.typ then OK(this)
+    else Err("type mismatch")
 ```
 
 Verification is run automatically during parsing and transformation passes. Verification combines generic IR checks with operation- and trait-specific constraints.
@@ -260,7 +285,7 @@ In ScaIR, dialects are declared using `summonDialect`.
 ```scala sc:nocompile
 val MyDialect = summonDialect[
   // Attributes
-  (MyType, VectorType, RangeAttr),
+  (MyType, FunctionType, RangeAttr),
 
   // Operations
   (Add, PureOp)

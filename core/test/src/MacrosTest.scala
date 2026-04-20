@@ -6,6 +6,7 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scala.collection.mutable.LinkedHashMap
 import scair.utils.*
+import javax.tools.FileObject
 
 case class RegionOp(
     wowregions: Seq[Region]
@@ -561,12 +562,11 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
   }
 
   "Incorrect Conversion to ADTOp" should "fail gracefully on structuring" in {
-    def unstrucOp = mulComp.UnstructuredOp()
+    val unstrucOp = mulComp.UnstructuredOp()
 
     val structured = unstrucOp.structured
-    structured should matchPattern {
-      case Err("java.lang.Exception: Expected 2 operands, got 0.") =>
-    }
+
+    structured shouldBe Err("Expected 2 operands, got 0.", Some(unstrucOp))
   }
 
   "Single Optional Conversion to Unstructured" should
@@ -595,7 +595,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     )
 
     val out = java.io.StringWriter()
-    val printer = new scair.Printer(p = java.io.PrintWriter(out))
+    val printer = new scair.print.AssemblyPrinter(p = java.io.PrintWriter(out))
     printer.print(op, op2)
 
     out.toString() should be(

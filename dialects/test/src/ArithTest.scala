@@ -4,7 +4,7 @@ import scair.ir.*
 import scair.dialects.arith.*
 import scair.dialects.builtin.*
 import scair.dialects.func.*
-import scair.Printer
+import scair.print.*
 import scair.utils.*
 
 import org.scalatest.*
@@ -58,7 +58,7 @@ class ArithTests extends AnyFlatSpec with BeforeAndAfter:
       )
     )
     var out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module)
+    AssemblyPrinter(p = out).print(module)
     out.toString().trim() shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {
@@ -76,7 +76,7 @@ builtin.module {
     RewriteMethods.eraseOp(zero)
 
     out = StringWriter()
-    Printer(p = PrintWriter(out)).print(module.structured.get)
+    AssemblyPrinter(p = out).print(module.structured.get)
     out.toString().trim() shouldEqual """
 builtin.module {
   func.func @suchCompute(%0: i32) -> i32 {
