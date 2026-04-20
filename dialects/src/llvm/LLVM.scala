@@ -151,7 +151,6 @@ case class GetElementPtr(
     res: Result[Ptr],
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute,
-    gepFlags: Option[ArrayAttribute[StringData]] = None,
 ) extends DerivedOperation["llvm.getelementptr"]
     with NoMemoryEffect derives OpDefs:
 
