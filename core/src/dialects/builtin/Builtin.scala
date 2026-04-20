@@ -1,10 +1,10 @@
 package scair.dialects.builtin
 
 import fastparse.*
-import scair.Printer
 import scair.clair.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 import scair.utils.*
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
@@ -392,8 +392,8 @@ final case class DenseArrayAttr(
 \*≡==---==≡≡==---==≡*/
 
 final case class FunctionType(
-    inputs: Seq[Attribute],
-    outputs: Seq[Attribute],
+    inputs: Seq[Attribute] = Seq.empty,
+    outputs: Seq[Attribute] = Seq.empty,
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
@@ -450,10 +450,6 @@ final case class DenseIntOrFPElementsAttr(
               Err(
                 s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
-          case _ =>
-            Err(
-              s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
-            )
       )
     ).map(_ => ())
 

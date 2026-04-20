@@ -9,6 +9,7 @@ import org.scalatest.prop.Tables.Table
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.*
 import java.io.*
 
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
@@ -16,12 +17,12 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
   val ctx = MLContext()
   var parser = new Parser(ctx, allowUnregisteredDialect = true)
   var out = StringWriter()
-  var printer = new Printer(true, p = PrintWriter(out))
+  var printer = new AssemblyPrinter(true, p = PrintWriter(out))
 
   before {
     parser = new Parser(ctx, allowUnregisteredDialect = true)
     out = StringWriter()
-    printer = new Printer(true, p = PrintWriter(out))
+    printer = new AssemblyPrinter(true, p = PrintWriter(out))
   }
 
   def getResult[A](result: String, expected: A) =
@@ -218,7 +219,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
   "parseDifferentAttributes" should
     "match parsed string against expected string" in {
 
-      val block1 = new Block(
+      val block1 = Block(
         ListType(F16),
         ListType(
           UnregisteredOperation("test.op")(
@@ -243,7 +244,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         ).map(Result(_)),
       )
 
-      val block2 = new Block(
+      val block2 = Block(
         ListType(F128),
         ListType(
           op4,
@@ -262,7 +263,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
         ).map(Result(_))
       )
 
-      val block3 = new Block(
+      val block3 = Block(
         ListType(I64),
         ListType(
           op5,

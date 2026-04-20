@@ -1,11 +1,11 @@
 package scair.clair
 
 import fastparse.P
-import scair.Printer
 import scair.clair.macros.deriveAttrDefs
 import scair.clair.macros.deriveOpDefs
 import scair.ir.*
 import scair.parse.Parser
+import scair.print.Printer
 import scair.utils.*
 
 import scala.quoted.*
@@ -94,7 +94,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
       )
 
     override def structured = Try(companion.structure(this)) match
-      case Failure(e)  => Err(e.toString())
+      case Failure(e)  => Err(e.getMessage())
       case Success(op) => op.asInstanceOf[Operation].structured
 
     override def verify(): OK[Operation] =
