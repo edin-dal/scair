@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers.*
 
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatest.prop.Tables.Table
-import scair.Printer
+import scair.print.Printer
 import scair.dialects.builtin.*
 import java.io.StringWriter
 import java.io.PrintWriter

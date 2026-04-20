@@ -2,12 +2,12 @@ package scair.clair.macros
 
 import fastparse.*
 import scair.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 import scair.utils.*
@@ -100,8 +100,7 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
       )
     )
   opInputDefs.count(_ match
-    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single
-    case _                        => false) match
+    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single) match
     // Special cases for better performance
     // TODO: Further cases
 
@@ -708,11 +707,6 @@ def tryConstruct[T: Type](
                     properties,
                     name,
                   )
-                case Variadicity.Variadic =>
-                  report
-                    .errorAndAbort(
-                      s"Properties cannot be variadic in an ADT."
-                    )
               NamedArg(name, property.asTerm)
             case '[type t <: Attribute; `t`] =>
               val property = variadicity match
@@ -727,11 +721,6 @@ def tryConstruct[T: Type](
                     name,
                     defaultValue,
                   )
-                case Variadicity.Variadic =>
-                  report
-                    .errorAndAbort(
-                      s"Properties cannot be variadic in an ADT."
-                    )
               NamedArg(name, property.asTerm)
           namedArg
       }

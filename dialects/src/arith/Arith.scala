@@ -1,13 +1,13 @@
 package scair.dialects.arith
 
 import fastparse.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.arith.canonicalization.given
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
 import scair.parse.Parser
+import scair.print.Printer
 import scair.utils.*
 
 import scala.collection.immutable.*
