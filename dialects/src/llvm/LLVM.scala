@@ -160,7 +160,11 @@ case class Store(
     addr: Operand[Ptr],
 ) extends DerivedOperation["llvm.store"] derives OpDefs
 
-// Mirrors MLIR LLVM::GEPOp::kDynamicIndex for dynamic/SSA-valued GEP indices.
+// Mirrors MLIR's LLVM GEPOp encoding. MLIR stores one entry per GEP index in
+// rawConstantIndices; constant indices are stored directly, while dynamic/SSA
+// indices are marked with LLVM::GEPOp::kDynamicIndex (the minimum int32 value)
+// and their actual operands live in dynamicIndices. The verifier below follows
+// MLIR by checking that the number of sentinels matches dynamicIndices.size.
 private val gepDynamicIndexSentinel: BigInt = BigInt(Int.MinValue)
 
 private def isDynamicGEPIndex(attr: IntegerAttr): Boolean =
