@@ -1,12 +1,12 @@
 package scair.dialects.llvm
 
 import fastparse.*
-import scair.print.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.given
+import scair.print.Printer
 import scair.utils.*
 
 case class Ptr() extends DerivedAttribute["llvm.ptr"] with TypeAttribute
