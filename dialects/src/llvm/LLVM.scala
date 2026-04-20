@@ -1,13 +1,13 @@
 package scair.dialects.llvm
 
 import fastparse.*
-import scair.print.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.given
+import scair.print.Printer
 import scair.utils.*
 
 case class Ptr() extends DerivedAttribute["llvm.ptr"] with TypeAttribute
@@ -26,6 +26,7 @@ enum ICmpPredicate(name: String) extends I64Enum(name):
   case uge extends ICmpPredicate("uge")
 
 object ICmpPredicate:
+
   def fromString(value: String): Option[ICmpPredicate] =
     values.find(_.name == value)
 
@@ -132,7 +133,7 @@ given OperationCustomParser[ICmp]:
         (typeOfP[IntegerType] | typeOfP[IndexType])
     ).flatMap((pred, lhsName, rhsName, typ) =>
       ICmpPredicate.fromString(pred) match
-        case None => Fail(s"unknown llvm.icmp predicate '$pred'")
+        case None            => Fail(s"unknown llvm.icmp predicate '$pred'")
         case Some(predicate) =>
           operandP(lhsName, typ).flatMap(lhs =>
             operandP(rhsName, typ).flatMap(rhs =>
