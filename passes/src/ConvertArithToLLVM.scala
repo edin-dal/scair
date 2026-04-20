@@ -96,6 +96,15 @@ private final class Builder(val funcOp: func.Func):
         )
         valueMap(mul.result) = lowered.res
         Seq(lowered)
+      case cmp: llvm.ICmp =>
+        val lowered = llvm.ICmp(
+          asLLVMIndex(remap(cmp.lhs)),
+          asLLVMIndex(remap(cmp.rhs)),
+          Result(cmp.res.typ),
+          cmp.predicate,
+        )
+        valueMap(cmp.res) = lowered.res
+        Seq(lowered)
       case other =>
         val copied = other.deepCopy(using blockMap, valueMap)
         valueMap.addAll(other.results.zip(copied.results))
