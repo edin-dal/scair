@@ -160,6 +160,7 @@ case class Store(
     addr: Operand[Ptr],
 ) extends DerivedOperation["llvm.store"] derives OpDefs
 
+// Mirrors MLIR LLVM::GEPOp::kDynamicIndex for dynamic/SSA-valued GEP indices.
 private val gepDynamicIndexSentinel: BigInt = BigInt(Int.MinValue)
 
 private def isDynamicGEPIndex(attr: IntegerAttr): Boolean =
