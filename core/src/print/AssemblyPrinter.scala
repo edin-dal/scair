@@ -15,8 +15,8 @@ case class AssemblyPrinter(
       .empty,
     val blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
     protected val p: Writer = new PrintWriter(System.out),
-    private var aliasesMap: Map[Attribute, String] = Map.empty,
-    private var indentLevel: Int = 0,
+    protected var aliasesMap: Map[Attribute, String] = Map.empty,
+    protected var indentLevel: Int = 0,
 ) extends Printer(strictlyGeneric, p):
 
   protected def writer: Writer = p
@@ -93,7 +93,7 @@ case class AssemblyPrinter(
   def print(region: Region): Unit =
     this.scoped._printRegion(region)
 
-  private def _printRegion(region: Region) =
+  protected def _printRegion(region: Region) =
 
     print("{\n")
     region.blocks match

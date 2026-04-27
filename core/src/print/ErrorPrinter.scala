@@ -8,19 +8,48 @@ import java.io.Writer
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
+private final class ErrorPrinterFilter(writer: Writer)
+    extends PrintWriter(writer):
 
   final val currentColumn = mutable.ListBuffer(0)
 
+  var msg: Option[(String, Int, Int)] = None
+
   @tailrec
-  private final def accountLines(str: String, start: Int): Unit =
+  def writeRec(str: String, start: Int): Unit =
     str.indexOf('\n', start) match
       case -1 =>
         currentColumn(currentColumn.length - 1) += str.length - start
+        super.write(str, start, str.length - start)
       case i =>
         currentColumn(currentColumn.length - 1) += i - start
         currentColumn += 0
-        accountLines(str, i + 1)
+        super.write(str, start, i - start + 1)
+        msg.map(printMessage)
+        writeRec(str, i + 1)
+
+  def withUnderlinedMessage(toPrint: => Unit, message: String): Unit =
+    val startColumn = lastLength
+    toPrint
+    val end = lastLength
+    currentColumn.last match
+      case 0 => // new line, just print the message
+        printMessage(message, startColumn, end)
+      case _ => // Otherwise print it after the current line
+        msg = Some((message, startColumn, end))
+
+  final def printMessage(content: String, start: Int, end: Int): Unit =
+    msg = None
+    1 to start foreach (_ => super.write(" "))
+    start + 1 to end foreach (_ => super.write("^"))
+    super.write("\n")
+    content.linesIterator.foreach(l =>
+      1 to start foreach (_ => super.write(" "))
+      super.write("> ")
+      super.write(l)
+      super.write("\n")
+    )
+    flush()
 
   def lastLength: Int =
     currentColumn.last match
@@ -30,30 +59,29 @@ private class ErrorPrinterFilter(writer: Writer) extends PrintWriter(writer):
       case l => l
 
   override def write(str: String): Unit =
-    accountLines(str, 0)
-    super.write(str)
+    writeRec(str, 0)
 
 final class ErrorPrinter(
     error: Err,
     w: ErrorPrinterFilter = ErrorPrinterFilter(new PrintWriter(System.out)),
-    indent: String = "  ",
-    valueNextID: Int = 0,
-    blockNextID: Int = 0,
-    valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
+    _indent: String = "  ",
+    _valueNextID: Int = 0,
+    _blockNextID: Int = 0,
+    _valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
       .empty,
-    blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
-    aliasesMap: Map[Attribute, String] = Map.empty,
-    indentLevel: Int = 0,
+    _blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
+    _aliasesMap: Map[Attribute, String] = Map.empty,
+    _indentLevel: Int = 0,
 ) extends AssemblyPrinter(
       true,
-      indent,
-      valueNextID,
-      blockNextID,
-      valueNameMap,
-      blockNameMap,
+      _indent,
+      _valueNextID,
+      _blockNextID,
+      _valueNameMap,
+      _blockNameMap,
       w,
-      aliasesMap,
-      indentLevel,
+      _aliasesMap,
+      _indentLevel,
     ):
 
   val obj = error.obj.getOrElse(null)
@@ -71,29 +99,16 @@ final class ErrorPrinter(
       indentLevel,
     )
 
-  final private def withUnderlinedMessage(toPrint: => Unit): Unit =
-    val startColumn = p.asInstanceOf[ErrorPrinterFilter].lastLength
-    toPrint
-    val endColumn = p.asInstanceOf[ErrorPrinterFilter].lastLength
-    1 to startColumn foreach (_ => super.print(" "))
-    startColumn + 1 to endColumn foreach (_ => super.print("^"))
-    super.print("\n")
-    error.msg.linesIterator.foreach(l =>
-      1 to startColumn foreach (_ => super.print(" "))
-      super.print("> ")
-      super.print(l)
-      super.print("\n")
-    )
-    flush()
-
   override def print(operation: Operation): Unit =
-    if obj eq operation then withUnderlinedMessage(super.print(operation))
+    if obj eq operation then
+      w.withUnderlinedMessage(super.print(operation), error.msg)
     else super.print(operation)
 
   override def print(attribute: Attribute): Unit =
-    if obj eq attribute then withUnderlinedMessage(super.print(attribute))
+    if obj eq attribute then
+      w.withUnderlinedMessage(super.print(attribute), error.msg)
     else super.print(attribute)
 
   override def print(value: Value[? <: Attribute]): Unit =
-    if obj eq value then withUnderlinedMessage(super.print(value))
+    if obj eq value then w.withUnderlinedMessage(super.print(value), error.msg)
     else super.print(value)
