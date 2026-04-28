@@ -43,3 +43,10 @@ class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
       case failure: fastparse.Parsed.Failure =>
         fail(s"Failed to parse operation: $failure.msg")
   }
+
+  it should "destructure and structure correctly" in {
+    val op = EnumOperation(Color.Green)
+    val destructured = summon[OpDefs[EnumOperation]].destructure(op)
+    val restructured = summon[OpDefs[EnumOperation]].structure(destructured)
+    assert(op.color == restructured.color)
+  }

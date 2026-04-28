@@ -66,13 +66,14 @@ def enumFromProperty[A <: scala.reflect.Enum: Type](
               Expr(typeName)
             }}"
         )
-      case Some(prop @ IntegerAttr(IntData(i), _)) =>
+      case Some(IntegerAttr(IntData(i), _)) =>
         $enumFromOrdinalFunc(i.toInt)
-      case Some(_) =>
+      case Some(i: A)  => i
+      case Some(value) =>
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
             s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass.getSimpleName}"
+            s"but found ${value.getClass()}"
         )
   }
 
