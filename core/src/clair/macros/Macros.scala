@@ -290,7 +290,7 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
     value match
       case None          => $ifAbsent
       case Some(prop: A) => prop
-      case Some(value)       =>
+      case Some(value)   =>
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
             s"expected ${${ Expr(typeName) }}, " +
