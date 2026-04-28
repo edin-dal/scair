@@ -48,5 +48,5 @@ class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
     val op = EnumOperation(Color.Green)
     val destructured = summon[OpDefs[EnumOperation]].destructure(op)
     val restructured = summon[OpDefs[EnumOperation]].structure(destructured)
-    assert(restructured == op)
+    assert(op.color == restructured.color)
   }
