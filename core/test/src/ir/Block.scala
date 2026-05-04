@@ -122,17 +122,16 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 "test.op3"(%1) : (i32) -> ()
 """).get.value
 
-    input.regions(0).blocks(0).operations(0).regions(0).blocks(0).operations.zipWithIndex.foreach {
-      case (op, idx) =>
+    input.regions(0).blocks(0).operations(0).regions(0).blocks(0).operations
+      .zipWithIndex.foreach { case (op, idx) =>
         op.blockIndex shouldEqual idx
-    }
+      }
 
     input.regions(0).blocks(0).operations(0) // test.op1
-      .regions(0).blocks(0).operations(2)    // nested test.op3
-      .regions(0).blocks(0).operations.zipWithIndex.foreach {
-      case (op, idx) =>
+      .regions(0).blocks(0).operations(2) // nested test.op3
+      .regions(0).blocks(0).operations.zipWithIndex.foreach { case (op, idx) =>
         op.blockIndex shouldEqual idx
-    }
+      }
   }
 
   "Block Transformations via Passes" should
@@ -166,11 +165,12 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 
       output.regions(0).blocks(0).isOpOrderValid shouldEqual false
     }
-  
-  "Block Transformations via Passes" should "preserve the indexing of untouched blocks" in {
-    val ctx = MLContext()
-    val parser = Parser(ctx, allowUnregisteredDialect = true)
-    val input = parser.parse("""
+
+  "Block Transformations via Passes" should
+    "preserve the indexing of untouched blocks" in {
+      val ctx = MLContext()
+      val parser = Parser(ctx, allowUnregisteredDialect = true)
+      val input = parser.parse("""
 %0 = "test.op1"() ({
   %0 = "test.op1"() : () -> i32
   %1 = "test.op2"(%0) : (i32) -> i32
@@ -184,7 +184,7 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 "test.op3"(%1) : (i32) -> ()
 """).get.value
 
-    object TestPattern extends RewritePattern:
+      object TestPattern extends RewritePattern:
         override def matchAndRewrite(
             op: Operation,
             rewriter: PatternRewriter,
@@ -195,16 +195,16 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
           if newRes != op.results then
             rewriter.replaceOp(op, op.updated(results = newRes))
 
-    final class TestPass(ctx: MLContext) extends WalkerPass(ctx):
-      override val name = "test-test"
-      override final val walker = PatternRewriteWalker(TestPattern)
+      final class TestPass(ctx: MLContext) extends WalkerPass(ctx):
+        override val name = "test-test"
+        override final val walker = PatternRewriteWalker(TestPattern)
 
-    val pass = TestPass(ctx)
+      val pass = TestPass(ctx)
 
-    val output = pass.transform(input)
+      val output = pass.transform(input)
 
-    output.regions(0).blocks(0).isOpOrderValid shouldEqual false
-    input.regions(0).blocks(0).operations(0) // test.op1
-      .regions(0).blocks(0).operations(2)    // nested test.op3
-      .regions(0).blocks(0).isOpOrderValid shouldEqual true
-  }
+      output.regions(0).blocks(0).isOpOrderValid shouldEqual false
+      input.regions(0).blocks(0).operations(0) // test.op1
+        .regions(0).blocks(0).operations(2) // nested test.op3
+        .regions(0).blocks(0).isOpOrderValid shouldEqual true
+    }
