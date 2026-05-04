@@ -138,29 +138,16 @@ case class Block private (
     val operations: BlockOperations,
 ) extends IRNode:
 
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||  BLOCK INITIALIZATION  ||
+  \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
+
   // it is implicitly true, as BlockOperations data structure will calculate operation order on construction
+  // tbd if this is a good design
   var isOpOrderValid = true
 
-  override def recomputeOpOrder(): Unit =
-    if !isOpOrderValid then
-      isOpOrderValid = true
-      operations.computeBlockOrder()
-
-  final override def deepCopy(using
-      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
-        .empty,
-  ): Block =
-    Block(
-      argumentsTypes = arguments.map(_.typ),
-      (args) =>
-        valueMapper addAll (arguments zip args)
-        operations.map(_.deepCopy),
-    )
-
+  var containerRegion: Option[Region] = None
   final override def parent: Option[Region] = containerRegion
-
-  operations.foreach(attachOp)
 
   arguments.foreach(a =>
     if a.owner != None then
@@ -170,7 +157,11 @@ case class Block private (
     else a.owner = Some(this)
   )
 
-  var containerRegion: Option[Region] = None
+  operations.foreach(attachOp)
+
+  /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  || BLOCK TRANSFORMATIONS ||
+  \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
   private def attachOp(op: Operation): Unit =
     op.containerBlock match
@@ -186,6 +177,21 @@ case class Block private (
             )
           case false =>
             op.containerBlock = Some(this)
+
+  def detachOp(op: Operation): Operation =
+    (op.containerBlock `equals` Some(this)) match
+      case true =>
+        op.containerBlock = None
+        operations -= op
+        op
+      case false =>
+        throw new Exception(
+          "MLIROperation can only be detached from a block in which it is contained."
+        )
+
+  def eraseOp(op: Operation, safeErase: Boolean = true) =
+    detachOp(op)
+    op.erase(safeErase)
 
   def addOp(newOp: Operation): Unit =
     val oplen = operations.length
@@ -253,20 +259,14 @@ case class Block private (
           "given as a point of reference does not exist in the current block."
       )
 
-  def detachOp(op: Operation): Operation =
-    (op.containerBlock `equals` Some(this)) match
-      case true =>
-        op.containerBlock = None
-        operations -= op
-        op
-      case false =>
-        throw new Exception(
-          "MLIROperation can only be detached from a block in which it is contained."
-        )
+  /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   BLOCK STRUCTURING   ||
+  \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-  def eraseOp(op: Operation, safeErase: Boolean = true) =
-    detachOp(op)
-    op.erase(safeErase)
+  override def recomputeOpOrder(): Unit =
+    if !isOpOrderValid then
+      isOpOrderValid = true
+      operations.computeBlockOrder()
 
   def structured: OK[Unit] =
     operations.foldLeft[OK[Unit]](OK())((res, op) =>
@@ -287,6 +287,22 @@ case class Block private (
           res.flatMap(_ => op.verify().map(_ => ()))
         )
       )
+
+  /*≡==--==≡≡≡≡≡≡==--=≡≡*\
+  ||   OBJECT METHODS   ||
+  \*≡==---==≡≡≡≡==---==≡*/
+
+  final override def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
+  ): Block =
+    Block(
+      argumentsTypes = arguments.map(_.typ),
+      (args) =>
+        valueMapper addAll (arguments zip args)
+        operations.map(_.deepCopy),
+    )
 
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]

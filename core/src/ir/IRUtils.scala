@@ -2,6 +2,7 @@ package scair.ir
 
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Map
 
 // ██╗ ██████╗░
 // ██║ ██╔══██╗
@@ -17,6 +18,27 @@ import scala.collection.mutable.ListBuffer
 // ╚██████╔╝ ░░░██║░░░ ██║ ███████╗ ██████╔╝
 // ░╚═════╝░ ░░░╚═╝░░░ ╚═╝ ╚══════╝ ╚═════╝░
 
+/*≡==--==≡≡≡≡≡==--=≡≡*\
+||      IR NODE      ||
+\*≡==---==≡≡≡==---==≡*/
+
+trait IRNode:
+  def parent: Option[IRNode]
+
+  final def isAncestor(other: IRNode): Boolean =
+    other.parent match
+      case Some(parent) if parent == this => true
+      case Some(parent)                   => isAncestor(parent)
+      case None                           => false
+      case null                           => false
+
+  def deepCopy(using
+      blockMapper: Map[Block, Block] = Map.empty,
+      valueMapper: Map[Value[Attribute], Value[Attribute]] = Map.empty,
+  ): IRNode
+
+  def recomputeOpOrder(): Unit = ???
+
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||      OP INPUTS      ||
 \*≡==---==≡≡≡≡≡==---==≡*/
@@ -28,11 +50,11 @@ type Successor = Block
 ||      UTILS      ||
 \*≡==---==≡==---==≡*/
 
-val DictType = LinkedHashMap
-type DictType[A, B] = LinkedHashMap[A, B]
-
 val ListType = ListBuffer
 type ListType[A] = ListBuffer[A]
+
+val DictType = LinkedHashMap
+type DictType[A, B] = LinkedHashMap[A, B]
 
 extension (dt: DictType[String, Attribute])
 
