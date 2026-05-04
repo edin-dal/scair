@@ -138,6 +138,15 @@ case class Block private (
     val operations: BlockOperations,
 ) extends IRNode:
 
+  // it is implicitly true, as BlockOperations data structure will calculate operation order on construction
+  // also the Parser populates the indexes when adding operations into the block - kind of ad-hoc but works :D
+  var isOpOrderValid = true
+
+  override def recomputeOpOrder(): Unit =
+    if !isOpOrderValid then
+      isOpOrderValid = true
+      operations.computeBlockOrder()
+
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
       valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map

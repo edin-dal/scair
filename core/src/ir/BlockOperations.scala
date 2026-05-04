@@ -30,6 +30,7 @@ object BlockOperations:
   def from(i: IterableOnce[Operation]) =
     val list = new BlockOperations
     list.addAll(i)
+    list.computeBlockOrder()
 
   def unapplySeq(list: BlockOperations): Some[Seq[Operation]] =
     Some(list.toSeq)
@@ -42,6 +43,15 @@ class BlockOperations extends IntrusiveList[Operation]:
   private inline def handleOperationRemoval(op: Operation) =
     op.operands
       .foreachWithIndex((o, i) => o.uses.filterInPlace(_.operation != op))
+
+  final def computeBlockOrder(): this.type =
+    var idx = 0
+    this.foreach { op =>
+      op.blockIndex = idx
+      idx += 1
+      op.recomputeOpOrder()
+    }
+    this
 
   override final def addOne(elem: Operation): this.type =
     handleOperationInsertion(elem)

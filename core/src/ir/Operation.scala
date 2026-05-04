@@ -39,9 +39,12 @@ trait IRNode:
         .empty,
   ): IRNode
 
+  def recomputeOpOrder(): Unit = ???
+
 trait Operation extends IRNode with IntrusiveNode[Operation]:
 
   final override def parent = containerBlock
+  var blockIndex = -1
 
   /*
    * Return an error message wrapping this operation. Purposefully shadowing the Err
@@ -77,6 +80,9 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
     // else
     r.owner = Some(this)
   )
+
+  override def recomputeOpOrder(): Unit =
+    regions.foreach(_.recomputeOpOrder())
 
   def name: String
 
