@@ -138,10 +138,13 @@ case class Block private (
     val operations: BlockOperations,
 ) extends IRNode:
 
-  final override def parent: Option[Region] = containerRegion
   // it is implicitly true, as BlockOperations data structure will calculate operation order on construction
   var isOpOrderValid = true
-  var containerRegion: Option[Region] = None
+
+  override def recomputeOpOrder(): Unit =
+    if !isOpOrderValid then
+      isOpOrderValid = true
+      operations.computeBlockOrder()
 
   final override def deepCopy(using
       blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
@@ -155,6 +158,8 @@ case class Block private (
         operations.map(_.deepCopy),
     )
 
+  final override def parent: Option[Region] = containerRegion
+
   operations.foreach(attachOp)
 
   arguments.foreach(a =>
@@ -165,14 +170,7 @@ case class Block private (
     else a.owner = Some(this)
   )
 
-  override def recomputeOpOrder(): Unit =
-    if !isOpOrderValid then
-      isOpOrderValid = true
-      operations.computeBlockOrder()
-
-  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-  ||   BLOCK TRANSFORMATIONS   ||
-  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+  var containerRegion: Option[Region] = None
 
   private def attachOp(op: Operation): Unit =
     op.containerBlock match
@@ -188,21 +186,6 @@ case class Block private (
             )
           case false =>
             op.containerBlock = Some(this)
-
-  def detachOp(op: Operation): Operation =
-    (op.containerBlock `equals` Some(this)) match
-      case true =>
-        op.containerBlock = None
-        operations -= op
-        op
-      case false =>
-        throw new Exception(
-          "MLIROperation can only be detached from a block in which it is contained."
-        )
-
-  def eraseOp(op: Operation, safeErase: Boolean = true) =
-    detachOp(op)
-    op.erase(safeErase)
 
   def addOp(newOp: Operation): Unit =
     val oplen = operations.length
@@ -270,11 +253,20 @@ case class Block private (
           "given as a point of reference does not exist in the current block."
       )
 
-  // def replaceOp
+  def detachOp(op: Operation): Operation =
+    (op.containerBlock `equals` Some(this)) match
+      case true =>
+        op.containerBlock = None
+        operations -= op
+        op
+      case false =>
+        throw new Exception(
+          "MLIROperation can only be detached from a block in which it is contained."
+        )
 
-  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
-  ||      BLOCK STRUCTURE      ||
-  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+  def eraseOp(op: Operation, safeErase: Boolean = true) =
+    detachOp(op)
+    op.erase(safeErase)
 
   def structured: OK[Unit] =
     operations.foldLeft[OK[Unit]](OK())((res, op) =>

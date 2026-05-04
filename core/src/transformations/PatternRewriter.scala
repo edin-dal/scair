@@ -212,6 +212,11 @@ class PatternRewriteWalker(
 
     override def operationRemovalHandler: Operation => Unit =
       (op: Operation) =>
+        // here the logic is simple - we invalidate the op order every time an operation is removed from the block
+        op.containerBlock match
+          case Some(block) => 
+            block.isOpOrderValid = false
+          case None        => ()
         clearWorklist(op)
         op.operands.foreach((o) =>
           o.owner match
@@ -220,7 +225,12 @@ class PatternRewriteWalker(
         )
 
     override def operationInsertionHandler: Operation => Unit =
-      populateWorklist
+      (op: Operation) =>
+        // similarly, we invalidate the op order every time an operation is added from the block
+        op.containerBlock match
+          case Some(block) => block.isOpOrderValid = false
+          case None        => ()
+        populateWorklist(op)
 
     def eraseOp(op: Operation): Unit =
       super.eraseOp(op)

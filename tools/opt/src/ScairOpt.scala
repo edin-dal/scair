@@ -157,6 +157,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                       sys.exit(1)
                   module.map { op =>
                     val out = pass.transform(op)
+                    out.recomputeOpOrder()
 
                     if !parsedArgs.skipVerify then
                       Verifier.verify(out).fold(
