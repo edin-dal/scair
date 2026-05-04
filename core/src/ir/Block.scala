@@ -143,6 +143,7 @@ case class Block private (
   \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
 
   // it is implicitly true, as BlockOperations data structure will calculate operation order on construction
+  // also the Parser populates the indexes when adding operations into the block - kind of ad-hoc but works :D
   // tbd if this is a good design
   var isOpOrderValid = true
 
