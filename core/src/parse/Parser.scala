@@ -625,9 +625,13 @@ private def populateBlockArgsP[$: P](
   )
 
 private def blockBodyP[$: P](block: Block)(using Parser) =
+  // TODO: temporary solution to populate indexes within block body.
+  var idx = 0
   operationP.map(op =>
     op.containerBlock = Some(block)
     block.operations.addOne(op): Unit
+    op.blockIndex = idx
+    idx += 1
   ).rep ~ Pass(block)
 
 def blockP[$: P](using Parser) = P(

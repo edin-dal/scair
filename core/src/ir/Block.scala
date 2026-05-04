@@ -139,6 +139,7 @@ case class Block private (
 ) extends IRNode:
 
   // it is implicitly true, as BlockOperations data structure will calculate operation order on construction
+  // also the Parser populates the indexes when adding operations into the block - kind of ad-hoc but works :D
   var isOpOrderValid = true
 
   override def recomputeOpOrder(): Unit =
