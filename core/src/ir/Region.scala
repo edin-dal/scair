@@ -46,6 +46,9 @@ case class Region(
 
   blocks.foreach(attachBlock)
 
+  override def recomputeOpOrder(): Unit =
+    blocks.foreach(_.recomputeOpOrder())
+
   def structured =
     blocks.foldLeft[OK[Unit]](OK())((res, block) =>
       res.flatMap(_ => block.structured)
