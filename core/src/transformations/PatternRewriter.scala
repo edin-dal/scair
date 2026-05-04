@@ -59,15 +59,23 @@ case class InsertPoint(
 
 trait Rewriter:
 
-  def operationRemovalHandler: Operation => Unit = (op: Operation) => {
+  def operationRemovalHandler: Operation => Unit = (op: Operation) =>
     // default handler does nothing
-  }
+    // apart from invalidating the block's op order :D
+    op.containerBlock match
+      case Some(block) =>
+        block.isOpOrderValid = false
+      case None => ()
 
   def operationInsertionHandler: (Operation) => Unit = (
     op: Operation
-  ) => {
+  ) =>
     // default handler does nothing
-  }
+    // apart from invalidating the block's op order :D
+    op.containerBlock match
+      case Some(block) =>
+        block.isOpOrderValid = false
+      case None => ()
 
   def eraseOp(op: Operation, safeErase: Boolean = true) =
     op.containerBlock match
