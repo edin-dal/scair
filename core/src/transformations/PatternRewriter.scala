@@ -214,9 +214,9 @@ class PatternRewriteWalker(
       (op: Operation) =>
         // here the logic is simple - we invalidate the op order every time an operation is removed from the block
         op.containerBlock match
-          case Some(block) => 
+          case Some(block) =>
             block.isOpOrderValid = false
-          case None        => ()
+          case None => ()
         clearWorklist(op)
         op.operands.foreach((o) =>
           o.owner match
