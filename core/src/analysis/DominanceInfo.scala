@@ -38,8 +38,8 @@ final class DominanceInfo(root: Operation):
     yield
       if defBlock eq useBlock then
         // Same block => order matters
-        val idx = blockOpIndex(useBlock)
-        idx.get(defOp).exists(d => idx.get(liftedUse).exists(u => d <= u))
+        defBlock.recomputeOpOrder()
+        defOp.blockIndex <= liftedUse.blockIndex
       else
         // Different blocks in same region => CFG block dominance
         blockDominates(defRegion, defBlock, useBlock)
