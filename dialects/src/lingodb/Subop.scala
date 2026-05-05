@@ -1,9 +1,9 @@
 package scair.dialects.lingodb
 
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.print.Printer
 
 // ░██████╗ ██╗░░░██╗ ██████╗░ ░█████╗░ ██████╗░
 // ██╔════╝ ██║░░░██║ ██╔══██╗ ██╔══██╗ ██╔══██╗
@@ -55,8 +55,7 @@ final case class SubopLocalTableType(
 case class SetResult(
     index: IntData,
     rel: Operand[Attribute],
-) extends DerivedOperation["subop.set_result", SetResult]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["subop.set_result"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("subop.set_result ")

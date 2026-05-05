@@ -55,21 +55,21 @@ import scair.clair.*
 
 case class Complex(
   elem: Attribute,
-) extends DerivedAttribute["cmath.complex", Complex] with TypeAttribute
-  derives DerivedAttributeCompanion
+) extends DerivedAttribute["cmath.complex"] with TypeAttribute
+  derives AttrDefs
 
 case class Norm(
   in: Operand[Attribute],
   out: Result[Attribute],
-) extends DerivedOperation["cmath.norm", Norm]
-  derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.norm"]
+  derives OpDefs
 
 case class Mul(
   lhs: Operand[Attribute],
   rhs: Operand[Attribute],
   res: Result[Attribute],
-) extends DerivedOperation["cmath.mul", Mul]
-  derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mul"]
+  derives OpDefs
 
 val cmath = summonDialect[Complex *: EmptyTuple, Norm *: Mul *: EmptyTuple]
 """.stripMargin

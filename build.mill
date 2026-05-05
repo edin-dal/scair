@@ -1,4 +1,4 @@
-//| mill-version: 1.1.4-native
+//| mill-version: 1.1.5-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
@@ -42,10 +42,10 @@ import mill.javalib.PlatformModuleBase
 trait ScairSettings extends ScalaModule with PublishModule:
   def scoverageVersion = Task { "2.5.2" }
 
-  override def scalaVersion = "3.8.2"
+  override def scalaVersion = "3.8.3"
 
   override def scalacOptions =
-    super.scalacOptions() ++ Seq("-Wunused:imports", "-explain")
+    super.scalacOptions() ++ Seq("-Wunused:imports", "-explain", "-opt", "-opt-inline:<sources>,scair.**")
 
   override def artifactName = s"scair-${super.artifactName()}"
 

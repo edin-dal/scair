@@ -10,8 +10,8 @@ title: "Defining a Dialect"
 [IsolatedFromAbove]: scair.ir.IsolatedFromAbove
 [DerivedAttribute]: scair.clair.DerivedAttribute
 [DerivedOperation]: scair.clair.DerivedOperation
-[derives DerivedOperationCompanion]: scair.clair.DerivedOperationCompanion
-[derives DerivedAttributeCompanion]: scair.clair.DerivedAttributeCompanion
+[derives OpDefs]: scair.clair.DerivedOperationCompanion
+[derives AttrDefs]: scair.clair.AttrDefs
 
 # Defining a Dialect
 This tutorial explains how to define new attributes and operations in ScaIR and how to package these into a dialect.
@@ -46,11 +46,15 @@ In ScaIR, this distinction is expressed explicitly in Scala: type attributes ext
 
 `TypeAttribute` describes the types of SSA values. While MLIR requires every SSA value to have exactly one type attribute, ScaIR allows SSA values to be typed using regular attributes as well.
 
-```scala sc:nocompile
+```scala sc-name:MyType
+//{
+import scair.ir.TypeAttribute
+import scair.clair.*
+//}
 final case class MyType()
-  extends DerivedAttribute["mydialect.type", MyType]
+  extends DerivedAttribute["mydialect.type"]
   with TypeAttribute
-  derives DerivedAttributeCompanion
+  derives AttrDefs
 ```
 
 Type attributes are printed in the IR type position:
@@ -61,7 +65,7 @@ Type attributes are printed in the IR type position:
 
 [DerivedAttribute] is the typed base for attributes whose IR name and parameters are provided by a derived companion. 
 
-[derives DerivedAttributeCompanion] generates the glue code needed for printing/parsing and parameter handling.
+[derives AttrDefs] generates the glue code needed for printing/parsing and parameter handling.
 
 ### Data Attributes
 
@@ -69,7 +73,7 @@ Data attributes store constant compile-time data, such as numbers or structured 
 
 ScaIR provides many built-in examples (e.g. `IntData`, `FloatData`). You can define your own:
 
-```scala
+```scala sc-name:RangeAttr
 //{
 import scair.dialects.builtin.IntData
 import scair.ir.DataAttribute
@@ -88,7 +92,7 @@ Use data attributes for:
 
 Parametrized attributes are composed of other attributes.
 
-```scala 
+```scala sc-name:FunctionType
 //{
 import scair.clair.macros.*
 import scair.ir.*
@@ -140,21 +144,26 @@ In most cases, the companion is derived automatically using macros:
 
 ```scala sc:nocompile
 case class Add(...) 
-  extends DerivedOperation["mydialect.add", Add]
-  derives DerivedOperationCompanion
+  extends DerivedOperation["mydialect.add"]
+  derives OpDefs
 ```
 
 This derived companion plays the same role as MLIR’s TableGen-generated boilerplate, but without a separate code-generation step.
 
 ### A Simple Operation
 
-```scala sc:nocompile
+```scala sc-name:Add
+//{
+import scair.ir.*
+import scair.dialects.builtin.*
+import scair.clair.*
+//}
 case class Add(
   lhs: Operand[IntegerType],
   rhs: Operand[IntegerType],
   res: Result[IntegerType]
-) extends DerivedOperation["mydialect.add", Add]
-  derives DerivedOperationCompanion
+) extends DerivedOperation["mydialect.add"]
+  derives OpDefs
 ```
 
 This defines an operation printed as:
@@ -167,13 +176,18 @@ This defines an operation printed as:
 
 Operations may contain regions, which define nested scopes.
 
-```scala sc:nocompile
+```scala sc-name:MyIf
+//{
+import scair.ir.*
+import scair.clair.*
+import scair.dialects.builtin.*
+//}
 case class MyIf(
   cond: Operand[IntegerType],
   thenRegion: Region,
   elseRegion: Region
-) extends DerivedOperation["mydialect.if", MyIf]
-  derives DerivedOperationCompanion
+) extends DerivedOperation["mydialect.if"]
+  derives OpDefs
 ```
 
 Regions are commonly used for control flow and loops.
@@ -190,12 +204,17 @@ Common examples:
 * [IsTerminator]
 * [IsolatedFromAbove]
 
-```scala sc:nocompile
+```scala sc-name:PureOp
+//{
+import scair.ir.*
+import scair.clair.*
+import scair.dialects.builtin.*
+//}
 case class PureOp(
   res: Result[IntegerType]
-) extends DerivedOperation["mydialect.pure", PureOp]
+) extends DerivedOperation["mydialect.pure"]
   with NoMemoryEffect
-  derives DerivedOperationCompanion
+  derives OpDefs
 ```
 
 Example trait Implementation:
@@ -230,10 +249,16 @@ Traits are commonly used by [transformations](transformations.md) and verificati
 
 Operations can define a `verify()` method to enforce invariants:
 
-```scala sc:nocompile
-override def verify() =
-  if lhs.typ == rhs.typ then Right(this)
-  else Left("type mismatch")
+```scala
+///{
+import scair.ir.*
+import scair.clair.*
+import scair.utils.*
+///}
+case class ExampleOp(lhs: Operand[Attribute], rhs: Operand[Attribute]) extends DerivedOperation["example"] derives OpDefs:
+  override def verify() =
+    if lhs.typ == rhs.typ then OK(this)
+    else Err("type mismatch")
 ```
 
 Verification is run automatically during parsing and transformation passes. Verification combines generic IR checks with operation- and trait-specific constraints.
@@ -260,7 +285,7 @@ In ScaIR, dialects are declared using `summonDialect`.
 ```scala sc:nocompile
 val MyDialect = summonDialect[
   // Attributes
-  (MyType, VectorType, RangeAttr),
+  (MyType, FunctionType, RangeAttr),
 
   // Operations
   (Add, PureOp)

@@ -38,8 +38,8 @@ final class DominanceInfo(root: Operation):
     yield
       if defBlock eq useBlock then
         // Same block => order matters
-        val idx = blockOpIndex(useBlock)
-        idx.get(defOp).exists(d => idx.get(liftedUse).exists(u => d <= u))
+        defBlock.recomputeOpOrder()
+        defOp.blockIndex <= liftedUse.blockIndex
       else
         // Different blocks in same region => CFG block dominance
         blockDominates(defRegion, defBlock, useBlock)
@@ -85,17 +85,8 @@ final class DominanceInfo(root: Operation):
   private val regionCache: mutable.Map[Region, RegionDomInfo] = mutable.Map
     .empty
 
-  private val blockIndexCache: mutable.Map[Block, Map[Operation, Int]] =
-    mutable.Map.empty
-
   private def regionInfo(r: Region): RegionDomInfo =
     regionCache.getOrElseUpdate(r, computeRegionDom(r))
-
-  private def blockOpIndex(b: Block): Map[Operation, Int] =
-    blockIndexCache.getOrElseUpdate(
-      b,
-      b.operations.toSeq.zipWithIndex.toMap,
-    )
 
   // ----------------------------
   // Region CFG extraction

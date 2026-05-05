@@ -5,7 +5,7 @@ import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.MLContext
-import scair.clair.DerivedOperationCompanion
+import scair.clair.OpDefs
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
@@ -210,7 +210,7 @@ private final class Scope(
         )
       else Pass(blockMap(blockName))
     else
-      val newBlock = new Block()
+      val newBlock = Block()
       blockMap(blockName) = newBlock
       Pass(newBlock)
 
@@ -220,7 +220,7 @@ private final class Scope(
     blockMap.getOrElseUpdate(
       blockName, {
         forwardBlocks += blockName
-        new Block()
+        Block()
       },
     )
 
@@ -272,7 +272,7 @@ final class Parser(
     Pass
 
   private[parse] def exitRegionP[$: P] =
-    scopes.pop.allBlocksAndValuesDefinedP
+    scopes.pop().allBlocksAndValuesDefinedP
 
   def parse[T](
       input: ParserInputSource,
@@ -373,7 +373,7 @@ final class Parser(
     // it already had at the time of the catched error!
     // This is a workaround to get the error message with the correct state.
     // TODO: More functional and fastparse-compatible state handling!
-    scopes.popAll
+    scopes.popAll()
     scopes.push(new Scope())
     attributeAliases.clear()
     typeAliases.clear()
@@ -444,11 +444,11 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
     ) ~/ p.exitRegionP ~ End
 ).map((toplevel: Seq[Operation]) =>
   toplevel.toList match
-    case (head: ModuleOp) :: Nil => head
-    case (head: DerivedOperationCompanion[ModuleOp]#UnstructuredOp) :: Nil =>
+    case (head: ModuleOp) :: Nil                        => head
+    case (head: OpDefs[ModuleOp]#UnstructuredOp) :: Nil =>
       head
     case _ =>
-      val block = new Block(operations = toplevel)
+      val block = Block(operations = toplevel)
       val region = Region(block)
       val moduleOp = ModuleOp(region)
 
@@ -625,9 +625,13 @@ private def populateBlockArgsP[$: P](
   )
 
 private def blockBodyP[$: P](block: Block)(using Parser) =
+  // TODO: temporary solution to populate indexes within block body.
+  var idx = 0
   operationP.map(op =>
     op.containerBlock = Some(block)
     block.operations.addOne(op): Unit
+    op.blockIndex = idx
+    idx += 1
   ).rep ~ Pass(block)
 
 def blockP[$: P](using Parser) = P(
@@ -660,11 +664,11 @@ def regionP[$: P](
     entryArgs: Seq[(String, Attribute)] = Seq.empty
 )(using p: Parser) = P(
   "{" ~/ p.enterRegionP ~/
-    (populateBlockArgsP(new Block(), entryArgs).flatMap(blockBodyP) ~/
-      blockP.rep).map((entry: Block, blocks: Seq[Block]) =>
-      if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
-      else entry +: blocks
-    ) ~/ "}" ~/ p.exitRegionP
+    (populateBlockArgsP(Block(), entryArgs).flatMap(blockBodyP) ~/ blockP.rep)
+      .map((entry: Block, blocks: Seq[Block]) =>
+        if entry.operations.isEmpty && entry.arguments.isEmpty then blocks
+        else entry +: blocks
+      ) ~/ "}" ~/ p.exitRegionP
 ).map(Region(_))
 
 // [x] - value-id-and-type ::= value-id `:` type

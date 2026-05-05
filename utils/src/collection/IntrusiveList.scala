@@ -1,4 +1,4 @@
-package scair.utils
+package scair.collection
 
 import scala.annotation.switch
 import scala.annotation.tailrec
@@ -23,16 +23,16 @@ import scala.collection.*
 trait IntrusiveNode[A]:
   this: A =>
 
-  private[utils] final var _prev: Option[A] = None
-  private[utils] final var _next: Option[A] = None
+  private[collection] final var _prev: Option[A] = None
+  private[collection] final var _next: Option[A] = None
 
   inline final def prev: Option[A] = _prev
   inline final def next: Option[A] = _next
 
-  inline final private[utils] def prev_=(p: Option[A]) =
+  inline final private[collection] def prev_=(p: Option[A]) =
     _prev = p
 
-  inline final private[utils] def next_=(n: Option[A]) =
+  inline final private[collection] def next_=(n: Option[A]) =
     _next = n
 
 class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:

@@ -2,12 +2,12 @@ package scair.dialects.func
 
 import fastparse.*
 import scair.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
 import scair.parse.*
 import scair.parse.Parser
+import scair.print.Printer
 import scair.utils.*
 
 //
@@ -21,9 +21,9 @@ import scair.utils.*
 
 case class Call(
     callee: SymbolRefAttr,
-    _operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]],
-) extends DerivedOperation["func.call", Call] derives DerivedOperationCompanion
+    _operands: Seq[Operand[Attribute]] = Seq.empty,
+    _results: Seq[Result[Attribute]] = Seq.empty,
+) extends DerivedOperation["func.call"] derives OpDefs
 
 given OperationCustomParser[Func]:
 
@@ -66,15 +66,15 @@ given OperationCustomParser[Func]:
 case class Func(
     sym_name: StringData,
     function_type: FunctionType,
-    sym_visibility: Option[StringData],
-    body: Region,
-) extends DerivedOperation["func.func", Func]
+    sym_visibility: Option[StringData] = None,
+    body: Region = Region(),
+) extends DerivedOperation["func.func"]
     with IsolatedFromAbove
     with Symbol
-    with SymbolTable derives DerivedOperationCompanion:
+    with SymbolTable derives OpDefs:
 
   override def customPrint(printer: Printer) =
-    val lprinter = printer.copy()
+    val lprinter = printer.scoped
     lprinter.print("func.func ")
     sym_visibility match
       case Some(visibility) =>
@@ -109,30 +109,29 @@ case class Func(
       case Seq()           => ()
       case entry :: others =>
         lprinter.print(" {\n")
-        lprinter.indented(entry.operations.foreach(lprinter.print(_)))
+        lprinter.printBlockBody(entry)
         others.foreach(lprinter.print)
         lprinter.withIndent(lprinter.print("}"))
 
 case class Return(
-    _operands: Seq[Operand[Attribute]]
-) extends DerivedOperation["func.return", Return]
+    _operands: Seq[Operand[Attribute]] = Seq.empty
+) extends DerivedOperation["func.return"]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
     with NoMemoryEffect
-    with IsTerminator derives DerivedOperationCompanion
+    with IsTerminator derives OpDefs
 
 case class Constant(
     value: SymbolRefAttr,
     res: Result[FunctionType],
-) extends DerivedOperation["func.constant", Constant]
+) extends DerivedOperation["func.constant"]
     with AssemblyFormat["attr-dict $value `:` type($res)"]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect derives OpDefs
 
 case class CallIndirect(
     callee: Operand[FunctionType],
-    callee_operands: Seq[Operand[Attribute]],
-    _results: Seq[Result[Attribute]],
-) extends DerivedOperation["func.call_indirect", CallIndirect]
-    derives DerivedOperationCompanion:
+    callee_operands: Seq[Operand[Attribute]] = Seq.empty,
+    _results: Seq[Result[Attribute]] = Seq.empty,
+) extends DerivedOperation["func.call_indirect"] derives OpDefs:
 
   override def verify(): OK[Operation] =
     callee.typ match
@@ -143,13 +142,11 @@ case class CallIndirect(
           )
         else if _results.map(_.typ) != outTys then
           Err(
-            s"func.call_indirect: result types ${_results.map(_.typ)} do not match callee output types $outTys"
+            s"func.call_indirect: result types ${_results.map(_.typ)} do not match callee output types $outTys",
+            // TODO: Really not ideal error localization, was done for demonstration purposes, feel free to change it.
+            Some(callee),
           )
         else OK(this)
-      case other =>
-        Err(
-          s"func.call_indirect: callee must have builtin.function_type, got $other"
-        )
 
 val FuncDialect =
   summonDialect[EmptyTuple, (Call, CallIndirect, Constant, Func, Return)]

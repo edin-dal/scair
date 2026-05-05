@@ -1,11 +1,12 @@
 package scair.ir
 
 import fastparse.P
-import scair.Printer
+import scair.collection.IntrusiveNode
 import scair.parse.Parser
+import scair.print.AssemblyPrinter
+import scair.print.Printer
 import scair.transformations.RewritePattern
 import scair.utils.*
-import scair.utils.IntrusiveNode
 
 import scala.collection.mutable
 import scala.collection.mutable.LinkedHashMap
@@ -19,43 +20,15 @@ import scala.collection.mutable.LinkedHashMap
 // ░╚════╝░ ╚═╝░░░░░ ╚══════╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ╚═╝ ░╚════╝░ ╚═╝░░╚══╝
 //
 
-/*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
-||    MLIR OPERATIONS    ||
-\*≡==---==≡≡≡≡≡≡≡==---==≡*/
-trait IRNode:
-  def parent: Option[IRNode]
-
-  final def isAncestor(other: IRNode): Boolean =
-    other.parent match
-      case Some(parent) if parent == this => true
-      case Some(parent)                   => isAncestor(parent)
-      case None                           => false
-      case null                           => false
-
-  def deepCopy(using
-      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
-        .empty,
-  ): IRNode
-
 trait Operation extends IRNode with IntrusiveNode[Operation]:
 
-  final override def parent = containerBlock
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   OPERATION INITIALIZATION   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  final override def deepCopy(using
-      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
-        .empty,
-  ): Operation =
-    val newResults = results.map(_.copy())
-    valueMapper addAll (results zip newResults)
-    updated(
-      results = newResults.asInstanceOf[Seq[Result[Attribute]]],
-      operands = operands.map(o => valueMapper.getOrElse(o, o)),
-      successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
-      regions = regions.map(_.deepCopy),
-      attributes = LinkedHashMap.from(attributes),
-    )
+  var containerBlock: Option[Block] = None
+  final override def parent = containerBlock
+  var blockIndex = -1
 
   regions.foreach(attachRegion)
 
@@ -68,7 +41,36 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
     r.owner = Some(this)
   )
 
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   OPERATION GENERIC INTERFACE   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
   def name: String
+
+  def operands: Seq[Value[Attribute]]
+  def successors: Seq[Block]
+  def results: Seq[Result[Attribute]]
+  def regions: Seq[Region]
+  def properties: Map[String, Attribute]
+  val attributes: DictType[String, Attribute] = DictType.empty
+
+  final def detachedRegions = regions.map(_.detached)
+
+  def customPrint(p: Printer) =
+    p.printGenericMLIROperation(this)
+
+  /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
+  ||   OPERATION UTILS   ||
+  \*≡==---==≡≡≡≡≡==---==≡*/
+
+  /*
+   * Return an error message wrapping this operation. Purposefully shadowing the Err
+   * constructor in an Operation's body, to just automatically wrap the error message
+   * with the operation that caused it, without having to explicitly pass 'this' every
+   * time.
+   */
+  def Err(msg: String, obj: Option[AnyRef] = Some(this)) = scair.utils
+    .Err(msg, obj)
 
   def updated(
       operands: Seq[Value[Attribute]] = operands,
@@ -79,18 +81,45 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       attributes: DictType[String, Attribute] = attributes,
   ): Operation
 
-  def operands: Seq[Value[Attribute]]
-  def successors: Seq[Block]
-  def results: Seq[Result[Attribute]]
-  def regions: Seq[Region]
-  final def detachedRegions = regions.map(_.detached)
-  def properties: Map[String, Attribute]
-  val attributes: DictType[String, Attribute] = DictType.empty
-  var containerBlock: Option[Block] = None
-  def traitVerify(): OK[Operation] = OK(this)
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   OPERATION TRANSFORMATIONS   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-  def customPrint(p: Printer) =
-    p.printGenericMLIROperation(this)
+  final def dropAllReferences: Unit =
+    containerBlock = None
+
+  final def erase(safeErase: Boolean = true): Unit =
+    if containerBlock != None then
+      throw new Exception(
+        "Operation should be first detached from its container block before erasure."
+      )
+    dropAllReferences
+    if safeErase then for result <- results do result.erase()
+
+  final def attachRegion(region: Region) =
+    region.containerOperation match
+      case Some(x) =>
+        throw new Exception(
+          s"""Can't attach a region already attached to an operation:
+              ${AssemblyPrinter().print(region)}"""
+        )
+      case None =>
+        region.isAncestor(this) match
+          case true =>
+            throw new Exception(
+              "Can't add a region to an operation that is contained within that region"
+            )
+          case false =>
+            region.containerOperation = Some(this)
+
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   OPERATION STRUCTURING   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+  override def recomputeOpOrder(): Unit =
+    regions.foreach(_.recomputeOpOrder())
+
+  def traitVerify(): OK[Operation] = OK(this)
 
   def customVerify(): OK[Operation] = OK(this)
 
@@ -115,34 +144,27 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       )
     ).flatMap(_ => traitVerify()).flatMap(_ => customVerify())
 
-  final def dropAllReferences: Unit =
-    containerBlock = None
+  /*≡==--==≡≡≡≡≡≡==--=≡≡*\
+  ||   OBJECT METHODS   ||
+  \*≡==---==≡≡≡≡==---==≡*/
 
-  final def erase(safeErase: Boolean = true): Unit =
-    if containerBlock != None then
-      throw new Exception(
-        "Operation should be first detached from its container block before erasure."
-      )
-    dropAllReferences
-    if safeErase then for result <- results do result.erase()
-
-  final def attachRegion(region: Region) =
-    region.containerOperation match
-      case Some(x) =>
-        throw new Exception(
-          s"""Can't attach a region already attached to an operation:
-              ${Printer().print(region)}"""
-        )
-      case None =>
-        region.isAncestor(this) match
-          case true =>
-            throw new Exception(
-              "Can't add a region to an operation that is contained within that region"
-            )
-          case false =>
-            region.containerOperation = Some(this)
+  final override def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
+  ): Operation =
+    val newResults = results.map(_.copy())
+    valueMapper addAll (results zip newResults)
+    updated(
+      results = newResults.asInstanceOf[Seq[Result[Attribute]]],
+      operands = operands.map(o => valueMapper.getOrElse(o, o)),
+      successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
+      regions = regions.map(_.deepCopy),
+      attributes = LinkedHashMap.from(attributes),
+    )
 
   final override def hashCode(): Int = System.identityHashCode(this)
+
   final override def equals(o: Any): Boolean = this eq o.asInstanceOf[Object]
 
 object UnregisteredOperation:

@@ -33,12 +33,9 @@ case class Region(
     blocks: Block*
 ) extends IRNode:
 
-  final override def deepCopy(using
-      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
-      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
-        .empty,
-  ): Region =
-    Region(blocks.map(_.deepCopy))
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   REGION INITIALIZATION   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
   final override def parent = containerOperation
 
@@ -46,18 +43,9 @@ case class Region(
 
   blocks.foreach(attachBlock)
 
-  def structured =
-    blocks.foldLeft[OK[Unit]](OK())((res, block) =>
-      res.flatMap(_ => block.structured)
-    )
-
-  def verify(): OK[Unit] =
-    blocks.foldLeft[OK[Unit]](OK())((res, block) =>
-      res.flatMap(_ => block.verify())
-    )
-
-  override def equals(o: Any): Boolean =
-    return this eq o.asInstanceOf[AnyRef]
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   REGION TRANSFORMATIONS   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
   // Heavily debatable
   def detached =
@@ -79,3 +67,34 @@ case class Region(
             )
           case false =>
             block.containerRegion = Some(this)
+
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   REGION STRUCTURING   ||
+  \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
+
+  override def recomputeOpOrder(): Unit =
+    blocks.foreach(_.recomputeOpOrder())
+
+  def structured =
+    blocks.foldLeft[OK[Unit]](OK())((res, block) =>
+      res.flatMap(_ => block.structured)
+    )
+
+  def verify(): OK[Unit] =
+    blocks.foldLeft[OK[Unit]](OK())((res, block) =>
+      res.flatMap(_ => block.verify())
+    )
+
+  /*≡==--==≡≡≡≡≡≡==--=≡≡*\
+  ||   OBJECT METHODS   ||
+  \*≡==---==≡≡≡≡==---==≡*/
+
+  final override def deepCopy(using
+      blockMapper: mutable.Map[Block, Block] = mutable.Map.empty,
+      valueMapper: mutable.Map[Value[Attribute], Value[Attribute]] = mutable.Map
+        .empty,
+  ): Region =
+    Region(blocks.map(_.deepCopy))
+
+  override def equals(o: Any): Boolean =
+    return this eq o.asInstanceOf[AnyRef]

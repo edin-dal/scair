@@ -8,15 +8,15 @@ package scair.utils
   *   now.
   */
 opaque type OK[+T] = Err | T
-final case class Err(msg: String)
+final case class Err(msg: String, obj: Option[AnyRef] = None)
 
 object OK:
   def apply[T](t: T): OK[T] = t
   def apply(): OK[Unit] = OK(())
 
   def unapply[T](ok: OK[T]): Option[T] = ok match
-    case err: Err => None
-    case t: T     => Some(t)
+    case err: Err        => None
+    case t: T @unchecked => Some(t)
 
   given error: [T] => Conversion[Err, OK[T]] = x => x
   given discard: [T] => Conversion[OK[T], OK[Unit]] = x => ()

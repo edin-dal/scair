@@ -1,9 +1,9 @@
 package scair.dialects.lingodb
 
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.print.Printer
 
 // ████████╗ ██╗░░░██╗ ██████╗░ ██╗░░░░░ ███████╗ ░██████╗
 // ╚══██╔══╝ ██║░░░██║ ██╔══██╗ ██║░░░░░ ██╔════╝ ██╔════╝
@@ -74,8 +74,7 @@ case class GetCol(
     tuple: Operand[TupleType],
     attr: ColumnRefAttr,
     result: Result[Attribute],
-) extends DerivedOperation["tuples.getcol", GetCol]
-    derives DerivedOperationCompanion:
+) extends DerivedOperation["tuples.getcol"] derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("tuples.getcol ")
@@ -87,8 +86,8 @@ case class GetCol(
 
 case class TuplesReturn(
     results_ : Seq[Operand[Attribute]]
-) extends DerivedOperation["tuples.return", TuplesReturn]
-    with IsTerminator derives DerivedOperationCompanion:
+) extends DerivedOperation["tuples.return"]
+    with IsTerminator derives OpDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("tuples.return ")

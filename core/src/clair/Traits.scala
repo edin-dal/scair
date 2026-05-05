@@ -1,8 +1,10 @@
 package scair.clair
 
-import scair.Printer
 import scair.ir.*
+import scair.print.Printer
 import scair.utils.*
+
+import scala.compiletime.deferred
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
 // ╚══██╔══╝ ██╔══██╗ ██╔══██╗ ██║ ╚══██╔══╝ ██╔════╝
@@ -11,24 +13,25 @@ import scair.utils.*
 // ░░░██║░░░ ██║░░██║ ██║░░██║ ██║ ░░░██║░░░ ██████╔╝
 // ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ░░░╚═╝░░░ ╚═════╝░
 
-transparent trait DerivedAttribute[name <: String, T <: Attribute](using
-    private final val comp: DerivedAttributeCompanion[T]
-) extends ParametrizedAttribute:
+transparent trait DerivedAttribute[name <: String]
+    extends ParametrizedAttribute:
 
-  this: T =>
+  // This enables summoning the right instance without an explicit type parameter
+  protected final given defs
+      : AttrDefs[? >: this.type <: DerivedAttribute[name]] = deferred
 
-  override val name: String = comp.name
+  override val name: String = defs.name
 
   override val parameters: Seq[Attribute | Seq[Attribute]] =
-    comp.parameters(this)
+    defs.parameters(this)
 
 trait AssemblyFormat[format <: String]
 
-abstract class DerivedOperation[name <: String, T <: Operation](using
-    private final val comp: DerivedOperationCompanion[T]
-) extends Operation:
+transparent trait DerivedOperation[name <: String] extends Operation:
 
-  this: T =>
+  // This enables summoning the right instance without an explicit type parameter
+  protected final given defs: OpDefs[? >: this.type <: DerivedOperation[name]] =
+    deferred
 
   override def updated(
       operands: Seq[Value[Attribute]],
@@ -38,7 +41,7 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       properties: Map[String, Attribute],
       attributes: DictType[String, Attribute],
   ) =
-    comp(
+    defs(
       operands = operands,
       successors = successors,
       results = results,
@@ -47,18 +50,18 @@ abstract class DerivedOperation[name <: String, T <: Operation](using
       attributes = attributes,
     )
 
-  def name: String = comp.name
-  def operands: Seq[Value[Attribute]] = comp.operands(this)
-  def successors: Seq[Block] = comp.successors(this)
-  def results: Seq[Result[Attribute]] = comp.results(this)
-  def regions: Seq[Region] = comp.regions(this)
-  def properties: Map[String, Attribute] = comp.properties(this)
+  def name: String = defs.name
+  def operands: Seq[Value[Attribute]] = defs.operands(this)
+  def successors: Seq[Block] = defs.successors(this)
+  def results: Seq[Result[Attribute]] = defs.results(this)
+  def regions: Seq[Region] = defs.regions(this)
+  def properties: Map[String, Attribute] = defs.properties(this)
 
   override def customPrint(p: Printer): Unit =
-    comp.customPrint(this, p)
+    defs.customPrint(this, p)
 
   override def verify(): OK[Operation] =
     super.verify().flatMap(_ => constraintVerify())
 
   def constraintVerify(): OK[Operation] =
-    comp.constraintVerify(this)
+    defs.constraintVerify(this)

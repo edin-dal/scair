@@ -1,9 +1,9 @@
 package scair.tools.opt
 
-import scair.Printer
-import scair.exceptions.VerifyException
 import scair.ir.*
 import scair.parse.*
+import scair.print.AssemblyPrinter
+import scair.print.ErrorPrinter
 import scair.tools.ScairToolBase
 import scair.utils.*
 import scair.verify.Verifier
@@ -109,6 +109,17 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     // Parse the CLI args
     OParser.parse(argparser, args, ScairOptArgs()).get
 
+  def handleVerificationError(
+      error: Err,
+      operation: Operation,
+      verifyDiagnostics: Boolean,
+  ): OK[Operation] =
+    error match
+      case Err(msg, Some(_)) =>
+        val p = new ErrorPrinter(error)
+        p.print(operation)
+        if verifyDiagnostics then error else sys.exit(42)
+
   def main(args: Array[String]): Unit =
 
     val parsedArgs = parseArgs(args)
@@ -148,30 +159,35 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                     val out = pass.transform(op)
 
                     if !parsedArgs.skipVerify then
-                      Verifier.verify(out) match
-                        case Err(errorMsg) =>
-                          if parsedArgs.verifyDiagnostics then
-                            Err(errorMsg + "\n")
-                          else throw new VerifyException(errorMsg)
-                        case _ => ()
+                      Verifier.verify(out).fold(
+                        handleVerificationError(
+                          _,
+                          out,
+                          parsedArgs.verifyDiagnostics,
+                        ),
+                        _ => (),
+                      )
 
                     out
 
                   }
                 )
-              case Err(errorMsg) =>
-                if parsedArgs.verifyDiagnostics then Err(errorMsg + "\n")
-                else throw new VerifyException(errorMsg)
+              case err: Err =>
+                handleVerificationError(
+                  err,
+                  inputModule,
+                  parsedArgs.verifyDiagnostics,
+                )
 
           {
-            val printer = new Printer(parsedArgs.printGeneric)
+            val printer = new AssemblyPrinter(parsedArgs.printGeneric)
             processedModule.fold(
-              err => printer.print(err.msg),
+              err => (),
               printer.printTopLevel,
             )
             printer.flush()
           }
-        case Err(errorMsg) =>
+        case Err(msg = errorMsg) =>
           if parsedArgs.parsingDiagnostics then println(errorMsg)
           else throw new Exception(errorMsg)
 

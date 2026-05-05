@@ -59,17 +59,20 @@ Notice here, that the old reference to `a` is written as `%a0`, and the newly cr
 Another core part of the MLIR IR are **`Regions`**, which are used to *express localized scoping in the IR*. 
 
 Let's look at a simple program here:
-```scala sc:nocompile
-...
+```scala
+///{
+val condition: Boolean = true
+///}
+//...
 val c5 = 5
 val c10 = 10
 
 val x = if condition then {
 			val a = c5 + c5
-			return a
+			a
 		} else {
 			val a = c10 + c10
-			return a
+			a
 		} 
 ```
 The two branches of the `if` expression contained within the curly brackets `{ ... }` define localized scope.

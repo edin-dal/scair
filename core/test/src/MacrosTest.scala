@@ -6,28 +6,25 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scala.collection.mutable.LinkedHashMap
 import scair.utils.*
+import javax.tools.FileObject
 
 case class RegionOp(
     wowregions: Seq[Region]
-) extends DerivedOperation["test.region", RegionOp]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["test.region"] derives OpDefs
 
 case class Mul(
     lhs: Operand[IntegerType],
     rhs: Operand[IntegerType],
     result: Result[IntegerType],
     randProp: StringData,
-) extends DerivedOperation["cmath.mul", Mul] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mul"] derives OpDefs
 
 case class MulSingleVariadic(
     lhs: Operand[IntegerType],
     rhs: Seq[Operand[IntegerType]],
     result: Seq[Result[IntegerType]],
     randProp: StringData,
-) extends DerivedOperation[
-      "cmath.mulsinglevariadic",
-      MulSingleVariadic,
-    ] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mulsinglevariadic"] derives OpDefs
 
 case class MulMultiVariadic(
     lhs: Operand[IntegerType],
@@ -38,10 +35,7 @@ case class MulMultiVariadic(
     result3: Seq[Result[IntegerType]],
     operandSegmentSizes: DenseArrayAttr,
     resultSegmentSizes: DenseArrayAttr,
-) extends DerivedOperation[
-      "cmath.mulmultivariadic",
-      MulMultiVariadic,
-    ] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mulmultivariadic"] derives OpDefs
 
 case class MulFull(
     operand1: Operand[IntegerType],
@@ -54,56 +48,48 @@ case class MulFull(
     reg2: Region,
     succ1: Successor,
     succ2: Successor,
-) extends DerivedOperation["cmath.mulfull", MulFull]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mulfull"] derives OpDefs
 
 case class MulOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Operand[IntegerType],
     res: Result[IntegerType],
-) extends DerivedOperation["cmath.mulopt", MulOptional]
+) extends DerivedOperation["cmath.mulopt"]
     with AssemblyFormat[
       "($lhs^ `,`)? $rhs attr-dict `:` `(` (type($lhs)^ `,`)? type($rhs) `)` `->` type($res)"
-    ] derives DerivedOperationCompanion
+    ] derives OpDefs
 
 case class MulMultiOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Option[Operand[IntegerType]],
     additional: Option[Operand[IntegerType]],
     res: Result[IntegerType],
-) extends DerivedOperation["cmath.mulmultiopt", MulMultiOptional]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.mulmultiopt"] derives OpDefs
 
 case class MultiOptionalPropertyOp(
     prop1: Option[IntegerType],
     prop2: Option[IntegerType],
     prop3: Option[IntegerType],
-) extends DerivedOperation[
-      "cmath.multpropop",
-      MultiOptionalPropertyOp,
-    ] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.multpropop"] derives OpDefs
 
 case class MultiOptionalCompositionOp(
     operand: Option[Operand[IntegerType]],
     prop1: Option[IntegerType],
     prop2: IntegerType,
     result: Option[Result[IntegerType]],
-) extends DerivedOperation[
-      "cmath.multpropcompop",
-      MultiOptionalCompositionOp,
-    ] derives DerivedOperationCompanion
+) extends DerivedOperation["cmath.multpropcompop"] derives OpDefs
 
-val mulComp = summon[DerivedOperationCompanion[Mul]]
-val mulSVComp = summon[DerivedOperationCompanion[MulSingleVariadic]]
-val mulMMVComp = summon[DerivedOperationCompanion[MulMultiVariadic]]
-val mulOptComp = summon[DerivedOperationCompanion[MulOptional]]
-val mulMultiOptComp = summon[DerivedOperationCompanion[MulMultiOptional]]
+val mulComp = summon[OpDefs[Mul]]
+val mulSVComp = summon[OpDefs[MulSingleVariadic]]
+val mulMMVComp = summon[OpDefs[MulMultiVariadic]]
+val mulOptComp = summon[OpDefs[MulOptional]]
+val mulMultiOptComp = summon[OpDefs[MulMultiOptional]]
 
 val multiOptPropOpComp =
-  summon[DerivedOperationCompanion[MultiOptionalPropertyOp]]
+  summon[OpDefs[MultiOptionalPropertyOp]]
 
 val multiOptCompOp =
-  summon[DerivedOperationCompanion[MultiOptionalCompositionOp]]
+  summon[OpDefs[MultiOptionalCompositionOp]]
 
 class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
@@ -333,7 +319,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
   "Unstructured instantiation" should
     "Correctly instantiates the UnstructuredOp" in {
-      val opT = DerivedOperationCompanion.derived[Mul]
+      val opT = OpDefs.derived[Mul]
 
       val unstructMulOp = opT(
         operands = Seq(
@@ -361,7 +347,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
   "Conversion to Unstructured" should
     "Correctly translate from ADT operation to Unstructured Operation" in {
-      val opT = summon[DerivedOperationCompanion[Mul]]
+      val opT = summon[OpDefs[Mul]]
 
       val op = TestCases.adtMulOp
       val unstructMulOp = opT.destructure(op)
@@ -401,7 +387,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
   "ADTOp test for correctly passing around the same instances" should
     "test all fields of a ADTOp" in {
-      val opT = DerivedOperationCompanion.derived[MulFull]
+      val opT = OpDefs.derived[MulFull]
 
       val op = TestCases.adtMulOpAllFields
 
@@ -450,7 +436,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
   "Single Variadic Conversion to Unstructured" should
     "Correctly translate from Single Variadic ADT operation to Unstructured Operation" in {
-      val opT = summon[DerivedOperationCompanion[MulSingleVariadic]]
+      val opT = summon[OpDefs[MulSingleVariadic]]
 
       val op = TestCases.adtMulSinVarOp
       val unstructMulSinVarOp = opT.destructure(op)
@@ -515,7 +501,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
 
   "Multi Variadic Conversion to Unstructured" should
     "Correctly translate from Multi Variadic ADT operation to Unstructured Operation" in {
-      val opT = summon[DerivedOperationCompanion[MulMultiVariadic]]
+      val opT = summon[OpDefs[MulMultiVariadic]]
 
       val op = TestCases.adtMulMulVarOp
       val unstructMulSinVarOp = opT.destructure(op)
@@ -544,7 +530,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     }
 
   "Recursive conversion to ADTOp" should "do the thing \\o/" in {
-    val comp = summon[DerivedOperationCompanion[RegionOp]]
+    val comp = summon[OpDefs[RegionOp]]
     val op =
       comp.UnstructuredOp(regions =
         Seq(
@@ -576,12 +562,11 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
   }
 
   "Incorrect Conversion to ADTOp" should "fail gracefully on structuring" in {
-    def unstrucOp = mulComp.UnstructuredOp()
+    val unstrucOp = mulComp.UnstructuredOp()
 
     val structured = unstrucOp.structured
-    structured should matchPattern {
-      case Err("java.lang.Exception: Expected 2 operands, got 0.") =>
-    }
+
+    structured shouldBe Err("Expected 2 operands, got 0.", Some(unstrucOp))
   }
 
   "Single Optional Conversion to Unstructured" should
@@ -610,7 +595,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     )
 
     val out = java.io.StringWriter()
-    val printer = new scair.Printer(p = java.io.PrintWriter(out))
+    val printer = new scair.print.AssemblyPrinter(p = java.io.PrintWriter(out))
     printer.print(op, op2)
 
     out.toString() should be(

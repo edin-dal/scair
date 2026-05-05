@@ -23,55 +23,54 @@ import scair.ir.*
 \*≡==----==≡≡==----==≡*/
 
 case class Apply(
-    mapOperands: Seq[Operand[IndexType]],
+    mapOperands: Seq[Operand[IndexType]] = Seq.empty,
     res: Result[IndexType],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.apply", Apply]
-    with NoMemoryEffect derives DerivedOperationCompanion
+) extends DerivedOperation["affine.apply"]
+    with NoMemoryEffect derives OpDefs
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||      FOR OP      ||
 \*≡==----=≡≡=----==≡*/
 
 case class For(
-    lowerBoundOperands: Seq[Operand[IndexType]],
-    upperBoundOperands: Seq[Operand[IndexType]],
-    inits: Seq[Operand[Attribute]],
-    res: Seq[Result[Attribute]],
+    lowerBoundOperands: Seq[Operand[IndexType]] = Seq.empty,
+    upperBoundOperands: Seq[Operand[IndexType]] = Seq.empty,
+    inits: Seq[Operand[Attribute]] = Seq.empty,
+    res: Seq[Result[Attribute]] = Seq.empty,
     lowerBoundMap: AffineMapAttr,
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region,
-) extends DerivedOperation["affine.for", For] derives DerivedOperationCompanion
+) extends DerivedOperation["affine.for"] derives OpDefs
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
 \*≡==----==≡≡≡==----==≡*/
 
 case class Parallel(
-    mapOperands: Seq[Operand[IndexType]],
-    steps: Option[ArrayAttribute[IntegerAttr]],
+    mapOperands: Seq[Operand[IndexType]] = Seq.empty,
+    steps: Option[ArrayAttribute[IntegerAttr]] = None,
     reductions: Attribute,
     lowerBoundsMap: AffineMapAttr,
     lowerBoundsGroups: DenseIntOrFPElementsAttr,
     upperBoundsMap: AffineMapAttr,
     upperBoundsGroups: DenseIntOrFPElementsAttr,
-    res: Seq[Result[Attribute]],
+    res: Seq[Result[Attribute]] = Seq.empty,
     body: Region,
-) extends DerivedOperation["affine.parallel", Parallel]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.parallel"] derives OpDefs
 
 /*≡==--=≡≡≡=--=≡≡*\
 ||     IF OP     ||
 \*≡==---=≡=---==≡*/
 
 case class If(
-    args: Seq[Operand[Attribute]],
-    res: Seq[Result[Attribute]],
+    args: Seq[Operand[Attribute]] = Seq.empty,
+    res: Seq[Result[Attribute]] = Seq.empty,
     condition: AffineSetAttr,
     thenRegion: Region,
     elseRegion: Region,
-) extends DerivedOperation["affine.if", If] derives DerivedOperationCompanion
+) extends DerivedOperation["affine.if"] derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -80,10 +79,9 @@ case class If(
 case class Store(
     value: Operand[Attribute],
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType]],
+    indices: Seq[Operand[IndexType]] = Seq.empty,
     map: AffineMapAttr,
-) extends DerivedOperation["affine.store", Store]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.store"] derives OpDefs
 
 /*≡==---=≡≡≡=---=≡≡*\
 ||     LOAD OP     ||
@@ -91,33 +89,32 @@ case class Store(
 
 case class Load(
     memref: Operand[MemrefType],
-    indices: Seq[Operand[IndexType]],
+    indices: Seq[Operand[IndexType]] = Seq.empty,
     result: Result[Attribute],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.load", Load]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["affine.load"] derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||     MIN OP     ||
 \*≡==---=≡≡=---==≡*/
 
 case class Min(
-    arguments: Seq[Operand[IndexType]],
+    arguments: Seq[Operand[IndexType]] = Seq.empty,
     result: Result[IndexType],
     map: AffineMapAttr,
-) extends DerivedOperation["affine.min", Min]
-    with NoMemoryEffect derives DerivedOperationCompanion
+) extends DerivedOperation["affine.min"]
+    with NoMemoryEffect derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||
 \*≡==---=≡≡=---==≡*/
 
 case class Yield(
-    arguments: Seq[Operand[Attribute]]
-) extends DerivedOperation["affine.yield", Yield]
+    arguments: Seq[Operand[Attribute]] = Seq.empty
+) extends DerivedOperation["affine.yield"]
     with IsTerminator
     with AssemblyFormat["attr-dict ($arguments^ `:` type($arguments))?"]
-    with NoMemoryEffect derives DerivedOperationCompanion
+    with NoMemoryEffect derives OpDefs
 
 val AffineDialect = summonDialect[
   EmptyTuple,

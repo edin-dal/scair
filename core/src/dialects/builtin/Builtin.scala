@@ -1,10 +1,10 @@
 package scair.dialects.builtin
 
 import fastparse.*
-import scair.Printer
 import scair.clair.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 import scair.utils.*
 
 // ██████╗░ ██╗░░░██╗ ██╗ ██╗░░░░░ ████████╗ ██╗ ███╗░░██╗
@@ -43,30 +43,24 @@ case object Signless extends Signedness("signless", "i")
 
 sealed abstract class FloatType extends TypeAttribute
 
-final case class Float16Type()
-    extends FloatType
-    with DerivedAttribute["f16", Float16Type] derives DerivedAttributeCompanion:
+final case class Float16Type() extends FloatType with DerivedAttribute["f16"]
+    derives AttrDefs:
   override def customPrint(p: Printer) = p.print(name)
 
-final case class Float32Type()
-    extends FloatType
-    with DerivedAttribute["f32", Float32Type] derives DerivedAttributeCompanion:
+final case class Float32Type() extends FloatType with DerivedAttribute["f32"]
+    derives AttrDefs:
   override def customPrint(p: Printer) = p.print(name)
 
-final case class Float64Type()
-    extends FloatType
-    with DerivedAttribute["f64", Float64Type] derives DerivedAttributeCompanion:
+final case class Float64Type() extends FloatType with DerivedAttribute["f64"]
+    derives AttrDefs:
   override def customPrint(p: Printer) = p.print(name)
 
-final case class Float80Type()
-    extends FloatType
-    with DerivedAttribute["f80", Float80Type] derives DerivedAttributeCompanion:
+final case class Float80Type() extends FloatType with DerivedAttribute["f80"]
+    derives AttrDefs:
   override def customPrint(p: Printer) = p.print(name)
 
-final case class Float128Type()
-    extends FloatType
-    with DerivedAttribute["f128", Float128Type]
-    derives DerivedAttributeCompanion:
+final case class Float128Type() extends FloatType with DerivedAttribute["f128"]
+    derives AttrDefs:
   override def customPrint(p: Printer) = p.print(name)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -84,8 +78,7 @@ final case class IntData(value: BigInt)
 
 final case class IntegerType(width: IntData, sign: Signedness)
     extends TypeAttribute
-    with DerivedAttribute["builtin.int_type", IntegerType]
-    derives DerivedAttributeCompanion:
+    with DerivedAttribute["builtin.int_type"] derives AttrDefs:
 
   override def customPrint(p: Printer) =
     p.print(sign)
@@ -98,8 +91,7 @@ final case class IntegerType(width: IntData, sign: Signedness)
 case class IntegerAttr(
     value: IntData,
     typ: IntegerType | IndexType = I64,
-) extends DerivedAttribute["builtin.integer_attr", IntegerAttr]
-    derives DerivedAttributeCompanion:
+) extends DerivedAttribute["builtin.integer_attr"] derives AttrDefs:
 
   infix def +(that: IntegerAttr): IntegerAttr =
     if this.typ != that.typ then
@@ -146,8 +138,7 @@ final case class FloatData(value: Double)
 \*≡==---==≡≡==---==≡*/
 
 final case class FloatAttr(value: FloatData, typ: FloatType)
-    extends DerivedAttribute["builtin.float_attr", FloatAttr]
-    derives DerivedAttributeCompanion:
+    extends DerivedAttribute["builtin.float_attr"] derives AttrDefs:
 
   override def customPrint(p: Printer) =
     p.print(value, " : ", typ)
@@ -157,14 +148,13 @@ final case class FloatAttr(value: FloatData, typ: FloatType)
 \*≡==---==≡≡==---==≡*/
 
 final case class IndexType()
-    extends DerivedAttribute["builtin.index", IndexType]
-    with TypeAttribute derives DerivedAttributeCompanion:
+    extends DerivedAttribute["builtin.index"]
+    with TypeAttribute derives AttrDefs:
   override def customPrint(p: Printer) = p.print("index")
 
 final case class ComplexType(
     tpe: IntegerType | IndexType | FloatType
-) extends DerivedAttribute["builtin.complex", ComplexType]
-    derives DerivedAttributeCompanion:
+) extends DerivedAttribute["builtin.complex"] derives AttrDefs:
 
   override def customPrint(p: Printer) = p.print("complex<", tpe, ">")
 
@@ -262,8 +252,8 @@ case class RankedTensorType(
     p.print(">")
 
 final case class UnrankedTensorType(elementType: Attribute)
-    extends DerivedAttribute["builtin.unranked_tensor", UnrankedTensorType]
-    with TensorType derives DerivedAttributeCompanion:
+    extends DerivedAttribute["builtin.unranked_tensor"]
+    with TensorType derives AttrDefs:
 
   override def customPrint(p: Printer) =
     p.print("tensor<*x", elementType, ">")
@@ -304,8 +294,8 @@ final case class RankedMemrefType(
     p.print(elementType, ">")
 
 final case class UnrankedMemrefType(elementType: Attribute)
-    extends DerivedAttribute["builtin.unranked_memref", UnrankedMemrefType]
-    with MemrefType derives DerivedAttributeCompanion:
+    extends DerivedAttribute["builtin.unranked_memref"]
+    with MemrefType derives AttrDefs:
 
   override def customPrint(p: Printer) =
     p.print("tensor<*x", elementType, ">")
@@ -318,9 +308,9 @@ final case class VectorType(
     elementType: Attribute,
     shape: ArrayAttribute[IntData],
     scalableDims: ArrayAttribute[IntData],
-) extends DerivedAttribute["builtin.vector_type", VectorType]
+) extends DerivedAttribute["builtin.vector_type"]
     with ShapedType
-    with ContainerType derives DerivedAttributeCompanion:
+    with ContainerType derives AttrDefs:
 
   override def getNumDims = shape.attrValues.length
   override def getShape = shape.attrValues.map(_.data.toLong)
@@ -402,8 +392,8 @@ final case class DenseArrayAttr(
 \*≡==---==≡≡==---==≡*/
 
 final case class FunctionType(
-    inputs: Seq[Attribute],
-    outputs: Seq[Attribute],
+    inputs: Seq[Attribute] = Seq.empty,
+    outputs: Seq[Attribute] = Seq.empty,
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
@@ -430,8 +420,7 @@ type TensorLiteralArray =
 final case class DenseIntOrFPElementsAttr(
     typ: ContainerType,
     data: TensorLiteralArray,
-) extends DerivedAttribute["builtin.dense", DenseIntOrFPElementsAttr]
-    derives DerivedAttributeCompanion:
+) extends DerivedAttribute["builtin.dense"] derives AttrDefs:
 
   def elementType = typ.elementType
 
@@ -461,10 +450,6 @@ final case class DenseIntOrFPElementsAttr(
               Err(
                 s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
               )
-          case _ =>
-            Err(
-              s"DenseIntOrFPElementsAttr data element must be IntegerAttr or FloatAttr, got: $elt"
-            )
       )
     ).map(_ => ())
 
@@ -526,8 +511,8 @@ given OperationCustomParser[ModuleOp]:
 
 case class ModuleOp(
     body: Region
-) extends DerivedOperation["builtin.module", ModuleOp]
-    with SymbolTable derives DerivedOperationCompanion:
+) extends DerivedOperation["builtin.module"]
+    with SymbolTable derives OpDefs:
 
   override def customPrint(
       p: Printer
@@ -537,10 +522,7 @@ case class ModuleOp(
 case class UnrealizedConversionCastOp(
     inputs: Seq[Value[Attribute]] = Seq(),
     outputs: Seq[Result[Attribute]] = Seq(),
-) extends DerivedOperation[
-      "builtin.unrealized_conversion_cast",
-      UnrealizedConversionCastOp,
-    ] derives DerivedOperationCompanion
+) extends DerivedOperation["builtin.unrealized_conversion_cast"] derives OpDefs
 
 val BuiltinDialect =
   summonDialect[EmptyTuple, (ModuleOp, UnrealizedConversionCastOp)]

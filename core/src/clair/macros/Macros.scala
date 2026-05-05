@@ -2,12 +2,12 @@ package scair.clair.macros
 
 import fastparse.*
 import scair.*
-import scair.Printer
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
 import scair.parse.*
+import scair.print.Printer
 import scair.transformations.CanonicalizationPatterns
 import scair.transformations.RewritePattern
 import scair.utils.*
@@ -100,8 +100,7 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
       )
     )
   opInputDefs.count(_ match
-    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single
-    case _                        => false) match
+    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single) match
     // Special cases for better performance
     // TODO: Further cases
 
@@ -291,11 +290,11 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
     value match
       case None          => $ifAbsent
       case Some(prop: A) => prop
-      case Some(_)       =>
+      case Some(value)   =>
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
             s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass.getSimpleName}"
+            s"but found ${value.getClass}"
         )
   }
 
@@ -334,7 +333,7 @@ type DefinedInput[T <: OpInputDef] = DefinedInputOf[T, Attribute]
   * given a construct definition type.
   */
 def getConstructSeq[Def <: OpInputDef: Type as d](
-    op: Expr[DerivedOperationCompanion[?]#UnstructuredOp]
+    op: Expr[OpDefs[?]#UnstructuredOp]
 )(using Quotes) =
   (d match
     case '[ResultDef]     => '{ ${ op }.results }
@@ -708,11 +707,6 @@ def tryConstruct[T: Type](
                     properties,
                     name,
                   )
-                case Variadicity.Variadic =>
-                  report
-                    .errorAndAbort(
-                      s"Properties cannot be variadic in an ADT."
-                    )
               NamedArg(name, property.asTerm)
             case '[type t <: Attribute; `t`] =>
               val property = variadicity match
@@ -727,11 +721,6 @@ def tryConstruct[T: Type](
                     name,
                     defaultValue,
                   )
-                case Variadicity.Variadic =>
-                  report
-                    .errorAndAbort(
-                      s"Properties cannot be variadic in an ADT."
-                    )
               NamedArg(name, property.asTerm)
           namedArg
       }
@@ -758,7 +747,7 @@ def tryConstruct[T: Type](
 
 def fromUnstructuredOperationMacro[T <: Operation: Type](
     opDef: OperationDef,
-    genExpr: Expr[DerivedOperationCompanion[T]#UnstructuredOp],
+    genExpr: Expr[OpDefs[T]#UnstructuredOp],
 )(using Quotes): Expr[T] =
 
   // Create named arguments for all of the ADT's constructor arguments.
@@ -842,14 +831,14 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-def derivedAttributeCompanion[T <: Attribute: Type](using
+def deriveAttrDefs[T <: Attribute: Type](using
     Quotes
-): Expr[DerivedAttributeCompanion[T]] =
+): Expr[AttrDefs[T]] =
 
   val attrDef = getAttrDefImpl[T]
 
   '{
-    new DerivedAttributeCompanion[T]:
+    new AttrDefs[T]:
       override def name: String = ${ Expr(attrDef.name) }
       override def parse[$: P as ctx](using p: Parser): P[T] = ${
         getAttrCustomParse[T]('{ p }, '{ ctx })
@@ -867,9 +856,9 @@ def derivedAttributeCompanion[T <: Attribute: Type](using
       }
   }
 
-def deriveOperationCompanion[T <: Operation: Type](using
+def deriveOpDefs[T <: Operation: Type](using
     Quotes
-): Expr[DerivedOperationCompanion[T]] =
+): Expr[OpDefs[T]] =
   val opDef = getDefImpl[T]
 
   val summonedPatterns = Expr.summon[CanonicalizationPatterns[T]] match
@@ -879,7 +868,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
 
   '{
 
-    new DerivedOperationCompanion[T]:
+    new OpDefs[T]:
 
       override def canonicalizationPatterns: Seq[RewritePattern] =
         $summonedPatterns
@@ -960,7 +949,7 @@ def deriveOperationCompanion[T <: Operation: Type](using
         ${
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match
-          case adt: DerivedOperation[?, T] =>
+          case adt: DerivedOperation[?] =>
             adt.attributes.addAll(unstrucOp.attributes)
             adt
           case _ =>

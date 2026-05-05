@@ -14,61 +14,52 @@ import scair.ir.*
 final case class Dialect(
     sym_name: StringData,
     body: Region,
-) extends DerivedOperation["irdl.dialect", Dialect]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.dialect"] derives OpDefs
 
 final case class Operation(
     sym_name: StringData,
     body: Region,
-) extends DerivedOperation["irdl.operation", Operation]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.operation"] derives OpDefs
 
 final case class Attribute(
     sym_name: StringData,
     body: Region,
-) extends DerivedOperation["irdl.attribute", Attribute]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.attribute"] derives OpDefs
 
 final case class Type(
     sym_name: StringData,
     body: Region,
-) extends DerivedOperation["irdl.type", Type] derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.type"] derives OpDefs
 
 final case class Parameters(
-    args: Seq[Operand[AttributeType]],
+    args: Seq[Operand[AttributeType]] = Seq.empty,
     names: ArrayAttribute[StringData],
-) extends DerivedOperation["irdl.parameters", Parameters]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.parameters"] derives OpDefs
 
 final case class Operands(
-    args: Seq[Operand[AttributeType]],
+    args: Seq[Operand[AttributeType]] = Seq.empty,
     names: ArrayAttribute[StringData],
-) extends DerivedOperation["irdl.operands", Operands]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.operands"] derives OpDefs
 
 final case class Results(
     args: Seq[Operand[AttributeType]],
     names: ArrayAttribute[StringData],
-) extends DerivedOperation["irdl.results", Results]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.results"] derives OpDefs
 
 final case class Attributes(
     args: Seq[Operand[AttributeType]],
     attribute_value_names: ArrayAttribute[StringData],
-) extends DerivedOperation["irdl.attributes", Attributes]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.attributes"] derives OpDefs
 
-final case class AttributeType()
-    extends DerivedAttribute["irdl.attribute", AttributeType]
-    derives DerivedAttributeCompanion
+final case class AttributeType() extends DerivedAttribute["irdl.attribute"]
+    derives AttrDefs
 
-final case class RegionType()
-    extends DerivedAttribute["irdl.region", RegionType]
-    derives DerivedAttributeCompanion
+final case class RegionType() extends DerivedAttribute["irdl.region"]
+    derives AttrDefs
 
 final case class Any(
     output: Result[AttributeType]
-) extends DerivedOperation["irdl.any", Any] derives DerivedOperationCompanion
+) extends DerivedOperation["irdl.any"] derives OpDefs
 
 val IRDL = summonDialect[
   (AttributeType, RegionType),

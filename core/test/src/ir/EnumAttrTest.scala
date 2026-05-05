@@ -17,8 +17,7 @@ enum Color(name: String) extends I32Enum(name):
 
 case class EnumOperation(
     val color: Color
-) extends DerivedOperation["enum.enum_op", EnumOperation]
-    derives DerivedOperationCompanion
+) extends DerivedOperation["enum.enum_op"] derives OpDefs
 
 val EnumTestDialect = summonDialect[EmptyTuple, Tuple1[EnumOperation]]
 
@@ -43,4 +42,11 @@ class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
         assert(enumOp.color == Color.Red)
       case failure: fastparse.Parsed.Failure =>
         fail(s"Failed to parse operation: $failure.msg")
+  }
+
+  it should "destructure and structure correctly" in {
+    val op = EnumOperation(Color.Green)
+    val destructured = summon[OpDefs[EnumOperation]].destructure(op)
+    val restructured = summon[OpDefs[EnumOperation]].structure(destructured)
+    assert(op.color == restructured.color)
   }
