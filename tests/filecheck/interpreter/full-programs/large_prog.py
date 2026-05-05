@@ -58,7 +58,6 @@ if __name__ == "__main__":
 
     target_dir = get_target_dir()
 
-    # optional: show existing files
     existing = list_existing_mlir_files(target_dir)
     print(f"[INFO] Found {len(existing)} MLIR files in benchmark directory")
 
