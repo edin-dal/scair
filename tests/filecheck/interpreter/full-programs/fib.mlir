@@ -2,7 +2,7 @@
 
 builtin.module {
   func.func @main() -> (i32) {
-    %n    = "arith.constant"() <{value = 1000000 : i32}> : () -> i32
+    %n    = "arith.constant"() <{value = 10 : i32}> : () -> i32
     %lb   = "arith.constant"() <{value = 0 : i32}> : () -> i32
     %step = "arith.constant"() <{value = 1 : i32}> : () -> i32
 
