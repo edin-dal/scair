@@ -102,7 +102,8 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       )
 
     // TODO: Allow specifying the function for entry point and default to main if not
-    val output = interpreter.call_op(entryPoint, interpreter.create_scope(entryPoint), Seq())
+    val output = interpreter
+      .call_op(entryPoint, interpreter.create_scope(entryPoint), Seq())
 
     printScopes match
       case true =>

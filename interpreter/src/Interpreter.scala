@@ -36,13 +36,14 @@ trait OpImpl[O <: Operation: ClassTag]:
     val result = compute(op, interpreter, ctx, args)
     val op_results = op.results
 
-    if op_results.size == 0 then () 
-    else if op_results.size == 1 then ctx.scopedDict.update(op_results.head, result.head) 
+    if op_results.size == 0 then ()
+    else if op_results.size == 1 then
+      ctx.scopedDict.update(op_results.head, result.head)
     else
       var i = 0
-       while i < op_results.length do
-            ctx.scopedDict.update(op_results(i), result(i))
-            i += 1
+      while i < op_results.length do
+        ctx.scopedDict.update(op_results(i), result(i))
+        i += 1
 
 // interpreter context class stores variables and current result
 class RuntimeCtx(
@@ -105,7 +106,9 @@ class Interpreter(
     ctx.scopedDict.get(value) match
       case Some(v) => v
       case _       =>
-        throw new Exception(s"Variable $value not found in context: ${ctx.scopedDict.name}")
+        throw new Exception(
+          s"Variable $value not found in context: ${ctx.scopedDict.name}"
+        )
 
   def register_implementations(): Unit =
     for dialect <- dialects do
@@ -130,7 +133,12 @@ class Interpreter(
   def interpret_block(block: Block, ctx: RuntimeCtx): Unit =
     for operation <- block.operations do interpret_op(operation, ctx)
 
-  def run_ssacfg_region(region: Region, ctx: RuntimeCtx, name: String, inputs: Seq[Any]): Seq[Any] =
+  def run_ssacfg_region(
+      region: Region,
+      ctx: RuntimeCtx,
+      name: String,
+      inputs: Seq[Any],
+  ): Seq[Any] =
     var results: Seq[Any] = Seq()
 
     if region.blocks.isEmpty then return Seq() // no blocks to run
@@ -158,11 +166,11 @@ class Interpreter(
         throw new Exception(
           s"Unsupported operation when interpreting: ${op.getClass}"
         )
-  
+
   def call_op(name: String, ctx: RuntimeCtx, inputs: Seq[Any]): Seq[Any] =
     val callee = symbolTable.get(name)
       .getOrElse(
-        throw new Exception(s"Function ${name} not found")
+        throw new Exception(s"Function $name not found")
       )
     set_values(callee.asInstanceOf[Operation].operands, inputs, ctx)
     run_ssacfg_region(callee.regions.head, ctx, name, inputs)
@@ -170,7 +178,7 @@ class Interpreter(
   def get_values(
       operands: Seq[Value[Attribute]],
       ctx: RuntimeCtx,
-  ): Seq[Any] = 
+  ): Seq[Any] =
     operands.map(op => lookup_op(op, ctx))
 
   def set_values(
@@ -178,8 +186,7 @@ class Interpreter(
       values: Seq[Any],
       ctx: RuntimeCtx,
   ): Unit =
-    for (res, value) <- results.zip(values) do
-      ctx.scopedDict.update(res, value)
+    for (res, value) <- results.zip(values) do ctx.scopedDict.update(res, value)
 
   // helper function to print values in interpreter
   // useful if booleans are represented as 0 and 1

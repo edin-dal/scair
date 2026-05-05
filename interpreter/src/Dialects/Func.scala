@@ -28,8 +28,7 @@ object run_call extends OpImpl[func.Call]:
       val print_value = interpreter.lookup_op(op._operands.head, ctx)
       interpreter.interpreter_print(print_value)
       Seq()
-    else
-      interpreter.call_op(op.callee.rootRef.stringLiteral, ctx, args)
+    else interpreter.call_op(op.callee.rootRef.stringLiteral, ctx, args)
 
 object run_function extends OpImpl[func.Func]:
 
@@ -47,8 +46,7 @@ object run_function extends OpImpl[func.Func]:
     )
     val results = interpreter.run_op(new_call, ctx, Seq())
 
-    if new_call._results.nonEmpty then
-      results
+    if new_call._results.nonEmpty then results
     else Seq()
 
 val InterpreterFuncDialect: InterpreterDialect =
