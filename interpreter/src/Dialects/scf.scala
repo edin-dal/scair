@@ -58,7 +58,7 @@ object run_if extends OpImpl[scf.IfOp]:
           regionToRun,
           ctx.push_scope("if_branch"),
           "if_branch",
-          rest.toSeq,
+          Seq.empty,
         )
       case Seq(cond: Boolean, rest*) =>
         val regionToRun = if cond then op.thenRegion else op.elseRegion
@@ -66,7 +66,7 @@ object run_if extends OpImpl[scf.IfOp]:
           regionToRun,
           ctx.push_scope("if_branch"),
           "if_branch",
-          rest.toSeq,
+          Seq.empty,
         )
       case _ =>
         throw new Exception("If condition must be an integer")

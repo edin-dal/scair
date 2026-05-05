@@ -23,11 +23,11 @@ builtin.module {
 
   func.func @main() -> (i32) {
 
-    %c = "arith.constant"() <{value = 487 : i32}> : () -> i32
+    %c = "arith.constant"() <{value = 10 : i32}> : () -> i32
     %res = "func.call"(%c) <{"callee" = @rec}> : (i32) -> i32
 
     func.return %res : i32
   }
 }
 
-// CHECK: Result:
+// CHECK: Result: 10
