@@ -11,20 +11,20 @@ object run_alloc extends OpImpl[memref.Alloc]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Option[Any] =
+  ): Seq[Any] =
 
     // initialising a zero array to represent allocated memory
     // multi-dimensional objects are packed into a 1-D array
     args match
-      case Seq()          => Some(ShapedArray(Seq(1))) // 0-D memref
+      case Seq()          => Seq(ShapedArray(Seq(1))) // 0-D memref
       case Seq(size: Int) => // 1-D memref
-        Some(
+        Seq(
           ShapedArray(
             Seq(size)
           )
         )
       case Seq(sizes*) => // multi-D memref
-        Some(
+        Seq(
           ShapedArray(
             sizes.asInstanceOf[Seq[Int]] // TODO: some way to remove asInstance
           )
@@ -37,15 +37,15 @@ object run_store extends OpImpl[memref.Store]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Option[Any] =
+  ): Seq[Any] =
     args match
       case Seq(value: Int, memref: ShapedArray) =>
         memref(Seq(0)) = value // storing in first index for 0-D memref
-        None
+        Seq()
       case Seq(value: Int, memref: ShapedArray, indices*) =>
         memref(indices.asInstanceOf[Seq[Int]]) =
           value // storing in specified index for higher-D memref
-        None
+        Seq()
       case _ =>
         throw new Exception(
           "Store operands must be (Int, ShapedArray) or (Int, ShapedArray, Seq[Int])"
@@ -58,12 +58,12 @@ object run_load extends OpImpl[memref.Load]:
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Option[Any] =
+  ): Seq[Any] =
     args match
       case Seq(memref: ShapedArray) =>
-        Some(memref(Seq(0)))
+        Seq(memref(Seq(0)))
       case Seq(memref: ShapedArray, indices*) =>
-        Some(memref(indices.asInstanceOf[Seq[Int]]))
+        Seq(memref(indices.asInstanceOf[Seq[Int]]))
       case _ =>
         throw new Exception("Load operands must be (ShapedArray, Seq[Int])")
 

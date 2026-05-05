@@ -121,7 +121,7 @@ trait GraalScairModule extends ScairSettings with NativeImageModule:
   // Remove "-Ob" (fast build) to revert to default "-O2" (highest optimization available
   // before paywall)
   override def nativeImageOptions =
-    Seq("--no-fallback", "--initialize-at-build-time", "-Ob")
+    Seq("--no-fallback", "--initialize-at-build-time")
 
 trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule with SonatypeCentralPublishModule
     with PlatformScalaModule:
