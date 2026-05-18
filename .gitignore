@@ -42,5 +42,4 @@ full-classpath
 .mill/
 out/
 
-#
 .DS_Store
