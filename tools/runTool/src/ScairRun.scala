@@ -9,7 +9,6 @@ import scair.utils.*
 import scair.verify.Verifier
 import scopt.OParser
 
-import scala.collection.mutable
 import scala.io.BufferedSource
 import scala.io.Source
 
@@ -38,7 +37,11 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
 
   def interpreterDialects = scair.interpreter.allInterpreterDialects
 
-  def verboseInterpreter = false
+  def entryPoint = "main"
+
+  def verboseInterpreter = true
+
+  def printScopes = false
 
   override def dialects = scair.dialects.allDialects
 
@@ -84,7 +87,6 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
       case Some(file) => Source.fromFile(file)
       case None       => Source.stdin
 
-    // casted as moduleOp
     val module = parse(parsedArgs)(input).head.get.asInstanceOf[ModuleOp]
 
     if !parsedArgs.skipVerify then
@@ -92,30 +94,34 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
         case e: scair.utils.Err => throw new Exception(e.msg)
         case _                  => ()
 
-    // get main block of module
-    val module_block = module.body.blocks.head
-
     // construct interpreter and runtime context
     val interpreter =
       new Interpreter(
         module,
-        mutable.Map(),
-        mutable.ArrayBuffer(),
         interpreterDialects,
       )
 
-    // call interpret function and return result
+    // TODO: Allow specifying the function for entry point and default to main if not
     val output = interpreter
-      .interpret(module_block, interpreter.globalRuntimeCtx)
+      .call_op(entryPoint, interpreter.create_scope(entryPoint), Seq())
 
-    verboseInterpreter match
+    printScopes match
       case true =>
         interpreter.scopes.foreach(_.prettyPrint())
       case false => ()
 
-    output match
-      case Some(value) => interpreter.interpreter_print(value)
-      case None        => println("Result: ()")
+    verboseInterpreter match
+      case true =>
+        output match
+          case Seq()      => println("Result: ()")
+          case Seq(value) =>
+            print("Result: ")
+            interpreter.interpreter_print(value)
+          case multiple =>
+            print("Result: (")
+            multiple.foreach(res => print(s"$res, "))
+            print(")")
+      case false => ()
 
 object ScairRun extends ScairRunBase:
   def toolName = "scair-run"
