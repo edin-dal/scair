@@ -61,7 +61,33 @@ private final class ErrorPrinterFilter(writer: Writer)
   override def write(str: String): Unit =
     writeRec(str, 0)
 
-final class ErrorPrinter(
+object ErrorPrinter:
+
+  def apply(
+      error: Err,
+      w: Writer = PrintWriter(System.out),
+      _indent: String = "  ",
+      _valueNextID: Int = 0,
+      _blockNextID: Int = 0,
+      _valueNameMap: mutable.Map[Value[? <: Attribute], String] = mutable.Map
+        .empty,
+      _blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
+      _aliasesMap: Map[Attribute, String] = Map.empty,
+      _indentLevel: Int = 0,
+  ): ErrorPrinter =
+    new ErrorPrinter(
+      error,
+      new ErrorPrinterFilter(w),
+      _indent,
+      _valueNextID,
+      _blockNextID,
+      _valueNameMap,
+      _blockNameMap,
+      _aliasesMap,
+      _indentLevel,
+    )
+
+final class ErrorPrinter private (
     error: Err,
     w: ErrorPrinterFilter = ErrorPrinterFilter(new PrintWriter(System.out)),
     _indent: String = "  ",
