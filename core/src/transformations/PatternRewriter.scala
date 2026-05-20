@@ -27,6 +27,21 @@ import scala.collection.mutable.LinkedHashSet
 ||   Utils realm   ||
 \*≡==---==≡==---==≡*/
 
+private def augmentException(
+    e: Exception,
+    op: Operation,
+    pattern: RewritePattern,
+): Nothing =
+  val errorStringWriter = StringWriter()
+  val printer = ErrorPrinter(
+    Err(s"Caught exception applying $pattern", Some(op)),
+    errorStringWriter,
+  )
+  printer.printTopLevel(op.topLevel.asInstanceOf[Operation])
+  val errorString = errorStringWriter.toString()
+  errorStringWriter.close()
+  throw Exception(errorString, e)
+
 object InsertPoint:
 
   def before(op: Operation) =
@@ -203,12 +218,7 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
       case Nil    => ()
       case h :: t =>
         try h.matchAndRewrite(op, rewriter)
-        catch
-          case e: Exception =>
-            throw Exception(
-              s"Caught exception during application of $h on $op",
-              e,
-            )
+        catch case e: Exception => augmentException(e, op, h)
         if !rewriter.hasDoneAction then matchAndRewriteRec(op, rewriter, t)
 
   override def matchAndRewrite(
@@ -354,17 +364,7 @@ class PatternRewriteWalker(
       rewriter.currentOp = op
 
       try pattern.matchAndRewrite(op, rewriter)
-      catch
-        case e: Exception =>
-          val errorStringWriter = StringWriter()
-          val printer = ErrorPrinter(
-            Err(s"Caught exception applying $pattern", Some(op)),
-            errorStringWriter,
-          )
-          printer.printTopLevel(op.topLevel.asInstanceOf[Operation])
-          val errorString = errorStringWriter.toString()
-          errorStringWriter.close()
-          throw Exception(errorString, e)
+      catch case e: Exception => augmentException(e, op, pattern)
 
       rewriter_done_action |= rewriter.hasDoneAction
 
