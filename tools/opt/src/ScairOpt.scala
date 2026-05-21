@@ -116,8 +116,8 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
   ): OK[Operation] =
     error match
       case Err(msg, Some(_)) =>
-        val p = new ErrorPrinter(error)
-        p.print(operation)
+        val p = ErrorPrinter(error)
+        p.printTopLevel(operation)
         if verifyDiagnostics then error else sys.exit(42)
 
   def main(args: Array[String]): Unit =

@@ -2,7 +2,10 @@ package scair.transformations
 
 import scair.helpers.*
 import scair.ir.*
+import scair.print.ErrorPrinter
+import scair.utils.Err
 
+import java.io.StringWriter
 import scala.annotation.tailrec
 import scala.collection.mutable.LinkedHashSet
 
@@ -23,6 +26,21 @@ import scala.collection.mutable.LinkedHashSet
 /*≡==--==≡≡≡==--=≡≡*\
 ||   Utils realm   ||
 \*≡==---==≡==---==≡*/
+
+private def augmentException(
+    e: Exception,
+    op: Operation,
+    pattern: RewritePattern,
+): Nothing =
+  val errorStringWriter = StringWriter()
+  val printer = ErrorPrinter(
+    Err(s"Caught exception applying $pattern", Some(op)),
+    errorStringWriter,
+  )
+  printer.printTopLevel(op.topLevel.asInstanceOf[Operation])
+  val errorString = errorStringWriter.toString()
+  errorStringWriter.close()
+  throw Exception(errorString, e)
 
 object InsertPoint:
 
@@ -199,7 +217,8 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
     patterns match
       case Nil    => ()
       case h :: t =>
-        h.matchAndRewrite(op, rewriter)
+        try h.matchAndRewrite(op, rewriter)
+        catch case e: Exception => augmentException(e, op, h)
         if !rewriter.hasDoneAction then matchAndRewriteRec(op, rewriter, t)
 
   override def matchAndRewrite(
@@ -345,8 +364,7 @@ class PatternRewriteWalker(
       rewriter.currentOp = op
 
       try pattern.matchAndRewrite(op, rewriter)
-      catch
-        case e: Exception => throw e // throw new Exception("Caught exception!")
+      catch case e: Exception => augmentException(e, op, pattern)
 
       rewriter_done_action |= rewriter.hasDoneAction
 

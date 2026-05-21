@@ -1,5 +1,6 @@
 package scair.ir
 
+import scala.annotation.tailrec
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
@@ -24,6 +25,12 @@ import scala.collection.mutable.Map
 
 trait IRNode:
   def parent: Option[IRNode]
+
+  @tailrec
+  final def topLevel: IRNode =
+    parent match
+      case Some(p) => p.topLevel
+      case None    => this
 
   final def isAncestor(other: IRNode): Boolean =
     other.parent match
