@@ -1,4 +1,4 @@
-//| mill-version: 1.1.5-native
+//| mill-version: 1.1.6-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
 //|   - com.goyeau::mill-scalafix_mill1:0.6.0
@@ -42,7 +42,7 @@ import mill.javalib.PlatformModuleBase
 trait ScairSettings extends ScalaModule with PublishModule:
   def scoverageVersion = Task { "2.5.2" }
 
-  override def scalaVersion = "3.8.3"
+  override def scalaVersion = "3.8.4"
 
   override def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:imports", "-explain", "-opt", "-opt-inline:<sources>,scair.**")
@@ -80,7 +80,7 @@ trait JvmScairModule
     with ScairSettings:
 
   trait ScairTests extends ScalaTests with TestModule.ScalaTest:
-    override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.19")
+    override def mvnDeps = Seq(mvn"org.scalatest::scalatest::3.2.20")
     // This was necessary to cooperate with graalvm at time of writing.
     // Please remove if unit tests work fine without it in the future.
     override def testParallelism = false
@@ -126,7 +126,7 @@ trait GraalScairModule extends ScairSettings with NativeImageModule:
 trait NativeScairModule(scairModule: ModuleRef[ScairModule]) extends ScairSettings with ScalaNativeModule with SonatypeCentralPublishModule
     with PlatformScalaModule:
   override def enableBsp = false
-  override def scalaNativeVersion = "0.5.10"
+  override def scalaNativeVersion = "0.5.12"
   
   override def mvnDeps = scairModule().mvnDeps
   override def generatedSources: Simple[Seq[PathRef]] =
