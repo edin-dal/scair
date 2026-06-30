@@ -30,6 +30,28 @@ object ICmpPredicate:
   def fromString(value: String): Option[ICmpPredicate] =
     values.find(_.name == value)
 
+enum FCmpPredicate(name: String) extends I64Enum(name):
+  case AlwaysFalse extends FCmpPredicate("false")
+  case OEQ  extends FCmpPredicate("oeq")
+  case OGT  extends FCmpPredicate("ogt")
+  case OGE  extends FCmpPredicate("oge")
+  case OLT  extends FCmpPredicate("olt")
+  case OLE  extends FCmpPredicate("ole")
+  case ONE  extends FCmpPredicate("one")
+  case ORD  extends FCmpPredicate("ord")
+  case UEQ  extends FCmpPredicate("ueq")
+  case UGT  extends FCmpPredicate("ugt")
+  case UGE  extends FCmpPredicate("uge")
+  case ULT  extends FCmpPredicate("ult")
+  case ULE  extends FCmpPredicate("ule")
+  case UNE  extends FCmpPredicate("une")
+  case UNO  extends FCmpPredicate("uno")
+  case AlwaysTrue extends FCmpPredicate("true")
+
+object FCmpPredicate:
+  def fromString(value: String): Option[FCmpPredicate] =
+    values.find(_.name == value)
+
 final case class StructType(
     elems: Seq[TypeAttribute]
 ) extends ParametrizedAttribute
@@ -353,28 +375,192 @@ case class Func(
       others.foreach(lprinter.print)
       lprinter.withIndent(lprinter.print("}"))
 
+case class Sub(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+    overflowFlags: Option[ArrayAttribute[StringData]] = None,
+) extends DerivedOperation["llvm.sub"]
+    with NoMemoryEffect derives OpDefs
+
+case class SDiv(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.sdiv"]
+    with NoMemoryEffect derives OpDefs
+
+case class SRem(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.srem"]
+    with NoMemoryEffect derives OpDefs
+
+case class FSub(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[FloatType],
+) extends DerivedOperation["llvm.fsub"]
+    with NoMemoryEffect derives OpDefs
+
+case class FDiv(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[FloatType],
+) extends DerivedOperation["llvm.fdiv"]
+    with NoMemoryEffect derives OpDefs
+
+case class FRem(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[FloatType],
+) extends DerivedOperation["llvm.frem"]
+    with NoMemoryEffect derives OpDefs
+
+case class FNeg(
+    operand: Operand[FloatType],
+    res: Result[FloatType],
+) extends DerivedOperation["llvm.fneg"]
+    with NoMemoryEffect derives OpDefs
+
+case class FCmp(
+    lhs: Operand[FloatType],
+    rhs: Operand[FloatType],
+    res: Result[IntegerType],
+    predicate: FCmpPredicate,
+) extends DerivedOperation["llvm.fcmp"]
+    with NoMemoryEffect derives OpDefs
+
+case class And(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.and"]
+    with NoMemoryEffect derives OpDefs
+
+case class Or(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.or"]
+    with NoMemoryEffect derives OpDefs
+
+case class XOr(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.xor"]
+    with NoMemoryEffect derives OpDefs
+
+case class Unreachable()
+    extends DerivedOperation["llvm.unreachable"]
+    with IsTerminator derives OpDefs
+
+case class Alloca(
+    arraySize: Operand[IntegerType | IndexType],
+    res: Result[Ptr],
+    elem_type: Attribute,
+    alignment: Option[IntegerAttr] = None,
+) extends DerivedOperation["llvm.alloca"] derives OpDefs
+
+case class Trunc(
+    in: Operand[IntegerType | IndexType],
+    out: Result[IntegerType],
+) extends DerivedOperation["llvm.trunc"]
+    with NoMemoryEffect derives OpDefs
+
+case class ZExt(
+    in: Operand[IntegerType | IndexType],
+    out: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.zext"]
+    with NoMemoryEffect derives OpDefs
+
+case class SExt(
+    in: Operand[IntegerType | IndexType],
+    out: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.sext"]
+    with NoMemoryEffect derives OpDefs
+
+case class SIToFP(
+    in: Operand[IntegerType | IndexType],
+    out: Result[FloatType],
+) extends DerivedOperation["llvm.sitofp"]
+    with NoMemoryEffect derives OpDefs
+
+case class FPToSI(
+    in: Operand[FloatType],
+    out: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.fptosi"]
+    with NoMemoryEffect derives OpDefs
+
+case class FPTrunc(
+    in: Operand[FloatType],
+    out: Result[FloatType],
+) extends DerivedOperation["llvm.fptrunc"]
+    with NoMemoryEffect derives OpDefs
+
+case class FPExt(
+    in: Operand[FloatType],
+    out: Result[FloatType],
+) extends DerivedOperation["llvm.fpext"]
+    with NoMemoryEffect derives OpDefs
+
+case class Shl(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+    overflowFlags: Option[ArrayAttribute[StringData]] = None,
+) extends DerivedOperation["llvm.shl"]
+    with NoMemoryEffect derives OpDefs
+
+case class LShr(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.lshr"]
+    with NoMemoryEffect derives OpDefs
+
+case class AShr(
+    lhs: Operand[IntegerType | IndexType],
+    rhs: Operand[IntegerType | IndexType],
+    res: Result[IntegerType | IndexType],
+) extends DerivedOperation["llvm.ashr"]
+    with NoMemoryEffect derives OpDefs
+
+case class Select(
+    condition: Operand[IntegerType],
+    trueValue: Operand[Attribute],
+    falseValue: Operand[Attribute],
+    res: Result[Attribute],
+) extends DerivedOperation["llvm.select"]
+    with NoMemoryEffect derives OpDefs
+
+case class CallIndirect(
+    callee: Operand[Ptr],
+    operandss: Seq[Operand[Attribute]],
+    resultss: Seq[Result[Attribute]],
+) extends DerivedOperation["llvm.call_indirect"] derives OpDefs
+
 val LLVMDialect = summonDialect[
   (Ptr, StructType, ArrayType),
   (
       Func,
-      Constant,
-      Zero,
-      Poison,
-      Add,
-      Mul,
-      FAdd,
-      FMul,
-      ICmp,
-      Load,
-      Store,
-      GetElementPtr,
-      ExtractValue,
-      InsertValue,
-      PtrToInt,
-      IntToPtr,
-      Call,
-      Br,
-      CondBr,
-      Return,
+      Constant, Zero, Poison,
+      Add, Sub, Mul, SDiv, SRem,
+      FAdd, FSub, FMul, FDiv, FRem, FNeg,
+      ICmp, FCmp,
+      And, Or, XOr,
+      Shl, LShr, AShr,
+      Load, Store, GetElementPtr,
+      ExtractValue, InsertValue,
+      Trunc, ZExt, SExt,
+      SIToFP, FPToSI,
+      FPTrunc, FPExt,
+      Select,
+      PtrToInt, IntToPtr,
+      Call, CallIndirect,
+      Alloca,
+      Br, CondBr, Return, Unreachable,
   ),
 ]
