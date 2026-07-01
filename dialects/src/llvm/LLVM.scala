@@ -32,23 +32,24 @@ object ICmpPredicate:
 
 enum FCmpPredicate(name: String) extends I64Enum(name):
   case AlwaysFalse extends FCmpPredicate("false")
-  case OEQ  extends FCmpPredicate("oeq")
-  case OGT  extends FCmpPredicate("ogt")
-  case OGE  extends FCmpPredicate("oge")
-  case OLT  extends FCmpPredicate("olt")
-  case OLE  extends FCmpPredicate("ole")
-  case ONE  extends FCmpPredicate("one")
-  case ORD  extends FCmpPredicate("ord")
-  case UEQ  extends FCmpPredicate("ueq")
-  case UGT  extends FCmpPredicate("ugt")
-  case UGE  extends FCmpPredicate("uge")
-  case ULT  extends FCmpPredicate("ult")
-  case ULE  extends FCmpPredicate("ule")
-  case UNE  extends FCmpPredicate("une")
-  case UNO  extends FCmpPredicate("uno")
+  case OEQ extends FCmpPredicate("oeq")
+  case OGT extends FCmpPredicate("ogt")
+  case OGE extends FCmpPredicate("oge")
+  case OLT extends FCmpPredicate("olt")
+  case OLE extends FCmpPredicate("ole")
+  case ONE extends FCmpPredicate("one")
+  case ORD extends FCmpPredicate("ord")
+  case UEQ extends FCmpPredicate("ueq")
+  case UGT extends FCmpPredicate("ugt")
+  case UGE extends FCmpPredicate("uge")
+  case ULT extends FCmpPredicate("ult")
+  case ULE extends FCmpPredicate("ule")
+  case UNE extends FCmpPredicate("une")
+  case UNO extends FCmpPredicate("uno")
   case AlwaysTrue extends FCmpPredicate("true")
 
 object FCmpPredicate:
+
   def fromString(value: String): Option[FCmpPredicate] =
     values.find(_.name == value)
 
@@ -546,21 +547,49 @@ val LLVMDialect = summonDialect[
   (Ptr, StructType, ArrayType),
   (
       Func,
-      Constant, Zero, Poison,
-      Add, Sub, Mul, SDiv, SRem,
-      FAdd, FSub, FMul, FDiv, FRem, FNeg,
-      ICmp, FCmp,
-      And, Or, XOr,
-      Shl, LShr, AShr,
-      Load, Store, GetElementPtr,
-      ExtractValue, InsertValue,
-      Trunc, ZExt, SExt,
-      SIToFP, FPToSI,
-      FPTrunc, FPExt,
+      Constant,
+      Zero,
+      Poison,
+      Add,
+      Sub,
+      Mul,
+      SDiv,
+      SRem,
+      FAdd,
+      FSub,
+      FMul,
+      FDiv,
+      FRem,
+      FNeg,
+      ICmp,
+      FCmp,
+      And,
+      Or,
+      XOr,
+      Shl,
+      LShr,
+      AShr,
+      Load,
+      Store,
+      GetElementPtr,
+      ExtractValue,
+      InsertValue,
+      Trunc,
+      ZExt,
+      SExt,
+      SIToFP,
+      FPToSI,
+      FPTrunc,
+      FPExt,
       Select,
-      PtrToInt, IntToPtr,
-      Call, CallIndirect,
+      PtrToInt,
+      IntToPtr,
+      Call,
+      CallIndirect,
       Alloca,
-      Br, CondBr, Return, Unreachable,
+      Br,
+      CondBr,
+      Return,
+      Unreachable,
   ),
 ]
