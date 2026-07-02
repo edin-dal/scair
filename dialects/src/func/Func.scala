@@ -85,7 +85,7 @@ case class Func(
     body.blocks match
       case Seq() =>
         lprinter.print(function_type)
-      case entry :: _ =>
+      case entry +: _ =>
         lprinter.printListF(
           entry.arguments,
           lprinter.printArgument,
@@ -107,7 +107,7 @@ case class Func(
     // TODO: Should that simply be a region print?
     body.blocks match
       case Seq()           => ()
-      case entry :: others =>
+      case entry +: others =>
         lprinter.print(" {\n")
         lprinter.printBlockBody(entry)
         others.foreach(lprinter.print)

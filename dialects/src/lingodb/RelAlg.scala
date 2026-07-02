@@ -63,7 +63,7 @@ private def printRegionWithInlineArgs(
     region: Region,
 ): Unit =
   region.blocks.toList match
-    case entry :: others =>
+    case entry +: others =>
       lp.print("(")
       lp.printListF(entry.arguments, lp.printArgument)
       lp.print(") {\n")
@@ -266,7 +266,7 @@ case class RelAlgQuery(
     val lp = p.scoped
     lp.print("relalg.query (){\n")
     body.blocks.toList match
-      case entry :: others =>
+      case entry +: others =>
         entry.operations.foreach(x => lp.indented(lp.print(x)))
         others.foreach(lp.print)
       case _ => ()
