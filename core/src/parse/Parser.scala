@@ -116,7 +116,7 @@ def flatRepRec[$: P, V, T](
     whitespace: Whitespace
 ): P[Builder[V, Seq[V]]] =
   i match
-    case head :: tail =>
+    case head +: tail =>
       flatRepRec(
         tail,
         f,
@@ -138,7 +138,7 @@ extension [T](inline i: Seq[T])
       whitespace: Whitespace
   ): P[Seq[V]] =
     i match
-      case head :: tail =>
+      case head +: tail =>
         val builder = Seq.newBuilder[V]
         flatRepRec(
           tail,
@@ -444,8 +444,8 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
     ) ~/ p.exitRegionP ~ End
 ).map((toplevel: Seq[Operation]) =>
   toplevel.toList match
-    case (head: ModuleOp) :: Nil                        => head
-    case (head: OpDefs[ModuleOp]#UnstructuredOp) :: Nil =>
+    case (head: ModuleOp) +: Nil                        => head
+    case (head: OpDefs[ModuleOp]#UnstructuredOp) +: Nil =>
       head
     case _ =>
       val block = Block(operations = toplevel)

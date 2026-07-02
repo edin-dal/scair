@@ -216,7 +216,7 @@ case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
   ): Unit =
     patterns match
       case Nil    => ()
-      case h :: t =>
+      case h +: t =>
         try h.matchAndRewrite(op, rewriter)
         catch case e: Exception => augmentException(e, op, h)
         if !rewriter.hasDoneAction then matchAndRewriteRec(op, rewriter, t)
