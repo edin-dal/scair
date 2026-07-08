@@ -33,7 +33,7 @@ given CanonicalizationPatterns[Create](
 
 // complex.re(complex.constant(a, b)) -> a
 val ReConstant = pattern {
-  case Re(Owner(Constant(ArrayAttribute(Seq(r, _)), _)), res) =>
+  case Re(Owner(Constant(ArrayAttribute(r, _), _)), res) =>
     arith.Constant(r, res.copy())
 }
 
@@ -59,7 +59,7 @@ given CanonicalizationPatterns[Re](
 
 // complex.im(complex.constant(a, b)) -> b
 val ImConstant = pattern {
-  case Im(Owner(Constant(ArrayAttribute(Seq(_, i)), _)), res) =>
+  case Im(Owner(Constant(ArrayAttribute(_, i), _)), res) =>
     arith.Constant(i, res.copy())
 }
 
@@ -112,7 +112,8 @@ val AddZero = pattern {
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+              FloatAttr(FloatData(r), _),
+              FloatAttr(FloatData(i), _),
             ),
             _,
           )
@@ -147,7 +148,8 @@ val SubZero = pattern {
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+              FloatAttr(FloatData(r), _),
+              FloatAttr(FloatData(i), _),
             ),
             _,
           )
@@ -179,7 +181,8 @@ val MulOne = pattern {
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+              FloatAttr(FloatData(r), _),
+              FloatAttr(FloatData(i), _),
             ),
             _,
           )
@@ -197,7 +200,8 @@ val MulZero = pattern {
         zero @ Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(r), _), FloatAttr(FloatData(i), _))
+              FloatAttr(FloatData(r), _),
+              FloatAttr(FloatData(i), _),
             ),
             _,
           )
@@ -214,7 +218,8 @@ val MulConstant = pattern {
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(a), t), FloatAttr(FloatData(b), _))
+              FloatAttr(FloatData(a), t),
+              FloatAttr(FloatData(b), _),
             ),
             _,
           )
@@ -222,7 +227,8 @@ val MulConstant = pattern {
         Owner(
           Constant(
             ArrayAttribute(
-              Seq(FloatAttr(FloatData(c), _), FloatAttr(FloatData(d), _))
+              FloatAttr(FloatData(c), _),
+              FloatAttr(FloatData(d), _),
             ),
             _,
           )
@@ -232,10 +238,8 @@ val MulConstant = pattern {
       ) =>
     Constant(
       ArrayAttribute(
-        Seq(
-          FloatAttr(FloatData(a * c - b * d), t),
-          FloatAttr((FloatData(a * d + b * c)), t),
-        )
+        FloatAttr(FloatData(a * c - b * d), t),
+        FloatAttr((FloatData(a * d + b * c)), t),
       ),
       Result(tpe),
     )

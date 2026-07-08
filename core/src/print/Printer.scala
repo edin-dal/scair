@@ -47,11 +47,6 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
   def indented(toPrint: => Unit): Unit
   def withIndent(toPrint: => Unit): Unit
 
-  def print(parameter: Attribute | Seq[Attribute]): Unit =
-    parameter match
-      case seq: Seq[?]     => printList(seq.asInstanceOf[Seq[Attribute]])
-      case attr: Attribute => print(attr)
-
   def printArgument(value: Value[? <: Attribute]) =
     print(value, ": ", value.typ)
 

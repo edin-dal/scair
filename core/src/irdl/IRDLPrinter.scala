@@ -52,21 +52,21 @@ extension (operation: Operation)
     val x = operation.body.blocks.head.operations.collect { case o: Operands =>
       o
     }
-    if x.isEmpty then Operands(Seq(), ArrayAttribute(Seq()))
+    if x.isEmpty then Operands(Seq(), ArrayAttribute())
     else x.head
 
   def resultDefs =
     val x = operation.body.blocks.head.operations.collect { case r: Results =>
       r
     }
-    if x.isEmpty then Results(Seq(), ArrayAttribute(Seq()))
+    if x.isEmpty then Results(Seq(), ArrayAttribute())
     else x.head
 
   def attributeDefs =
     val x = operation.body.blocks.head.operations.collect {
       case r: Attributes => r
     }
-    if x.isEmpty then Attributes(Seq(), ArrayAttribute(Seq()))
+    if x.isEmpty then Attributes(Seq(), ArrayAttribute())
     else x.head
 
 extension (attribute: Attribute)

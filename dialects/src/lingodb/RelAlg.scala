@@ -40,7 +40,7 @@ final case class SortSpecificationAttr(colRef: ColumnRefAttr, spec: SortSpec)
     extends ParametrizedAttribute:
   override val name: String = "relalg.sort_spec"
 
-  override val parameters: Seq[Attribute | Seq[Attribute]] =
+  override val parameters: Seq[Attribute] =
     Seq(colRef, spec)
 
   override def customPrint(p: Printer): Unit =

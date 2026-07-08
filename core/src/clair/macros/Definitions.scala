@@ -2,6 +2,7 @@ package scair.clair.macros
 
 import scair.clair.macros.AssemblyFormatDirective
 import scair.constraints.ConstraintImpl
+import scair.ir.Attribute
 
 import scala.quoted.*
 import scala.reflect.*
@@ -89,7 +90,7 @@ case class OpPropertyDef(
 
 case class AttributeParamDef(
     val name: String,
-    val tpe: Type[?],
+    val tpe: Type[? <: Attribute],
 ) {}
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\

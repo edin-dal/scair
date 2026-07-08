@@ -35,7 +35,7 @@ trait AttributeCustomParser[T <: Attribute]:
   ): P[T]
 
 trait AttrDefs[T <: Attribute] extends AttributeCompanion[T]:
-  def parameters(attr: T): Seq[Attribute | Seq[Attribute]]
+  def parameters(attr: T): Seq[Attribute]
   override def parse[$: P](using Parser): P[T]
 
 object AttrDefs:

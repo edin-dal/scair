@@ -162,7 +162,12 @@ final case class ComplexType(
 || ARRAY ATTRIBUTE  ||
 \*≡==---==≡≡==---==≡*/
 
-final case class ArrayAttribute[D <: Attribute](attrValues: Seq[D])
+object ArrayAttribute:
+
+  given [D <: Attribute] => Conversion[Iterable[D], ArrayAttribute[D]] =
+    iterable => ArrayAttribute[D](iterable.toSeq*)
+
+final case class ArrayAttribute[D <: Attribute](attrValues: D*)
     extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues):
 
   override def customPrint(p: Printer) =
@@ -233,7 +238,7 @@ case class RankedTensorType(
 
   override def name: String = "builtin.ranked_tensor"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
@@ -276,7 +281,7 @@ final case class RankedMemrefType(
 
   override def name: String = "builtin.ranked_memref"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     shape +: elementType +: encoding.toSeq
 
   override def getNumDims = shape.attrValues.length
@@ -333,12 +338,12 @@ final case class VectorType(
 
 final case class SymbolRefAttr(
     rootRef: StringData,
-    nestedRefs: Seq[StringData] = Seq(),
+    nestedRefs: ArrayAttribute[StringData] = ArrayAttribute(),
 ) extends ParametrizedAttribute:
 
   override def name: String = "builtin.symbol_ref"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     Seq(rootRef, nestedRefs)
 
   override def customPrint(p: Printer) =
@@ -354,15 +359,15 @@ final case class SymbolRefAttr(
 
 final case class DenseArrayAttr(
     typ: IntegerType | FloatType,
-    data: Seq[IntegerAttr] | Seq[FloatAttr],
+    data: ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr],
 ) extends ParametrizedAttribute
     with Seq[Attribute]:
 
   override def name: String = "builtin.dense_array"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
+  override def parameters: Seq[Attribute] = Seq(typ, data)
 
   override def customVerify(): OK[Unit] =
-    if !data.forall(_ match
+    if !data.data.forall(_ match
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ)
     then Err("Element types do not match the dense array type")
@@ -370,9 +375,9 @@ final case class DenseArrayAttr(
 
   override def customPrint(p: Printer) =
     p.print("array<", typ)
-    if data.nonEmpty then p.print(": ")
+    if data.data.nonEmpty then p.print(": ")
     p.printListF(
-      data,
+      data.data,
       {
         case IntegerAttr(value, _) => p.print(value)
         case FloatAttr(value, _)   => p.print(value)
@@ -381,25 +386,25 @@ final case class DenseArrayAttr(
     p.print(">")
 
   // Seq methods
-  def apply(idx: Int): Attribute = data.apply(idx)
+  def apply(idx: Int): Attribute = data.data.apply(idx)
 
-  def length: Int = data.length
+  def length: Int = data.data.length
 
-  def iterator: Iterator[Attribute] = data.iterator
+  def iterator: Iterator[Attribute] = data.data.iterator
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||  FunctionType    ||
 \*≡==---==≡≡==---==≡*/
 
 final case class FunctionType(
-    inputs: Seq[Attribute] = Seq.empty,
-    outputs: Seq[Attribute] = Seq.empty,
+    inputs: ArrayAttribute[Attribute] = ArrayAttribute(),
+    outputs: ArrayAttribute[Attribute] = ArrayAttribute(),
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
   override def name: String = "builtin.function_type"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     Seq(inputs, outputs)
 
   override def customPrint(p: Printer) =
@@ -407,8 +412,8 @@ final case class FunctionType(
     p.printList(inputs)
     p.print(") -> ")
     outputs match
-      case Seq(single) => p.print(single)
-      case s           => p.printList(s, "(", ", ", ")")
+      case ArrayAttribute(single) => p.print(single)
+      case s                      => p.printList(s, "(", ", ", ")")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 || DenseIntOrFPAttr ||
