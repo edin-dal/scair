@@ -94,6 +94,7 @@ Parametrized attributes are composed of other attributes.
 
 ```scala sc-name:FunctionType
 //{
+import scair.dialects.builtin.ArrayAttribute
 import scair.clair.macros.*
 import scair.ir.*
 //}
