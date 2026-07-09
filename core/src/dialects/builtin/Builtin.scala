@@ -167,11 +167,17 @@ object ArrayAttribute:
   given [D <: Attribute] => Conversion[Iterable[D], ArrayAttribute[D]] =
     iterable => ArrayAttribute[D](iterable.toSeq*)
 
-final case class ArrayAttribute[D <: Attribute](attrValues: D*)
-    extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues):
+  given [D <: Attribute] => Conversion[ArrayAttribute[D], Seq[D]] = _.data
+
+final case class ArrayAttribute[D <: Attribute](data: D*)
+    extends ParametrizedAttribute:
+
+  override def name = "builtin.array_attr"
+
+  override def parameters: Seq[Attribute] = data
 
   override def customPrint(p: Printer) =
-    p.printList(attrValues, "[", ", ", "]")
+    p.printList(data, "[", ", ", "]")
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || DICTIONARY ATTRIBUTE  ||
@@ -241,12 +247,12 @@ case class RankedTensorType(
   override def parameters: Seq[Attribute] =
     shape +: elementType +: encoding.toSeq
 
-  override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data.toLong)
+  override def getNumDims = shape.length
+  override def getShape = shape.map(_.data.toLong)
 
   override def customPrint(p: Printer) =
     p.print("tensor<")
-    shape.attrValues.foreach(s =>
+    shape.foreach(s =>
       s match
         case IntData(-1) => p.print("?")
         case d           => p.print(d)
@@ -284,12 +290,12 @@ final case class RankedMemrefType(
   override def parameters: Seq[Attribute] =
     shape +: elementType +: encoding.toSeq
 
-  override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data.toLong)
+  override def getNumDims = shape.length
+  override def getShape = shape.map(_.data.toLong)
 
   override def customPrint(p: Printer) =
     p.print("memref<")
-    shape.attrValues.foreach(s =>
+    shape.foreach(s =>
       s match
         case IntData(-1) => p.print("?")
         case d           => p.print(d)
@@ -317,8 +323,8 @@ final case class VectorType(
     with ShapedType
     with ContainerType derives AttrDefs:
 
-  override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data.toLong)
+  override def getNumDims = shape.length
+  override def getShape = shape.map(_.data.toLong)
 
   override def customPrint(p: Printer): Unit =
 
@@ -438,7 +444,7 @@ final case class DenseIntOrFPElementsAttr(
           s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
         )
 
-    data.attrValues.foldLeft[OK[Any]](
+    data.data.foldLeft[OK[Any]](
       tpe
     )((acc, elt) =>
       acc.map(tpe =>
@@ -459,11 +465,11 @@ final case class DenseIntOrFPElementsAttr(
     ).map(_ => ())
 
   override def customPrint(p: Printer) =
-    val values = data.attrValues(0) match
+    val values = data.data(0) match
       case x: IntegerAttr =>
-        for (a <- data.attrValues) yield a.asInstanceOf[IntegerAttr].value
+        for (a <- data.data) yield a.asInstanceOf[IntegerAttr].value
       case y: FloatAttr =>
-        for (a <- data.attrValues) yield a.asInstanceOf[FloatAttr].value
+        for (a <- data.data) yield a.asInstanceOf[FloatAttr].value
     p.print("dense<")
     values match
       case Seq(single) => p.print(single)

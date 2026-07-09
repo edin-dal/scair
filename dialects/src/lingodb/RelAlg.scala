@@ -122,7 +122,7 @@ case class MapOp(
     lp.print("relalg.map ")
     lp.print(rel)
     lp.print(" computes : [")
-    lp.printListF(computedCols.attrValues, c => lp.print(c))
+    lp.printListF(computedCols, c => lp.print(c))
     lp.print("] ")
     printRegionWithInlineArgs(lp, lambda)
 
@@ -167,9 +167,9 @@ case class Aggregation(
     lp.print("relalg.aggregation ")
     lp.print(rel)
     lp.print(" [")
-    lp.printListF(groupByCols.attrValues, c => lp.print(c))
+    lp.printListF(groupByCols, c => lp.print(c))
     lp.print("] computes : [")
-    lp.printListF(computedCols.attrValues, c => lp.print(c))
+    lp.printListF(computedCols, c => lp.print(c))
     lp.print("] ")
     printRegionWithInlineArgs(lp, aggr)
 
@@ -209,7 +209,7 @@ case class Sort(
     p.print("relalg.sort ")
     p.print(rel)
     p.print(" [")
-    p.printListF(sortspecs.attrValues, s => p.print(s), sep = ",")
+    p.printListF(sortspecs, s => p.print(s), sep = ",")
     p.print("]")
 
 case class Limit(
@@ -235,7 +235,7 @@ case class Projection(
     p.print("relalg.projection ")
     p.print(setSemantic.name)
     p.print(" [")
-    p.printListF(cols.attrValues, c => p.print(c))
+    p.printListF(cols, c => p.print(c))
     p.print("] ")
     p.print(rel)
 
@@ -250,9 +250,9 @@ case class Materialize(
     p.print("relalg.materialize ")
     p.print(rel)
     p.print(" [")
-    p.printListF(cols.attrValues, c => p.print(c))
+    p.printListF(cols, c => p.print(c))
     p.print("] => [")
-    p.printListF(colNames.attrValues, n => p.print(n))
+    p.printListF(colNames, n => p.print(n))
     p.print("] : ")
     p.print(result.typ)
 

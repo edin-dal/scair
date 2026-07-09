@@ -229,8 +229,7 @@ def complexTypeP[$: P](using Parser): P[ComplexType] =
 // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
 def arrayAttributeP[$: P](using Parser): P[ArrayAttribute[Attribute]] = P(
-  "[" ~ attributeP.rep(sep = ",")
-    .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x*)) ~ "]"
+  "[" ~ attributeP.rep(sep = ",").map(ArrayAttribute(_*)) ~ "]"
 )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
