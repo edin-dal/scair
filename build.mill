@@ -1,7 +1,7 @@
-//| mill-version: 1.1.6-native
+//| mill-version: 1.1.7-native
 //| mill-opts: ["-DPATH={$PATH}"]
 //| mvnDeps:
-//|   - com.goyeau::mill-scalafix_mill1:0.6.0
+//|   - com.goyeau::mill-scalafix_mill1:0.6.1
 //|   - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 //| mill-jvm-opts: ["-Xss10m"]
 
@@ -213,7 +213,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
   override def unidocOptions =
     super.unidocOptions() ++ Seq("-snippet-compiler:compile", "-siteroot", (rootPath/"docs").toString())
 
-  override def unidocVersion = Task { Some("0.6.0") }
+  override def unidocVersion = Task { Some("0.6.1") }
   override def unidocDocumentTitle = Task { "ScaIR" }
 
 
