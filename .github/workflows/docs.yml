@@ -32,7 +32,12 @@ jobs:
 
     - name: Generate documentation
       run: ./mill unidocSite
-      
+
+    - name: Install landing page as site homepage
+      run: |
+        rm out/unidocSite.dest/index.html
+        cp website/index.html out/unidocSite.dest/index.html
+
     - name: Upload static files as artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
