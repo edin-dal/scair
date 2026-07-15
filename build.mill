@@ -153,33 +153,13 @@ trait ScairModule extends JvmScairModule with GraalScairModule:
 
 object `package` extends ScairSettings with ScoverageReport with UnidocModule with SonatypeCentralPublishModule:
 
-  override def artifactName = "scair-all"
+  // Modules implementing a dialect.
+  trait DialectModule extends ScairModule:
+    override def moduleDeps = core +: dialectDeps
+    def dialectDeps: Seq[DialectModule] = Seq()
 
-  override def moduleDeps = allChildren.collect {
-    case m: ScairModule => m
-  }
-
-  def rootPath = moduleDir
-
-  override def unidocOptions =
-    super.unidocOptions() ++ Seq("-snippet-compiler:compile", "-siteroot", (rootPath/"docs").toString())
-
-  override def unidocVersion = Task { Some("0.6.0") }
-  override def unidocDocumentTitle = Task { "ScaIR" }
-
-
-  object utils extends ScairModule
-
-  object core extends ScairModule:
-
-    override def moduleDeps = Seq(utils)
-
-    override def mvnDeps = Seq(
-      mvn"com.lihaoyi::fastparse::3.1.1"
-    )
-
-  object dialects extends ScairModule:
-
+  // Modules implementing a dialect via IRDL, through .irdl files.
+  trait IRDLDialectModule extends DialectModule:
     def irdlSources = Task {
       Lib.findSourceFiles(sources(), Seq("irdl")).map(PathRef(_))
     }
@@ -221,7 +201,52 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     }
 
     override def generatedSources = scalaFiles()
-    override def moduleDeps = Seq(core)
+
+  override def artifactName = "scair-all"
+
+  override def moduleDeps = allChildren.collect {
+    case m: ScairModule => m
+  }
+
+  def rootPath = moduleDir
+
+  override def unidocOptions =
+    super.unidocOptions() ++ Seq("-snippet-compiler:compile", "-siteroot", (rootPath/"docs").toString())
+
+  override def unidocVersion = Task { Some("0.6.0") }
+  override def unidocDocumentTitle = Task { "ScaIR" }
+
+
+  object utils extends ScairModule
+
+  object core extends ScairModule:
+
+    override def moduleDeps = Seq(utils)
+
+    override def mvnDeps = Seq(
+      mvn"com.lihaoyi::fastparse::3.1.1"
+    )
+
+  // Aggregate module: hosts AllDialects.scala and re-exports every per-dialect
+  // submodule so downstream `moduleDeps = Seq(dialects, ...)` stays unchanged.
+  object dialects extends ScairModule:
+    override def moduleDeps =
+      core +: moduleDirectChildren.collect {
+        case m: ScairModule => m
+      }
+
+    object affine extends DialectModule
+    object arith extends DialectModule
+    object func extends DialectModule
+    object llvm extends DialectModule
+    object memref extends DialectModule
+    object scf extends DialectModule
+    object lingodb extends DialectModule
+    object math extends DialectModule:
+      override def dialectDeps = Seq(arith)
+    object complex extends DialectModule:
+      override def dialectDeps = Seq(arith)
+    object cmath extends IRDLDialectModule
 
   object passes extends ScairModule:
     override def moduleDeps = Seq(dialects)
