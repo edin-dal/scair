@@ -62,7 +62,7 @@ trait IntegerEnumAttr extends Attribute:
 
 abstract trait ParametrizedAttribute() extends Attribute:
 
-  def parameters: Seq[Attribute | Seq[Attribute]]
+  def parameters: Seq[Attribute]
 
   override def printParameters(p: Printer): Unit =
     if parameters.size > 0 then

@@ -78,7 +78,7 @@ case class Func(
     lprinter.print("func.func ")
     sym_visibility match
       case Some(visibility) =>
-        lprinter.print(visibility.data); lprinter.print(" ")
+        lprinter.print(visibility.data, " ")
       case None => ()
     lprinter.print("@")
     lprinter.print(sym_name.data)
@@ -96,7 +96,7 @@ case class Func(
         if function_type.outputs.nonEmpty then
           lprinter.print(" -> ")
           function_type.outputs match
-            case Seq(single) =>
+            case ArrayAttribute(single) =>
               lprinter.print(single)
             case outputs =>
               lprinter.printList(outputs, "(", ", ", ")")
@@ -136,13 +136,15 @@ case class CallIndirect(
   override def verify(): OK[Operation] =
     callee.typ match
       case FunctionType(inTys, outTys) =>
-        if callee_operands.map(_.typ) != inTys then
+        if callee_operands.typ != inTys.data then
           Err(
-            s"func.call_indirect: argument types ${callee_operands.map(_.typ)} do not match callee input types $inTys"
+            s"func.call_indirect: argument types ${callee_operands
+                .typ} do not match callee input types ${inTys.data}"
           )
-        else if _results.map(_.typ) != outTys then
+        else if _results.typ != outTys.data then
           Err(
-            s"func.call_indirect: result types ${_results.map(_.typ)} do not match callee output types $outTys",
+            s"func.call_indirect: result types ${_results
+                .typ} do not match callee output types ${outTys.data}",
             // TODO: Really not ideal error localization, was done for demonstration purposes, feel free to change it.
             Some(callee),
           )

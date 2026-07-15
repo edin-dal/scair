@@ -851,7 +851,7 @@ def deriveAttrDefs[T <: Attribute: Type](using
             }
           )
       }
-      def parameters(attr: T): Seq[Attribute | Seq[Attribute]] = ${
+      def parameters(attr: T): Seq[Attribute] = ${
         parametersMacro(attrDef, '{ attr })
       }
   }

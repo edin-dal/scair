@@ -22,7 +22,7 @@ transparent trait DerivedAttribute[name <: String]
 
   override val name: String = defs.name
 
-  override val parameters: Seq[Attribute | Seq[Attribute]] =
+  override val parameters: Seq[Attribute] =
     defs.parameters(this)
 
 trait AssemblyFormat[format <: String]

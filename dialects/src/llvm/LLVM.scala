@@ -54,11 +54,11 @@ object FCmpPredicate:
     values.find(_.name == value)
 
 final case class StructType(
-    elems: Seq[TypeAttribute]
+    elems: ArrayAttribute[TypeAttribute]
 ) extends ParametrizedAttribute
     with TypeAttribute:
   override def name: String = "llvm.struct"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(elems)
+  override def parameters: Seq[Attribute] = Seq(elems)
 
   override def printParameters(p: Printer): Unit =
     given indentLevel: Int = 0
@@ -79,7 +79,7 @@ final case class ArrayType(
 ) extends ParametrizedAttribute
     with TypeAttribute:
   override def name: String = "llvm.array"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(size, elem)
+  override def parameters: Seq[Attribute] = Seq(size, elem)
 
   override def printParameters(p: Printer): Unit =
     given indentLevel: Int = 0
@@ -204,8 +204,9 @@ case class GetElementPtr(
     with NoMemoryEffect derives OpDefs:
 
   override def customVerify(): OK[Operation] =
-    val rawIndices = rawConstantIndices.data.collect { case i: IntegerAttr =>
-      i
+    val rawIndices = rawConstantIndices.data.data.collect {
+      case i: IntegerAttr =>
+        i
     }
     val numDynamicMarkers = rawIndices.count(isDynamicGEPIndex)
     if numDynamicMarkers != dynamicIndices.size then
@@ -224,7 +225,7 @@ case class ExtractValue(
   override def customPrint(printer: Printer): Unit =
     printer.print(name, " ", container, "[")
     printer.printListF(
-      position.data.collect { case i: IntegerAttr => i.value.value },
+      position.data.data.collect { case i: IntegerAttr => i.value.value },
       idx => printer.print(idx.toString),
       sep = ", ",
     )
@@ -240,7 +241,7 @@ case class InsertValue(
   override def customPrint(printer: Printer): Unit =
     printer.print(name, " ", value, ", ", container, "[")
     printer.printListF(
-      position.data.collect { case i: IntegerAttr => i.value.value },
+      position.data.data.collect { case i: IntegerAttr => i.value.value },
       idx => printer.print(idx.toString),
       sep = ", ",
     )
@@ -349,8 +350,8 @@ case class Func(
       if function_type.outputs.nonEmpty then
         lprinter.print(" -> ")
         function_type.outputs match
-          case Seq(single) => lprinter.print(single)
-          case many        => lprinter.printList(many, "(", ", ", ")")
+          case ArrayAttribute(single) => lprinter.print(single)
+          case many => lprinter.printList(many, "(", ", ", ")")
     else
       val entry = body.blocks.head
       lprinter.printListF(
@@ -363,8 +364,8 @@ case class Func(
       if function_type.outputs.nonEmpty then
         lprinter.print(" -> ")
         function_type.outputs match
-          case Seq(single) => lprinter.print(single)
-          case many        => lprinter.printList(many, "(", ", ", ")")
+          case ArrayAttribute(single) => lprinter.print(single)
+          case many => lprinter.printList(many, "(", ", ", ")")
     if attributes.nonEmpty then
       lprinter.print(" attributes")
       lprinter.printOptionalAttrDict(attributes.toMap)

@@ -162,11 +162,22 @@ final case class ComplexType(
 || ARRAY ATTRIBUTE  ||
 \*≡==---==≡≡==---==≡*/
 
-final case class ArrayAttribute[D <: Attribute](attrValues: Seq[D])
-    extends DataAttribute[Seq[D]]("builtin.array_attr", attrValues):
+object ArrayAttribute:
+
+  given [D <: Attribute] => Conversion[Iterable[D], ArrayAttribute[D]] =
+    iterable => ArrayAttribute[D](iterable.toSeq*)
+
+  given [D <: Attribute] => Conversion[ArrayAttribute[D], Seq[D]] = _.data
+
+final case class ArrayAttribute[D <: Attribute](data: D*)
+    extends ParametrizedAttribute:
+
+  override def name = "builtin.array_attr"
+
+  override def parameters: Seq[Attribute] = data
 
   override def customPrint(p: Printer) =
-    p.printList(attrValues, "[", ", ", "]")
+    p.printList(data, "[", ", ", "]")
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || DICTIONARY ATTRIBUTE  ||
@@ -233,15 +244,15 @@ case class RankedTensorType(
 
   override def name: String = "builtin.ranked_tensor"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     shape +: elementType +: encoding.toSeq
 
-  override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data.toLong)
+  override def getNumDims = shape.length
+  override def getShape = shape.map(_.data.toLong)
 
   override def customPrint(p: Printer) =
     p.print("tensor<")
-    shape.attrValues.foreach(s =>
+    shape.foreach(s =>
       s match
         case IntData(-1) => p.print("?")
         case d           => p.print(d)
@@ -276,15 +287,15 @@ final case class RankedMemrefType(
 
   override def name: String = "builtin.ranked_memref"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     shape +: elementType +: encoding.toSeq
 
-  override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data.toLong)
+  override def getNumDims = shape.length
+  override def getShape = shape.map(_.data.toLong)
 
   override def customPrint(p: Printer) =
     p.print("memref<")
-    shape.attrValues.foreach(s =>
+    shape.foreach(s =>
       s match
         case IntData(-1) => p.print("?")
         case d           => p.print(d)
@@ -312,8 +323,8 @@ final case class VectorType(
     with ShapedType
     with ContainerType derives AttrDefs:
 
-  override def getNumDims = shape.attrValues.length
-  override def getShape = shape.attrValues.map(_.data.toLong)
+  override def getNumDims = shape.length
+  override def getShape = shape.map(_.data.toLong)
 
   override def customPrint(p: Printer): Unit =
 
@@ -333,12 +344,12 @@ final case class VectorType(
 
 final case class SymbolRefAttr(
     rootRef: StringData,
-    nestedRefs: Seq[StringData] = Seq(),
+    nestedRefs: ArrayAttribute[StringData] = ArrayAttribute(),
 ) extends ParametrizedAttribute:
 
   override def name: String = "builtin.symbol_ref"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     Seq(rootRef, nestedRefs)
 
   override def customPrint(p: Printer) =
@@ -354,15 +365,15 @@ final case class SymbolRefAttr(
 
 final case class DenseArrayAttr(
     typ: IntegerType | FloatType,
-    data: Seq[IntegerAttr] | Seq[FloatAttr],
+    data: ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr],
 ) extends ParametrizedAttribute
     with Seq[Attribute]:
 
   override def name: String = "builtin.dense_array"
-  override def parameters: Seq[Attribute | Seq[Attribute]] = Seq(typ, data)
+  override def parameters: Seq[Attribute] = Seq(typ, data)
 
   override def customVerify(): OK[Unit] =
-    if !data.forall(_ match
+    if !data.data.forall(_ match
         case IntegerAttr(_, eltyp) => eltyp == typ
         case FloatAttr(_, eltyp)   => eltyp == typ)
     then Err("Element types do not match the dense array type")
@@ -370,9 +381,9 @@ final case class DenseArrayAttr(
 
   override def customPrint(p: Printer) =
     p.print("array<", typ)
-    if data.nonEmpty then p.print(": ")
+    if data.data.nonEmpty then p.print(": ")
     p.printListF(
-      data,
+      data.data,
       {
         case IntegerAttr(value, _) => p.print(value)
         case FloatAttr(value, _)   => p.print(value)
@@ -381,25 +392,25 @@ final case class DenseArrayAttr(
     p.print(">")
 
   // Seq methods
-  def apply(idx: Int): Attribute = data.apply(idx)
+  def apply(idx: Int): Attribute = data.data.apply(idx)
 
-  def length: Int = data.length
+  def length: Int = data.data.length
 
-  def iterator: Iterator[Attribute] = data.iterator
+  def iterator: Iterator[Attribute] = data.data.iterator
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||  FunctionType    ||
 \*≡==---==≡≡==---==≡*/
 
 final case class FunctionType(
-    inputs: Seq[Attribute] = Seq.empty,
-    outputs: Seq[Attribute] = Seq.empty,
+    inputs: ArrayAttribute[Attribute] = ArrayAttribute(),
+    outputs: ArrayAttribute[Attribute] = ArrayAttribute(),
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
   override def name: String = "builtin.function_type"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     Seq(inputs, outputs)
 
   override def customPrint(p: Printer) =
@@ -407,8 +418,8 @@ final case class FunctionType(
     p.printList(inputs)
     p.print(") -> ")
     outputs match
-      case Seq(single) => p.print(single)
-      case s           => p.printList(s, "(", ", ", ")")
+      case ArrayAttribute(single) => p.print(single)
+      case s                      => p.printList(s, "(", ", ", ")")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 || DenseIntOrFPAttr ||
@@ -433,7 +444,7 @@ final case class DenseIntOrFPElementsAttr(
           s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
         )
 
-    data.attrValues.foldLeft[OK[Any]](
+    data.data.foldLeft[OK[Any]](
       tpe
     )((acc, elt) =>
       acc.map(tpe =>
@@ -454,11 +465,11 @@ final case class DenseIntOrFPElementsAttr(
     ).map(_ => ())
 
   override def customPrint(p: Printer) =
-    val values = data.attrValues(0) match
+    val values = data.data(0) match
       case x: IntegerAttr =>
-        for (a <- data.attrValues) yield a.asInstanceOf[IntegerAttr].value
+        for (a <- data.data) yield a.asInstanceOf[IntegerAttr].value
       case y: FloatAttr =>
-        for (a <- data.attrValues) yield a.asInstanceOf[FloatAttr].value
+        for (a <- data.data) yield a.asInstanceOf[FloatAttr].value
     p.print("dense<")
     values match
       case Seq(single) => p.print(single)

@@ -58,7 +58,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     (
       RankedTensorType(
         Float32Type(),
-        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
+        ArrayAttribute(IntData(3), IntData(-1), IntData(5)),
         None,
       ),
       "Success",
@@ -66,7 +66,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     ),
     (UnrankedTensorType(Float32Type()), "Success", "tensor<*xf32>"),
     (
-      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
+      ArrayAttribute(F64, ArrayAttribute(), StringData("hello")),
       "Success",
       "[f64, [], \"hello\"]",
     ),
@@ -93,7 +93,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     (
       "[f64, [], \"hello\"]",
       "Success",
-      ArrayAttribute(Seq(F64, ArrayAttribute(Seq()), StringData("hello"))),
+      ArrayAttribute(F64, ArrayAttribute(), StringData("hello")),
     ),
     ("\"hello world!\"", "Success", StringData("hello world!")),
     (
@@ -101,7 +101,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       "Success",
       RankedTensorType(
         Float32Type(),
-        ArrayAttribute(Seq(IntData(3), IntData(-1), IntData(5))),
+        ArrayAttribute(IntData(3), IntData(-1), IntData(5)),
         None,
       ),
     ),

@@ -229,8 +229,7 @@ def complexTypeP[$: P](using Parser): P[ComplexType] =
 // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
 def arrayAttributeP[$: P](using Parser): P[ArrayAttribute[Attribute]] = P(
-  "[" ~ attributeP.rep(sep = ",")
-    .map((x: Seq[Attribute]) => ArrayAttribute(attrValues = x)) ~ "]"
+  "[" ~ attributeP.rep(sep = ",").map(ArrayAttribute(_*)) ~ "]"
 )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -288,7 +287,7 @@ def tensorTypeP[$: P](using Parser): P[TensorType] = P(
 
 def rankedTensorTypeP[$: P](using Parser): P[TensorType] = P(
   dimensionListP ~ typeP ~ ("," ~ encodingP).?
-).map((x: (ArrayAttribute[IntData], Attribute, Option[Attribute])) =>
+).map((x: (Seq[IntData], Attribute, Option[Attribute])) =>
   RankedTensorType(
     shape = x._1,
     elementType = x._2,
@@ -301,7 +300,7 @@ def unrankedTensorTypeP[$: P](using Parser): P[TensorType] =
     .map((x: Attribute) => UnrankedTensorType(elementType = x))
 
 def dimensionListP[$: P](using Parser) =
-  P((dimensionP ~ "x").rep).map(x => ArrayAttribute(attrValues = x))
+  P((dimensionP ~ "x").rep)
 
 def dimensionP[$: P](using Parser): P[IntData] =
   P("?".map(_ => -1: BigInt) | decimalLiteralP).map(x => IntData(x))
@@ -324,7 +323,7 @@ def memrefTypeP[$: P](using Parser): P[MemrefType] = P(
 
 def rankedMemrefTypeP[$: P](using Parser): P[MemrefType] = P(
   dimensionListP ~ typeP
-).map((x: (ArrayAttribute[IntData], Attribute)) =>
+).map((x: (Seq[IntData], Attribute)) =>
   RankedMemrefType(
     shape = x._1,
     elementType = x._2,
@@ -346,9 +345,9 @@ def vectorTypeP[$: P](using Parser): P[VectorType] = P(
   "vector<" ~/ vectorDimensionListP ~/ typeP ~/ ">"
 ).map((shape: Seq[IntData], scalableDims: Seq[IntData], typ: Attribute) =>
   VectorType(
-    shape = ArrayAttribute[IntData](shape),
+    shape = shape,
     elementType = typ,
-    scalableDims = ArrayAttribute[IntData](scalableDims),
+    scalableDims = scalableDims,
   )
 )
 
@@ -387,9 +386,9 @@ def singleTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
   P(floatDataP | intDataP)
     .map(_ match
       case (x: IntData) =>
-        ArrayAttribute[IntegerAttr](Seq(IntegerAttr(x, I32)))
+        ArrayAttribute(IntegerAttr(x, I32))
       case (y: FloatData) =>
-        ArrayAttribute[FloatAttr](Seq(FloatAttr(y, Float32Type()))))
+        ArrayAttribute(FloatAttr(y, Float32Type())))
 
 def multipleTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
   P(multipleFloatTensorLiteralP | multipleIntTensorLiteralP)
@@ -397,23 +396,17 @@ def multipleTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
 def multipleIntTensorLiteralP[$: P](using
     Parser
 ): P[ArrayAttribute[IntegerAttr]] =
-  P("[" ~ intDataP.rep(1, sep = ",") ~ "]").map((x: Seq[IntData]) =>
-    ArrayAttribute[IntegerAttr](
-      for (x1 <- x) yield IntegerAttr(x1, I32)
-    )
-  )
+  P("[" ~ intDataP.rep(1, sep = ",") ~ "]")
+    .map((x: Seq[IntData]) => x.map(IntegerAttr(_, I32)))
 
 def multipleFloatTensorLiteralP[$: P](using
     Parser
 ): P[ArrayAttribute[FloatAttr]] =
-  P("[" ~ floatDataP.rep(1, sep = ",") ~ "]").map((y: Seq[FloatData]) =>
-    ArrayAttribute[FloatAttr](
-      for (y1 <- y) yield FloatAttr(y1, Float32Type())
-    )
-  )
+  P("[" ~ floatDataP.rep(1, sep = ",") ~ "]")
+    .map((y: Seq[FloatData]) => y.map(FloatAttr(_, Float32Type())))
 
 def emptyTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
-  P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr](Seq.empty))
+  P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr]())
 
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||   AFFINE MAP ATTR   ||
@@ -435,7 +428,7 @@ def affineSetAttrP[$: P](using Parser): P[AffineSetAttr] =
 
 def functionTypeP[$: P](using Parser): P[FunctionType] = P(
   (parenTypeListP ~ "->" ~/ (parenTypeListP | typeP.map(Seq(_))))
-    .map(FunctionType.apply)
+    .map(FunctionType(_, _))
 )
 
 private def builtinTypeP[$: P](using Parser): P[Attribute] =

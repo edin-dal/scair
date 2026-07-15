@@ -21,7 +21,7 @@ final case class LocalTableColumn(colName: StringData, colType: Attribute)
     extends ParametrizedAttribute:
   override val name: String = "subop.local_table_column"
 
-  override val parameters: Seq[Attribute | Seq[Attribute]] =
+  override val parameters: Seq[Attribute] =
     Seq(colName, colType)
 
   override def customPrint(p: Printer): Unit =
@@ -31,13 +31,13 @@ final case class LocalTableColumn(colName: StringData, colType: Attribute)
 
 /** Prints as `!subop.local_table<[col$0 : type, ...], ["name", ...]>`. */
 final case class SubopLocalTableType(
-    columns: Seq[LocalTableColumn],
-    outputNames: Seq[StringData],
+    columns: ArrayAttribute[LocalTableColumn],
+    outputNames: ArrayAttribute[StringData],
 ) extends ParametrizedAttribute
     with TypeAttribute:
   override val name: String = "subop.local_table"
 
-  override val parameters: Seq[Attribute | Seq[Attribute]] =
+  override val parameters: Seq[Attribute] =
     Seq(columns, outputNames)
 
   override def customPrint(p: Printer): Unit =

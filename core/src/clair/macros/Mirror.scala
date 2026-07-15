@@ -161,10 +161,10 @@ def getAttrDef[Label: Type, Elem: Type](using
       Type.valueOfConstant[Label].get.asInstanceOf[String]
 
   Type.of[Elem] match
-    case '[Attribute] =>
+    case '[type t <: Attribute; `t`] =>
       AttributeParamDef(
         name = name,
-        tpe = Type.of[Elem],
+        tpe = Type.of[t],
       )
     case _ =>
       throw new Exception(

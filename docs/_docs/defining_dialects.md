@@ -94,18 +94,19 @@ Parametrized attributes are composed of other attributes.
 
 ```scala sc-name:FunctionType
 //{
+import scair.dialects.builtin.ArrayAttribute
 import scair.clair.macros.*
 import scair.ir.*
 //}
 final case class FunctionType(
-    inputs: Seq[Attribute],
-    outputs: Seq[Attribute],
+    inputs: ArrayAttribute[Attribute],
+    outputs: ArrayAttribute[Attribute],
 ) extends ParametrizedAttribute
     with TypeAttribute:
 
   override def name: String = "builtin.function_type"
 
-  override def parameters: Seq[Attribute | Seq[Attribute]] =
+  override def parameters: Seq[Attribute] =
     Seq(inputs, outputs)
 ```
 
