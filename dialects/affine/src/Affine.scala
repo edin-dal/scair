@@ -3,6 +3,7 @@ package scair.dialects.affine
 import scair.clair.*
 import scair.dialects.builtin.*
 import scair.ir.*
+import scair.utils.OK
 
 // ░█████╗░ ███████╗ ███████╗ ██╗ ███╗░░██╗ ███████╗
 // ██╔══██╗ ██╔════╝ ██╔════╝ ██║ ████╗░██║ ██╔════╝
@@ -209,30 +210,37 @@ case class LinearizeIndex(
 // three affine maps (the structured src/dst/tag memref+index grouping and the
 // trailing num_elements/stride operands are derived from the maps rather than
 // expressed as separate operand segments).
-//
-// TODO: affine.dma_start predates MLIR's properties migration, so real mlir-opt
-// stores src_map/dst_map/tag_map as *discardable* attributes ({...}) rather than
-// properties (<{...}>). ScaIR's op framework prints every Attribute field as a
-// property, so this op does not currently round-trip through mlir-opt (it does
-// round-trip through scair-opt). Making it interop-clean needs framework support
-// for discardable attributes.
 case class DmaStart(
-    arguments: Seq[Operand[Attribute]] = Seq.empty,
-    src_map: AffineMapAttr,
-    dst_map: AffineMapAttr,
-    tag_map: AffineMapAttr,
-) extends DerivedOperation["affine.dma_start"] derives OpDefs
+    arguments: Seq[Operand[Attribute]] = Seq.empty
+) extends DerivedOperation["affine.dma_start"] derives OpDefs:
+  def src_map: AffineMapAttr = attributes("src_map").asInstanceOf[AffineMapAttr]
+  def dst_map: AffineMapAttr = attributes("dst_map").asInstanceOf[AffineMapAttr]
+  def tag_map: AffineMapAttr = attributes("tag_map").asInstanceOf[AffineMapAttr]
+
+  override def customVerify(): OK[Operation] =
+    attributes.get("src_map") match
+      case Some(_: AffineMapAttr) => OK(this)
+      case _                      => Err("src_map must be an AffineMapAttr")
+    attributes.get("dst_map") match
+      case Some(_: AffineMapAttr) => OK(this)
+      case _                      => Err("dst_map must be an AffineMapAttr")
+    attributes.get("tag_map") match
+      case Some(_: AffineMapAttr) => OK(this)
+      case _                      => Err("tag_map must be an AffineMapAttr")
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||   DMA_WAIT OP    ||
 \*≡==----=≡≡=----==≡*/
 
-// TODO: like affine.dma_start, tag_map is a discardable attribute in real mlir-opt;
-// see the note on DmaStart. Round-trips through scair-opt but not mlir-opt yet.
 case class DmaWait(
-    arguments: Seq[Operand[Attribute]] = Seq.empty,
-    tag_map: AffineMapAttr,
-) extends DerivedOperation["affine.dma_wait"] derives OpDefs
+    arguments: Seq[Operand[Attribute]] = Seq.empty
+) extends DerivedOperation["affine.dma_wait"] derives OpDefs:
+  def tag_map: AffineMapAttr = attributes("tag_map").asInstanceOf[AffineMapAttr]
+
+  override def customVerify(): OK[Operation] =
+    attributes.get("tag_map") match
+      case Some(_: AffineMapAttr) => OK(this)
+      case _                      => Err("tag_map must be an AffineMapAttr")
 
 val AffineDialect = summonDialect[
   EmptyTuple,
