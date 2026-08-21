@@ -4,6 +4,7 @@ import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
 import scair.*
+import scair.dialects.builtin.UnitAttr
 import scair.ir.*
 import scair.parse.*
 import scair.print.Printer
@@ -121,23 +122,43 @@ case class LiteralDirective(
 /** Directive for an operation's attribute dictionnary. Its presence is
   * mandatory in every declarative assembly format, as this ensures the
   * operation's unknown added attributes are carried by its syntax.
+  *
+  * As MLIR does, it also carries the `properties` the rest of the format does
+  * not spell out, so that no property is lost by a custom syntax.
   */
-case class AttrDictDirective() extends Directive:
+case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
 
   override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] =
     state.lastWasPunctuation = false
-    '{
-      $p.printOptionalAttrDict(${
-        selectMember[DictType[String, Attribute]](op, "attributes")
-      }.toMap)
+    val attributes = '{
+      ${ selectMember[DictType[String, Attribute]](op, "attributes") }.toMap
     }
+    val printed =
+      if properties.isEmpty then attributes
+      else
+        val props = selectMember[Map[String, Attribute]](op, "properties")
+        '{
+          $attributes ++ ${ Expr(properties) }
+            .flatMap(name => $props.get(name).map(name -> _))
+        }
+    '{ $p.printOptionalAttrDict($printed) }
 
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
     '{ optionalAttributesP(using $ctx, $p) }
+
+/** A unit property carries no value of its own: its presence is the
+  * information, and it is spelled out by the literals around it, as in
+  * ``(`volatile` $volatile_^)?``. Such a variable prints nothing and parses as
+  * present without consuming any input.
+  */
+private def isUnitProperty(construct: OpInputDef)(using Quotes): Boolean =
+  construct match
+    case OpPropertyDef(tpe = '[UnitAttr]) => true
+    case _                                => false
 
 /** Directive for variables, handling operations' individual constructs
   * (operands, results, regions, successors or properties).
@@ -149,6 +170,7 @@ case class VariableDirective(
   override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] =
+    if isUnitProperty(construct) then return '{ () }
     val space = printSpace(p, state)
     val printVar = construct match
       case OperandDef(name = n, variadicity = v) =>
@@ -207,6 +229,15 @@ case class VariableDirective(
       ctx: Expr[P[Any]]
   )(using quotes: Quotes) =
     construct match
+      // A unit property is spelled by the literals around it, so it parses as
+      // present without consuming any input.
+      case OpPropertyDef(
+            variadicity = Variadicity.Optional,
+            tpe = '[UnitAttr],
+          ) =>
+        '{ Pass(Some(UnitAttr()))(using $ctx) }
+      case OpPropertyDef(tpe = '[UnitAttr]) =>
+        '{ Pass(UnitAttr())(using $ctx) }
       case OperandDef(name = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
@@ -437,11 +468,25 @@ case class AssemblyFormatDirective(
     directives: Seq[Directive]
 ):
 
-  def print(op: Expr[?], p: Expr[Printer])(using Quotes): Expr[Unit] =
+  /** The properties no other directive of the format spells out. As MLIR does,
+    * those are carried by the attribute dictionary.
+    */
+  def propertiesInAttrDict(opDef: OperationDef): Seq[String] =
+    val spelled = parsedDirectives.collect {
+      case VariableDirective(OpPropertyDef(name = name)) => name
+    }
+    opDef.properties.map(_.name).filterNot(spelled.contains)
+
+  def print(opDef: OperationDef, op: Expr[?], p: Expr[Printer])(using
+      Quotes
+  ): Expr[Unit] =
     given PrintingState = PrintingState()
+    val inAttrDict = propertiesInAttrDict(opDef)
     Expr.block(
-      '{ $p.print($op.asInstanceOf[Operation].name) } +:
-        directives.map(_.print(op, p)).toList,
+      '{ $p.print($op.asInstanceOf[Operation].name) } +: directives.map {
+        case _: AttrDictDirective => AttrDictDirective(inAttrDict).print(op, p)
+        case directive            => directive.print(op, p)
+      }.toList,
       '{},
     )
 
@@ -558,27 +603,49 @@ case class AssemblyFormatDirective(
     val attrDictIndex = parsedDirectives.zipWithIndex.find(_._1 match
       case _: AttrDictDirective => true
       case _                    => false) match
-      case Some((AttrDictDirective(), i)) => i
-      case _                              =>
+      case Some((_: AttrDictDirective, i)) => i
+      case _                               =>
         report
           .errorAndAbort(
             "Assembly format directive must contain an `attr-dict` directive"
           )
 
-    val attrDict = '{
+    val parsedAttrDict = '{
       $parsed(${ Expr(attrDictIndex) }).asInstanceOf[Map[String, Attribute]]
     }
 
-    val propertiesNames = Map.from(
-      parsedDirectives.zipWithIndex.flatMap((d, i) =>
-        d match
-          case VariableDirective(OpPropertyDef(name = name)) =>
-            Some(name -> i)
-          case _ => None
-      )
-    ).mapValues((i) => '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
-      .map((n, e) => '{ (${ Expr(n) }, $e) }).toSeq
-    val propertiesDict = '{ Map.from(${ Expr.ofList(propertiesNames) }) }
+    // The properties the format does not spell out were parsed as part of the
+    // attribute dictionary; take them back out of it.
+    val inAttrDict = propertiesInAttrDict(opDef)
+    val attrDict =
+      if inAttrDict.isEmpty then parsedAttrDict
+      else '{ $parsedAttrDict -- ${ Expr(inAttrDict) } }
+
+    // An optional property parses into an Option; it only makes it into the
+    // properties dictionary when it is actually there.
+    val propertiesEntries = parsedDirectives.zipWithIndex.collect {
+      case (
+            VariableDirective(
+              OpPropertyDef(name = name, variadicity = Variadicity.Optional)
+            ),
+            i,
+          ) =>
+        val value = '{ $parsed(${ Expr(i) }) }.asExprOf[Any]
+        '{ $value.asInstanceOf[Option[Attribute]].map((${ Expr(name) }, _)) }
+      case (VariableDirective(OpPropertyDef(name = name)), i) =>
+        val value = '{ $parsed(${ Expr(i) }) }.asExprOf[Any]
+        '{ Some((${ Expr(name) }, $value.asInstanceOf[Attribute])) }
+    }
+    val spelledProperties = '{
+      Map.from(${ Expr.ofList(propertiesEntries) }.flatten)
+    }
+    val propertiesDict =
+      if inAttrDict.isEmpty then spelledProperties
+      else
+        '{
+          $spelledProperties ++ ${ Expr(inAttrDict) }
+            .flatMap(name => $parsedAttrDict.get(name).map(name -> _))
+        }
     // This pushes the constructor disptching to runtime just like with generic syntax.
     // TODO: This should at least generate a call to the right Unstructured[T] constructor.
     // Or of course, directly T if so we choose.
@@ -590,7 +657,7 @@ case class AssemblyFormatDirective(
         resultsNames = $resNames,
         resultsTypes = $flatResultTypes,
         attributes = $attrDict,
-        properties = $propertiesDict.asInstanceOf[Map[String, Attribute]],
+        properties = $propertiesDict,
         regions = $flatRegionsArg,
       )(using $ctx)
     }

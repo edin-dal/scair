@@ -42,6 +42,8 @@
 
 %lin = "affine.linearize_index"(%zero, %zero) <{"static_basis" = array<i64: 2, 3>, "operandSegmentSizes" = array<i32: 2, 0>}> : (index, index) -> index
 
+%lin_disjoint = "affine.linearize_index"(%zero, %zero) <{"static_basis" = array<i64: 2, 3>, "operandSegmentSizes" = array<i32: 2, 0>, "disjoint"}> : (index, index) -> index
+
 "affine.dma_start"(%memref, %zero, %memref, %zero, %memref, %zero) {"src_map" = affine_map<(d0) -> (d0)>, "dst_map" = affine_map<(d0) -> (d0)>, "tag_map" = affine_map<(d0) -> (d0)>} : (memref<2x3xf64>, index, memref<2x3xf64>, index, memref<2x3xf64>, index) -> ()
 
 "affine.dma_wait"(%memref, %zero) {"tag_map" = affine_map<(d0) -> (d0)>} : (memref<2x3xf64>, index) -> ()
@@ -84,6 +86,7 @@
 // CHECK-NEXT:    "affine.prefetch"(%2, %3, %3) <{isWrite = false, localityHint = 3 : i32, isDataCache = true, map = #map6}> : (memref<2x3xf64>, index, index) -> ()
 // CHECK-NEXT:    %9, %10 = "affine.delinearize_index"(%3) <{static_basis = array<i64: 2, 3>}> : (index) -> (index, index)
 // CHECK-NEXT:    %11 = "affine.linearize_index"(%3, %3) <{static_basis = array<i64: 2, 3>, operandSegmentSizes = array<i32: 2, 0>}> : (index, index) -> index
+// CHECK-NEXT:    %12 = "affine.linearize_index"(%3, %3) <{static_basis = array<i64: 2, 3>, operandSegmentSizes = array<i32: 2, 0>, disjoint}> : (index, index) -> index
 // CHECK-NEXT:    "affine.dma_start"(%2, %3, %2, %3, %2, %3) {src_map = #map7, dst_map = #map7, tag_map = #map7} : (memref<2x3xf64>, index, memref<2x3xf64>, index, memref<2x3xf64>, index) -> ()
 // CHECK-NEXT:    "affine.dma_wait"(%2, %3) {tag_map = #map7} : (memref<2x3xf64>, index) -> ()
 // CHECK-NEXT:  }
