@@ -47,11 +47,13 @@ private inline def dialectTypeP[$: P](using p: Parser): P[Attribute] =
           )
   }
 
-// [x] - attribute-entry ::= (bare-id | string-literal) `=` attribute-value
+// [x] - attribute-entry ::= (bare-id | string-literal) (`=` attribute-value)?
 // [x] - attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 
+// An entry with no value is MLIR's unit attribute shorthand: `{disjoint}` means
+// `{disjoint = unit}`.
 private inline def attributeEntryP[$: P](using Parser) =
-  (bareIdP | stringLiteralP) ~ "=" ~/ (attributeP)
+  (bareIdP | stringLiteralP) ~ ("=" ~/ attributeP).orElse(UnitAttr())
 
 def attributeP[$: P](using Parser) = P(
   typeP | builtinAttrP | dialectAttributeP | attributeAliasP
@@ -183,6 +185,12 @@ def integerAttrP[$: P](using Parser): P[IntegerAttr] =
       .orElse(I64).map(IntegerAttr.apply(data, _))
   ) | "true".map(_ => IntegerAttr(IntData(1), I1)) |
     "false".map(_ => IntegerAttr(IntData(0), I1)))
+
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    UNIT ATTR     ||
+\*≡==---==≡≡==---==≡*/
+
+def unitAttrP[$: P](using Parser): P[UnitAttr] = P("unit".map(_ => UnitAttr()))
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    FLOAT DATA    ||
@@ -438,4 +446,4 @@ private def builtinTypeP[$: P](using Parser): P[Attribute] =
 private def builtinAttrP[$: P](using Parser): P[Attribute] =
   arrayAttributeP | denseArrayAttributeP | symbolRefAttrP | floatAttrP |
     integerAttrP | denseIntOrFPElementsAttrP | affineMapAttrP | affineSetAttrP |
-    stringAttributeP
+    stringAttributeP | unitAttrP
