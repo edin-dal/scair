@@ -26,11 +26,6 @@ case class Call(
     no_inline: Option[UnitAttr] = None,
 ) extends DerivedOperation["func.call"] derives OpDefs
 
-/** The properties `func.func`'s syntax does not spell out, and which its
-  * attribute dictionary carries instead.
-  */
-private val funcSyntaxProperties = Seq("no_inline")
-
 given OperationCustomParser[Func]:
 
   def parseResultTypes[$: P](using
@@ -120,7 +115,7 @@ case class Func(
       lprinter.printOptionalAttrDict(
         attributes.toMap,
         properties,
-        funcSyntaxProperties,
+        Seq("no_inline"),
       )
     // TODO: Should that simply be a region print?
     body.blocks match

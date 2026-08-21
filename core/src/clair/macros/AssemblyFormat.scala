@@ -139,6 +139,7 @@ case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
       if properties.isEmpty then attributes
       else
         val props = selectMember[Map[String, Attribute]](op, "properties")
+        // TODO: Might be more efficient to unroll the named properties at compile time instead of pushing to flatMap.
         '{
           $attributes ++ ${ Expr(properties) }
             .flatMap(name => $props.get(name).map(name -> _))
