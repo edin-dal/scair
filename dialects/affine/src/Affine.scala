@@ -44,6 +44,7 @@ case class For(
     step: IntegerAttr,
     body: Region,
 ) extends DerivedOperation["affine.for"]
+    with LoopLike(body)
     with RecursiveMemoryEffects
     with RecursivelySpeculatable derives OpDefs
 
@@ -62,6 +63,7 @@ case class Parallel(
     res: Seq[Result[Attribute]] = Seq.empty,
     body: Region,
 ) extends DerivedOperation["affine.parallel"]
+    with LoopLike(body)
     with RecursiveMemoryEffects derives OpDefs
 
 /*≡==--=≡≡≡=--=≡≡*\

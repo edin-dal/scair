@@ -1,6 +1,7 @@
 package scair.ir
 
 import scair.dialects.builtin.StringData
+import scair.transformations.Rewriter
 import scair.utils.*
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
@@ -85,6 +86,35 @@ object ConstantLike:
     op match
       case c: ConstantLike => Some((value = c.getValue))
       case _               => None
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||       LOOP LIKE          ||
+\*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** MLIR's `LoopLikeOpInterface`, reduced to what code motion needs. */
+trait LoopLike(val loopRegions: Region*) extends Operation:
+
+  /** Whether `value` is defined outside of every loop region.
+    *
+    * Block arguments of a loop region count as defined inside it, as the parent
+    * of their owning block is that region.
+    */
+  def isDefinedOutsideOfLoop(value: Value[Attribute]): Boolean =
+    value.owner match
+      case Some(owner) => !loopRegions.exists(_.isAncestor(owner))
+      // A detached value is conservatively taken to be inside.
+      case None => false
+
+  /** Move `op` out of the loop, to just before it. */
+  def moveOutOfLoop(op: Operation)(using rewriter: Rewriter): Unit =
+    rewriter.moveOpsBefore(this, op)
+
+object LoopLike:
+
+  def unapply(op: Operation): Option[Seq[Region]] =
+    op match
+      case l: LoopLike => Some(l.loopRegions)
+      case _           => None
 
 trait Symbol extends Operation:
   def sym_name: StringData

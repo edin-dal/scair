@@ -71,6 +71,7 @@ case class ForOp(
     unsignedCmp: Option[UnitAttr] = None,
 ) extends DerivedOperation["scf.for"]
     with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
+    with LoopLike(region)
     with RecursiveMemoryEffects
     with RecursivelySpeculatable derives OpDefs
 
@@ -87,6 +88,7 @@ case class ForallOp(
     region: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.forall"]
+    with LoopLike(region)
     with RecursiveMemoryEffects derives OpDefs
 
 case class InParallelOp(
@@ -112,6 +114,7 @@ case class ParallelOp(
     region: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.parallel"]
+    with LoopLike(region)
     with RecursiveMemoryEffects derives OpDefs
 
 case class ReduceOp(
@@ -137,6 +140,7 @@ case class WhileOp(
     after: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.while"]
+    with LoopLike(before, after)
     with RecursiveMemoryEffects derives OpDefs
 
 case class IndexSwitchOp(
