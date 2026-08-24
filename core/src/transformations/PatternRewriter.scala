@@ -135,6 +135,50 @@ trait Rewriter:
   ): Unit =
     insertOpsAt(InsertPoint.after(op), newOps)
 
+  /** Move already-attached operations to `insertionPoint`.
+    *
+    * Note that a move has to go through both a detach and an insertion:
+    * `BlockOperations` maintains `Value.uses` in its `addOne`/`subtractOne`
+    * overrides, so detaching drops the operations' uses and re-inserting
+    * restores them. Splicing the underlying list directly would leave the use
+    * lists stale.
+    *
+    * The insertion point is taken by name and computed once the operations are
+    * detached, so that a point anchored on a neighbour of theirs - as
+    * `InsertPoint.after` is, reading `op.next` - names the slot they leave
+    * behind rather than one of them.
+    */
+  def moveOpsAt(
+      insertionPoint: => InsertPoint,
+      ops: Operation | Seq[Operation],
+  ): Unit =
+
+    val operations = ops match
+      case x: Operation => Seq(x)
+      case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
+
+    operations.foreach: op =>
+      op.containerBlock match
+        case Some(block) =>
+          operationRemovalHandler(op)
+          block.detachOp(op)
+        case None =>
+          throw new Exception("Cannot move an operation that has no parents.")
+
+    insertOpsAt(insertionPoint, operations)
+
+  def moveOpsBefore(
+      op: Operation,
+      movedOps: Operation | Seq[Operation],
+  ): Unit =
+    moveOpsAt(InsertPoint.before(op), movedOps)
+
+  def moveOpsAfter(
+      op: Operation,
+      movedOps: Operation | Seq[Operation],
+  ): Unit =
+    moveOpsAt(InsertPoint.after(op), movedOps)
+
   def replaceOp(
       op: Operation,
       newOps: Operation | Seq[Operation],
@@ -279,7 +323,7 @@ class PatternRewriteWalker(
     def insertOpAfterMatchedOp(
         ops: Operation | Seq[Operation]
     ): Unit =
-      super.insertOpsBefore(currentOp, ops)
+      super.insertOpsAfter(currentOp, ops)
 
     def insertOpAtEndOf(
         block: Block,
