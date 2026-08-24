@@ -7,6 +7,7 @@ import scair.dialects.cmath.cmath
 import scair.dialects.complex.Complex
 import scair.dialects.func.FuncDialect
 import scair.dialects.irdl.IRDL
+import scair.dialects.linalg.LinalgDialect
 import scair.dialects.lingodb.*
 import scair.dialects.llvm.LLVMDialect
 import scair.dialects.math.MathDialect
@@ -49,4 +50,5 @@ val allDialects: Seq[Dialect] =
     TuplesDialect,
     RelAlgDialect,
     SubopDialect,
+    LinalgDialect,
   )

@@ -242,6 +242,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     object memref extends DialectModule
     object scf extends DialectModule
     object lingodb extends DialectModule
+    object linalg extends DialectModule
     object math extends DialectModule:
       override def dialectDeps = Seq(arith)
     object complex extends DialectModule:
