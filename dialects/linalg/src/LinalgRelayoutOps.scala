@@ -23,18 +23,23 @@ import scair.ir.*
  * ScaIR has no custom-directive support, so these ops print and parse in the
  * generic form, which MLIR accepts. */
 
-trait TypesMatchWith(one: RankedTensorType, two: RankedTensorType)
-    extends Operation
+trait TypesMatchWith extends Operation:
+  val one: RankedTensorType
+  val two: RankedTensorType
 
-trait LinalgRelayoutOp(val dest: RankedTensorType, val result: RankedTensorType)
-    extends Operation
+trait LinalgRelayoutOp(
+    val _dest: RankedTensorType,
+    val _result: RankedTensorType,
+) extends Operation
     with OpAsmOpInterface
     with DestinationStyleOpInterface
     with LinalgRelayoutOpInterface
     with ConditionallySpeculatable
     with NoMemoryEffect
     with ReifyRankedShapedTypeOpInterface
-    with TypesMatchWith(dest, result)
+    with TypesMatchWith:
+  val one: RankedTensorType = _dest
+  val two: RankedTensorType = _result
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    PACK OP     ||

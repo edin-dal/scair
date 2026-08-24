@@ -99,4 +99,5 @@ trait ReturnLike extends Operation
   */
 trait SingleBlockImplicitYieldTerminator extends Operation
 
-trait AllElementTypesMatch(input: Attribute, output: Attribute) extends Operation
+trait AllElementTypesMatch(input: Attribute, output: Attribute)
+    extends Operation

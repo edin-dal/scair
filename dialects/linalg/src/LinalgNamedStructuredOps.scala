@@ -823,17 +823,6 @@ case class PoolingNdhwcSum(
     with LinalgStructuredBase
     with LinalgConvolutionOpInterface derives OpDefs
 
-case class PoolingNchwMax(
-    inputs: Seq[Operand[Attribute]] = Seq.empty,
-    outputs: Seq[Operand[ShapedType]] = Seq.empty,
-    result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
-    region: Region,
-) extends DerivedOperation["linalg.pooling_nchw_max"]
-    with LinalgStructuredBase
-    with LinalgConvolutionOpInterface derives OpDefs
-
 case class PoolingNdhwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,

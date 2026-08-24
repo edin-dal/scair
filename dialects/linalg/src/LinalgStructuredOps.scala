@@ -33,10 +33,6 @@ trait LinalgStructuredBase
       LinalgStructuredInterface,
       ReifyRankedShapedTypeOpInterface
 
-trait LinalgContractionOpInterface extends Operation
-trait LinalgConvolutionOpInterface extends Operation
-trait LinalgFillOpInterface extends Operation
-
 /*≡==--=≡≡≡≡≡≡=--=≡≡*\
 ||    GENERIC OP    ||
 \*≡==---=≡≡≡≡=---==≡*/
