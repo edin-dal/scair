@@ -93,6 +93,14 @@ case class RecursivelySpeculatableOp(
     with RecursivelySpeculatable
     with RecursiveMemoryEffects derives OpDefs
 
+/** Used in a region, to yield the corresponding type for that operation. */
+case class RegionYieldOp(
+    result: Operand[Attribute]
+) extends DerivedOperation["test.region_yield"]
+    with AssemblyFormat["$result `:` type($result) attr-dict"]
+    with IsTerminator
+    with Pure derives OpDefs
+
 val Test: Dialect = summonDialect[
   EmptyTuple,
   (
@@ -101,5 +109,6 @@ val Test: Dialect = summonDialect[
       NeverSpeculatableOp,
       ConditionallySpeculatableOp,
       RecursivelySpeculatableOp,
+      RegionYieldOp,
   ),
 ]

@@ -109,3 +109,10 @@ def isSpeculatable(op: Operation): Boolean = op match
       case Speculatability.NotSpeculatable => false
   // Not implementing the interface at all is a distinct, conservative state.
   case _ => false
+
+/** Whether the operation is pure, i.e. is speculatable and does not touch
+  * memory. The equivalent of the [[Pure]] trait, for an operation that may have
+  * earned both properties separately.
+  */
+def isPure(op: Operation): Boolean =
+  isSpeculatable(op) && isMemoryEffectFree(op)
