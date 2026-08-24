@@ -43,7 +43,8 @@ case class For(
     upperBoundMap: AffineMapAttr,
     step: IntegerAttr,
     body: Region,
-) extends DerivedOperation["affine.for"] derives OpDefs
+) extends DerivedOperation["affine.for"]
+    with RecursiveMemoryEffects derives OpDefs
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -59,7 +60,8 @@ case class Parallel(
     upperBoundsGroups: DenseIntOrFPElementsAttr,
     res: Seq[Result[Attribute]] = Seq.empty,
     body: Region,
-) extends DerivedOperation["affine.parallel"] derives OpDefs
+) extends DerivedOperation["affine.parallel"]
+    with RecursiveMemoryEffects derives OpDefs
 
 /*≡==--=≡≡≡=--=≡≡*\
 ||     IF OP     ||
@@ -71,7 +73,8 @@ case class If(
     condition: AffineSetAttr,
     thenRegion: Region,
     elseRegion: Region,
-) extends DerivedOperation["affine.if"] derives OpDefs
+) extends DerivedOperation["affine.if"]
+    with RecursiveMemoryEffects derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
