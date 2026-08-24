@@ -5,6 +5,8 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
 import scair.clair.*
+import scair.dialects.builtin.*
+import scair.dialects.test.*
 import scair.utils.*
 
 case class FillerOp(
@@ -46,6 +48,13 @@ case class RecursiveEffectsOp(
     override val regions: Seq[Region] = Seq()
 ) extends DerivedOperation["recursiveeffects"]
     with RecursiveMemoryEffects derives OpDefs
+
+/** A constant, to drive `test.conditionally_speculatable_op`. */
+case class ConstantOp(
+    result: Result[IntegerType]
+) extends DerivedOperation["constant"]
+    with ConstantLike(IntData(0))
+    with Pure derives OpDefs
 
 class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
@@ -186,3 +195,78 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
     val pure = containing(RecursiveEffectsOp(_))(EffectFreeOp())
     isMemoryEffectFree(containing(RecursiveEffectsOp(_))(pure)) shouldBe true
   }
+
+  /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||     SPECULATION       ||
+  \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+
+  val i32 = IntegerType(IntData(32), Signless)
+
+  def alwaysSpeculatable = AlwaysSpeculatableOp(Result(i32))
+  def neverSpeculatable = NeverSpeculatableOp(Result(i32))
+
+  def recursivelySpeculatable(ops: Operation*) =
+    RecursivelySpeculatableOp(Region(Block(operations = ops)), Result(i32))
+
+  "isSpeculatable" should "hold for an always speculatable operation" in {
+    isSpeculatable(alwaysSpeculatable) shouldBe true
+  }
+
+  it should "not hold for a never speculatable operation" in {
+    isSpeculatable(neverSpeculatable) shouldBe false
+  }
+
+  it should "not hold for an operation implementing no interface" in
+    withClue("Not implementing the interface is its own conservative state: ") {
+      isSpeculatable(UnknownEffectsOp()) shouldBe false
+      isSpeculatable(EffectFreeOp()) shouldBe false
+    }
+
+  it should "hold for a recursive operation over speculatable operations" in {
+    val op = recursivelySpeculatable(alwaysSpeculatable, alwaysSpeculatable)
+    isSpeculatable(op) shouldBe true
+  }
+
+  it should
+    "not hold for a recursive operation over a never speculatable one" in {
+      val op = recursivelySpeculatable(alwaysSpeculatable, neverSpeculatable)
+      isSpeculatable(op) shouldBe false
+    }
+
+  it should "not hold for a recursive operation over an uninterfaced one" in {
+    isSpeculatable(recursivelySpeculatable(UnknownEffectsOp())) shouldBe false
+  }
+
+  it should "hold for an empty recursive operation" in {
+    isSpeculatable(recursivelySpeculatable()) shouldBe true
+  }
+
+  it should "recurse through nested recursive operations" in {
+    val deep = recursivelySpeculatable(neverSpeculatable)
+    isSpeculatable(recursivelySpeculatable(deep)) shouldBe false
+
+    val fine = recursivelySpeculatable(alwaysSpeculatable)
+    isSpeculatable(recursivelySpeculatable(fine)) shouldBe true
+  }
+
+  it should
+    "be decided dynamically by a conditionally speculatable operation" in
+    withClue("The interface answers per operation, not per trait: ") {
+      val constant = ConstantOp(Result(i32))
+      val onConstant = ConditionallySpeculatableOp(constant.result, Result(i32))
+      isSpeculatable(onConstant) shouldBe true
+
+      val nonConstant = alwaysSpeculatable
+      val onNonConstant =
+        ConditionallySpeculatableOp(nonConstant.result, Result(i32))
+      isSpeculatable(onNonConstant) shouldBe false
+    }
+
+  "Pure" should "satisfy both axes, and still match NoMemoryEffect" in
+    withClue("Canonicalize and CSE match on NoMemoryEffect: ") {
+      val op = alwaysSpeculatable
+      isMemoryEffectFree(op) shouldBe true
+      isSpeculatable(op) shouldBe true
+      op shouldBe a[NoMemoryEffect]
+      op shouldBe a[ConditionallySpeculatable]
+    }

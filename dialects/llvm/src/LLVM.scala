@@ -97,18 +97,18 @@ case class Constant(
     value: Attribute,
     res: Result[Attribute],
 ) extends DerivedOperation["llvm.mlir.constant"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Zero(
     res: Result[Attribute]
 ) extends DerivedOperation["llvm.mlir.zero"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Poison(
     res: Result[Attribute]
 ) extends DerivedOperation["llvm.mlir.poison"]
     with AssemblyFormat["attr-dict `:` type($res)"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Add(
     lhs: Operand[IntegerType | IndexType],
@@ -212,7 +212,7 @@ case class GetElementPtr(
     rawConstantIndices: DenseArrayAttr,
     elem_type: Attribute,
 ) extends DerivedOperation["llvm.getelementptr"]
-    with NoMemoryEffect derives OpDefs:
+    with Pure derives OpDefs:
 
   override def customVerify(): OK[Operation] =
     val rawIndices = rawConstantIndices.data.data.collect {
@@ -481,6 +481,10 @@ case class Func(
       others.foreach(lprinter.print)
       lprinter.withIndent(lprinter.print("}"))
 
+// The LLVM integer arithmetic operations below are effect free but not
+// speculatable: upstream `LLVM_ArithmeticOpBase` grants `NoMemoryEffect`
+// alone, since a poison-generating flag (nsw/nuw/exact/disjoint) makes the
+// result undefined. Only their floating point counterparts are `Pure`.
 case class Sub(
     lhs: Operand[IntegerType | IndexType],
     rhs: Operand[IntegerType | IndexType],
@@ -509,27 +513,27 @@ case class FSub(
     rhs: Operand[FloatType],
     res: Result[FloatType],
 ) extends DerivedOperation["llvm.fsub"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FDiv(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
 ) extends DerivedOperation["llvm.fdiv"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FRem(
     lhs: Operand[FloatType],
     rhs: Operand[FloatType],
     res: Result[FloatType],
 ) extends DerivedOperation["llvm.frem"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FNeg(
     operand: Operand[FloatType],
     res: Result[FloatType],
 ) extends DerivedOperation["llvm.fneg"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FCmp(
     lhs: Operand[FloatType],
@@ -537,7 +541,7 @@ case class FCmp(
     res: Result[IntegerType],
     predicate: FCmpPredicate,
 ) extends DerivedOperation["llvm.fcmp"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class And(
     lhs: Operand[IntegerType | IndexType],
@@ -577,44 +581,44 @@ case class Trunc(
     in: Operand[IntegerType | IndexType],
     out: Result[IntegerType],
 ) extends DerivedOperation["llvm.trunc"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class ZExt(
     in: Operand[IntegerType | IndexType],
     out: Result[IntegerType | IndexType],
     nonNeg: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.zext"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class SExt(
     in: Operand[IntegerType | IndexType],
     out: Result[IntegerType | IndexType],
 ) extends DerivedOperation["llvm.sext"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class SIToFP(
     in: Operand[IntegerType | IndexType],
     out: Result[FloatType],
 ) extends DerivedOperation["llvm.sitofp"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FPToSI(
     in: Operand[FloatType],
     out: Result[IntegerType | IndexType],
 ) extends DerivedOperation["llvm.fptosi"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FPTrunc(
     in: Operand[FloatType],
     out: Result[FloatType],
 ) extends DerivedOperation["llvm.fptrunc"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FPExt(
     in: Operand[FloatType],
     out: Result[FloatType],
 ) extends DerivedOperation["llvm.fpext"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Shl(
     lhs: Operand[IntegerType | IndexType],
@@ -646,7 +650,7 @@ case class Select(
     falseValue: Operand[Attribute],
     res: Result[Attribute],
 ) extends DerivedOperation["llvm.select"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class CallIndirect(
     callee: Operand[Ptr],
