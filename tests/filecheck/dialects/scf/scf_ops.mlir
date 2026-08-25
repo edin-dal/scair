@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s | scair-opt -g | scair-opt | filecheck %s
 
 %0, %1, %2, %3 = "test.op"() : () -> (i1, i32, i32, i32)
 
@@ -41,8 +41,19 @@
 }, {
 }) : (index) -> (i1, i1)
 
-scf.yield %24 : i1
 
+%lb, %ub, %step = "test.op"() : () -> (index, index, index)
+
+"scf.for"(%lb, %ub, %step) <{"unsignedCmp"}> ({
+^bb0(%iv : index):
+  "scf.yield"() : () -> ()
+}) : (index, index, index) -> ()
+
+"scf.execute_region"() <{"no_inline"}> ({
+  "scf.yield"() : () -> ()
+}) : () -> ()
+
+scf.yield %24 : i1
 
 // CHECK:       builtin.module {
 // CHECK-NEXT:    %0, %1, %2, %3 = "test.op"() : () -> (i1, i32, i32, i32)
@@ -77,5 +88,13 @@ scf.yield %24 : i1
 // CHECK-NEXT:    %24, %25 = "scf.index_switch"(%13) <{cases = array<i1: 0, 1>}> ({
 // CHECK-NEXT:    }, {
 // CHECK-NEXT:    }) : (index) -> (i1, i1)
+// CHECK-NEXT:    %26, %27, %28 = "test.op"() : () -> (index, index, index)
+// CHECK-NEXT:    "scf.for"(%26, %27, %28) <{unsignedCmp}> ({
+// CHECK-NEXT:    ^bb0(%29: index):
+// CHECK-NEXT:      scf.yield
+// CHECK-NEXT:    }) : (index, index, index) -> ()
+// CHECK-NEXT:    "scf.execute_region"() <{no_inline}> ({
+// CHECK-NEXT:      scf.yield
+// CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:    scf.yield %24 : i1
 // CHECK-NEXT:  }

@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | scair-opt | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 func.func @noarg_void() {
   func.return
@@ -30,6 +30,14 @@ func.func @multi_return_body(%a : i32) -> (i32, i32) {
   func.return %a, %a : i32, i32
 }
 
+func.func @callee() attributes {no_inline} {
+  func.return
+}
+func.func @caller() {
+  "func.call"() <{callee = @callee, no_inline}> : () -> ()
+  func.return
+}
+
 // CHECK:       builtin.module {
 // CHECK-NEXT:    func.func @noarg_void() {
 // CHECK-NEXT:      func.return
@@ -53,5 +61,12 @@ func.func @multi_return_body(%a : i32) -> (i32, i32) {
 // CHECK-NEXT:    func.func private @external_fn(i32) -> (i32, i32)
 // CHECK-NEXT:    func.func @multi_return_body(%0: i32) -> (i32, i32) {
 // CHECK-NEXT:      func.return %0, %0 : i32, i32
+// CHECK-NEXT:    }
+// CHECK-NEXT:    func.func @callee() attributes {no_inline} {
+// CHECK-NEXT:      func.return
+// CHECK-NEXT:    }
+// CHECK-NEXT:    func.func @caller() {
+// CHECK-NEXT:      "func.call"() <{callee = @callee, no_inline}> : () -> ()
+// CHECK-NEXT:      func.return
 // CHECK-NEXT:    }
 // CHECK-NEXT:  }

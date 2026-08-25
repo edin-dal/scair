@@ -23,6 +23,7 @@ case class Call(
     callee: SymbolRefAttr,
     _operands: Seq[Operand[Attribute]] = Seq.empty,
     _results: Seq[Result[Attribute]] = Seq.empty,
+    no_inline: Option[UnitAttr] = None,
 ) extends DerivedOperation["func.call"] derives OpDefs
 
 given OperationCustomParser[Func]:
@@ -34,7 +35,7 @@ given OperationCustomParser[Func]:
 
   def parse[$: P](
       resNames: Seq[String]
-  )(using Parser): P[Func] =
+  )(using p: Parser): P[Func] =
     ("private".!.? ~ symbolRefAttrP ~
       (("(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")")
         .flatMap((args: Seq[(String, Attribute)]) =>
@@ -58,8 +59,15 @@ given OperationCustomParser[Func]:
           ),
           sym_visibility = visibility.map(StringData(_)),
           body = body,
+          no_inline = attributes.get("no_inline") match
+            case s @ Some(UnitAttr()) => s.asInstanceOf[Option[UnitAttr]]
+            case Some(_)              =>
+              throw new Exception(
+                "func.func: no_inline attribute must be a UnitAttr"
+              )
+            case None => None,
         )
-        f.attributes.addAll(attributes)
+        f.attributes.addAll(attributes - "no_inline")
         f
     }
 
@@ -68,6 +76,7 @@ case class Func(
     function_type: FunctionType,
     sym_visibility: Option[StringData] = None,
     body: Region = Region(),
+    no_inline: Option[UnitAttr] = None,
 ) extends DerivedOperation["func.func"]
     with IsolatedFromAbove
     with Symbol
@@ -101,9 +110,13 @@ case class Func(
             case outputs =>
               lprinter.printList(outputs, "(", ", ", ")")
 
-    if attributes.nonEmpty then
+    if attributes.nonEmpty || no_inline.isDefined then
       lprinter.print(" attributes")
-      lprinter.printOptionalAttrDict(attributes.toMap)
+      lprinter.printOptionalAttrDict(
+        attributes.toMap,
+        properties,
+        Seq("no_inline"),
+      )
     // TODO: Should that simply be a region print?
     body.blocks match
       case Seq()           => ()
