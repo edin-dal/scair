@@ -2,6 +2,7 @@ package scair.dialects.linalg
 
 import scair.clair.*
 import scair.dialects.builtin.*
+import scair.dialects.builtin.TensorLiteralArray
 import scair.ir.*
 
 // ███╗░░██╗ ░█████╗░ ███╗░░░███╗ ███████╗ ██████╗░
@@ -41,6 +42,14 @@ import scair.ir.*
  * `dense<1> : tensor<2xi64>`; they are `DenseIntOrFPElementsAttr` here. Both are
  * optional with a default of all-ones, which ScaIR cannot express, so an absent
  * attribute carries that default implicitly. */
+
+def denseI64ElementsAttr(dims: Int, data: Int*) = DenseIntOrFPElementsAttr(
+  typ = RankedTensorType(
+    IntegerType(IntData(64), Signless),
+    ArrayAttribute(IntData(dims)),
+  ),
+  data = ArrayAttribute(data.map(IntData(_))*).asInstanceOf[TensorLiteralArray],
+)
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ELEMENTWISE UNARY / COPY  ||
@@ -357,8 +366,12 @@ case class Conv1DNwcWcf(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_1d_nwc_wcf"]
     with LinalgStructuredBase
@@ -368,8 +381,12 @@ case class Conv1DNcwFcw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_1d_ncw_fcw"]
     with LinalgStructuredBase
@@ -379,8 +396,12 @@ case class Conv2DNhwcHwcf(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nhwc_hwcf"]
     with LinalgStructuredBase
@@ -390,8 +411,12 @@ case class Conv2DNhwcFhwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nhwc_fhwc"]
     with LinalgStructuredBase
@@ -401,8 +426,12 @@ case class Conv2DNhwcHwcfQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nhwc_hwcf_q"]
     with LinalgStructuredBase
@@ -412,8 +441,12 @@ case class Conv2DNhwcFhwcQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nhwc_fhwc_q"]
     with LinalgStructuredBase
@@ -423,8 +456,12 @@ case class Conv2DNchwFchwQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nchw_fchw_q"]
     with LinalgStructuredBase
@@ -434,8 +471,12 @@ case class Conv2DNchwFchw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nchw_fchw"]
     with LinalgStructuredBase
@@ -445,8 +486,12 @@ case class Conv2DNgchwFgchw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_ngchw_fgchw"]
     with LinalgStructuredBase
@@ -456,8 +501,12 @@ case class Conv2DNgchwGfchw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_ngchw_gfchw"]
     with LinalgStructuredBase
@@ -467,8 +516,12 @@ case class Conv2DNhwgcGfhwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nhwgc_gfhwc"]
     with LinalgStructuredBase
@@ -478,8 +531,12 @@ case class Conv2DNhwgcGfhwcQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_nhwgc_gfhwc_q"]
     with LinalgStructuredBase
@@ -489,8 +546,12 @@ case class Conv2DNgchwGfchwQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_2d_ngchw_gfchw_q"]
     with LinalgStructuredBase
@@ -500,8 +561,12 @@ case class Conv3DNdhwcDhwcf(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_3d_ndhwc_dhwcf"]
     with LinalgStructuredBase
@@ -511,8 +576,12 @@ case class Conv3DNdhwcDhwcfQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_3d_ndhwc_dhwcf_q"]
     with LinalgStructuredBase
@@ -522,8 +591,12 @@ case class Conv3DNcdhwFcdhw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.conv_3d_ncdhw_fcdhw"]
     with LinalgStructuredBase
@@ -537,8 +610,12 @@ case class DepthwiseConv1DNwcWc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_1d_nwc_wc"]
     with LinalgStructuredBase
@@ -548,8 +625,12 @@ case class DepthwiseConv1DNcwCw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_1d_ncw_cw"]
     with LinalgStructuredBase
@@ -559,8 +640,12 @@ case class DepthwiseConv1DNwcWcm(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_1d_nwc_wcm"]
     with LinalgStructuredBase
@@ -570,8 +655,12 @@ case class DepthwiseConv2DNhwcHwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_2d_nhwc_hwc"]
     with LinalgStructuredBase
@@ -581,8 +670,12 @@ case class DepthwiseConv2DNchwChw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_2d_nchw_chw"]
     with LinalgStructuredBase
@@ -592,8 +685,12 @@ case class DepthwiseConv2DNhwcHwcQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_2d_nhwc_hwc_q"]
     with LinalgStructuredBase
@@ -603,8 +700,12 @@ case class DepthwiseConv2DNhwcHwcm(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_2d_nhwc_hwcm"]
     with LinalgStructuredBase
@@ -614,8 +715,12 @@ case class DepthwiseConv2DNhwcHwcmQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_2d_nhwc_hwcm_q"]
     with LinalgStructuredBase
@@ -625,8 +730,12 @@ case class DepthwiseConv3DNdhwcDhwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_3d_ndhwc_dhwc"]
     with LinalgStructuredBase
@@ -636,8 +745,12 @@ case class DepthwiseConv3DNcdhwCdhw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_3d_ncdhw_cdhw"]
     with LinalgStructuredBase
@@ -647,8 +760,12 @@ case class DepthwiseConv3DNdhwcDhwcm(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.depthwise_conv_3d_ndhwc_dhwcm"]
     with LinalgStructuredBase
@@ -662,8 +779,12 @@ case class PoolingNhwcSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nhwc_sum"]
     with LinalgStructuredBase
@@ -673,8 +794,12 @@ case class PoolingNchwSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nchw_sum"]
     with LinalgStructuredBase
@@ -684,8 +809,12 @@ case class PoolingNhwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nhwc_max"]
     with LinalgStructuredBase
@@ -695,8 +824,12 @@ case class PoolingNhwcMaxUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nhwc_max_unsigned"]
     with LinalgStructuredBase
@@ -706,8 +839,12 @@ case class PoolingNchwMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nchw_max"]
     with LinalgStructuredBase
@@ -717,8 +854,12 @@ case class PoolingNhwcMin(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nhwc_min"]
     with LinalgStructuredBase
@@ -728,8 +869,12 @@ case class PoolingNhwcMinUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(2, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nhwc_min_unsigned"]
     with LinalgStructuredBase
@@ -739,8 +884,12 @@ case class PoolingNwcSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nwc_sum"]
     with LinalgStructuredBase
@@ -750,8 +899,12 @@ case class PoolingNcwSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_ncw_sum"]
     with LinalgStructuredBase
@@ -761,8 +914,12 @@ case class PoolingNwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nwc_max"]
     with LinalgStructuredBase
@@ -772,8 +929,12 @@ case class PoolingNwcMaxUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nwc_max_unsigned"]
     with LinalgStructuredBase
@@ -783,8 +944,12 @@ case class PoolingNcwMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_ncw_max"]
     with LinalgStructuredBase
@@ -794,8 +959,12 @@ case class PoolingNwcMin(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nwc_min"]
     with LinalgStructuredBase
@@ -805,8 +974,12 @@ case class PoolingNwcMinUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(1, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_nwc_min_unsigned"]
     with LinalgStructuredBase
@@ -816,8 +989,12 @@ case class PoolingNdhwcSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_ndhwc_sum"]
     with LinalgStructuredBase
@@ -827,8 +1004,12 @@ case class PoolingNdhwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_ndhwc_max"]
     with LinalgStructuredBase
@@ -838,8 +1019,12 @@ case class PoolingNdhwcMin(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = None,
-    dilations: Option[DenseIntOrFPElementsAttr] = None,
+    strides: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
+    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+      denseI64ElementsAttr(3, 1)
+    ),
     region: Region,
 ) extends DerivedOperation["linalg.pooling_ndhwc_min"]
     with LinalgStructuredBase
