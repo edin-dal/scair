@@ -48,3 +48,12 @@
 // CHECK-NEXT:    %30 = "arith.index_cast"(%2) : (i32) -> index
 %andi = "arith.andi"(%lhsi32, %rhsi32) : (i32, i32) -> i32
 // CHECK-NEXT:    %31 = "arith.andi"(%2, %3) : (i32, i32) -> i32
+
+%divsiExact = "arith.divsi"(%lhsi32, %rhsi32) <{"isExact"}> : (i32, i32) -> i32
+// CHECK-NEXT:    %32 = "arith.divsi"(%2, %3) <{isExact}> : (i32, i32) -> i32
+%divuiExact = "arith.divui"(%lhsi32, %rhsi32) <{"isExact"}> : (i32, i32) -> i32
+// CHECK-NEXT:    %33 = "arith.divui"(%2, %3) <{isExact}> : (i32, i32) -> i32
+%shrsiExact = "arith.shrsi"(%lhsi32, %rhsi32) <{"isExact"}> : (i32, i32) -> i32
+// CHECK-NEXT:    %34 = "arith.shrsi"(%2, %3) <{isExact}> : (i32, i32) -> i32
+%shruiExact = "arith.shrui"(%lhsi32, %rhsi32) <{"isExact"}> : (i32, i32) -> i32
+// CHECK-NEXT:    %35 = "arith.shrui"(%2, %3) <{isExact}> : (i32, i32) -> i32

@@ -72,6 +72,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
     ),
     (StringData("hello world!"), "Success", "\"hello world!\""),
     (INDEX, "Success", "index"),
+    (UnitAttr(), "Success", "unit"),
   )
 
   val strToAttributeTests = Table(
@@ -106,6 +107,7 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
       ),
     ),
     ("tensor<*xf32>", "Success", UnrankedTensorType(Float32Type())),
+    ("unit", "Success", UnitAttr()),
     ("fg12", "Failure", ""),
   )
 

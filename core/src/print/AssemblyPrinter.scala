@@ -123,7 +123,7 @@ case class AssemblyPrinter(
     if op.properties.nonEmpty then
       printListF(
         op.properties,
-        (k, v) => print(k, " = ", v),
+        (k, v) => printAttrEntry(k, v),
         " <{",
         ", ",
         "}>",
