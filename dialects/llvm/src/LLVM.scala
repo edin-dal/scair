@@ -172,16 +172,27 @@ given OperationCustomParser[ICmp]:
           )
     )
 
+// The syntax is MLIR's: the flags are keywords, except `nontemporal`, which
+// MLIR leaves to the attribute dictionary (the format not spelling it out is
+// what puts it there).
 case class Load(
     addr: Operand[Ptr],
     res: Result[Attribute],
+    volatile_ : Option[UnitAttr] = None,
+    nontemporal: Option[UnitAttr] = None,
+    invariant: Option[UnitAttr] = None,
+    invariantGroup: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.load"]
-    with AssemblyFormat["$addr attr-dict `:` type($addr) `->` type($res)"]
-    derives OpDefs
+    with AssemblyFormat[
+      "(`volatile` $volatile_^)? $addr (`invariant` $invariant^)? (`invariant_group` $invariantGroup^)? attr-dict `:` type($addr) `->` type($res)"
+    ] derives OpDefs
 
 case class Store(
     value: Operand[Attribute],
     addr: Operand[Ptr],
+    volatile_ : Option[UnitAttr] = None,
+    nontemporal: Option[UnitAttr] = None,
+    invariantGroup: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.store"] derives OpDefs
 
 // Mirrors MLIR's LLVM GEPOp encoding. MLIR stores one entry per GEP index in
@@ -257,16 +268,60 @@ case class IntToPtr(
     out: Result[Ptr],
 ) extends DerivedOperation["llvm.inttoptr"] derives OpDefs
 
+/** The properties `llvm.call`'s syntax does not spell out, and which its
+  * attribute dictionary carries instead.
+  */
+private val callSyntaxProperties = Seq(
+  "convergent",
+  "no_unwind",
+  "will_return",
+  "no_inline",
+  "always_inline",
+  "inline_hint",
+)
+
+given OperationCustomParser[Call]:
+
+  def parse[$: P](resNames: Seq[String])(using p: Parser): P[Call] =
+    P(
+      symbolRefAttrP ~ "(" ~ operandNameP.rep(sep = ",") ~ ")" ~
+        optionalAttributesP ~ ":" ~ parenTypeListP ~ "->" ~
+        (parenTypeListP | typeP.map(Seq(_)))
+    ).flatMap { (callee, operandNames, attributes, operandTypes, resultTypes) =>
+      // The unit flags are printed within the attribute dictionary; they are
+      // properties, so they are taken back out of it here.
+      val (unspelled, discardable) = attributes
+        .partition((name, _) => callSyntaxProperties.contains(name))
+      p.generateOperationP(
+        opName = "llvm.call",
+        resultsNames = resNames,
+        operandsNames = operandNames,
+        operandsTypes = operandTypes,
+        resultsTypes = resultTypes,
+        properties = unspelled + ("callee" -> callee),
+        attributes = discardable,
+      ).map(_.asInstanceOf[Call])
+    }
+
 case class Call(
     callee: SymbolRefAttr,
     operandss: Seq[Operand[Attribute]],
     resultss: Seq[Result[Attribute]],
+    convergent: Option[UnitAttr] = None,
+    no_unwind: Option[UnitAttr] = None,
+    will_return: Option[UnitAttr] = None,
+    no_inline: Option[UnitAttr] = None,
+    always_inline: Option[UnitAttr] = None,
+    inline_hint: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.call"] derives OpDefs:
 
   override def customPrint(printer: Printer): Unit =
     printer.print(name, " @", callee.rootRef.data, "(")
     printer.printList(operandss)
-    printer.print(") : (")
+    printer.print(")")
+    printer
+      .printOptionalAttrDict(attributes.toMap, properties, callSyntaxProperties)
+    printer.print(" : (")
     printer.printListF(operandss.map(_.typ), printer.print, sep = ", ")
     printer.print(") -> ")
     resultss.map(_.typ) match
@@ -297,12 +352,34 @@ case class Return(
 ) extends DerivedOperation["llvm.return"]
     with IsTerminator derives OpDefs
 
+/** The properties `llvm.func`'s syntax does not spell out, and which its
+  * attribute dictionary carries instead.
+  */
+private val funcSyntaxProperties = Seq(
+  "dso_local",
+  "convergent",
+  "no_inline",
+  "always_inline",
+  "inline_hint",
+  "no_unwind",
+  "will_return",
+  "optimize_none",
+  "arm_streaming",
+  "arm_locally_streaming",
+  "arm_streaming_compatible",
+  "arm_new_za",
+  "arm_in_za",
+  "arm_out_za",
+  "arm_inout_za",
+  "arm_preserves_za",
+)
+
 given OperationCustomParser[Func]:
 
   def parseResultTypes[$: P](using Parser): P[Seq[Attribute]] =
     ("->" ~ (parenTypeListP | typeP.map(Seq(_)))).orElse(Seq.empty)
 
-  def parse[$: P](resNames: Seq[String])(using Parser): P[Func] =
+  def parse[$: P](resNames: Seq[String])(using p: Parser): P[Func] =
     ("private".!.? ~ symbolRefAttrP ~
       (("(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")")
         .flatMap((args: Seq[(String, Attribute)]) =>
@@ -312,16 +389,21 @@ given OperationCustomParser[Func]:
         (
           parenTypeListP ~ parseResultTypes ~
             ("attributes" ~ attributeDictionaryP).orElse(Map()) ~ Pass(Region())
-        ))).map {
+        ))).flatMap {
       case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
-        val f = Func(
-          sym_name = symbol.rootRef,
-          function_type = FunctionType(argTypes, resTypes),
-          sym_visibility = visibility.map(StringData(_)),
-          body = body,
-        )
-        f.attributes.addAll(attributes)
-        f
+        // The properties the syntax does not spell out were parsed as part of
+        // the attribute dictionary; take them back out of it.
+        val (unspelled, discardable) = attributes
+          .partition((name, _) => funcSyntaxProperties.contains(name))
+        p.generateOperationP(
+          opName = "llvm.func",
+          properties = unspelled ++ Map(
+            "sym_name" -> symbol.rootRef,
+            "function_type" -> FunctionType(argTypes, resTypes),
+          ) ++ visibility.map(v => "sym_visibility" -> StringData(v)),
+          regions = Seq(body),
+          attributes = discardable,
+        ).map(_.asInstanceOf[Func])
     }
 
 case class Func(
@@ -329,6 +411,22 @@ case class Func(
     function_type: FunctionType,
     sym_visibility: Option[StringData],
     body: Region,
+    dso_local: Option[UnitAttr] = None,
+    convergent: Option[UnitAttr] = None,
+    no_inline: Option[UnitAttr] = None,
+    always_inline: Option[UnitAttr] = None,
+    inline_hint: Option[UnitAttr] = None,
+    no_unwind: Option[UnitAttr] = None,
+    will_return: Option[UnitAttr] = None,
+    optimize_none: Option[UnitAttr] = None,
+    arm_streaming: Option[UnitAttr] = None,
+    arm_locally_streaming: Option[UnitAttr] = None,
+    arm_streaming_compatible: Option[UnitAttr] = None,
+    arm_new_za: Option[UnitAttr] = None,
+    arm_in_za: Option[UnitAttr] = None,
+    arm_out_za: Option[UnitAttr] = None,
+    arm_inout_za: Option[UnitAttr] = None,
+    arm_preserves_za: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.func"]
     with IsolatedFromAbove
     with Symbol
@@ -366,9 +464,15 @@ case class Func(
         function_type.outputs match
           case ArrayAttribute(single) => lprinter.print(single)
           case many => lprinter.printList(many, "(", ", ", ")")
-    if attributes.nonEmpty then
+    if attributes.nonEmpty ||
+      properties.keySet.exists(funcSyntaxProperties.contains)
+    then
       lprinter.print(" attributes")
-      lprinter.printOptionalAttrDict(attributes.toMap)
+      lprinter.printOptionalAttrDict(
+        attributes.toMap,
+        properties,
+        funcSyntaxProperties,
+      )
     if body.blocks.nonEmpty then
       val entry = body.blocks.head
       val others = body.blocks.tail
@@ -389,6 +493,7 @@ case class SDiv(
     lhs: Operand[IntegerType | IndexType],
     rhs: Operand[IntegerType | IndexType],
     res: Result[IntegerType | IndexType],
+    isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.sdiv"]
     with NoMemoryEffect derives OpDefs
 
@@ -445,6 +550,7 @@ case class Or(
     lhs: Operand[IntegerType | IndexType],
     rhs: Operand[IntegerType | IndexType],
     res: Result[IntegerType | IndexType],
+    isDisjoint: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.or"]
     with NoMemoryEffect derives OpDefs
 
@@ -464,6 +570,7 @@ case class Alloca(
     res: Result[Ptr],
     elem_type: Attribute,
     alignment: Option[IntegerAttr] = None,
+    inalloca: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.alloca"] derives OpDefs
 
 case class Trunc(
@@ -475,6 +582,7 @@ case class Trunc(
 case class ZExt(
     in: Operand[IntegerType | IndexType],
     out: Result[IntegerType | IndexType],
+    nonNeg: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.zext"]
     with NoMemoryEffect derives OpDefs
 
@@ -520,6 +628,7 @@ case class LShr(
     lhs: Operand[IntegerType | IndexType],
     rhs: Operand[IntegerType | IndexType],
     res: Result[IntegerType | IndexType],
+    isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.lshr"]
     with NoMemoryEffect derives OpDefs
 
@@ -527,6 +636,7 @@ case class AShr(
     lhs: Operand[IntegerType | IndexType],
     rhs: Operand[IntegerType | IndexType],
     res: Result[IntegerType | IndexType],
+    isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.ashr"]
     with NoMemoryEffect derives OpDefs
 

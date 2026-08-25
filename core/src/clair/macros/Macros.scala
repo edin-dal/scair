@@ -211,7 +211,7 @@ def customPrintMacro(
 )(using Quotes): Expr[Unit] =
   opDef.assemblyFormat match
     case Some(format) =>
-      format.print(adtOpExpr, p)
+      format.print(opDef, adtOpExpr, p)
     case None =>
       '{
         $p.printGenericMLIROperation(${ adtOpExpr }.asInstanceOf[Operation])

@@ -152,6 +152,18 @@ final case class IndexType()
     with TypeAttribute derives AttrDefs:
   override def customPrint(p: Printer) = p.print("index")
 
+/*≡==--==≡≡≡≡==--=≡≡*\
+||  UNIT ATTRIBUTE  ||
+\*≡==---==≡≡==---==≡*/
+
+/** The attribute carrying no value; its mere presence is the information. In
+  * attribute dictionaries it is printed and parsed with MLIR's shorthand, as a
+  * bare key with no `= value` part.
+  */
+final case class UnitAttr() extends DerivedAttribute["builtin.unit"]
+    derives AttrDefs:
+  override def customPrint(p: Printer) = p.print("unit")
+
 final case class ComplexType(
     tpe: IntegerType | IndexType | FloatType
 ) extends DerivedAttribute["builtin.complex"] derives AttrDefs:

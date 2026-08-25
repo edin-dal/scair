@@ -56,6 +56,7 @@ case class Condition(
 case class ExecuteRegionOp(
     region: Region,
     result: Seq[Result[Attribute]] = Seq.empty,
+    no_inline: Option[UnitAttr] = None,
 ) extends DerivedOperation["scf.execute_region"]
     with RecursiveMemoryEffects derives OpDefs
 
@@ -67,6 +68,7 @@ case class ForOp(
     initArgs: Seq[Operand[Attribute]] = Seq.empty,
     region: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
+    unsignedCmp: Option[UnitAttr] = None,
 ) extends DerivedOperation["scf.for"]
     with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
     with RecursiveMemoryEffects derives OpDefs

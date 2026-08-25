@@ -429,6 +429,7 @@ case class DivSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
+    val isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["arith.divsi"]
     with SameOperandsAndResultTypes
     with NoMemoryEffect derives OpDefs
@@ -437,6 +438,7 @@ case class DivUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
+    val isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["arith.divui"]
     with SameOperandsAndResultTypes
     with NoMemoryEffect derives OpDefs
@@ -701,6 +703,7 @@ case class ShRSI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
+    val isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["arith.shrsi"]
     with NoMemoryEffect
     with SameOperandsAndResultTypes derives OpDefs
@@ -709,6 +712,7 @@ case class ShRUI(
     val lhs: Operand[AnyIntegerType],
     val rhs: Operand[AnyIntegerType],
     val result: Result[AnyIntegerType],
+    val isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["arith.shrui"]
     with NoMemoryEffect
     with SameOperandsAndResultTypes derives OpDefs

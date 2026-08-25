@@ -1,9 +1,11 @@
 package scair.print
 
+import scair.dialects.builtin.UnitAttr
 import scair.ir.*
 
 import java.io.Writer
 import scala.annotation.targetName
+import scala.collection.immutable.ListMap
 
 // ██████╗░ ██████╗░ ██╗ ███╗░░██╗ ████████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██║ ████╗░██║ ╚══██╔══╝ ██╔════╝ ██╔══██╗
@@ -50,12 +52,20 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
   def printArgument(value: Value[? <: Attribute]) =
     print(value, ": ", value.typ)
 
+  /** Prints a single `key = value` pair of an attribute dictionary. A
+    * [[UnitAttr]] value is printed as the bare key, as MLIR does.
+    */
+  def printAttrEntry(k: String, v: Attribute): Unit =
+    v match
+      case _: UnitAttr => print(k)
+      case _           => print(k, " = ", v)
+
   def printAttrDict(
       attrs: Map[String, Attribute]
   ): Unit =
     printListF(
       attrs,
-      (k, v) => print(k, " = ", v),
+      (k, v) => printAttrEntry(k, v),
       " {",
       ", ",
       "}",
@@ -70,6 +80,21 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
       attrs: Map[String, Attribute]
   ): Unit =
     if attrs.nonEmpty then printAttrDict(attrs)
+
+  /** Prints the attribute dictionary of a hand-written custom syntax: the
+    * operation's attributes, plus the `names` properties its syntax does not
+    * spell out itself, in the order named. This is the rule the `attr-dict`
+    * directive follows for declarative formats, which hand-written printers
+    * have to apply themselves.
+    */
+  def printOptionalAttrDict(
+      attrs: Map[String, Attribute],
+      properties: Map[String, Attribute],
+      names: Seq[String],
+  ): Unit =
+    names.flatMap(name => properties.get(name).map(name -> _)) match
+      case Seq()     => printOptionalAttrDict(attrs)
+      case unspelled => printAttrDict(ListMap.from(attrs) ++ unspelled)
 
   @targetName("printVariadicHelper")
   inline def print(

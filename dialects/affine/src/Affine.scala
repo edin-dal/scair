@@ -190,18 +190,17 @@ case class DelinearizeIndex(
 ||   LINEARIZE_INDEX OP  ||
 \*≡==----=≡≡≡≡≡≡≡=----==≡*/
 
-// TODO: `disjoint` is a `UnitAttr` upstream. ScaIR has no `UnitAttr`, so it is
-// modeled as an optional `IntegerAttr` (present ⇒ disjoint). Replace with a proper
-// `UnitAttr` if one is added. `static_basis` is a `DenseI64ArrayAttr` upstream,
-// modeled with `DenseArrayAttr` as in `DelinearizeIndex`. This op has two variadic
-// operand lists, so the generic printer emits an `operandSegmentSizes` property (as
+// `disjoint` is a UnitProp in MLIR, slightly different from a UnitAttr!
+// TODO: `static_basis` is a `DenseI64ArrayAttr` upstream, modeled with
+// `DenseArrayAttr` as in `DelinearizeIndex`. This op has two variadic operand
+// lists, so the generic printer emits an `operandSegmentSizes` property (as
 // `affine.for` already does).
 case class LinearizeIndex(
     multiIndex: Seq[Operand[IndexType]] = Seq.empty,
     dynamicBasis: Seq[Operand[IndexType]] = Seq.empty,
     linearIndex: Result[IndexType],
     static_basis: DenseArrayAttr,
-    disjoint: Option[IntegerAttr] = None,
+    disjoint: Option[UnitAttr] = None,
 ) extends DerivedOperation["affine.linearize_index"]
     with NoMemoryEffect derives OpDefs
 
