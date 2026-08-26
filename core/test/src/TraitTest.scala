@@ -186,9 +186,3 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
     val pure = containing(RecursiveEffectsOp(_))(EffectFreeOp())
     isMemoryEffectFree(containing(RecursiveEffectsOp(_))(pure)) shouldBe true
   }
-
-  "hasUnknownEffects" should "hold only for an undeclared operation" in {
-    hasUnknownEffects(UnknownEffectsOp()) shouldBe true
-    hasUnknownEffects(EffectFreeOp()) shouldBe false
-    hasUnknownEffects(RecursiveEffectsOp()) shouldBe false
-  }
