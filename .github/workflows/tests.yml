@@ -120,7 +120,7 @@ jobs:
     - name: Install lit and filecheck (python version)
       run: |
         pip install --upgrade pip
-        pip install lit filecheck
+        pip install "lit<23" filecheck
 
     # Restore Mill's incremental build cache
     - name: Restore incremental cache
