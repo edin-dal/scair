@@ -264,6 +264,156 @@ case class ExampleOp(lhs: Operand[Attribute], rhs: Operand[Attribute]) extends D
 
 Verification is run automatically during parsing and transformation passes. Verification combines generic IR checks with operation- and trait-specific constraints.
 
+### Constraints
+
+Hand-written `verify()` is the escape hatch. Most invariants are better stated
+declaratively, as a *constraint* attached to an operand or result with `!>`:
+
+```scala
+///{
+import scair.ir.*
+import scair.clair.*
+import scair.constraints.*
+import scair.dialects.builtin.*
+///}
+val i32 = IntegerType(IntData(32), Signless)
+
+case class MulI(
+    lhs: Operand[IntegerType !> EqAttr[i32.type]],
+    rhs: Operand[IntegerType !> EqAttr[i32.type]],
+    result: Result[IntegerType],
+) extends DerivedOperation["example.muli"] derives OpDefs
+```
+
+Constraints are types, and they are interpreted entirely at compile time: the
+macro that derives `OpDefs` compiles them into straight-line code inside the
+operation's verifier. Nothing about the constraint survives into the generated
+program -- there is no constraint object, no context and no lookup table at run
+time.
+
+The algebra:
+
+| Constraint | Holds when |
+|---|---|
+| `AnyAttr` | always |
+| `Base[A]` | the attribute is an `A` |
+| `EqAttr[a.type]` | the attribute equals `a` (which must be a stable `val`) |
+| `Var["T"]` | the attribute equals whatever else `"T"` matched |
+| `Param[A, (C1, ..., Cn)]` | it is an `A` whose parameters satisfy `C1`..`Cn` |
+| `Msg["...", C]` | `C` holds; otherwise report the given message |
+| `C1 && C2` | both hold |
+| `C1 \|\| C2` | either holds |
+
+#### Tying components together
+
+`Var` is the interesting one. Its first occurrence binds, later ones must agree,
+so sharing a variable between operands and results is MLIR's
+`SameOperandsAndResultType`:
+
+```scala
+///{
+import scair.ir.*
+import scair.clair.*
+import scair.constraints.*
+import scair.dialects.builtin.*
+///}
+type T = Var["T"]
+
+case class AddF(
+    lhs: Operand[Attribute !> (Base[FloatType] && T)],
+    rhs: Operand[Attribute !> T],
+    result: Result[Attribute !> T],
+) extends DerivedOperation["example.addf"] derives OpDefs
+```
+
+Sharing a variable costs nothing: the generated check for `rhs` is a direct
+comparison against `lhs.typ`, because the compiler knows where the variable was
+bound.
+
+#### Inferred result types
+
+A result whose type is determined by a constraint variable need not appear in
+the assembly format at all -- it is inferred while parsing:
+
+```scala
+///{
+import scair.ir.*
+import scair.clair.*
+import scair.constraints.*
+import scair.dialects.builtin.*
+type T = Var["T"]
+///}
+case class NegF(
+    operand: Operand[Attribute !> T],
+    result: Result[Attribute !> T],
+) extends DerivedOperation["example.negf"]
+    with AssemblyFormat["$operand attr-dict `:` type($operand)"]
+    derives OpDefs
+```
+
+If a result's type is neither spelled out in the format nor inferable, that is a
+compile error naming the result, rather than a failure at parse time.
+
+#### Reusing and extending constraints
+
+A constraint you use often is just a type alias, and one that takes parameters
+is just a parameterised alias:
+
+```scala
+///{
+import scair.ir.*
+import scair.constraints.*
+import scair.dialects.builtin.*
+///}
+type AnyFloat = Base[Float16Type] || Base[Float32Type] || Base[Float64Type]
+type SignlessInt = Param[IntegerType, (AnyAttr, EqAttr[Signless.type])]
+```
+
+Constraints are types, and each one -- built-in or not -- is a trait plus a
+companion object carrying a `ConstraintGen`, the thing that says how to compile
+it. `EqAttr` and `AnyOf` are defined exactly this way, so a constraint you define
+downstream is not a second-class citizen: it can bind constraint variables,
+override failure messages and take part in inference, because it uses the same
+interface the built-ins do.
+
+For a constraint that genuinely cannot be composed -- one that has to *compute*
+over the attribute -- write it out:
+
+```scala
+///{
+import scair.constraints.*
+import scair.dialects.builtin.*
+import scair.ir.*
+import scair.utils.*
+import scala.quoted.*
+///}
+trait Width[N <: Int] extends Constraint
+
+object Width extends ConstraintGen:
+  def verify(c: Type[?], attr: Expr[Attribute], path: String)(using
+      Quotes, GenCtx, ErrCtx
+  ) =
+    c match
+      case '[Width[n]] =>
+        val expected = Expr(Type.valueOfConstant[n].get.asInstanceOf[Int])
+        Some('{
+          $attr match
+            case IntegerType(IntData(bits), _) if bits == BigInt($expected) => OK()
+            case a => ${ fail(path, '{ "an integer of width " + $expected }, 'a) }
+        })
+```
+
+`ConstraintGen` has two more methods, both optional: `infer`, to let the
+constraint pin down a result type an assembly format omits, and `bind`, to seed
+inference from a value already known to satisfy it. Returning `None` from
+`verify` means the constraint needs no code at all -- that is how `AnyAttr` and a
+variable's first occurrence stay genuinely free. A constraint built out of other
+constraints should extend `CompositeGen` and say only what its `parts` are.
+
+A generator runs at compile time, so it must live in a module compiled *before*
+the operations that use it -- the same rule that already applies to macros and
+`derives OpDefs`.
+
 ## What is a Dialect?
 
 A dialect is a namespace that groups:

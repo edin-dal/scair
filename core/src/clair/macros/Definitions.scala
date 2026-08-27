@@ -1,7 +1,7 @@
 package scair.clair.macros
 
 import scair.clair.macros.AssemblyFormatDirective
-import scair.constraints.ConstraintImpl
+import scair.constraints.Constraint
 import scair.ir.Attribute
 
 import scala.quoted.*
@@ -34,6 +34,15 @@ object OpInputDef:
 sealed trait OpInputDef:
   def name: String
 
+/** A construct that can carry a constraint on its attribute.
+  *
+  * Mirrors how [[MayVariadicOpInputDef]] hoists `variadicity`: it makes "does
+  * this construct kind carry a constraint" a typed question rather than a match
+  * with a catch-all that a new construct kind would silently fall into.
+  */
+sealed trait ConstrainedOpInputDef extends OpInputDef:
+  def constraint: Option[Type[? <: Constraint]]
+
 object MayVariadicOpInputDef:
 
   def unapply(d: Any) = d match
@@ -54,16 +63,16 @@ case class OperandDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None,
-) extends OpInputDef
+    override val constraint: Option[Type[? <: Constraint]] = None,
+) extends ConstrainedOpInputDef
     with MayVariadicOpInputDef {}
 
 case class ResultDef(
     override val name: String,
     val tpe: Type[?],
     override val variadicity: Variadicity = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None,
-) extends OpInputDef
+    override val constraint: Option[Type[? <: Constraint]] = None,
+) extends ConstrainedOpInputDef
     with MayVariadicOpInputDef {}
 
 case class RegionDef(
@@ -83,9 +92,9 @@ case class OpPropertyDef(
     val tpe: Type[?],
     override val variadicity: Variadicity.Single.type |
       Variadicity.Optional.type = Variadicity.Single,
-    val constraint: Option[Expr[ConstraintImpl[?]]] = None,
+    override val constraint: Option[Type[? <: Constraint]] = None,
     val defaultValue: Option[Expr[Any]],
-) extends OpInputDef
+) extends ConstrainedOpInputDef
     with MayVariadicOpInputDef {}
 
 case class AttributeParamDef(

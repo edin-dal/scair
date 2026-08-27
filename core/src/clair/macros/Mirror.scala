@@ -28,27 +28,29 @@ import scala.quoted.Type
 ||    MIRROR LOGIC    ||
 \*≡==----=≡≡≡≡=----==≡*/
 
-def getTypeConstraint(tpe: Type[?])(using Quotes) =
+/** Extract the constraint attached to a field's type by `!>`, if any.
+  *
+  * This only *extracts*; the constraint is interpreted later, by `verifyC`, so
+  * that an unknown constraint is reported against the field being checked
+  * rather than against the mirror.
+  */
+def getTypeConstraint(tpe: Type[?])(using
+    Quotes
+): Option[Type[? <: Constraint]] =
   import quotes.reflect.*
-  val op = TypeRepr.of[!>]
+  val constraint = TypeRepr.of[Constraint]
   TypeRepr.of(using tpe) match
-    case AppliedType(op, List(attr, constraint)) =>
-      constraint.asType match
-        case '[type t <: Constraint; `t`] =>
-          Expr.summon[ConstraintImpl[t]] match
-            case Some(i) => Some(i)
-            case None    =>
-              Implicits.search(TypeRepr.of[ConstraintImpl[t]]) match
-                case s: ImplicitSearchSuccess =>
-                  Some(s.tree.asExprOf[ConstraintImpl[t]])
-                case f: ImplicitSearchFailure =>
-                  report
-                    .errorAndAbort(
-                      s"Could not find an implementation for constraint ${Type
-                          .show[t]}:\n${f.explanation}"
-                    )
-    case _ =>
-      None
+    // `!>` cannot be recognised by its symbol: it is a transparent alias
+    // `[A, C] =>> A`, so `TypeRepr.of[!>].typeSymbol` is `A`'s symbol, not its
+    // own. Recognise it structurally instead -- a binary applied type whose
+    // second argument is a Constraint and which dealiases to its first. Note
+    // the guard is what keeps ordinary two-parameter generic attributes from
+    // matching here.
+    case applied @ AppliedType(_, List(a, c))
+        if c <:< constraint && applied.dealias =:= a =>
+      c.asType match
+        case '[type t <: Constraint; `t`] => Some(Type.of[t])
+    case _ => None
 
 def getDefType(elem: Type[?])(using Quotes) =
   elem match

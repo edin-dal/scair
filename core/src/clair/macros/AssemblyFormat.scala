@@ -4,6 +4,7 @@ import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
 import scair.*
+import scair.constraints.*
 import scair.dialects.builtin.UnitAttr
 import scair.ir.*
 import scair.parse.*
@@ -558,8 +559,35 @@ case class AssemblyFormatDirective(
           case _ => None
       )
     )
+    // Operand types the format spells out bind the operation's constraint
+    // variables; result types it leaves out are then inferred from them. This
+    // is the only place inference is consumed, mirroring xDSL, where the
+    // declarative assembly format is likewise its only consumer.
+    given GenCtx = GenCtx(quotes.reflect.Symbol.spliceOwner)
+    constrainedConstructs(opDef).foreach {
+      case (d, "operand", c) =>
+        operandTypes.get(d.name)
+          .foreach(t =>
+            // `t` reads out of the parsed tuple, so its static type is
+            // `Tuple.Elem`; the parser has already guaranteed it is a type.
+            bindC(c, '{ $t.asInstanceOf[Attribute] })
+          )
+      case _ => ()
+    }
+
     val operandTypesArg =
-      Expr.ofList(opDef.operands.map(od => (operandTypes(od.name))))
+      Expr.ofList(
+        opDef.operands.map(od =>
+          operandTypes.getOrElse(
+            od.name,
+            report
+              .errorAndAbort(
+                s"operand '${od.name}' of ${opDef.name} has no type in the " +
+                  s"assembly format; add `type($$${od.name})` to the format."
+              ),
+          )
+        )
+      )
     val flatOperandTypes = '{
       $operandTypesArg.flatMap(op =>
         op match
@@ -577,7 +605,19 @@ case class AssemblyFormatDirective(
       )
     )
     val resultTypesArg =
-      Expr.ofList(opDef.results.map(od => (resultTypes(od.name))))
+      Expr.ofList(
+        opDef.results.map(od =>
+          resultTypes.get(od.name).orElse(
+            od.constraint.flatMap(inferC(_).map(_.asExprOf[Any]))
+          ).getOrElse(
+            report.errorAndAbort(
+              s"result '${od.name}' of ${opDef.name} has no type in the " +
+                s"assembly format and cannot be inferred from its constraint; " +
+                s"add `type($$${od.name})` to the format."
+            )
+          )
+        )
+      )
     val flatResultTypes = '{
       $resultTypesArg.flatMap(op =>
         op match

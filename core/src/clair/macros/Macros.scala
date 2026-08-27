@@ -3,6 +3,7 @@ package scair.clair.macros
 import fastparse.*
 import scair.*
 import scair.clair.*
+import scair.constraints.*
 import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
@@ -32,19 +33,6 @@ import scala.quoted.*
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  ADT to Unstructured conversion Macro  ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
-
-/** Small helper to select a member of an expression.
-  * @param obj
-  *   The object to select the member from.
-  * @param name
-  *   The name of the member to select.
-  */
-def selectMember[T: Type](obj: Expr[?], name: String)(using
-    Quotes
-): Expr[T] =
-  import quotes.reflect.*
-
-  Select.unique(obj.asTerm, name).asExprOf[T]
 
 def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
@@ -236,30 +224,78 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
+/** Generate the body of an operation's `constraintVerify`.
+  *
+  * All the constraints of the operation are compiled together, in one pass, so
+  * that constraint variables can be resolved entirely at compile time: the
+  * first occurrence of a `Var` records *where to read it back from*, and later
+  * occurrences compile to a comparison against that path. Nothing survives into
+  * the generated code except the comparisons themselves -- no constraint
+  * objects, no context, no dictionary.
+  *
+  * Operands are checked before results, matching xDSL's `OpDef.verify`
+  * ordering, so a `Var` shared between an operand and a result binds on the
+  * operand.
+  */
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
+  given ErrCtx = ErrCtx()
+  given GenCtx = GenCtx(quotes.reflect.Symbol.spliceOwner)
 
-  val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
-    .filter(_.variadicity == Variadicity.Single)
-    .collect(_ match
-      case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.constraints.ConstraintContext) =>
-          $constraint.verify($mem.typ)(using ctx)
-        })
+  // Each construct's attribute is named once, then checked; a constraint that
+  // reads its subject several times costs one read, not one per mention.
+  def check(
+      cs: List[(ConstrainedOpInputDef, String, Type[? <: Constraint])]
+  ): Option[Expr[OK[Unit]]] =
+    cs match
+      case Nil                  => None
+      case (d, kind, c) :: rest =>
+        val mem = selectMember[Value[Attribute]](adtOpExpr, d.name)
+        letAttr('{ $mem.typ }) { attr =>
+          chain(
+            verifyC(c, attr, s"$kind '${d.name}'").toList ++ check(rest).toList
+          )
+        }
 
-  '{
-    given ctx: scair.constraints.ConstraintContext =
-      scair.constraints.ConstraintContext()
-    ${
-      val chain = a.foldLeft[Expr[OK[Unit]]](
-        '{ OK() }
-      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
-      '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
-    }
+  // Any slot a constraint variable needed is declared around the checks that
+  // fill it; usually there are none and this is just the checks.
+  withDeclaredCells(check(constrainedConstructs(opDef).toList) match
+    case None    => '{ OK($adtOpExpr.asInstanceOf[Operation]) }
+    case Some(c) => '{ $c.map(_ => $adtOpExpr.asInstanceOf[Operation]) })
+
+/** The constructs of an operation that carry a constraint, in the order the
+  * interpreter must visit them.
+  *
+  * Operands come before results, matching xDSL's `OpDef.verify` ordering, so a
+  * `Var` shared between an operand and a result binds on the operand. Both the
+  * verifier and the assembly-format parser drive off this, so they cannot drift
+  * on what an operation's constrained surface is.
+  */
+def constrainedConstructs(
+    opDef: OperationDef
+)(using Quotes): Seq[(ConstrainedOpInputDef, String, Type[? <: Constraint])] =
+  val all = opDef.operands.map((_, "operand")) ++
+    opDef.results.map((_, "result"))
+
+  // TODO: variadic and optional constructs, and properties. The interpreter is
+  // agnostic to all of them; only this driver is restricted. Reject rather than
+  // ignore, so a constraint written on one is never silently unchecked.
+  all.collect {
+    case (d, kind)
+        if d.constraint.isDefined && d.variadicity != Variadicity.Single =>
+      quotes.reflect.report
+        .errorAndAbort(
+          s"constraint on $kind '${d.name}' of ${opDef.name}: constraints on " +
+            s"variadic and optional constructs are not supported yet."
+        )
   }
+
+  all.collect {
+    case (d, kind) if d.variadicity == Variadicity.Single =>
+      d.constraint.map((d, kind, _))
+  }.flatten
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||

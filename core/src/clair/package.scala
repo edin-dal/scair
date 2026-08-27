@@ -80,22 +80,47 @@ package scair
   * ||   constraints over operation components   ||
   * \*≡==----=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=----==≡*/
   *
-  * import scair.constraints.{*, given}
+  * import scair.constraints.*
   *
   * type T = Var["T"]
   * val i32 = IntegerType(IntData(32), Signless)
   *
+  * // `EqAttr` pins an operand to one exact attribute.
   * case class MulIEq(
   *     lhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     rhs: Operand[IntegerType !> EqAttr[i32.type]],
   *     result: Result[IntegerType],
   * ) extends DerivedOperation["samplecnstr.mulieq"] derives OpDefs
   *
+  * // A `Var` ties components together: whichever type `lhs` has, `rhs` and
+  * // `result` must have the same. This is MLIR's SameOperandsAndResultType,
+  * // and it costs nothing at run time -- the generated check is a direct
+  * // comparison of the two fields, with no variable to look up anywhere.
   * case class MulIVar(
   *     lhs: Operand[IntegerType !> T],
   *     rhs: Operand[IntegerType !> T],
-  *     result: Result[IntegerType],
+  *     result: Result[IntegerType !> T],
   * ) extends DerivedOperation["samplecnstr.mulivar"] derives OpDefs
+  *
+  * // Constraints compose. Name the combinations you use often; a type alias
+  * // is all a reusable constraint needs to be.
+  * type AnyFloat = Base[Float16Type] || Base[Float32Type] || Base[Float64Type]
+  * type SignlessInt = Param[IntegerType, (AnyAttr, EqAttr[Signless.type])]
+  *
+  * case class AddF(
+  *     lhs: Operand[Attribute !> (AnyFloat && T)],
+  *     rhs: Operand[Attribute !> T],
+  *     result: Result[Attribute !> Msg["result must match the operands", T]],
+  * ) extends DerivedOperation["samplecnstr.addf"] derives OpDefs
+  *
+  * // Because `result`'s type is determined by `T`, an assembly format may
+  * // leave it out entirely; it is inferred when parsing.
+  * case class NegF(
+  *     operand: Operand[Attribute !> (AnyFloat && T)],
+  *     result: Result[Attribute !> T],
+  * ) extends DerivedOperation["samplecnstr.negf"]
+  *     with AssemblyFormat["$operand attr-dict `:` type($operand)"]
+  *     derives OpDefs
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   packaging into a dialect   ||
