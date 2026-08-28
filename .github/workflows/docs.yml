@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout Scair
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     # Restore Mill's incremental build cache
     # - name: Restore Incremental Build Cache
@@ -40,7 +40,7 @@ jobs:
 
     - name: Upload static files as artifact
       id: deployment
-      uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
+      uses: actions/upload-pages-artifact@v5
       with:
           path: out/unidocSite.dest/
 
@@ -59,4 +59,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

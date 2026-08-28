@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: Checkout Scair
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Ensure MLIR availability
       id: mlir
       uses: ./.github/actions/ensure-mlir
@@ -28,7 +28,7 @@ jobs:
     # entry, which is fresh by definition, so only touch on a hit.
     - name: Touch MLIR cache
       if: steps.mlir.outputs.cache-hit == 'true'
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: llvm-project/build
         key: ${{ steps.mlir.outputs.cache-key }}

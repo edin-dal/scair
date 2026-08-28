@@ -26,7 +26,7 @@ runs:
 
   - name: Lookup MLIR cache
     id: lookup-mlir-cache
-    uses: actions/cache/restore@v4
+    uses: actions/cache/restore@v6
     with:
       path: llvm-project/build
       lookup-only: true
@@ -34,7 +34,7 @@ runs:
 
   - name: Checkout MLIR
     if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
-    uses: actions/checkout@v4
+    uses: actions/checkout@v7
     with:
       repository: llvm/llvm-project.git
       path: llvm-project
@@ -42,11 +42,11 @@ runs:
 
   - name: Clang Setup
     if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
-    uses: egor-tensin/setup-clang@v1
+    uses: egor-tensin/setup-clang@v2
 
   - name: Ninja Setup
     if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
-    uses: lukka/get-cmake@9e431acfe656e5db66cd4930386328fce59cfaba
+    uses: lukka/get-cmake@v4.4.2
 
   - name: MLIR configuration
     if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
@@ -75,7 +75,7 @@ runs:
 
   - name: Save MLIR build cache
     if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
-    uses: actions/cache/save@v4
+    uses: actions/cache/save@v6
     with:
       path: llvm-project/build
       key: ${{ steps.version.outputs.cache-key }}

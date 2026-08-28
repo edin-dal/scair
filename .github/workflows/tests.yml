@@ -23,7 +23,7 @@ jobs:
 
     steps:
     - name: Checkout Scair
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Ensure MLIR availability
       id: ensure-mlir
       uses: ./.github/actions/ensure-mlir
@@ -47,14 +47,14 @@ jobs:
 
     steps:
     - name: Checkout Scair
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     ##############
     # MLIR SETUP #
     ##############
 
     - name: Restore MLIR build cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         key: ${{ needs.ensure-mlir.outputs.mlir-cache-key }}
         path: llvm-project/build
@@ -77,7 +77,7 @@ jobs:
     # Restore Mill's incremental build cache
     - name: Restore incremental cache
       id: restore-mill-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: out
         key: mill-incremental-tests-${{ matrix.task }}${{ github.run_id }}-${{ github.run_attempt }}
@@ -105,13 +105,13 @@ jobs:
 
     # If tests passed, save the cache for the next run
     - name: Save incremental cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: out
         key: mill-incremental-tests-${{ matrix.task }}${{ github.run_id }}-${{ github.run_attempt }}
 
     - name: Upload coverage report to Codecov
       if: matrix.task == 'scoverage'
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

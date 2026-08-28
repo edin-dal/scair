@@ -18,7 +18,7 @@ jobs:
     # Checkout the code
     steps:
     - name: Checkout Scair
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     # Restore Mill's incremental build cache
     # - name: Cache Incremental Build
