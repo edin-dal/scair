@@ -126,8 +126,7 @@ class Interpreter(
               opImpl.opType,
               (interp, ctx, op, args) =>
                 OpImplResult(
-                  opImpl
-                    .asInstanceOf[OpImpl[Operation]]
+                  opImpl.asInstanceOf[OpImpl[Operation]]
                     .compute(op, interp, ctx, args)
                 ),
             )
@@ -136,8 +135,7 @@ class Interpreter(
               termImpl.opType,
               (interp, ctx, op, args) =>
                 val (step, values) =
-                  termImpl
-                    .asInstanceOf[OpTerminatorImpl[Operation]]
+                  termImpl.asInstanceOf[OpTerminatorImpl[Operation]]
                     .computeTerminator(op, interp, ctx, args)
                 OpImplResult(values, Some(step)),
             )
@@ -170,7 +168,7 @@ class Interpreter(
         val res = run_op(op, blockCtx, get_values(op.operands, blockCtx))
         set_values(op.results, res.values, blockCtx)
         res.step match
-          case Some(CFGStep.Return(values)) => return values
+          case Some(CFGStep.Return(values))   => return values
           case Some(CFGStep.Jump(dest, args)) =>
             jump = Some((dest, args))
           case None => ()
@@ -202,7 +200,8 @@ class Interpreter(
         val res = impl(this, ctx, op, inputs)
         if op.results.size != res.values.size then
           throw new Exception(
-            s"Operation '${op.name}' produced ${res.values.size} values but declares ${op.results.size} results"
+            s"Operation '${op.name}' produced ${res.values
+                .size} values but declares ${op.results.size} results"
           )
         res
       case None =>

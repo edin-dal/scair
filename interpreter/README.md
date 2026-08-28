@@ -4,39 +4,30 @@
 [![codecov](https://codecov.io/github/edin-dal/scair/graph/badge.svg?token=H3TBWG1YNT)](https://codecov.io/github/edin-dal/scair)
 [![license](https://img.shields.io/badge/license-Apache_2.0-blue)](https://github.com/edin-dal/scair/blob/main/LICENSE)
 
-ScaIR's extensible interpreter infrastructure for MLIR. It enables high-level interpretation and execution of MLIR SSA programs (complete with its own bookkeeping and execution engine) without lowering. To accommodate the open-endedness of MLIR dialects, operation and dialect implementation logic can be extended by overriding the registry in `./interpreter/src/InterpreterDialects.scala`.
+ScaIR's extensible interpreter infrastructure for MLIR. It executes MLIR SSA programs directly (with its own scoping, bookkeeping, and execution engine) without lowering. Operation and dialect behaviour can be extended by registering implementations in the interpreter registry (`interpreter/src/InterpreterDialects.scala`).
+
+This module is part of [ScaIR](https://github.com/edin-dal/scair); see the [root README](../README.md) for the framework overview.
 
 ## Contents
 
-- [Overview](#overview)
-- [Features](#features)
 - [Getting started](#getting-started)
 - [Supported operations](#supported-operations)
-- [UG4 dissertation](#ug4-dissertation)
-- [Evaluation](#evaluation)
-- [Current limitations](#current-limitations)
 - [How it works](#how-it-works)
+- [Extending the interpreter](#extending-the-interpreter)
+- [Current limitations](#current-limitations)
 - [Testing](#testing)
 - [Layout](#layout)
+- [Background](#background)
+- [Evaluation](#evaluation)
 
-## Overview
+## Getting started
 
-The `interpreter` module adds an execution path to ScaIR. It is used by the `scair-run` command-line tool (defined in `tools/runTool`), which:
+The `interpreter` module adds an execution path to ScaIR, exposed through the `scair-run` command-line tool (defined in `tools/runTool`). `scair-run`:
 
 1. Parses an `.mlir` file or stdin.
 2. Registers the supported dialects from the extensible dialect registry (see [Adding an operation](#adding-an-operation)).
 3. Invokes the interpreter on the `.mlir` file.
 4. Returns the result once execution completes.
-
-## Features
-
-- Direct execution of MLIR programs, without lowering
-- Scoped SSA value tracking with parent-scope lookup
-- Structured and multi-block CFG control flow handling
-- Core helper functions for implementation logic (e.g. `push_scope`, `get_values`)
-- Built-in support for the `arith`, `memref`, and `scf` dialects, among others
-
-## Getting started
 
 ### Prerequisites
 
@@ -88,14 +79,119 @@ More complete programs can be found under `tests/filecheck/interpreter/`.
 | `scf` | `for`, `if`, `yield` | loop-carried values supported |
 | LLVM terminators | `llvm.br`, `llvm.cond_br`, `llvm.return`, `llvm.unreachable` | drive multi-block control flow; `llvm.return` returns from the function |
 
-## UG4 dissertation
+## How it works
 
-This work was developed as part of a UG4 dissertation on high-level interpretation of MLIR. The key dissertation findings, comparing this interpreter to xDSL's, a python-based compiler framework, are summarised below.
+| Component | Responsibility |
+| --- | --- |
+| `Interpreter` | Walks the module, dispatches operations, maintains the symbol table |
+| `OpImpl` | Per-operation implementation: `compute` returns results, which are stored in the current context |
+| Symbol Table | Mapping of all symbols (`global`, `func.func` names) for referencing |
+| `RuntimeCtx` | Holds the active `ScopedDict` and current region result |
+| `ScopedDict` | Maps SSA `Value`s to runtime values |
 
-### Findings
+```mermaid
+flowchart LR
+    Module[Input ModuleOp] --> Interpreter
+    Registry[(OpImpl registry)] --> Interpreter
+    Symbols[(Symbol Table)] --> Interpreter
+    Interpreter <--> Ctx[RuntimeCtx]
+    Interpreter --> Main[run @main]
+    Main --> Result[Return values]
+```
 
-- The interpreter allows for more conciseness when defining operations compared to xDSL: up to 28.8% fewer LoC (Arith), 18.8% fewer for MemRef (see [Evaluation](#evaluation) below).
-- Faster than xDSL on all four loop-based benchmark programs at their largest size, e.g. 1M looped function calls and iterative Fibonacci up to N = 1M (see [Evaluation](#evaluation) below).
+## Extending the interpreter
+
+During execution, the interpreter dispatches every operation to an `OpImpl`, the class that represents the high-level interpretation logic for that operation. To allow custom operations and dialects to be interpreted, the extension flow is: implement an `OpImpl`, group implementations into a dialect, register the dialect, and pass the extended registry to the interpreter.
+
+### Adding an operation
+
+Extend `OpImpl` for the operation of interest:
+
+```scala
+import scair.interpreter.*
+import scair.dialects.arith
+
+object run_maxsi extends OpImpl[arith.MaxSI]:
+  def compute(
+      op: arith.MaxSI,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Seq[Any],
+  ): Seq[Any] =
+    args match
+      case Seq(lhs: Int, rhs: Int) => Seq(lhs.max(rhs)) // must return seq()
+      case _ => throw new Exception("MaxSI operands must be integers")
+```
+
+### Adding a dialect
+
+An `InterpreterDialect` is a sequence of operation and terminator implementations:
+
+```scala
+type InterpreterDialect =
+  Seq[OpImpl[? <: Operation] | OpTerminatorImpl[? <: Operation]]
+```
+
+There is no separate dialect class to implement — a dialect is just the impls grouped together:
+
+```scala
+val myDialect: InterpreterDialect = Seq(run_maxsi, run_my_br)
+```
+
+### Registering the dialect
+
+As with dialect registration for ScaIR tools, there are two common ways to make your dialect available to the interpreter:
+
+* When using ScaIR as a library: extend `ScairRunBase` (in `scair.tools.runTool`) and override `interpreterDialects` to append your dialect:
+
+```scala
+object MyRun extends ScairRunBase:
+  override def interpreterDialects =
+    scair.interpreter.allInterpreterDialects :+ myDialect
+```
+
+* When working within ScaIR itself: add the dialect to `allInterpreterDialects` in `interpreter/src/InterpreterDialects.scala`.
+
+### Passing dialects to the interpreter
+
+Construct the interpreter with the extended dialect list:
+
+```scala
+val extendedDialects =
+  allInterpreterDialects :+ myDialect
+
+val interpreter = new Interpreter(module, extendedDialects)
+```
+
+## Current limitations
+
+- Integer arithmetic only — no floats, index, vector, tensor, or complex values
+- `arith.constant` supports `IntegerAttr` only
+- Signedness is not modeled; signed and unsigned variants use Scala `Int` semantics
+- `memref` stores are limited to `Int` values
+- The entry point is fixed to `@main`
+- External calls are limited to the built-in `@print`
+
+## Layout
+
+```text
+interpreter/
+└── src/
+    ├── Interpreter.scala          # engine and RuntimeCtx
+    ├── InterpreterDialects.scala  # built-in dialect registry
+    ├── ScopedDict.scala           # scoped SSA value storage
+    ├── ShapedArray.scala          # Reusable data type for tensors
+    └── Dialects/                  # ScaIR dialect implementations
+        ├── Arith.scala
+        ├── Func.scala
+        ├── LLVM.scala
+        ├── Memref.scala
+        └── scf.scala
+```
+
+## Background
+
+This module was developed as part of a UG4 dissertation on high-level interpretation of MLIR, which compared this interpreter to xDSL, a Python-based compiler framework. The headline results on implementation conciseness and runtime performance are detailed in the [Evaluation](#evaluation) below.
 
 ## Evaluation
 
@@ -131,10 +227,9 @@ Average (mean) wall-clock seconds over 10 runs for each benchmark at its largest
 
 ScaIR interpreted beats xDSL on every benchmark at its largest size: 18× faster on 1M looped function calls, 15× on 1M load-add-store iterations, 12× on Fibonacci to N = 1M, and 1.5× on 10k chained additions. Benchmarked on an Apple M5 MacBook Pro (2026).
 
-All three looped benchmarks (`func_calls`, `memref`, `fib`) scale the same way, so `func_calls` is shown as a representative alongside the straight-line `chained_arith`.
+### Full scaling charts
 
-<details>
-<summary>Average runtime (s) across all benchmarked sizes</summary>
+All three looped benchmarks (`func_calls`, `memref`, `fib`) scale the same way, so `func_calls` is representative of them all.
 
 The titles use the example program names from `tests/filecheck/interpreter/full-programs/` (`func_calls.mlir`, `fib.mlir`, `memref_tester.mlir`; `chained_arith` is generated by `chained_arith.py`). Key: in both charts the line ending higher at the largest size is xDSL; the lower line is ScaIR.
 
@@ -154,134 +249,4 @@ xychart-beta
     y-axis "average seconds" 0 --> 1.2
     line "ScaIR" [0.217, 0.219, 0.225, 0.235, 0.252, 0.284, 0.330, 0.401, 0.514, 0.722]
     line "xDSL" [0.177, 0.178, 0.182, 0.187, 0.196, 0.225, 0.270, 0.363, 0.643, 1.120]
-```
-
-</details>
-
-## Current limitations
-
-- Integer arithmetic only — no floats, index, vector, tensor, or complex values
-- `arith.constant` supports `IntegerAttr` only
-- Signedness is not modeled; signed and unsigned variants use Scala `Int` semantics
-- `memref` stores are limited to `Int` values
-- The entry point is fixed to `@main`
-- External calls are limited to the built-in `@print`
-
-## How it works
-
-| Component | Responsibility |
-| --- | --- |
-| `Interpreter` | Walks the module, dispatches operations, maintains the symbol table |
-| `OpImpl` | Per-operation implementation: `compute` returns results, which are stored in the current context |
-| `OpTerminatorImpl` | Terminator implementation: returns a `CFGStep` (jump to a block or return) plus produced values |
-| `RuntimeCtx` | Holds the active `ScopedDict` and creates nested scopes |
-| `ScopedDict` | Maps SSA `Value`s to runtime values, falling back to parent scopes |
-| `ShapedArray` | Row-major array backing `memref` values |
-
-```mermaid
-flowchart LR
-    Module[ModuleOp] --> Interpreter
-    Interpreter --> Registry[(OpImpl registry)]
-    Interpreter --> Symbols[(Symbol table)]
-    Interpreter --> Ctx[RuntimeCtx]
-    Ctx --> Scope[ScopedDict]
-    Interpreter --> Main[call @main]
-    Main --> Result[Returned values]
-```
-
-### Adding an operation
-
-Implement `OpImpl` for the operation and register it in an `InterpreterDialect`:
-
-```scala
-import scair.interpreter.*
-import scair.dialects.arith
-
-object run_maxsi extends OpImpl[arith.MaxSI]:
-  def compute(
-      op: arith.MaxSI,
-      interpreter: Interpreter,
-      ctx: RuntimeCtx,
-      args: Seq[Any],
-  ): Seq[Any] =
-    args match
-      case Seq(lhs: Int, rhs: Int) => Seq(lhs.max(rhs))
-      case _ => throw new Exception("MaxSI operands must be integers")
-
-val extendedDialects =
-  allInterpreterDialects :+ Seq(run_maxsi)
-```
-
-Pass `extendedDialects` when constructing the interpreter:
-
-```scala
-val interpreter = new Interpreter(module, extendedDialects)
-```
-
-Terminators follow the same pattern, but implement `OpTerminatorImpl` and return a `CFGStep` describing where control flow goes next:
-
-```scala
-object run_my_br extends OpTerminatorImpl[my.Br]:
-  def computeTerminator(
-      op: my.Br,
-      interpreter: Interpreter,
-      ctx: RuntimeCtx,
-      args: Seq[Any],
-  ): (CFGStep, Seq[Any]) =
-    (CFGStep.Jump(op.dest, args), Seq())
-```
-
-### Adding a dialect
-
-An `InterpreterDialect` is a sequence of operation and terminator implementations:
-
-```scala
-type InterpreterDialect =
-  Seq[OpImpl[? <: Operation] | OpTerminatorImpl[? <: Operation]]
-```
-
-There is no separate dialect class to implement — a dialect is just the impls grouped together:
-
-```scala
-val myDialect: InterpreterDialect = Seq(run_maxsi, run_my_br)
-```
-
-As with dialect registration for ScaIR tools, there are two common ways to make it available to the interpreter:
-
-* When using ScaIR as a library: extend `ScairRunBase` (in `scair.tools.runTool`) and override `interpreterDialects` to append your dialect:
-
-```scala
-object MyRun extends ScairRunBase:
-  override def interpreterDialects =
-    scair.interpreter.allInterpreterDialects :+ myDialect
-```
-
-* When working within ScaIR itself: add the dialect to `allInterpreterDialects` in `interpreter/src/InterpreterDialects.scala`.
-
-The interpreter is then constructed with the extended list, as shown in [Adding an operation](#adding-an-operation).
-
-## Testing
-
-- Unit tests: `./mill interpreter.test` — runs the module's unit tests
-- Filecheck tests: `./mill filechecks` — runs the lit programs under `tests/filecheck/interpreter/`
-- Full pipeline: `./mill testAll` — runs the full ScaIR test suite, including this module
-
-## Layout
-
-```text
-interpreter/
-├── src/
-│   ├── Interpreter.scala          # engine and RuntimeCtx
-│   ├── InterpreterDialects.scala  # built-in dialect registry
-│   ├── ScopedDict.scala           # scoped SSA value storage
-│   ├── ShapedArray.scala          # memref backing store
-│   └── Dialects/
-│       ├── Arith.scala
-│       ├── Func.scala
-│       ├── LLVM.scala
-│       ├── Memref.scala
-│       └── scf.scala
-└── test/
-    └── src/
-        └── ToolsTest.scala
 ```
