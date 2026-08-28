@@ -71,15 +71,15 @@ object run_if extends OpImpl[scf.IfOp]:
       case _ =>
         throw new Exception("If condition must be an integer")
 
-object run_yield extends OpImpl[scf.YieldOp]:
+object run_yield extends OpTerminatorImpl[scf.YieldOp]:
 
-  def compute(
+  def computeTerminator(
       op: scf.YieldOp,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Seq[Any] =
-    args
+  ): (CFGStep, Seq[Any]) =
+    (CFGStep.Return(args), Seq())
 
 val InterpreterScfDialect: InterpreterDialect =
   Seq(

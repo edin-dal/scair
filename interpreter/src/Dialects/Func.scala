@@ -4,15 +4,15 @@ import scair.dialects.builtin.SymbolRefAttr
 import scair.dialects.func
 import scair.ir.Result
 
-object run_return extends OpImpl[func.Return]:
+object run_return extends OpTerminatorImpl[func.Return]:
 
-  def compute(
+  def computeTerminator(
       op: func.Return,
       interpreter: Interpreter,
       ctx: RuntimeCtx,
       args: Seq[Any],
-  ): Seq[Any] =
-    return args
+  ): (CFGStep, Seq[Any]) =
+    (CFGStep.Return(args), Seq())
 
 object run_call extends OpImpl[func.Call]:
 
@@ -44,7 +44,7 @@ object run_function extends OpImpl[func.Func]:
       _operands = Seq(),
       _results = op.function_type.outputs.map(res => Result(res)),
     )
-    val results = interpreter.run_op(new_call, ctx, Seq())
+    val results = interpreter.run_op(new_call, ctx, Seq()).values
 
     if new_call._results.nonEmpty then results
     else Seq()

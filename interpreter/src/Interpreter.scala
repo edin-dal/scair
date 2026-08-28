@@ -7,10 +7,21 @@ import scala.collection.mutable
 import scala.reflect.ClassTag
 
 // global implementation dictionary for interpreter
-val impl_dict = mutable
-  .Map[Class[? <: Operation], OpImpl[
-    ? <: Operation
-  ]]()
+type RegisteredImpl =
+  (Interpreter, RuntimeCtx, Operation, Seq[Any]) => OpImplResult
+
+val impl_dict = mutable.Map[Class[? <: Operation], RegisteredImpl]()
+
+// control-flow step produced by a terminator implementation
+enum CFGStep:
+  case Return(values: Seq[Any])
+  case Jump(dest: Block, args: Seq[Any])
+
+// result of running an operation: produced values plus optional control-flow step
+case class OpImplResult(
+    values: Seq[Any],
+    step: Option[CFGStep] = None,
+)
 
 // custom operations should implement this trait
 trait OpImpl[O <: Operation: ClassTag]:
@@ -28,22 +39,18 @@ trait OpImpl[O <: Operation: ClassTag]:
       args: Seq[Any],
   ): Seq[Any]
 
-  // run function that is automatically defined to store results in context after compute
-  final def run(op: O, interpreter: Interpreter, ctx: RuntimeCtx): Unit =
-    var args = interpreter.get_values(op.operands, ctx)
+// terminator operations implement this trait instead of OpImpl
+// computeTerminator returns the control-flow step to take, plus any values the operation produces
+trait OpTerminatorImpl[O <: Operation: ClassTag]:
 
-    // call compute to get result
-    val result = compute(op, interpreter, ctx, args)
-    val op_results = op.results
+  def opType: Class[O] = summon[ClassTag[O]].runtimeClass.asInstanceOf[Class[O]]
 
-    if op_results.size == 0 then ()
-    else if op_results.size == 1 then
-      ctx.scopedDict.update(op_results.head, result.head)
-    else
-      var i = 0
-      while i < op_results.length do
-        ctx.scopedDict.update(op_results(i), result(i))
-        i += 1
+  def computeTerminator(
+      op: O,
+      interpreter: Interpreter,
+      ctx: RuntimeCtx,
+      args: Seq[Any],
+  ): (CFGStep, Seq[Any])
 
 // interpreter context class stores variables and current result
 class RuntimeCtx(
@@ -112,26 +119,31 @@ class Interpreter(
 
   def register_implementations(): Unit =
     for dialect <- dialects do
-      for impl <- dialect do impl_dict.put(impl.opType, impl)
+      for impl <- dialect do
+        impl match
+          case opImpl: OpImpl[? <: Operation] =>
+            impl_dict.put(
+              opImpl.opType,
+              (interp, ctx, op, args) =>
+                OpImplResult(
+                  opImpl
+                    .asInstanceOf[OpImpl[Operation]]
+                    .compute(op, interp, ctx, args)
+                ),
+            )
+          case termImpl: OpTerminatorImpl[? <: Operation] =>
+            impl_dict.put(
+              termImpl.opType,
+              (interp, ctx, op, args) =>
+                val (step, values) =
+                  termImpl
+                    .asInstanceOf[OpTerminatorImpl[Operation]]
+                    .computeTerminator(op, interp, ctx, args)
+                OpImplResult(values, Some(step)),
+            )
 
   def create_scope(name: String): RuntimeCtx =
     RuntimeCtx(ScopedDict(None, mutable.Map(), name), Seq())
-
-  def interpret_op(op: Operation, ctx: RuntimeCtx): Unit =
-    val impl = impl_dict.get(op.getClass)
-    impl match
-      case Some(impl) => impl.asInstanceOf[OpImpl[Operation]].run(op, this, ctx)
-      case None       =>
-        throw new Exception(
-          s"Unsupported operation when interpreting: ${op.getClass}"
-        )
-
-  def interpret_region(region: Region, ctx: RuntimeCtx): Unit =
-    for operation <- region.blocks.head.operations do
-      interpret_op(operation, ctx)
-
-  def interpret_block(block: Block, ctx: RuntimeCtx): Unit =
-    for operation <- block.operations do interpret_op(operation, ctx)
 
   def run_ssacfg_region(
       region: Region,
@@ -139,29 +151,60 @@ class Interpreter(
       name: String,
       inputs: Seq[Any],
   ): Seq[Any] =
-    var results: Seq[Any] = Seq()
+    if region.blocks.isEmpty then return Seq()
 
-    if region.blocks.isEmpty then return Seq() // no blocks to run
-    else
-      val new_ctx = ctx.push_scope(name)
-      set_values(region.blocks.head.arguments, inputs, new_ctx)
-      for operation <- region.blocks.head.operations do
-        val inputs = get_values(operation.operands, new_ctx)
-        if operation.isInstanceOf[IsTerminator] then
-          results = run_op(operation, new_ctx, inputs)
-        interpret_op(operation, new_ctx)
-      results
+    var current: Option[Block] = Some(region.blocks.head)
+    var blockArgs = inputs
+    var blockCtx = ctx.push_scope(name)
 
-  def run_op(op: Operation, ctx: RuntimeCtx, inputs: Seq[Any]): Seq[Any] =
+    while current.isDefined do
+      val block = current.get
+      current = None
+      bind_block_args(block, blockArgs, blockCtx)
+
+      var jump: Option[(Block, Seq[Any])] = None
+      val ops = block.operations.toSeq
+      var i = 0
+      while i < ops.length && jump.isEmpty do
+        val op = ops(i)
+        val res = run_op(op, blockCtx, get_values(op.operands, blockCtx))
+        set_values(op.results, res.values, blockCtx)
+        res.step match
+          case Some(CFGStep.Return(values)) => return values
+          case Some(CFGStep.Jump(dest, args)) =>
+            jump = Some((dest, args))
+          case None => ()
+        i += 1
+
+      jump match
+        case Some((dest, args)) =>
+          current = Some(dest)
+          blockArgs = args
+          blockCtx = blockCtx.push_scope(name)
+        case None => ()
+    Seq()
+
+  private def bind_block_args(
+      block: Block,
+      args: Seq[Any],
+      ctx: RuntimeCtx,
+  ): Unit =
+    if block.arguments.size != args.size then
+      throw new Exception(
+        s"Expected ${block.arguments.size} block arguments, got ${args.size}"
+      )
+    set_values(block.arguments, args, ctx)
+
+  def run_op(op: Operation, ctx: RuntimeCtx, inputs: Seq[Any]): OpImplResult =
     val impl = impl_dict.get(op.getClass)
     impl match
       case Some(impl) =>
-        impl.asInstanceOf[OpImpl[Operation]].compute(
-          op,
-          this,
-          ctx,
-          inputs,
-        )
+        val res = impl(this, ctx, op, inputs)
+        if op.results.size != res.values.size then
+          throw new Exception(
+            s"Operation '${op.name}' produced ${res.values.size} values but declares ${op.results.size} results"
+          )
+        res
       case None =>
         throw new Exception(
           s"Unsupported operation when interpreting: ${op.getClass}"
