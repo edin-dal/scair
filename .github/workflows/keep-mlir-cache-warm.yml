@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout Scair
+      uses: actions/checkout@v4
     - name: Ensure MLIR availability
       id: mlir
       uses: ./.github/actions/ensure-mlir

@@ -22,6 +22,8 @@ jobs:
       mlir-cache-key: ${{ steps.ensure-mlir.outputs.cache-key }}
 
     steps:
+    - name: Checkout Scair
+      uses: actions/checkout@v4
     - name: Ensure MLIR availability
       id: ensure-mlir
       uses: ./.github/actions/ensure-mlir
