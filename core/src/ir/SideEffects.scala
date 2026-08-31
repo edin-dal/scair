@@ -33,6 +33,55 @@ trait NoMemoryEffect extends Operation
   */
 trait RecursiveMemoryEffects extends Operation
 
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||   SPECULATION INTERFACES   ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** Mirrors `Speculation::Speculatability`. */
+enum Speculatability:
+
+  /** The operation cannot be speculatively executed. This could be because it
+    * may invoke undefined behavior or have other side effects.
+    */
+  case NotSpeculatable
+
+  /** The operation can be speculatively executed. It does not have any side
+    * effects or undefined behavior.
+    */
+  case Speculatable
+
+  /** The operation can be speculatively executed if all the operations in all
+    * attached regions can also be speculatively executed.
+    */
+  case RecursivelySpeculatable
+
+/** MLIR's `ConditionallySpeculatable` op interface.
+  *
+  * Implement this directly to answer dynamically, as [[AlwaysSpeculatable]] and
+  * [[RecursivelySpeculatable]] only ever give a fixed answer.
+  */
+trait ConditionallySpeculatable extends Operation:
+  def getSpeculatability: Speculatability
+
+/** ODS `AlwaysSpeculatableImplTrait`. */
+trait AlwaysSpeculatable extends ConditionallySpeculatable:
+
+  final override def getSpeculatability: Speculatability = Speculatability
+    .Speculatable
+
+/** ODS `RecursivelySpeculatableImplTrait`. */
+trait RecursivelySpeculatable extends ConditionallySpeculatable:
+
+  final override def getSpeculatability: Speculatability =
+    Speculatability.RecursivelySpeculatable
+
+/** ODS `def Pure : TraitList<[AlwaysSpeculatable, NoMemoryEffect]>`.
+  *
+  * Note that this is the conjunction of two independent axes, memory effects
+  * and speculatability, rather than a member of either.
+  */
+trait Pure extends AlwaysSpeculatable with NoMemoryEffect
+
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||   SIDE EFFECT UTILS   ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
@@ -49,3 +98,14 @@ def isMemoryEffectFree(op: Operation): Boolean =
     // Neither: the effects of the operation are unknown, so it cannot be known
     // to be movable.
     case _ => false
+
+/** Whether the operation can be speculatively executed. */
+def isSpeculatable(op: Operation): Boolean = op match
+  case c: ConditionallySpeculatable =>
+    c.getSpeculatability match
+      case Speculatability.RecursivelySpeculatable =>
+        op.regions.forall(_.blocks.forall(_.operations.forall(isSpeculatable)))
+      case Speculatability.Speculatable    => true
+      case Speculatability.NotSpeculatable => false
+  // Not implementing the interface at all is a distinct, conservative state.
+  case _ => false

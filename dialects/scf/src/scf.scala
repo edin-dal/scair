@@ -50,7 +50,7 @@ case class Condition(
     condition: Operand[I1],
     args: Seq[Operand[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.condition"]
-    with NoMemoryEffect
+    with Pure
     with IsTerminator derives OpDefs
 
 case class ExecuteRegionOp(
@@ -71,7 +71,8 @@ case class ForOp(
     unsignedCmp: Option[UnitAttr] = None,
 ) extends DerivedOperation["scf.for"]
     with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
-    with RecursiveMemoryEffects derives OpDefs
+    with RecursiveMemoryEffects
+    with RecursivelySpeculatable derives OpDefs
 
 case class ForallOp(
     dynamicLowerBound: Seq[Operand[Index]] = Seq.empty,
@@ -92,7 +93,7 @@ case class InParallelOp(
     region: Region
 ) extends DerivedOperation["scf.forall.in_parallel"]
     with IsTerminator
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class IfOp(
     condition: Operand[I1],
@@ -100,7 +101,8 @@ case class IfOp(
     elseRegion: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.if"]
-    with RecursiveMemoryEffects derives OpDefs
+    with RecursiveMemoryEffects
+    with RecursivelySpeculatable derives OpDefs
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]] = Seq.empty,
@@ -127,7 +129,7 @@ case class ReduceReturnOp(
 ) extends DerivedOperation["scf.reduce.return"]
     with AssemblyFormat["$result attr-dict `:` type($result)"]
     with IsTerminator
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class WhileOp(
     inits: Seq[Operand[Attribute]] = Seq.empty,
@@ -145,14 +147,15 @@ case class IndexSwitchOp(
     caseRegions: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.index_switch"]
-    with RecursiveMemoryEffects derives OpDefs
+    with RecursiveMemoryEffects
+    with RecursivelySpeculatable derives OpDefs
 
 case class YieldOp(
     resultss: Seq[Operand[Attribute]] = Seq.empty
 ) extends DerivedOperation["scf.yield"]
     with AssemblyFormat["attr-dict ($resultss^ `:` type($resultss))?"]
     with IsTerminator
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 val SCFDialect =
   summonDialect[

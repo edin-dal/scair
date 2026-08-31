@@ -28,7 +28,7 @@ case class Apply(
     res: Result[IndexType],
     map: AffineMapAttr,
 ) extends DerivedOperation["affine.apply"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 /*≡==---=≡≡≡≡=---=≡≡*\
 ||      FOR OP      ||
@@ -44,7 +44,8 @@ case class For(
     step: IntegerAttr,
     body: Region,
 ) extends DerivedOperation["affine.for"]
-    with RecursiveMemoryEffects derives OpDefs
+    with RecursiveMemoryEffects
+    with RecursivelySpeculatable derives OpDefs
 
 /*≡==---==≡≡≡≡≡==---=≡≡*\
 ||     PARALLEL OP     ||
@@ -74,7 +75,8 @@ case class If(
     thenRegion: Region,
     elseRegion: Region,
 ) extends DerivedOperation["affine.if"]
-    with RecursiveMemoryEffects derives OpDefs
+    with RecursiveMemoryEffects
+    with RecursivelySpeculatable derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    STORE OP    ||
@@ -107,7 +109,7 @@ case class Min(
     result: Result[IndexType],
     map: AffineMapAttr,
 ) extends DerivedOperation["affine.min"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    YIELD OP    ||
@@ -118,7 +120,7 @@ case class Yield(
 ) extends DerivedOperation["affine.yield"]
     with IsTerminator
     with AssemblyFormat["attr-dict ($arguments^ `:` type($arguments))?"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||     MAX OP     ||
@@ -129,7 +131,7 @@ case class Max(
     result: Result[IndexType],
     map: AffineMapAttr,
 ) extends DerivedOperation["affine.max"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 /*≡==---=≡≡≡≡≡≡≡=---=≡≡*\
 ||   VECTOR_LOAD OP    ||
@@ -184,7 +186,7 @@ case class DelinearizeIndex(
     multiIndex: Seq[Result[IndexType]] = Seq.empty,
     static_basis: DenseArrayAttr,
 ) extends DerivedOperation["affine.delinearize_index"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 /*≡==---=≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||   LINEARIZE_INDEX OP  ||
@@ -202,7 +204,7 @@ case class LinearizeIndex(
     static_basis: DenseArrayAttr,
     disjoint: Option[UnitAttr] = None,
 ) extends DerivedOperation["affine.linearize_index"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 /*≡==---=≡≡≡≡≡≡=---=≡≡*\
 ||    DMA_START OP    ||
