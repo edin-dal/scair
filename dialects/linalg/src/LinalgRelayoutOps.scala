@@ -23,11 +23,10 @@ import scair.ir.*
  * ScaIR has no custom-directive support, so these ops print and parse in the
  * generic form, which MLIR accepts. */
 
-trait TypesMatchWith extends Operation:
-  val one: RankedTensorType
-  val two: RankedTensorType
+trait TypesMatchWith(one: RankedTensorType, two: RankedTensorType)
+    extends Operation
 
-trait LinalgRelayoutOp(
+abstract class LinalgRelayoutOp(
     val _dest: RankedTensorType,
     val _result: RankedTensorType,
 ) extends Operation
@@ -37,9 +36,7 @@ trait LinalgRelayoutOp(
     with ConditionallySpeculatable
     with NoMemoryEffect
     with ReifyRankedShapedTypeOpInterface
-    with TypesMatchWith:
-  val one: RankedTensorType = _dest
-  val two: RankedTensorType = _result
+    with TypesMatchWith(_dest, _result)
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    PACK OP     ||
@@ -57,8 +54,8 @@ case class Pack(
     inner_tiles: Seq[Operand[IndexType]] = Seq.empty,
     static_inner_tiles: DenseArrayAttr,
     result: Result[RankedTensorType],
-) extends DerivedOperation["linalg.pack"]
-    with LinalgRelayoutOp(dest.typ, result.typ) derives OpDefs
+) extends LinalgRelayoutOp(dest.typ, result.typ)
+    with DerivedOperation["linalg.pack"] derives OpDefs
 
 /*≡==--=≡≡≡≡≡≡=--=≡≡*\
 ||    UNPACK OP     ||
@@ -72,5 +69,5 @@ case class UnPack(
     inner_tiles: Seq[Operand[IndexType]] = Seq.empty,
     static_inner_tiles: DenseArrayAttr,
     result: Result[RankedTensorType],
-) extends DerivedOperation["linalg.unpack"]
-    with LinalgRelayoutOp(dest.typ, result.typ) derives OpDefs
+) extends LinalgRelayoutOp(dest.typ, result.typ)
+    with DerivedOperation["linalg.unpack"] derives OpDefs
