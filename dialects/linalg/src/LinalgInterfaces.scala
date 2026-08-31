@@ -71,11 +71,6 @@ trait ReifyRankedShapedTypeOpInterface extends Operation
   */
 trait TilingInterface extends Operation
 
-/** MLIR: `ConditionallySpeculatable`. An op whose speculatability depends on
-  * its operands rather than being fixed.
-  */
-trait ConditionallySpeculatable extends Operation
-
 /** MLIR: `MemoryEffectsOpInterface`. An op that declares its memory effects.
   */
 trait MemoryEffectsOpInterface extends Operation

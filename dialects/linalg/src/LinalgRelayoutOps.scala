@@ -36,7 +36,10 @@ abstract class LinalgRelayoutOp(
     with ConditionallySpeculatable
     with NoMemoryEffect
     with ReifyRankedShapedTypeOpInterface
-    with TypesMatchWith(_dest, _result)
+    with TypesMatchWith(_dest, _result):
+
+  def getSpeculatability: Speculatability =
+    Speculatability.RecursivelySpeculatable
 
 /*≡==--=≡≡≡≡=--=≡≡*\
 ||    PACK OP     ||

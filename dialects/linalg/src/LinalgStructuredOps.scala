@@ -31,7 +31,10 @@ trait LinalgStructuredBase
       RecursiveMemoryEffects,
       DestinationStyleOpInterface,
       LinalgStructuredInterface,
-      ReifyRankedShapedTypeOpInterface
+      ReifyRankedShapedTypeOpInterface:
+
+  def getSpeculatability: Speculatability =
+    Speculatability.RecursivelySpeculatable
 
 /*≡==--=≡≡≡≡≡≡=--=≡≡*\
 ||    GENERIC OP    ||
