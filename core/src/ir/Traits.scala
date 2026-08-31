@@ -44,8 +44,6 @@ trait NoTerminator extends Operation:
     else OK(this)
   }.flatMap(_ => super.traitVerify())
 
-trait NoMemoryEffect extends Operation
-
 trait IsolatedFromAbove extends Operation:
 
   final def verifyRec(regs: Seq[Region]): OK[Operation] =

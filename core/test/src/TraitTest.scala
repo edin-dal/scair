@@ -30,6 +30,23 @@ case class NoTerminatorOp(
 ) extends DerivedOperation["noterminator"]
     with NoTerminator derives OpDefs
 
+/** Declares no memory effects of its own. */
+case class EffectFreeOp(
+    override val regions: Seq[Region] = Seq()
+) extends DerivedOperation["effectfree"]
+    with NoMemoryEffect derives OpDefs
+
+/** Declares nothing, so its effects are unknown. */
+case class UnknownEffectsOp(
+    override val regions: Seq[Region] = Seq()
+) extends DerivedOperation["unknowneffects"] derives OpDefs
+
+/** Derives its effects from the operations nested in its regions. */
+case class RecursiveEffectsOp(
+    override val regions: Seq[Region] = Seq()
+) extends DerivedOperation["recursiveeffects"]
+    with RecursiveMemoryEffects derives OpDefs
+
 class TraitTest extends AnyFlatSpec with BeforeAndAfter:
 
   "IsTerminator Test1" should "pass the test the IsTerminator trait" in {
@@ -122,4 +139,50 @@ class TraitTest extends AnyFlatSpec with BeforeAndAfter:
       "NoTerminator Operation 'noterminator' requires single-block regions",
       Some(noterminator),
     )
+  }
+
+  /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   MEMORY EFFECTS      ||
+  \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+
+  /** Wraps `ops` in a single region, single block operation of type `T`. */
+  def containing(make: Seq[Region] => Operation)(ops: Operation*): Operation =
+    make(Seq(Region(Block(operations = ops))))
+
+  "isMemoryEffectFree" should "hold for an operation declaring no effects" in {
+    isMemoryEffectFree(EffectFreeOp()) shouldBe true
+  }
+
+  it should "not hold for an operation whose effects are unknown" in {
+    isMemoryEffectFree(UnknownEffectsOp()) shouldBe false
+  }
+
+  it should "not recurse into a region of an operation declaring no effects" in
+    withClue("A declared absence of effects covers the whole operation: ") {
+      val op = containing(EffectFreeOp(_))(UnknownEffectsOp())
+      isMemoryEffectFree(op) shouldBe true
+    }
+
+  it should "hold for a recursive operation over effect free operations" in {
+    val op = containing(RecursiveEffectsOp(_))(EffectFreeOp(), EffectFreeOp())
+    isMemoryEffectFree(op) shouldBe true
+  }
+
+  it should "not hold for a recursive operation over an unknown operation" in {
+    val op =
+      containing(RecursiveEffectsOp(_))(EffectFreeOp(), UnknownEffectsOp())
+    isMemoryEffectFree(op) shouldBe false
+  }
+
+  it should "hold for an empty recursive operation" in {
+    isMemoryEffectFree(RecursiveEffectsOp()) shouldBe true
+  }
+
+  it should "recurse through nested recursive operations" in {
+    val deep = containing(RecursiveEffectsOp(_))(UnknownEffectsOp())
+    val op = containing(RecursiveEffectsOp(_))(EffectFreeOp(), deep)
+    isMemoryEffectFree(op) shouldBe false
+
+    val pure = containing(RecursiveEffectsOp(_))(EffectFreeOp())
+    isMemoryEffectFree(containing(RecursiveEffectsOp(_))(pure)) shouldBe true
   }

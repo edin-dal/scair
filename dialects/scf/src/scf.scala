@@ -57,7 +57,8 @@ case class ExecuteRegionOp(
     region: Region,
     result: Seq[Result[Attribute]] = Seq.empty,
     no_inline: Option[UnitAttr] = None,
-) extends DerivedOperation["scf.execute_region"] derives OpDefs
+) extends DerivedOperation["scf.execute_region"]
+    with RecursiveMemoryEffects derives OpDefs
 
 // TODO: this should also contain a SingleBlockImplicitTerminator<"scf::YieldOp">,
 case class ForOp(
@@ -69,7 +70,8 @@ case class ForOp(
     resultss: Seq[Result[Attribute]] = Seq.empty,
     unsignedCmp: Option[UnitAttr] = None,
 ) extends DerivedOperation["scf.for"]
-    with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ) derives OpDefs
+    with AllTypesMatch(lowerBound.typ, upperBound.typ, step.typ)
+    with RecursiveMemoryEffects derives OpDefs
 
 case class ForallOp(
     dynamicLowerBound: Seq[Operand[Index]] = Seq.empty,
@@ -83,7 +85,8 @@ case class ForallOp(
     mapping: Option[ArrayAttribute[Attribute]] = None,
     region: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
-) extends DerivedOperation["scf.forall"] derives OpDefs
+) extends DerivedOperation["scf.forall"]
+    with RecursiveMemoryEffects derives OpDefs
 
 case class InParallelOp(
     region: Region
@@ -96,7 +99,8 @@ case class IfOp(
     thenRegion: Region,
     elseRegion: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
-) extends DerivedOperation["scf.if"] derives OpDefs
+) extends DerivedOperation["scf.if"]
+    with RecursiveMemoryEffects derives OpDefs
 
 case class ParallelOp(
     lowerBound: Seq[Operand[Index]] = Seq.empty,
@@ -105,7 +109,8 @@ case class ParallelOp(
     initVals: Seq[Operand[Attribute]] = Seq.empty,
     region: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
-) extends DerivedOperation["scf.parallel"] derives OpDefs
+) extends DerivedOperation["scf.parallel"]
+    with RecursiveMemoryEffects derives OpDefs
 
 case class ReduceOp(
     operandss: Seq[Operand[Attribute]] = Seq.empty,
@@ -129,7 +134,8 @@ case class WhileOp(
     before: Region,
     after: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
-) extends DerivedOperation["scf.while"] derives OpDefs
+) extends DerivedOperation["scf.while"]
+    with RecursiveMemoryEffects derives OpDefs
 
 case class IndexSwitchOp(
     arg: Operand[Index],
@@ -138,7 +144,8 @@ case class IndexSwitchOp(
     // TODO: variadic regions
     caseRegions: Region,
     resultss: Seq[Result[Attribute]] = Seq.empty,
-) extends DerivedOperation["scf.index_switch"] derives OpDefs
+) extends DerivedOperation["scf.index_switch"]
+    with RecursiveMemoryEffects derives OpDefs
 
 case class YieldOp(
     resultss: Seq[Operand[Attribute]] = Seq.empty
