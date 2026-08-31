@@ -1,0 +1,81 @@
+name: Ensure MLIR
+description: >
+  Make sure the pinned MLIR version is available in the build cache, building
+  and caching it if it is not. Single source of truth for the MLIR version and
+  the cache key it is stored under.
+
+outputs:
+  cache-key:
+    description: "Cache key the llvm-project/build directory is stored under"
+    value: ${{ steps.version.outputs.cache-key }}
+  cache-hit:
+    description: "'true' if the build was already cached, i.e. nothing was built"
+    value: ${{ steps.lookup-mlir-cache.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+  - name: MLIR version
+    id: version
+    shell: bash
+    env:
+      MLIR_VERSION: llvmorg-22.1.1
+    run: |
+      echo "version=$MLIR_VERSION" >> "$GITHUB_OUTPUT"
+      echo "cache-key=mlir-${{ runner.os }}-$MLIR_VERSION" >> "$GITHUB_OUTPUT"
+
+  - name: Lookup MLIR cache
+    id: lookup-mlir-cache
+    uses: actions/cache/restore@v4
+    with:
+      path: llvm-project/build
+      lookup-only: true
+      key: ${{ steps.version.outputs.cache-key }}
+
+  - name: Checkout MLIR
+    if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
+    uses: actions/checkout@v4
+    with:
+      repository: llvm/llvm-project.git
+      path: llvm-project
+      ref: ${{ steps.version.outputs.version }}
+
+  - name: Clang Setup
+    if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
+    uses: egor-tensin/setup-clang@v1
+
+  - name: Ninja Setup
+    if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
+    uses: lukka/get-cmake@9e431acfe656e5db66cd4930386328fce59cfaba
+
+  - name: MLIR configuration
+    if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
+    shell: bash
+    run: |
+      mkdir llvm-project/build
+      cd llvm-project/build
+      cmake -G Ninja ../llvm \
+        -DLLVM_ENABLE_PROJECTS=mlir \
+        -DLLVM_TARGETS_TO_BUILD="Native" \
+        -DLLVM_ENABLE_LLD=ON \
+        -DLLVM_INCLUDE_BENCHMARKS=OFF \
+        -DLLVM_INCLUDE_EXAMPLES=OFF \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_C_FLAGS="-pipe" \
+        -DCMAKE_CXX_FLAGS="-pipe" \
+        -DCMAKE_BUILD_TYPE=Release
+
+  - name: MLIR build
+    if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
+    shell: bash
+    run: |
+      cd llvm-project/build
+      cmake --build . --target mlir-opt mlir-runner
+
+  - name: Save MLIR build cache
+    if: steps.lookup-mlir-cache.outputs.cache-hit != 'true'
+    uses: actions/cache/save@v4
+    with:
+      path: llvm-project/build
+      key: ${{ steps.version.outputs.cache-key }}
