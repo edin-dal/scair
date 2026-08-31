@@ -1,6 +1,7 @@
 package scair.dialects.test
 
-import scair.clair.summonDialect
+import scair.clair.*
+import scair.dialects.builtin.*
 import scair.ir.*
 
 object TestOp extends OperationCompanion[TestOp]:
@@ -37,4 +38,68 @@ case class TestOp(
       attributes,
     )
 
-val Test: Dialect = summonDialect[EmptyTuple, Tuple1[TestOp]]
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||   SPECULATION TEST OPS      ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+// Ported from mlir/test/lib/Dialect/Test/TestOps.td, where they exist to
+// exercise every arm of the ConditionallySpeculatable interface.
+
+/** Op used to test conditional speculation. This op can always be speculatively
+  * executed.
+  */
+case class AlwaysSpeculatableOp(
+    result: Result[IntegerType]
+) extends DerivedOperation["test.always_speculatable_op"]
+    with Pure derives OpDefs
+
+/** Op used to test conditional speculation. This op can never be speculatively
+  * executed.
+  */
+case class NeverSpeculatableOp(
+    result: Result[IntegerType]
+) extends DerivedOperation["test.never_speculatable_op"]
+    with ConditionallySpeculatable derives OpDefs:
+
+  override def getSpeculatability: Speculatability =
+    Speculatability.NotSpeculatable
+
+/** Op used to test conditional speculation. This op can be speculatively
+  * executed if the input to it is a constant.
+  *
+  * Upstream this checks specifically for an `arith.constant`. The arith dialect
+  * is downstream of core, so match the `ConstantLike` trait instead — which is
+  * closer to the intent anyway.
+  */
+case class ConditionallySpeculatableOp(
+    input: Operand[IntegerType],
+    result: Result[IntegerType],
+) extends DerivedOperation["test.conditionally_speculatable_op"]
+    with ConditionallySpeculatable
+    with NoMemoryEffect derives OpDefs:
+
+  override def getSpeculatability: Speculatability =
+    input.owner match
+      case Some(_: ConstantLike) => Speculatability.Speculatable
+      case _                     => Speculatability.NotSpeculatable
+
+/** Op used to test conditional speculation. This op can be speculatively
+  * executed only if all the ops in the attached region can be.
+  */
+case class RecursivelySpeculatableOp(
+    body: Region,
+    result: Result[IntegerType],
+) extends DerivedOperation["test.recursively_speculatable_op"]
+    with RecursivelySpeculatable
+    with RecursiveMemoryEffects derives OpDefs
+
+val Test: Dialect = summonDialect[
+  EmptyTuple,
+  (
+      TestOp,
+      AlwaysSpeculatableOp,
+      NeverSpeculatableOp,
+      ConditionallySpeculatableOp,
+      RecursivelySpeculatableOp,
+  ),
+]
