@@ -95,10 +95,10 @@ class LoopLikeTest extends AnyFlatSpec with BeforeAndAfter:
       loop.isDefinedOutsideOfLoop(inAfter.result) shouldBe false
     }
 
-  it should "not hold for a detached value" in
+  it should "error out for a detached value" in
     withClue("A value with no owner is conservatively taken to be inside: ") {
       val loop = SingleRegionLoopOp(Region(Block()))
-      loop.isDefinedOutsideOfLoop(Value(i32)) shouldBe false
+      an[Exception] should be thrownBy loop.isDefinedOutsideOfLoop(Value(i32))
     }
 
   "moveOutOfLoop" should "move an operation to just before the loop" in {
