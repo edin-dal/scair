@@ -111,10 +111,7 @@ trait LoopLike(val loopRegions: Region*) extends Operation:
 
 object LoopLike:
 
-  def unapply(op: Operation): Option[Seq[Region]] =
-    op match
-      case l: LoopLike => Some(l.loopRegions)
-      case _           => None
+  def unapply(op: LoopLike): Tuple1[Seq[Region]] = Tuple1(op.loopRegions)
 
 trait Symbol extends Operation:
   def sym_name: StringData
