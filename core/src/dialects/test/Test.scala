@@ -100,9 +100,33 @@ case class RegionYieldOp(
     with AssemblyFormat["$result `:` type($result) attr-dict"]
     with IsTerminator
     with Pure derives OpDefs
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||       ENUM TEST OPS         ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** A standalone enum attribute, i.e., one that is an attribute in its own right
+  * rather than being backed by an integer one. Mirrors upstream's
+  * `Arith_RoundingModeAttr`, keyword for keyword, under the test namespace.
+  */
+enum RoundingMode(caseName: String)
+    extends EnumAttr("test.rounding_mode", caseName):
+  case ToNearestEven extends RoundingMode("to_nearest_even")
+  case Downward extends RoundingMode("downward")
+  case Upward extends RoundingMode("upward")
+  case TowardZero extends RoundingMode("toward_zero")
+  case ToNearestAway extends RoundingMode("to_nearest_away")
+
+/** Op used to test standalone enum attributes, as a required and as an optional
+  * property.
+  */
+case class RoundingModeOp(
+    result: Result[IntegerType],
+    mode: RoundingMode,
+    fallbackMode: Option[RoundingMode] = None,
+) extends DerivedOperation["test.rounding_mode_op"] derives OpDefs
 
 val Test: Dialect = summonDialect[
-  EmptyTuple,
+  Tuple1[RoundingMode],
   (
       TestOp,
       AlwaysSpeculatableOp,
@@ -110,5 +134,6 @@ val Test: Dialect = summonDialect[
       ConditionallySpeculatableOp,
       RecursivelySpeculatableOp,
       RegionYieldOp,
+      RoundingModeOp,
   ),
 ]

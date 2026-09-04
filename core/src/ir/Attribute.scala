@@ -60,6 +60,20 @@ trait IntegerEnumAttr extends Attribute:
   override def customPrint(p: Printer): Unit =
     p.print(ordinalIntAttr)
 
+object EnumAttr:
+
+  inline given enumAttrCompanion[E <: EnumAttr]: AttributeCompanion[E] =
+    scair.enums.EnumAttrCompanion[E](scair.enums.enumValues[E].toSeq)
+
+abstract class EnumAttr(val enumName: String, val caseName: String)
+    extends Attribute
+    with scala.reflect.Enum:
+
+  override def name: String = enumName
+
+  override def printParameters(p: Printer): Unit =
+    p.print("<", caseName, ">")
+
 abstract trait ParametrizedAttribute() extends Attribute:
 
   def parameters: Seq[Attribute]

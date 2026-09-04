@@ -695,7 +695,7 @@ def tryConstruct[T: Type](
       opDef.properties.map {
         case OpPropertyDef(name, tpe, variadicity, _, defaultValue) =>
           val namedArg = tpe match
-            case '[type t <: scala.reflect.Enum; `t`] =>
+            case '[type t <: scala.reflect.Enum & IntegerEnumAttr; `t`] =>
               val property = variadicity match
                 case Variadicity.Optional =>
                   enumFromPropertyOption[t](
