@@ -59,7 +59,7 @@ case class Copy(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    cast: Option[TypeFn] = None,
+    cast: Option[TypeFn] = Some(TypeFn.cast_signed),
     region: Region,
 ) extends DerivedOperation["linalg.copy"]
     with LinalgStructuredBase derives OpDefs

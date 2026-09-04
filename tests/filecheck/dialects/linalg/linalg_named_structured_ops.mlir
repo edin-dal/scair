@@ -22,7 +22,7 @@
 //     default all-ones values would not round-trip today.
 
 %copy_a0, %copy_a1 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
-%copy = "linalg.copy"(%copy_a0, %copy_a1) <{operandSegmentSizes = array<i32: 1, 1>, cast = 0 : i32}> ({
+%copy = "linalg.copy"(%copy_a0, %copy_a1) <{operandSegmentSizes = array<i32: 1, 1>, cast = #linalg.type_fn<cast_unsigned>}> ({
 ^bb0(%copy_b0: f32, %copy_b1: f32):
   "linalg.yield"(%copy_b0) : (f32) -> ()
 }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> (tensor<4x8xf32>)
@@ -509,7 +509,7 @@
 
 // CHECK:      builtin.module {
 // CHECK-NEXT:   %0, %1 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
-// CHECK-NEXT:   %2 = "linalg.copy"(%0, %1) <{operandSegmentSizes = array<i32: 1, 1>, cast = 0 : i32}> ({
+// CHECK-NEXT:   %2 = "linalg.copy"(%0, %1) <{operandSegmentSizes = array<i32: 1, 1>, cast = #linalg.type_fn<cast_unsigned>}> ({
 // CHECK-NEXT:   ^bb0(%3: f32, %4: f32):
 // CHECK-NEXT:     linalg.yield %3 : f32
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
