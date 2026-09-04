@@ -9,6 +9,7 @@ import scair.passes.cdt.TestReplacementPass
 import scair.passes.convert_arith_to_llvm.ConvertArithToLLVM
 import scair.passes.convert_func_to_llvm.ConvertFuncToLLVM
 import scair.passes.cse.CommonSubexpressionElimination
+import scair.passes.licm.LoopInvariantCodeMotion
 import scair.passes.reconcile.ReconcileUnrealizedCasts
 import scair.transformations.ModulePass
 
@@ -39,4 +40,5 @@ val allPasses: Seq[MLContext => ModulePass] =
     TestInsertionPass(_),
     TestReplacementPass(_),
     Canonicalize(_),
+    LoopInvariantCodeMotion(_),
   )
