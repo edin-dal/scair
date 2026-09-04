@@ -27,14 +27,11 @@ trait LinalgStructuredBase
     extends Operation,
       SingleBlockImplicitYieldTerminator,
       MemoryEffectsOpInterface,
-      ConditionallySpeculatable,
+      RecursivelySpeculatable,
       RecursiveMemoryEffects,
       DestinationStyleOpInterface,
       LinalgStructuredInterface,
-      ReifyRankedShapedTypeOpInterface:
-
-  def getSpeculatability: Speculatability =
-    Speculatability.RecursivelySpeculatable
+      ReifyRankedShapedTypeOpInterface
 
 /*≡==--=≡≡≡≡≡≡=--=≡≡*\
 ||    GENERIC OP    ||

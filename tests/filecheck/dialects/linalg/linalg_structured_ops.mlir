@@ -80,14 +80,14 @@
 }) : (tensor<4x8xf32>, tensor<4x8x2xf32>) -> tensor<4x8x2xf32>
 
 // linalg.elementwise. `kind` is an ElementwiseKind ordinal: 13 is `add`.
-%ew = "linalg.elementwise"(%t, %t, %tb) <{kind = 13 : i32, operandSegmentSizes = array<i32: 2, 1>}> ({
+%ew = "linalg.elementwise"(%t, %t, %tb) <{kind = #linalg.elementwise_kind<add>, operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%a: f32, %b: f32, %c: f32):
   linalg.yield %a : f32
 }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 
 // ... and with explicit indexing maps.
 %ew2 = "linalg.elementwise"(%t, %tb) <{
-  kind = 0 : i32,
+  kind = #linalg.elementwise_kind<exp>,
   indexing_maps = [affine_map<(d0, d1) -> (d0, d1)>, affine_map<(d0, d1) -> (d0, d1)>],
   operandSegmentSizes = array<i32: 1, 1>
 }> ({
@@ -105,7 +105,7 @@
 // ... and with both spelled out. `cast = 1` is TypeFn::cast_unsigned.
 %mm2 = "linalg.matmul"(%lhs, %rhs, %acc) <{
   indexing_maps = [affine_map<(d0, d1, d2) -> (d0, d2)>, affine_map<(d0, d1, d2) -> (d2, d1)>, affine_map<(d0, d1, d2) -> (d0, d1)>],
-  cast = 1 : i32,
+  cast = #linalg.type_fn<cast_unsigned>,
   operandSegmentSizes = array<i32: 2, 1>
 }> ({
 ^bb0(%a: f32, %b: f32, %c: f32):
@@ -172,11 +172,11 @@
 // CHECK-NEXT:   ^bb0(%14: f32, %15: f32):
 // CHECK-NEXT:     linalg.yield %14 : f32
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8x2xf32>) -> tensor<4x8x2xf32>
-// CHECK-NEXT:   %14 = "linalg.elementwise"(%0, %0, %1) <{kind = 13 : i32, operandSegmentSizes = array<i32: 2, 1>}> ({
+// CHECK-NEXT:   %14 = "linalg.elementwise"(%0, %0, %1) <{kind = #linalg.elementwise_kind<add>, operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%15: f32, %16: f32, %17: f32):
 // CHECK-NEXT:     linalg.yield %15 : f32
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
-// CHECK-NEXT:   %15 = "linalg.elementwise"(%0, %1) <{kind = 0 : i32, operandSegmentSizes = array<i32: 1, 1>, indexing_maps = [#map, #map]}> ({
+// CHECK-NEXT:   %15 = "linalg.elementwise"(%0, %1) <{kind = #linalg.elementwise_kind<exp>, operandSegmentSizes = array<i32: 1, 1>, indexing_maps = [#map, #map]}> ({
 // CHECK-NEXT:   ^bb0(%16: f32, %17: f32):
 // CHECK-NEXT:     linalg.yield %16 : f32
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
@@ -185,7 +185,7 @@
 // CHECK-NEXT:   ^bb0(%20: f32, %21: f32, %22: f32):
 // CHECK-NEXT:     linalg.yield %20 : f32
 // CHECK-NEXT:   }) : (tensor<4x16xf32>, tensor<16x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
-// CHECK-NEXT:   %20 = "linalg.matmul"(%16, %17, %18) <{operandSegmentSizes = array<i32: 2, 1>, indexing_maps = [#map1, #map2, #map3], cast = 1 : i32}> ({
+// CHECK-NEXT:   %20 = "linalg.matmul"(%16, %17, %18) <{operandSegmentSizes = array<i32: 2, 1>, indexing_maps = [#map1, #map2, #map3], cast = #linalg.type_fn<cast_unsigned>}> ({
 // CHECK-NEXT:   ^bb0(%21: f32, %22: f32, %23: f32):
 // CHECK-NEXT:     linalg.yield %21 : f32
 // CHECK-NEXT:   }) : (tensor<4x16xf32>, tensor<16x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>

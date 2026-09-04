@@ -10,7 +10,14 @@ import scair.clair.*
 // ╚══════╝ ╚═╝ ╚═╝░░╚══╝ ╚═╝░░╚═╝ ╚══════╝ ░╚═════╝░
 
 val LinalgDialect = summonDialect[
-  EmptyTuple,
+  (
+      ElementwiseKind,
+      UnaryFn,
+      BinaryFn,
+      TernaryFn,
+      TypeFn,
+      IteratorType,
+  ),
   (
       Yield,
       Index,

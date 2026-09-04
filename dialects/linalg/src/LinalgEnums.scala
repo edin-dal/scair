@@ -1,6 +1,7 @@
 package scair.dialects.linalg
 
-import scair.enums.*
+import scair.ir.EnumAttr
+import scair.enums.I32Enum
 
 // ██╗░░░░░ ██╗ ███╗░░██╗ ░█████╗░ ██╗░░░░░ ░██████╗░
 // ██║░░░░░ ██║ ████╗░██║ ██╔══██╗ ██║░░░░░ ██╔════╝░
@@ -16,6 +17,11 @@ import scair.enums.*
 // ███████╗ ██║░╚███║ ╚██████╔╝ ██║░╚═╝░██║ ██████╔╝
 // ╚══════╝ ╚═╝░░╚══╝ ░╚═════╝░ ╚═╝░░░░░╚═╝ ╚═════╝░
 
+// enum Shade(caseName: String) extends EnumAttr("enum.shade", caseName):
+//   case Pale extends Shade("pale")
+//   case Vivid extends Shade("vivid")
+//   case Dark extends Shade("dark")
+
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||     UNARY FN      ||
 \*≡==---==≡≡≡==---==≡*/
@@ -23,7 +29,7 @@ import scair.enums.*
 /** Function attribute enum matching the OpDSL unary functions. Ported from
   * MLIR's `UnaryFn` in `LinalgEnums.td`.
   */
-enum UnaryFn(name: String) extends I32Enum(name):
+enum UnaryFn(name: String) extends EnumAttr("linalg.unary_fn", name):
   case exp extends UnaryFn("exp")
   case log extends UnaryFn("log")
   case abs extends UnaryFn("abs")
@@ -45,7 +51,7 @@ enum UnaryFn(name: String) extends I32Enum(name):
 /** Function attribute enum matching the OpDSL binary functions. Ported from
   * MLIR's `BinaryFn` in `LinalgEnums.td`.
   */
-enum BinaryFn(name: String) extends I32Enum(name):
+enum BinaryFn(name: String) extends EnumAttr("linalg.binary_fn", name):
   case add extends BinaryFn("add")
   case sub extends BinaryFn("sub")
   case mul extends BinaryFn("mul")
@@ -64,7 +70,7 @@ enum BinaryFn(name: String) extends I32Enum(name):
 /** Function attribute enum matching the OpDSL ternary functions. Ported from
   * MLIR's `TernaryFn` in `LinalgEnums.td`.
   */
-enum TernaryFn(name: String) extends I32Enum(name):
+enum TernaryFn(name: String) extends EnumAttr("linalg.ternary_fn", name):
   case select extends TernaryFn("select")
 
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
@@ -76,7 +82,8 @@ enum TernaryFn(name: String) extends I32Enum(name):
   * offsets chosen so that the numeric values do not overlap; the concatenation
   * is spelled out here since ScaIR has no equivalent of TableGen's `!foldl`.
   */
-enum ElementwiseKind(name: String) extends I32Enum(name):
+enum ElementwiseKind(name: String)
+    extends EnumAttr("linalg.elementwise_kind", name):
   // UnaryFn cases, offset 0
   case exp extends ElementwiseKind("exp")
   case log extends ElementwiseKind("log")
@@ -105,30 +112,6 @@ enum ElementwiseKind(name: String) extends I32Enum(name):
   // TernaryFn cases, offset 23
   case select extends ElementwiseKind("select")
 
-/** Marks where each individual enum class ends within [[ElementwiseKind]].
-  * Upstream these values are computed from the case list sizes; they are
-  * spelled out here for the same reason as above.
-  */
-enum ElementwiseCaseLimits(name: String) extends I32Enum(name):
-  case LastUnary extends ElementwiseCaseLimits("LastUnary")
-  case LastBinary extends ElementwiseCaseLimits("LastBinary")
-  case LastTernary extends ElementwiseCaseLimits("LastTernary")
-
-  val LastUnary: Int = UnaryFn.values.length
-  val LastBinary: Int = LastUnary + BinaryFn.values.length
-  val LastTernary: Int = LastBinary + TernaryFn.values.length
-
-/** Categorises the arity of element-wise ops. Note that, unlike the other enums
-  * here, upstream numbers these from 1, so the ordinal is off by one; [[arity]]
-  * gives the upstream value.
-  */
-enum ElementwiseArityGroup(name: String) extends I32Enum(name):
-  case Unary extends ElementwiseArityGroup("Unary")
-  case Binary extends ElementwiseArityGroup("Binary")
-  case Ternary extends ElementwiseArityGroup("Ternary")
-
-  def arity: Int = ordinal + 1
-
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||      TYPE FN      ||
 \*≡==---==≡≡≡==---==≡*/
@@ -136,7 +119,7 @@ enum ElementwiseArityGroup(name: String) extends I32Enum(name):
 /** Function attribute enum matching the OpDSL type conversion functions. Ported
   * from MLIR's `TypeFn` in `LinalgEnums.td`.
   */
-enum TypeFn(name: String) extends I32Enum(name):
+enum TypeFn(name: String) extends EnumAttr("linalg.type_fn", name):
   case cast_signed extends TypeFn("cast_signed")
   case cast_unsigned extends TypeFn("cast_unsigned")
 
@@ -162,7 +145,7 @@ enum WinogradConv2DFmr(name: String) extends I32Enum(name):
   * itself, but only ever surfaced through `linalg.generic`'s `iterator_types`,
   * so it is ported here.
   */
-enum IteratorType(name: String) extends I32Enum(name):
+enum IteratorType(name: String) extends EnumAttr("linalg.iterator_type", name):
   case parallel extends IteratorType("parallel")
   case reduction extends IteratorType("reduction")
   case window extends IteratorType("window")
