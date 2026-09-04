@@ -32,6 +32,7 @@ trait IRNode:
       case Some(p) => p.topLevel
       case None    => this
 
+  // checks if this node is an ancestor of the other node
   final def isAncestor(other: IRNode): Boolean =
     other.parent match
       case Some(parent) if parent == this => true

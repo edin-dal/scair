@@ -22,6 +22,11 @@ import scala.collection.mutable.Queue
 // ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░
 //
 
+extension (op: Operation)
+
+  def nested: Seq[Operation] =
+    op.regions.flatMap(_.blocks.flatMap(_.operations))
+
 /** The core LICM algorithm, mirroring
   * `mlir/lib/Transforms/Utils/LoopInvariantCodeMotionUtils.cpp`.
   */
@@ -42,11 +47,9 @@ def canBeHoisted(
       // defined outside of the loop or in a nested region, but not at the level
       // of the loop body.
       def walk(child: Operation): Boolean =
-        child.operands
-          .forall(operand =>
-            // Values defined in a region nested under `op` travel with it.
-            operand.owner.exists(op.isAncestor) || definedOutside(operand)
-          ) && child.nested.forall(walk)
+        child.operands.forall(operand =>
+          operand.owner.exists(op.isAncestor) || definedOutside(operand)
+        ) && child.nested.forall(walk) // nested operations must be hoistable
       walk(op)
 
 /** Whether `node` sits directly in `region`. Compared by identity, as regions
