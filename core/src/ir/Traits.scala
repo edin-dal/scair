@@ -103,7 +103,7 @@ trait LoopLike(val loopRegions: Region*) extends Operation:
     value.owner match
       case Some(owner) => !loopRegions.exists(_.isAncestor(owner))
       // A detached value is conservatively taken to be inside.
-      case None => false
+      case None => throw new Exception("Value has no owner")
 
   /** Move `op` out of the loop, to just before it. */
   def moveOutOfLoop(op: Operation)(using rewriter: Rewriter): Unit =
@@ -111,10 +111,7 @@ trait LoopLike(val loopRegions: Region*) extends Operation:
 
 object LoopLike:
 
-  def unapply(op: Operation): Option[Seq[Region]] =
-    op match
-      case l: LoopLike => Some(l.loopRegions)
-      case _           => None
+  def unapply(op: LoopLike): Tuple1[Seq[Region]] = Tuple1(op.loopRegions)
 
 trait Symbol extends Operation:
   def sym_name: StringData
