@@ -20,6 +20,11 @@
 //   * All-equal dense attributes are additionally collapsed to a splat on print
 //     (`dense<[1, 1]>` prints as `dense<1>`), which is a second reason the
 //     default all-ones values would not round-trip today.
+//
+// The contraction ops (mmt4d, batch_mmt4d, matvec, vecmat, batch_matvec,
+// batch_vecmat and dot) carry a real multiply-accumulate body rather than a
+// trivial yield: MLIR's ContractionOpInterface verifier rejects anything else
+// with "expected add/mul op in the body". Every other op keeps the trivial body.
 
 %copy_a0, %copy_a1 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 %copy = "linalg.copy"(%copy_a0, %copy_a1) <{operandSegmentSizes = array<i32: 1, 1>, cast = #linalg.type_fn<cast_unsigned>}> ({
@@ -168,13 +173,17 @@
 %mmt4d_a0, %mmt4d_a1, %mmt4d_a2 = "test.op"() : () -> (tensor<2x4x5x7xf32>, tensor<3x4x6x7xf32>, tensor<2x3x5x6xf32>)
 %mmt4d = "linalg.mmt4d"(%mmt4d_a0, %mmt4d_a1, %mmt4d_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%mmt4d_b0: f32, %mmt4d_b1: f32, %mmt4d_b2: f32):
-  "linalg.yield"(%mmt4d_b0) : (f32) -> ()
+  %mmt4d_p0 = "arith.mulf"(%mmt4d_b0, %mmt4d_b1) : (f32, f32) -> f32
+  %mmt4d_p1 = "arith.addf"(%mmt4d_b2, %mmt4d_p0) : (f32, f32) -> f32
+  "linalg.yield"(%mmt4d_p1) : (f32) -> ()
 }) : (tensor<2x4x5x7xf32>, tensor<3x4x6x7xf32>, tensor<2x3x5x6xf32>) -> (tensor<2x3x5x6xf32>)
 
 %batch_mmt4d_a0, %batch_mmt4d_a1, %batch_mmt4d_a2 = "test.op"() : () -> (tensor<2x3x5x6x8xf32>, tensor<2x4x5x7x8xf32>, tensor<2x3x4x6x7xf32>)
 %batch_mmt4d = "linalg.batch_mmt4d"(%batch_mmt4d_a0, %batch_mmt4d_a1, %batch_mmt4d_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%batch_mmt4d_b0: f32, %batch_mmt4d_b1: f32, %batch_mmt4d_b2: f32):
-  "linalg.yield"(%batch_mmt4d_b0) : (f32) -> ()
+  %batch_mmt4d_p0 = "arith.mulf"(%batch_mmt4d_b0, %batch_mmt4d_b1) : (f32, f32) -> f32
+  %batch_mmt4d_p1 = "arith.addf"(%batch_mmt4d_b2, %batch_mmt4d_p0) : (f32, f32) -> f32
+  "linalg.yield"(%batch_mmt4d_p1) : (f32) -> ()
 }) : (tensor<2x3x5x6x8xf32>, tensor<2x4x5x7x8xf32>, tensor<2x3x4x6x7xf32>) -> (tensor<2x3x4x6x7xf32>)
 
 %quantized_batch_matmul_a0, %quantized_batch_matmul_a1, %quantized_batch_matmul_a2, %quantized_batch_matmul_a3, %quantized_batch_matmul_a4 = "test.op"() : () -> (tensor<2x3x5xi32>, tensor<2x5x4xi32>, i32, i32, tensor<2x3x4xi32>)
@@ -186,32 +195,42 @@
 %matvec_a0, %matvec_a1, %matvec_a2 = "test.op"() : () -> (tensor<2x3xf32>, tensor<3xf32>, tensor<2xf32>)
 %matvec = "linalg.matvec"(%matvec_a0, %matvec_a1, %matvec_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%matvec_b0: f32, %matvec_b1: f32, %matvec_b2: f32):
-  "linalg.yield"(%matvec_b0) : (f32) -> ()
+  %matvec_p0 = "arith.mulf"(%matvec_b0, %matvec_b1) : (f32, f32) -> f32
+  %matvec_p1 = "arith.addf"(%matvec_b2, %matvec_p0) : (f32, f32) -> f32
+  "linalg.yield"(%matvec_p1) : (f32) -> ()
 }) : (tensor<2x3xf32>, tensor<3xf32>, tensor<2xf32>) -> (tensor<2xf32>)
 
 %vecmat_a0, %vecmat_a1, %vecmat_a2 = "test.op"() : () -> (tensor<3xf32>, tensor<3x2xf32>, tensor<2xf32>)
 %vecmat = "linalg.vecmat"(%vecmat_a0, %vecmat_a1, %vecmat_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%vecmat_b0: f32, %vecmat_b1: f32, %vecmat_b2: f32):
-  "linalg.yield"(%vecmat_b0) : (f32) -> ()
+  %vecmat_p0 = "arith.mulf"(%vecmat_b0, %vecmat_b1) : (f32, f32) -> f32
+  %vecmat_p1 = "arith.addf"(%vecmat_b2, %vecmat_p0) : (f32, f32) -> f32
+  "linalg.yield"(%vecmat_p1) : (f32) -> ()
 }) : (tensor<3xf32>, tensor<3x2xf32>, tensor<2xf32>) -> (tensor<2xf32>)
 
 %batch_matvec_a0, %batch_matvec_a1, %batch_matvec_a2 = "test.op"() : () -> (tensor<2x3x4xf32>, tensor<2x4xf32>, tensor<2x3xf32>)
 %batch_matvec = "linalg.batch_matvec"(%batch_matvec_a0, %batch_matvec_a1, %batch_matvec_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%batch_matvec_b0: f32, %batch_matvec_b1: f32, %batch_matvec_b2: f32):
-  "linalg.yield"(%batch_matvec_b0) : (f32) -> ()
+  %batch_matvec_p0 = "arith.mulf"(%batch_matvec_b0, %batch_matvec_b1) : (f32, f32) -> f32
+  %batch_matvec_p1 = "arith.addf"(%batch_matvec_b2, %batch_matvec_p0) : (f32, f32) -> f32
+  "linalg.yield"(%batch_matvec_p1) : (f32) -> ()
 }) : (tensor<2x3x4xf32>, tensor<2x4xf32>, tensor<2x3xf32>) -> (tensor<2x3xf32>)
 
 %batch_vecmat_a0, %batch_vecmat_a1, %batch_vecmat_a2 = "test.op"() : () -> (tensor<2x4xf32>, tensor<2x4x3xf32>, tensor<2x3xf32>)
 %batch_vecmat = "linalg.batch_vecmat"(%batch_vecmat_a0, %batch_vecmat_a1, %batch_vecmat_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%batch_vecmat_b0: f32, %batch_vecmat_b1: f32, %batch_vecmat_b2: f32):
-  "linalg.yield"(%batch_vecmat_b0) : (f32) -> ()
+  %batch_vecmat_p0 = "arith.mulf"(%batch_vecmat_b0, %batch_vecmat_b1) : (f32, f32) -> f32
+  %batch_vecmat_p1 = "arith.addf"(%batch_vecmat_b2, %batch_vecmat_p0) : (f32, f32) -> f32
+  "linalg.yield"(%batch_vecmat_p1) : (f32) -> ()
 }) : (tensor<2x4xf32>, tensor<2x4x3xf32>, tensor<2x3xf32>) -> (tensor<2x3xf32>)
 
-%dot_a0, %dot_a1, %dot_a2 = "test.op"() : () -> (tensor<2xf32>, tensor<2xf32>, tensor<4x8xf32>)
+%dot_a0, %dot_a1, %dot_a2 = "test.op"() : () -> (tensor<2xf32>, tensor<2xf32>, tensor<f32>)
 %dot = "linalg.dot"(%dot_a0, %dot_a1, %dot_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 ^bb0(%dot_b0: f32, %dot_b1: f32, %dot_b2: f32):
-  "linalg.yield"(%dot_b0) : (f32) -> ()
-}) : (tensor<2xf32>, tensor<2xf32>, tensor<4x8xf32>) -> (tensor<4x8xf32>)
+  %dot_p0 = "arith.mulf"(%dot_b0, %dot_b1) : (f32, f32) -> f32
+  %dot_p1 = "arith.addf"(%dot_b2, %dot_p0) : (f32, f32) -> f32
+  "linalg.yield"(%dot_p1) : (f32) -> ()
+}) : (tensor<2xf32>, tensor<2xf32>, tensor<f32>) -> (tensor<f32>)
 
 %conv_1d_a0, %conv_1d_a1, %conv_1d_a2 = "test.op"() : () -> (tensor<4xf32>, tensor<3xf32>, tensor<2xf32>)
 %conv_1d = "linalg.conv_1d"(%conv_1d_a0, %conv_1d_a1, %conv_1d_a2) <{operandSegmentSizes = array<i32: 2, 1>}> ({
@@ -631,12 +650,16 @@
 // CHECK-NEXT:   %85, %86, %87 = "test.op"() : () -> (tensor<2x4x5x7xf32>, tensor<3x4x6x7xf32>, tensor<2x3x5x6xf32>)
 // CHECK-NEXT:   %88 = "linalg.mmt4d"(%85, %86, %87) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%89: f32, %90: f32, %91: f32):
-// CHECK-NEXT:     "linalg.yield"(%89) : (f32) -> ()
+// CHECK-NEXT:     %92 = "arith.mulf"(%89, %90) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %93 = "arith.addf"(%91, %92) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%93) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x4x5x7xf32>, tensor<3x4x6x7xf32>, tensor<2x3x5x6xf32>) -> tensor<2x3x5x6xf32>
 // CHECK-NEXT:   %89, %90, %91 = "test.op"() : () -> (tensor<2x3x5x6x8xf32>, tensor<2x4x5x7x8xf32>, tensor<2x3x4x6x7xf32>)
 // CHECK-NEXT:   %92 = "linalg.batch_mmt4d"(%89, %90, %91) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%93: f32, %94: f32, %95: f32):
-// CHECK-NEXT:     "linalg.yield"(%93) : (f32) -> ()
+// CHECK-NEXT:     %96 = "arith.mulf"(%93, %94) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %97 = "arith.addf"(%95, %96) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%97) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x5x6x8xf32>, tensor<2x4x5x7x8xf32>, tensor<2x3x4x6x7xf32>) -> tensor<2x3x4x6x7xf32>
 // CHECK-NEXT:   %93, %94, %95, %96, %97 = "test.op"() : () -> (tensor<2x3x5xi32>, tensor<2x5x4xi32>, i32, i32, tensor<2x3x4xi32>)
 // CHECK-NEXT:   %98 = "linalg.quantized_batch_matmul"(%93, %94, %95, %96, %97) <{operandSegmentSizes = array<i32: 4, 1>}> ({
@@ -646,28 +669,38 @@
 // CHECK-NEXT:   %99, %100, %101 = "test.op"() : () -> (tensor<2x3xf32>, tensor<3xf32>, tensor<2xf32>)
 // CHECK-NEXT:   %102 = "linalg.matvec"(%99, %100, %101) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%103: f32, %104: f32, %105: f32):
-// CHECK-NEXT:     "linalg.yield"(%103) : (f32) -> ()
+// CHECK-NEXT:     %106 = "arith.mulf"(%103, %104) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %107 = "arith.addf"(%105, %106) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%107) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3xf32>, tensor<3xf32>, tensor<2xf32>) -> tensor<2xf32>
 // CHECK-NEXT:   %103, %104, %105 = "test.op"() : () -> (tensor<3xf32>, tensor<3x2xf32>, tensor<2xf32>)
 // CHECK-NEXT:   %106 = "linalg.vecmat"(%103, %104, %105) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%107: f32, %108: f32, %109: f32):
-// CHECK-NEXT:     "linalg.yield"(%107) : (f32) -> ()
+// CHECK-NEXT:     %110 = "arith.mulf"(%107, %108) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %111 = "arith.addf"(%109, %110) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%111) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<3xf32>, tensor<3x2xf32>, tensor<2xf32>) -> tensor<2xf32>
 // CHECK-NEXT:   %107, %108, %109 = "test.op"() : () -> (tensor<2x3x4xf32>, tensor<2x4xf32>, tensor<2x3xf32>)
 // CHECK-NEXT:   %110 = "linalg.batch_matvec"(%107, %108, %109) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%111: f32, %112: f32, %113: f32):
-// CHECK-NEXT:     "linalg.yield"(%111) : (f32) -> ()
+// CHECK-NEXT:     %114 = "arith.mulf"(%111, %112) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %115 = "arith.addf"(%113, %114) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%115) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x4xf32>, tensor<2x4xf32>, tensor<2x3xf32>) -> tensor<2x3xf32>
 // CHECK-NEXT:   %111, %112, %113 = "test.op"() : () -> (tensor<2x4xf32>, tensor<2x4x3xf32>, tensor<2x3xf32>)
 // CHECK-NEXT:   %114 = "linalg.batch_vecmat"(%111, %112, %113) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%115: f32, %116: f32, %117: f32):
-// CHECK-NEXT:     "linalg.yield"(%115) : (f32) -> ()
+// CHECK-NEXT:     %118 = "arith.mulf"(%115, %116) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %119 = "arith.addf"(%117, %118) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%119) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x4xf32>, tensor<2x4x3xf32>, tensor<2x3xf32>) -> tensor<2x3xf32>
-// CHECK-NEXT:   %115, %116, %117 = "test.op"() : () -> (tensor<2xf32>, tensor<2xf32>, tensor<4x8xf32>)
+// CHECK-NEXT:   %115, %116, %117 = "test.op"() : () -> (tensor<2xf32>, tensor<2xf32>, tensor<f32>)
 // CHECK-NEXT:   %118 = "linalg.dot"(%115, %116, %117) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%119: f32, %120: f32, %121: f32):
-// CHECK-NEXT:     "linalg.yield"(%119) : (f32) -> ()
-// CHECK-NEXT:   }) : (tensor<2xf32>, tensor<2xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
+// CHECK-NEXT:     %122 = "arith.mulf"(%119, %120) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %123 = "arith.addf"(%121, %122) <{fastmath = #arith.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     "linalg.yield"(%123) : (f32) -> ()
+// CHECK-NEXT:   }) : (tensor<2xf32>, tensor<2xf32>, tensor<f32>) -> tensor<f32>
 // CHECK-NEXT:   %119, %120, %121 = "test.op"() : () -> (tensor<4xf32>, tensor<3xf32>, tensor<2xf32>)
 // CHECK-NEXT:   %122 = "linalg.conv_1d"(%119, %120, %121) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%123: f32, %124: f32, %125: f32):
