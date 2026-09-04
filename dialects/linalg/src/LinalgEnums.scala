@@ -1,7 +1,7 @@
 package scair.dialects.linalg
 
-import scair.ir.EnumAttr
 import scair.enums.I32Enum
+import scair.ir.EnumAttr
 
 // ██╗░░░░░ ██╗ ███╗░░██╗ ░█████╗░ ██╗░░░░░ ░██████╗░
 // ██║░░░░░ ██║ ████╗░██║ ██╔══██╗ ██║░░░░░ ██╔════╝░
