@@ -511,406 +511,406 @@
 // CHECK-NEXT:   %0, %1 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %2 = "linalg.copy"(%0, %1) <{operandSegmentSizes = array<i32: 1, 1>, cast = #linalg.type_fn<cast_unsigned>}> ({
 // CHECK-NEXT:   ^bb0(%3: f32, %4: f32):
-// CHECK-NEXT:     linalg.yield %3 : f32
+// CHECK-NEXT:     "linalg.yield"(%3) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %3, %4 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %5 = "linalg.exp"(%3, %4) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%6: f32, %7: f32):
-// CHECK-NEXT:     linalg.yield %6 : f32
+// CHECK-NEXT:     "linalg.yield"(%6) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %6, %7 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %8 = "linalg.log"(%6, %7) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%9: f32, %10: f32):
-// CHECK-NEXT:     linalg.yield %9 : f32
+// CHECK-NEXT:     "linalg.yield"(%9) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %9, %10 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %11 = "linalg.abs"(%9, %10) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%12: f32, %13: f32):
-// CHECK-NEXT:     linalg.yield %12 : f32
+// CHECK-NEXT:     "linalg.yield"(%12) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %12, %13 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %14 = "linalg.ceil"(%12, %13) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%15: f32, %16: f32):
-// CHECK-NEXT:     linalg.yield %15 : f32
+// CHECK-NEXT:     "linalg.yield"(%15) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %15, %16 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %17 = "linalg.floor"(%15, %16) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%18: f32, %19: f32):
-// CHECK-NEXT:     linalg.yield %18 : f32
+// CHECK-NEXT:     "linalg.yield"(%18) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %18, %19 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %20 = "linalg.negf"(%18, %19) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%21: f32, %22: f32):
-// CHECK-NEXT:     linalg.yield %21 : f32
+// CHECK-NEXT:     "linalg.yield"(%21) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %21, %22 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %23 = "linalg.reciprocal"(%21, %22) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%24: f32, %25: f32):
-// CHECK-NEXT:     linalg.yield %24 : f32
+// CHECK-NEXT:     "linalg.yield"(%24) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %24, %25 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %26 = "linalg.round"(%24, %25) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%27: f32, %28: f32):
-// CHECK-NEXT:     linalg.yield %27 : f32
+// CHECK-NEXT:     "linalg.yield"(%27) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %27, %28 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %29 = "linalg.sqrt"(%27, %28) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%30: f32, %31: f32):
-// CHECK-NEXT:     linalg.yield %30 : f32
+// CHECK-NEXT:     "linalg.yield"(%30) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %30, %31 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %32 = "linalg.rsqrt"(%30, %31) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%33: f32, %34: f32):
-// CHECK-NEXT:     linalg.yield %33 : f32
+// CHECK-NEXT:     "linalg.yield"(%33) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %33, %34 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %35 = "linalg.square"(%33, %34) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%36: f32, %37: f32):
-// CHECK-NEXT:     linalg.yield %36 : f32
+// CHECK-NEXT:     "linalg.yield"(%36) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %36, %37 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %38 = "linalg.tanh"(%36, %37) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%39: f32, %40: f32):
-// CHECK-NEXT:     linalg.yield %39 : f32
+// CHECK-NEXT:     "linalg.yield"(%39) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %39, %40 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %41 = "linalg.erf"(%39, %40) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%42: f32, %43: f32):
-// CHECK-NEXT:     linalg.yield %42 : f32
+// CHECK-NEXT:     "linalg.yield"(%42) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %42, %43, %44 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %45 = "linalg.add"(%42, %43, %44) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%46: f32, %47: f32, %48: f32):
-// CHECK-NEXT:     linalg.yield %46 : f32
+// CHECK-NEXT:     "linalg.yield"(%46) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %46, %47, %48 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %49 = "linalg.sub"(%46, %47, %48) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%50: f32, %51: f32, %52: f32):
-// CHECK-NEXT:     linalg.yield %50 : f32
+// CHECK-NEXT:     "linalg.yield"(%50) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %50, %51, %52 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %53 = "linalg.mul"(%50, %51, %52) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%54: f32, %55: f32, %56: f32):
-// CHECK-NEXT:     linalg.yield %54 : f32
+// CHECK-NEXT:     "linalg.yield"(%54) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %54, %55, %56 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %57 = "linalg.div"(%54, %55, %56) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%58: f32, %59: f32, %60: f32):
-// CHECK-NEXT:     linalg.yield %58 : f32
+// CHECK-NEXT:     "linalg.yield"(%58) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %58, %59, %60 = "test.op"() : () -> (tensor<4x8xi32>, tensor<4x8xi32>, tensor<4x8xi32>)
 // CHECK-NEXT:   %61 = "linalg.div_unsigned"(%58, %59, %60) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%62: i32, %63: i32, %64: i32):
-// CHECK-NEXT:     linalg.yield %62 : i32
+// CHECK-NEXT:     "linalg.yield"(%62) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xi32>, tensor<4x8xi32>, tensor<4x8xi32>) -> tensor<4x8xi32>
 // CHECK-NEXT:   %62, %63, %64 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %65 = "linalg.max"(%62, %63, %64) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%66: f32, %67: f32, %68: f32):
-// CHECK-NEXT:     linalg.yield %66 : f32
+// CHECK-NEXT:     "linalg.yield"(%66) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %66, %67, %68 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %69 = "linalg.min"(%66, %67, %68) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%70: f32, %71: f32, %72: f32):
-// CHECK-NEXT:     linalg.yield %70 : f32
+// CHECK-NEXT:     "linalg.yield"(%70) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %70, %71, %72 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %73 = "linalg.powf"(%70, %71, %72) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%74: f32, %75: f32, %76: f32):
-// CHECK-NEXT:     linalg.yield %74 : f32
+// CHECK-NEXT:     "linalg.yield"(%74) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %74, %75, %76, %77 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %78 = "linalg.select"(%74, %75, %76, %77) <{operandSegmentSizes = array<i32: 3, 1>}> ({
 // CHECK-NEXT:   ^bb0(%79: f32, %80: f32, %81: f32, %82: f32):
-// CHECK-NEXT:     linalg.yield %79 : f32
+// CHECK-NEXT:     "linalg.yield"(%79) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %79, %80, %81, %82, %83 = "test.op"() : () -> (tensor<2x4xi32>, tensor<4x3xi32>, i32, i32, tensor<2x3xi32>)
 // CHECK-NEXT:   %84 = "linalg.quantized_matmul"(%79, %80, %81, %82, %83) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%85: i32, %86: i32, %87: i32, %88: i32, %89: i32):
-// CHECK-NEXT:     linalg.yield %85 : i32
+// CHECK-NEXT:     "linalg.yield"(%85) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x4xi32>, tensor<4x3xi32>, i32, i32, tensor<2x3xi32>) -> tensor<2x3xi32>
 // CHECK-NEXT:   %85, %86, %87 = "test.op"() : () -> (tensor<2x4x5x7xf32>, tensor<3x4x6x7xf32>, tensor<2x3x5x6xf32>)
 // CHECK-NEXT:   %88 = "linalg.mmt4d"(%85, %86, %87) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%89: f32, %90: f32, %91: f32):
-// CHECK-NEXT:     linalg.yield %89 : f32
+// CHECK-NEXT:     "linalg.yield"(%89) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x4x5x7xf32>, tensor<3x4x6x7xf32>, tensor<2x3x5x6xf32>) -> tensor<2x3x5x6xf32>
 // CHECK-NEXT:   %89, %90, %91 = "test.op"() : () -> (tensor<2x3x5x6x8xf32>, tensor<2x4x5x7x8xf32>, tensor<2x3x4x6x7xf32>)
 // CHECK-NEXT:   %92 = "linalg.batch_mmt4d"(%89, %90, %91) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%93: f32, %94: f32, %95: f32):
-// CHECK-NEXT:     linalg.yield %93 : f32
+// CHECK-NEXT:     "linalg.yield"(%93) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x5x6x8xf32>, tensor<2x4x5x7x8xf32>, tensor<2x3x4x6x7xf32>) -> tensor<2x3x4x6x7xf32>
 // CHECK-NEXT:   %93, %94, %95, %96, %97 = "test.op"() : () -> (tensor<2x3x5xi32>, tensor<2x5x4xi32>, i32, i32, tensor<2x3x4xi32>)
 // CHECK-NEXT:   %98 = "linalg.quantized_batch_matmul"(%93, %94, %95, %96, %97) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%99: i32, %100: i32, %101: i32, %102: i32, %103: i32):
-// CHECK-NEXT:     linalg.yield %99 : i32
+// CHECK-NEXT:     "linalg.yield"(%99) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x5xi32>, tensor<2x5x4xi32>, i32, i32, tensor<2x3x4xi32>) -> tensor<2x3x4xi32>
 // CHECK-NEXT:   %99, %100, %101 = "test.op"() : () -> (tensor<2x3xf32>, tensor<3xf32>, tensor<2xf32>)
 // CHECK-NEXT:   %102 = "linalg.matvec"(%99, %100, %101) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%103: f32, %104: f32, %105: f32):
-// CHECK-NEXT:     linalg.yield %103 : f32
+// CHECK-NEXT:     "linalg.yield"(%103) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3xf32>, tensor<3xf32>, tensor<2xf32>) -> tensor<2xf32>
 // CHECK-NEXT:   %103, %104, %105 = "test.op"() : () -> (tensor<3xf32>, tensor<3x2xf32>, tensor<2xf32>)
 // CHECK-NEXT:   %106 = "linalg.vecmat"(%103, %104, %105) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%107: f32, %108: f32, %109: f32):
-// CHECK-NEXT:     linalg.yield %107 : f32
+// CHECK-NEXT:     "linalg.yield"(%107) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<3xf32>, tensor<3x2xf32>, tensor<2xf32>) -> tensor<2xf32>
 // CHECK-NEXT:   %107, %108, %109 = "test.op"() : () -> (tensor<2x3x4xf32>, tensor<2x4xf32>, tensor<2x3xf32>)
 // CHECK-NEXT:   %110 = "linalg.batch_matvec"(%107, %108, %109) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%111: f32, %112: f32, %113: f32):
-// CHECK-NEXT:     linalg.yield %111 : f32
+// CHECK-NEXT:     "linalg.yield"(%111) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x4xf32>, tensor<2x4xf32>, tensor<2x3xf32>) -> tensor<2x3xf32>
 // CHECK-NEXT:   %111, %112, %113 = "test.op"() : () -> (tensor<2x4xf32>, tensor<2x4x3xf32>, tensor<2x3xf32>)
 // CHECK-NEXT:   %114 = "linalg.batch_vecmat"(%111, %112, %113) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%115: f32, %116: f32, %117: f32):
-// CHECK-NEXT:     linalg.yield %115 : f32
+// CHECK-NEXT:     "linalg.yield"(%115) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x4xf32>, tensor<2x4x3xf32>, tensor<2x3xf32>) -> tensor<2x3xf32>
 // CHECK-NEXT:   %115, %116, %117 = "test.op"() : () -> (tensor<2xf32>, tensor<2xf32>, tensor<4x8xf32>)
 // CHECK-NEXT:   %118 = "linalg.dot"(%115, %116, %117) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%119: f32, %120: f32, %121: f32):
-// CHECK-NEXT:     linalg.yield %119 : f32
+// CHECK-NEXT:     "linalg.yield"(%119) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2xf32>, tensor<2xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %119, %120, %121 = "test.op"() : () -> (tensor<4xf32>, tensor<3xf32>, tensor<2xf32>)
 // CHECK-NEXT:   %122 = "linalg.conv_1d"(%119, %120, %121) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%123: f32, %124: f32, %125: f32):
-// CHECK-NEXT:     linalg.yield %123 : f32
+// CHECK-NEXT:     "linalg.yield"(%123) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4xf32>, tensor<3xf32>, tensor<2xf32>) -> tensor<2xf32>
 // CHECK-NEXT:   %123, %124, %125 = "test.op"() : () -> (tensor<5x7xf32>, tensor<4x5xf32>, tensor<2x3xf32>)
 // CHECK-NEXT:   %126 = "linalg.conv_2d"(%123, %124, %125) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%127: f32, %128: f32, %129: f32):
-// CHECK-NEXT:     linalg.yield %127 : f32
+// CHECK-NEXT:     "linalg.yield"(%127) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<5x7xf32>, tensor<4x5xf32>, tensor<2x3xf32>) -> tensor<2x3xf32>
 // CHECK-NEXT:   %127, %128, %129 = "test.op"() : () -> (tensor<6x8x10xf32>, tensor<5x6x7xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %130 = "linalg.conv_3d"(%127, %128, %129) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%131: f32, %132: f32, %133: f32):
-// CHECK-NEXT:     linalg.yield %131 : f32
+// CHECK-NEXT:     "linalg.yield"(%131) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<6x8x10xf32>, tensor<5x6x7xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %131, %132, %133 = "test.op"() : () -> (tensor<2x7x6xf32>, tensor<5x6x4xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %134 = "linalg.conv_1d_nwc_wcf"(%131, %132, %133) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%135: f32, %136: f32, %137: f32):
-// CHECK-NEXT:     linalg.yield %135 : f32
+// CHECK-NEXT:     "linalg.yield"(%135) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x6xf32>, tensor<5x6x4xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %135, %136, %137 = "test.op"() : () -> (tensor<2x5x9xf32>, tensor<3x5x6xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %138 = "linalg.conv_1d_ncw_fcw"(%135, %136, %137) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%139: f32, %140: f32, %141: f32):
-// CHECK-NEXT:     linalg.yield %139 : f32
+// CHECK-NEXT:     "linalg.yield"(%139) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x5x9xf32>, tensor<3x5x6xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %139, %140, %141 = "test.op"() : () -> (tensor<2x8x10x8xf32>, tensor<6x7x8x5xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %142 = "linalg.conv_2d_nhwc_hwcf"(%139, %140, %141) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%143: f32, %144: f32, %145: f32):
-// CHECK-NEXT:     linalg.yield %143 : f32
+// CHECK-NEXT:     "linalg.yield"(%143) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x8xf32>, tensor<6x7x8x5xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %143, %144, %145 = "test.op"() : () -> (tensor<2x8x10x8xf32>, tensor<5x6x7x8xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %146 = "linalg.conv_2d_nhwc_fhwc"(%143, %144, %145) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%147: f32, %148: f32, %149: f32):
-// CHECK-NEXT:     linalg.yield %147 : f32
+// CHECK-NEXT:     "linalg.yield"(%147) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x8xf32>, tensor<5x6x7x8xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %147, %148, %149, %150, %151 = "test.op"() : () -> (tensor<2x8x10x8xi32>, tensor<6x7x8x5xi32>, i32, i32, tensor<2x3x4x5xi32>)
 // CHECK-NEXT:   %152 = "linalg.conv_2d_nhwc_hwcf_q"(%147, %148, %149, %150, %151) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%153: i32, %154: i32, %155: i32, %156: i32, %157: i32):
-// CHECK-NEXT:     linalg.yield %153 : i32
+// CHECK-NEXT:     "linalg.yield"(%153) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x8xi32>, tensor<6x7x8x5xi32>, i32, i32, tensor<2x3x4x5xi32>) -> tensor<2x3x4x5xi32>
 // CHECK-NEXT:   %153, %154, %155, %156, %157 = "test.op"() : () -> (tensor<2x8x10x8xi32>, tensor<5x6x7x8xi32>, i32, i32, tensor<2x3x4x5xi32>)
 // CHECK-NEXT:   %158 = "linalg.conv_2d_nhwc_fhwc_q"(%153, %154, %155, %156, %157) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%159: i32, %160: i32, %161: i32, %162: i32, %163: i32):
-// CHECK-NEXT:     linalg.yield %159 : i32
+// CHECK-NEXT:     "linalg.yield"(%159) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x8xi32>, tensor<5x6x7x8xi32>, i32, i32, tensor<2x3x4x5xi32>) -> tensor<2x3x4x5xi32>
 // CHECK-NEXT:   %159, %160, %161, %162, %163 = "test.op"() : () -> (tensor<2x6x10x12xi32>, tensor<3x6x7x8xi32>, i32, i32, tensor<2x3x4x5xi32>)
 // CHECK-NEXT:   %164 = "linalg.conv_2d_nchw_fchw_q"(%159, %160, %161, %162, %163) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%165: i32, %166: i32, %167: i32, %168: i32, %169: i32):
-// CHECK-NEXT:     linalg.yield %165 : i32
+// CHECK-NEXT:     "linalg.yield"(%165) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x6x10x12xi32>, tensor<3x6x7x8xi32>, i32, i32, tensor<2x3x4x5xi32>) -> tensor<2x3x4x5xi32>
 // CHECK-NEXT:   %165, %166, %167 = "test.op"() : () -> (tensor<2x6x10x12xf32>, tensor<3x6x7x8xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %168 = "linalg.conv_2d_nchw_fchw"(%165, %166, %167) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%169: f32, %170: f32, %171: f32):
-// CHECK-NEXT:     linalg.yield %169 : f32
+// CHECK-NEXT:     "linalg.yield"(%169) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x6x10x12xf32>, tensor<3x6x7x8xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %169, %170, %171 = "test.op"() : () -> (tensor<2x3x7x12x14xf32>, tensor<4x3x7x8x9xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %172 = "linalg.conv_2d_ngchw_fgchw"(%169, %170, %171) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%173: f32, %174: f32, %175: f32):
-// CHECK-NEXT:     linalg.yield %173 : f32
+// CHECK-NEXT:     "linalg.yield"(%173) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x7x12x14xf32>, tensor<4x3x7x8x9xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %173, %174, %175 = "test.op"() : () -> (tensor<2x3x7x12x14xf32>, tensor<3x4x7x8x9xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %176 = "linalg.conv_2d_ngchw_gfchw"(%173, %174, %175) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%177: f32, %178: f32, %179: f32):
-// CHECK-NEXT:     linalg.yield %177 : f32
+// CHECK-NEXT:     "linalg.yield"(%177) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x7x12x14xf32>, tensor<3x4x7x8x9xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %177, %178, %179 = "test.op"() : () -> (tensor<2x9x11x5x9xf32>, tensor<5x6x7x8x9xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %180 = "linalg.conv_2d_nhwgc_gfhwc"(%177, %178, %179) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%181: f32, %182: f32, %183: f32):
-// CHECK-NEXT:     linalg.yield %181 : f32
+// CHECK-NEXT:     "linalg.yield"(%181) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x5x9xf32>, tensor<5x6x7x8x9xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %181, %182, %183, %184, %185 = "test.op"() : () -> (tensor<2x9x11x5x9xi32>, tensor<5x6x7x8x9xi32>, i32, i32, tensor<2x3x4x5x6xi32>)
 // CHECK-NEXT:   %186 = "linalg.conv_2d_nhwgc_gfhwc_q"(%181, %182, %183, %184, %185) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%187: i32, %188: i32, %189: i32, %190: i32, %191: i32):
-// CHECK-NEXT:     linalg.yield %187 : i32
+// CHECK-NEXT:     "linalg.yield"(%187) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x5x9xi32>, tensor<5x6x7x8x9xi32>, i32, i32, tensor<2x3x4x5x6xi32>) -> tensor<2x3x4x5x6xi32>
 // CHECK-NEXT:   %187, %188, %189, %190, %191 = "test.op"() : () -> (tensor<2x3x7x12x14xi32>, tensor<3x4x7x8x9xi32>, i32, i32, tensor<2x3x4x5x6xi32>)
 // CHECK-NEXT:   %192 = "linalg.conv_2d_ngchw_gfchw_q"(%187, %188, %189, %190, %191) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%193: i32, %194: i32, %195: i32, %196: i32, %197: i32):
-// CHECK-NEXT:     linalg.yield %193 : i32
+// CHECK-NEXT:     "linalg.yield"(%193) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x7x12x14xi32>, tensor<3x4x7x8x9xi32>, i32, i32, tensor<2x3x4x5x6xi32>) -> tensor<2x3x4x5x6xi32>
 // CHECK-NEXT:   %193, %194, %195 = "test.op"() : () -> (tensor<2x9x11x13x10xf32>, tensor<7x8x9x10x6xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %196 = "linalg.conv_3d_ndhwc_dhwcf"(%193, %194, %195) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%197: f32, %198: f32, %199: f32):
-// CHECK-NEXT:     linalg.yield %197 : f32
+// CHECK-NEXT:     "linalg.yield"(%197) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x13x10xf32>, tensor<7x8x9x10x6xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %197, %198, %199, %200, %201 = "test.op"() : () -> (tensor<2x9x11x13x10xi32>, tensor<7x8x9x10x6xi32>, i32, i32, tensor<2x3x4x5x6xi32>)
 // CHECK-NEXT:   %202 = "linalg.conv_3d_ndhwc_dhwcf_q"(%197, %198, %199, %200, %201) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%203: i32, %204: i32, %205: i32, %206: i32, %207: i32):
-// CHECK-NEXT:     linalg.yield %203 : i32
+// CHECK-NEXT:     "linalg.yield"(%203) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x13x10xi32>, tensor<7x8x9x10x6xi32>, i32, i32, tensor<2x3x4x5x6xi32>) -> tensor<2x3x4x5x6xi32>
 // CHECK-NEXT:   %203, %204, %205 = "test.op"() : () -> (tensor<2x7x11x13x15xf32>, tensor<3x7x8x9x10xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %206 = "linalg.conv_3d_ncdhw_fcdhw"(%203, %204, %205) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%207: f32, %208: f32, %209: f32):
-// CHECK-NEXT:     linalg.yield %207 : f32
+// CHECK-NEXT:     "linalg.yield"(%207) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x11x13x15xf32>, tensor<3x7x8x9x10xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %207, %208, %209 = "test.op"() : () -> (tensor<2x7x4xf32>, tensor<5x4xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %210 = "linalg.depthwise_conv_1d_nwc_wc"(%207, %208, %209) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%211: f32, %212: f32, %213: f32):
-// CHECK-NEXT:     linalg.yield %211 : f32
+// CHECK-NEXT:     "linalg.yield"(%211) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x4xf32>, tensor<5x4xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %211, %212, %213 = "test.op"() : () -> (tensor<2x4x7xf32>, tensor<4x5xf32>, tensor<2x4x3xf32>)
 // CHECK-NEXT:   %214 = "linalg.depthwise_conv_1d_ncw_cw"(%211, %212, %213) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%215: f32, %216: f32, %217: f32):
-// CHECK-NEXT:     linalg.yield %215 : f32
+// CHECK-NEXT:     "linalg.yield"(%215) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x4x7xf32>, tensor<4x5xf32>, tensor<2x4x3xf32>) -> tensor<2x4x3xf32>
 // CHECK-NEXT:   %215, %216, %217 = "test.op"() : () -> (tensor<2x8x4xf32>, tensor<6x4x5xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %218 = "linalg.depthwise_conv_1d_nwc_wcm"(%215, %216, %217) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%219: f32, %220: f32, %221: f32):
-// CHECK-NEXT:     linalg.yield %219 : f32
+// CHECK-NEXT:     "linalg.yield"(%219) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x4xf32>, tensor<6x4x5xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %219, %220, %221 = "test.op"() : () -> (tensor<2x8x10x5xf32>, tensor<6x7x5xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %222 = "linalg.depthwise_conv_2d_nhwc_hwc"(%219, %220, %221) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%223: f32, %224: f32, %225: f32):
-// CHECK-NEXT:     linalg.yield %223 : f32
+// CHECK-NEXT:     "linalg.yield"(%223) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xf32>, tensor<6x7x5xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %223, %224, %225 = "test.op"() : () -> (tensor<2x5x8x10xf32>, tensor<5x6x7xf32>, tensor<2x5x3x4xf32>)
 // CHECK-NEXT:   %226 = "linalg.depthwise_conv_2d_nchw_chw"(%223, %224, %225) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%227: f32, %228: f32, %229: f32):
-// CHECK-NEXT:     linalg.yield %227 : f32
+// CHECK-NEXT:     "linalg.yield"(%227) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x5x8x10xf32>, tensor<5x6x7xf32>, tensor<2x5x3x4xf32>) -> tensor<2x5x3x4xf32>
 // CHECK-NEXT:   %227, %228, %229, %230, %231 = "test.op"() : () -> (tensor<2x8x10x5xi32>, tensor<6x7x5xi32>, i32, i32, tensor<2x3x4x5xi32>)
 // CHECK-NEXT:   %232 = "linalg.depthwise_conv_2d_nhwc_hwc_q"(%227, %228, %229, %230, %231) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%233: i32, %234: i32, %235: i32, %236: i32, %237: i32):
-// CHECK-NEXT:     linalg.yield %233 : i32
+// CHECK-NEXT:     "linalg.yield"(%233) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xi32>, tensor<6x7x5xi32>, i32, i32, tensor<2x3x4x5xi32>) -> tensor<2x3x4x5xi32>
 // CHECK-NEXT:   %233, %234, %235 = "test.op"() : () -> (tensor<2x9x11x5xf32>, tensor<7x8x5x6xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %236 = "linalg.depthwise_conv_2d_nhwc_hwcm"(%233, %234, %235) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%237: f32, %238: f32, %239: f32):
-// CHECK-NEXT:     linalg.yield %237 : f32
+// CHECK-NEXT:     "linalg.yield"(%237) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x5xf32>, tensor<7x8x5x6xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %237, %238, %239, %240, %241 = "test.op"() : () -> (tensor<2x9x11x5xi32>, tensor<7x8x5x6xi32>, i32, i32, tensor<2x3x4x5x6xi32>)
 // CHECK-NEXT:   %242 = "linalg.depthwise_conv_2d_nhwc_hwcm_q"(%237, %238, %239, %240, %241) <{operandSegmentSizes = array<i32: 4, 1>}> ({
 // CHECK-NEXT:   ^bb0(%243: i32, %244: i32, %245: i32, %246: i32, %247: i32):
-// CHECK-NEXT:     linalg.yield %243 : i32
+// CHECK-NEXT:     "linalg.yield"(%243) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x5xi32>, tensor<7x8x5x6xi32>, i32, i32, tensor<2x3x4x5x6xi32>) -> tensor<2x3x4x5x6xi32>
 // CHECK-NEXT:   %243, %244, %245 = "test.op"() : () -> (tensor<2x8x10x12x9xf32>, tensor<6x7x8x9xf32>, tensor<2x3x4x5x9xf32>)
 // CHECK-NEXT:   %246 = "linalg.depthwise_conv_3d_ndhwc_dhwc"(%243, %244, %245) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%247: f32, %248: f32, %249: f32):
-// CHECK-NEXT:     linalg.yield %247 : f32
+// CHECK-NEXT:     "linalg.yield"(%247) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x12x9xf32>, tensor<6x7x8x9xf32>, tensor<2x3x4x5x9xf32>) -> tensor<2x3x4x5x9xf32>
 // CHECK-NEXT:   %247, %248, %249 = "test.op"() : () -> (tensor<2x9x8x10x12xf32>, tensor<9x6x7x8xf32>, tensor<2x9x3x4x5xf32>)
 // CHECK-NEXT:   %250 = "linalg.depthwise_conv_3d_ncdhw_cdhw"(%247, %248, %249) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%251: f32, %252: f32, %253: f32):
-// CHECK-NEXT:     linalg.yield %251 : f32
+// CHECK-NEXT:     "linalg.yield"(%251) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x8x10x12xf32>, tensor<9x6x7x8xf32>, tensor<2x9x3x4x5xf32>) -> tensor<2x9x3x4x5xf32>
 // CHECK-NEXT:   %251, %252, %253 = "test.op"() : () -> (tensor<2x9x11x13x10xf32>, tensor<7x8x9x10x6xf32>, tensor<2x3x4x5x10x6xf32>)
 // CHECK-NEXT:   %254 = "linalg.depthwise_conv_3d_ndhwc_dhwcm"(%251, %252, %253) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%255: f32, %256: f32, %257: f32):
-// CHECK-NEXT:     linalg.yield %255 : f32
+// CHECK-NEXT:     "linalg.yield"(%255) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x13x10xf32>, tensor<7x8x9x10x6xf32>, tensor<2x3x4x5x10x6xf32>) -> tensor<2x3x4x5x10x6xf32>
 // CHECK-NEXT:   %255, %256, %257 = "test.op"() : () -> (tensor<2x8x10x5xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %258 = "linalg.pooling_nhwc_sum"(%255, %256, %257) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%259: f32, %260: f32, %261: f32):
-// CHECK-NEXT:     linalg.yield %259 : f32
+// CHECK-NEXT:     "linalg.yield"(%259) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %259, %260, %261 = "test.op"() : () -> (tensor<2x3x9x11xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %262 = "linalg.pooling_nchw_sum"(%259, %260, %261) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%263: f32, %264: f32, %265: f32):
-// CHECK-NEXT:     linalg.yield %263 : f32
+// CHECK-NEXT:     "linalg.yield"(%263) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x9x11xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %263, %264, %265 = "test.op"() : () -> (tensor<2x8x10x5xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %266 = "linalg.pooling_nhwc_max"(%263, %264, %265) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%267: f32, %268: f32, %269: f32):
-// CHECK-NEXT:     linalg.yield %267 : f32
+// CHECK-NEXT:     "linalg.yield"(%267) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %267, %268, %269 = "test.op"() : () -> (tensor<2x8x10x5xi32>, tensor<6x7xi32>, tensor<2x3x4x5xi32>)
 // CHECK-NEXT:   %270 = "linalg.pooling_nhwc_max_unsigned"(%267, %268, %269) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%271: i32, %272: i32, %273: i32):
-// CHECK-NEXT:     linalg.yield %271 : i32
+// CHECK-NEXT:     "linalg.yield"(%271) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xi32>, tensor<6x7xi32>, tensor<2x3x4x5xi32>) -> tensor<2x3x4x5xi32>
 // CHECK-NEXT:   %271, %272, %273 = "test.op"() : () -> (tensor<2x3x9x11xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %274 = "linalg.pooling_nchw_max"(%271, %272, %273) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%275: f32, %276: f32, %277: f32):
-// CHECK-NEXT:     linalg.yield %275 : f32
+// CHECK-NEXT:     "linalg.yield"(%275) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x9x11xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %275, %276, %277 = "test.op"() : () -> (tensor<2x8x10x5xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>)
 // CHECK-NEXT:   %278 = "linalg.pooling_nhwc_min"(%275, %276, %277) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%279: f32, %280: f32, %281: f32):
-// CHECK-NEXT:     linalg.yield %279 : f32
+// CHECK-NEXT:     "linalg.yield"(%279) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xf32>, tensor<6x7xf32>, tensor<2x3x4x5xf32>) -> tensor<2x3x4x5xf32>
 // CHECK-NEXT:   %279, %280, %281 = "test.op"() : () -> (tensor<2x8x10x5xi32>, tensor<6x7xi32>, tensor<2x3x4x5xi32>)
 // CHECK-NEXT:   %282 = "linalg.pooling_nhwc_min_unsigned"(%279, %280, %281) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%283: i32, %284: i32, %285: i32):
-// CHECK-NEXT:     linalg.yield %283 : i32
+// CHECK-NEXT:     "linalg.yield"(%283) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x8x10x5xi32>, tensor<6x7xi32>, tensor<2x3x4x5xi32>) -> tensor<2x3x4x5xi32>
 // CHECK-NEXT:   %283, %284, %285 = "test.op"() : () -> (tensor<2x7x4xf32>, tensor<5xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %286 = "linalg.pooling_nwc_sum"(%283, %284, %285) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%287: f32, %288: f32, %289: f32):
-// CHECK-NEXT:     linalg.yield %287 : f32
+// CHECK-NEXT:     "linalg.yield"(%287) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x4xf32>, tensor<5xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %287, %288, %289 = "test.op"() : () -> (tensor<2x3x8xf32>, tensor<5xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %290 = "linalg.pooling_ncw_sum"(%287, %288, %289) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%291: f32, %292: f32, %293: f32):
-// CHECK-NEXT:     linalg.yield %291 : f32
+// CHECK-NEXT:     "linalg.yield"(%291) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x8xf32>, tensor<5xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %291, %292, %293 = "test.op"() : () -> (tensor<2x7x4xf32>, tensor<5xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %294 = "linalg.pooling_nwc_max"(%291, %292, %293) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%295: f32, %296: f32, %297: f32):
-// CHECK-NEXT:     linalg.yield %295 : f32
+// CHECK-NEXT:     "linalg.yield"(%295) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x4xf32>, tensor<5xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %295, %296, %297 = "test.op"() : () -> (tensor<2x7x4xi32>, tensor<5xi32>, tensor<2x3x4xi32>)
 // CHECK-NEXT:   %298 = "linalg.pooling_nwc_max_unsigned"(%295, %296, %297) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%299: i32, %300: i32, %301: i32):
-// CHECK-NEXT:     linalg.yield %299 : i32
+// CHECK-NEXT:     "linalg.yield"(%299) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x4xi32>, tensor<5xi32>, tensor<2x3x4xi32>) -> tensor<2x3x4xi32>
 // CHECK-NEXT:   %299, %300, %301 = "test.op"() : () -> (tensor<2x3x8xf32>, tensor<5xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %302 = "linalg.pooling_ncw_max"(%299, %300, %301) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%303: f32, %304: f32, %305: f32):
-// CHECK-NEXT:     linalg.yield %303 : f32
+// CHECK-NEXT:     "linalg.yield"(%303) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x3x8xf32>, tensor<5xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %303, %304, %305 = "test.op"() : () -> (tensor<2x7x4xf32>, tensor<5xf32>, tensor<2x3x4xf32>)
 // CHECK-NEXT:   %306 = "linalg.pooling_nwc_min"(%303, %304, %305) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%307: f32, %308: f32, %309: f32):
-// CHECK-NEXT:     linalg.yield %307 : f32
+// CHECK-NEXT:     "linalg.yield"(%307) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x4xf32>, tensor<5xf32>, tensor<2x3x4xf32>) -> tensor<2x3x4xf32>
 // CHECK-NEXT:   %307, %308, %309 = "test.op"() : () -> (tensor<2x7x4xi32>, tensor<5xi32>, tensor<2x3x4xi32>)
 // CHECK-NEXT:   %310 = "linalg.pooling_nwc_min_unsigned"(%307, %308, %309) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%311: i32, %312: i32, %313: i32):
-// CHECK-NEXT:     linalg.yield %311 : i32
+// CHECK-NEXT:     "linalg.yield"(%311) : (i32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x7x4xi32>, tensor<5xi32>, tensor<2x3x4xi32>) -> tensor<2x3x4xi32>
 // CHECK-NEXT:   %311, %312, %313 = "test.op"() : () -> (tensor<2x9x11x13x6xf32>, tensor<7x8x9xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %314 = "linalg.pooling_ndhwc_sum"(%311, %312, %313) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%315: f32, %316: f32, %317: f32):
-// CHECK-NEXT:     linalg.yield %315 : f32
+// CHECK-NEXT:     "linalg.yield"(%315) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x13x6xf32>, tensor<7x8x9xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %315, %316, %317 = "test.op"() : () -> (tensor<2x9x11x13x6xf32>, tensor<7x8x9xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %318 = "linalg.pooling_ndhwc_max"(%315, %316, %317) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%319: f32, %320: f32, %321: f32):
-// CHECK-NEXT:     linalg.yield %319 : f32
+// CHECK-NEXT:     "linalg.yield"(%319) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x13x6xf32>, tensor<7x8x9xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %319, %320, %321 = "test.op"() : () -> (tensor<2x9x11x13x6xf32>, tensor<7x8x9xf32>, tensor<2x3x4x5x6xf32>)
 // CHECK-NEXT:   %322 = "linalg.pooling_ndhwc_min"(%319, %320, %321) <{operandSegmentSizes = array<i32: 2, 1>}> ({
 // CHECK-NEXT:   ^bb0(%323: f32, %324: f32, %325: f32):
-// CHECK-NEXT:     linalg.yield %323 : f32
+// CHECK-NEXT:     "linalg.yield"(%323) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<2x9x11x13x6xf32>, tensor<7x8x9xf32>, tensor<2x3x4x5x6xf32>) -> tensor<2x3x4x5x6xf32>
 // CHECK-NEXT:   %323, %324 = "test.op"() : () -> (f32, tensor<4x8xf32>)
 // CHECK-NEXT:   %325 = "linalg.fill"(%323, %324) <{operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%326: f32, %327: f32):
-// CHECK-NEXT:     linalg.yield %326 : f32
+// CHECK-NEXT:     "linalg.yield"(%326) : (f32) -> ()
 // CHECK-NEXT:   }) : (f32, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %326, %327, %328, %329 = "test.op"() : () -> (f32, f32, f32, tensor<2x3xf32>)
 // CHECK-NEXT:   %330 = "linalg.fill_rng_2d"(%326, %327, %328, %329) <{operandSegmentSizes = array<i32: 3, 1>}> ({
 // CHECK-NEXT:   ^bb0(%331: f32, %332: f32, %333: f32, %334: f32):
-// CHECK-NEXT:     linalg.yield %331 : f32
+// CHECK-NEXT:     "linalg.yield"(%331) : (f32) -> ()
 // CHECK-NEXT:   }) : (f32, f32, f32, tensor<2x3xf32>) -> tensor<2x3xf32>
 // CHECK-NEXT: }

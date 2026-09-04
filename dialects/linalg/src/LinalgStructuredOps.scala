@@ -37,18 +37,11 @@ trait LinalgStructuredBase
 ||    GENERIC OP    ||
 \*≡==---=≡≡≡≡=---==≡*/
 
-// TODO: `iterator_types` is an `IteratorTypeArrayAttr` upstream, i.e. an array
-// of `#linalg.iterator_type<parallel|reduction|window>` attributes. ScaIR's enum
-// support (`scair.enums`) represents an enum as its ordinal `IntegerAttr`, and
-// there is no attribute parser to read the symbolic form back, so the array is
-// modeled here as an array of `IntegerAttr` ordinals into [[IteratorType]].
-// Switch to `ArrayAttribute[IteratorType]` once ScaIR grows dialect-owned enum
-// attributes.
 case class Generic(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     indexing_maps: ArrayAttribute[AffineMapAttr],
-    iterator_types: ArrayAttribute[IntegerAttr],
+    iterator_types: ArrayAttribute[IteratorType],
     doc: Option[StringData] = None,
     library_call: Option[StringData] = None,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,

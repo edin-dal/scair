@@ -32,7 +32,6 @@ case class Yield(
 ) extends DerivedOperation["linalg.yield"]
     with IsTerminator
     with ReturnLike
-    with AssemblyFormat["attr-dict ($values^ `:` type($values))?"]
     with Pure derives OpDefs
 
 /*≡==--=≡≡≡≡=--=≡≡*\
@@ -70,10 +69,7 @@ case class Softmax(
     with ReifyRankedShapedTypeOpInterface
     with AggregatedOpInterface
     with MemoryEffectsOpInterface
-    with TilingInterface
-    with AssemblyFormat[
-      "attr-dict `dimension` `(` $dimension `)` `ins` `(` $input `:` type($input) `)` `outs` `(` $output `:` type($output) `)` (`->` type($result)^)?"
-    ] derives OpDefs
+    with TilingInterface derives OpDefs
 
 /*≡==---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||  WINOGRAD FILTER TRANSFORM  ||
@@ -94,10 +90,7 @@ case class WinogradFilterTransform(
 ) extends DerivedOperation["linalg.winograd_filter_transform"]
     with AllElementTypesMatch(filter.typ, output.typ)
     with DestinationStyleOpInterface
-    with TilingInterface
-    with AssemblyFormat[
-      "attr-dict `fmr` `(` $fmr `)` `ins` `(` $filter `:` type($filter) `)` `outs` `(` $output `:` type($output) `)` `->` type($result)"
-    ] derives OpDefs
+    with TilingInterface derives OpDefs
 
 /*≡==---=≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||  WINOGRAD INPUT TRANSFORM ||
@@ -112,10 +105,7 @@ case class WinogradInputTransform(
 ) extends DerivedOperation["linalg.winograd_input_transform"]
     with AllElementTypesMatch(input.typ, output.typ)
     with DestinationStyleOpInterface
-    with TilingInterface
-    with AssemblyFormat[
-      "attr-dict `fmr` `(` $fmr `)` `ins` `(` $input `:` type($input) `)` `outs` `(` $output `:` type($output) `)` `->` type($result)"
-    ] derives OpDefs
+    with TilingInterface derives OpDefs
 
 /*≡==---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
 ||  WINOGRAD OUTPUT TRANSFORM ||
@@ -130,7 +120,4 @@ case class WinogradOutputTransform(
 ) extends DerivedOperation["linalg.winograd_output_transform"]
     with AllElementTypesMatch(value.typ, output.typ)
     with DestinationStyleOpInterface
-    with TilingInterface
-    with AssemblyFormat[
-      "attr-dict `fmr` `(` $fmr `)` `ins` `(` $value `:` type($value) `)` `outs` `(` $output `:` type($output) `)` `->` type($result)"
-    ] derives OpDefs
+    with TilingInterface derives OpDefs
