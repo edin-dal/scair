@@ -3,7 +3,6 @@ package scair.passes.convert_arith_to_llvm
 import scair.MLContext
 import scair.dialects.arith
 import scair.dialects.builtin.*
-import scair.dialects.func
 import scair.dialects.llvm
 import scair.ir.*
 import scair.transformations.GreedyRewritePatternApplier
@@ -11,25 +10,13 @@ import scair.transformations.PatternRewriteWalker
 import scair.transformations.WalkerPass
 import scair.transformations.pattern
 
-import scala.collection.mutable
-
+// TODO: This is platform-dependent and shouldn't be hardcoded
 private val llvmIndexType: IntegerType = I64
 
-private def asLLVMIndex(v: Value[Attribute]): Operand[IntegerType | IndexType] =
-  v.asInstanceOf[Operand[IntegerType | IndexType]]
-
-private def asFloat(v: Value[Attribute]): Operand[FloatType] =
-  v.asInstanceOf[Operand[FloatType]]
-
-private def convertLLVMValueType(attr: Attribute): Attribute =
+private def convertLLVMType[A <: Attribute](attr: A): A | IntegerType =
   attr match
     case _: IndexType => llvmIndexType
     case other        => other
-
-private def convertLLVMIntegerType(attr: Attribute): IntegerType | IndexType =
-  attr match
-    case _: IndexType       => llvmIndexType
-    case other: IntegerType => other
 
 private def convertLLVMConstantAttr(attr: Attribute): Attribute =
   attr match
@@ -37,118 +24,27 @@ private def convertLLVMConstantAttr(attr: Attribute): Attribute =
       IntegerAttr(IntData(v), llvmIndexType)
     case other => other
 
-// This builder performs a whole-function rebuild so arithmetic conversion can
-// preserve block order and SSA remapping without relying on full conversion
-// infrastructure.
-private final class Builder(val funcOp: func.Func):
-  val blockMap = mutable.Map.empty[Block, Block]
-  val valueMap = mutable.Map.empty[Value[Attribute], Value[Attribute]]
+private val LowerConstant = pattern { case c: arith.Constant =>
+  llvm.Constant(
+    convertLLVMConstantAttr(c.value),
+    Result(convertLLVMType(c.result.typ)),
+  )
+}
 
-  private def remap(v: Value[Attribute]): Value[Attribute] =
-    valueMap.getOrElse(v, v)
+private val LowerAddI = pattern { case add: arith.AddI =>
+  llvm.Add(add.lhs, add.rhs, Result(convertLLVMType(add.result.typ)))
+}
 
-  private def lowerConstant(op: arith.Constant, block: Block): Operation =
-    val lowered = llvm.Constant(
-      convertLLVMConstantAttr(op.value),
-      Result(convertLLVMValueType(op.result.typ)),
-    )
-    valueMap(op.result) = lowered.res
-    lowered
+private val LowerMulI = pattern { case mul: arith.MulI =>
+  llvm.Mul(mul.lhs, mul.rhs, Result(convertLLVMType(mul.result.typ)))
+}
 
-  private def lowerOp(op: Operation): Seq[Operation] =
-    op match
-      case c: arith.Constant =>
-        Seq(
-          llvm.Constant(
-            convertLLVMConstantAttr(c.value),
-            Result(convertLLVMValueType(c.result.typ)),
-          )
-        )
-      case add: arith.AddI =>
-        val lowered = llvm.Add(
-          asLLVMIndex(remap(add.lhs)),
-          asLLVMIndex(remap(add.rhs)),
-          Result(convertLLVMIntegerType(add.result.typ)),
-        )
-        valueMap(add.result) = lowered.res
-        Seq(lowered)
-      case mul: arith.MulI =>
-        val lowered = llvm.Mul(
-          asLLVMIndex(remap(mul.lhs)),
-          asLLVMIndex(remap(mul.rhs)),
-          Result(convertLLVMIntegerType(mul.result.typ)),
-        )
-        valueMap(mul.result) = lowered.res
-        Seq(lowered)
-      case add: arith.AddF =>
-        val lowered = llvm.FAdd(
-          asFloat(remap(add.lhs)),
-          asFloat(remap(add.rhs)),
-          Result(add.result.typ),
-        )
-        valueMap(add.result) = lowered.res
-        Seq(lowered)
-      case mul: arith.MulF =>
-        val lowered = llvm.FMul(
-          asFloat(remap(mul.lhs)),
-          asFloat(remap(mul.rhs)),
-          Result(mul.result.typ),
-        )
-        valueMap(mul.result) = lowered.res
-        Seq(lowered)
-      case cmp: llvm.ICmp =>
-        val lowered = llvm.ICmp(
-          asLLVMIndex(remap(cmp.lhs)),
-          asLLVMIndex(remap(cmp.rhs)),
-          Result(cmp.res.typ),
-          cmp.predicate,
-        )
-        valueMap(cmp.res) = lowered.res
-        Seq(lowered)
-      case other =>
-        val copied = other.deepCopy(using blockMap, valueMap)
-        valueMap.addAll(other.results.zip(copied.results))
-        Seq(copied)
+private val LowerAddF = pattern { case add: arith.AddF =>
+  llvm.FAdd(add.lhs, add.rhs, Result(add.result.typ))
+}
 
-  def lower(): func.Func =
-    val newBlocks = funcOp.body.blocks.map { oldBlock =>
-      val nb = Block(oldBlock.arguments.map(_.typ), Seq.empty)
-      blockMap(oldBlock) = nb
-      valueMap.addAll(oldBlock.arguments.zip(nb.arguments))
-      nb
-    }
-    funcOp.body.blocks.zip(newBlocks).foreach { case (oldBlock, newBlock) =>
-      // Constants are emitted in source order within each block to keep the
-      // lowering deterministic without introducing a pass-local ordering policy.
-      val constants = oldBlock.operations.collect { case c: arith.Constant =>
-        c
-      }.toSeq
-      constants.foreach { c =>
-        val lowered = lowerConstant(c, newBlock)
-        newBlock.addOp(lowered)
-      }
-      oldBlock.operations.foreach {
-        case _: arith.Constant => ()
-        case other             => newBlock.addOps(lowerOp(other))
-      }
-    }
-    val lowered = func.Func(
-      funcOp.sym_name,
-      funcOp.function_type,
-      funcOp.sym_visibility,
-      Region(newBlocks),
-    )
-    lowered.attributes.addAll(funcOp.attributes)
-    lowered
-
-private val LowerFunc = pattern {
-  case op: func.Func if op.body.blocks.exists(_.operations.exists {
-        case _: arith.Constant | _: arith.AddI | _: arith.MulI | _: arith.AddF |
-            _: arith.MulF =>
-          true
-        case _ => false
-      }) =>
-    Builder(op).lower()
+private val LowerMulF = pattern { case mul: arith.MulF =>
+  llvm.FMul(mul.lhs, mul.rhs, Result(mul.result.typ))
 }
 
 // Converts scalar arithmetic to LLVM arithmetic.
@@ -158,4 +54,8 @@ final class ConvertArithToLLVM(ctx: MLContext) extends WalkerPass(ctx):
   override val name: String = "convert-arith-to-llvm"
 
   override val walker: PatternRewriteWalker =
-    PatternRewriteWalker(GreedyRewritePatternApplier(Seq(LowerFunc)))
+    PatternRewriteWalker(
+      GreedyRewritePatternApplier(
+        Seq(LowerConstant, LowerAddI, LowerMulI, LowerAddF, LowerMulF)
+      )
+    )
