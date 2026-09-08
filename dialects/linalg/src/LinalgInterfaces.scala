@@ -83,7 +83,8 @@ trait RecursiveMemoryEffects extends Operation
 /** MLIR: `OpAsmOpInterface`. An op that customises how the assembly printer
   * names its results and block arguments.
   */
-trait OpAsmOpInterface extends Operation
+trait OpAsmOpInterface extends Operation:
+  def getAsmBlockArgumentNames: Seq[String] = ???
 
 /** MLIR: `ReturnLike`. An op that returns from the region enclosing it.
   */
