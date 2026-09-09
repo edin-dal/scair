@@ -2,6 +2,7 @@ package scair.dialects.linalg
 
 import scair.clair.*
 import scair.dialects.builtin.*
+import scair.dialects.linalg.canonicalization.given
 import scair.ir.*
 
 // ░██████╗ ████████╗ ██████╗░ ██╗░░░██╗ ░█████╗░ ████████╗ ██╗░░░██╗ ██████╗░ ███████╗ ██████╗░
