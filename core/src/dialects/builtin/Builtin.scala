@@ -437,31 +437,26 @@ final case class FunctionType(
 || Dense Elements Attrs ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-sealed trait DenseIntOrFPElementsAttr extends ParametrizedAttribute:
+sealed trait DenseIntOrFPElementsAttr[Element <: Attribute] extends ParametrizedAttribute:
 
-  type Element <: Attribute
-
-  def typ: ContainerType
+  def typ: RankedTensorType | VectorType
   def data: ArrayAttribute[Element]
 
   final def elementType: Attribute = typ.elementType
 
   protected def printElement(element: Element, p: Printer): Unit
 
-  protected final def verifyShapeAndElementCount(): OK[Unit] = typ match
-    case shaped: ShapedType =>
-      val shape = shaped.getShape
-      if shape.exists(_ < 0) then
-        Err("Dense elements attribute requires a statically shaped type")
-      else
-        val elementCount = shape.foldLeft(BigInt(1))(_ * _)
-        if data.length == 1 || BigInt(data.length) == elementCount then OK()
-        else
-          Err(
-            s"Dense elements attribute has ${data.length} values, but type $typ has $elementCount elements"
-          )
-    case _ =>
+  protected final def verifyShapeAndElementCount(): OK[Unit] =
+    val shape = typ.getShape
+    if shape.exists(_ < 0) then
       Err("Dense elements attribute requires a statically shaped type")
+    else
+      val elementCount = shape.foldLeft(1:Long)(_ * _)
+      if data.length == 1 || data.length == elementCount then OK()
+      else
+        Err(
+          s"Dense elements attribute has ${data.length} values, but type $typ has $elementCount elements"
+        )
 
   override final def customPrint(p: Printer): Unit =
     p.print("dense<")
@@ -469,27 +464,24 @@ sealed trait DenseIntOrFPElementsAttr extends ParametrizedAttribute:
     else if data.nonEmpty then
       val values = data.iterator
       def printNested(shape: Seq[Long]): Unit =
-        p.print("[")
-        val dimension = shape.head
-        for index <- 0L until dimension do
-          if index != 0 then p.print(", ")
-          if shape.length == 1 then printElement(values.next(), p)
-          else printNested(shape.tail)
-        p.print("]")
+        p.printListF(
+          0L until shape.head,
+          element =>
+            if shape.length == 1 then printElement(values.next(), p)
+            else printNested(shape.tail),
+          "[",
+          ", ",
+          "]",
+        )
 
-      typ match
-        case shaped: ShapedType => printNested(shaped.getShape)
-        case _                  =>
-          p.printListF(data, printElement(_, p), "[", ", ", "]")
+      printNested(typ.getShape)
     p.print("> : ", typ)
 
 final case class DenseIntElementsAttr(
-    typ: ContainerType,
+    typ: RankedTensorType | VectorType,
     data: ArrayAttribute[IntegerAttr],
-) extends DenseIntOrFPElementsAttr,
+) extends DenseIntOrFPElementsAttr[IntegerAttr],
       DerivedAttribute["builtin.dense"] derives AttrDefs:
-
-  override type Element = IntegerAttr
 
   override protected def printElement(
       integer: IntegerAttr,
@@ -513,19 +505,18 @@ final case class DenseIntElementsAttr(
           if element.typ == elementType then OK()
           else
             Err(
-              s"DenseIntElementsAttr data element type ${element.typ} does not match expected type $elementType"
+              s"DenseIntElementsAttr data element type ${element.typ} does not match expected type $elementType",
+              Some(element)
             )
         )
       )
     )
 
 final case class DenseFPElementsAttr(
-    typ: ContainerType,
+    typ: RankedTensorType | VectorType,
     data: ArrayAttribute[FloatAttr],
-) extends DenseIntOrFPElementsAttr,
+) extends DenseIntOrFPElementsAttr[FloatAttr],
       DerivedAttribute["builtin.dense"] derives AttrDefs:
-
-  override type Element = FloatAttr
 
   override protected def printElement(element: FloatAttr, p: Printer): Unit =
     p.print(element.value)
