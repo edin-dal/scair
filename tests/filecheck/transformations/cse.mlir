@@ -88,8 +88,8 @@ func.func @different_attributes(%0: index, %1: index) -> (i1, i1, i1) {
   func.return %2, %3, %4 : i1, i1, i1
 }
 // CHECK-NEXT:    func.func @different_attributes(%0: index, %1: index) -> (i1, i1, i1) {
-// CHECK-NEXT:      %2 = "arith.cmpi"(%0, %1) <{predicate = 2}> : (index, index) -> i1
-// CHECK-NEXT:      %3 = "arith.cmpi"(%0, %1) <{predicate = 1}> : (index, index) -> i1
+// CHECK-NEXT:      %2 = "arith.cmpi"(%0, %1) <{predicate = 2 : i64}> : (index, index) -> i1
+// CHECK-NEXT:      %3 = "arith.cmpi"(%0, %1) <{predicate = 1 : i64}> : (index, index) -> i1
 // CHECK-NEXT:      func.return %2, %3, %3 : i1, i1, i1
 // CHECK-NEXT:    }
 

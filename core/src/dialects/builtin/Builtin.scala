@@ -121,7 +121,6 @@ case class IntegerAttr(
   override def customPrint(p: Printer) = (value, typ) match
     case (IntData(1), IntegerType(IntData(1), Signless)) => p.print("true")
     case (IntData(0), IntegerType(IntData(1), Signless)) => p.print("false")
-    case (_, IntegerType(IntData(64), Signless))         => p.print(value)
     case (_, _) => p.print(value, " : ", typ)
 
 /*≡==--==≡≡≡≡==--=≡≡*\

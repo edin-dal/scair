@@ -22,9 +22,9 @@
 %remui_index = "arith.remui"(%lhsindex, %rhsindex) : (index, index) -> index
 // CHECK-NEXT:    %18 = "arith.remui"(%6, %7) : (index, index) -> index
 %cmpi = "arith.cmpi"(%lhsi32, %rhsi32) <{"predicate" = 2 : i64}> : (i32, i32) -> i1
-// CHECK-NEXT:    %19 = "arith.cmpi"(%2, %3) <{predicate = 2}> : (i32, i32) -> i1
+// CHECK-NEXT:    %19 = "arith.cmpi"(%2, %3) <{predicate = 2 : i64}> : (i32, i32) -> i1
 %cmpi_index = "arith.cmpi"(%lhsindex, %rhsindex) <{"predicate" = 2 : i64}> : (index, index) -> i1
-// CHECK-NEXT:    %20 = "arith.cmpi"(%6, %7) <{predicate = 2}> : (index, index) -> i1
+// CHECK-NEXT:    %20 = "arith.cmpi"(%6, %7) <{predicate = 2 : i64}> : (index, index) -> i1
 %addi = "arith.addi"(%lhsi32, %rhsi32) {"hello" = "world"} : (i32, i32) -> i32
 // CHECK-NEXT:    %21 = "arith.addi"(%2, %3) <{overflowFlags = #arith.overflow<none>}> {hello = "world"} : (i32, i32) -> i32
 %addf = "arith.addf"(%lhsf64, %rhsf64) : (f64, f64) -> f64

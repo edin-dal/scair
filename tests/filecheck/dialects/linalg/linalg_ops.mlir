@@ -76,7 +76,7 @@
 // CHECK-NEXT:   %0, %1, %2 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, f32)
 // CHECK-NEXT:   %3 = "linalg.generic"(%0, %1) <{indexing_maps = [#map, #map], iterator_types = [#linalg.iterator_type<parallel>, #linalg.iterator_type<parallel>], operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%4: f32, %5: f32):
-// CHECK-NEXT:     %6 = "linalg.index"() <{dim = 0}> : () -> index
+// CHECK-NEXT:     %6 = "linalg.index"() <{dim = 0 : i64}> : () -> index
 // CHECK-NEXT:     "linalg.yield"(%4) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %4 = "linalg.map"(%0, %1) ({
@@ -87,9 +87,9 @@
 // CHECK-NEXT:   ^bb0(%5: f32):
 // CHECK-NEXT:     "linalg.yield"() : () -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>) -> ()
-// CHECK-NEXT:   %5 = "linalg.softmax"(%0, %1) <{dimension = 1}> : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
+// CHECK-NEXT:   %5 = "linalg.softmax"(%0, %1) <{dimension = 1 : i64}> : (tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %6, %7 = "test.op"() : () -> (memref<4x8xf32>, memref<4x8xf32>)
-// CHECK-NEXT:   "linalg.softmax"(%6, %7) <{dimension = 0}> : (memref<4x8xf32>, memref<4x8xf32>) -> ()
+// CHECK-NEXT:   "linalg.softmax"(%6, %7) <{dimension = 0 : i64}> : (memref<4x8xf32>, memref<4x8xf32>) -> ()
 // CHECK-NEXT:   %8, %9 = "test.op"() : () -> (tensor<2x3x3x5xf32>, tensor<4x4x5x2xf32>)
 // CHECK-NEXT:   %10 = "linalg.winograd_filter_transform"(%8, %9) <{fmr = 0 : i32}> : (tensor<2x3x3x5xf32>, tensor<4x4x5x2xf32>) -> tensor<4x4x5x2xf32>
 // CHECK-NEXT:   %11, %12 = "test.op"() : () -> (tensor<2x6x6x5xf32>, tensor<6x6x1x1x2x5xf32>)
