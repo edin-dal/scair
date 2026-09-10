@@ -294,7 +294,7 @@ def tensorTypeP[$: P](using Parser): P[TensorType] = P(
   "tensor" ~ "<" ~/ (unrankedTensorTypeP | rankedTensorTypeP) ~ ">"
 )
 
-def rankedTensorTypeP[$: P](using Parser): P[TensorType] = P(
+def rankedTensorTypeP[$: P](using Parser): P[RankedTensorType] = P(
   dimensionListP ~ typeP ~ ("," ~ encodingP).?
 ).map((x: (Seq[IntData], Attribute, Option[Attribute])) =>
   RankedTensorType(
@@ -387,87 +387,88 @@ private final case class TensorLiteral(
     inferredShape: Option[Seq[Long]],
 )
 
+private def denseElementsTypeP[$: P](using
+    Parser
+): P[RankedTensorType | VectorType] = P(
+  ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">") | vectorTypeP
+)
+
 def denseIntOrFPElementsAttrP[$: P](using
     Parser
 ): P[DenseIntOrFPElementsAttr[?]] =
   P(
     "dense" ~/ "<" ~/ tensorLiteralP.orElse(TensorLiteral(Seq(), None)) ~ ">" ~ ":" ~
-      (tensorTypeP | vectorTypeP).asInstanceOf[P[RankedTensorType | VectorType]]
+      denseElementsTypeP
   ).flatMap((literal, typ) =>
-    typ match
-      case typ: (RankedTensorType | VectorType)
-          if typ.getShape.exists(_ < 0) =>
-        Fail("dense elements attribute requires a statically shaped type")
-      case typ: (RankedTensorType | VectorType)
-          if literal.inferredShape.exists(_ != typ.getShape) =>
-        Fail(
-          s"inferred shape of elements literal (${literal.inferredShape
-              .get}) does not match type (${typ.getShape})"
-        )
-      case typ: (RankedTensorType | VectorType) =>
-        val hasBoolean = literal.values.exists {
-          case TensorLiteralElement.Bool(_) => true
-          case _                            => false
-        }
-        val allInteger = literal.values.forall {
-          case TensorLiteralElement.Float(_) => false
-          case _                             => true
-        }
-        val allFloat = literal.values.forall {
-          case TensorLiteralElement.Float(_) => true
-          case _                             => false
-        }
-        val attr = typ.elementType match
-          case elementType: IntegerType
-              if allInteger && (!hasBoolean || elementType == I1) =>
-            Some(
-              DenseIntElementsAttr(
-                typ,
-                literal.values.collect {
-                  case TensorLiteralElement.Integer(value) =>
-                    IntegerAttr(value, elementType)
-                  case TensorLiteralElement.Bool(value) =>
-                    IntegerAttr(IntData(if value then 1 else 0), elementType)
+    if typ.getShape.exists(_ < 0) then
+      Fail("dense elements attribute requires a statically shaped type")
+    else if literal.inferredShape.exists(_ != typ.getShape) then
+      Fail(
+        s"inferred shape of elements literal (${literal.inferredShape
+            .get}) does not match type (${typ.getShape})"
+      )
+    else
+      val hasBoolean = literal.values.exists {
+        case TensorLiteralElement.Bool(_) => true
+        case _                            => false
+      }
+      val allInteger = literal.values.forall {
+        case TensorLiteralElement.Float(_) => false
+        case _                             => true
+      }
+      val allFloat = literal.values.forall {
+        case TensorLiteralElement.Float(_) => true
+        case _                             => false
+      }
+      val attr = typ.elementType match
+        case elementType: IntegerType
+            if allInteger && (!hasBoolean || elementType == I1) =>
+          Some(
+            DenseIntElementsAttr(
+              typ,
+              literal.values.collect {
+                case TensorLiteralElement.Integer(value) =>
+                  IntegerAttr(value, elementType)
+                case TensorLiteralElement.Bool(value) =>
+                  IntegerAttr(IntData(if value then 1 else 0), elementType)
+              },
+            ): DenseIntOrFPElementsAttr[?]
+          )
+        case elementType: IndexType if allInteger && !hasBoolean =>
+          Some(
+            DenseIntElementsAttr(
+              typ,
+              literal.values
+                .collect { case TensorLiteralElement.Integer(value) =>
+                  IntegerAttr(value, elementType)
                 },
-              ): DenseIntOrFPElementsAttr[?]
-            )
-          case elementType: IndexType if allInteger && !hasBoolean =>
-            Some(
-              DenseIntElementsAttr(
-                typ,
-                literal.values
-                  .collect { case TensorLiteralElement.Integer(value) =>
-                    IntegerAttr(value, elementType)
-                  },
-              ): DenseIntOrFPElementsAttr[?]
-            )
-          case elementType: FloatType if allFloat =>
-            Some(
-              DenseFPElementsAttr(
-                typ,
-                literal.values
-                  .collect { case TensorLiteralElement.Float(value) =>
-                    FloatAttr(value, elementType)
-                  },
-              ): DenseIntOrFPElementsAttr[?]
-            )
-          case _: IntegerType | _: IndexType =>
-            None
-          case _: FloatType =>
-            None
-          case _ => None
+            ): DenseIntOrFPElementsAttr[?]
+          )
+        case elementType: FloatType if allFloat =>
+          Some(
+            DenseFPElementsAttr(
+              typ,
+              literal.values
+                .collect { case TensorLiteralElement.Float(value) =>
+                  FloatAttr(value, elementType)
+                },
+            ): DenseIntOrFPElementsAttr[?]
+          )
+        case _: IntegerType | _: IndexType =>
+          None
+        case _: FloatType =>
+          None
+        case _ => None
 
-        attr match
-          case Some(dense) =>
-            dense.customVerify()
-              .fold(error => Fail(error.msg), _ => Pass(dense))
-          case None =>
-            Fail(
-              s"dense literal kind does not match container element type ${typ
-                  .elementType}"
-            )
-      case _ =>
-        Fail("dense elements attribute requires a statically shaped type")
+      attr match
+        case Some(dense) =>
+          dense.customVerify()
+            .fold(error => Fail(error.msg), _ => Pass(dense))
+        case None =>
+          Fail(
+            s"dense literal kind does not match container element type ${typ
+                .elementType}"
+          )
   )
 
 private def tensorLiteralP[$: P](using Parser): P[TensorLiteral] =

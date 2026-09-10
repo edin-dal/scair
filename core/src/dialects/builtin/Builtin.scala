@@ -437,7 +437,8 @@ final case class FunctionType(
 || Dense Elements Attrs ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-sealed trait DenseIntOrFPElementsAttr[Element <: Attribute] extends ParametrizedAttribute:
+sealed trait DenseIntOrFPElementsAttr[Element <: Attribute]
+    extends ParametrizedAttribute:
 
   def typ: RankedTensorType | VectorType
   def data: ArrayAttribute[Element]
@@ -462,19 +463,20 @@ sealed trait DenseIntOrFPElementsAttr[Element <: Attribute] extends Parametrized
     p.print("dense<")
     if data.length == 1 then printElement(data(0), p)
     else if data.nonEmpty then
-      val values = data.iterator
-      def printNested(shape: Seq[Long]): Unit =
-        p.printListF(
-          0L until shape.head,
-          element =>
-            if shape.length == 1 then printElement(values.next(), p)
-            else printNested(shape.tail),
-          "[",
-          ", ",
-          "]",
-        )
+      def printNested(elements: Seq[Element], shape: Seq[Long]): Unit =
+        shape match
+          case _ +: tail if tail.nonEmpty =>
+            p.printListF(
+              elements.grouped(tail.product.toInt),
+              printNested(_, tail),
+              "[",
+              ", ",
+              "]",
+            )
+          case _ =>
+            p.printListF(elements, printElement(_, p), "[", ", ", "]")
 
-      printNested(typ.getShape)
+      printNested(data.data, typ.getShape)
     p.print("> : ", typ)
 
 final case class DenseIntElementsAttr(
