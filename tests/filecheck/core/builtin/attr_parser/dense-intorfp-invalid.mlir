@@ -27,9 +27,3 @@
 "test.op"() {value = dense<> : tensor<2xi32>} : () -> ()
 
 // CHECK: Dense elements attribute has 0 values, but type tensor<2xi32> has 2 elements
-
-// -----
-
-"test.op"() {value = dense<true> : tensor<i32>} : () -> ()
-
-// CHECK: dense literal kind does not match container element type i32

@@ -452,7 +452,7 @@ sealed trait DenseIntOrFPElementsAttr[Element <: Attribute]
     if shape.exists(_ < 0) then
       Err("Dense elements attribute requires a statically shaped type")
     else
-      val elementCount = shape.foldLeft(1:Long)(_ * _)
+      val elementCount = shape.foldLeft(1: Long)(_ * _)
       if data.length == 1 || data.length == elementCount then OK()
       else
         Err(
@@ -508,7 +508,7 @@ final case class DenseIntElementsAttr(
           else
             Err(
               s"DenseIntElementsAttr data element type ${element.typ} does not match expected type $elementType",
-              Some(element)
+              Some(element),
             )
         )
       )
