@@ -385,7 +385,13 @@ private enum TensorLiteralElement:
 private final case class TensorLiteral(
     values: Seq[TensorLiteralElement],
     inferredShape: Option[Seq[Long]],
-)
+):
+
+  def mapAll[A](
+      f: PartialFunction[TensorLiteralElement, A]
+  ): Option[Seq[A]] =
+    val mapped = values.collect(f)
+    Option.when(mapped.length == values.length)(mapped)
 
 private def denseElementsTypeP[$: P](using
     Parser
@@ -400,64 +406,37 @@ def denseIntOrFPElementsAttrP[$: P](using
     "dense" ~/ "<" ~/ tensorLiteralP.orElse(TensorLiteral(Seq(), None)) ~ ">" ~ ":" ~
       denseElementsTypeP
   ).flatMap((literal, typ) =>
-    if typ.getShape.exists(_ < 0) then
+    val shape = typ.getShape
+    if shape.exists(_ < 0) then
       Fail("dense elements attribute requires a statically shaped type")
-    else if literal.inferredShape.exists(_ != typ.getShape) then
+    else if literal.inferredShape.exists(_ != shape) then
       Fail(
         s"inferred shape of elements literal (${literal.inferredShape
-            .get}) does not match type (${typ.getShape})"
+            .get}) does not match type ($shape)"
       )
     else
-      val hasBoolean = literal.values.exists {
-        case TensorLiteralElement.Bool(_) => true
-        case _                            => false
-      }
-      val allInteger = literal.values.forall {
-        case TensorLiteralElement.Float(_) => false
-        case _                             => true
-      }
-      val allFloat = literal.values.forall {
-        case TensorLiteralElement.Float(_) => true
-        case _                             => false
-      }
-      val attr = typ.elementType match
-        case elementType: IntegerType
-            if allInteger && (!hasBoolean || elementType == I1) =>
-          Some(
-            DenseIntElementsAttr(
-              typ,
-              literal.values.collect {
-                case TensorLiteralElement.Integer(value) =>
-                  IntegerAttr(value, elementType)
-                case TensorLiteralElement.Bool(value) =>
-                  IntegerAttr(IntData(if value then 1 else 0), elementType)
-              },
-            ): DenseIntOrFPElementsAttr[?]
+      val attr: Option[DenseIntOrFPElementsAttr[?]] = typ.elementType match
+        case elementType: IntegerType =>
+          literal.mapAll {
+            case TensorLiteralElement.Integer(value) =>
+              IntegerAttr(value, elementType)
+            case TensorLiteralElement.Bool(value) if elementType == I1 =>
+              IntegerAttr(IntData(if value then 1 else 0), elementType)
+          }.map(data =>
+            DenseIntElementsAttr(typ, data): DenseIntOrFPElementsAttr[?]
           )
-        case elementType: IndexType if allInteger && !hasBoolean =>
-          Some(
-            DenseIntElementsAttr(
-              typ,
-              literal.values
-                .collect { case TensorLiteralElement.Integer(value) =>
-                  IntegerAttr(value, elementType)
-                },
-            ): DenseIntOrFPElementsAttr[?]
+        case elementType: IndexType =>
+          literal.mapAll { case TensorLiteralElement.Integer(value) =>
+            IntegerAttr(value, elementType)
+          }.map(data =>
+            DenseIntElementsAttr(typ, data): DenseIntOrFPElementsAttr[?]
           )
-        case elementType: FloatType if allFloat =>
-          Some(
-            DenseFPElementsAttr(
-              typ,
-              literal.values
-                .collect { case TensorLiteralElement.Float(value) =>
-                  FloatAttr(value, elementType)
-                },
-            ): DenseIntOrFPElementsAttr[?]
+        case elementType: FloatType =>
+          literal.mapAll { case TensorLiteralElement.Float(value) =>
+            FloatAttr(value, elementType)
+          }.map(data =>
+            DenseFPElementsAttr(typ, data): DenseIntOrFPElementsAttr[?]
           )
-        case _: IntegerType | _: IndexType =>
-          None
-        case _: FloatType =>
-          None
         case _ => None
 
       attr match
