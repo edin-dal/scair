@@ -391,9 +391,8 @@ private final case class TensorLiteral(
 private def denseElementsTypeP[$: P](using
     Parser
 ): P[RankedTensorType | RankedMemrefType | VectorType] = P(
-  ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">")
-  | ("memref" ~ "<" ~/ rankedMemrefTypeP ~ ">")
-  | vectorTypeP
+  ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">") |
+    ("memref" ~ "<" ~/ rankedMemrefTypeP ~ ">") | vectorTypeP
 ).asInstanceOf[P[RankedTensorType | RankedMemrefType | VectorType]]
 
 def denseIntOrFPElementsAttrP[$: P](using
@@ -413,24 +412,14 @@ def denseIntOrFPElementsAttrP[$: P](using
       )
     else
       val attr: Option[DenseIntOrFPElementsAttr[?]] = typ.elementType match
-        case elementType: IntegerType =>
+        case elementType: (IntegerType | IndexType) =>
           literal.mapAll { case value: IntData =>
             IntegerAttr(value, elementType)
-          }.map(data =>
-            DenseIntElementsAttr(typ, data): DenseIntOrFPElementsAttr[?]
-          )
-        case elementType: IndexType =>
-          literal.mapAll { case value: IntData =>
-            IntegerAttr(value, elementType)
-          }.map(data =>
-            DenseIntElementsAttr(typ, data): DenseIntOrFPElementsAttr[?]
-          )
+          }.map(data => DenseIntElementsAttr(typ, data))
         case elementType: FloatType =>
           literal.mapAll { case value: FloatData =>
             FloatAttr(value, elementType)
-          }.map(data =>
-            DenseFPElementsAttr(typ, data): DenseIntOrFPElementsAttr[?]
-          )
+          }.map(data => DenseFPElementsAttr(typ, data))
         case _ => None
 
       attr.fold(

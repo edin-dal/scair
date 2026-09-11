@@ -480,7 +480,7 @@ sealed trait DenseIntOrFPElementsAttr[Element <: Attribute]
     p.print("> : ", typ)
 
 final case class DenseIntElementsAttr(
-    typ: RankedTensorType | RankedMemrefType |VectorType,
+    typ: RankedTensorType | RankedMemrefType | VectorType,
     data: ArrayAttribute[IntegerAttr],
 ) extends DenseIntOrFPElementsAttr[IntegerAttr],
       DerivedAttribute["builtin.dense"] derives AttrDefs:
