@@ -257,7 +257,59 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         case '[AssemblyFormat[format]] =>
           Some(parseAssemblyFormat(Type.valueOfConstant[format].get, opDef))
         case _ => None
-      opDef.copy(assemblyFormat = format)
+      opDef.copy(
+        assemblyFormat = format,
+        sameVariadicOperandSize = checkedSameVariadicSize[
+          T,
+          SameVariadicOperandSize,
+        ](opDef, "operand", opDef.variadicOperandCount),
+        sameVariadicResultSize = checkedSameVariadicSize[
+          T,
+          SameVariadicResultSize,
+        ](opDef, "result", opDef.variadicResultCount),
+      )
+
+/** Check whether `T` mixes in the `SameVariadic*Size` trait `Marker`, and that
+  * doing so is coherent with its definitions.
+  *
+  * @tparam T
+  *   The operation ADT type.
+  * @tparam Marker
+  *   The marker trait to look for.
+  * @param construct
+  *   The name of the construct the marker applies to, for diagnostics.
+  * @param variadicCount
+  *   The number of variadic definitions of that construct.
+  */
+def checkedSameVariadicSize[T <: Operation: Type, Marker: Type](
+    opDef: OperationDef,
+    construct: String,
+    variadicCount: Int,
+)(using Quotes): Boolean =
+  import quotes.reflect.*
+
+  if !(TypeRepr.of[T] <:< TypeRepr.of[Marker]) then false
+  else
+    val marker = Type.show[Marker].split('.').last
+    val pos = TypeRepr.of[T].typeSymbol.pos
+    def abort(msg: String) =
+      pos match
+        case Some(p) => report.errorAndAbort(msg, p)
+        case None    => report.errorAndAbort(msg)
+
+    // Mirrors MLIR's tblgen-time checks; a single variadic construct is
+    // unambiguous on its own, so the marker would be vacuous.
+    if variadicCount < 2 then
+      abort(
+        s"${opDef.className} is marked $marker but has fewer than two variadic ${construct}s."
+      )
+    // The marker and an explicit segment sizes property are two mutually
+    // exclusive ways of disambiguating the very same constructs.
+    if opDef.properties.exists(_.name == s"${construct}SegmentSizes") then
+      abort(
+        s"${opDef.className} cannot both be marked $marker and define the ${construct}SegmentSizes property."
+      )
+    true
 
 def getCompanion[T: Type](using quotes: Quotes) =
   import quotes.reflect.*

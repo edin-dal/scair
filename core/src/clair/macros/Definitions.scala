@@ -106,6 +106,8 @@ case class OperationDef(
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
     val assemblyFormat: Option[AssemblyFormatDirective] = None,
+    val sameVariadicOperandSize: Boolean = false,
+    val sameVariadicResultSize: Boolean = false,
 ):
 
   def allDefs =
@@ -126,6 +128,15 @@ case class OperationDef(
 
   def hasMultiVariadicSuccessors =
     successors.count(_.variadicity == Variadicity.Variadic) > 1
+
+  /** The number of operand definitions holding a variable number of operands.
+    */
+  def variadicOperandCount =
+    operands.count(_.variadicity != Variadicity.Single)
+
+  /** The number of result definitions holding a variable number of results. */
+  def variadicResultCount =
+    results.count(_.variadicity != Variadicity.Single)
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   ATTRIBUTE DEF   ||

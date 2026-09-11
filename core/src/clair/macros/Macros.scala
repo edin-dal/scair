@@ -149,12 +149,12 @@ def propertiesMacro(
   import quotes.reflect.*
 
   val opSegSizeProp = makeSegmentSizes(
-    opDef.hasMultiVariadicOperands,
+    opDef.hasMultiVariadicOperands && !opDef.sameVariadicOperandSize,
     opDef.operands,
     adtOpExpr,
   )
   val resSegSizeProp = makeSegmentSizes(
-    opDef.hasMultiVariadicResults,
+    opDef.hasMultiVariadicResults && !opDef.sameVariadicResultSize,
     opDef.results,
     adtOpExpr,
   )
@@ -236,10 +236,69 @@ def parseMacro[O <: Operation: Type](
         )
       }
 
+/** Verify that all variadic definitions of a construct indeed hold the same
+  * number of constructs, as the op declares with a `SameVariadic*Size` trait.
+  *
+  * @param defs
+  *   The construct definitions of the marked construct.
+  * @param marker
+  *   The name of the trait the op is marked with, for diagnostics.
+  */
+def sameVariadicSizeVerifier[Def <: MayVariadicOpInputDef: Type](
+    opName: String,
+    defs: Seq[Def],
+    marker: String,
+    adtOpExpr: Expr[?],
+)(using Quotes): Expr[OK[Unit]] =
+  val variadics = defs.filter(_.variadicity != Variadicity.Single)
+  // Each variadic definition, paired with the number of constructs it holds.
+  val sizes = Expr.ofList(
+    variadics.map(d =>
+      '{
+        (
+          ${ Expr(d.name) },
+          ${ selectMember[Iterable[?]](adtOpExpr, d.name) }.size,
+        )
+      }
+    )
+  )
+  '{
+    val named = $sizes
+    if named.map(_._2).distinct.length > 1 then
+      scair.utils.Err(
+        s"Operation '${${ Expr(opName) }}' is marked ${${
+            Expr(marker)
+          }}, but its variadic ${${
+            Expr(getConstructName[Def])
+          }}s have differing sizes: ${named
+            .map((name, size) => s"$name ($size)").mkString(", ")}",
+        Some($adtOpExpr.asInstanceOf[Operation]),
+      )
+    else OK()
+  }
+
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
+
+  val sameSizes =
+    Option
+      .when(opDef.sameVariadicOperandSize)(
+        sameVariadicSizeVerifier(
+          opDef.name,
+          opDef.operands,
+          "SameVariadicOperandSize",
+          adtOpExpr,
+        )
+      ) ++ Option.when(opDef.sameVariadicResultSize)(
+      sameVariadicSizeVerifier(
+        opDef.name,
+        opDef.results,
+        "SameVariadicResultSize",
+        adtOpExpr,
+      )
+    )
 
   val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
     .filter(_.variadicity == Variadicity.Single)
@@ -254,8 +313,11 @@ def verifyMacro(
     given ctx: scair.constraints.ConstraintContext =
       scair.constraints.ConstraintContext()
     ${
+      val start = sameSizes.foldLeft[Expr[OK[Unit]]]('{ OK() })((res, check) =>
+        '{ $res.flatMap(_ => $check) }
+      )
       val chain = a.foldLeft[Expr[OK[Unit]]](
-        '{ OK() }
+        start
       )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
       '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
     }
@@ -544,6 +606,80 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
         }
   }
 
+/** Partition a construct sequence, in the case of multiple variadic definitions
+  * declared to all hold the same number of constructs.
+  *
+  * The flat sequence is split evenly over the variadic definitions, rather than
+  * according to a segment sizes property.
+  *
+  * @see
+  *   [[constructPartitioner]]
+  */
+def sameSizeConstructPartitioner[Def <: OpInputDef: Type](
+    defs: Seq[Def]
+)(using Quotes) =
+  val variadicities = defs.map(getConstructVariadicity(_))
+  val variadics = variadicities.count(_ != Variadicity.Single)
+  val singles = defs.length - variadics
+  // An optional definition holds at most one construct, which caps the shared
+  // size all variadic definitions must agree on.
+  val hasOptional = variadicities.contains(Variadicity.Optional)
+
+  // The number of constructs each variadic definition holds, deduced from the
+  // total. Kept as an expression as it is only known at runtime.
+  val sharedSize = '{ (flat: Seq[DefinedInput[Def]]) =>
+    val variable = flat.length - ${ Expr(singles) }
+    if variable < 0 || variable % ${ Expr(variadics) } != 0 then
+      throw new Exception(
+        s"Expected ${${ Expr(singles) }} ${${
+            Expr(getConstructName[Def])
+          }}s plus a multiple of ${${
+            Expr(variadics)
+          }} same-sized variadic ones, got ${flat.length}."
+      )
+    val size = variable / ${ Expr(variadics) }
+    if ${ Expr(hasOptional) } && size > 1 then
+      throw new Exception(
+        s"Expected at most one ${${
+            Expr(getConstructName[Def])
+          }} per variadic definition, as one of them is optional, got $size."
+      )
+    size
+  }
+
+  // Each definition starts after the preceeding single ones, plus a shared size
+  // worth of constructs for each preceeding variadic one.
+  val starts = variadicities.scanLeft((0, 0))((counts, variadicity) =>
+    variadicity match
+      case Variadicity.Single => (counts._1 + 1, counts._2)
+      case Variadicity.Variadic | Variadicity.Optional =>
+        (counts._1, counts._2 + 1)
+  )
+
+  (defs zip starts).map { case (d, (singlesBefore, variadicsBefore)) =>
+    val start = '{ (flat: Seq[DefinedInput[Def]]) =>
+      ${ Expr(singlesBefore) } +
+        ${ Expr(variadicsBefore) } * ${ sharedSize }(flat)
+    }
+    getConstructVariadicity(d) match
+      case Variadicity.Single =>
+        '{
+          (
+              properties: Map[String, Attribute],
+              flat: Seq[DefinedInput[Def]],
+          ) => flat(${ start }(flat))
+        }
+      case Variadicity.Variadic | Variadicity.Optional =>
+        '{
+          (
+              properties: Map[String, Attribute],
+              flat: Seq[DefinedInput[Def]],
+          ) =>
+            val from = ${ start }(flat)
+            flat.slice(from, from + ${ sharedSize }(flat))
+        }
+  }
+
 /** Partion constructs of a specified type. That is, check that they are in a
   * coherent quantity, and partition them into the provided definitions.
   *
@@ -556,13 +692,15 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
   *   the sequence of partitions according to the definitions.
   */
 def constructPartitioner[Def <: OpInputDef: Type](
-    defs: Seq[Def]
+    defs: Seq[Def],
+    sameVariadicSize: Boolean = false,
 )(using Quotes) =
   // Check the number of variadic constructs
   defs.count(getConstructVariadicity(_) != Variadicity.Single) match
-    case 0 => uniadicConstructPartitioner(defs)
-    case 1 => univariadicConstructPartitioner(defs)
-    case _ => multivariadicConstructPartitioner(defs)
+    case 0                     => uniadicConstructPartitioner(defs)
+    case 1                     => univariadicConstructPartitioner(defs)
+    case _ if sameVariadicSize => sameSizeConstructPartitioner(defs)
+    case _                     => multivariadicConstructPartitioner(defs)
 
 /* Return an extractor for a single-defined construct
  */
@@ -645,10 +783,12 @@ def extractedConstructs[Def <: OpInputDef: Type](
     defs: Seq[Def],
     flat: Expr[Seq[DefinedInput[Def]]],
     properties: Expr[Map[String, Attribute]],
+    sameVariadicSize: Boolean = false,
 )(using Quotes) =
   // partition the constructs according to their definitions
   val partitioned =
-    constructPartitioner(defs).map(p => '{ ${ p }($properties, $flat) })
+    constructPartitioner(defs, sameVariadicSize)
+      .map(p => '{ ${ p }($properties, $flat) })
 
   // extract the constructs
   (partitioned zip defs).map((c, d) => '{ ${ constructExtractor(d) }(${ c }) })
@@ -679,9 +819,14 @@ def tryConstruct[T: Type](
       opDef.operands,
       operands,
       properties,
+      opDef.sameVariadicOperandSize,
     ) zip opDef.operands).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-      (extractedConstructs(opDef.results, results, properties) zip
-        opDef.results).map((e, d) => NamedArg(d.name, e.asTerm)) ++
+      (extractedConstructs(
+        opDef.results,
+        results,
+        properties,
+        opDef.sameVariadicResultSize,
+      ) zip opDef.results).map((e, d) => NamedArg(d.name, e.asTerm)) ++
       (extractedConstructs(
         opDef.regions,
         regions,

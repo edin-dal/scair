@@ -246,6 +246,39 @@ trait IsTerminator extends Operation:
 
 Traits are commonly used by [transformations](transformations.md) and verification passes.
 
+#### Same variadic sizes
+
+An operation holding several variadic operands, written as `Seq[Operand[...]]`
+fields, is ambiguous: the flat operand list alone does not say where one group
+ends and the next begins. By default ScaIR disambiguates it with an
+`operandSegmentSizes` property, spelling out the size of each group.
+
+Mixing in `SameVariadicOperandSize` instead declares that all variadic operands
+hold the same number of values, so the operand list is split evenly over them and
+no property is needed. `SameVariadicResultSize` does the same for results. Both
+mirror the MLIR traits of the same names; unlike upstream, ScaIR checks the size
+agreement during verification.
+
+```scala sc-name:SameSizeOp
+//{
+import scair.ir.*
+import scair.clair.*
+import scair.dialects.builtin.*
+//}
+case class SameSizeOp(
+  lhs: Seq[Operand[IntegerType]],
+  rhs: Seq[Operand[IntegerType]],
+  res: Result[IntegerType]
+) extends DerivedOperation["mydialect.same_size"]
+  with SameVariadicOperandSize
+  derives OpDefs
+```
+
+The trait requires at least two variadic definitions of the construct it applies
+to, and cannot be combined with an explicit segment sizes property; either is a
+compile error.
+
+
 ### Verification
 
 Operations can define a `verify()` method to enforce invariants:
