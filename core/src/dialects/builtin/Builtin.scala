@@ -433,61 +433,114 @@ final case class FunctionType(
       case ArrayAttribute(single) => p.print(single)
       case s                      => p.printList(s, "(", ", ", ")")
 
-/*≡==--==≡≡≡≡==--=≡≡*\
-|| DenseIntOrFPAttr ||
-\*≡==---==≡≡==---==≡*/
+/*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
+|| Dense Elements Attrs ||
+\*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-type TensorLiteralArray =
-  ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr]
+sealed trait DenseIntOrFPElementsAttr[Element <: Attribute]
+    extends ParametrizedAttribute:
 
-final case class DenseIntOrFPElementsAttr(
-    typ: ContainerType,
-    data: TensorLiteralArray,
-) extends DerivedAttribute["builtin.dense"] derives AttrDefs:
+  def typ: RankedTensorType | RankedMemrefType | VectorType
+  def data: ArrayAttribute[Element]
 
-  def elementType = typ.elementType
+  final def elementType: Attribute = typ.elementType
 
-  override def customVerify(): OK[Unit] =
-    val tpe = elementType match
-      case it: IntegerType => OK(it)
-      case ft: FloatType   => OK(ft)
-      case _               =>
+  protected def printElement(element: Element, p: Printer): Unit
+
+  protected final def verifyShapeAndElementCount(): OK[Unit] =
+    val shape = typ.getShape
+    if shape.exists(_ < 0) then
+      Err("Dense elements attribute requires a statically shaped type")
+    else
+      val elementCount = shape.foldLeft(1: Long)(_ * _)
+      if data.length == 1 || data.length == elementCount then OK()
+      else
         Err(
-          s"DenseIntOrFPElementsAttr element type must be IntegerType or FloatType, got: $elementType"
+          s"Dense elements attribute has ${data.length} values, but type $typ has $elementCount elements"
         )
 
-    data.data.foldLeft[OK[Any]](
-      tpe
-    )((acc, elt) =>
-      acc.map(tpe =>
-        elt match
-          case IntegerAttr(_, etyp) =>
-            if tpe == etyp then acc
-            else
-              Err(
-                s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
-              )
-          case FloatAttr(_, etyp) =>
-            if tpe == etyp then acc
-            else
-              Err(
-                s"DenseIntOrFPElementsAttr data element type $etyp does not match expected type $tpe"
-              )
-      )
-    ).map(_ => ())
-
-  override def customPrint(p: Printer) =
-    val values = data.data(0) match
-      case x: IntegerAttr =>
-        for (a <- data.data) yield a.asInstanceOf[IntegerAttr].value
-      case y: FloatAttr =>
-        for (a <- data.data) yield a.asInstanceOf[FloatAttr].value
+  override final def customPrint(p: Printer): Unit =
     p.print("dense<")
-    values match
-      case Seq(single) => p.print(single)
-      case s           => p.printList(s, "[", ", ", "]")
-    p.print("> : ")
-    p.print(typ)
+    if data.length == 1 then printElement(data(0), p)
+    else if data.nonEmpty then
+      def printNested(elements: Seq[Element], shape: Seq[Long]): Unit =
+        shape match
+          case _ +: tail if tail.nonEmpty =>
+            p.printListF(
+              elements.grouped(tail.product.toInt),
+              printNested(_, tail),
+              "[",
+              ", ",
+              "]",
+            )
+          case _ =>
+            p.printListF(elements, printElement(_, p), "[", ", ", "]")
+
+      printNested(data.data, typ.getShape)
+    p.print("> : ", typ)
+
+final case class DenseIntElementsAttr(
+    typ: RankedTensorType | RankedMemrefType | VectorType,
+    data: ArrayAttribute[IntegerAttr],
+) extends DenseIntOrFPElementsAttr[IntegerAttr],
+      DerivedAttribute["builtin.dense"] derives AttrDefs:
+
+  override protected def printElement(
+      integer: IntegerAttr,
+      p: Printer,
+  ): Unit =
+    elementType match
+      case IntegerType(IntData(1), Signless) =>
+        p.print(if integer.value.data == 0 then "false" else "true")
+      case _ => p.print(integer.value)
+
+  override def customVerify(): OK[Unit] =
+    val elementTypeCheck = elementType match
+      case _: IntegerType | _: IndexType => OK()
+      case _                             =>
+        Err(
+          s"DenseIntElementsAttr element type must be IntegerType or IndexType, got: $elementType"
+        )
+    elementTypeCheck.flatMap(_ => verifyShapeAndElementCount()).flatMap(_ =>
+      data.data.foldLeft[OK[Unit]](OK())((result, element) =>
+        result.flatMap(_ =>
+          if element.typ == elementType then OK()
+          else
+            Err(
+              s"DenseIntElementsAttr data element type ${element.typ} does not match expected type $elementType",
+              Some(element),
+            )
+        )
+      )
+    )
+
+final case class DenseFPElementsAttr(
+    typ: RankedTensorType | RankedMemrefType | VectorType,
+    data: ArrayAttribute[FloatAttr],
+) extends DenseIntOrFPElementsAttr[FloatAttr],
+      DerivedAttribute["builtin.dense"] derives AttrDefs:
+
+  override protected def printElement(element: FloatAttr, p: Printer): Unit =
+    p.print(element.value)
+
+  override def customVerify(): OK[Unit] =
+    val elementTypeCheck = elementType match
+      case _: FloatType => OK()
+      case _            =>
+        Err(
+          s"DenseFPElementsAttr element type must be FloatType, got: $elementType"
+        )
+    elementTypeCheck.flatMap(_ => verifyShapeAndElementCount()).flatMap(_ =>
+      data.data.foldLeft[OK[Unit]](OK())((result, element) =>
+        result.flatMap(_ =>
+          if element.typ == elementType then OK()
+          else
+            Err(
+              s"DenseFPElementsAttr data element type ${element.typ} does not match expected type $elementType"
+            )
+        )
+      )
+    )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||  AFFINE MAP ATTR ||
