@@ -58,7 +58,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
         Expr.ofList(
           defs.map((d) =>
             d.variadicity match
-              case Variadicity.Single                          => Expr(1)
+              case Variadicity.Single   => Expr(1)
               case Variadicity.Variadic =>
                 '{
                   ${ selectMember[Seq[?]](adtOpExpr, d.name) }.length
