@@ -259,14 +259,12 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         case _ => None
       opDef.copy(
         assemblyFormat = format,
-        sameVariadicOperandSize = checkedSameVariadicSize[
-          T,
-          SameVariadicOperandSize,
-        ](opDef, "operand", opDef.variadicOperandCount),
-        sameVariadicResultSize = checkedSameVariadicSize[
-          T,
-          SameVariadicResultSize,
-        ](opDef, "result", opDef.variadicResultCount),
+        sameVariadicOperandSize = Type.of[T] match
+          case '[SameVariadicOperandSize] => true
+          case _                          => false,
+        sameVariadicResultSize = Type.of[T] match
+          case '[SameVariadicResultSize] => true
+          case _                         => false,
       )
 
 /** Check whether `T` mixes in the `SameVariadic*Size` trait `Marker`, and that
