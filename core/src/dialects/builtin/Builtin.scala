@@ -440,7 +440,7 @@ final case class FunctionType(
 sealed trait DenseIntOrFPElementsAttr[Element <: Attribute]
     extends ParametrizedAttribute:
 
-  def typ: RankedTensorType | VectorType
+  def typ: RankedTensorType | RankedMemrefType | VectorType
   def data: ArrayAttribute[Element]
 
   final def elementType: Attribute = typ.elementType
@@ -480,7 +480,7 @@ sealed trait DenseIntOrFPElementsAttr[Element <: Attribute]
     p.print("> : ", typ)
 
 final case class DenseIntElementsAttr(
-    typ: RankedTensorType | VectorType,
+    typ: RankedTensorType | RankedMemrefType |VectorType,
     data: ArrayAttribute[IntegerAttr],
 ) extends DenseIntOrFPElementsAttr[IntegerAttr],
       DerivedAttribute["builtin.dense"] derives AttrDefs:
@@ -515,7 +515,7 @@ final case class DenseIntElementsAttr(
     )
 
 final case class DenseFPElementsAttr(
-    typ: RankedTensorType | VectorType,
+    typ: RankedTensorType | RankedMemrefType | VectorType,
     data: ArrayAttribute[FloatAttr],
 ) extends DenseIntOrFPElementsAttr[FloatAttr],
       DerivedAttribute["builtin.dense"] derives AttrDefs:

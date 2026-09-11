@@ -330,7 +330,7 @@ def memrefTypeP[$: P](using Parser): P[MemrefType] = P(
   "memref" ~ "<" ~/ (unrankedMemrefTypeP | rankedMemrefTypeP) ~ ">"
 )
 
-def rankedMemrefTypeP[$: P](using Parser): P[MemrefType] = P(
+def rankedMemrefTypeP[$: P](using Parser): P[RankedMemrefType] = P(
   dimensionListP ~ typeP
 ).map((x: (Seq[IntData], Attribute)) =>
   RankedMemrefType(
@@ -390,9 +390,11 @@ private final case class TensorLiteral(
 
 private def denseElementsTypeP[$: P](using
     Parser
-): P[RankedTensorType | VectorType] = P(
-  ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">") | vectorTypeP
-)
+): P[RankedTensorType | RankedMemrefType | VectorType] = P(
+  ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">")
+  | ("memref" ~ "<" ~/ rankedMemrefTypeP ~ ">")
+  | vectorTypeP
+).asInstanceOf[P[RankedTensorType | RankedMemrefType | VectorType]]
 
 def denseIntOrFPElementsAttrP[$: P](using
     Parser
