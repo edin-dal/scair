@@ -28,12 +28,13 @@ enum PatternAction:
   *   A RewritePattern to hook to the infrastructure.
   */
 inline def pattern(
-    partial: PartialFunction[
+    inline partial: PartialFunction[
       Operation,
       PatternAction | Operation | Seq[Operation] |
         (Operation | Seq[Operation], Value[?] | Seq[Value[?]]),
     ]
 ): RewritePattern =
+
   val lifted = partial.lift
 
   object pattern extends RewritePattern:
