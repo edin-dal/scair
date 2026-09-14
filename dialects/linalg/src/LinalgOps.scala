@@ -18,8 +18,6 @@ import scair.ir.*
 // ╚█████╔╝ ██║░░░░░ ███████╗ ██║░░██║ ██║░░██║ ░░░██║░░░ ██║ ╚█████╔╝ ██║░╚███║ ██████╔╝
 // ░╚════╝░ ╚═╝░░░░░ ╚══════╝ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ╚═╝ ░╚════╝░ ╚═╝░░╚══╝ ╚═════╝░
 
-trait Pure extends Operation with NoMemoryEffect
-
 /* Ports the Linalg ops that do not correspond to library calls, i.e. those
  * defined in MLIR's LinalgOps.td. */
 

@@ -10,7 +10,7 @@ func.func @zero() -> i64 {
 
 // CHECK:       "builtin.module"() ({
 // CHECK-NEXT:    "func.func"() <{sym_name = "zero", function_type = () -> i64}> ({
-// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0}> : () -> i64
+// CHECK-NEXT:      %0 = "arith.constant"() <{value = 0 : i64}> : () -> i64
 // CHECK-NEXT:      "func.return"(%0) : (i64) -> ()
 // CHECK-NEXT:    }) : () -> ()
 // CHECK-NEXT:    %0 = "func.constant"() <{value = @zero}> : () -> () -> i64

@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 // Coverage for the data-layout ops, ported from MLIR's LinalgRelayoutOps.td.
 //

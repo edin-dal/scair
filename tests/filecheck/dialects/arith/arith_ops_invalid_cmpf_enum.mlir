@@ -5,7 +5,7 @@
 
 // CHECK:       "builtin.module"() ({
 // CHECK-NEXT:    %0, %1 = "test.op"() : () -> (f32, f32)
-// CHECK-NEXT:    %2 = "arith.cmpf"(%0, %1) <{fastmath = #arith.fastmath<none>, predicate = 19}> : (f32, f32) -> i1
+// CHECK-NEXT:    %2 = "arith.cmpf"(%0, %1) <{fastmath = #arith.fastmath<none>, predicate = 19 : i64}> : (f32, f32) -> i1
 // CHECK-NEXT:    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // CHECK-NEXT:    > enum scair.dialects.arith.CmpFPredicate has no case with ordinal: 19
 // CHECK-NEXT:  }) : () -> ()
