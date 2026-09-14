@@ -37,6 +37,21 @@ case class MulMultiVariadic(
     resultSegmentSizes: DenseArrayAttr,
 ) extends DerivedOperation["cmath.mulmultivariadic"] derives OpDefs
 
+case class MulSameVariadicOperands(
+    lhs: Operand[IntegerType],
+    rhs: Seq[Operand[IntegerType]],
+    mhs: Seq[Operand[IntegerType]],
+    result: Result[IntegerType],
+) extends DerivedOperation["cmath.samevaroperands"]
+    with SameVariadicOperandSize derives OpDefs
+
+case class MulSameVariadicResults(
+    lhs: Operand[IntegerType],
+    res1: Seq[Result[IntegerType]],
+    res2: Seq[Result[IntegerType]],
+) extends DerivedOperation["cmath.samevarresults"]
+    with SameVariadicResultSize derives OpDefs
+
 case class MulFull(
     operand1: Operand[IntegerType],
     operand2: Operand[IntegerType],
@@ -83,6 +98,8 @@ val mulComp = summon[OpDefs[Mul]]
 val mulSVComp = summon[OpDefs[MulSingleVariadic]]
 val mulMMVComp = summon[OpDefs[MulMultiVariadic]]
 val mulOptComp = summon[OpDefs[MulOptional]]
+val mulSVOComp = summon[OpDefs[MulSameVariadicOperands]]
+val mulSVRComp = summon[OpDefs[MulSameVariadicResults]]
 val mulMultiOptComp = summon[OpDefs[MulMultiOptional]]
 
 val multiOptPropOpComp =
@@ -283,6 +300,44 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
           ),
         ))
       ),
+    )
+
+    def i5 = IntegerType(IntData(5), Unsigned)
+
+    def adtMulSameVarOperands = MulSameVariadicOperands(
+      lhs = Value(i5),
+      rhs = Seq(Value(i5), Value(i5)),
+      mhs = Seq(Value(i5), Value(i5)),
+      result = Result(i5),
+    )
+
+    /** Five operands: one single, then two variadics of two each. */
+    def unstructMulSameVarOperands = mulSVOComp.UnstructuredOp(
+      operands = Seq.fill(5)(Value[IntegerType](typ = i5)),
+      results = Seq(Result(i5)),
+    )
+
+    /** Four operands, which cannot split evenly over two variadics. */
+    def unstructMulSameVarOperandsUneven = mulSVOComp.UnstructuredOp(
+      operands = Seq.fill(4)(Value[IntegerType](typ = i5)),
+      results = Seq(Result(i5)),
+    )
+
+    /** One operand per variadic definition. */
+    def unstructMulSameVarOperandsThin = mulSVOComp.UnstructuredOp(
+      operands = Seq.fill(3)(Value[IntegerType](typ = i5)),
+      results = Seq(Result(i5)),
+    )
+
+    def adtMulSameVarResults = MulSameVariadicResults(
+      lhs = Value(i5),
+      res1 = Seq(Result(i5), Result(i5)),
+      res2 = Seq(Result(i5), Result(i5)),
+    )
+
+    def unstructMulSameVarResults = mulSVRComp.UnstructuredOp(
+      operands = Seq(Value[IntegerType](typ = i5)),
+      results = Seq.fill(4)(Result(i5)),
     )
 
     def adtMultiOptionalPropOp = MultiOptionalPropertyOp(
@@ -528,6 +583,87 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
             ) =>
       }
     }
+
+  "Same Variadic Operand Size" should
+    "Not emit an operandSegmentSizes property when destructuring" in {
+      val unstruct = mulSVOComp.destructure(TestCases.adtMulSameVarOperands)
+      unstruct.properties.keys should not contain "operandSegmentSizes"
+      unstruct.operands should have length 5
+    }
+
+  it should "Split the operands evenly over the variadic definitions" in {
+    val unstruct = TestCases.unstructMulSameVarOperands
+    val adt = mulSVOComp.structure(unstruct)
+    adt.lhs should be(unstruct.operands(0))
+    adt.rhs should have length 2
+    adt.mhs should have length 2
+    (adt.rhs ++ adt.mhs) should be(unstruct.operands.tail)
+  }
+
+  it should "Split a single operand per variadic definition" in {
+    val adt = mulSVOComp.structure(TestCases.unstructMulSameVarOperandsThin)
+    adt.rhs should have length 1
+    adt.mhs should have length 1
+  }
+
+  it should "Reject a number of operands that does not split evenly" in {
+    TestCases.unstructMulSameVarOperandsUneven.structured.getError.msg should
+      be(
+        "Expected 1 operands plus a multiple of 2 same-sized variadic ones, got 4."
+      )
+  }
+
+  it should "Round-trip through the unstructured representation" in {
+    val adt = TestCases.adtMulSameVarOperands
+    val roundTripped = mulSVOComp.structure(mulSVOComp.destructure(adt))
+    roundTripped.lhs should be(adt.lhs)
+    roundTripped.rhs should be(adt.rhs)
+    roundTripped.mhs should be(adt.mhs)
+  }
+
+  it should "Reject differently sized variadic operands on verification" in {
+    val op = MulSameVariadicOperands(
+      lhs = Value(TestCases.i5),
+      rhs = Seq(Value(TestCases.i5), Value(TestCases.i5)),
+      mhs = Seq(Value(TestCases.i5)),
+      result = Result(TestCases.i5),
+    )
+    op.verify() should be(
+      Err(
+        "Operation 'cmath.samevaroperands' is marked SameVariadicOperandSize, but its variadic operands have differing sizes: rhs (2), mhs (1)",
+        Some(op),
+      )
+    )
+  }
+
+  "Same Variadic Result Size" should
+    "Not emit a resultSegmentSizes property when destructuring" in {
+      val unstruct = mulSVRComp.destructure(TestCases.adtMulSameVarResults)
+      unstruct.properties.keys should not contain "resultSegmentSizes"
+      unstruct.results should have length 4
+    }
+
+  it should "Split the results evenly over the variadic definitions" in {
+    val unstruct = TestCases.unstructMulSameVarResults
+    val adt = mulSVRComp.structure(unstruct)
+    adt.res1 should have length 2
+    adt.res2 should have length 2
+    (adt.res1 ++ adt.res2) should be(unstruct.results)
+  }
+
+  it should "Reject differently sized variadic results on verification" in {
+    val op = MulSameVariadicResults(
+      lhs = Value(TestCases.i5),
+      res1 = Seq(Result(TestCases.i5), Result(TestCases.i5)),
+      res2 = Seq(Result(TestCases.i5)),
+    )
+    op.verify() should be(
+      Err(
+        "Operation 'cmath.samevarresults' is marked SameVariadicResultSize, but its variadic results have differing sizes: res1 (2), res2 (1)",
+        Some(op),
+      )
+    )
+  }
 
   "Recursive conversion to ADTOp" should "do the thing \\o/" in {
     val comp = summon[OpDefs[RegionOp]]
