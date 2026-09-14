@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --print-generic | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 // Coverage for the Linalg ops that do not correspond to library calls, ported
 // from MLIR's LinalgOps.td.
@@ -72,7 +72,7 @@
 %22 = "linalg.winograd_output_transform"(%20, %21) <{fmr = 2 : i32}> : (tensor<6x6x2x2x2x5xf32>, tensor<2x4x4x5xf32>) -> tensor<2x4x4x5xf32>
 
 // CHECK:      #map = affine_map<(d0, d1)[] -> (d0, d1)>
-// CHECK-NEXT: "builtin.module"() ({
+// CHECK-NEXT: builtin.module {
 // CHECK-NEXT:   %0, %1, %2 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, f32)
 // CHECK-NEXT:   %3 = "linalg.generic"(%0, %1) <{indexing_maps = [#map, #map], iterator_types = [#linalg.iterator_type<parallel>, #linalg.iterator_type<parallel>], operandSegmentSizes = array<i32: 1, 1>}> ({
 // CHECK-NEXT:   ^bb0(%4: f32, %5: f32):
@@ -96,4 +96,4 @@
 // CHECK-NEXT:   %13 = "linalg.winograd_input_transform"(%11, %12) <{fmr = 1 : i32}> : (tensor<2x6x6x5xf32>, tensor<6x6x1x1x2x5xf32>) -> tensor<6x6x1x1x2x5xf32>
 // CHECK-NEXT:   %14, %15 = "test.op"() : () -> (tensor<6x6x2x2x2x5xf32>, tensor<2x4x4x5xf32>)
 // CHECK-NEXT:   %16 = "linalg.winograd_output_transform"(%14, %15) <{fmr = 2 : i32}> : (tensor<6x6x2x2x2x5xf32>, tensor<2x4x4x5xf32>) -> tensor<2x4x4x5xf32>
-// CHECK-NEXT: }) : () -> ()
+// CHECK-NEXT: }
