@@ -101,6 +101,30 @@ case class RegionYieldOp(
     with IsTerminator
     with Pure derives OpDefs
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||   SAME VARIADIC SIZE OPS    ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+// Ported from mlir/test/lib/Dialect/Test/TestOps.td, where they exist to
+// exercise the even split of several variadic constructs over their
+// definitions, in place of a segment sizes property.
+
+/** Op used to test several variadic operands declared to have the same size. */
+case class SameVariadicOperandSizeOp(
+    variadic1: Seq[Operand[Attribute]],
+    non_variadic: Operand[Attribute],
+    variadic2: Seq[Operand[Attribute]],
+) extends DerivedOperation["test.same_variadic_operand"]
+    with SameVariadicOperandSize derives OpDefs
+
+/** Op used to test several variadic results declared to have the same size. */
+case class SameVariadicResultSizeOp(
+    variadic1: Seq[Result[Attribute]],
+    non_variadic: Result[Attribute],
+    variadic2: Seq[Result[Attribute]],
+) extends DerivedOperation["test.same_variadic_result"]
+    with SameVariadicResultSize derives OpDefs
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||       ENUM TEST OPS         ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
@@ -134,6 +158,8 @@ val Test: Dialect = summonDialect[
       ConditionallySpeculatableOp,
       RecursivelySpeculatableOp,
       RegionYieldOp,
+      SameVariadicOperandSizeOp,
+      SameVariadicResultSizeOp,
       RoundingModeOp,
   ),
 ]

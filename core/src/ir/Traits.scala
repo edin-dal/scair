@@ -77,6 +77,27 @@ trait IsolatedFromAbove extends Operation:
 
 trait Commutative extends Operation
 
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||    SAME VARIADIC SIZES        ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** All variadic operands of the op hold the same number of values.
+  *
+  * Selects an even split of the operands over their definitions, in place of
+  * the `operandSegmentSizes` property otherwise required to disambiguate
+  * several variadic operands. Mirrors MLIR's `SameVariadicOperandSize`; unlike
+  * upstream, where the trait is purely a code generation hint, the size
+  * agreement is checked at verification time.
+  */
+trait SameVariadicOperandSize extends Operation
+
+/** All variadic results of the op hold the same number of values.
+  *
+  * @see
+  *   [[SameVariadicOperandSize]], of which this is the result counterpart.
+  */
+trait SameVariadicResultSize extends Operation
+
 trait ConstantLike(_value: Attribute) extends Operation:
   def getValue: Attribute = _value
 

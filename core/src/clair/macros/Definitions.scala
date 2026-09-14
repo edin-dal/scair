@@ -106,6 +106,8 @@ case class OperationDef(
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
     val assemblyFormat: Option[AssemblyFormatDirective] = None,
+    val sameVariadicOperandSize: Boolean = false,
+    val sameVariadicResultSize: Boolean = false,
 ):
 
   def allDefs =
@@ -116,16 +118,16 @@ case class OperationDef(
       successors.zipWithIndex ++ properties.zipWithIndex
 
   def hasMultiVariadicOperands =
-    operands.count(_.variadicity == Variadicity.Variadic) > 1
+    operands.count(_.variadicity != Variadicity.Single) > 1
 
   def hasMultiVariadicResults =
-    results.count(_.variadicity == Variadicity.Variadic) > 1
+    results.count(_.variadicity != Variadicity.Single) > 1
 
   def hasMultiVariadicRegions =
-    regions.count(_.variadicity == Variadicity.Variadic) > 1
+    regions.count(_.variadicity != Variadicity.Single) > 1
 
   def hasMultiVariadicSuccessors =
-    successors.count(_.variadicity == Variadicity.Variadic) > 1
+    successors.count(_.variadicity != Variadicity.Single) > 1
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   ATTRIBUTE DEF   ||
