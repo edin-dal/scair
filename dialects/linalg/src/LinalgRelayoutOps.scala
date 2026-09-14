@@ -11,17 +11,7 @@ import scair.ir.*
 // ██║░░██║ ███████╗ ███████╗ ██║░░██║ ░░░██║░░░ ╚█████╔╝ ╚██████╔╝ ░░░██║░░░
 // ╚═╝░░╚═╝ ╚══════╝ ╚══════╝ ╚═╝░░╚═╝ ░░░╚═╝░░░ ░╚════╝░ ░╚═════╝░ ░░░╚═╝░░░
 
-/* Ports the data-layout ops defined in MLIR's LinalgRelayoutOps.td.
- *
- * Both ops carry two variadic-ish operand groups (`padding_value` is optional
- * and `inner_tiles` is variadic), so the generic printer emits an
- * `operandSegmentSizes` property for them.
- *
- * Upstream both use a declarative assembly format built around
- * `custom<DynamicIndexList>($inner_tiles, $static_inner_tiles)`, which
- * interleaves the dynamic operands with the static `static_inner_tiles` entries.
- * ScaIR has no custom-directive support, so these ops print and parse in the
- * generic form, which MLIR accepts. */
+/* Ports the data-layout ops defined in MLIR's LinalgRelayoutOps.td. */
 
 trait TypesMatchWith(one: RankedTensorType, two: RankedTensorType)
     extends Operation

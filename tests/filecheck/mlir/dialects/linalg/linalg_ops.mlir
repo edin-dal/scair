@@ -4,11 +4,7 @@
 // from MLIR's LinalgOps.td.
 //
 // `linalg.softmax` and the three Winograd transforms use their upstream
-// assembly format. One deviation from MLIR is visible below:
-//
-//   * `fmr` prints as an i32 ordinal (`fmr(0 : i32)`) rather than as the
-//     symbolic `fmr(F_2_3)`. ScaIR represents enums as their ordinal
-//     IntegerAttr; see LinalgEnums.scala. MLIR accepts the ordinal on input.
+// assembly format.
 
 %0, %1, %2 = "test.op"() : () -> (tensor<4x8xf32>, tensor<4x8xf32>, f32)
 

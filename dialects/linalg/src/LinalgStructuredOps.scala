@@ -70,11 +70,7 @@ case class Map(
 // TODO: upstream `dimensions` is confined to a strictly sorted
 // `DenseI64ArrayAttr`; ScaIR has no confined attributes, so the sortedness
 // constraint is dropped.
-//
-// TODO: upstream this op carries `SameVariadicOperandSize` and so has no
-// `operandSegmentSizes` property. ScaIR emits and requires that property for
-// any op with two variadic operand groups, so `linalg.reduce` printed by ScaIR
-// carries one extra property compared to MLIR.
+
 case class Reduce(
     inputs: Seq[Operand[ShapedType]] = Seq.empty,
     inits: Seq[Operand[ShapedType]] = Seq.empty,
