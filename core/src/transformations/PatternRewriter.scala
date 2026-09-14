@@ -6,7 +6,6 @@ import scair.print.ErrorPrinter
 import scair.utils.Err
 
 import java.io.StringWriter
-import scala.annotation.tailrec
 import scala.collection.mutable.LinkedHashSet
 
 // ██████╗░ ░█████╗░ ████████╗ ████████╗ ███████╗ ██████╗░ ███╗░░██╗
@@ -252,24 +251,20 @@ abstract class RewritePattern:
 case class GreedyRewritePatternApplier(patterns: Seq[RewritePattern])
     extends RewritePattern:
 
-  @tailrec
-  private final def matchAndRewriteRec(
-      op: Operation,
-      rewriter: PatternRewriter,
-      patterns: Seq[RewritePattern],
-  ): Unit =
-    patterns match
-      case Nil    => ()
-      case h +: t =>
-        try h.matchAndRewrite(op, rewriter)
-        catch case e: Exception => augmentException(e, op, h)
-        if !rewriter.hasDoneAction then matchAndRewriteRec(op, rewriter, t)
+  // Materialize once: `patterns` may be any Seq, including a non-List Seq.
+  // Indexed access avoids decomposing that Seq for every operation rewritten.
+  private val patternArray = patterns.toArray
 
   override def matchAndRewrite(
       op: Operation,
       rewriter: PatternRewriter,
   ): Unit =
-    matchAndRewriteRec(op, rewriter, patterns)
+    var index = 0
+    while index < patternArray.length && !rewriter.hasDoneAction do
+      val pattern = patternArray(index)
+      try pattern.matchAndRewrite(op, rewriter)
+      catch case e: Exception => augmentException(e, op, pattern)
+      index += 1
 
 //    OPERATION REWRITE WALKER    //
 class PatternRewriteWalker(
