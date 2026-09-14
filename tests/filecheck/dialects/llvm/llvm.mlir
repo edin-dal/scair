@@ -137,7 +137,7 @@ builtin.module {
 // CHECK-NEXT:    %26 = "llvm.fdiv"(%15, %16) : (f32, f32) -> f32
 // CHECK-NEXT:    %27 = "llvm.frem"(%15, %16) : (f32, f32) -> f32
 // CHECK-NEXT:    %28 = "llvm.fneg"(%15) : (f32) -> f32
-// CHECK-NEXT:    %29 = "llvm.fcmp"(%15, %16) <{predicate = 1}> : (f32, f32) -> i1
+// CHECK-NEXT:    %29 = "llvm.fcmp"(%15, %16) <{predicate = 1 : i64}> : (f32, f32) -> i1
 // CHECK-NEXT:    %30 = "llvm.and"(%1, %8) : (i32, i32) -> i32
 // CHECK-NEXT:    %31 = "llvm.or"(%1, %8) : (i32, i32) -> i32
 // CHECK-NEXT:    %32 = "llvm.xor"(%1, %8) : (i32, i32) -> i32
