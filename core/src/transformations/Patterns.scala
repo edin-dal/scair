@@ -42,7 +42,7 @@ inline def pattern(
       partial.applyOrElse(op, (_: Operation) => PatternAction.Abort) match
         case PatternAction.Erase =>
           rewriter.eraseOp(op)
-        case PatternAction.Abort => ()
+        case PatternAction.Abort                                          => ()
         case both: (Operation | Seq[Operation], Value[?] | Seq[Value[?]]) =>
           rewriter.replaceOp(
             op,
