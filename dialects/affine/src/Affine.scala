@@ -57,9 +57,9 @@ case class Parallel(
     steps: Option[ArrayAttribute[IntegerAttr]] = None,
     reductions: Attribute,
     lowerBoundsMap: AffineMapAttr,
-    lowerBoundsGroups: DenseIntOrFPElementsAttr,
+    lowerBoundsGroups: DenseIntElementsAttr,
     upperBoundsMap: AffineMapAttr,
-    upperBoundsGroups: DenseIntOrFPElementsAttr,
+    upperBoundsGroups: DenseIntElementsAttr,
     res: Seq[Result[Attribute]] = Seq.empty,
     body: Region,
 ) extends DerivedOperation["affine.parallel"]
