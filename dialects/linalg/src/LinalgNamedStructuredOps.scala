@@ -2,7 +2,6 @@ package scair.dialects.linalg
 
 import scair.clair.*
 import scair.dialects.builtin.*
-import scair.dialects.builtin.TensorLiteralArray
 import scair.ir.*
 
 // ███╗░░██╗ ░█████╗░ ███╗░░░███╗ ███████╗ ██████╗░
@@ -39,16 +38,14 @@ import scair.ir.*
  * convolutions and fills structurally instead.
  *
  * Upstream `strides` and `dilations` are `I64ElementsAttr`s, printed as
- * `dense<1> : tensor<2xi64>`; they are `DenseIntOrFPElementsAttr` here. Both are
- * optional with a default of all-ones, which ScaIR cannot express, so an absent
- * attribute carries that default implicitly. */
+ * `dense<1> : tensor<2xi64>`; they are `DenseIntElementsAttr` here. */
 
-def denseI64ElementsAttr(dims: Int, data: Int*) = DenseIntOrFPElementsAttr(
+def denseI64ElementsAttr(dims: Int, data: Int*) = DenseIntElementsAttr(
   typ = RankedTensorType(
-    IntegerType(IntData(64), Signless),
+    I64,
     ArrayAttribute(IntData(dims)),
   ),
-  data = ArrayAttribute(data.map(IntData(_))*).asInstanceOf[TensorLiteralArray],
+  data = ArrayAttribute(data.map(IntData(_)).map(IntegerAttr(_, I64))*),
 )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -366,10 +363,10 @@ case class Conv1DNwcWcf(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -381,10 +378,10 @@ case class Conv1DNcwFcw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -396,10 +393,10 @@ case class Conv2DNhwcHwcf(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -411,10 +408,10 @@ case class Conv2DNhwcFhwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -426,10 +423,10 @@ case class Conv2DNhwcHwcfQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -441,10 +438,10 @@ case class Conv2DNhwcFhwcQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -456,10 +453,10 @@ case class Conv2DNchwFchwQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -471,10 +468,10 @@ case class Conv2DNchwFchw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -486,10 +483,10 @@ case class Conv2DNgchwFgchw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -501,10 +498,10 @@ case class Conv2DNgchwGfchw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -516,10 +513,10 @@ case class Conv2DNhwgcGfhwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -531,10 +528,10 @@ case class Conv2DNhwgcGfhwcQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -546,10 +543,10 @@ case class Conv2DNgchwGfchwQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -561,10 +558,10 @@ case class Conv3DNdhwcDhwcf(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -576,10 +573,10 @@ case class Conv3DNdhwcDhwcfQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -591,10 +588,10 @@ case class Conv3DNcdhwFcdhw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -610,10 +607,10 @@ case class DepthwiseConv1DNwcWc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -625,10 +622,10 @@ case class DepthwiseConv1DNcwCw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -640,10 +637,10 @@ case class DepthwiseConv1DNwcWcm(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -655,10 +652,10 @@ case class DepthwiseConv2DNhwcHwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -670,10 +667,10 @@ case class DepthwiseConv2DNchwChw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -685,10 +682,10 @@ case class DepthwiseConv2DNhwcHwcQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -700,10 +697,10 @@ case class DepthwiseConv2DNhwcHwcm(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -715,10 +712,10 @@ case class DepthwiseConv2DNhwcHwcmQ(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -730,10 +727,10 @@ case class DepthwiseConv3DNdhwcDhwc(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -745,10 +742,10 @@ case class DepthwiseConv3DNcdhwCdhw(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -760,10 +757,10 @@ case class DepthwiseConv3DNdhwcDhwcm(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -779,10 +776,10 @@ case class PoolingNhwcSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -794,10 +791,10 @@ case class PoolingNchwSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -809,10 +806,10 @@ case class PoolingNhwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -824,10 +821,10 @@ case class PoolingNhwcMaxUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -839,10 +836,10 @@ case class PoolingNchwMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -854,10 +851,10 @@ case class PoolingNhwcMin(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -869,10 +866,10 @@ case class PoolingNhwcMinUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(2, 1)
     ),
     region: Region,
@@ -884,10 +881,10 @@ case class PoolingNwcSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -899,10 +896,10 @@ case class PoolingNcwSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -914,10 +911,10 @@ case class PoolingNwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -929,10 +926,10 @@ case class PoolingNwcMaxUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -944,10 +941,10 @@ case class PoolingNcwMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -959,10 +956,10 @@ case class PoolingNwcMin(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -974,10 +971,10 @@ case class PoolingNwcMinUnsigned(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(1, 1)
     ),
     region: Region,
@@ -989,10 +986,10 @@ case class PoolingNdhwcSum(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -1004,10 +1001,10 @@ case class PoolingNdhwcMax(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,
@@ -1019,10 +1016,10 @@ case class PoolingNdhwcMin(
     inputs: Seq[Operand[Attribute]] = Seq.empty,
     outputs: Seq[Operand[ShapedType]] = Seq.empty,
     result_tensors: Seq[Result[RankedTensorType]] = Seq.empty,
-    strides: Option[DenseIntOrFPElementsAttr] = Some(
+    strides: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
-    dilations: Option[DenseIntOrFPElementsAttr] = Some(
+    dilations: Option[DenseIntElementsAttr] = Some(
       denseI64ElementsAttr(3, 1)
     ),
     region: Region,

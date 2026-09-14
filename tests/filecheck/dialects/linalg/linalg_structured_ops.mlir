@@ -172,7 +172,7 @@
 // CHECK-NEXT:     "linalg.yield"(%8) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4x8xf32>, tensor<4x8xf32>) -> tensor<4x8xf32>
 // CHECK-NEXT:   %8 = "test.op"() : () -> tensor<4xf32>
-// CHECK-NEXT:   %9 = "linalg.reduce"(%0, %8) <{dimensions = array<i64: 1>, operandSegmentSizes = array<i32: 1, 1>}> ({
+// CHECK-NEXT:   %9 = "linalg.reduce"(%0, %8) <{dimensions = array<i64: 1>}> ({
 // CHECK-NEXT:   ^bb0(%10: f32, %11: f32):
 // CHECK-NEXT:     "linalg.yield"(%10) : (f32) -> ()
 // CHECK-NEXT:   }) : (tensor<4x8xf32>, tensor<4xf32>) -> tensor<4xf32>

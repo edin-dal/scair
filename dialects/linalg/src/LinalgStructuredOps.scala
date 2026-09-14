@@ -83,7 +83,8 @@ case class Reduce(
     combiner: Region,
 ) extends DerivedOperation["linalg.reduce"]
     with LinalgStructuredBase
-    with OpAsmOpInterface derives OpDefs
+    with OpAsmOpInterface
+    with SameVariadicOperandSize derives OpDefs
 
 /*≡==--=≡≡≡≡≡≡≡=--=≡≡*\
 ||    TRANSPOSE OP   ||
