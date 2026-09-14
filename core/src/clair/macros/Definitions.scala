@@ -106,6 +106,8 @@ case class OperationDef(
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
     val assemblyFormat: Option[AssemblyFormatDirective] = None,
+    val sameVariadicOperandSize: Boolean = false,
+    val sameVariadicResultSize: Boolean = false,
 ):
 
   def allDefs =
