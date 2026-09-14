@@ -303,11 +303,16 @@ class PatternRewriteWalker(
           case None        => ()
         populateWorklist(op)
 
-    def eraseOp(op: Operation): Unit =
-      super.eraseOp(op)
+    // Erasing counts as an action just as inserting and replacing do: without
+    // this, a pattern that erases an operation lets `GreedyRewritePatternApplier`
+    // carry on offering that same, now detached, operation to every remaining
+    // pattern.
+    override def eraseOp(op: Operation, safeErase: Boolean = true): Unit =
+      super.eraseOp(op, safeErase)
+      hasDoneAction = true
 
     def eraseMatchedOp(): Unit =
-      super.eraseOp(currentOp)
+      eraseOp(currentOp)
 
     def insertOpAtLocation(
         insertionPoint: InsertPoint,
