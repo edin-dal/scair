@@ -1,4 +1,4 @@
-// RUN: scair-opt %s | filecheck %s
+// RUN: scair-opt %s | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 // Coverage for the hand-written structured Linalg ops, ported from MLIR's
 // LinalgStructuredOps.td. Each op is exercised in the generic form, which is
