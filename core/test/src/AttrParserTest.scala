@@ -338,13 +338,11 @@ class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
                         ),
                         Seq(),
                         _,
-                        _,
                       )
                     ),
                   )
                 )
               ),
-              _,
               _,
             ),
             98,

@@ -4,7 +4,6 @@ import scair.clair.*
 import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
-import scala.collection.mutable.LinkedHashMap
 import scair.utils.*
 import javax.tools.FileObject
 
@@ -142,7 +141,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       succ2 = scair.ir.Block(),
     )
 
-    def unstructMulSinVarOp = new mulSVComp.UnstructuredOp(
+    def unstructMulSinVarOp = mulSVComp.UnstructuredOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),

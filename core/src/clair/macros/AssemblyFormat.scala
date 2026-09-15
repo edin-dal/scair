@@ -133,7 +133,7 @@ case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
   )(using Quotes): Expr[Unit] =
     state.lastWasPunctuation = false
     val attributes = '{
-      ${ selectMember[DictType[String, Attribute]](op, "attributes") }.toMap
+      ${ selectMember[Map[String, Attribute]](op, "attributes") }
     }
     val printed =
       if properties.isEmpty then attributes

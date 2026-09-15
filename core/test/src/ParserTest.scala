@@ -185,7 +185,6 @@ class ParserTest
                   ),
                   Seq(),
                   _,
-                  _,
                 ),
                 UnregisteredOperation(
                   "test.op",
@@ -193,7 +192,6 @@ class ParserTest
                   Seq(),
                   Seq(),
                   Seq(),
-                  _,
                   _,
                 ),
               ),
@@ -228,7 +226,6 @@ class ParserTest
                     ),
                     Seq(),
                     _,
-                    _,
                   ),
                   UnregisteredOperation(
                     "test.op",
@@ -236,7 +233,6 @@ class ParserTest
                     Seq(),
                     Seq(),
                     Seq(),
-                    _,
                     _,
                   ),
                 ),
@@ -255,7 +251,6 @@ class ParserTest
                     ),
                     Seq(),
                     _,
-                    _,
                   ),
                   UnregisteredOperation(
                     "test.op",
@@ -266,7 +261,6 @@ class ParserTest
                     Seq(),
                     Seq(),
                     Seq(),
-                    _,
                     _,
                   ),
                 ),
@@ -367,7 +361,6 @@ class ParserTest
                         Result(I32),
                       ),
                       Seq(),
-                      _,
                       _,
                     )
                   ),

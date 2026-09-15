@@ -1057,8 +1057,7 @@ def deriveOpDefs[T <: Operation: Type](using
           results: Seq[Result[Attribute]] = Seq(),
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] = DictType
-            .empty[String, Attribute],
+          attributes: Map[String, Attribute] = Map.empty[String, Attribute],
       ): UnstructuredOp | T & Operation =
         try {
           val structured = ${
@@ -1071,8 +1070,7 @@ def deriveOpDefs[T <: Operation: Type](using
               '{ properties },
             )
           }
-          structured.attributes.addAll(attributes)
-          structured
+          structured.withAttributes(attributes)
         } catch { _ =>
           UnstructuredOp(
             operands = operands,
@@ -1099,8 +1097,7 @@ def deriveOpDefs[T <: Operation: Type](using
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match
           case adt: DerivedOperation[?] =>
-            adt.attributes.addAll(unstrucOp.attributes)
-            adt
+            adt.withAttributes(unstrucOp.attributes)
           case _ =>
             throw new Exception(
               s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: $unstrucOp"

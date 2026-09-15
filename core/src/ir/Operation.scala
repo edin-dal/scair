@@ -9,7 +9,6 @@ import scair.transformations.RewritePattern
 import scair.utils.*
 
 import scala.collection.mutable
-import scala.collection.mutable.LinkedHashMap
 
 //
 // ░█████╗░ ██████╗░ ███████╗ ██████╗░ ░█████╗░ ████████╗ ██╗ ░█████╗░ ███╗░░██╗
@@ -52,7 +51,19 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   def results: Seq[Result[Attribute]]
   def regions: Seq[Region]
   def properties: Map[String, Attribute]
-  val attributes: DictType[String, Attribute] = DictType.empty
+
+  /** The operation's discardable attributes. Immutable so that attribute-less
+    * operations (the vast majority) share `Map.empty` and allocate nothing;
+    * write with `op.attributes += k -> v`, `++=` or plain assignment.
+    */
+  var attributes: Map[String, Attribute] = Map.empty
+
+  /** Sets this operation's attributes and returns it, for chaining in
+    * constructors.
+    */
+  final def withAttributes(attributes: Map[String, Attribute]): this.type =
+    this.attributes = attributes
+    this
 
   final def detachedRegions = regions.map(_.detached)
 
@@ -78,7 +89,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes,
+      attributes: Map[String, Attribute] = attributes,
   ): Operation
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -160,7 +171,6 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       operands = operands.map(o => valueMapper.getOrElse(o, o)),
       successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
       regions = regions.map(_.deepCopy),
-      attributes = LinkedHashMap.from(attributes),
     )
 
   final override def hashCode(): Int = System.identityHashCode(this)
@@ -179,8 +189,7 @@ object UnregisteredOperation:
           results: Seq[Result[Attribute]] = Seq(),
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] = DictType
-            .empty[String, Attribute],
+          attributes: Map[String, Attribute] = Map.empty[String, Attribute],
       ): UnregisteredOperation =
         new UnregisteredOperation(
           name = _name,
@@ -189,19 +198,15 @@ object UnregisteredOperation:
           results = results,
           regions = regions,
           properties = properties,
-          attributes = attributes,
-        )
+        ).withAttributes(attributes)
 
 case class UnregisteredOperation private (
     override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] = Map
-      .empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] = DictType
-      .empty[String, Attribute],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results: Seq[Result[Attribute]],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
 ) extends Operation:
 
   override def updated(
@@ -210,7 +215,7 @@ case class UnregisteredOperation private (
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes,
+      attributes: Map[String, Attribute] = attributes,
   ) =
     UnregisteredOperation(name)(
       operands = operands,
@@ -236,8 +241,7 @@ trait OperationCompanion[O <: Operation]:
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] = DictType
-        .empty[String, Attribute],
+      attributes: Map[String, Attribute] = Map.empty[String, Attribute],
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()
