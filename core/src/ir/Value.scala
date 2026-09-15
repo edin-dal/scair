@@ -1,5 +1,6 @@
 package scair.ir
 
+import scair.collection.SmallSet
 import scair.ir.*
 import scair.utils.OK
 
@@ -24,7 +25,8 @@ final case class Value[+T <: Attribute](
     val typ: T
 ):
 
-  val uses: collection.mutable.Set[Use] = collection.mutable.Set.empty[Use]
+  // Most values have a handful of uses; keep them in a small array-backed set.
+  val uses: collection.mutable.Set[Use] = SmallSet[Use]()
   var owner: Option[Operation | Block] = None
 
   def erase(): Unit =
