@@ -59,7 +59,7 @@ private final class Builder(val funcOp: func.Func):
       if funcOp.body.blocks.isEmpty then None else funcOp.sym_visibility,
       Region(newBlocks),
     )
-    lowered.attributes.addAll(funcOp.attributes)
+    lowered.attributes ++= funcOp.attributes
     lowered
 
 private val LowerFunc = pattern { case op: func.Func =>

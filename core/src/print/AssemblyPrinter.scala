@@ -129,7 +129,7 @@ case class AssemblyPrinter(
         "}>",
       )
     if op.regions.nonEmpty then printList(op.regions, " (", ", ", ")")
-    printOptionalAttrDict(op.attributes.toMap)
+    printOptionalAttrDict(op.attributes)
     print(" : ")
     printListF(
       op.operands,

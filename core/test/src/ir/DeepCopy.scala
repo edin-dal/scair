@@ -11,7 +11,6 @@ import scair.dialects.builtin.*
 import java.io.StringWriter
 import java.io.PrintWriter
 import scair.clair.macros.*
-import scala.collection.mutable.LinkedHashMap
 
 import scair.dialects.test.TestOp
 
@@ -20,13 +19,12 @@ class DeepCopyTest extends AnyFlatSpec:
   "Operation.deepCopy" should "deep copy a simple operation" in:
     val a = TestOp(
       properties = Map("prop" -> I32),
-      attributes = LinkedHashMap("attr" -> I64),
+      attributes = Map("attr" -> I64),
       results = Seq(Result(I32)),
     )
     val b = a.deepCopy
     a should not be b
     a.attributes.equals(b.attributes) shouldBe true
-    a.attributes.eq(b.attributes) shouldBe false
     a.properties.equals(b.properties) shouldBe true
     a should matchPattern {
       case TestOp(

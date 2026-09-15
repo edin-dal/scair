@@ -65,15 +65,25 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
   def customPrint(adtOp: T, p: Printer): Unit
   def constraintVerify(adtOp: T): OK[Operation]
 
+  object UnstructuredOp:
+
+    def apply(
+        operands: Seq[Value[Attribute]] = Seq(),
+        successors: Seq[Block] = Seq(),
+        results: Seq[Result[Attribute]] = Seq(),
+        regions: Seq[Region] = Seq(),
+        properties: Map[String, Attribute] = Map.empty[String, Attribute],
+        attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+    ): UnstructuredOp =
+      new UnstructuredOp(operands, successors, results, regions, properties)
+        .withAttributes(attributes)
+
   case class UnstructuredOp(
-      override val operands: Seq[Value[Attribute]] = Seq(),
-      override val successors: Seq[Block] = Seq(),
-      override val results: Seq[Result[Attribute]] = Seq(),
-      override val regions: Seq[Region] = Seq(),
-      override val properties: Map[String, Attribute] = Map
-        .empty[String, Attribute],
-      override val attributes: DictType[String, Attribute] = DictType
-        .empty[String, Attribute],
+      override val operands: Seq[Value[Attribute]],
+      override val successors: Seq[Block],
+      override val results: Seq[Result[Attribute]],
+      override val regions: Seq[Region],
+      override val properties: Map[String, Attribute],
   ) extends Operation:
 
     override def updated(
@@ -82,7 +92,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
         results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
         regions: Seq[Region] = detachedRegions,
         properties: Map[String, Attribute] = properties,
-        attributes: DictType[String, Attribute] = attributes,
+        attributes: Map[String, Attribute] = attributes,
     ): Operation =
       UnstructuredOp(
         operands,
@@ -108,8 +118,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] = DictType
-        .empty[String, Attribute],
+      attributes: Map[String, Attribute] = Map.empty[String, Attribute],
   ): UnstructuredOp | T & Operation
 
   def destructure(adtOp: T): UnstructuredOp
