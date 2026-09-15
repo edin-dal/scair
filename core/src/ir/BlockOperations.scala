@@ -41,8 +41,9 @@ class BlockOperations extends IntrusiveList[Operation]:
     op.operands.foreachWithIndex((o, i) => o.uses += Use(op, i))
 
   private inline def handleOperationRemoval(op: Operation) =
-    op.operands
-      .foreachWithIndex((o, i) => o.uses.filterInPlace(_.operation != op))
+    // Hoisted so it is allocated once per operation rather than per operand.
+    val notOp = (u: Use) => u.operation != op
+    op.operands.foreach(_.uses.filterInPlace(notOp))
 
   final def computeBlockOrder(): this.type =
     var idx = 0

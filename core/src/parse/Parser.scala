@@ -1,6 +1,7 @@
 package scair.parse
 
 import fastparse.*
+import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.MLContext
@@ -147,6 +148,33 @@ extension [T](inline i: Seq[T])
           error,
         ).map(_.result())
       case Nil => Pass(Seq.empty[V])
+
+/*≡==--==≡≡≡≡==--=≡≡*\
+||    REPEATERS     ||
+\*≡==---==≡≡==---==≡*/
+
+// fastparse's default Repeater accumulates in an ArrayBuffer (eagerly backed
+// by a 16-slot array) and then copies it into a List. This one builds the
+// List directly. Bounded to AnyRef so that Unit-typed parsers still resolve to
+// fastparse's UnitRepeater.
+private object ListRepeater extends Repeater[Any, Seq[Any]]:
+  type Acc = mutable.ListBuffer[Any]
+  def initial = mutable.ListBuffer.empty[Any]
+  def accumulate(t: Any, acc: Acc) = acc.addOne(t)
+  def result(acc: Acc) = acc.toList
+
+given listRepeater[T <: AnyRef]: Repeater[T, Seq[T]] =
+  ListRepeater.asInstanceOf[Repeater[T, Seq[T]]]
+
+// Accumulates parsed entries straight into an immutable Map, skipping the
+// intermediate sequence.
+private object MapRepeater extends Repeater[(Any, Any), Map[Any, Any]]:
+  type Acc = Builder[(Any, Any), Map[Any, Any]]
+  def initial = Map.newBuilder[Any, Any]
+  def accumulate(t: (Any, Any), acc: Acc) = acc.addOne(t)
+  def result(acc: Acc) = acc.result()
+
+def mapRepeater[K, V] = MapRepeater.asInstanceOf[Repeater[(K, V), Map[K, V]]]
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||      SCOPE      ||
@@ -408,23 +436,36 @@ final class Parser(
       Console.err.println(msg)
       sys.exit(1)
 
+/** Looks a value name up through the scope stack, innermost first.
+  *
+  * @return
+  *   The value, or null if no enclosing scope defines it.
+  */
+@tailrec
+private def lookupValue(
+    scopes: mutable.Stack[Scope],
+    name: String,
+    depth: Int = 0,
+): Value[Attribute] =
+  if depth >= scopes.length then null
+  else
+    val value = scopes(depth).valueMap.getOrElse(name, null)
+    if value ne null then value else lookupValue(scopes, name, depth + 1)
+
 def operandP[$: P, A <: Attribute](name: String, typ: A)(using
     p: Parser
 ): P[Value[A]] =
-  p.scopes.collectFirst {
-    case scope if scope.valueMap.contains(name) =>
-      scope.valueMap(name)
-  } match
-    case Some(value) if value.typ == typ => Pass(value.asInstanceOf[Value[A]])
-    case Some(value)                     =>
-      Fail(
-        s"Value %$name defined with type ${value.typ}, but used with type $typ."
-      )
-    case None =>
-      val forwardValue = Value(typ)
-      p.scopes.top.valueMap(name) = forwardValue
-      p.scopes.top.forwardValues += name
-      Pass(forwardValue)
+  val value = lookupValue(p.scopes, name)
+  if value eq null then
+    val forwardValue = Value(typ)
+    p.scopes.top.valueMap(name) = forwardValue
+    p.scopes.top.forwardValues += name
+    Pass(forwardValue)
+  else if value.typ == typ then Pass(value.asInstanceOf[Value[A]])
+  else
+    Fail(
+      s"Value %$name defined with type ${value.typ}, but used with type $typ."
+    )
 
 def resultP[$: P, A <: Attribute](
     name: String,
@@ -715,7 +756,7 @@ def propertiesP[$: P](using Parser) = P(
 def attributeDictionaryP[$: P](using
     Parser
 ): P[Map[String, Attribute]] = P(
-  "{" ~ attributeEntryP.rep(sep = ",").map(Map.from) ~ "}"
+  "{" ~ attributeEntryP.rep(sep = ",")(using mapRepeater) ~ "}"
 )
 
 /** Parses an optional properties dictionary from the input.
