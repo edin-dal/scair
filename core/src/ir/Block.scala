@@ -1,7 +1,9 @@
 package scair.ir
 
+import scair.helpers.foreachInline
 import scair.utils.*
 
+import scala.annotation.tailrec
 import scala.annotation.targetName
 import scala.collection.mutable
 
@@ -160,9 +162,62 @@ case class Block private (
 
   operations.foreach(attachOp)
 
+  /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   BLOCK TRAVERSAL   ||
+  \*≡==---==≡≡≡≡≡≡==---==≡*/
+
+  /** Applies f to each operation, inlined: no closure nor iterator. The next
+    * operation is read before f is applied, so f may erase the current one.
+    */
+  inline final def forEachOp(inline f: Operation => Unit): Unit =
+    operations.foreachInline(f)
+
+  /** Walks all operations of this block in pre-order. See WalkResult. */
+  final def walk(f: Operation => WalkResult): WalkResult =
+    var result = WalkResult.Advance
+    forEachOp(op => if result ne WalkResult.Interrupt then result = op.walk(f))
+    result
+
+  /** Walks all operations of this block in post-order. See WalkResult. */
+  final def walkPostOrder(f: Operation => WalkResult): WalkResult =
+    var result = WalkResult.Advance
+    forEachOp(op =>
+      if result ne WalkResult.Interrupt then result = op.walkPostOrder(f)
+    )
+    result
+
+  /** Walks all operations of this block in pre-order, applying f. */
+  inline final def walkAll(inline f: Operation => Unit): Unit =
+    walk(op =>
+      f(op)
+      WalkResult.Advance
+    )
+
+  /** The operation directly in this block containing `op` - `op` itself if it
+    * is directly in this block - if any.
+    */
+  @tailrec
+  final def findAncestorOp(op: Operation): Option[Operation] =
+    op.containerBlock match
+      case Some(block) if block eq this => Some(op)
+      case Some(block)                  =>
+        block.containerRegion match
+          case Some(region) =>
+            region.containerOperation match
+              case Some(parent) => findAncestorOp(parent)
+              case None         => None
+          case None => None
+      case None => None
+
   /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
   || BLOCK TRANSFORMATIONS ||
   \*≡==---==≡≡≡≡≡≡≡==---==≡*/
+
+  /** Whether `op` is directly contained in this block. */
+  inline private def isContainerOf(op: Operation): Boolean =
+    op.containerBlock match
+      case Some(block) => block eq this
+      case None        => false
 
   private def attachOp(op: Operation): Unit =
     op.containerBlock match
@@ -180,7 +235,7 @@ case class Block private (
             op.containerBlock = Some(this)
 
   def detachOp(op: Operation): Operation =
-    (op.containerBlock `equals` Some(this)) match
+    isContainerOf(op) match
       case true =>
         op.containerBlock = None
         operations -= op
@@ -201,13 +256,13 @@ case class Block private (
 
   def addOps(newOps: Seq[Operation]): Unit =
     val oplen = operations.length
-    for op <- newOps do attachOp(op)
+    newOps.foreachInline(attachOp)
     operations.insertAll(oplen, newOps)
 
   def insertOpBefore(
       existingOp: Operation,
       newOp: Operation,
-  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+  ): Unit = isContainerOf(existingOp) match
     case true =>
       attachOp(newOp)
       operations.insert(existingOp, newOp)
@@ -220,9 +275,9 @@ case class Block private (
   def insertOpsBefore(
       existingOp: Operation,
       newOps: Seq[Operation],
-  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+  ): Unit = isContainerOf(existingOp) match
     case true =>
-      for op <- newOps do attachOp(op)
+      newOps.foreachInline(attachOp)
       operations.insertAll(existingOp, newOps)
     case false =>
       throw new Exception(
@@ -233,7 +288,7 @@ case class Block private (
   def insertOpAfter(
       existingOp: Operation,
       newOp: Operation,
-  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+  ): Unit = isContainerOf(existingOp) match
     case true =>
       attachOp(newOp)
       existingOp.next match
@@ -248,9 +303,9 @@ case class Block private (
   def insertOpsAfter(
       existingOp: Operation,
       newOps: Seq[Operation],
-  ): Unit = (existingOp.containerBlock `equals` Some(this)) match
+  ): Unit = isContainerOf(existingOp) match
     case true =>
-      for op <- newOps do attachOp(op)
+      newOps.foreachInline(attachOp)
       existingOp.next match
         case Some(n) => operations.insertAll(n, newOps)
         case None    => operations.addAll(newOps)

@@ -2,6 +2,7 @@ package scair.ir
 
 import fastparse.P
 import scair.collection.IntrusiveNode
+import scair.helpers.foreachInline
 import scair.parse.Parser
 import scair.print.AssemblyPrinter
 import scair.print.Printer
@@ -123,12 +124,71 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
           case false =>
             region.containerOperation = Some(this)
 
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   OPERATION TRAVERSAL   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+  /** Applies f to each region, inlined: no closure nor iterator. */
+  inline final def forEachRegion(inline f: Region => Unit): Unit =
+    regions.foreachInline(f)
+
+  /** Applies f to each operand, inlined: no closure nor iterator. */
+  inline final def forEachOperand(inline f: Value[Attribute] => Unit): Unit =
+    operands.foreachInline(f)
+
+  /** The operation directly containing this one, if any. */
+  final def parentOp: Option[Operation] =
+    containerBlock match
+      case Some(block) =>
+        block.containerRegion match
+          case Some(region) => region.containerOperation
+          case None         => None
+      case None => None
+
+  /** Walks this operation and all nested ones in pre-order. See WalkResult. */
+  final def walk(f: Operation => WalkResult): WalkResult =
+    f(this) match
+      case WalkResult.Advance   => walkRegions(f)
+      case WalkResult.Skip      => WalkResult.Advance
+      case WalkResult.Interrupt => WalkResult.Interrupt
+
+  /** Walks all nested operations then this one, in post-order. See WalkResult.
+    */
+  final def walkPostOrder(f: Operation => WalkResult): WalkResult =
+    walkRegionsPostOrder(f) match
+      case WalkResult.Interrupt => WalkResult.Interrupt
+      case _                    =>
+        f(this) match
+          case WalkResult.Interrupt => WalkResult.Interrupt
+          case _                    => WalkResult.Advance
+
+  /** Walks this operation and all nested ones in pre-order, applying f. */
+  inline final def walkAll(inline f: Operation => Unit): Unit =
+    walk(op =>
+      f(op)
+      WalkResult.Advance
+    )
+
+  private def walkRegions(f: Operation => WalkResult): WalkResult =
+    var result = WalkResult.Advance
+    forEachRegion(region =>
+      if result ne WalkResult.Interrupt then result = region.walk(f)
+    )
+    result
+
+  private def walkRegionsPostOrder(f: Operation => WalkResult): WalkResult =
+    var result = WalkResult.Advance
+    forEachRegion(region =>
+      if result ne WalkResult.Interrupt then result = region.walkPostOrder(f)
+    )
+    result
+
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||   OPERATION STRUCTURING   ||
   \*≡==---==≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
   override def recomputeOpOrder(): Unit =
-    regions.foreach(_.recomputeOpOrder())
+    forEachRegion(_.recomputeOpOrder())
 
   def traitVerify(): OK[Operation] = OK(this)
 

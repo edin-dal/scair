@@ -40,6 +40,21 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
   private final var _head: Option[A] = None
   private final var _last: Option[A] = None
 
+  // The stored options, rather than the default's fresh Some.
+  override def headOption: Option[A] = _head
+  override def lastOption: Option[A] = _last
+
+  /** foreach inlined at the call site: no closure, no iterator. The next
+    * element is read before `f` is applied, so `f` may remove the current
+    * element.
+    */
+  inline def foreachInline[U](inline f: A => U): Unit =
+    var current = _head
+    while current.isDefined do
+      val element = current.get
+      current = element.next
+      f(element)
+
   override def iterator: Iterator[A] = new AbstractIterator[A]:
     private var current = _head
     def hasNext = current.isDefined
@@ -169,7 +184,8 @@ class IntrusiveList[A <: IntrusiveNode[A]] extends mutable.Buffer[A]:
     else insertAll(apply(idx), elems)
 
   def insertAll(at: A, elems: IterableOnce[A]): Unit =
-    elems.iterator.foreach(e => insert(at, e))
+    val it = elems.iterator
+    while it.hasNext do insert(at, it.next())
 
   override def patchInPlace(
       from: Int,
