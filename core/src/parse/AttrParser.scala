@@ -171,9 +171,10 @@ inline def intDataP[$: P](using Parser): P[IntData] =
 // integer-type           ::=  signed-integer-type | unsigned-integer-type | signless-integer-type
 
 def integerTypeP[$: P](using Parser): P[IntegerType] = P(
-  (("i".map(_ => Signless) | "si".map(_ => Signed) | "ui".map(_ => Unsigned)) ~~
-    decDigitsP.!./.map(d => IntData(d.toInt)))
-    .map((sign, bits) => IntegerType.apply(bits, sign))
+  (("i" ~~ Pass(Signless) | "si" ~~ Pass(Signed) | "ui" ~~ Pass(Unsigned))
+    .flatMap((sign: Signedness) =>
+      decDigitsP.!./.mapTry(d => IntegerType(IntData(d.toInt), sign))
+    ))
 )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
