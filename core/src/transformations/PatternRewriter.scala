@@ -205,8 +205,7 @@ trait Rewriter:
 
     RewriteMethods.insertOpsBefore(op, ops)
 
-    for (old_res, new_res) <- (op.results zip results) do
-      replaceValue(old_res, new_res)
+    op.results.lazyZip(results).foreach(replaceValue)
 
     RewriteMethods.eraseOp(op, safeErase = false)
     operationRemovalHandler(op)
