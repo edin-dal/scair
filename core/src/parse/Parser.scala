@@ -1,7 +1,6 @@
 package scair.parse
 
 import fastparse.*
-import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.MLContext
@@ -149,14 +148,6 @@ extension [T](inline i: Seq[T])
         ).map(_.result())
       case Nil => Pass(Seq.empty[V])
 
-// See uses; enables .rep to concatenate parsed sequences
-// TODO: Expose as nicer helper, but could'nt get it just right for now
-def concatRepeater[T] = new Repeater[Seq[T], Seq[T]]:
-  type Acc = mutable.Buffer[T]
-  def initial = mutable.Buffer.empty[T]
-  def accumulate(t: Seq[T], acc: mutable.Buffer[T]) = acc ++= t
-  def result(acc: mutable.Buffer[T]) = acc.toSeq
-
 /*≡==--==≡≡≡==--=≡≡*\
 ||      SCOPE      ||
 \*≡==---==≡==---==≡*/
@@ -234,19 +225,34 @@ private final class Scope(
 // [x] successor             ::= caret-id (`:` block-arg-list)?
 // [x] trailing-location     ::= `loc` `(` location `)`
 
-private def opResultListP[$: P] =
-  (opResultP.rep(1, sep = ",")(using concatRepeater[String]) ~ "=")
-    .orElse(Seq.empty)
+private def opResultListP[$: P]: P[Seq[String]] =
+  (opResultsP ~ "=").orElse(Seq.empty)
 
-private inline def sequenceValues(
+// Prepends `name#0 ... name#(count - 1)` onto tail.
+private def sequenceValues(
     name: String,
-    no: BigInt,
-): Seq[String] = (0 to (no.toInt - 1)).map(no => s"$name#$no")
+    count: Int,
+    tail: List[String],
+): List[String] =
+  var res = tail
+  var i = count - 1
+  while i >= 0 do
+    res = s"$name#$i" :: res
+    i -= 1
+  res
 
-private inline def opResultP[$: P] = (valueIdP.flatMapX(name =>
-  (":" ~~ decDigitsP.!.map(d => sequenceValues(name, d.toInt)))
-    .orElse(Seq(name))
-))
+// op-result (`,` op-result)*, built back-to-front: one `::` per name, no
+// intermediate buffer or copies.
+private def opResultsP[$: P]: P[List[String]] =
+  valueIdP.flatMapX(name =>
+    // -1 marks a plain `%name`; `%name:N` expands to N `name#i` values.
+    (":" ~~ decDigitsP.!.map(_.toInt)).orElse(-1).flatMapX(count =>
+      // `Pass ~` to consume whitespace before the separator.
+      (Pass ~ "," ~ opResultsP).orElse(Nil).map(tail =>
+        if count < 0 then name :: tail else sequenceValues(name, count, tail)
+      )
+    )
+  )
 
 private def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
 
