@@ -76,7 +76,7 @@ case class InsertPoint(
 
 trait Rewriter:
 
-  def operationRemovalHandler: Operation => Unit = (op: Operation) =>
+  def operationRemovalHandler(op: Operation): Unit =
     // default handler does nothing
     // apart from invalidating the block's op order :D
     op.containerBlock match
@@ -84,9 +84,7 @@ trait Rewriter:
         block.isOpOrderValid = false
       case None => ()
 
-  def operationInsertionHandler: (Operation) => Unit = (
-    op: Operation
-  ) =>
+  def operationInsertionHandler(op: Operation): Unit =
     // default handler does nothing
     // apart from invalidating the block's op order :D
     op.containerBlock match
@@ -120,7 +118,7 @@ trait Rewriter:
       case None =>
         insertionPoint.block.addOps(operations)
 
-    operations.foreach(operationInsertionHandler)
+    operations.foreachInline(operationInsertionHandler)
 
   def insertOpsBefore(
       op: Operation,
@@ -209,7 +207,7 @@ trait Rewriter:
 
     RewriteMethods.eraseOp(op, safeErase = false)
     operationRemovalHandler(op)
-    ops.foreach(operationInsertionHandler)
+    ops.foreachInline(operationInsertionHandler)
 
   def replaceValue(
       value: Value[Attribute],
@@ -275,27 +273,25 @@ class PatternRewriteWalker(
   ) extends Rewriter:
     var hasDoneAction: Boolean = false
 
-    override def operationRemovalHandler: Operation => Unit =
-      (op: Operation) =>
-        // here the logic is simple - we invalidate the op order every time an operation is removed from the block
-        op.containerBlock match
-          case Some(block) =>
-            block.isOpOrderValid = false
-          case None => ()
-        clearWorklist(op)
-        op.operands.foreach((o) =>
-          o.owner match
-            case Some(owner: Operation) => populateWorklist(owner)
-            case _                      => ()
-        )
+    override def operationRemovalHandler(op: Operation): Unit =
+      // here the logic is simple - we invalidate the op order every time an operation is removed from the block
+      op.containerBlock match
+        case Some(block) =>
+          block.isOpOrderValid = false
+        case None => ()
+      clearWorklist(op)
+      op.forEachOperand(o =>
+        o.owner match
+          case Some(owner: Operation) => populateWorklist(owner)
+          case _                      => ()
+      )
 
-    override def operationInsertionHandler: Operation => Unit =
-      (op: Operation) =>
-        // similarly, we invalidate the op order every time an operation is added from the block
-        op.containerBlock match
-          case Some(block) => block.isOpOrderValid = false
-          case None        => ()
-        populateWorklist(op)
+    override def operationInsertionHandler(op: Operation): Unit =
+      // similarly, we invalidate the op order every time an operation is added from the block
+      op.containerBlock match
+        case Some(block) => block.isOpOrderValid = false
+        case None        => ()
+      populateWorklist(op)
 
     // Erasing counts as an action just as inserting and replacing do: without
     // this, a pattern that erases an operation lets `GreedyRewritePatternApplier`
@@ -377,21 +373,26 @@ class PatternRewriteWalker(
     worklist.remove(op)
     op
 
+  // Walk callbacks, allocated once for the walker rather than per walk.
+  private val enqueue: Operation => WalkResult = op =>
+    worklist += op
+    WalkResult.Advance
+
+  private val dequeue: Operation => WalkResult = op =>
+    worklist -= op
+    WalkResult.Advance
+
   inline private def populateWorklist(region: Region): Unit =
-    region.blocks.foreach(populateWorklist)
+    region.walk(enqueue)
 
   inline private def populateWorklist(block: Block): Unit =
-    block.operations.foreach(populateWorklist)
+    block.walk(enqueue)
 
-  private def populateWorklist(op: Operation): Unit =
-    worklist += op
-    op.regions.foreach(populateWorklist)
+  inline private def populateWorklist(op: Operation): Unit =
+    op.walk(enqueue)
 
-  private def clearWorklist(op: Operation): Unit =
-    worklist -= op
-    op.regions.foreach((x: Region) =>
-      x.blocks.foreach((y: Block) => y.operations.foreach(clearWorklist(_)))
-    )
+  inline private def clearWorklist(op: Operation): Unit =
+    op.walk(dequeue)
 
   private def processWorklist(): Boolean =
 

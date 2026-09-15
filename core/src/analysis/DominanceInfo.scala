@@ -25,25 +25,30 @@ final class DominanceInfo(root: Operation):
   /** Returns true if block 'a' dominates block 'b' within the given region. */
   def blockDominates(region: Region, a: Block, b: Block): Boolean =
     val info = regionInfo(region)
-    info.doms.get(b).exists(_.contains(a))
+    info.doms.getOrElse(b, Set.empty).contains(a)
 
   /** Returns true if 'defOp' dominates 'useOp' (hierarchical dominance aware).
     */
   def opDominates(defOp: Operation, useOp: Operation): Boolean =
-    (for
-      defBlock <- defOp.containerBlock
-      defRegion <- defBlock.containerRegion
-      liftedUse <- liftUseToRegion(useOp, defRegion)
-      useBlock <- liftedUse.containerBlock
-    yield
-      if defBlock eq useBlock then
-        // Same block => order matters
-        defBlock.recomputeOpOrder()
-        defOp.blockIndex <= liftedUse.blockIndex
-      else
-        // Different blocks in same region => CFG block dominance
-        blockDominates(defRegion, defBlock, useBlock)
-    ).getOrElse(false)
+    defOp.containerBlock match
+      case Some(defBlock) =>
+        defBlock.containerRegion match
+          case Some(defRegion) =>
+            // Lift the use to the definition's region.
+            defRegion.findAncestorOp(useOp) match
+              case Some(liftedUse) =>
+                liftedUse.containerBlock match
+                  case Some(useBlock) if useBlock eq defBlock =>
+                    // Same block => order matters
+                    defBlock.recomputeOpOrder()
+                    defOp.blockIndex <= liftedUse.blockIndex
+                  case Some(useBlock) =>
+                    // Different blocks in same region => CFG block dominance
+                    blockDominates(defRegion, defBlock, useBlock)
+                  case None => false
+              case None => false
+          case None => false
+      case None => false
 
   /** Returns true if SSA value 'v' dominates its use at operation 'user'.
     *
@@ -55,14 +60,9 @@ final class DominanceInfo(root: Operation):
   def valueDominates(v: Value[Attribute], user: Operation): Boolean =
     v.owner match
       case Some(b: Block) =>
-        // Block arguments are only in-scope in their own block.
-        // If 'user' is inside nested regions, lift it up to 'b''s region
-        // and require it's still in the same defining block.
-        (for
-          defRegion <- b.containerRegion
-          liftedUse <- liftUseToRegion(user, defRegion)
-          useBlock <- liftedUse.containerBlock
-        yield useBlock eq b).getOrElse(false)
+        // Block arguments are only in-scope in their own block, including
+        // nested regions of its operations.
+        b.isAncestor(user)
 
       case Some(defOp: Operation) =>
         opDominates(defOp, user)
@@ -139,35 +139,3 @@ final class DominanceInfo(root: Operation):
             changed = true
 
     RegionDomInfo(r, blocks, preds, doms0.toMap)
-
-  // ----------------------------
-  // Hierarchical lifting
-  // ----------------------------
-
-  /** Lift a use operation up the parent chain until it's in the given region.
-    *
-    * If 'useOp' is already in that region, returns it. If we can't reach that
-    * region (e.g., malformed IR), returns None.
-    */
-  private def liftUseToRegion(
-      useOp: Operation,
-      targetRegion: Region,
-  ): Option[Operation] =
-    def regionOf(op: Operation): Option[Region] =
-      op.containerBlock.flatMap(_.containerRegion)
-
-    var cur: Operation = useOp
-    var curRegion = regionOf(cur)
-
-    while curRegion.isDefined && (curRegion.get ne targetRegion) do
-      // climb via region's containerOperation (not op.parent!)
-      curRegion.get.containerOperation match
-        case Some(parentOp) =>
-          cur = parentOp
-          curRegion = regionOf(cur)
-        case None =>
-          return None
-
-    curRegion match
-      case Some(r) if r eq targetRegion => Some(cur)
-      case _                            => None
