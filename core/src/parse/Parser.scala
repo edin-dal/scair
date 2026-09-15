@@ -225,8 +225,8 @@ private final class Scope(
 // [x] successor             ::= caret-id (`:` block-arg-list)?
 // [x] trailing-location     ::= `loc` `(` location `)`
 
-private def opResultListP[$: P]: P[Seq[String]] =
-  (opResultsP ~ "=").orElse(Seq.empty)
+private def opResultListP[$: P]: P[List[String]] = (opResultsP ~ "=")
+  .orElse(Nil)
 
 // Prepends `name#0 ... name#(count - 1)` onto tail.
 private def sequenceValues(
