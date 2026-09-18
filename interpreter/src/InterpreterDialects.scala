@@ -2,7 +2,8 @@ package scair.interpreter
 
 import scair.ir.*
 
-type InterpreterDialect = Seq[OpImpl[? <: Operation]]
+type InterpreterDialect =
+  Seq[OpImpl[? <: Operation] | OpTerminatorImpl[? <: Operation]]
 
 val allInterpreterDialects: Seq[InterpreterDialect] =
   Seq(
@@ -10,4 +11,5 @@ val allInterpreterDialects: Seq[InterpreterDialect] =
     InterpreterArithDialect,
     InterpreterMemrefDialect,
     InterpreterScfDialect,
+    InterpreterLLVMDialect,
   )
