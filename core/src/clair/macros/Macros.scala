@@ -225,8 +225,6 @@ def propertiesMacro(
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Map[String, Attribute]] =
 
-  import quotes.reflect.*
-
   val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands && !opDef.sameVariadicOperandSize,
     opDef.operands,
@@ -261,9 +259,10 @@ def propertiesMacro(
     }
   // Properties are typically few; a chain of `updated` goes through the
   // small specialized maps without a builder or tuples along the way.
-  val withMandatory = mandatoryProps.foldLeft('{
-    Map.empty[String, Attribute]
-  })((props, prop) => '{ $props.updated(${ prop._1 }, ${ prop._2 }) })
+  val withMandatory = mandatoryProps
+    .foldLeft('{
+      Map.empty[String, Attribute]
+    })((props, prop) => '{ $props.updated(${ prop._1 }, ${ prop._2 }) })
   optionalProps.foldLeft(withMandatory)((props, prop) =>
     '{
       val current = $props
@@ -346,12 +345,20 @@ def sameVariadicSizeVerifier[Def <: MayVariadicOpInputDef: Type](
     else OK()
   }
 
+/** Generate the constraint verification of an op: its `SameVariadic*Size`
+  * checks, followed by its operand constraints, short-circuiting on the first
+  * error and yielding the op otherwise.
+  *
+  * Only what the op declares is generated; an op without any check verifies to
+  * itself, allocation-free.
+  */
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
+  val op = '{ $adtOpExpr.asInstanceOf[Operation] }
 
-  val sameSizes =
+  val sameSizes: Seq[Expr[OK[Unit]]] =
     Option
       .when(opDef.sameVariadicOperandSize)(
         sameVariadicSizeVerifier(
@@ -360,7 +367,7 @@ def verifyMacro(
           "SameVariadicOperandSize",
           adtOpExpr,
         )
-      ) ++ Option.when(opDef.sameVariadicResultSize)(
+      ).toSeq ++ Option.when(opDef.sameVariadicResultSize)(
       sameVariadicSizeVerifier(
         opDef.name,
         opDef.results,
@@ -369,28 +376,30 @@ def verifyMacro(
       )
     )
 
-  val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
-    .filter(_.variadicity == Variadicity.Single)
-    .collect(_ match
-      case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.constraints.ConstraintContext) =>
-          $constraint.verify($mem.typ)(using ctx)
-        })
-
-  '{
-    given ctx: scair.constraints.ConstraintContext =
-      scair.constraints.ConstraintContext()
-    ${
-      val start = sameSizes.foldLeft[Expr[OK[Unit]]]('{ OK() })((res, check) =>
-        '{ $res.flatMap(_ => $check) }
-      )
-      val chain = a.foldLeft[Expr[OK[Unit]]](
-        start
-      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
-      '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
+  // Operand constraints share one context (e.g. for `Var` constraints); each
+  // check is generated against the context expression it is given.
+  val constraints
+      : Seq[Expr[scair.constraints.ConstraintContext] => Expr[OK[Unit]]] =
+    opDef.operands.collect {
+      case OperandDef(name, _, Variadicity.Single, Some(constraint)) =>
+        val typ = '{
+          ${ selectMember[Operand[Attribute]](adtOpExpr, name) }.typ
+        }
+        ctx => '{ $constraint.verify($typ)(using $ctx) }
     }
-  }
+
+  // Sequence the checks, short-circuiting on the first error, and yield the op.
+  def chain(checks: Seq[Expr[OK[Unit]]]): Expr[OK[Operation]] =
+    checks.reduceOption((done, next) => '{ $done.flatMap(_ => $next) }) match
+      case None      => '{ OK($op) }
+      case Some(all) => '{ $all.map(_ => $op) }
+
+  if constraints.isEmpty then chain(sameSizes)
+  else
+    '{
+      val ctx = scair.constraints.ConstraintContext()
+      ${ chain(sameSizes ++ constraints.map(_('{ ctx }))) }
+    }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
