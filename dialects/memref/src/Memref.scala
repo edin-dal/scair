@@ -25,6 +25,9 @@ case class Dealloc(
 ) extends DerivedOperation["memref.dealloc"]
     with AssemblyFormat["$memref attr-dict `:` type($memref)"] derives OpDefs
 
+// TODO: Upstream `memref.dim` is `ConditionallySpeculatable`, speculatable
+//       only when its index is known to be in range. With no integer range
+//       analysis here it stays unspeculatable, which is conservative.
 case class Dim(
     memref: Operand[MemrefType],
     index: Operand[IndexType],

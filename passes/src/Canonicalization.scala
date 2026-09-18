@@ -20,11 +20,13 @@ import scair.transformations.*
 //
 
 // TODO: Move out
+// TODO: This is narrower than MLIR's `wouldOpBeTriviallyDead`, which also spares
+//       symbols and allows erasing operations that only read or allocate.
 val RemoveUnusedOperations = pattern {
   case _: IsTerminator => PatternAction.Abort
-  case op: NoMemoryEffect if op.results.forall(_.uses.isEmpty) =>
+  case op: Operation
+      if isMemoryEffectFree(op) && op.results.forall(_.uses.isEmpty) =>
     PatternAction.Erase
-  case op: NoMemoryEffect => PatternAction.Abort
 }
 
 // TODO: Move out

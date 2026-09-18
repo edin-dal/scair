@@ -1,6 +1,7 @@
 package scair.dialects.test
 
-import scair.clair.summonDialect
+import scair.clair.*
+import scair.dialects.builtin.*
 import scair.ir.*
 
 object TestOp extends OperationCompanion[TestOp]:
@@ -37,4 +38,128 @@ case class TestOp(
       attributes,
     )
 
-val Test: Dialect = summonDialect[EmptyTuple, Tuple1[TestOp]]
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||   SPECULATION TEST OPS      ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+// Ported from mlir/test/lib/Dialect/Test/TestOps.td, where they exist to
+// exercise every arm of the ConditionallySpeculatable interface.
+
+/** Op used to test conditional speculation. This op can always be speculatively
+  * executed.
+  */
+case class AlwaysSpeculatableOp(
+    result: Result[IntegerType]
+) extends DerivedOperation["test.always_speculatable_op"]
+    with Pure derives OpDefs
+
+/** Op used to test conditional speculation. This op can never be speculatively
+  * executed.
+  */
+case class NeverSpeculatableOp(
+    result: Result[IntegerType]
+) extends DerivedOperation["test.never_speculatable_op"]
+    with ConditionallySpeculatable derives OpDefs:
+
+  override def getSpeculatability: Speculatability =
+    Speculatability.NotSpeculatable
+
+/** Op used to test conditional speculation. This op can be speculatively
+  * executed if the input to it is a constant.
+  *
+  * Upstream this checks specifically for an `arith.constant`. The arith dialect
+  * is downstream of core, so match the `ConstantLike` trait instead — which is
+  * closer to the intent anyway.
+  */
+case class ConditionallySpeculatableOp(
+    input: Operand[IntegerType],
+    result: Result[IntegerType],
+) extends DerivedOperation["test.conditionally_speculatable_op"]
+    with ConditionallySpeculatable
+    with NoMemoryEffect derives OpDefs:
+
+  override def getSpeculatability: Speculatability =
+    input.owner match
+      case Some(_: ConstantLike) => Speculatability.Speculatable
+      case _                     => Speculatability.NotSpeculatable
+
+/** Op used to test conditional speculation. This op can be speculatively
+  * executed only if all the ops in the attached region can be.
+  */
+case class RecursivelySpeculatableOp(
+    body: Region,
+    result: Result[IntegerType],
+) extends DerivedOperation["test.recursively_speculatable_op"]
+    with RecursivelySpeculatable
+    with RecursiveMemoryEffects derives OpDefs
+
+/** Used in a region, to yield the corresponding type for that operation. */
+case class RegionYieldOp(
+    result: Operand[Attribute]
+) extends DerivedOperation["test.region_yield"]
+    with AssemblyFormat["$result `:` type($result) attr-dict"]
+    with IsTerminator
+    with Pure derives OpDefs
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||   SAME VARIADIC SIZE OPS    ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+// Ported from mlir/test/lib/Dialect/Test/TestOps.td, where they exist to
+// exercise the even split of several variadic constructs over their
+// definitions, in place of a segment sizes property.
+
+/** Op used to test several variadic operands declared to have the same size. */
+case class SameVariadicOperandSizeOp(
+    variadic1: Seq[Operand[Attribute]],
+    non_variadic: Operand[Attribute],
+    variadic2: Seq[Operand[Attribute]],
+) extends DerivedOperation["test.same_variadic_operand"]
+    with SameVariadicOperandSize derives OpDefs
+
+/** Op used to test several variadic results declared to have the same size. */
+case class SameVariadicResultSizeOp(
+    variadic1: Seq[Result[Attribute]],
+    non_variadic: Result[Attribute],
+    variadic2: Seq[Result[Attribute]],
+) extends DerivedOperation["test.same_variadic_result"]
+    with SameVariadicResultSize derives OpDefs
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||       ENUM TEST OPS         ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** A standalone enum attribute, i.e., one that is an attribute in its own right
+  * rather than being backed by an integer one. Mirrors upstream's
+  * `Arith_RoundingModeAttr`, keyword for keyword, under the test namespace.
+  */
+enum RoundingMode(caseName: String)
+    extends EnumAttr("test.rounding_mode", caseName):
+  case ToNearestEven extends RoundingMode("to_nearest_even")
+  case Downward extends RoundingMode("downward")
+  case Upward extends RoundingMode("upward")
+  case TowardZero extends RoundingMode("toward_zero")
+  case ToNearestAway extends RoundingMode("to_nearest_away")
+
+/** Op used to test standalone enum attributes, as a required and as an optional
+  * property.
+  */
+case class RoundingModeOp(
+    result: Result[IntegerType],
+    mode: RoundingMode,
+    fallbackMode: Option[RoundingMode] = None,
+) extends DerivedOperation["test.rounding_mode_op"] derives OpDefs
+
+val Test: Dialect = summonDialect[
+  Tuple1[RoundingMode],
+  (
+      TestOp,
+      AlwaysSpeculatableOp,
+      NeverSpeculatableOp,
+      ConditionallySpeculatableOp,
+      RecursivelySpeculatableOp,
+      RegionYieldOp,
+      SameVariadicOperandSizeOp,
+      SameVariadicResultSizeOp,
+      RoundingModeOp,
+  ),
+]

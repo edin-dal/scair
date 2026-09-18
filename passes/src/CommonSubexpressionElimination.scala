@@ -54,8 +54,8 @@ case class CSE(
 
   def simplify(op: Operation): Unit =
     op match
-      case _: IsTerminator      => ()
-      case free: NoMemoryEffect =>
+      case _: IsTerminator             => ()
+      case _ if isMemoryEffectFree(op) =>
         knownOps.get(OperationInfo(op)) match
           case Some(known) =>
             (op.results zip known.results).foreach(rewriter.replaceValue)

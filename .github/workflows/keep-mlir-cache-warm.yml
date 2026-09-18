@@ -1,0 +1,34 @@
+name: Keep MLIR cache warm
+
+# GitHub evicts cache entries that have not been accessed for 7 days, and
+# rebuilding MLIR from scratch costs hours of CI. Touch the entry twice a week,
+# or rebuild it off-peak rather than on someone's pull request if it did expire.
+on:
+  schedule:
+    - cron: '0 4 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+
+  warm-mlir-cache:
+
+    name: "Touch the MLIR build cache"
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Scair
+      uses: actions/checkout@v4
+    - name: Ensure MLIR availability
+      id: mlir
+      uses: ./.github/actions/ensure-mlir
+
+    # A lookup alone does not count as using the cache; only an actual restore
+    # resets GitHub's eviction timer. A cache miss just rebuilt and saved the
+    # entry, which is fresh by definition, so only touch on a hit.
+    - name: Touch MLIR cache
+      if: steps.mlir.outputs.cache-hit == 'true'
+      uses: actions/cache/restore@v4
+      with:
+        path: llvm-project/build
+        key: ${{ steps.mlir.outputs.cache-key }}

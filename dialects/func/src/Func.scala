@@ -130,7 +130,7 @@ case class Return(
     _operands: Seq[Operand[Attribute]] = Seq.empty
 ) extends DerivedOperation["func.return"]
     with AssemblyFormat["attr-dict ($_operands^ `:` type($_operands))?"]
-    with NoMemoryEffect
+    with Pure
     with IsTerminator derives OpDefs
 
 case class Constant(
@@ -138,7 +138,7 @@ case class Constant(
     res: Result[FunctionType],
 ) extends DerivedOperation["func.constant"]
     with AssemblyFormat["attr-dict $value `:` type($res)"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class CallIndirect(
     callee: Operand[FunctionType],

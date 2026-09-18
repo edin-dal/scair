@@ -5,6 +5,7 @@ import scair.*
 import scair.dialects.builtin.*
 import scair.dialects.builtin.VectorType
 import scair.ir.*
+import scair.utils.*
 
 import java.lang.Float.intBitsToFloat
 import scala.annotation.tailrec
@@ -293,7 +294,7 @@ def tensorTypeP[$: P](using Parser): P[TensorType] = P(
   "tensor" ~ "<" ~/ (unrankedTensorTypeP | rankedTensorTypeP) ~ ">"
 )
 
-def rankedTensorTypeP[$: P](using Parser): P[TensorType] = P(
+def rankedTensorTypeP[$: P](using Parser): P[RankedTensorType] = P(
   dimensionListP ~ typeP ~ ("," ~ encodingP).?
 ).map((x: (Seq[IntData], Attribute, Option[Attribute])) =>
   RankedTensorType(
@@ -329,7 +330,7 @@ def memrefTypeP[$: P](using Parser): P[MemrefType] = P(
   "memref" ~ "<" ~/ (unrankedMemrefTypeP | rankedMemrefTypeP) ~ ">"
 )
 
-def rankedMemrefTypeP[$: P](using Parser): P[MemrefType] = P(
+def rankedMemrefTypeP[$: P](using Parser): P[RankedMemrefType] = P(
   dimensionListP ~ typeP
 ).map((x: (Seq[IntData], Attribute)) =>
   RankedMemrefType(
@@ -376,45 +377,91 @@ def symbolRefAttrP[$: P](using Parser): P[SymbolRefAttr] = P(
 ||   DenseIntOrFPElementsAttr   ||
 \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
 
-// TO-DO : it can also parse a vector type or a memref type
-// TO-DO : Figure out why it is throwing an error when you get rid of asInstanceOf...
+private final case class TensorLiteral(
+    values: Seq[IntData | FloatData],
+    inferredShape: Option[Seq[Long]],
+):
+
+  def mapAll[A](
+      f: PartialFunction[IntData | FloatData | Boolean, A]
+  ): Option[Seq[A]] =
+    val mapped = values.collect(f)
+    Option.when(mapped.length == values.length)(mapped)
+
+private def denseElementsTypeP[$: P](using
+    Parser
+): P[RankedTensorType | RankedMemrefType | VectorType] = P(
+  ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">") |
+    ("memref" ~ "<" ~/ rankedMemrefTypeP ~ ">") | vectorTypeP
+).asInstanceOf[P[RankedTensorType | RankedMemrefType | VectorType]]
 
 def denseIntOrFPElementsAttrP[$: P](using
     Parser
-): P[DenseIntOrFPElementsAttr] =
+): P[DenseIntOrFPElementsAttr[?]] =
   P(
-    "dense" ~ "<" ~ tensorLiteralP ~ ">" ~ ":" ~
-      (tensorTypeP | memrefTypeP | vectorTypeP)
-  ).map((x, y) => DenseIntOrFPElementsAttr(y, x))
+    "dense" ~/ "<" ~/ tensorLiteralP.orElse(TensorLiteral(Seq(), None)) ~ ">" ~
+      ":" ~ denseElementsTypeP
+  ).flatMap((literal, typ) =>
+    val shape = typ.getShape
+    if shape.exists(_ < 0) then
+      Fail("dense elements attribute requires a statically shaped type")
+    else if literal.inferredShape.exists(_ != shape) then
+      Fail(
+        s"inferred shape of elements literal (${literal.inferredShape
+            .get}) does not match type ($shape)"
+      )
+    else
+      val attr: Option[DenseIntOrFPElementsAttr[?]] = typ.elementType match
+        case elementType: (IntegerType | IndexType) =>
+          literal.mapAll { case value: IntData =>
+            IntegerAttr(value, elementType)
+          }.map(data => DenseIntElementsAttr(typ, data))
+        case elementType: FloatType =>
+          literal.mapAll { case value: FloatData =>
+            FloatAttr(value, elementType)
+          }.map(data => DenseFPElementsAttr(typ, data))
+        case _ => None
 
-def tensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
-  P(singleTensorLiteralP | emptyTensorLiteralP | multipleTensorLiteralP)
+      attr.fold(
+        Fail(
+          s"dense literal kind does not match container element type ${typ
+              .elementType}"
+        )
+      )(dense =>
+        dense.customVerify().fold(error => Fail(error.msg), _ => Pass(dense))
+      )
+  )
 
-def singleTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
-  P(floatDataP | intDataP)
-    .map(_ match
-      case (x: IntData) =>
-        ArrayAttribute(IntegerAttr(x, I32))
-      case (y: FloatData) =>
-        ArrayAttribute(FloatAttr(y, Float32Type())))
+private def tensorLiteralP[$: P](using Parser): P[TensorLiteral] =
+  P(tensorLiteralListP | tensorLiteralElementP)
 
-def multipleTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
-  P(multipleFloatTensorLiteralP | multipleIntTensorLiteralP)
+private def tensorLiteralElementP[$: P](using Parser): P[TensorLiteral] =
+  P(
+    floatDataP.map(value => TensorLiteral(Seq(value), None)) |
+      intDataP.map(value => TensorLiteral(Seq(value), None)) |
+      "true".map(_ => TensorLiteral(Seq(IntData(1)), None)) |
+      "false".map(_ => TensorLiteral(Seq(IntData(0)), None))
+  )
 
-def multipleIntTensorLiteralP[$: P](using
-    Parser
-): P[ArrayAttribute[IntegerAttr]] =
-  P("[" ~ intDataP.rep(1, sep = ",") ~ "]")
-    .map((x: Seq[IntData]) => x.map(IntegerAttr(_, I32)))
-
-def multipleFloatTensorLiteralP[$: P](using
-    Parser
-): P[ArrayAttribute[FloatAttr]] =
-  P("[" ~ floatDataP.rep(1, sep = ",") ~ "]")
-    .map((y: Seq[FloatData]) => y.map(FloatAttr(_, Float32Type())))
-
-def emptyTensorLiteralP[$: P](using Parser): P[TensorLiteralArray] =
-  P("[" ~ "]").map(_ => ArrayAttribute[IntegerAttr]())
+private def tensorLiteralListP[$: P](using Parser): P[TensorLiteral] =
+  P("[" ~/ tensorLiteralP.rep(sep = ",") ~ "]").flatMap(elements =>
+    val shapes = elements.map(_.inferredShape.getOrElse(Seq())).distinct
+    val elementKinds = elements.flatMap(_.values).map {
+      case _: FloatData => true
+      case _            => false
+    }.distinct
+    if shapes.length > 1 then
+      Fail("tensor literal ranks are not consistent between elements")
+    else if elementKinds.length > 1 then
+      Fail("tensor literal mixes integer and floating-point elements")
+    else
+      Pass(
+        TensorLiteral(
+          elements.flatMap(_.values),
+          Some(elements.length.toLong +: shapes.headOption.getOrElse(Seq())),
+        )
+      )
+  )
 
 /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
 ||   AFFINE MAP ATTR   ||

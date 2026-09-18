@@ -35,11 +35,12 @@ def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
     value.map {
+      case prop: A                           => prop
       case prop @ IntegerAttr(IntData(i), _) => $enumFromOrdinalFunc(i.toInt)
-      case _                                 =>
+      case prop                              =>
         throw new IllegalArgumentException(
           s"Type mismatch for enum property \"${${ Expr(propName) }}\": " +
-            s"expected IntegerAttr, but found ${value.getClass}"
+            s"expected IntegerAttr, but found ${prop.getClass}"
         )
     }
   }
@@ -99,3 +100,32 @@ def enumFromOrdinalFunc[E <: scala.reflect.Enum: Type](using
   '{ (x: Int) =>
     ${ Select(companionRef, fromOrdSym).appliedTo('{ x }.asTerm).asExprOf[E] }
   }
+
+/** Retrieves a given Enum's companion object and returns an expression of its
+  * synthetic ``values`` array.
+  *
+  * @return
+  *   Expr[Array[E]]
+  */
+def enumValuesExpr[E <: scala.reflect.Enum: Type](using
+    Quotes
+): Expr[Array[E]] =
+  import quotes.reflect.*
+
+  val symbol = TypeRepr.of[E].typeSymbol
+  val companion = symbol.companionModule
+
+  companion.methodMember("values") match
+    case valuesSym :: _ =>
+      Ref(companion).select(valuesSym).asExprOf[Array[E]]
+    case Nil =>
+      report
+        .errorAndAbort(
+          s"${Type.show[E]} has no `values` member on its companion object; " +
+            "it must be a Scala 3 `enum` (and not one of its cases)."
+        )
+
+/** All of an Enum's cases, as an Array. */
+inline def enumValues[E <: scala.reflect.Enum]: Array[E] = ${
+  enumValuesExpr[E]
+}

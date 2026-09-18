@@ -1,6 +1,7 @@
 package scair.ir
 
 import scair.dialects.builtin.StringData
+import scair.transformations.Rewriter
 import scair.utils.*
 
 // ████████╗ ██████╗░ ░█████╗░ ██╗ ████████╗ ░██████╗
@@ -44,8 +45,6 @@ trait NoTerminator extends Operation:
     else OK(this)
   }.flatMap(_ => super.traitVerify())
 
-trait NoMemoryEffect extends Operation
-
 trait IsolatedFromAbove extends Operation:
 
   final def verifyRec(regs: Seq[Region]): OK[Operation] =
@@ -78,6 +77,27 @@ trait IsolatedFromAbove extends Operation:
 
 trait Commutative extends Operation
 
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||    SAME VARIADIC SIZES        ||
+\*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** All variadic operands of the op hold the same number of values.
+  *
+  * Selects an even split of the operands over their definitions, in place of
+  * the `operandSegmentSizes` property otherwise required to disambiguate
+  * several variadic operands. Mirrors MLIR's `SameVariadicOperandSize`; unlike
+  * upstream, where the trait is purely a code generation hint, the size
+  * agreement is checked at verification time.
+  */
+trait SameVariadicOperandSize extends Operation
+
+/** All variadic results of the op hold the same number of values.
+  *
+  * @see
+  *   [[SameVariadicOperandSize]], of which this is the result counterpart.
+  */
+trait SameVariadicResultSize extends Operation
+
 trait ConstantLike(_value: Attribute) extends Operation:
   def getValue: Attribute = _value
 
@@ -87,6 +107,32 @@ object ConstantLike:
     op match
       case c: ConstantLike => Some((value = c.getValue))
       case _               => None
+
+/*≡==--==≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+||       LOOP LIKE          ||
+\*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
+
+/** MLIR's `LoopLikeOpInterface`, reduced to what code motion needs. */
+trait LoopLike(val loopRegions: Region*) extends Operation:
+
+  /** Whether `value` is defined outside of every loop region.
+    *
+    * Block arguments of a loop region count as defined inside it, as the parent
+    * of their owning block is that region.
+    */
+  def isDefinedOutsideOfLoop(value: Value[Attribute]): Boolean =
+    value.owner match
+      case Some(owner) => !loopRegions.exists(_.isAncestor(owner))
+      // A detached value is conservatively taken to be inside.
+      case None => throw new Exception("Value has no owner")
+
+  /** Move `op` out of the loop, to just before it. */
+  def moveOutOfLoop(op: Operation)(using rewriter: Rewriter): Unit =
+    rewriter.moveOpsBefore(this, op)
+
+object LoopLike:
+
+  def unapply(op: LoopLike): Tuple1[Seq[Region]] = Tuple1(op.loopRegions)
 
 trait Symbol extends Operation:
   def sym_name: StringData
