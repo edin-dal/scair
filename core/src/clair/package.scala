@@ -42,7 +42,8 @@ package scair
   *     "#sample<" ~ CharsWhile(_ != '>').!.map(SampleData.apply) ~ ">"
   *
   * case class SampleData(val d: String)
-  *     extends DataAttribute[String]("sample", d)
+  *     extends DataAttribute[String](d):
+  *   override def name = "sample"
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\
   * ||   defining a custom attribute   ||

@@ -20,15 +20,15 @@ import scair.print.Printer
 final case class DBStringType()
     extends ParametrizedAttribute
     with TypeAttribute:
-  override val name: String = "db.string"
-  override val parameters: Seq[Attribute] = Seq()
+  override def name: String = "db.string"
+  override def parameters: Seq[Attribute] = Seq()
   override def customPrint(p: Printer): Unit = p.print("!db.string")
 
 final case class NullableType(inner: Attribute)
     extends ParametrizedAttribute
     with TypeAttribute:
-  override val name: String = "db.nullable"
-  override val parameters: Seq[Attribute] = Seq(inner)
+  override def name: String = "db.nullable"
+  override def parameters: Seq[Attribute] = Seq(inner)
 
   override def customPrint(p: Printer): Unit =
     p.print("!db.nullable<")
@@ -38,8 +38,8 @@ final case class NullableType(inner: Attribute)
 final case class DecimalType(prec: IntData, scale: IntData)
     extends ParametrizedAttribute
     with TypeAttribute:
-  override val name: String = "db.decimal"
-  override val parameters: Seq[Attribute] = Seq(prec, scale)
+  override def name: String = "db.decimal"
+  override def parameters: Seq[Attribute] = Seq(prec, scale)
 
   override def customPrint(p: Printer): Unit =
     p.print("!db.decimal<")
@@ -51,8 +51,8 @@ final case class DecimalType(prec: IntData, scale: IntData)
 final case class DateType(unit: StringData)
     extends ParametrizedAttribute
     with TypeAttribute:
-  override val name: String = "db.date"
-  override val parameters: Seq[Attribute] = Seq(unit)
+  override def name: String = "db.date"
+  override def parameters: Seq[Attribute] = Seq(unit)
 
   override def customPrint(p: Printer): Unit =
     p.print("!db.date<")
@@ -62,8 +62,8 @@ final case class DateType(unit: StringData)
 final case class CharType(len: IntData)
     extends ParametrizedAttribute
     with TypeAttribute:
-  override val name: String = "db.char"
-  override val parameters: Seq[Attribute] = Seq(len)
+  override def name: String = "db.char"
+  override def parameters: Seq[Attribute] = Seq(len)
 
   override def customPrint(p: Printer): Unit =
     p.print("!db.char<")
