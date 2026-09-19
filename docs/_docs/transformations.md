@@ -150,7 +150,7 @@ import scair.transformations.*
 import scair.MLContext
 //}
 final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "sample-constant-folding-and-dce"
+  override def name = "sample-constant-folding-and-dce"
 
   override final val walker = PatternRewriteWalker(
     GreedyRewritePatternApplier(
