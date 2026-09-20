@@ -333,6 +333,49 @@ def verifyMacro(
 
 /*_____________*\
 \*-- HELPERS --*/
+/** Tests that `value` really is an `A`, including the type arguments a plain
+  * type test drops to erasure.
+  *
+  * Only `A`'s own arguments are established here. An attribute that already is
+  * an instance of a parametrized attribute had its parameters checked when it
+  * was built -- by this very test on the way in, or by Scala at a typed
+  * construction site -- so there is nothing left to verify below that level.
+  * That is what keeps this off, say, the elements of a dense attribute's data:
+  * a property declared as one stays a single class test.
+  */
+def isOfAttributeType[A <: Attribute: Type](
+    value: Expr[Attribute]
+)(using Quotes): Expr[Boolean] =
+  import quotes.reflect.*
+  val arrayAttribute = TypeRepr.of[ArrayAttribute[Attribute]].typeSymbol
+  TypeRepr.of[A].dealias match
+    // Either side of a union is a type in its own right; test for both.
+    case OrType(left, right) =>
+      (left.asType, right.asType) match
+        case ('[type l <: Attribute; `l`], '[type r <: Attribute; `r`]) =>
+          '{
+            ${ isOfAttributeType[l](value) } || ${ isOfAttributeType[r](value) }
+          }
+        case _ => '{ $value.isInstanceOf[A] }
+    // An array's element type is exactly what erasure loses, and no one below
+    // holds it: the elements are only known as Attribute until checked here.
+    case AppliedType(tycon, List(element))
+        if tycon.typeSymbol == arrayAttribute =>
+      element.asType match
+        case '[type e <: Attribute; `e`] =>
+          // Every attribute is an Attribute; asking again would scan for nothing.
+          if TypeRepr.of[Attribute] <:< element then
+            '{ $value.isInstanceOf[ArrayAttribute[?]] }
+          else
+            '{
+              $value match
+                case array: ArrayAttribute[?] =>
+                  array.data.forall(_.isInstanceOf[e])
+                case _ => false
+            }
+        case _ => '{ $value.isInstanceOf[A] }
+    case _ => '{ $value.isInstanceOf[A] }
+
 /** Helper to check a property argument.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
@@ -340,7 +383,7 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
     propName: String,
     defaultValue: Option[Expr[Any]],
 )(using Quotes): Expr[A] =
-  val typeName = Type.of[A].toString()
+  val typeName = Type.show[A]
   val ifAbsent = defaultValue match
     case Some(default) => default.asExprOf[A]
     case None          =>
@@ -354,32 +397,31 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
     value match
-      case None          => $ifAbsent
-      case Some(prop: A) => prop
-      case Some(value)   =>
-        throw new IllegalArgumentException(
-          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-            s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass}"
-        )
+      case None       => $ifAbsent
+      case Some(prop) =>
+        if ${ isOfAttributeType[A]('{ prop }) } then prop.asInstanceOf[A]
+        else
+          throw new IllegalArgumentException(
+            s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+              s"expected ${${ Expr(typeName) }}, " + s"but found $prop"
+          )
   }
 
 def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
     list: Expr[Map[String, Attribute]],
     propName: String,
 )(using Quotes): Expr[Option[A]] =
-  val typeName = Type.of[A].toString()
+  val typeName = Type.show[A]
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
-    value.map {
-      case prop: A => prop
-      case _       =>
+    value.map(prop =>
+      if ${ isOfAttributeType[A]('{ prop }) } then prop.asInstanceOf[A]
+      else
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-            s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass}"
+            s"expected ${${ Expr(typeName) }}, " + s"but found $prop"
         )
-    }
+    )
   }
 
 /** Type helper to get the defined input type of a construct definition.
@@ -940,9 +982,9 @@ def getAttrConstructor[T: Type](
       // expected type of the attribute
       val tpe = d.tpe
       tpe match
-        case '[t] =>
+        case '[type t <: Attribute; `t`] =>
           '{
-            if !${ a }.isInstanceOf[t] then
+            if !${ isOfAttributeType[t](a) } then
               throw Exception(
                 s"Expected ${${ Expr(d.name) }} to be of type ${${
                     Expr(Type.show[t])
