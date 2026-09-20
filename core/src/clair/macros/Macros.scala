@@ -336,45 +336,85 @@ def verifyMacro(
 /** Tests that `value` really is an `A`, including the type arguments a plain
   * type test drops to erasure.
   *
-  * Only `A`'s own arguments are established here. An attribute that already is
-  * an instance of a parametrized attribute had its parameters checked when it
-  * was built -- by this very test on the way in, or by Scala at a typed
-  * construction site -- so there is nothing left to verify below that level.
-  * That is what keeps this off, say, the elements of a dense attribute's data:
-  * a property declared as one stays a single class test.
+  * What the type system already establishes is not tested again: whatever
+  * `value` is statically known to be, and the element type an array attribute
+  * statically carries, are taken as given rather than rediscovered at runtime.
+  *
+  * Past that, only `A`'s own arguments are established. An attribute that
+  * already is an instance of a parametrized attribute had its parameters
+  * checked when it was built -- by this very test on the way in, or by Scala at
+  * a typed construction site -- so there is nothing left to verify below that
+  * level. That is what keeps this off, say, the elements of a dense attribute's
+  * data: a property declared as one stays a single class test.
+  *
+  * An array's elements are tested by type alone, so an element type carrying
+  * erased arguments of its own is only established as far as its class. The
+  * compiler says so, flagging the generated test where that happens.
   */
 def isOfAttributeType[A <: Attribute: Type](
     value: Expr[Attribute]
 )(using Quotes): Expr[Boolean] =
   import quotes.reflect.*
   val arrayAttribute = TypeRepr.of[ArrayAttribute[Attribute]].typeSymbol
-  TypeRepr.of[A].dealias match
-    // Either side of a union is a type in its own right; test for both.
-    case OrType(left, right) =>
-      (left.asType, right.asType) match
-        case ('[type l <: Attribute; `l`], '[type r <: Attribute; `r`]) =>
-          '{
-            ${ isOfAttributeType[l](value) } || ${ isOfAttributeType[r](value) }
-          }
-        case _ => '{ $value.isInstanceOf[A] }
-    // An array's element type is exactly what erasure loses, and no one below
-    // holds it: the elements are only known as Attribute until checked here.
-    case AppliedType(tycon, List(element))
-        if tycon.typeSymbol == arrayAttribute =>
-      element.asType match
-        case '[type e <: Attribute; `e`] =>
-          // Every attribute is an Attribute; asking again would scan for nothing.
-          if TypeRepr.of[Attribute] <:< element then
-            '{ $value.isInstanceOf[ArrayAttribute[?]] }
-          else
+
+  /** The element type `tpe` carries, if it is an array attribute at all. */
+  def arrayElementOf(tpe: TypeRepr): Option[TypeRepr] =
+    tpe.baseType(arrayAttribute) match
+      case AppliedType(_, List(element)) => Some(element)
+      case _                             => None
+
+  val valueType = value.asTerm.tpe.widen.dealias
+  val target = TypeRepr.of[A].dealias
+
+  if valueType <:< target then '{ true }
+  else
+    target match
+      // Either side of a union is a type in its own right; test for both.
+      case OrType(left, right) =>
+        (left.asType, right.asType) match
+          case ('[type l <: Attribute; `l`], '[type r <: Attribute; `r`]) =>
             '{
-              $value match
-                case array: ArrayAttribute[?] =>
-                  array.data.forall(_.isInstanceOf[e])
-                case _ => false
+              ${ isOfAttributeType[l](value) } || ${
+                isOfAttributeType[r](value)
+              }
             }
-        case _ => '{ $value.isInstanceOf[A] }
-    case _ => '{ $value.isInstanceOf[A] }
+          case _ => '{ $value.isInstanceOf[A] }
+      case _ =>
+        arrayElementOf(target) match
+          case None => '{ $value.isInstanceOf[A] }
+          // An array's element type is what erasure loses, and no one below
+          // holds it: its elements are only known as Attribute until walked.
+          case Some(element) =>
+            // Unless the value's own type carries an element type that
+            // conforms, in which case Scala has already done this.
+            if arrayElementOf(valueType).exists(_ <:< element) then '{ true }
+            // Or unless every attribute conforms, and walking would ask
+            // nothing.
+            else if TypeRepr.of[Attribute] <:< element then
+              '{ $value.isInstanceOf[ArrayAttribute[?]] }
+            else
+              element.asType match
+                case '[type e <: Attribute; `e`] =>
+                  '{
+                    $value match
+                      case array: ArrayAttribute[?] =>
+                        array.data.forall(_.isInstanceOf[e])
+                      case _ => false
+                  }
+                case _ => '{ $value.isInstanceOf[A] }
+
+/** Tests `attribute` against `A` the way the operation and attribute macros do:
+  * checking the type arguments a plain type test loses to erasure, and leaning
+  * on what is already known statically rather than re-establishing it.
+  */
+inline def isAttributeOfType[A <: Attribute](
+    inline attribute: Attribute
+): Boolean =
+  ${ isAttributeOfTypeMacro[A]('attribute) }
+
+private def isAttributeOfTypeMacro[A <: Attribute: Type](
+    attribute: Expr[Attribute]
+)(using Quotes): Expr[Boolean] = isOfAttributeType[A](attribute)
 
 /** Helper to check a property argument.
   */
