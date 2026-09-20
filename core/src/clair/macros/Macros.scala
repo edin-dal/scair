@@ -333,77 +333,71 @@ def verifyMacro(
 
 /*_____________*\
 \*-- HELPERS --*/
-/** Tests that `value` really is an `A`, including the type arguments a plain
-  * type test drops to erasure.
+/** Produces `value` as an `A`, checking the type arguments a plain type test
+  * drops to erasure, and handing whatever is not an `A` to `orElse`.
   *
-  * What the type system already establishes is not tested again: whatever
-  * `value` is statically known to be is taken as given rather than rediscovered
-  * at runtime. [[ArrayAttribute]] being covariant, that covers an array whose
-  * static element type already conforms, elements and all.
+  * What the type system already establishes is not tested again: a value
+  * statically known to be an `A` is passed straight through. [[ArrayAttribute]]
+  * being covariant, that covers an array whose static element type already
+  * conforms, elements and all.
   *
   * Past that, only `A`'s own arguments are established. An attribute that
   * already is an instance of a parametrized attribute had its parameters
-  * checked when it was built -- by this very test on the way in, or by Scala at
-  * a typed construction site -- so there is nothing left to verify below that
-  * level. That is what keeps this off, say, the elements of a dense attribute's
-  * data: a property declared as one stays a single class test.
+  * checked when it was built -- by this very check on the way in, or by Scala
+  * at a typed construction site -- so there is nothing left to verify below
+  * that level. That is what keeps this off, say, the elements of a dense
+  * attribute's data: a property declared as one stays a single type test.
   *
   * An array's elements are tested by type alone, so an element type carrying
   * erased arguments of its own is only established as far as its class. The
   * compiler says so, flagging the generated test where that happens.
   */
-def isOfAttributeType[A <: Attribute: Type](
-    value: Expr[Attribute]
-)(using Quotes): Expr[Boolean] =
+def checkedAttribute[A <: Attribute: Type](value: Expr[Attribute])(
+    orElse: Expr[Attribute] => Expr[A]
+)(using Quotes): Expr[A] =
   import quotes.reflect.*
   val arrayAttribute = TypeRepr.of[ArrayAttribute[Attribute]].typeSymbol
   val valueType = value.asTerm.tpe.widen.dealias
   val target = TypeRepr.of[A].dealias
 
-  if valueType <:< target then '{ true }
+  if valueType <:< target then value.asExprOf[A]
   else
     target match
-      // Either side of a union is a type in its own right; test for both.
-      case OrType(left, right) =>
-        (left.asType, right.asType) match
-          case ('[type l <: Attribute; `l`], '[type r <: Attribute; `r`]) =>
-            '{
-              ${ isOfAttributeType[l](value) } || ${
-                isOfAttributeType[r](value)
-              }
-            }
-          case _ => '{ $value.isInstanceOf[A] }
       // An array's element type is what erasure loses, and nothing below holds
-      // it: its elements are only known as Attribute until walked.
+      // it: its elements are only known as Attribute until walked. Unless every
+      // attribute conforms, and walking would ask nothing.
       case AppliedType(tycon, List(element))
-          if tycon.typeSymbol == arrayAttribute =>
-        // Unless every attribute conforms, and walking would ask nothing.
-        if TypeRepr.of[Attribute] <:< element then
-          '{ $value.isInstanceOf[ArrayAttribute[?]] }
-        else
-          element.asType match
-            case '[type e <: Attribute; `e`] =>
-              '{
-                $value match
-                  case array: ArrayAttribute[?] =>
-                    array.data.forall(_.isInstanceOf[e])
-                  case _ => false
-              }
-            case _ => '{ $value.isInstanceOf[A] }
-      case _ => '{ $value.isInstanceOf[A] }
+          if tycon.typeSymbol == arrayAttribute &&
+            !(TypeRepr.of[Attribute] <:< element) =>
+        element.asType match
+          case '[type e <: Attribute; `e`] =>
+            '{
+              $value match
+                case array: ArrayAttribute[?]
+                    if array.data.forall(_.isInstanceOf[e]) =>
+                  array.asInstanceOf[A]
+                case other => ${ orElse('{ other }) }
+            }
+          case _ => plainlyChecked[A](value)(orElse)
+      case AppliedType(tycon, _) if tycon.typeSymbol == arrayAttribute =>
+        '{
+          $value match
+            case array: ArrayAttribute[?] => array.asInstanceOf[A]
+            case other                    => ${ orElse('{ other }) }
+        }
+      case _ => plainlyChecked[A](value)(orElse)
 
-/** Tests `attribute` against `A` the way the operation and attribute macros do:
-  * checking the type arguments a plain type test loses to erasure, and leaning
-  * on what is already known statically rather than re-establishing it.
+/** `value` as an `A` by a plain type test, for an `A` that has no type
+  * arguments for erasure to take away.
   */
-inline def isAttributeOfType[A <: Attribute](
-    inline attribute: Attribute
-): Boolean =
-  ${ isAttributeOfTypeMacro[A]('attribute) }
-
-private def isAttributeOfTypeMacro[A <: Attribute: Type](
-    attribute: Expr[Attribute]
-)(using Quotes): Expr[Boolean] = isOfAttributeType[A](attribute)
+private def plainlyChecked[A <: Attribute: Type](value: Expr[Attribute])(
+    orElse: Expr[Attribute] => Expr[A]
+)(using Quotes): Expr[A] =
+  '{
+    $value match
+      case checked: A => checked
+      case other      => ${ orElse('{ other }) }
+  }
 
 /** Helper to check a property argument.
   */
@@ -428,12 +422,16 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
     value match
       case None       => $ifAbsent
       case Some(prop) =>
-        if ${ isOfAttributeType[A]('{ prop }) } then prop.asInstanceOf[A]
-        else
-          throw new IllegalArgumentException(
-            s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-              s"expected ${${ Expr(typeName) }}, " + s"but found $prop"
+        ${
+          checkedAttribute[A]('{ prop })(found =>
+            '{
+              throw new IllegalArgumentException(
+                s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+                  s"expected ${${ Expr(typeName) }}, but found ${$found}"
+              )
+            }
           )
+        }
   }
 
 def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
@@ -444,12 +442,16 @@ def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
   '{
     val value: Option[Attribute] = $list.get(${ Expr(propName) })
     value.map(prop =>
-      if ${ isOfAttributeType[A]('{ prop }) } then prop.asInstanceOf[A]
-      else
-        throw new IllegalArgumentException(
-          s"Type mismatch for property \"${${ Expr(propName) }}\": " +
-            s"expected ${${ Expr(typeName) }}, " + s"but found $prop"
+      ${
+        checkedAttribute[A]('{ prop })(found =>
+          '{
+            throw new IllegalArgumentException(
+              s"Type mismatch for property \"${${ Expr(propName) }}\": " +
+                s"expected ${${ Expr(typeName) }}, but found ${$found}"
+            )
+          }
         )
+      }
     )
   }
 
@@ -1012,15 +1014,15 @@ def getAttrConstructor[T: Type](
       val tpe = d.tpe
       tpe match
         case '[type t <: Attribute; `t`] =>
-          '{
-            if !${ isOfAttributeType[t](a) } then
+          checkedAttribute[t](a)(found =>
+            '{
               throw Exception(
                 s"Expected ${${ Expr(d.name) }} to be of type ${${
                     Expr(Type.show[t])
-                  }}, got ${${ a }}"
+                  }}, got ${$found}"
               )
-            ${ a }.asInstanceOf[t]
-          }
+            }
+          )
     }
 
   val args = (extractedConstructs zip attrDef.attributes)
