@@ -333,44 +333,34 @@ def verifyMacro(
 
 /*_____________*\
 \*-- HELPERS --*/
-/** Produces `value` as an `A`, checking the type arguments a plain type test
-  * drops to erasure, and handing whatever is not an `A` to `orElse`.
-  *
-  * What the type system already establishes is not tested again: a value
-  * statically known to be an `A` is passed straight through. [[ArrayAttribute]]
-  * being covariant, that covers an array whose static element type already
-  * conforms, elements and all.
-  *
-  * Past that, only `A`'s own arguments are established. An attribute that
-  * already is an instance of a parametrized attribute had its parameters
-  * checked when it was built -- by this very check on the way in, or by Scala
-  * at a typed construction site -- so there is nothing left to verify below
-  * that level. That is what keeps this off, say, the elements of a dense
-  * attribute's data: a property declared as one stays a single type test.
-  *
-  * An array's elements are tested by type alone, so an element type carrying
-  * erased arguments of its own is only established as far as its class. The
-  * compiler says so, flagging the generated test where that happens.
-  */
+
+/*
+ * Produces a check that `value` is an `A`.
+ * Special case for ArrayAttribute[A] to check all elements if needed.
+ */
 def checkedAttribute[A <: Attribute: Type](value: Expr[Attribute])(
     orElse: Expr[Attribute] => Expr[A]
 )(using Quotes): Expr[A] =
-  import quotes.reflect.*
-  val arrayAttribute = TypeRepr.of[ArrayAttribute[Attribute]].typeSymbol
-  val valueType = value.asTerm.tpe.widen.dealias
-  val target = TypeRepr.of[A].dealias
-
-  if valueType <:< target then value.asExprOf[A]
-  else
-    target match
-      // An array's element type is what erasure loses, and nothing below holds
-      // it: its elements are only known as Attribute until walked. Unless every
-      // attribute conforms, and walking would ask nothing.
-      case AppliedType(tycon, List(element))
-          if tycon.typeSymbol == arrayAttribute &&
-            !(TypeRepr.of[Attribute] <:< element) =>
-        element.asType match
-          case '[type e <: Attribute; `e`] =>
+  value match
+    // If the expression is already knwon of the expected type by the compiler, nothing to check.
+    case '{
+          type t <: A; $value: t
+        } =>
+      value
+    case _ =>
+      Type.of[A] match
+        // Special case for ArrayAttribute[A] to check all elements if needed.
+        case '[ArrayAttribute[e]] =>
+          // If it is exactly ArrayAttribute[Attribute], nothing more to check.
+          if Type.of[e] == Type.of[Attribute] then
+            '{
+              $value match
+                case array: ArrayAttribute[?] =>
+                  array.asInstanceOf[A]
+                case other => ${ orElse('{ other }) }
+            }
+          // If A is a more specific attribute, check elements.
+          else
             '{
               $value match
                 case array: ArrayAttribute[?]
@@ -378,26 +368,13 @@ def checkedAttribute[A <: Attribute: Type](value: Expr[Attribute])(
                   array.asInstanceOf[A]
                 case other => ${ orElse('{ other }) }
             }
-          case _ => plainlyChecked[A](value)(orElse)
-      case AppliedType(tycon, _) if tycon.typeSymbol == arrayAttribute =>
-        '{
-          $value match
-            case array: ArrayAttribute[?] => array.asInstanceOf[A]
-            case other                    => ${ orElse('{ other }) }
-        }
-      case _ => plainlyChecked[A](value)(orElse)
-
-/** `value` as an `A` by a plain type test, for an `A` that has no type
-  * arguments for erasure to take away.
-  */
-private def plainlyChecked[A <: Attribute: Type](value: Expr[Attribute])(
-    orElse: Expr[Attribute] => Expr[A]
-)(using Quotes): Expr[A] =
-  '{
-    $value match
-      case checked: A => checked
-      case other      => ${ orElse('{ other }) }
-  }
+        // For any other attribute type, check the type directly.
+        case _ =>
+          '{
+            $value match
+              case checked: A => checked
+              case other      => ${ orElse('{ other }) }
+          }
 
 /** Helper to check a property argument.
   */
