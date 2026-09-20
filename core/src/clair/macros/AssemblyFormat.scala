@@ -545,8 +545,8 @@ case class AssemblyFormatDirective(
     val flatOperandNames = '{
       $operandNamesArg.flatMap(op =>
         op match
-          case op: String      => Seq(op)
-          case op: Seq[String] => op
+          case op: String                   => Seq(op)
+          case op: (Seq[String] @unchecked) => op
       )
     }
 
@@ -563,8 +563,8 @@ case class AssemblyFormatDirective(
     val flatOperandTypes = '{
       $operandTypesArg.flatMap(op =>
         op match
-          case op: Attribute      => Seq(op)
-          case op: Seq[Attribute] => op
+          case op: Attribute                   => Seq(op)
+          case op: (Seq[Attribute] @unchecked) => op
       )
     }
 
@@ -581,8 +581,8 @@ case class AssemblyFormatDirective(
     val flatResultTypes = '{
       $resultTypesArg.flatMap(op =>
         op match
-          case op: Attribute      => Seq(op)
-          case op: Seq[Attribute] => op
+          case op: Attribute                   => Seq(op)
+          case op: (Seq[Attribute] @unchecked) => op
       )
     }
 
@@ -596,8 +596,8 @@ case class AssemblyFormatDirective(
     val flatRegionsArg = '{
       $regionsArg.flatMap(op =>
         op match
-          case op: Region      => Seq(op)
-          case op: Seq[Region] => op
+          case op: Region                   => Seq(op)
+          case op: (Seq[Region] @unchecked) => op
       )
     }
 
