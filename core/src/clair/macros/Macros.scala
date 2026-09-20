@@ -337,8 +337,9 @@ def verifyMacro(
   * type test drops to erasure.
   *
   * What the type system already establishes is not tested again: whatever
-  * `value` is statically known to be, and the element type an array attribute
-  * statically carries, are taken as given rather than rediscovered at runtime.
+  * `value` is statically known to be is taken as given rather than rediscovered
+  * at runtime. [[ArrayAttribute]] being covariant, that covers an array whose
+  * static element type already conforms, elements and all.
   *
   * Past that, only `A`'s own arguments are established. An attribute that
   * already is an instance of a parametrized attribute had its parameters
@@ -356,13 +357,6 @@ def isOfAttributeType[A <: Attribute: Type](
 )(using Quotes): Expr[Boolean] =
   import quotes.reflect.*
   val arrayAttribute = TypeRepr.of[ArrayAttribute[Attribute]].typeSymbol
-
-  /** The element type `tpe` carries, if it is an array attribute at all. */
-  def arrayElementOf(tpe: TypeRepr): Option[TypeRepr] =
-    tpe.baseType(arrayAttribute) match
-      case AppliedType(_, List(element)) => Some(element)
-      case _                             => None
-
   val valueType = value.asTerm.tpe.widen.dealias
   val target = TypeRepr.of[A].dealias
 
@@ -379,29 +373,24 @@ def isOfAttributeType[A <: Attribute: Type](
               }
             }
           case _ => '{ $value.isInstanceOf[A] }
-      case _ =>
-        arrayElementOf(target) match
-          case None => '{ $value.isInstanceOf[A] }
-          // An array's element type is what erasure loses, and no one below
-          // holds it: its elements are only known as Attribute until walked.
-          case Some(element) =>
-            // Unless the value's own type carries an element type that
-            // conforms, in which case Scala has already done this.
-            if arrayElementOf(valueType).exists(_ <:< element) then '{ true }
-            // Or unless every attribute conforms, and walking would ask
-            // nothing.
-            else if TypeRepr.of[Attribute] <:< element then
-              '{ $value.isInstanceOf[ArrayAttribute[?]] }
-            else
-              element.asType match
-                case '[type e <: Attribute; `e`] =>
-                  '{
-                    $value match
-                      case array: ArrayAttribute[?] =>
-                        array.data.forall(_.isInstanceOf[e])
-                      case _ => false
-                  }
-                case _ => '{ $value.isInstanceOf[A] }
+      // An array's element type is what erasure loses, and nothing below holds
+      // it: its elements are only known as Attribute until walked.
+      case AppliedType(tycon, List(element))
+          if tycon.typeSymbol == arrayAttribute =>
+        // Unless every attribute conforms, and walking would ask nothing.
+        if TypeRepr.of[Attribute] <:< element then
+          '{ $value.isInstanceOf[ArrayAttribute[?]] }
+        else
+          element.asType match
+            case '[type e <: Attribute; `e`] =>
+              '{
+                $value match
+                  case array: ArrayAttribute[?] =>
+                    array.data.forall(_.isInstanceOf[e])
+                  case _ => false
+              }
+            case _ => '{ $value.isInstanceOf[A] }
+      case _ => '{ $value.isInstanceOf[A] }
 
 /** Tests `attribute` against `A` the way the operation and attribute macros do:
   * checking the type arguments a plain type test loses to erasure, and leaning

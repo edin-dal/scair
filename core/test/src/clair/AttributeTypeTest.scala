@@ -16,6 +16,11 @@ import scair.ir.*
   */
 class AttributeTypeTest extends AnyFlatSpec with Matchers:
 
+  // What lets the check take an array's elements as given: an array of a
+  // subtype is an array of its supertype, so Scala settles the element type
+  // before the check is even reached.
+  summon[ArrayAttribute[IntData] <:< ArrayAttribute[Attribute]]
+
   val lyingInts: ArrayAttribute[IntData] =
     ArrayAttribute[Attribute](StringData("a"))
       .asInstanceOf[ArrayAttribute[IntData]]

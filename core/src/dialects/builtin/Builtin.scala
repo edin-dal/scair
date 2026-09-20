@@ -180,7 +180,7 @@ object ArrayAttribute:
 
   given [D <: Attribute] => Conversion[ArrayAttribute[D], Seq[D]] = _.data
 
-final case class ArrayAttribute[D <: Attribute](data: D*)
+final case class ArrayAttribute[+D <: Attribute](data: D*)
     extends ParametrizedAttribute:
 
   override def name = "builtin.array_attr"
