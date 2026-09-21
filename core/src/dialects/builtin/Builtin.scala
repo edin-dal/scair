@@ -209,8 +209,8 @@ final case class DictionaryAttr(entries: Map[String, Attribute])
 /*≡==--==≡≡≡≡==--=≡≡*\
 || STRING ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
-final case class StringData(stringLiteral: String)
-    extends DataAttribute[String] derives TransparentData:
+final case class StringData(stringLiteral: String) extends DataAttribute[String]
+    derives TransparentData:
   override def name = "builtin.string"
   override def data = stringLiteral
 
