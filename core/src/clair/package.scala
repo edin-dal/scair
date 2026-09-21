@@ -41,7 +41,8 @@ package scair
   *   override def parse[$: P](using Parser) =
   *     "#sample<" ~ CharsWhile(_ != '>').!.map(SampleData.apply) ~ ">"
   *
-  * case class SampleData(val d: String) extends DataAttribute[String](d):
+  * case class SampleData(val d: String) extends DataAttribute[String]:
+  *   override def data = d
   *   override def name = "sample"
   *
   * /*≡≡=---=≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡=---=≡≡*\

@@ -79,7 +79,8 @@ import scair.dialects.builtin.IntData
 import scair.ir.DataAttribute
 //}
 case class RangeAttr(min: IntData, max: IntData)
-  extends DataAttribute[(IntData, IntData)]("mydialect.range", (min, max))
+  extends DataAttribute[(IntData, IntData)]:
+  override def data = (min, max)
 ```
 
 Use data attributes for:

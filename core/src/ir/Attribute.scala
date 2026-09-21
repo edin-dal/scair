@@ -100,9 +100,9 @@ object DataAttribute:
   *   reference to the same string in every instance. Subclasses override it
   *   with a literal.
   */
-abstract class DataAttribute[D](
-    val data: D
-) extends Attribute:
+abstract trait DataAttribute[D] extends Attribute:
+
+  def data: D
 
   override def printParameters(p: Printer) =
     p.print("<", data.toString, ">")

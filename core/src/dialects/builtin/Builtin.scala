@@ -30,7 +30,9 @@ val I64 = IntegerType(IntData(64), Signless)
 \*≡==---==≡≡==---==≡*/
 
 sealed abstract class Signedness(override val name: String, val dat: String)
-    extends DataAttribute[String](dat):
+    extends DataAttribute[String]:
+
+  override def data: String = dat
   override def customPrint(p: Printer) = p.print(dat)
 
 case object Signed extends Signedness("signed", "si")
@@ -67,9 +69,10 @@ final case class Float128Type() extends FloatType with DerivedAttribute["f128"]
 ||     INT DATA     ||
 \*≡==---==≡≡==---==≡*/
 
-final case class IntData(value: BigInt) extends DataAttribute[BigInt](value)
+final case class IntData(value: BigInt) extends DataAttribute[BigInt]
     derives TransparentData:
   override def name = "builtin.int_attr"
+  override def data = value
   override def customPrint(p: Printer) = p.print(value.toString)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -127,9 +130,10 @@ case class IntegerAttr(
 ||    FLOAT DATA    ||
 \*≡==---==≡≡==---==≡*/
 
-final case class FloatData(value: Double) extends DataAttribute[Double](value)
+final case class FloatData(value: Double) extends DataAttribute[Double]
     derives TransparentData:
   override def name = "builtin.float_data"
+  override def data = value
   override def customPrint(p: Printer) = p.print(value.toString)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
@@ -195,8 +199,9 @@ final case class ArrayAttribute[D <: Attribute](data: D*)
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 final case class DictionaryAttr(entries: Map[String, Attribute])
-    extends DataAttribute[Map[String, Attribute]](entries):
+    extends DataAttribute[Map[String, Attribute]]:
   override def name = "builtin.dict_attr"
+  override def data = entries
 
   override def customPrint(p: Printer) =
     p.printAttrDict(entries)
@@ -205,8 +210,9 @@ final case class DictionaryAttr(entries: Map[String, Attribute])
 || STRING ATTRIBUTE ||
 \*≡==---==≡≡==---==≡*/
 final case class StringData(stringLiteral: String)
-    extends DataAttribute(stringLiteral) derives TransparentData:
+    extends DataAttribute[String] derives TransparentData:
   override def name = "builtin.string"
+  override def data = stringLiteral
 
   override def customPrint(p: Printer) =
     //       ("\\" ~~ (
@@ -531,9 +537,10 @@ final case class DenseFPElementsAttr(
 \*≡==---==≡≡==---==≡*/
 
 final case class AffineMapAttr(affineMap: AffineMap)
-    extends DataAttribute[AffineMap](affineMap)
+    extends DataAttribute[AffineMap]
     with AliasedAttribute("map") derives TransparentData:
   override def name = "builtin.affine_map"
+  override def data = affineMap
 
   override def customPrint(p: Printer) =
     p.print("affine_map<", affineMap.toString, ">")
@@ -544,9 +551,10 @@ final case class AffineMapAttr(affineMap: AffineMap)
 // note: in mlir terms this is called an IntegerSetAttr
 
 final case class AffineSetAttr(affineSet: AffineSet)
-    extends DataAttribute[AffineSet](affineSet)
+    extends DataAttribute[AffineSet]
     with AliasedAttribute("set") derives TransparentData:
   override def name = "builtin.affine_set"
+  override def data = affineSet
 
   override def customPrint(p: Printer) =
     p.print("affine_set<", affineSet.toString, ">")
