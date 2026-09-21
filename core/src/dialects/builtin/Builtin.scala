@@ -354,12 +354,7 @@ final case class VectorType(
 final case class SymbolRefAttr(
     rootRef: StringData,
     nestedRefs: ArrayAttribute[StringData] = ArrayAttribute(),
-) extends ParametrizedAttribute:
-
-  override def name: String = "builtin.symbol_ref"
-
-  override def parameters: Seq[Attribute] =
-    Seq(rootRef, nestedRefs)
+) extends DerivedAttribute["builtin.symbol_ref"] derives AttrDefs:
 
   override def customPrint(p: Printer) =
     p.printListF(
@@ -375,11 +370,8 @@ final case class SymbolRefAttr(
 final case class DenseArrayAttr(
     typ: IntegerType | FloatType,
     data: ArrayAttribute[IntegerAttr] | ArrayAttribute[FloatAttr],
-) extends ParametrizedAttribute
-    with Seq[Attribute]:
-
-  override def name: String = "builtin.dense_array"
-  override def parameters: Seq[Attribute] = Seq(typ, data)
+) extends DerivedAttribute["builtin.dense_array"]
+    with Seq[Attribute] derives AttrDefs:
 
   override def customVerify(): OK[Unit] =
     if !data.data.forall(_ match
@@ -414,13 +406,8 @@ final case class DenseArrayAttr(
 final case class FunctionType(
     inputs: ArrayAttribute[Attribute] = ArrayAttribute(),
     outputs: ArrayAttribute[Attribute] = ArrayAttribute(),
-) extends ParametrizedAttribute
-    with TypeAttribute:
-
-  override def name: String = "builtin.function_type"
-
-  override def parameters: Seq[Attribute] =
-    Seq(inputs, outputs)
+) extends DerivedAttribute["builtin.function_type"]
+    with TypeAttribute derives AttrDefs:
 
   override def customPrint(p: Printer) =
     p.print("(")

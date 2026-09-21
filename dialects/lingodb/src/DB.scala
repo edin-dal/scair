@@ -18,57 +18,24 @@ import scair.print.Printer
 \*≡==---==≡≡==---==≡*/
 
 final case class DBStringType()
-    extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "db.string"
-  override def parameters: Seq[Attribute] = Seq()
-  override def customPrint(p: Printer): Unit = p.print("!db.string")
+    extends DerivedAttribute["db.string"]
+    with TypeAttribute derives AttrDefs
 
 final case class NullableType(inner: Attribute)
-    extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "db.nullable"
-  override def parameters: Seq[Attribute] = Seq(inner)
-
-  override def customPrint(p: Printer): Unit =
-    p.print("!db.nullable<")
-    p.print(inner)
-    p.print(">")
+    extends DerivedAttribute["db.nullable"]
+    with TypeAttribute derives AttrDefs
 
 final case class DecimalType(prec: IntData, scale: IntData)
-    extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "db.decimal"
-  override def parameters: Seq[Attribute] = Seq(prec, scale)
-
-  override def customPrint(p: Printer): Unit =
-    p.print("!db.decimal<")
-    p.print(prec)
-    p.print(", ")
-    p.print(scale)
-    p.print(">")
+    extends DerivedAttribute["db.decimal"]
+    with TypeAttribute derives AttrDefs
 
 final case class DateType(unit: StringData)
-    extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "db.date"
-  override def parameters: Seq[Attribute] = Seq(unit)
-
-  override def customPrint(p: Printer): Unit =
-    p.print("!db.date<")
-    p.print(unit.data)
-    p.print(">")
+    extends DerivedAttribute["db.date"]
+    with TypeAttribute derives AttrDefs
 
 final case class CharType(len: IntData)
-    extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "db.char"
-  override def parameters: Seq[Attribute] = Seq(len)
-
-  override def customPrint(p: Printer): Unit =
-    p.print("!db.char<")
-    p.print(len)
-    p.print(">")
+    extends DerivedAttribute["db.char"]
+    with TypeAttribute derives AttrDefs
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||      ENUMS       ||
