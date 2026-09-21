@@ -31,7 +31,11 @@ final case class DecimalType(prec: IntData, scale: IntData)
 
 final case class DateType(unit: StringData)
     extends DerivedAttribute["db.date"]
-    with TypeAttribute derives AttrDefs
+    with TypeAttribute derives AttrDefs:
+
+  // The unit prints bare, not as the quoted string literal a StringData would.
+  override def customPrint(p: Printer): Unit =
+    p.print("!db.date<", unit.data, ">")
 
 final case class CharType(len: IntData)
     extends DerivedAttribute["db.char"]

@@ -88,21 +88,6 @@ abstract trait ParametrizedAttribute() extends Attribute:
         ">",
       )
 
-  /** Structural equality over [[parameters]].
-    *
-    * @note
-    *   Derived attributes override this with a field-wise comparison generated
-    *   by `AttrDefs`, which avoids materialising `parameters` on both sides.
-    *   This remains the fallback for hand-written parametrized attributes.
-    */
-  override def equals(attr: Any): Boolean =
-    (this eq attr.asInstanceOf[AnyRef]) ||
-      (attr match
-        // getClass already implies equal names, name being a per-class constant.
-        case x: ParametrizedAttribute =>
-          x.getClass == this.getClass && x.parameters == this.parameters
-        case _ => false)
-
 object DataAttribute:
   // Make all DataAttributes implicitely convertible to their held data.
   given [D]: Conversion[DataAttribute[D], D] = _.data

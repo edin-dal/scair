@@ -37,7 +37,10 @@ enum SortSpec(name: String) extends I64Enum(name):
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 final case class SortSpecificationAttr(colRef: ColumnRefAttr, spec: SortSpec)
-    extends DerivedAttribute["relalg.sort_spec"] derives AttrDefs
+    extends DerivedAttribute["relalg.sort_spec"] derives AttrDefs:
+
+  override def customPrint(p: Printer): Unit =
+    p.print("(", colRef, ",", spec.name, ")")
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||       HELPERS          ||

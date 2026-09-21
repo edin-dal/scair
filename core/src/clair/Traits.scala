@@ -25,19 +25,6 @@ transparent trait DerivedAttribute[name <: String]
   override def parameters: Seq[Attribute] =
     defs.parameters(this)
 
-  /** Field-wise equality, overriding [[ParametrizedAttribute.equals]].
-    *
-    * The inherited implementation compares `parameters`, which since it became
-    * a def would build a sequence on both sides for every comparison. The
-    * derived `equal` reads the fields straight off the two instances instead.
-    */
-  override def equals(attr: Any): Boolean =
-    (this eq attr.asInstanceOf[AnyRef]) ||
-      (attr match
-        case x: DerivedAttribute[?] if x.getClass == this.getClass =>
-          defs.equal(this, x)
-        case _ => false)
-
 trait AssemblyFormat[format <: String]
 
 transparent trait DerivedOperation[name <: String] extends Operation:

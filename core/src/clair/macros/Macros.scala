@@ -980,33 +980,6 @@ def parametersMacro(
 )(using Quotes): Expr[Seq[Attribute]] =
   ADTFlatAttrInputMacro(attrDef.attributes, adtAttrExpr)
 
-/** Builds `self.p1 == that.p1 && ... && self.pN == that.pN`.
-  *
-  * Each parameter is selected at its declared type rather than as `Any`, so the
-  * comparisons call `Attribute.equals` directly instead of going through
-  * `BoxesRunTime.equals`. An attribute with no parameters compares equal to any
-  * other instance of its class, which is what its single inhabitant warrants.
-  */
-def equalMacro[T <: Attribute: Type](
-    attrDef: AttributeDef,
-    selfExpr: Expr[T],
-    otherExpr: Expr[Any],
-)(using Quotes): Expr[Boolean] =
-  '{
-    val that = $otherExpr.asInstanceOf[T]
-    ${
-      attrDef.attributes.map(d =>
-        d.tpe match
-          case '[t] =>
-            '{
-              ${ selectMember[t](selfExpr, d.name) } == ${
-                selectMember[t]('{ that }, d.name)
-              }
-            }
-      ).reduceOption((l, r) => '{ $l && $r }).getOrElse('{ true })
-    }
-  }
-
 def deriveAttrDefs[T <: Attribute: Type](using
     Quotes
 ): Expr[AttrDefs[T]] =
@@ -1029,9 +1002,6 @@ def deriveAttrDefs[T <: Attribute: Type](using
       }
       def parameters(attr: T): Seq[Attribute] = ${
         parametersMacro(attrDef, '{ attr })
-      }
-      def equal(self: T, other: Any): Boolean = ${
-        equalMacro[T](attrDef, '{ self }, '{ other })
       }
   }
 

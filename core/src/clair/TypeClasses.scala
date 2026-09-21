@@ -37,17 +37,6 @@ trait AttributeCustomParser[T <: Attribute]:
 trait AttrDefs[T <: Attribute] extends AttributeCompanion[T]:
   def parameters(attr: T): Seq[Attribute]
 
-  /** Field-wise equality between `self` and `other`.
-    *
-    * Compares the attribute's parameters one by one, so that neither side has
-    * to materialise its [[parameters]] sequence just to be compared.
-    *
-    * @param other
-    *   Known by the caller to be of the same runtime class as `self`, and cast
-    *   as such; passing anything else is a programming error.
-    */
-  def equal(self: T, other: Any): Boolean
-
   override def parse[$: P](using Parser): P[T]
 
 object AttrDefs:
