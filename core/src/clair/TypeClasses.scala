@@ -67,7 +67,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
 
   object UnstructuredOp:
 
-    def apply(
+    inline def apply(
         operands: Seq[Value[Attribute]] = Seq(),
         successors: Seq[Block] = Seq(),
         results: Seq[Result[Attribute]] = Seq(),
@@ -75,16 +75,17 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
         properties: Map[String, Attribute] = Map.empty[String, Attribute],
         attributes: Map[String, Attribute] = Map.empty[String, Attribute],
     ): UnstructuredOp =
-      val op = new UnstructuredOp(operands, successors, results, regions, properties)
+      val op =
+        new UnstructuredOp(operands, successors, results, regions, properties)
       op.attributes ++= attributes
       op
 
   case class UnstructuredOp(
-      override val operands: Seq[Value[Attribute]] = Seq.empty,
-      override val successors: Seq[Block] = Seq.empty,
-      override val results: Seq[Result[Attribute]] = Seq.empty,
-      override val regions: Seq[Region] = Seq.empty,
-      override val properties: Map[String, Attribute] = Map.empty,
+      override val operands: Seq[Value[Attribute]],
+      override val successors: Seq[Block],
+      override val results: Seq[Result[Attribute]],
+      override val regions: Seq[Region],
+      override val properties: Map[String, Attribute],
   ) extends Operation:
 
     override def updated(
