@@ -50,7 +50,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?],
-)(using Quotes): Option[Expr[(String, Attribute)]] =
+)(using Quotes): Option[(Expr[String], Expr[Attribute])] =
   val name = s"${getConstructName[T]}SegmentSizes"
   hasMultiVariadic match
     case true =>
@@ -70,8 +70,9 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
           )
         )
       Some(
+        Expr(name),
         '{
-          ${ Expr(name) } -> DenseArrayAttr(
+          DenseArrayAttr(
             IntegerType(IntData(32), Signless),
             ${ arrayAttr }.map(x =>
               IntegerAttr(
@@ -80,7 +81,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
               )
             ),
           )
-        }
+        },
       )
     case false => None
 
@@ -143,8 +144,6 @@ def regionsMacro(
 )(using Quotes): Expr[Seq[Region]] =
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
-import scala.collection.mutable.Builder
-
 def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
@@ -176,7 +175,7 @@ def propertiesMacro(
   val mandatoryProps =
     opDef.properties.collect {
       case OpPropertyDef(name = name, variadicity = Variadicity.Single) =>
-        '{ ${ Expr(name) } -> ${ selectMember[Attribute](adtOpExpr, name) } }
+        (Expr(name), selectMember[Attribute](adtOpExpr, name))
     } ++ opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp
 
   val optionalProps =
@@ -184,29 +183,19 @@ def propertiesMacro(
       case OpPropertyDef(name = name, variadicity = Variadicity.Optional) =>
         (Expr(name), selectMember[Option[Attribute]](adtOpExpr, name))
     }
-  if mandatoryProps.isEmpty && optionalProps.isEmpty then
-    '{ Map.empty[String, Attribute] }
-  else
-    ValDef.let(
-      Symbol.spliceOwner,
-      "propsBuilder",
-      '{ Map.newBuilder[String, Attribute] }.asTerm,
-    )(builderTerm =>
-      val builder = builderTerm
-        .asExprOf[Builder[(String, Attribute), Map[String, Attribute]]]
-      val mandatoryAdds = mandatoryProps
-        .map(prop => '{ $builder.addOne($prop) }.asTerm)
-      val optionalAdds = optionalProps.map(prop =>
-        '{
-          if ${ prop._2 }.isDefined then
-            $builder.addOne(${ prop._1 } -> ${ prop._2 }.get)
-        }.asTerm
-      )
-      Block(
-        (mandatoryAdds ++ optionalAdds).toList,
-        '{ $builder.result() }.asTerm,
-      )
-    ).asExprOf[Map[String, Attribute]]
+  // Properties are typically few; a chain of `updated` goes through the
+  // small specialized maps without a builder or tuples along the way.
+  val withMandatory = mandatoryProps.foldLeft('{
+    Map.empty[String, Attribute]
+  })((props, prop) => '{ $props.updated(${ prop._1 }, ${ prop._2 }) })
+  optionalProps.foldLeft(withMandatory)((props, prop) =>
+    '{
+      val current = $props
+      ${ prop._2 } match
+        case Some(value) => current.updated(${ prop._1 }, value)
+        case None        => current
+    }
+  )
 
 def customPrintMacro(
     opDef: OperationDef,
