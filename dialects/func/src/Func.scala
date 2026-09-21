@@ -67,7 +67,8 @@ given OperationCustomParser[Func]:
               )
             case None => None,
         )
-        f.withAttributes(attributes - "no_inline")
+        f.attributes ++= attributes - "no_inline"
+        f
     }
 
 case class Func(

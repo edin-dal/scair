@@ -1070,7 +1070,8 @@ def deriveOpDefs[T <: Operation: Type](using
               '{ properties },
             )
           }
-          structured.withAttributes(attributes)
+          structured.attributes ++= attributes
+          structured
         } catch { _ =>
           UnstructuredOp(
             operands = operands,
@@ -1097,7 +1098,8 @@ def deriveOpDefs[T <: Operation: Type](using
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match
           case adt: DerivedOperation[?] =>
-            adt.withAttributes(unstrucOp.attributes)
+            adt.attributes ++= unstrucOp.attributes
+            adt
           case _ =>
             throw new Exception(
               s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: $unstrucOp"

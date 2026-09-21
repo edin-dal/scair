@@ -15,8 +15,9 @@ object TestOp extends OperationCompanion[TestOp]:
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: Map[String, Attribute] = Map.empty[String, Attribute],
   ): TestOp =
-    new TestOp(operands, successors, results, regions, properties)
-      .withAttributes(attributes)
+    val op = new TestOp(operands, successors, results, regions, properties)
+    op.attributes ++= attributes
+    op
 
 given OperationCompanion[TestOp] = TestOp
 

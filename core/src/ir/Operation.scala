@@ -58,13 +58,6 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
     */
   var attributes: Map[String, Attribute] = Map.empty
 
-  /** Sets this operation's attributes and returns it, for chaining in
-    * constructors.
-    */
-  final def withAttributes(attributes: Map[String, Attribute]): this.type =
-    this.attributes = attributes
-    this
-
   final def detachedRegions = regions.map(_.detached)
 
   def customPrint(p: Printer) =
@@ -191,14 +184,16 @@ object UnregisteredOperation:
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: Map[String, Attribute] = Map.empty[String, Attribute],
       ): UnregisteredOperation =
-        new UnregisteredOperation(
+        val op = new UnregisteredOperation(
           name = _name,
           operands = operands,
           successors = successors,
           results = results,
           regions = regions,
           properties = properties,
-        ).withAttributes(attributes)
+        )
+        op.attributes ++= attributes
+        op
 
 case class UnregisteredOperation private (
     override val name: String,
