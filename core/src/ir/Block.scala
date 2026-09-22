@@ -266,7 +266,7 @@ case class Block private (
   \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
   override def recomputeOpOrder(): Unit =
-    operations.computeBlockOrder()
+    if !isOpOrderValid then operations.computeBlockOrder()
 
   def structured: OK[Unit] =
     operations.foldLeft[OK[Unit]](OK())((res, op) =>
