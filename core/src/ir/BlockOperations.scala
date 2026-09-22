@@ -37,12 +37,20 @@ object BlockOperations:
 
 class BlockOperations extends IntrusiveList[Operation]:
 
+  /** Whether the indices `computeBlockOrder` assigned still describe this list.
+    * Mutating the list invalidates them, just as it invalidates the use lists
+    * maintained below.
+    */
+  var isOpOrderValid = true
+
   private inline def handleOperationInsertion(op: Operation) =
     op.operands.foreachWithIndex((o, i) => o.uses += Use(op, i))
+    isOpOrderValid = false
 
   private inline def handleOperationRemoval(op: Operation) =
     op.operands
       .foreachWithIndex((o, i) => o.uses.filterInPlace(_.operation != op))
+    isOpOrderValid = false
 
   final def computeBlockOrder(): this.type =
     var idx = 0
@@ -51,6 +59,7 @@ class BlockOperations extends IntrusiveList[Operation]:
       idx += 1
       op.recomputeOpOrder()
     }
+    isOpOrderValid = true
     this
 
   override final def addOne(elem: Operation): this.type =
