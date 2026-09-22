@@ -30,7 +30,7 @@ object Region:
     Region(Block(operation))
 
 case class Region(
-    private val initialBlocks: Block*
+    var blocks: Block*
 ) extends IRNode:
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -40,11 +40,6 @@ case class Region(
   final override def parent = containerOperation
 
   var containerOperation: Option[Operation] = None
-
-  private var _blocks: Seq[Block] = initialBlocks
-
-  /** The blocks contained in this region, in order. */
-  def blocks: Seq[Block] = _blocks
 
   blocks.foreach(attachBlock)
 
@@ -67,7 +62,7 @@ case class Region(
       )
     attachBlock(replacement)
     old.containerRegion = None
-    _blocks = _blocks.map(b => if b eq old then replacement else b)
+    blocks = blocks.map(b => if b eq old then replacement else b)
 
   private def attachBlock(block: Block): Unit =
 

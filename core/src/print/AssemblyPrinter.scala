@@ -97,7 +97,7 @@ case class AssemblyPrinter(
 
     print("{\n")
     region.blocks match
-      case Nil             => ()
+      case Seq()           => ()
       case entry +: blocks =>
         // If the entry block has no arguments, we can avoid printing the header
         // Unless it is empty, which would make the next block read as the entry!
