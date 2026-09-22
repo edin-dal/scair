@@ -20,9 +20,9 @@ transparent trait DerivedAttribute[name <: String]
   protected final given defs
       : AttrDefs[? >: this.type <: DerivedAttribute[name]] = deferred
 
-  override val name: String = defs.name
+  override def name: String = defs.name
 
-  override val parameters: Seq[Attribute] =
+  override def parameters: Seq[Attribute] =
     defs.parameters(this)
 
 trait AssemblyFormat[format <: String]

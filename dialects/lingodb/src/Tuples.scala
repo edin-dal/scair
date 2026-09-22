@@ -17,27 +17,19 @@ import scair.print.Printer
 \*≡==---==≡≡==---==≡*/
 
 final case class TupleStreamType()
-    extends ParametrizedAttribute
-    with TypeAttribute:
-  override val name: String = "tuples.tuplestream"
-  override val parameters: Seq[Attribute] = Seq()
-  override def customPrint(p: Printer): Unit = p.print("!tuples.tuplestream")
+    extends DerivedAttribute["tuples.tuplestream"]
+    with TypeAttribute derives AttrDefs
 
-final case class TupleType() extends ParametrizedAttribute with TypeAttribute:
-  override val name: String = "tuples.tuple"
-  override val parameters: Seq[Attribute] = Seq()
-  override def customPrint(p: Printer): Unit = p.print("!tuples.tuple")
+final case class TupleType()
+    extends DerivedAttribute["tuples.tuple"]
+    with TypeAttribute derives AttrDefs
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||      ATTRIBUTES        ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 final case class ColumnRefAttr(scope: StringData, colName: StringData)
-    extends ParametrizedAttribute:
-  override val name: String = "tuples.column_ref"
-
-  override val parameters: Seq[Attribute] =
-    Seq(scope, colName)
+    extends DerivedAttribute["tuples.column_ref"] derives AttrDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("@")
@@ -50,11 +42,7 @@ final case class ColumnDefAttr(
     scope: StringData,
     colName: StringData,
     colType: Attribute,
-) extends ParametrizedAttribute:
-  override val name: String = "tuples.column_def"
-
-  override val parameters: Seq[Attribute] =
-    Seq(scope, colName, colType)
+) extends DerivedAttribute["tuples.column_def"] derives AttrDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print("@")

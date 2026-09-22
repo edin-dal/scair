@@ -122,8 +122,9 @@ given AttributeCompanion[FastMathFlagsAttr]:
     }
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
-    extends DataAttribute[FastMathFlags]("arith.fastmath", flags)
-    derives TransparentData:
+    extends DataAttribute[FastMathFlags] derives TransparentData:
+  override def name = "arith.fastmath"
+  override def data = flags
 
   override def customPrint(p: Printer) =
     p.print("#arith.fastmath<")
@@ -187,8 +188,9 @@ given AttributeCompanion[OverflowFlagsAttr]:
     }
 
 case class OverflowFlagsAttr(val flags: OverflowFlags)
-    extends DataAttribute[OverflowFlags]("arith.overflow", flags)
-    derives TransparentData:
+    extends DataAttribute[OverflowFlags] derives TransparentData:
+  override def name = "arith.overflow"
+  override def data = flags
 
   override def customPrint(p: Printer) =
     p.print("#arith.overflow<")
