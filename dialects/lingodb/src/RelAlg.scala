@@ -37,18 +37,10 @@ enum SortSpec(name: String) extends I64Enum(name):
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
 final case class SortSpecificationAttr(colRef: ColumnRefAttr, spec: SortSpec)
-    extends ParametrizedAttribute:
-  override val name: String = "relalg.sort_spec"
-
-  override val parameters: Seq[Attribute] =
-    Seq(colRef, spec)
+    extends DerivedAttribute["relalg.sort_spec"] derives AttrDefs:
 
   override def customPrint(p: Printer): Unit =
-    p.print("(")
-    p.print(colRef)
-    p.print(",")
-    p.print(spec.name)
-    p.print(")")
+    p.print("(", colRef, ",", spec.name, ")")
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||       HELPERS          ||

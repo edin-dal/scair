@@ -55,10 +55,8 @@ object FCmpPredicate:
 
 final case class StructType(
     elems: ArrayAttribute[TypeAttribute]
-) extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "llvm.struct"
-  override def parameters: Seq[Attribute] = Seq(elems)
+) extends DerivedAttribute["llvm.struct"]
+    with TypeAttribute derives AttrDefs:
 
   override def printParameters(p: Printer): Unit =
     given indentLevel: Int = 0
@@ -66,8 +64,7 @@ final case class StructType(
     p.printListF(elems, p.print, sep = ", ")
     p.print(")>")
 
-given AttributeCompanion[StructType]:
-  override def name: String = "llvm.struct"
+given AttributeCustomParser[StructType]:
 
   override def parse[$: P](using Parser): P[StructType] =
     P("<" ~ "(" ~ typeP.rep(sep = ",") ~ ")" ~ ">")
@@ -76,17 +73,14 @@ given AttributeCompanion[StructType]:
 final case class ArrayType(
     size: IntData,
     elem: TypeAttribute,
-) extends ParametrizedAttribute
-    with TypeAttribute:
-  override def name: String = "llvm.array"
-  override def parameters: Seq[Attribute] = Seq(size, elem)
+) extends DerivedAttribute["llvm.array"]
+    with TypeAttribute derives AttrDefs:
 
   override def printParameters(p: Printer): Unit =
     given indentLevel: Int = 0
     p.print("<", size, " x ", elem, ">")
 
-given AttributeCompanion[ArrayType]:
-  override def name: String = "llvm.array"
+given AttributeCustomParser[ArrayType]:
 
   override def parse[$: P](using Parser): P[ArrayType] =
     P("<" ~ decimalLiteralP ~ "x" ~ typeP ~ ">").map((size, elem) =>
