@@ -18,11 +18,7 @@ import scair.print.Printer
 
 /** Column entry for SubopLocalTableType: prints as `name$0 : type`. */
 final case class LocalTableColumn(colName: StringData, colType: Attribute)
-    extends ParametrizedAttribute:
-  override val name: String = "subop.local_table_column"
-
-  override val parameters: Seq[Attribute] =
-    Seq(colName, colType)
+    extends DerivedAttribute["subop.local_table_column"] derives AttrDefs:
 
   override def customPrint(p: Printer): Unit =
     p.print(colName.data)
@@ -33,19 +29,8 @@ final case class LocalTableColumn(colName: StringData, colType: Attribute)
 final case class SubopLocalTableType(
     columns: ArrayAttribute[LocalTableColumn],
     outputNames: ArrayAttribute[StringData],
-) extends ParametrizedAttribute
-    with TypeAttribute:
-  override val name: String = "subop.local_table"
-
-  override val parameters: Seq[Attribute] =
-    Seq(columns, outputNames)
-
-  override def customPrint(p: Printer): Unit =
-    p.print("!subop.local_table<[")
-    p.printListF(columns, c => p.print(c))
-    p.print("], [")
-    p.printListF(outputNames, n => p.print(n))
-    p.print("]>")
+) extends DerivedAttribute["subop.local_table"]
+    with TypeAttribute derives AttrDefs
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 ||  OPERATION DEFINITION  ||

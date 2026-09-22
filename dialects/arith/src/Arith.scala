@@ -122,8 +122,9 @@ given AttributeCompanion[FastMathFlagsAttr]:
     }
 
 case class FastMathFlagsAttr(val flags: FastMathFlags)
-    extends DataAttribute[FastMathFlags]("arith.fastmath", flags)
-    derives TransparentData:
+    extends DataAttribute[FastMathFlags] derives TransparentData:
+  override def name = "arith.fastmath"
+  override def data = flags
 
   override def customPrint(p: Printer) =
     p.print("#arith.fastmath<")
@@ -187,8 +188,9 @@ given AttributeCompanion[OverflowFlagsAttr]:
     }
 
 case class OverflowFlagsAttr(val flags: OverflowFlags)
-    extends DataAttribute[OverflowFlags]("arith.overflow", flags)
-    derives TransparentData:
+    extends DataAttribute[OverflowFlags] derives TransparentData:
+  override def name = "arith.overflow"
+  override def data = flags
 
   override def customPrint(p: Printer) =
     p.print("#arith.overflow<")
@@ -240,16 +242,20 @@ type IndexCastTypeConstraint = AnyIntegerType | MemrefType
 trait SameOperandsAndResultTypes extends Operation:
 
   override def traitVerify(): OK[Operation] =
-    val params = (this.operands ++ this.results)
-    if params.isEmpty then OK(this)
+    val operands = this.operands
+    val results = this.results
+    // Check against the first operand or result, without concatenating them.
+    val first =
+      if operands.nonEmpty then operands.head.typ
+      else if results.nonEmpty then results.head.typ
+      else return OK(this)
+    if operands.forall(_.typ == first) && results.forall(_.typ == first) then
+      OK(this)
     else
-      val first = params.head.typ
-      if params.tail.forall(_.typ == first) then OK(this)
-      else
-        Err(
-          "All parameters of TypeConstraint must be of the same type in operation " +
-            this.name
-        )
+      Err(
+        "All parameters of TypeConstraint must be of the same type in operation " +
+          this.name
+      )
 
 trait SameOperandsAndResultShape extends Operation:
 

@@ -63,17 +63,3 @@ type ListType[A] = ListBuffer[A]
 
 val DictType = LinkedHashMap
 type DictType[A, B] = LinkedHashMap[A, B]
-
-extension (dt: DictType[String, Attribute])
-
-  def checkandget(
-      key: String,
-      opName: String,
-      expected_type: String,
-  ): Attribute =
-    dt.get(key) match
-      case Some(b) => b
-      case None    =>
-        throw new Exception(
-          s"Operation '$opName' must include an attribute named '$key' of type '${}'"
-        )

@@ -357,7 +357,7 @@ final class Parser(
                 successors = successors,
                 properties = properties,
                 results = results,
-                attributes = DictType.from(attributes),
+                attributes = attributes,
                 regions = regions,
               )
             )
@@ -540,7 +540,7 @@ private def genericOperationP[$: P](
                         results,
                         regions,
                         properties,
-                        attributes.to(DictType),
+                        attributes,
                       )
                     )
                 )
@@ -718,7 +718,7 @@ def attributeDictionaryP[$: P](using
   *   An optional dictionary of properties - empty if no dictionary is present.
   */
 def optionalPropertiesP[$: P](using Parser) =
-  (propertiesP).orElse(DictType.empty)
+  (propertiesP).orElse(Map.empty)
 
 /** Parses an optional attributes dictionary from the input.
   *

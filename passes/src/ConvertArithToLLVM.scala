@@ -138,7 +138,7 @@ private final class Builder(val funcOp: func.Func):
       funcOp.sym_visibility,
       Region(newBlocks),
     )
-    lowered.attributes.addAll(funcOp.attributes)
+    lowered.attributes ++= funcOp.attributes
     lowered
 
 private val LowerFunc = pattern {

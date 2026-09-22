@@ -67,7 +67,7 @@ given OperationCustomParser[Func]:
               )
             case None => None,
         )
-        f.attributes.addAll(attributes - "no_inline")
+        f.attributes ++= attributes - "no_inline"
         f
     }
 
@@ -113,7 +113,7 @@ case class Func(
     if attributes.nonEmpty || no_inline.isDefined then
       lprinter.print(" attributes")
       lprinter.printOptionalAttrDict(
-        attributes.toMap,
+        attributes,
         properties,
         Seq("no_inline"),
       )
