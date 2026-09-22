@@ -28,3 +28,23 @@ abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx):
   final def transform(region: Region): Region =
     walker.rewrite(region)
     return region
+
+/** A one-shot dialect conversion, run as a pass.
+  *
+  * The type conversion and operation conversion patterns are applied in a
+  * single sweep over the regions of the operation the pass is given; see
+  * [[ConversionDriver]].
+  */
+abstract class ConversionPass(ctx: MLContext) extends ModulePass(ctx):
+
+  def typeConverter: TypeConverter
+
+  def patterns: Seq[ConversionPattern]
+
+  /** Whether to fold the materialized casts once the conversion is done. */
+  def reconcile: Boolean = true
+
+  final override def transform(op: Operation): Operation =
+    ConversionDriver(typeConverter, patterns).convert(op)
+    if reconcile then ReconcileCasts.walker.rewrite(op)
+    return op
