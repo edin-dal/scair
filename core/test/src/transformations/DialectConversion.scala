@@ -31,7 +31,7 @@ class DialectConversionTest extends AnyFlatSpec:
       UnregisteredOperation(op.name)(
         operands = adaptor.operands,
         results = op.results.map(r => Result(convertType(r.typ))),
-        regions = op.regions,
+        regions = op.detachedRegions,
       )
   }
 
@@ -42,6 +42,30 @@ class DialectConversionTest extends AnyFlatSpec:
   ): Operation =
     ConversionDriver(TypeConverter(types), patterns).convert(module)
     module
+
+  /** The module `input` converts to, given the patterns enabled. */
+  def converted(
+      input: String,
+      types: Seq[TypeConversionPattern],
+      patterns: Seq[ConversionPattern],
+  ): String =
+    render(convert(parseModule(input), types, patterns))
+
+  /** A region whose block takes an argument its body uses. */
+  val RegionWithArgument = """
+"test.region"() ({
+^bb0(%arg: i32):
+  %0 = "test.consume"(%arg) : (i32) -> i32
+  "test.sink"(%0) : (i32) -> ()
+}) : () -> ()
+"""
+
+  /** A definition, a use of it, and a use of that. */
+  val ProduceConsumeSink = """
+%0 = "test.produce"() : () -> i32
+%1 = "test.consume"(%0) : (i32) -> i32
+"test.sink"(%1) : (i32) -> ()
+"""
 
   "A conversion with no patterns" should "leave the IR untouched" in {
     val module = parseModule("""
@@ -61,19 +85,11 @@ class DialectConversionTest extends AnyFlatSpec:
   }
 
   "A conversion covering every operation" should "emit no cast" in {
-    val module = parseModule("""
-%0 = "test.produce"() : () -> i32
-%1 = "test.consume"(%0) : (i32) -> i32
-"test.sink"(%1) : (i32) -> ()
-""")
-
-    convert(
-      module,
+    converted(
+      ProduceConsumeSink,
       Seq(i32ToI64),
       Seq(convertNamed("test.produce", "test.consume", "test.sink")),
-    )
-
-    render(module) shouldEqual """builtin.module {
+    ) shouldEqual """builtin.module {
   %0 = "test.produce"() : () -> i64
   %1 = "test.consume"(%0) : (i64) -> i64
   "test.sink"(%1) : (i64) -> ()
@@ -82,19 +98,11 @@ class DialectConversionTest extends AnyFlatSpec:
   }
 
   "An unconverted user of a converted value" should "get a cast back" in {
-    val module = parseModule("""
-%0 = "test.produce"() : () -> i32
-%1 = "test.consume"(%0) : (i32) -> i32
-"test.sink"(%1) : (i32) -> ()
-""")
-
-    convert(
-      module,
+    converted(
+      ProduceConsumeSink,
       Seq(i32ToI64),
       Seq(convertNamed("test.produce", "test.consume")),
-    )
-
-    render(module) shouldEqual """builtin.module {
+    ) shouldEqual """builtin.module {
   %0 = "test.produce"() : () -> i64
   %1 = "test.consume"(%0) : (i64) -> i64
   %2 = "builtin.unrealized_conversion_cast"(%1) : (i64) -> i32
@@ -143,21 +151,11 @@ class DialectConversionTest extends AnyFlatSpec:
     }
 
   "The block arguments of a converted operation" should "be converted too" in {
-    val module = parseModule("""
-"test.region"() ({
-^bb0(%arg: i32):
-  %0 = "test.consume"(%arg) : (i32) -> i32
-  "test.sink"(%0) : (i32) -> ()
-}) : () -> ()
-""")
-
-    convert(
-      module,
+    converted(
+      RegionWithArgument,
       Seq(i32ToI64),
       Seq(convertNamed("test.region", "test.consume", "test.sink")),
-    )
-
-    render(module) shouldEqual """builtin.module {
+    ) shouldEqual """builtin.module {
   "test.region"() ({
   ^bb0(%0: i64):
     %1 = "test.consume"(%0) : (i64) -> i64
@@ -168,23 +166,15 @@ class DialectConversionTest extends AnyFlatSpec:
   }
 
   "The block arguments of an unconverted operation" should "keep their types" in {
-    val module = parseModule("""
-"test.region"() ({
-^bb0(%arg: i32):
-  %0 = "test.consume"(%arg) : (i32) -> i32
-  "test.sink"(%0) : (i32) -> ()
-}) : () -> ()
-""")
-
-    convert(
-      module,
+    val rendered = converted(
+      RegionWithArgument,
       Seq(i32ToI64),
       Seq(convertNamed("test.consume", "test.sink")),
     )
 
     // `test.region` declares the signature, and is left alone: the entry block
     // keeps it, and the conversion casts across it instead.
-    render(module) shouldEqual """builtin.module {
+    rendered shouldEqual """builtin.module {
   "test.region"() ({
   ^bb0(%0: i32):
     %1 = "builtin.unrealized_conversion_cast"(%0) : (i32) -> i64
@@ -204,7 +194,7 @@ class DialectConversionTest extends AnyFlatSpec:
 
     val movesRegion = conversionPattern {
       case op if op.name == "test.region" =>
-        UnregisteredOperation("test.lowered")(regions = op.regions)
+        UnregisteredOperation("test.lowered")(regions = op.detachedRegions)
     }
 
     convert(module, Seq.empty, Seq(movesRegion))
@@ -295,4 +285,26 @@ class DialectConversionTest extends AnyFlatSpec:
     thrown.getMessage should include(
       "it branches to a block whose signature was converted"
     )
+  }
+
+  "Several casts for one definition" should "read in order" in {
+    val module = parseModule("""
+"test.region"() ({
+^bb0(%a: i32, %b: i32, %c: i32):
+  "test.sink"(%a, %b, %c) : (i32, i32, i32) -> ()
+}) : () -> ()
+""")
+
+    convert(module, Seq(i32ToI64), Seq(convertNamed("test.sink")))
+
+    render(module) shouldEqual """builtin.module {
+  "test.region"() ({
+  ^bb0(%0: i32, %1: i32, %2: i32):
+    %3 = "builtin.unrealized_conversion_cast"(%0) : (i32) -> i64
+    %4 = "builtin.unrealized_conversion_cast"(%1) : (i32) -> i64
+    %5 = "builtin.unrealized_conversion_cast"(%2) : (i32) -> i64
+    "test.sink"(%3, %4, %5) : (i64, i64, i64) -> ()
+  }) : () -> ()
+}
+"""
   }

@@ -66,5 +66,6 @@ object ReconcileCasts:
 
   val patterns: Seq[RewritePattern] = Seq(SameType, Unused, InputFuse)
 
+  // A fresh walker per use: PatternRewriteWalker carries a worklist.
   def walker: PatternRewriteWalker =
     PatternRewriteWalker(GreedyRewritePatternApplier(patterns))

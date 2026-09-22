@@ -3,6 +3,7 @@ package scair.transformations
 import scair.dialects.builtin.UnrealizedConversionCastOp
 import scair.ir.*
 
+import scala.annotation.threadUnsafe
 import scala.collection.mutable
 
 //
@@ -81,25 +82,20 @@ def convertType(attr: Attribute)(using converter: TypeConverter): Attribute =
   * them never causes a cast to be emitted.
   */
 final class Adaptor private[transformations] (
-    val op: Operation,
-    private val materialise: () => Seq[Value[Attribute]],
+    private val materialise: () => Seq[Value[Attribute]]
 ):
 
-  lazy val operands: Seq[Value[Attribute]] = materialise()
+  @threadUnsafe lazy val operands: Seq[Value[Attribute]] = materialise()
 
   def apply(index: Int): Value[Attribute] = operands(index)
-
-  /** The matched operation with its operands converted.
-    *
-    * Only its operands are meaningful: its results are fresh values of the
-    * unconverted types, and it is not attached to any block.
-    */
-  lazy val remapped: Operation = op.updated(operands = operands)
 
 /** The adaptor in scope, for use in the body of a conversion pattern. */
 def adaptor(using a: Adaptor): Adaptor = a
 
-type ConversionResult = PatternAction | Operation | Seq[Operation] |
+/** A [[RewriteResult]] as the driver sees it: `conversionPattern` maps
+  * `PatternAction.Abort` to "no conversion", so only `Erase` reaches here.
+  */
+type ConversionResult = PatternAction.Erase.type | Operation | Seq[Operation] |
   (Operation | Seq[Operation], Value[?] | Seq[Value[?]])
 
 abstract class ConversionPattern:
@@ -128,7 +124,7 @@ abstract class ConversionPattern:
 inline def conversionPattern(
     inline partial: (TypeConverter, Adaptor) ?=> PartialFunction[
       Operation,
-      ConversionResult,
+      RewriteResult,
     ]
 ): ConversionPattern =
   object conversionPattern extends ConversionPattern:
@@ -137,7 +133,7 @@ inline def conversionPattern(
     ): Option[ConversionResult] =
       partial(using converter, adaptor).lift(op) match
         case Some(PatternAction.Abort) => None
-        case other                     => other
+        case other => other.asInstanceOf[Option[ConversionResult]]
 
   conversionPattern
 
@@ -183,6 +179,10 @@ final class ConversionDriver(
 
   private given TypeConverter = typeConverter
 
+  // Materialized once, as GreedyRewritePatternApplier does: `patterns` may be
+  // any Seq, and it is walked for every operation placed.
+  private val patternArray = patterns.toArray
+
   /** Values that have been converted, keyed by the value they replace. */
   private val valueMap =
     mutable.Map.empty[Value[Attribute], Value[Attribute]]
@@ -195,11 +195,14 @@ final class ConversionDriver(
   private val casts =
     mutable.Map.empty[(Value[Attribute], Attribute), Value[Attribute]]
 
-  /** The last cast materialized at the start of a block, so that the casts of
-    * that block's arguments read in the order they were materialized rather
-    * than in reverse.
+  /** The last cast materialized for a value a given operation or block defines.
+    * Without it every cast would go immediately after the definition, so a
+    * definition needing several would emit them in reverse.
+    *
+    * The anchor is kept rather than an `InsertPoint`, which captures its
+    * neighbour eagerly and would go stale as the block is swept.
     */
-  private val lastArgumentCast = mutable.Map.empty[Block, Operation]
+  private val lastCast = mutable.Map.empty[Operation | Block, Operation]
 
   def convert(root: Operation): Unit =
     root.regions.foreach(convertRegion(_, convertSignatures = false))
@@ -224,19 +227,13 @@ final class ConversionDriver(
             inputs = Seq(value),
             outputs = Seq(Result(target)),
           )
-          // Inserted at the definition rather than at the use, so that the cast
-          // dominates every use of `value` and all of them can share it.
-          value.owner match
+          // Inserted at the definition rather than at the use, so that the
+          // cast dominates every use of `value` and all of them can share it.
+          val owner: Operation | Block = value.owner match
             case Some(owner: Operation) if owner.containerBlock.isDefined =>
-              RewriteMethods.insertOpsAfter(owner, cast)
-            case Some(block: Block) =>
-              lastArgumentCast.get(block) match
-                case Some(previous) =>
-                  RewriteMethods.insertOpsAfter(previous, cast)
-                case None =>
-                  RewriteMethods.insertOpsAt(InsertPoint.atStartOf(block), cast)
-              lastArgumentCast(block) = cast
-            case _ =>
+              owner
+            case Some(block: Block) => block
+            case _                  =>
               // Blocks are swept in reverse post-order, which is a linear
               // extension of dominance, and block arguments are mapped before
               // any block is swept. So a value is always defined - and placed -
@@ -245,6 +242,16 @@ final class ConversionDriver(
                 s"Cannot convert a value to $target before it is defined; " +
                   "the input does not respect dominance."
               )
+
+          lastCast.get(owner) match
+            case Some(previous) => RewriteMethods.insertOpsAfter(previous, cast)
+            case None           =>
+              owner match
+                case op: Operation => RewriteMethods.insertOpsAfter(op, cast)
+                case block: Block  =>
+                  RewriteMethods.insertOpsAt(InsertPoint.atStartOf(block), cast)
+          lastCast(owner) = cast
+
           cast.outputs.head
         },
       )
@@ -264,37 +271,41 @@ final class ConversionDriver(
   private def convertRegion(region: Region, convertSignatures: Boolean): Unit =
     // Rebuild the blocks whose signature converts first, so that a value
     // defined by a block argument is mapped before any block is swept.
-    val rebuilt =
-      for
-        block <- if convertSignatures then region.blocks.toSeq else Seq.empty
-        types = block.arguments.map(a => typeConverter.convertType(a.typ)).toSeq
-        if types != block.arguments.map(_.typ).toSeq
-      yield
-        val fresh = Block(types, Seq.empty)
-        blockMap(block) = fresh
-        valueMap ++= block.arguments.zip(fresh.arguments)
-        (block, fresh)
+    if convertSignatures then
+      for block <- region.blocks do
+        val types = block.arguments.map(a => typeConverter.convertType(a.typ))
+        if !types.corresponds(block.arguments)((t, a) => t == a.typ) then
+          val fresh = Block(types, Seq.empty)
+          blockMap(block) = fresh
+          valueMap ++= block.arguments.zip(fresh.arguments)
 
     for block <- reversePostOrder(region) do
       sweep(block, blockMap.getOrElse(block, block))
 
-    for (block, fresh) <- rebuilt do region.replaceBlock(block, fresh)
+    for block <- region.blocks.toSeq; fresh <- blockMap.get(block) do
+      region.replaceBlock(block, fresh)
 
   /** The blocks of `region`, entry first, in reverse post-order of the CFG
     * their terminators describe. Blocks the entry cannot reach keep their
     * original relative order, after the ones it can.
     */
   private def reversePostOrder(region: Region): Seq[Block] =
-    val visited = mutable.LinkedHashSet.empty[Block]
+    // The overwhelmingly common region - one straight-line block - needs none
+    // of the machinery below.
+    if region.blocks.length <= 1 then return region.blocks
+
+    val visited = mutable.HashSet.empty[Block]
     val postOrder = mutable.ArrayBuffer.empty[Block]
 
     def visit(block: Block): Unit =
       if visited.add(block) then
-        block.operations.lastOption.toSeq.flatMap(_.successors).foreach(visit)
+        block.operations.lastOption.foreach(_.successors.foreach(visit))
         postOrder += block
 
     region.blocks.headOption.foreach(visit)
-    postOrder.reverse.toSeq ++ region.blocks.filterNot(visited.contains)
+
+    if visited.size == region.blocks.length then postOrder.reverseIterator.toSeq
+    else postOrder.reverseIterator.toSeq ++ region.blocks.filterNot(visited)
 
   /*≡==--==≡≡≡≡==--=≡≡*\
   ||      Blocks      ||
@@ -311,7 +322,9 @@ final class ConversionDriver(
     * been swept yet.
     */
   private def sweep(source: Block, target: Block): Unit =
-    val staging = Block()
+    // Staging is only needed to drain a block into itself; otherwise the
+    // target is empty and can be filled directly.
+    val staging = if source eq target then Block() else target
 
     var pending = source.operations.headOption
     while pending.isDefined do
@@ -320,9 +333,9 @@ final class ConversionDriver(
       source.detachOp(op)
       place(op, staging)
 
-    val placed = staging.operations.toSeq
-    placed.foreach(staging.detachOp)
-    target.addOps(placed)
+    if staging ne target then
+      RewriteMethods
+        .moveOpsAt(InsertPoint.atEndOf(target), staging.operations.toSeq)
 
   /*≡==--==≡≡≡≡≡≡≡==--=≡≡*\
   ||     Operations      ||
@@ -338,7 +351,9 @@ final class ConversionDriver(
     // `%i` has to be converted *to* i64, where an ordinary operand of an
     // unconverted operation is converted *back to* index. `Operation.operands`
     // is flat, with no successor operand segmentation, so the two cannot be
-    // told apart.
+    // told apart. TODO: close this in the IR - a successorOperands accessor
+    // beside `Operation.successors`, which clair already models distinctly -
+    // rather than by working around the throw here.
     if op.successors.exists(blockMap.contains) then
       throw new Exception(
         s"Cannot convert '${op.name}': it branches to a block whose signature " +
@@ -347,25 +362,19 @@ final class ConversionDriver(
 
     val mapped = op.operands.map(v => valueMap.getOrElse(v, v))
 
-    val adaptor = Adaptor(
-      op,
-      () =>
-        op.operands.zip(mapped).map((operand, value) =>
-          materialize(value, typeConverter.convertType(operand.typ))
-        ),
+    val adaptor = Adaptor(() =>
+      op.operands.zip(mapped).map((operand, value) =>
+        materialize(value, typeConverter.convertType(operand.typ))
+      )
     )
 
-    // The operation's regions are detached before its patterns run, so that a
-    // pattern can move one onto the operation replacing it:
-    //
-    //   case op: func.Func => llvm.Func(op.sym_name, op.function_type, ..., op.body)
-    //
-    // `Operation.attachRegion` throws on a region that still has a
-    // containerOperation. They are attached back if no pattern converts the
-    // operation.
-    op.regions.foreach(_.detached)
+    var converted: Option[ConversionResult] = None
+    var index = 0
+    while converted.isEmpty && index < patternArray.length do
+      converted = patternArray(index).convert(op, adaptor)
+      index += 1
 
-    patterns.view.flatMap(_.convert(op, adaptor)).headOption match
+    converted match
       case Some(result) => placeConverted(op, result, target)
       case None         => placeUnconverted(op, mapped, target)
 
@@ -375,40 +384,25 @@ final class ConversionDriver(
       target: Block,
   ): Unit =
 
-    val (newOps, newResults) = result match
-      case PatternAction.Erase =>
-        (Seq.empty[Operation], Seq.empty[Value[Attribute]])
-      case PatternAction.Abort =>
-        throw new Exception("Unreachable: aborted patterns do not convert.")
-      case (ops, results): (Operation | Seq[Operation], ?) =>
-        (
-          normalize(ops),
-          results match
-            case r: Value[?]       => Seq(r.asInstanceOf[Value[Attribute]])
-            case rs: Seq[Value[?]] => rs.asInstanceOf[Seq[Value[Attribute]]],
-        )
-      case ops: (Operation | Seq[Operation]) =>
-        val normalized = normalize(ops)
-        (
-          normalized,
-          normalized.lastOption.map(_.results.map(r => r: Value[Attribute]))
-            .getOrElse(Seq.empty),
-        )
-
-    // A pattern erasing an operation whose results are still used throws: there
-    // is no replacement to map those results to.
+    // A pattern erasing an operation whose results are still used throws:
+    // there is no replacement to map those results to.
     //
     //   %0 = foo.a : index
     //   foo.b(%0)          // no pattern; still uses %0
-    //
-    // A pattern returning a different number of results than the operation has
-    // throws too.
-    if newOps.isEmpty && newResults.isEmpty then
-      if op.results.exists(_.uses.nonEmpty) then
-        throw new Exception(
-          s"Cannot erase '${op.name}': its results are still used."
-        )
-    else if newResults.length != op.results.length then
+    if result == PatternAction.Erase && op.results.exists(_.uses.nonEmpty) then
+      throw new Exception(
+        s"Cannot erase '${op.name}': its results are still used."
+      )
+
+    val (newOps, newResults) = result match
+      case PatternAction.Erase => (Seq.empty, Seq.empty)
+      case replacement         =>
+        val (ops, results) = asReplacement(replacement)
+        (ops, results.getOrElse(ops.lastOption.toSeq.flatMap(_.results)))
+
+    // A pattern returning a different number of results than the operation
+    // has throws too.
+    if newResults.length != op.results.length then
       throw new Exception(
         s"Converting '${op.name}' expected ${op.results.length} new results " +
           s"but got ${newResults.length}"
@@ -430,21 +424,14 @@ final class ConversionDriver(
       mapped: Seq[Value[Attribute]],
       target: Block,
   ): Unit =
-    if op.operands.zip(mapped).forall((operand, value) => operand eq value)
-    then
-      op.regions.foreach(op.attachRegion)
-      target.addOp(op)
-      op.regions.foreach(convertRegion(_, convertSignatures = false))
-    else
-      val operands = op.operands.zip(mapped)
-        .map((operand, value) => materialize(value, operand.typ))
-      // `results = op.results` keeps the results, and therefore their uses,
-      // identical - so nothing has to be mapped for them.
-      val newOp = op.updated(operands = operands, results = op.results)
-      target.addOp(newOp)
-      newOp.regions.foreach(convertRegion(_, convertSignatures = false))
+    val placed =
+      if op.operands.lazyZip(mapped).forall(_ eq _) then op
+      else
+        val operands = op.operands.lazyZip(mapped)
+          .map((operand, value) => materialize(value, operand.typ))
+        // `results = op.results` keeps the results, and therefore their uses,
+        // identical - so nothing has to be mapped for them.
+        op.updated(operands = operands, results = op.results)
 
-  private def normalize(ops: Operation | Seq[Operation]): Seq[Operation] =
-    ops match
-      case op: Operation => Seq(op)
-      case ops: Seq[?]   => ops.asInstanceOf[Seq[Operation]]
+    target.addOp(placed)
+    placed.regions.foreach(convertRegion(_, convertSignatures = false))

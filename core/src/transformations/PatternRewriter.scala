@@ -93,9 +93,7 @@ trait Rewriter:
       ops: Operation | Seq[Operation],
   ): Unit =
 
-    val operations = ops match
-      case x: Operation => Seq(x)
-      case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
+    val operations = asOps(ops)
 
     insertionPoint.insertBefore match
       case Some(op) =>
@@ -138,9 +136,7 @@ trait Rewriter:
       ops: Operation | Seq[Operation],
   ): Unit =
 
-    val operations = ops match
-      case x: Operation => Seq(x)
-      case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
+    val operations = asOps(ops)
 
     operations.foreach: op =>
       op.containerBlock match
@@ -175,9 +171,7 @@ trait Rewriter:
       case None    =>
         throw new Exception("Cannot replace an operation without a parent")
 
-    val ops = newOps match
-      case x: Operation => Seq(x)
-      case y: Seq[?]    => y.asInstanceOf[Seq[Operation]]
+    val ops = asOps(newOps)
 
     val results = newResults match
       case Some(x) => x

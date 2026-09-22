@@ -12,7 +12,7 @@ private val LowerFunc = conversionPattern { case op: func.Func =>
     op.function_type,
     // A declaration has no visibility to carry over.
     if op.body.blocks.isEmpty then None else op.sym_visibility,
-    op.body,
+    op.body.detached,
   )
   lowered.attributes ++= op.attributes
   lowered
