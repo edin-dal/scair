@@ -39,7 +39,7 @@ transparent trait DerivedOperation[name <: String] extends Operation:
       results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute],
+      attributes: Map[String, Attribute],
   ) =
     defs(
       operands = operands,

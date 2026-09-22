@@ -313,8 +313,7 @@ case class Call(
     printer.print(name, " @", callee.rootRef.data, "(")
     printer.printList(operandss)
     printer.print(")")
-    printer
-      .printOptionalAttrDict(attributes.toMap, properties, callSyntaxProperties)
+    printer.printOptionalAttrDict(attributes, properties, callSyntaxProperties)
     printer.print(" : (")
     printer.printListF(operandss.map(_.typ), printer.print, sep = ", ")
     printer.print(") -> ")
@@ -463,7 +462,7 @@ case class Func(
     then
       lprinter.print(" attributes")
       lprinter.printOptionalAttrDict(
-        attributes.toMap,
+        attributes,
         properties,
         funcSyntaxProperties,
       )
