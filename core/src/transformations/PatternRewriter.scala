@@ -76,28 +76,14 @@ case class InsertPoint(
 
 trait Rewriter:
 
-  def operationRemovalHandler: Operation => Unit = (op: Operation) =>
-    // default handler does nothing
-    // apart from invalidating the block's op order :D
-    op.containerBlock match
-      case Some(block) =>
-        block.isOpOrderValid = false
-      case None => ()
+  def handleOperationRemoval(op: Operation): Unit = ()
 
-  def operationInsertionHandler: (Operation) => Unit = (
-    op: Operation
-  ) =>
-    // default handler does nothing
-    // apart from invalidating the block's op order :D
-    op.containerBlock match
-      case Some(block) =>
-        block.isOpOrderValid = false
-      case None => ()
+  def handleOperationInsertion(op: Operation): Unit = ()
 
   def eraseOp(op: Operation, safeErase: Boolean = true) =
     op.containerBlock match
       case Some(block) =>
-        operationRemovalHandler(op)
+        handleOperationRemoval(op)
         block.eraseOp(op, safeErase)
       case _ =>
         throw new Exception("Cannot erase an operation that has no parents.")
@@ -120,7 +106,7 @@ trait Rewriter:
       case None =>
         insertionPoint.block.addOps(operations)
 
-    operations.foreach(operationInsertionHandler)
+    operations.foreach(handleOperationInsertion)
 
   def insertOpsBefore(
       op: Operation,
@@ -159,7 +145,7 @@ trait Rewriter:
     operations.foreach: op =>
       op.containerBlock match
         case Some(block) =>
-          operationRemovalHandler(op)
+          handleOperationRemoval(op)
           block.detachOp(op)
         case None =>
           throw new Exception("Cannot move an operation that has no parents.")
@@ -209,8 +195,8 @@ trait Rewriter:
       replaceValue(old_res, new_res)
 
     RewriteMethods.eraseOp(op, safeErase = false)
-    operationRemovalHandler(op)
-    ops.foreach(operationInsertionHandler)
+    handleOperationRemoval(op)
+    ops.foreach(handleOperationInsertion)
 
   def replaceValue(
       value: Value[Attribute],
@@ -276,27 +262,16 @@ class PatternRewriteWalker(
   ) extends Rewriter:
     var hasDoneAction: Boolean = false
 
-    override def operationRemovalHandler: Operation => Unit =
-      (op: Operation) =>
-        // here the logic is simple - we invalidate the op order every time an operation is removed from the block
-        op.containerBlock match
-          case Some(block) =>
-            block.isOpOrderValid = false
-          case None => ()
-        clearWorklist(op)
-        op.operands.foreach((o) =>
-          o.owner match
-            case Some(owner: Operation) => populateWorklist(owner)
-            case _                      => ()
-        )
+    override def handleOperationRemoval(op: Operation): Unit =
+      clearWorklist(op)
+      op.operands.foreach((o) =>
+        o.owner match
+          case Some(owner: Operation) => populateWorklist(owner)
+          case _                      => ()
+      )
 
-    override def operationInsertionHandler: Operation => Unit =
-      (op: Operation) =>
-        // similarly, we invalidate the op order every time an operation is added from the block
-        op.containerBlock match
-          case Some(block) => block.isOpOrderValid = false
-          case None        => ()
-        populateWorklist(op)
+    override def handleOperationInsertion(op: Operation): Unit =
+      populateWorklist(op)
 
     // Erasing counts as an action just as inserting and replacing do: without
     // this, a pattern that erases an operation lets `GreedyRewritePatternApplier`
