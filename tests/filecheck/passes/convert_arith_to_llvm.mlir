@@ -21,3 +21,25 @@ builtin.module {
 // CHECK-NEXT:     func.return %6, %8 : i32, f32
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
+
+// -----
+
+// `index` converts to `i64`, but `func.func` is left alone: its signature is
+// kept, and the conversion casts across it.
+
+builtin.module {
+  func.func @indexed(%a: index, %b: index) -> index {
+    %sum = "arith.addi"(%a, %b) : (index, index) -> index
+    func.return %sum : index
+  }
+}
+
+// CHECK: builtin.module {
+// CHECK-NEXT:   func.func @indexed(%0: index, %1: index) -> index {
+// CHECK-NEXT:     %2 = "builtin.unrealized_conversion_cast"(%0) : (index) -> i64
+// CHECK-NEXT:     %3 = "builtin.unrealized_conversion_cast"(%1) : (index) -> i64
+// CHECK-NEXT:     %4 = "llvm.add"(%2, %3) : (i64, i64) -> i64
+// CHECK-NEXT:     %5 = "builtin.unrealized_conversion_cast"(%4) : (i64) -> index
+// CHECK-NEXT:     func.return %5 : index
+// CHECK-NEXT:   }
+// CHECK-NEXT: }
