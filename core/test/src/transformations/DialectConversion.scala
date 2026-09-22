@@ -264,6 +264,70 @@ class DialectConversionTest extends AnyFlatSpec:
 """
     }
 
+  "A use laid out before its definition" should
+    "be swept after it, in dominance order" in {
+      val module = parseModule("""
+"test.region"() ({
+^bb0:
+  "test.br"()[^bb2] : () -> ()
+^bb1:
+  "test.sink"(%0) : (i32) -> ()
+^bb2:
+  %0 = "test.produce"() : () -> i32
+  "test.br"()[^bb1] : () -> ()
+}) : () -> ()
+""")
+
+      convert(module, Seq(i32ToI64), Seq(convertNamed("test.produce")))
+
+      render(module) shouldEqual """builtin.module {
+  "test.region"() ({
+    "test.br"()[^bb0] : () -> ()
+  ^bb1:
+    "test.sink"(%0) : (i32) -> ()
+  ^bb0:
+    %1 = "test.produce"() : () -> i64
+    %0 = "builtin.unrealized_conversion_cast"(%1) : (i64) -> i32
+    "test.br"()[^bb1] : () -> ()
+  }) : () -> ()
+}
+"""
+    }
+
+  "A converted branch to a converted block signature" should
+    "keep branching to that block" in {
+      converted(
+        """
+"test.region"() ({
+^bb0:
+  %0 = "test.produce"() : () -> i32
+  "test.br"(%0)[^bb1] : (i32) -> ()
+^bb1(%a: i32):
+  "test.sink"(%a) : (i32) -> ()
+}) : () -> ()
+""",
+        Seq(i32ToI64),
+        Seq(
+          convertNamed("test.region", "test.produce", "test.sink"),
+          conversionPattern {
+            case op if op.name == "test.br" =>
+              UnregisteredOperation("test.br")(
+                operands = adaptor.operands,
+                successors = op.successors,
+              )
+          },
+        ),
+      ) shouldEqual """builtin.module {
+  "test.region"() ({
+    %0 = "test.produce"() : () -> i64
+    "test.br"(%0)[^bb0] : (i64) -> ()
+  ^bb0(%1: i64):
+    "test.sink"(%1) : (i64) -> ()
+  }) : () -> ()
+}
+"""
+    }
+
   "An unconverted branch to a converted block signature" should "throw" in {
     val module = parseModule("""
 "test.region"() ({
