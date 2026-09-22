@@ -18,8 +18,9 @@ import scala.collection.mutable
 ||   Type conversion   ||
 \*≡==---==≡≡≡≡≡==---==≡*/
 
-abstract class TypeConversionPattern:
-  def convert(attr: Attribute)(using TypeConverter): Option[Attribute]
+/** Attempts to convert an attribute using the enclosing type converter. */
+type TypeConversionPattern =
+  (Attribute, TypeConverter) => Option[Attribute]
 
 /** Defines a TypeConversionPattern from a partial function on attributes.
   *
@@ -34,21 +35,13 @@ abstract class TypeConversionPattern:
 inline def typeConversion(
     inline partial: TypeConverter ?=> PartialFunction[Attribute, Attribute]
 ): TypeConversionPattern =
-  object typeConversion extends TypeConversionPattern:
-    override def convert(attr: Attribute)(using
-        converter: TypeConverter
-    ): Option[Attribute] =
-      partial(using converter).lift(attr)
-
-  typeConversion
+  (attr, converter) => partial(using converter).lift(attr)
 
 /** Maps attributes to the attributes they convert to, 1:1.
   *
   * `convertType` is total: an attribute no pattern matches converts to itself.
   */
 final class TypeConverter(val patterns: Seq[TypeConversionPattern]):
-
-  private given TypeConverter = this
 
   private val converted = mutable.Map.empty[Attribute, Attribute]
 
@@ -58,7 +51,7 @@ final class TypeConverter(val patterns: Seq[TypeConversionPattern]):
     converted.get(attr) match
       case Some(c) => c
       case None    =>
-        val c = patterns.view.flatMap(_.convert(attr)).headOption
+        val c = patterns.view.flatMap(pattern => pattern(attr, this)).headOption
           .getOrElse(attr)
         converted(attr) = c
         c
@@ -97,11 +90,9 @@ def adaptor(using a: Adaptor): Adaptor = a
 type ConversionResult = PatternAction.Erase.type | Operation | Seq[Operation] |
   (Operation | Seq[Operation], Value[?] | Seq[Value[?]])
 
-abstract class ConversionPattern:
-
-  def convert(op: Operation, adaptor: Adaptor)(using
-      TypeConverter
-  ): Option[ConversionResult]
+/** Attempts to convert an operation using its converted operands and types. */
+type ConversionPattern =
+  (Operation, Adaptor, TypeConverter) => Option[ConversionResult]
 
 /** Defines a ConversionPattern from a partial function, with the same return
   * protocol as [[pattern]]:
@@ -126,15 +117,10 @@ inline def conversionPattern(
       RewriteResult,
     ]
 ): ConversionPattern =
-  object conversionPattern extends ConversionPattern:
-    override def convert(op: Operation, adaptor: Adaptor)(using
-        converter: TypeConverter
-    ): Option[ConversionResult] =
-      partial(using converter, adaptor).lift(op) match
-        case Some(PatternAction.Abort) => None
-        case other => other.asInstanceOf[Option[ConversionResult]]
-
-  conversionPattern
+  (op, adaptor, converter) =>
+    partial(using converter, adaptor).lift(op) match
+      case Some(PatternAction.Abort) => None
+      case other => other.asInstanceOf[Option[ConversionResult]]
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||     Driver       ||
@@ -175,8 +161,6 @@ final class ConversionDriver(
     val typeConverter: TypeConverter,
     val patterns: Seq[ConversionPattern],
 ):
-
-  private given TypeConverter = typeConverter
 
   // Materialized once, as GreedyRewritePatternApplier does: `patterns` may be
   // any Seq, and it is walked for every operation placed.
@@ -370,7 +354,7 @@ final class ConversionDriver(
     var converted: Option[ConversionResult] = None
     var index = 0
     while converted.isEmpty && index < patternArray.length do
-      converted = patternArray(index).convert(op, adaptor)
+      converted = patternArray(index)(op, adaptor, typeConverter)
       index += 1
 
     converted match
