@@ -233,3 +233,24 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
     block.isOpOrderValid shouldEqual true
     block.operations.toSeq.map(_.blockIndex) shouldEqual Seq(0, 1)
   }
+
+  "A block" should "keep its hash as it is mutated" in {
+    // Identity equality without an identity hash would let a map keyed on a
+    // block lose track of it as soon as the block gained an operation.
+    val block = Block(Seq(TestOp()))
+    val map = scala.collection.mutable.Map(block -> "kept")
+
+    block.addOp(TestOp())
+
+    map.get(block) shouldEqual Some("kept")
+  }
+
+  "A region" should "keep its hash as its blocks are replaced" in {
+    val block = Block(Seq(TestOp()))
+    val region = Region(block)
+    val map = scala.collection.mutable.Map(region -> "kept")
+
+    region.replaceBlock(block, Block(Seq(TestOp())))
+
+    map.get(region) shouldEqual Some("kept")
+  }
