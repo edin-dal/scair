@@ -142,11 +142,7 @@ case class Block private (
   ||  BLOCK INITIALIZATION  ||
   \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
 
-  /** Whether the operations' indices still describe their order.
-    *
-    * The order is that of `operations`, and so is the flag; this forwards to
-    * it, which is what maintains it as the list is mutated.
-    */
+  // Whether the operations' indices still describe their order.
   def isOpOrderValid: Boolean = operations.isOpOrderValid
 
   def isOpOrderValid_=(valid: Boolean): Unit =
@@ -270,7 +266,7 @@ case class Block private (
   \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
   override def recomputeOpOrder(): Unit =
-    if !isOpOrderValid then operations.computeBlockOrder()
+    operations.computeBlockOrder()
 
   def structured: OK[Unit] =
     operations.foldLeft[OK[Unit]](OK())((res, op) =>

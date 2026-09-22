@@ -53,13 +53,14 @@ class BlockOperations extends IntrusiveList[Operation]:
     isOpOrderValid = false
 
   final def computeBlockOrder(): this.type =
-    var idx = 0
-    this.foreach { op =>
-      op.blockIndex = idx
-      idx += 1
-      op.recomputeOpOrder()
-    }
-    isOpOrderValid = true
+    if !isOpOrderValid then
+      var idx = 0
+      this.foreach { op =>
+        op.blockIndex = idx
+        idx += 1
+        op.recomputeOpOrder()
+      }
+      isOpOrderValid = true
     this
 
   override final def addOne(elem: Operation): this.type =
