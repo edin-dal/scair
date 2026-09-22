@@ -88,31 +88,32 @@ abstract trait ParametrizedAttribute() extends Attribute:
         ">",
       )
 
-  override def equals(attr: Any): Boolean =
-    attr match
-      case x: ParametrizedAttribute =>
-        x.name == this.name && x.getClass == this.getClass &&
-        x.parameters == this.parameters
-      case _ => false
-
 object DataAttribute:
   // Make all DataAttributes implicitely convertible to their held data.
   given [D]: Conversion[DataAttribute[D], D] = _.data
 
-abstract class DataAttribute[D](
-    override val name: String,
-    val data: D,
-) extends Attribute:
+/** An attribute holding one arbitrary value.
+  *
+  * @note
+  *   `name` is deliberately left abstract rather than taken as a constructor
+  *   parameter: it is a per-class constant, and a parameter would store a
+  *   reference to the same string in every instance. Subclasses override it
+  *   with a literal.
+  */
+abstract trait DataAttribute[D] extends Attribute:
+
+  def data: D
 
   override def printParameters(p: Printer) =
     p.print("<", data.toString, ">")
 
   override def equals(attr: Any): Boolean =
-    attr match
-      case x: DataAttribute[?] =>
-        x.name == this.name && x.getClass == this.getClass &&
-        x.data == this.data
-      case _ => false
+    (this eq attr.asInstanceOf[AnyRef]) ||
+      (attr match
+        // getClass already implies equal names, name being a per-class constant.
+        case x: DataAttribute[?] =>
+          x.getClass == this.getClass && x.data == this.data
+        case _ => false)
 
 trait AttributeCompanion[T <: Attribute]:
   def name: String

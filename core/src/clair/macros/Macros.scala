@@ -97,28 +97,104 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[DefinedInput[Def]]] =
-  val stuff =
-    opInputDefs.map((d: Def) =>
-      selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
-        adtOpExpr,
-        d.name,
-      )
-    )
-  opInputDefs.count(_ match
-    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single) match
-    // Special cases for better performance
-    // TODO: Further cases
+  def variadicity(d: Def): Variadicity = d match
+    case d: MayVariadicOpInputDef => d.variadicity
 
-    case 0 =>
-      // All non-variadic: just return Seq(...)
-      Expr.ofSeq(stuff.asInstanceOf[Seq[Expr[DefinedInput[Def]]]])
-    case _ =>
-      // A default, naive case implementation. Terrible runtime performance.
-      stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
-        next match
-          case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
-          case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
+  opInputDefs.toList match
+    case Nil =>
+      // No inputs, optimized empty sequence.
+      '{ Seq.empty[DefinedInput[Def]] }
+
+    case d :: Nil =>
+      variadicity(d) match
+        case Variadicity.Single =>
+          // One fixed input - simple constructor.
+          val input = selectMember[DefinedInput[Def]](adtOpExpr, d.name)
+          '{ Seq($input) }
+        case Variadicity.Variadic =>
+          // One variadic input - return as-is.
+          selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
+        case Variadicity.Optional =>
+          // One optional input - convert to sequence.
+          val input =
+            selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
+          '{
+            $input match
+              case Some(value) => Seq(value)
+              case None        => Seq.empty[DefinedInput[Def]]
+          }
+
+    case defs if defs.forall(variadicity(_) == Variadicity.Single) =>
+      // Multiple fixed inputs - straightforward constructor.
+      Expr
+        .ofSeq(
+          defs.map(d => selectMember[DefinedInput[Def]](adtOpExpr, d.name))
+        )
+
+    case defs =>
+      // Multiple inputs with optional or variadic fields - compute the runtime total size.
+      val totalSize = defs.foldLeft(Expr(0))((size, d) =>
+        variadicity(d) match
+          case Variadicity.Single   => '{ $size + 1 }
+          case Variadicity.Variadic =>
+            val input =
+              selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
+            '{ $size + $input.length }
+          case Variadicity.Optional =>
+            val input =
+              selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
+            '{ $size + $input.size }
       )
+      // Generate a filling of the mutable array.
+      def fillArray(
+          remaining: List[Def],
+          array: Expr[Array[AnyRef]],
+          index: Expr[Int],
+      ): Expr[Unit] = remaining match
+        case Nil       => '{ () }
+        case d :: tail =>
+          variadicity(d) match
+            case Variadicity.Single =>
+              // Copy one fixed input.
+              val input = selectMember[DefinedInput[Def]](adtOpExpr, d.name)
+              '{
+                $array($index) = $input.asInstanceOf[AnyRef]
+                ${ fillArray(tail, array, '{ $index + 1 }) }
+              }
+            case Variadicity.Variadic =>
+              // Copy one variadic input.
+              val input =
+                selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
+              '{
+                val copied = $input.copyToArray($array, $index)
+                ${ fillArray(tail, array, '{ $index + copied }) }
+              }
+            case Variadicity.Optional =>
+              // Copy one optional input.
+              val input =
+                selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
+              '{
+                val copied = $input match
+                  case Some(value) =>
+                    $array($index) = value.asInstanceOf[AnyRef]
+                    1
+                  case None => 0
+                ${ fillArray(tail, array, '{ $index + copied }) }
+              }
+
+      '{
+        val size = $totalSize
+        // If there are no inputs, return the optimized empty sequence.
+        if size == 0 then Seq.empty[DefinedInput[Def]]
+        else
+          // Else, preallocate an array, fill it and return.
+          val array = new Array[AnyRef](size)
+          ${ fillArray(defs, '{ array }, Expr(0)) }
+          // Every DefinedInput alternative is a reference type, so an AnyRef array
+          // can safely back the covariant immutable result sequence.
+          scala.collection.immutable.ArraySeq.unsafeWrapArray(array)
+            .asInstanceOf[Seq[DefinedInput[Def]]]
+      }
 
 def operandsMacro(
     opDef: OperationDef,
