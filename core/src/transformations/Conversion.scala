@@ -3,7 +3,6 @@ package scair.transformations
 import scair.dialects.builtin.UnrealizedConversionCastOp
 import scair.ir.*
 
-import scala.annotation.threadUnsafe
 import scala.collection.mutable
 
 //
@@ -85,7 +84,7 @@ final class Adaptor private[transformations] (
     private val materialise: () => Seq[Value[Attribute]]
 ):
 
-  @threadUnsafe lazy val operands: Seq[Value[Attribute]] = materialise()
+  lazy val operands: Seq[Value[Attribute]] = materialise()
 
   def apply(index: Int): Value[Attribute] = operands(index)
 

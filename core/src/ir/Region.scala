@@ -111,7 +111,4 @@ case class Region(
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]
 
-  // Identity equality needs an identity hash to go with it: the case class
-  // hash is derived from the mutable contents, so it changes as a region is
-  // mutated and any map keyed on one loses track of it.
   override def hashCode(): Int = System.identityHashCode(this)
