@@ -30,7 +30,7 @@ object Region:
     Region(Block(operation))
 
 case class Region(
-    blocks: Block*
+    private val initialBlocks: Block*
 ) extends IRNode:
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -40,6 +40,11 @@ case class Region(
   final override def parent = containerOperation
 
   var containerOperation: Option[Operation] = None
+
+  private var _blocks: Seq[Block] = initialBlocks
+
+  /** The blocks contained in this region, in order. */
+  def blocks: Seq[Block] = _blocks
 
   blocks.foreach(attachBlock)
 
@@ -51,6 +56,18 @@ case class Region(
   def detached =
     containerOperation = None
     this
+
+  /** Substitute `replacement` for `old` in place, keeping this region - and
+    * therefore its containing operation - identical.
+    */
+  def replaceBlock(old: Block, replacement: Block): Unit =
+    if !old.containerRegion.exists(_ eq this) then
+      throw new Exception(
+        "Can only replace a block that is contained in this region."
+      )
+    attachBlock(replacement)
+    old.containerRegion = None
+    _blocks = _blocks.map(b => if b eq old then replacement else b)
 
   private def attachBlock(block: Block): Unit =
 
