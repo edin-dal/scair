@@ -169,8 +169,7 @@ final class ConversionDriver(
   private val retyped = mutable.HashSet.empty[Block]
 
   /** Casts materialized, keyed by the value cast and the type cast to - the
-    * converted type for a pattern, or the original one for an unconverted
-    * user.
+    * converted type for a pattern, or the original one for an unconverted user.
     */
   private val casts =
     mutable.Map.empty[(Value[Attribute], Attribute), Value[Attribute]]
