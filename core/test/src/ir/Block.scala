@@ -244,13 +244,3 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
 
     map.get(block) shouldEqual Some("kept")
   }
-
-  "A region" should "keep its hash as its blocks are replaced" in {
-    val block = Block(Seq(TestOp()))
-    val region = Region(block)
-    val map = scala.collection.mutable.Map(region -> "kept")
-
-    region.replaceBlock(block, Block(Seq(TestOp())))
-
-    map.get(region) shouldEqual Some("kept")
-  }

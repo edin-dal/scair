@@ -30,7 +30,7 @@ object Region:
     Region(Block(operation))
 
 case class Region(
-    var blocks: Block*
+    blocks: Block*
 ) extends IRNode:
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -51,18 +51,6 @@ case class Region(
   def detached =
     containerOperation = None
     this
-
-  /** Substitute `replacement` for `old` in place, keeping this region - and
-    * therefore its containing operation - identical.
-    */
-  def replaceBlock(old: Block, replacement: Block): Unit =
-    if !old.containerRegion.exists(_ eq this) then
-      throw new Exception(
-        "Can only replace a block that is contained in this region."
-      )
-    attachBlock(replacement)
-    old.containerRegion = None
-    blocks = blocks.map(b => if b eq old then replacement else b)
 
   private def attachBlock(block: Block): Unit =
 

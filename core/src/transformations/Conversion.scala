@@ -47,7 +47,7 @@ final class TypeConverter(val patterns: Seq[TypeConversionPattern]):
     // Not `getOrElseUpdate`: a pattern may recurse into `convertType` for a
     // nested attribute, and reentering `getOrElseUpdate` is undefined.
     patterns.view.flatMap(pattern => pattern(attr, this)).headOption
-          .getOrElse(attr)
+      .getOrElse(attr)
 
 /** The converter in scope, for use in the body of a conversion pattern. */
 def convertType(attr: Attribute)(using converter: TypeConverter): Attribute =
@@ -154,19 +154,19 @@ final class ConversionDriver(
     val patterns: Seq[ConversionPattern],
 ):
 
-  // Materialized once, as GreedyRewritePatternApplier does: `patterns` may be
-  // any Seq, and it is walked for every operation placed.
-  private val patternArray = patterns.toArray
-
   /** Values that have been converted, keyed by the value they replace. */
   private val valueMap =
     mutable.Map.empty[Value[Attribute], Value[Attribute]]
 
-  /** Blocks given a converted signature. Only holds blocks whose argument
-    * types actually changed.
+  /** Blocks given a converted signature. Only holds blocks whose argument types
+    * actually changed.
     */
   private val retyped = mutable.HashSet.empty[Block]
 
+  /** Casts materialized, keyed by the value cast and the type cast to - the
+    * converted type for a pattern, or the original one for an unconverted
+    * user.
+    */
   private val casts =
     mutable.Map.empty[(Value[Attribute], Attribute), Value[Attribute]]
 
@@ -218,13 +218,10 @@ final class ConversionDriver(
                   "the input does not respect dominance."
               )
 
-          lastCast.get(owner) match
-            case Some(previous) => RewriteMethods.insertOpsAfter(previous, cast)
-            case None           =>
-              owner match
-                case op: Operation => RewriteMethods.insertOpsAfter(op, cast)
-                case block: Block  =>
-                  RewriteMethods.insertOpsAt(InsertPoint.atStartOf(block), cast)
+          lastCast.getOrElse(owner, owner) match
+            case op: Operation => RewriteMethods.insertOpsAfter(op, cast)
+            case block: Block  =>
+              RewriteMethods.insertOpsAt(InsertPoint.atStartOf(block), cast)
           lastCast(owner) = cast
 
           cast.outputs.head
@@ -248,24 +245,22 @@ final class ConversionDriver(
     // argument is mapped - and a branch to a retyped block is caught - before
     // any block is swept.
     if convertSignatures then
-      for block <- region.blocks; i <- block.arguments.indices do
-        val arg = block.arguments(i)
-        val typ = typeConverter.convertType(arg.typ)
-        if typ != arg.typ then
-          val fresh = BlockArgument(typ)
-          fresh.owner = Some(block)
-          block.arguments(i) = fresh
-          valueMap(arg) = fresh
-          retyped += block
+      for block <- region.blocks do
+        block.arguments.mapInPlace { arg =>
+          val typ = typeConverter.convertType(arg.typ)
+          if typ == arg.typ then arg
+          else
+            val fresh = BlockArgument(typ)
+            fresh.owner = Some(block)
+            valueMap(arg) = fresh
+            retyped += block
+            fresh
+        }
 
-    for block <- dominanceOrder(region) do
-      // Each operation's successor is taken before it is placed: whatever
-      // placing it inserts goes before it, or after definitions already swept.
-      var pending = block.operations.headOption
-      while pending.isDefined do
-        val op = pending.get
-        pending = op.next
-        place(op)
+    // Snapshotted: placing an operation inserts replacements and casts, which
+    // are not to be placed themselves.
+    for block <- dominanceOrder(region); op <- block.operations.toSeq do
+      place(op)
 
   /** The blocks of `region`, entry first, in depth-first pre-order of the CFG
     * their terminators describe - so every block comes after its dominators.
@@ -298,13 +293,8 @@ final class ConversionDriver(
       )
     )
 
-    var converted: Option[ConversionResult] = None
-    var index = 0
-    while converted.isEmpty && index < patternArray.length do
-      converted = patternArray(index)(op, adaptor, typeConverter)
-      index += 1
-
-    converted match
+    patterns.iterator.flatMap[ConversionResult](_(op, adaptor, typeConverter))
+      .nextOption() match
       case Some(result) => placeConverted(op, result)
       case None         => placeUnconverted(op, mapped)
 
