@@ -72,7 +72,12 @@ final class Adaptor private[transformations] (
 
   lazy val operands: Seq[Value[Attribute]] = materialise()
 
-  def apply(index: Int): Value[Attribute] = operands(index)
+  /** The converted operand at `index`, ascribed to the type the operation built
+    * from it expects: its type is only known to be the converted one at run
+    * time, so, like a derived operation's own accessors, this is unchecked.
+    */
+  def apply[T <: Attribute](index: Int): Operand[T] =
+    operands(index).asInstanceOf[Operand[T]]
 
 /** The adaptor in scope, for use in the body of a conversion pattern. */
 def adaptor(using a: Adaptor): Adaptor = a

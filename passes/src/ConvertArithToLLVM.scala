@@ -11,12 +11,6 @@ private val llvmIndexType: IntegerType = I64
 
 private val IndexToLLVM = typeConversion { case _: IndexType => llvmIndexType }
 
-// `Value`'s parameter is covariant, so a converted operand - which the adaptor
-// hands over as a `Value[Attribute]` - has to be ascribed to the type the
-// operation it is built into expects, as does its result type.
-private def as[T <: Attribute](v: Value[Attribute]): Operand[T] =
-  v.asInstanceOf[Operand[T]]
-
 private def res[T <: Attribute](attr: Attribute): Result[T] =
   Result(attr.asInstanceOf[T])
 
@@ -35,25 +29,25 @@ private val LowerConstant = conversionPattern { case op: arith.Constant =>
 }
 
 private val LowerAddI = conversionPattern { case op: arith.AddI =>
-  llvm.Add(as(adaptor(0)), as(adaptor(1)), res(convertType(op.result.typ)))
+  llvm.Add(adaptor(0), adaptor(1), res(convertType(op.result.typ)))
 }
 
 private val LowerMulI = conversionPattern { case op: arith.MulI =>
-  llvm.Mul(as(adaptor(0)), as(adaptor(1)), res(convertType(op.result.typ)))
+  llvm.Mul(adaptor(0), adaptor(1), res(convertType(op.result.typ)))
 }
 
 private val LowerAddF = conversionPattern { case op: arith.AddF =>
-  llvm.FAdd(as(adaptor(0)), as(adaptor(1)), res(convertType(op.result.typ)))
+  llvm.FAdd(adaptor(0), adaptor(1), res(convertType(op.result.typ)))
 }
 
 private val LowerMulF = conversionPattern { case op: arith.MulF =>
-  llvm.FMul(as(adaptor(0)), as(adaptor(1)), res(convertType(op.result.typ)))
+  llvm.FMul(adaptor(0), adaptor(1), res(convertType(op.result.typ)))
 }
 
 // `llvm.icmp` is already lowered, but its operands are not: it is converted so
 // that a comparison of converted indices does not have to cast them back.
 private val LowerICmp = conversionPattern { case op: llvm.ICmp =>
-  llvm.ICmp(as(adaptor(0)), as(adaptor(1)), Result(op.res.typ), op.predicate)
+  llvm.ICmp(adaptor(0), adaptor(1), Result(op.res.typ), op.predicate)
 }
 
 // Converts scalar arithmetic to LLVM arithmetic.
