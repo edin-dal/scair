@@ -306,3 +306,5 @@ case class Block private (
 
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]
+
+  override def hashCode(): Int = System.identityHashCode(this)

@@ -98,3 +98,5 @@ case class Region(
 
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]
+
+  override def hashCode(): Int = System.identityHashCode(this)
