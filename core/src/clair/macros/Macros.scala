@@ -1132,6 +1132,7 @@ def deriveOpDefs[T <: Operation: Type](using
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+          location: Location = UnknownLoc,
       ): UnstructuredOp | T & Operation =
         try {
           val structured = ${
@@ -1145,7 +1146,7 @@ def deriveOpDefs[T <: Operation: Type](using
             )
           }
           structured.attributes ++= attributes
-          structured
+          structured.at(location)
         } catch { _ =>
           UnstructuredOp(
             operands = operands,
@@ -1154,6 +1155,7 @@ def deriveOpDefs[T <: Operation: Type](using
             regions = regions,
             properties = properties,
             attributes = attributes,
+            location = location,
           )
         }
 

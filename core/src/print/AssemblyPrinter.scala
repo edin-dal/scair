@@ -17,7 +17,8 @@ case class AssemblyPrinter(
     protected val p: Writer = new PrintWriter(System.out),
     protected var aliasesMap: Map[Attribute, String] = Map.empty,
     protected var indentLevel: Int = 0,
-) extends Printer(strictlyGeneric, p):
+    val printLocations: Boolean = false,
+) extends Printer(strictlyGeneric, p, printLocations):
 
   protected def writer: Writer = p
 
@@ -108,7 +109,11 @@ case class AssemblyPrinter(
     withIndent(print("}"))
 
   def printAliases(ops: Seq[Operation]) =
-    val printer = AliasPrinter(strictlyGeneric = strictlyGeneric, p = p)
+    val printer = AliasPrinter(
+      strictlyGeneric = strictlyGeneric,
+      p = p,
+      printLocations = printLocations,
+    )
     printer.print(ops)
     this.aliasesMap = printer.getAliases
 

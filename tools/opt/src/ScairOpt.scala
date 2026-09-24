@@ -36,6 +36,7 @@ case class ScairOptArgs(
     val printGeneric: Boolean = false,
     val passes: Seq[String] = Seq(),
     val verifyDiagnostics: Boolean = false,
+    val printLocations: Boolean = false,
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
@@ -59,6 +60,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
         allowUnregisteredDialect = args.allowUnregistered,
+        inputLineOffset = indexOffset,
       )
       val parsed = parser.parse(
         input,
@@ -98,6 +100,9 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         opt[Unit]('g', "print-generic").optional()
           .text("Print Strictly in Generic format")
           .action((_, c) => c.copy(printGeneric = true)),
+        opt[Unit]("print-locations").optional()
+          .text("Print operation source locations")
+          .action((_, c) => c.copy(printLocations = true)),
         opt[Seq[String]]('p', "passes").optional()
           .text("Specify passes to apply to the IR")
           .action((x, c) => c.copy(passes = x)),
@@ -180,7 +185,10 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
                 )
 
           {
-            val printer = new AssemblyPrinter(parsedArgs.printGeneric)
+            val printer = new AssemblyPrinter(
+              parsedArgs.printGeneric,
+              printLocations = parsedArgs.printLocations,
+            )
             processedModule.fold(
               err => (),
               printer.printTopLevel,

@@ -74,6 +74,7 @@ object ErrorPrinter:
       _blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
       _aliasesMap: Map[Attribute, String] = Map.empty,
       _indentLevel: Int = 0,
+      _printLocations: Boolean = false,
   ): ErrorPrinter =
     new ErrorPrinter(
       error,
@@ -85,6 +86,7 @@ object ErrorPrinter:
       _blockNameMap,
       _aliasesMap,
       _indentLevel,
+      _printLocations,
     )
 
 final class ErrorPrinter private (
@@ -98,6 +100,7 @@ final class ErrorPrinter private (
     _blockNameMap: mutable.Map[Block, String] = mutable.Map.empty,
     _aliasesMap: Map[Attribute, String] = Map.empty,
     _indentLevel: Int = 0,
+    _printLocations: Boolean = false,
 ) extends AssemblyPrinter(
       true,
       _indent,
@@ -108,6 +111,7 @@ final class ErrorPrinter private (
       w,
       _aliasesMap,
       _indentLevel,
+      _printLocations,
     ):
 
   val obj = error.obj.getOrElse(null)
@@ -123,6 +127,7 @@ final class ErrorPrinter private (
       blockNameMap,
       aliasesMap,
       indentLevel,
+      printLocations,
     )
 
   override def print(operation: Operation): Unit =

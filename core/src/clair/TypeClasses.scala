@@ -75,11 +75,12 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
         regions: Seq[Region] = Seq(),
         properties: Map[String, Attribute] = Map.empty[String, Attribute],
         attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+        location: Location = UnknownLoc,
     ): UnstructuredOp =
       val op =
         new UnstructuredOp(operands, successors, results, regions, properties)
       op.attributes ++= attributes
-      op
+      op.at(location)
 
   case class UnstructuredOp(
       override val operands: Seq[Value[Attribute]],
@@ -122,6 +123,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+      location: Location = UnknownLoc,
   ): UnstructuredOp | T & Operation
 
   def destructure(adtOp: T): UnstructuredOp
