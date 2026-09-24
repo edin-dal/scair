@@ -248,7 +248,7 @@ private inline def opResultP[$: P] = (valueIdP.flatMapX(name =>
     .orElse(Seq(name))
 ))
 
-private def locationNumberP[$: P]: P[Int] = decDigitsP.!.map(_.toInt)
+private def locationNumberP[$: P]: P[Int] = decDigitsP.!.mapTry(_.toInt)
 
 private def fileLocationP[$: P]: P[Location] =
   (stringLiteralP ~ ":" ~ locationNumberP ~ ":" ~ locationNumberP)
