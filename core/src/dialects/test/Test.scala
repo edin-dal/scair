@@ -46,6 +46,7 @@ case class TestOp(
       regions,
       properties,
       attributes,
+      location,
     )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\

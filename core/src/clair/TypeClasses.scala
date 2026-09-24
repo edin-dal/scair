@@ -105,6 +105,7 @@ trait OpDefs[T <: Operation] extends OperationCompanion[T]:
         regions,
         properties,
         attributes,
+        location,
       )
 
     override def structured = Try(companion.structure(this)) match

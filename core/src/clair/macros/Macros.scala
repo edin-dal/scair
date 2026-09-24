@@ -1167,6 +1167,7 @@ def deriveOpDefs[T <: Operation: Type](using
           regions = regions(adtOp).map(_.detached),
           properties = properties(adtOp),
           attributes = adtOp.attributes,
+          location = adtOp.location,
         )
 
       def structure(unstrucOp: UnstructuredOp): T =
@@ -1175,7 +1176,7 @@ def deriveOpDefs[T <: Operation: Type](using
         } match
           case adt: DerivedOperation[?] =>
             adt.attributes ++= unstrucOp.attributes
-            adt
+            adt.at(unstrucOp.location)
           case _ =>
             throw new Exception(
               s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: $unstrucOp"

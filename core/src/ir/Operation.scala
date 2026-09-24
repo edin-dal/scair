@@ -233,6 +233,7 @@ case class UnregisteredOperation private (
       regions = regions,
       properties = properties,
       attributes = attributes,
+      location = location,
     )
 
 trait OperationCompanion[O <: Operation]:
