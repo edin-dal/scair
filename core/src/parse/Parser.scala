@@ -248,7 +248,26 @@ private inline def opResultP[$: P] = (valueIdP.flatMapX(name =>
     .orElse(Seq(name))
 ))
 
-private def trailingLocationP[$: P] = "loc" ~ "(" ~ "unknown" ~ ")"
+private def locationNumberP[$: P]: P[Int] = decDigitsP.!.mapTry(_.toInt)
+
+private def fileLocationP[$: P]: P[Location] =
+  (stringLiteralP ~ ":" ~ locationNumberP ~ ":" ~ locationNumberP)
+    .flatMap { (filename, line, column) =>
+      ("to" ~/ locationNumberP.? ~ ":" ~ locationNumberP).?.map {
+        case Some((endLine, endColumn)) =>
+          FileLineColRange(
+            filename,
+            line,
+            column,
+            endLine.getOrElse(line),
+            endColumn,
+          )
+        case None => FileLineColLoc(filename, line, column)
+      }
+    }
+
+private def trailingLocationP[$: P]: P[Location] =
+  "loc" ~/ "(" ~ ("unknown".map(_ => UnknownLoc) | fileLocationP) ~ ")"
 
 /*≡==--==≡≡≡≡≡≡≡≡==--=≡≡*\
 ||     PARSER CLASS     ||
@@ -265,7 +284,21 @@ final class Parser(
       mutable.Map.empty,
     private[parse] final val scopes: mutable.Stack[Scope] = mutable
       .Stack(new Scope()),
+    private[parse] final val inputLineOffset: Int = 0,
 ):
+
+  private[parse] def sourceLocation[$: P as ctx](index: Int): Location =
+    ctx.input.prettyIndex(index).split(":") match
+      case Array(line, column) =>
+        (line.toIntOption, column.toIntOption) match
+          case (Some(line), Some(column)) =>
+            FileLineColLoc(
+              inputPath.getOrElse("-"),
+              line + inputLineOffset,
+              column,
+            )
+          case _ => UnknownLoc
+      case _ => UnknownLoc
 
   private[parse] def enterRegionP[$: P] =
     scopes.push(new Scope())
@@ -451,6 +484,7 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
       val block = Block(operations = toplevel)
       val region = Region(block)
       val moduleOp = ModuleOp(region)
+        .at(FileLineColLoc(p.inputPath.getOrElse("-"), 0, 0))
 
       for op <- toplevel do op.containerBlock = Some(block)
       block.containerRegion = Some(region)
@@ -473,11 +507,16 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
 
 //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
 
-def operationP[$: P](using Parser): P[Operation] = P(
+def operationP[$: P](using p: Parser): P[Operation] = P(
   opResultListP./.flatMap(resNames =>
-    genericOperationP(resNames) | customOperationP(resNames)
+    (Index.map(p.sourceLocation(_)) ~~
+      (genericOperationP(resNames) | customOperationP(resNames)))
+      .map((location, op) => op.at(location))
   ) ~/ trailingLocationP.?
-)./
+).map { (op, location) =>
+  location.foreach(op.at)
+  op
+}./
 
 def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]

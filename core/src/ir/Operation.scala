@@ -21,6 +21,19 @@ import scala.collection.mutable
 
 trait Operation extends IRNode with IntrusiveNode[Operation]:
 
+  // Unknown locations share the null sentinel and allocate nothing per operation.
+  private var sourceLocation: Location | Null = null
+
+  final def location: Location = sourceLocation match
+    case null => UnknownLoc
+    case loc  => loc
+
+  final def at(location: Location): this.type =
+    sourceLocation = location match
+      case UnknownLoc => null
+      case loc        => loc
+    this
+
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||   OPERATION INITIALIZATION   ||
   \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
@@ -183,6 +196,7 @@ object UnregisteredOperation:
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
           attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+          location: Location = UnknownLoc,
       ): UnregisteredOperation =
         val op = new UnregisteredOperation(
           name = _name,
@@ -193,7 +207,7 @@ object UnregisteredOperation:
           properties = properties,
         )
         op.attributes ++= attributes
-        op
+        op.at(location)
 
 case class UnregisteredOperation private (
     override val name: String,
@@ -219,6 +233,7 @@ case class UnregisteredOperation private (
       regions = regions,
       properties = properties,
       attributes = attributes,
+      location = location,
     )
 
 trait OperationCompanion[O <: Operation]:
@@ -237,6 +252,7 @@ trait OperationCompanion[O <: Operation]:
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+      location: Location = UnknownLoc,
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()

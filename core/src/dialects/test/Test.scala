@@ -14,10 +14,11 @@ object TestOp extends OperationCompanion[TestOp]:
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
       attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+      location: Location = UnknownLoc,
   ): TestOp =
     val op = new TestOp(operands, successors, results, regions, properties)
     op.attributes ++= attributes
-    op
+    op.at(location)
 
 given OperationCompanion[TestOp] = TestOp
 
@@ -45,6 +46,7 @@ case class TestOp(
       regions,
       properties,
       attributes,
+      location,
     )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\

@@ -215,23 +215,7 @@ final case class StringData(stringLiteral: String) extends DataAttribute[String]
   override def data = stringLiteral
 
   override def customPrint(p: Printer) =
-    //       ("\\" ~~ (
-    //   "n"  ~~ Pass("\n")
-    // | "t"  ~~ Pass("\t")
-    // | "\\" ~~ Pass("\\")
-    // | "\"" ~~ Pass("\"")
-    p.print(
-      "\"",
-      stringLiteral.flatMap((c: Char) =>
-        c match
-          case '\n' => "\\n"
-          case '\t' => "\\t"
-          case '\\' => "\\\\"
-          case '"'  => "\\\""
-          case _    => c.toString()
-      ),
-      "\"",
-    )
+    p.printStringLiteral(stringLiteral)
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   SHAPED TYPE    ||

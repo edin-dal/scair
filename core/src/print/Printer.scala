@@ -14,7 +14,11 @@ import scala.collection.immutable.ListMap
 // ██║░░░░░ ██║░░██║ ██║ ██║░╚███║ ░░░██║░░░ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝
 
-abstract class Printer(strictlyGeneric: Boolean, p: Writer):
+abstract class Printer(
+    strictlyGeneric: Boolean,
+    p: Writer,
+    printLocations: Boolean = false,
+):
 
   type Printable = Value[?] | Block | Region | Operation | Attribute | String
 
@@ -31,8 +35,40 @@ abstract class Printer(strictlyGeneric: Boolean, p: Writer):
       )
     else op.customPrint(this)
 
+    if printLocations then
+      print(" loc(")
+      op.location match
+        case UnknownLoc                             => print("unknown")
+        case FileLineColLoc(filename, line, column) =>
+          printStringLiteral(filename)
+          print(s":$line:$column")
+        case FileLineColRange(
+              filename,
+              startLine,
+              startColumn,
+              endLine,
+              endColumn,
+            ) =>
+          printStringLiteral(filename)
+          print(s":$startLine:$startColumn to ")
+          if endLine != startLine then print(endLine.toString)
+          print(s":$endColumn")
+      print(")")
+
     print("\n")
     flush()
+
+  /** Print a quoted MLIR string, shared by string attributes and filenames. */
+  def printStringLiteral(value: String): Unit =
+    print("\"")
+    print(value.flatMap {
+      case '\n' => "\\n"
+      case '\t' => "\\t"
+      case '\\' => "\\\\"
+      case '"'  => "\\\""
+      case c    => c.toString
+    })
+    print("\"")
 
   @deprecated(
     "Just a first way to work with Java's Writer from Scala. Find better!"

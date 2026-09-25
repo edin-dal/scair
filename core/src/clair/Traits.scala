@@ -48,6 +48,7 @@ transparent trait DerivedOperation[name <: String] extends Operation:
       regions = detachedRegions,
       properties = properties,
       attributes = attributes,
+      location = location,
     )
 
   def name: String = defs.name
