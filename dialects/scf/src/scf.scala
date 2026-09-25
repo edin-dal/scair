@@ -119,7 +119,6 @@ case class ParallelOp(
 
 case class ReduceOp(
     operandss: Seq[Operand[Attribute]] = Seq.empty,
-    // TODO: variadic regions
     reductions: Seq[Region] = Seq.empty,
 ) extends DerivedOperation["scf.reduce"]
     with AssemblyFormat[
@@ -147,12 +146,18 @@ case class IndexSwitchOp(
     arg: Operand[Index],
     cases: DenseArrayAttr,
     defaultRegion: Region,
-    // TODO: variadic regions
-    caseRegions: Region,
+    caseRegions: Seq[Region] = Seq.empty,
     resultss: Seq[Result[Attribute]] = Seq.empty,
 ) extends DerivedOperation["scf.index_switch"]
     with RecursiveMemoryEffects
-    with RecursivelySpeculatable derives OpDefs
+    with RecursivelySpeculatable derives OpDefs:
+
+  override def customVerify(): OK[Operation] =
+    if caseRegions.length != cases.length then
+      Err(
+        s"scf.index_switch: has ${caseRegions.length} case regions but ${cases.length} case values"
+      )
+    else OK(this)
 
 case class YieldOp(
     resultss: Seq[Operand[Attribute]] = Seq.empty
