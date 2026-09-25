@@ -155,7 +155,8 @@ case class IndexSwitchOp(
   override def customVerify(): OK[Operation] =
     if caseRegions.length != cases.length then
       Err(
-        s"scf.index_switch: has ${caseRegions.length} case regions but ${cases.length} case values"
+        s"scf.index_switch: has ${caseRegions.length} case regions but ${cases
+            .length} case values"
       )
     else OK(this)
 
