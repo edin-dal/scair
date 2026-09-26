@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --print-locations | filecheck %s -DSOURCE_FILE=%s
+// RUN: scair-opt %s --print-locations --parse-locations | filecheck %s -DSOURCE_FILE=%s
 
 builtin.module {
   %0 = "test.op"() : () -> i32

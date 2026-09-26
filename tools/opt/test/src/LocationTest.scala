@@ -14,9 +14,11 @@ import scala.io.Source
 
 class LocationTest extends AnyFlatSpec:
 
-  "scair-opt" should "parse the location flag with a disabled default" in {
+  "scair-opt" should "parse the location flags with disabled defaults" in {
     ScairOpt.parseArgs(Array.empty).printLocations shouldBe false
     ScairOpt.parseArgs(Array("--print-locations")).printLocations shouldBe true
+    ScairOpt.parseArgs(Array.empty).parseLocations shouldBe false
+    ScairOpt.parseArgs(Array("--parse-locations")).parseLocations shouldBe true
   }
 
   it should "apply original-file offsets to split input chunks" in {
@@ -27,7 +29,11 @@ class LocationTest extends AnyFlatSpec:
     try
       val modules = ScairOpt
         .parse(
-          ScairOptArgs(input = Some("split.mlir"), splitInputFile = true)
+          ScairOptArgs(
+            input = Some("split.mlir"),
+            splitInputFile = true,
+            parseLocations = true,
+          )
         )(source)
       val locations = modules.toSeq.map {
         case OK(op) => op.location
@@ -64,12 +70,12 @@ class LocationTest extends AnyFlatSpec:
     try
       run() shouldBe
         "builtin.module {\n  %0 = \"arith.constant\"() <{value = 1 : i32}> : () -> i32\n}\n"
-      val located = run("--print-locations")
+      val located = run("--print-locations", "--parse-locations")
       located should include(
         s"\"arith.constant\"() <{value = 1 : i32}> : () -> i32 loc(\"$input\":2:8)"
       )
       located should endWith(s"} loc(\"$input\":1:1)\n")
-      val generic = run("--print-locations", "--print-generic")
+      val generic = run("--print-locations", "--parse-locations", "--print-generic")
       generic should include(s"loc(\"$input\":2:8)")
       generic should endWith(s"loc(\"$input\":1:1)\n")
     finally Files.deleteIfExists(input)
