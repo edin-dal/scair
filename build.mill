@@ -155,8 +155,11 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
 
   // Modules implementing a dialect.
   trait DialectModule extends ScairModule:
-    override def moduleDeps = core +: dialectDeps
-    def dialectDeps: Seq[DialectModule] = Seq()
+    override def moduleDeps: Seq[ScairModule] = Seq(core)
+
+  // Modules implementing a pass.
+  trait PassModule extends ScairModule:
+    override def moduleDeps: Seq[ScairModule] = Seq(core)
 
   // Modules implementing a dialect via IRDL, through .irdl files.
   trait IRDLDialectModule extends DialectModule:
@@ -244,13 +247,31 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     object lingodb extends DialectModule
     object linalg extends DialectModule
     object math extends DialectModule:
-      override def dialectDeps = Seq(arith)
+      override def moduleDeps = Seq(core, arith)
     object complex extends DialectModule:
-      override def dialectDeps = Seq(arith)
+      override def moduleDeps = Seq(core, arith)
     object cmath extends IRDLDialectModule
 
+  // Aggregate module: hosts AllPasses.scala and re-exports every per-pass
+  // submodule so downstream `moduleDeps = Seq(passes, ...)` stays unchanged.
+  // Also depends on `dialects` for its tests.
   object passes extends ScairModule:
-    override def moduleDeps = Seq(dialects)
+    override def moduleDeps =
+      dialects +: moduleDirectChildren.collect {
+        case m: ScairModule => m
+      }
+
+    object canonicalization extends PassModule
+    object cse extends PassModule
+    object licm extends PassModule
+    object reconcile extends PassModule
+    object cdt extends PassModule
+    object benchmark_constant_folding extends PassModule:
+      override def moduleDeps = Seq(core, dialects.arith, canonicalization)
+    object convert_arith_to_llvm extends PassModule:
+      override def moduleDeps = Seq(core, dialects.arith, dialects.llvm)
+    object convert_func_to_llvm extends PassModule:
+      override def moduleDeps = Seq(core, dialects.func, dialects.llvm)
 
   object interpreter extends ScairModule:
     override def moduleDeps = Seq(dialects)
