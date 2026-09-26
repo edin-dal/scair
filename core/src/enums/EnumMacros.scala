@@ -23,18 +23,17 @@ import scala.quoted.*
 /** Generates code to convert an IntegerAttr value to an Optional enum property
   * argument.
   *
-  * @param list
+  * @param value
+  *   The property's value, if any.
   * @param propName
-  * @return
+  *   The property's name, for diagnostics.
   */
 def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
-    list: Expr[Map[String, Attribute]],
+    value: Expr[Option[Attribute]],
     propName: String,
 )(using Quotes): Expr[Option[A]] =
-  val typeName = Type.of[A].toString()
   '{
-    val value: Option[Attribute] = $list.get(${ Expr(propName) })
-    value.map {
+    $value.map {
       case prop: A                           => prop
       case prop @ IntegerAttr(IntData(i), _) => $enumFromOrdinalFunc(i.toInt)
       case prop                              =>
@@ -48,19 +47,19 @@ def enumFromPropertyOption[A <: scala.reflect.Enum: Type](
 /** Generates code to convert an IntegerAttr value to a required enum property
   * argument.
   *
-  * @param list
+  * @param value
+  *   The property's value, if any.
   * @param propName
-  * @return
+  *   The property's name, for diagnostics.
   */
 def enumFromProperty[A <: scala.reflect.Enum: Type](
-    list: Expr[Map[String, Attribute]],
+    value: Expr[Option[Attribute]],
     propName: String,
 )(using Quotes): Expr[A] =
   import quotes.reflect.*
   val typeName = TypeRepr.of[A].show
   '{
-    val value: Option[Attribute] = $list.get(${ Expr(propName) })
-    value match
+    $value match
       case None =>
         throw new IllegalArgumentException(
           s"Missing required property \"${${ Expr(propName) }}\" of type ${${

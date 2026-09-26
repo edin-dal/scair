@@ -410,7 +410,7 @@ def verifyMacro(
 /** Helper to check a property argument.
   */
 def generateCheckedPropertyArgument[A <: Attribute: Type](
-    list: Expr[Map[String, Attribute]],
+    value: Expr[Option[Attribute]],
     propName: String,
     defaultValue: Option[Expr[Any]],
 )(using Quotes): Expr[A] =
@@ -426,8 +426,7 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
         )
       }
   '{
-    val value: Option[Attribute] = $list.get(${ Expr(propName) })
-    value match
+    $value match
       case None          => $ifAbsent
       case Some(prop: A) => prop
       case Some(value)   =>
@@ -439,22 +438,56 @@ def generateCheckedPropertyArgument[A <: Attribute: Type](
   }
 
 def generateOptionalCheckedPropertyArgument[A <: Attribute: Type](
-    list: Expr[Map[String, Attribute]],
+    value: Expr[Option[Attribute]],
     propName: String,
 )(using Quotes): Expr[Option[A]] =
   val typeName = Type.of[A].toString()
   '{
-    val value: Option[Attribute] = $list.get(${ Expr(propName) })
-    value.map {
+    val found = $value
+    found.map {
       case prop: A => prop
       case _       =>
         throw new IllegalArgumentException(
           s"Type mismatch for property \"${${ Expr(propName) }}\": " +
             s"expected ${${ Expr(typeName) }}, " +
-            s"but found ${value.getClass}"
+            s"but found ${found.getClass}"
         )
     }
   }
+
+/** The checked argument for a property of an ADT's primary constructor.
+  *
+  * @param d
+  *   The property definition.
+  * @param value
+  *   The property's value, if any.
+  */
+def propertyArgument(d: OpPropertyDef, value: Expr[Option[Attribute]])(using
+    Quotes
+): Expr[Any] =
+  d.tpe match
+    case '[type t <: scala.reflect.Enum & IntegerEnumAttr; `t`] =>
+      d.variadicity match
+        case Variadicity.Optional => enumFromPropertyOption[t](value, d.name)
+        case Variadicity.Single   => enumFromProperty[t](value, d.name)
+    case '[type t <: Attribute; `t`] =>
+      d.variadicity match
+        case Variadicity.Optional =>
+          generateOptionalCheckedPropertyArgument[t](value, d.name)
+        case Variadicity.Single =>
+          generateCheckedPropertyArgument[t](value, d.name, d.defaultValue)
+
+/** A call to the primary constructor of an ADT.
+  *
+  * @param args
+  *   The named arguments of the call.
+  */
+def construct[T: Type](args: Seq[(String, Expr[Any])])(using Quotes): Expr[T] =
+  import quotes.reflect.*
+  Apply(
+    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
+    args.map((name, arg) => NamedArg(name, arg.asTerm)).toList,
+  ).asExprOf[T]
 
 /** Type helper to get the defined input type of a construct definition.
   */
@@ -871,18 +904,15 @@ def extractedConstructs[Def <: OpInputDef: Type](
   // extract the constructs
   (partitioned zip defs).map((c, d) => '{ ${ constructExtractor(d) }(${ c }) })
 
-/** Return all named arguments for the primary constructor of an ADT. Those are
-  * checked, in the sense that they are checked to be of the correct types and
-  * numbers.
+/** Return a call to the primary constructor of an ADT, from an unstructured
+  * operation's constructs. Those are checked, in the sense that they are
+  * checked to be of the correct types and numbers.
   *
   * @param opDef
   *   The OperationDef derived from the ADT.
-  * @param op
-  *   The UnstructuredOp instance.
   * @return
-  *   The checked named arguments for the primary constructor of the ADT.
+  *   The checked call to the primary constructor of the ADT.
   */
-
 def tryConstruct[T: Type](
     opDef: OperationDef,
     operands: Expr[Seq[Operand[Attribute]]],
@@ -891,67 +921,21 @@ def tryConstruct[T: Type](
     successors: Expr[Seq[Successor]],
     properties: Expr[Map[String, Attribute]],
 )(using Quotes) =
-  import quotes.reflect.*
-  val args =
-    (extractedConstructs(
-      opDef.operands,
-      operands,
-      properties,
-      opDef.sameVariadicOperandSize,
-    ) zip opDef.operands).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-      (extractedConstructs(
-        opDef.results,
-        results,
-        properties,
-        opDef.sameVariadicResultSize,
-      ) zip opDef.results).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-      (extractedConstructs(
-        opDef.regions,
-        regions,
-        properties,
-      ) zip opDef.regions).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-      (extractedConstructs(
-        opDef.successors,
-        successors,
-        properties,
-      ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
-      opDef.properties.map {
-        case OpPropertyDef(name, tpe, variadicity, _, defaultValue) =>
-          val namedArg = tpe match
-            case '[type t <: scala.reflect.Enum & IntegerEnumAttr; `t`] =>
-              val property = variadicity match
-                case Variadicity.Optional =>
-                  enumFromPropertyOption[t](
-                    properties,
-                    name,
-                  )
-                case Variadicity.Single =>
-                  enumFromProperty[t](
-                    properties,
-                    name,
-                  )
-              NamedArg(name, property.asTerm)
-            case '[type t <: Attribute; `t`] =>
-              val property = variadicity match
-                case Variadicity.Optional =>
-                  generateOptionalCheckedPropertyArgument[t](
-                    properties,
-                    name,
-                  )
-                case Variadicity.Single =>
-                  generateCheckedPropertyArgument[t](
-                    properties,
-                    name,
-                    defaultValue,
-                  )
-              NamedArg(name, property.asTerm)
-          namedArg
-      }
-  // Return a call to the primary constructor of the ADT.
-  Apply(
-    Select(New(TypeTree.of[T]), TypeRepr.of[T].typeSymbol.primaryConstructor),
-    List.from(args),
-  ).asExprOf[T]
+  def named[Def <: OpInputDef: Type](
+      defs: Seq[Def],
+      flat: Expr[Seq[DefinedInput[Def]]],
+      sameVariadicSize: Boolean = false,
+  ) =
+    defs.map(_.name) zip
+      extractedConstructs(defs, flat, properties, sameVariadicSize)
+  construct[T](
+    named(opDef.operands, operands, opDef.sameVariadicOperandSize) ++
+      named(opDef.results, results, opDef.sameVariadicResultSize) ++
+      named(opDef.regions, regions) ++ named(opDef.successors, successors) ++
+      opDef.properties.map(d =>
+        d.name -> propertyArgument(d, '{ $properties.get(${ Expr(d.name) }) })
+      )
+  )
 
   /** Attempt to create an ADT from an UnstructuredOp[ADT]
     *
