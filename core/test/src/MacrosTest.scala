@@ -73,6 +73,15 @@ case class MulOptional(
       "($lhs^ `,`)? $rhs attr-dict `:` `(` (type($lhs)^ `,`)? type($rhs) `)` `->` type($res)"
     ] derives OpDefs
 
+case class KeywordOptional(
+    lhs: Option[Operand[IntegerType]],
+    rhs: Operand[IntegerType],
+    res: Result[IntegerType],
+) extends DerivedOperation["cmath.kwopt"]
+    with AssemblyFormat[
+      "(`lhs` $lhs^ `:` type($lhs) `,`)? $rhs attr-dict `:` type($rhs) `->` type($res)"
+    ] derives OpDefs
+
 case class MulMultiOptional(
     lhs: Option[Operand[IntegerType]],
     rhs: Option[Operand[IntegerType]],
@@ -790,6 +799,45 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
     out.toString() should be(
       "%0 = cmath.mulopt %1, %2 : (ui5, ui5) -> ui25\n%3 = cmath.mulopt %4 : ( ui5) -> ui25\n"
     )
+  }
+
+  "Optional operand custom syntax" should "Round-trip" in {
+    val ctx = scair.MLContext()
+    ctx
+      .registerDialect(
+        summonDialect[EmptyTuple, (MulOptional, KeywordOptional)]
+      )
+    def roundTrip(op: Operation) =
+      val out = java.io.StringWriter()
+      scair.print.AssemblyPrinter(p = java.io.PrintWriter(out)).print(op)
+      val syntax = out.toString.trim
+      val parser = new scair.parse.Parser(ctx)
+      parser.parse(syntax, scair.parse.operationP(using _, parser)) match
+        case fastparse.Parsed.Success(parsed, _) => (syntax, parsed)
+        case failure => fail(s"Failed to parse `$syntax`: $failure")
+
+    val i5 = IntegerType(IntData(5), Unsigned)
+    val i25 = IntegerType(IntData(25), Unsigned)
+    roundTrip(TestCases.adtMulOptional) should matchPattern {
+      case (
+            "%0 = cmath.mulopt %1, %2 : (ui5, ui5) -> ui25",
+            MulOptional(Some(Value(`i5`)), Value(`i5`), Result(`i25`)),
+          ) =>
+    }
+    roundTrip(KeywordOptional(Some(Value(i5)), Value(i5), Result(i25))) should
+      matchPattern {
+        case (
+              "%0 = cmath.kwopt lhs %1 : ui5, %2 : ui5 -> ui25",
+              KeywordOptional(Some(Value(`i5`)), Value(`i5`), Result(`i25`)),
+            ) =>
+      }
+    roundTrip(KeywordOptional(None, Value(i5), Result(i25))) should
+      matchPattern {
+        case (
+              "%0 = cmath.kwopt %1 : ui5 -> ui25",
+              KeywordOptional(None, Value(`i5`), Result(`i25`)),
+            ) =>
+      }
   }
 
   "Single Optional Conversion to ADTOp" should
