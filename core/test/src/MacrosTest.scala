@@ -4,7 +4,6 @@ import scair.clair.*
 import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
-import scala.collection.mutable.LinkedHashMap
 import scair.utils.*
 import javax.tools.FileObject
 
@@ -81,6 +80,10 @@ case class MulMultiOptional(
     res: Result[IntegerType],
 ) extends DerivedOperation["cmath.mulmultiopt"] derives OpDefs
 
+case class OptionalOperandOnly(
+    input: Option[Operand[IntegerType]]
+) extends DerivedOperation["test.optional_only"] derives OpDefs
+
 case class MultiOptionalPropertyOp(
     prop1: Option[IntegerType],
     prop2: Option[IntegerType],
@@ -101,6 +104,7 @@ val mulOptComp = summon[OpDefs[MulOptional]]
 val mulSVOComp = summon[OpDefs[MulSameVariadicOperands]]
 val mulSVRComp = summon[OpDefs[MulSameVariadicResults]]
 val mulMultiOptComp = summon[OpDefs[MulMultiOptional]]
+val optionalOperandOnlyComp = summon[OpDefs[OptionalOperandOnly]]
 
 val multiOptPropOpComp =
   summon[OpDefs[MultiOptionalPropertyOp]]
@@ -142,7 +146,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       succ2 = scair.ir.Block(),
     )
 
-    def unstructMulSinVarOp = new mulSVComp.UnstructuredOp(
+    def unstructMulSinVarOp = mulSVComp.UnstructuredOp(
       operands = Seq(
         Value[Attribute](typ = IntegerType(IntData(5), Unsigned)),
         Value[IntegerType](typ = IntegerType(IntData(5), Unsigned)),
@@ -371,6 +375,55 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
         ("prop2" -> IntegerType(IntData(5), Unsigned)),
       ),
     )
+
+  "ADT flat input generation" should
+    "return the shared empty sequence for undeclared inputs" in {
+      val op = TestCases.adtMulOp
+      (mulComp.regions(op) eq Seq.empty[Region]) should be(true)
+      (mulComp.successors(op) eq Seq.empty[Successor]) should be(true)
+    }
+
+  it should "return a sole variadic input without copying it" in {
+    val op = TestCases.adtMulSinVarOp
+    (mulSVComp.results(op) eq op.result) should be(true)
+  }
+
+  it should "handle a sole optional input without allocating when absent" in {
+    val empty = OptionalOperandOnly(None)
+    val value = Value(TestCases.i5)
+    val present = OptionalOperandOnly(Some(value))
+
+    (optionalOperandOnlyComp.operands(empty) eq Seq.empty) should be(true)
+    optionalOperandOnlyComp.operands(present) should contain.only(value)
+  }
+
+  it should
+    "return the shared empty sequence when all dynamic inputs are empty" in {
+      val op = MulMultiOptional(None, None, None, Result(TestCases.i5))
+      (mulMultiOptComp.operands(op) eq Seq.empty) should be(true)
+    }
+
+  it should "use an exact array for non-empty multi-dynamic inputs" in {
+    val results = Seq(Result(TestCases.i5), Result(TestCases.i5))
+    val op = MulSameVariadicResults(
+      Value(TestCases.i5),
+      res1 = results,
+      res2 = Seq.empty,
+    )
+    val flattened = mulSVRComp.results(op)
+
+    flattened should be(results)
+    (flattened eq results) should be(false)
+    flattened shouldBe a[scala.collection.immutable.ArraySeq[?]]
+  }
+
+  it should "preserve declaration order for fixed and variadic inputs" in {
+    val op = TestCases.adtMulSinVarOp
+    val flattened = mulSVComp.operands(op)
+
+    flattened should be(op.lhs +: op.rhs)
+    flattened shouldBe a[scala.collection.immutable.ArraySeq[?]]
+  }
 
   "Unstructured instantiation" should
     "Correctly instantiates the UnstructuredOp" in {

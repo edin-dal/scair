@@ -7,17 +7,27 @@ import scair.ir.*
 object TestOp extends OperationCompanion[TestOp]:
   override def name: String = "test.op"
 
+  def apply(
+      operands: Seq[Operand[Attribute]] = Seq(),
+      successors: Seq[Successor] = Seq(),
+      results: Seq[Result[Attribute]] = Seq(),
+      regions: Seq[Region] = Seq(),
+      properties: Map[String, Attribute] = Map.empty[String, Attribute],
+      attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+      location: Location = UnknownLoc,
+  ): TestOp =
+    val op = new TestOp(operands, successors, results, regions, properties)
+    op.attributes ++= attributes
+    op.at(location)
+
 given OperationCompanion[TestOp] = TestOp
 
 case class TestOp(
-    override val operands: Seq[Operand[Attribute]] = Seq(),
-    override val successors: Seq[Successor] = Seq(),
-    override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] = Map
-      .empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] = DictType
-      .empty[String, Attribute],
+    override val operands: Seq[Operand[Attribute]],
+    override val successors: Seq[Successor],
+    override val results: Seq[Result[Attribute]],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
 ) extends Operation:
   override def name = "test.op"
 
@@ -27,7 +37,7 @@ case class TestOp(
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes,
+      attributes: Map[String, Attribute] = attributes,
   ) =
     TestOp(
       operands,
@@ -36,6 +46,7 @@ case class TestOp(
       regions,
       properties,
       attributes,
+      location,
     )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\

@@ -11,10 +11,15 @@ final class AliasPrinter(
     private val p: Writer = PrintWriter(System.out),
     private val aliasesCounters: mutable.Map[String, Int] = mutable.Map.empty,
     private val aliases: mutable.Map[Attribute, String] = mutable.Map.empty,
-) extends Printer(strictlyGeneric, p):
+    printLocations: Boolean = false,
+) extends Printer(strictlyGeneric, p, printLocations):
 
   private val irPrinter =
-    AssemblyPrinter(strictlyGeneric = strictlyGeneric, p = p)
+    AssemblyPrinter(
+      strictlyGeneric = strictlyGeneric,
+      p = p,
+      printLocations = printLocations,
+    )
 
   def getAliases: Map[Attribute, String] =
     aliases.toMap

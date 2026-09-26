@@ -50,7 +50,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
     hasMultiVariadic: Boolean,
     defs: Seq[T],
     adtOpExpr: Expr[?],
-)(using Quotes): Option[Expr[(String, Attribute)]] =
+)(using Quotes): Option[(Expr[String], Expr[Attribute])] =
   val name = s"${getConstructName[T]}SegmentSizes"
   hasMultiVariadic match
     case true =>
@@ -70,8 +70,9 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
           )
         )
       Some(
+        Expr(name),
         '{
-          ${ Expr(name) } -> DenseArrayAttr(
+          DenseArrayAttr(
             IntegerType(IntData(32), Signless),
             ${ arrayAttr }.map(x =>
               IntegerAttr(
@@ -80,7 +81,7 @@ def makeSegmentSizes[T <: MayVariadicOpInputDef: Type](
               )
             ),
           )
-        }
+        },
       )
     case false => None
 
@@ -96,28 +97,104 @@ def ADTFlatInputMacro[Def <: OpInputDef: Type](
     opInputDefs: Seq[Def],
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Seq[DefinedInput[Def]]] =
-  val stuff =
-    opInputDefs.map((d: Def) =>
-      selectMember[DefinedInput[Def] | IterableOnce[DefinedInput[Def]]](
-        adtOpExpr,
-        d.name,
-      )
-    )
-  opInputDefs.count(_ match
-    case v: MayVariadicOpInputDef => v.variadicity != Variadicity.Single) match
-    // Special cases for better performance
-    // TODO: Further cases
+  def variadicity(d: Def): Variadicity = d match
+    case d: MayVariadicOpInputDef => d.variadicity
 
-    case 0 =>
-      // All non-variadic: just return Seq(...)
-      Expr.ofSeq(stuff.asInstanceOf[Seq[Expr[DefinedInput[Def]]]])
-    case _ =>
-      // A default, naive case implementation. Terrible runtime performance.
-      stuff.foldLeft('{ Seq.empty[DefinedInput[Def]] })((seq, next) =>
-        next match
-          case '{ $ne: DefinedInput[Def] }               => '{ $seq :+ $ne }
-          case '{ $ns: IterableOnce[DefinedInput[Def]] } => '{ $seq :++ $ns }
+  opInputDefs.toList match
+    case Nil =>
+      // No inputs, optimized empty sequence.
+      '{ Seq.empty[DefinedInput[Def]] }
+
+    case d :: Nil =>
+      variadicity(d) match
+        case Variadicity.Single =>
+          // One fixed input - simple constructor.
+          val input = selectMember[DefinedInput[Def]](adtOpExpr, d.name)
+          '{ Seq($input) }
+        case Variadicity.Variadic =>
+          // One variadic input - return as-is.
+          selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
+        case Variadicity.Optional =>
+          // One optional input - convert to sequence.
+          val input =
+            selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
+          '{
+            $input match
+              case Some(value) => Seq(value)
+              case None        => Seq.empty[DefinedInput[Def]]
+          }
+
+    case defs if defs.forall(variadicity(_) == Variadicity.Single) =>
+      // Multiple fixed inputs - straightforward constructor.
+      Expr
+        .ofSeq(
+          defs.map(d => selectMember[DefinedInput[Def]](adtOpExpr, d.name))
+        )
+
+    case defs =>
+      // Multiple inputs with optional or variadic fields - compute the runtime total size.
+      val totalSize = defs.foldLeft(Expr(0))((size, d) =>
+        variadicity(d) match
+          case Variadicity.Single   => '{ $size + 1 }
+          case Variadicity.Variadic =>
+            val input =
+              selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
+            '{ $size + $input.length }
+          case Variadicity.Optional =>
+            val input =
+              selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
+            '{ $size + $input.size }
       )
+      // Generate a filling of the mutable array.
+      def fillArray(
+          remaining: List[Def],
+          array: Expr[Array[AnyRef]],
+          index: Expr[Int],
+      ): Expr[Unit] = remaining match
+        case Nil       => '{ () }
+        case d :: tail =>
+          variadicity(d) match
+            case Variadicity.Single =>
+              // Copy one fixed input.
+              val input = selectMember[DefinedInput[Def]](adtOpExpr, d.name)
+              '{
+                $array($index) = $input.asInstanceOf[AnyRef]
+                ${ fillArray(tail, array, '{ $index + 1 }) }
+              }
+            case Variadicity.Variadic =>
+              // Copy one variadic input.
+              val input =
+                selectMember[Seq[DefinedInput[Def]]](adtOpExpr, d.name)
+              '{
+                val copied = $input.copyToArray($array, $index)
+                ${ fillArray(tail, array, '{ $index + copied }) }
+              }
+            case Variadicity.Optional =>
+              // Copy one optional input.
+              val input =
+                selectMember[Option[DefinedInput[Def]]](adtOpExpr, d.name)
+              '{
+                val copied = $input match
+                  case Some(value) =>
+                    $array($index) = value.asInstanceOf[AnyRef]
+                    1
+                  case None => 0
+                ${ fillArray(tail, array, '{ $index + copied }) }
+              }
+
+      '{
+        val size = $totalSize
+        // If there are no inputs, return the optimized empty sequence.
+        if size == 0 then Seq.empty[DefinedInput[Def]]
+        else
+          // Else, preallocate an array, fill it and return.
+          val array = new Array[AnyRef](size)
+          ${ fillArray(defs, '{ array }, Expr(0)) }
+          // Every DefinedInput alternative is a reference type, so an AnyRef array
+          // can safely back the covariant immutable result sequence.
+          scala.collection.immutable.ArraySeq.unsafeWrapArray(array)
+            .asInstanceOf[Seq[DefinedInput[Def]]]
+      }
 
 def operandsMacro(
     opDef: OperationDef,
@@ -143,14 +220,10 @@ def regionsMacro(
 )(using Quotes): Expr[Seq[Region]] =
   ADTFlatInputMacro(opDef.regions, adtOpExpr)
 
-import scala.collection.mutable.Builder
-
 def propertiesMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[Map[String, Attribute]] =
-
-  import quotes.reflect.*
 
   val opSegSizeProp = makeSegmentSizes(
     opDef.hasMultiVariadicOperands && !opDef.sameVariadicOperandSize,
@@ -176,7 +249,7 @@ def propertiesMacro(
   val mandatoryProps =
     opDef.properties.collect {
       case OpPropertyDef(name = name, variadicity = Variadicity.Single) =>
-        '{ ${ Expr(name) } -> ${ selectMember[Attribute](adtOpExpr, name) } }
+        (Expr(name), selectMember[Attribute](adtOpExpr, name))
     } ++ opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp
 
   val optionalProps =
@@ -184,29 +257,20 @@ def propertiesMacro(
       case OpPropertyDef(name = name, variadicity = Variadicity.Optional) =>
         (Expr(name), selectMember[Option[Attribute]](adtOpExpr, name))
     }
-  if mandatoryProps.isEmpty && optionalProps.isEmpty then
-    '{ Map.empty[String, Attribute] }
-  else
-    ValDef.let(
-      Symbol.spliceOwner,
-      "propsBuilder",
-      '{ Map.newBuilder[String, Attribute] }.asTerm,
-    )(builderTerm =>
-      val builder = builderTerm
-        .asExprOf[Builder[(String, Attribute), Map[String, Attribute]]]
-      val mandatoryAdds = mandatoryProps
-        .map(prop => '{ $builder.addOne($prop) }.asTerm)
-      val optionalAdds = optionalProps.map(prop =>
-        '{
-          if ${ prop._2 }.isDefined then
-            $builder.addOne(${ prop._1 } -> ${ prop._2 }.get)
-        }.asTerm
-      )
-      Block(
-        (mandatoryAdds ++ optionalAdds).toList,
-        '{ $builder.result() }.asTerm,
-      )
-    ).asExprOf[Map[String, Attribute]]
+  // Properties are typically few; a chain of `updated` goes through the
+  // small specialized maps without a builder or tuples along the way.
+  val withMandatory = mandatoryProps
+    .foldLeft('{
+      Map.empty[String, Attribute]
+    })((props, prop) => '{ $props.updated(${ prop._1 }, ${ prop._2 }) })
+  optionalProps.foldLeft(withMandatory)((props, prop) =>
+    '{
+      val current = $props
+      ${ prop._2 } match
+        case Some(value) => current.updated(${ prop._1 }, value)
+        case None        => current
+    }
+  )
 
 def customPrintMacro(
     opDef: OperationDef,
@@ -281,12 +345,20 @@ def sameVariadicSizeVerifier[Def <: MayVariadicOpInputDef: Type](
     else OK()
   }
 
+/** Generate the constraint verification of an op: its `SameVariadic*Size`
+  * checks, followed by its operand constraints, short-circuiting on the first
+  * error and yielding the op otherwise.
+  *
+  * Only what the op declares is generated; an op without any check verifies to
+  * itself, allocation-free.
+  */
 def verifyMacro(
     opDef: OperationDef,
     adtOpExpr: Expr[?],
 )(using Quotes): Expr[OK[Operation]] =
+  val op = '{ $adtOpExpr.asInstanceOf[Operation] }
 
-  val sameSizes =
+  val sameSizes: Seq[Expr[OK[Unit]]] =
     Option
       .when(opDef.sameVariadicOperandSize)(
         sameVariadicSizeVerifier(
@@ -295,7 +367,7 @@ def verifyMacro(
           "SameVariadicOperandSize",
           adtOpExpr,
         )
-      ) ++ Option.when(opDef.sameVariadicResultSize)(
+      ).toSeq ++ Option.when(opDef.sameVariadicResultSize)(
       sameVariadicSizeVerifier(
         opDef.name,
         opDef.results,
@@ -304,28 +376,30 @@ def verifyMacro(
       )
     )
 
-  val a = opDef.operands // val xyz: Seq[Expr[OK[Unit]]] =
-    .filter(_.variadicity == Variadicity.Single)
-    .collect(_ match
-      case OperandDef(name, _, _, Some(constraint)) =>
-        val mem = selectMember[Operand[Attribute]](adtOpExpr, name)
-        '{ (ctx: scair.constraints.ConstraintContext) =>
-          $constraint.verify($mem.typ)(using ctx)
-        })
-
-  '{
-    given ctx: scair.constraints.ConstraintContext =
-      scair.constraints.ConstraintContext()
-    ${
-      val start = sameSizes.foldLeft[Expr[OK[Unit]]]('{ OK() })((res, check) =>
-        '{ $res.flatMap(_ => $check) }
-      )
-      val chain = a.foldLeft[Expr[OK[Unit]]](
-        start
-      )((res, result) => '{ $res.flatMap(_ => $result(ctx)) })
-      '{ $chain.map(_ => $adtOpExpr.asInstanceOf[Operation]) }
+  // Operand constraints share one context (e.g. for `Var` constraints); each
+  // check is generated against the context expression it is given.
+  val constraints
+      : Seq[Expr[scair.constraints.ConstraintContext] => Expr[OK[Unit]]] =
+    opDef.operands.collect {
+      case OperandDef(name, _, Variadicity.Single, Some(constraint)) =>
+        val typ = '{
+          ${ selectMember[Operand[Attribute]](adtOpExpr, name) }.typ
+        }
+        ctx => '{ $constraint.verify($typ)(using $ctx) }
     }
-  }
+
+  // Sequence the checks, short-circuiting on the first error, and yield the op.
+  def chain(checks: Seq[Expr[OK[Unit]]]): Expr[OK[Operation]] =
+    checks.reduceOption((done, next) => '{ $done.flatMap(_ => $next) }) match
+      case None      => '{ OK($op) }
+      case Some(all) => '{ $all.map(_ => $op) }
+
+  if constraints.isEmpty then chain(sameSizes)
+  else
+    '{
+      val ctx = scair.constraints.ConstraintContext()
+      ${ chain(sameSizes ++ constraints.map(_('{ ctx }))) }
+    }
 
 /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || Unstructured to ADT conversion Macro ||
@@ -1057,8 +1131,8 @@ def deriveOpDefs[T <: Operation: Type](using
           results: Seq[Result[Attribute]] = Seq(),
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] = DictType
-            .empty[String, Attribute],
+          attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+          location: Location = UnknownLoc,
       ): UnstructuredOp | T & Operation =
         try {
           val structured = ${
@@ -1071,8 +1145,8 @@ def deriveOpDefs[T <: Operation: Type](using
               '{ properties },
             )
           }
-          structured.attributes.addAll(attributes)
-          structured
+          structured.attributes ++= attributes
+          structured.at(location)
         } catch { _ =>
           UnstructuredOp(
             operands = operands,
@@ -1081,6 +1155,7 @@ def deriveOpDefs[T <: Operation: Type](using
             regions = regions,
             properties = properties,
             attributes = attributes,
+            location = location,
           )
         }
 
@@ -1092,6 +1167,7 @@ def deriveOpDefs[T <: Operation: Type](using
           regions = regions(adtOp).map(_.detached),
           properties = properties(adtOp),
           attributes = adtOp.attributes,
+          location = adtOp.location,
         )
 
       def structure(unstrucOp: UnstructuredOp): T =
@@ -1099,8 +1175,8 @@ def deriveOpDefs[T <: Operation: Type](using
           fromUnstructuredOperationMacro[T](opDef, '{ unstrucOp })
         } match
           case adt: DerivedOperation[?] =>
-            adt.attributes.addAll(unstrucOp.attributes)
-            adt
+            adt.attributes ++= unstrucOp.attributes
+            adt.at(unstrucOp.location)
           case _ =>
             throw new Exception(
               s"Internal Error: Hacky did not hack -> T is not a DerivedOperation: $unstrucOp"

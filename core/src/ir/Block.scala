@@ -142,10 +142,11 @@ case class Block private (
   ||  BLOCK INITIALIZATION  ||
   \*≡==---==≡≡≡≡≡≡≡≡==---==≡*/
 
-  // it is implicitly true, as BlockOperations data structure will calculate operation order on construction
-  // also the Parser populates the indexes when adding operations into the block - kind of ad-hoc but works :D
-  // tbd if this is a good design
-  var isOpOrderValid = true
+  // Whether the operations' indices still describe their order.
+  def isOpOrderValid: Boolean = operations.isOpOrderValid
+
+  def isOpOrderValid_=(valid: Boolean): Unit =
+    operations.isOpOrderValid = valid
 
   var containerRegion: Option[Region] = None
   final override def parent: Option[Region] = containerRegion
@@ -265,9 +266,7 @@ case class Block private (
   \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
   override def recomputeOpOrder(): Unit =
-    if !isOpOrderValid then
-      isOpOrderValid = true
-      operations.computeBlockOrder()
+    operations.computeBlockOrder()
 
   def structured: OK[Unit] =
     operations.foldLeft[OK[Unit]](OK())((res, op) =>
@@ -307,3 +306,5 @@ case class Block private (
 
   override def equals(o: Any): Boolean =
     return this eq o.asInstanceOf[AnyRef]
+
+  override def hashCode(): Int = System.identityHashCode(this)

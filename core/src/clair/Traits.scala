@@ -20,9 +20,9 @@ transparent trait DerivedAttribute[name <: String]
   protected final given defs
       : AttrDefs[? >: this.type <: DerivedAttribute[name]] = deferred
 
-  override val name: String = defs.name
+  override def name: String = defs.name
 
-  override val parameters: Seq[Attribute] =
+  override def parameters: Seq[Attribute] =
     defs.parameters(this)
 
 trait AssemblyFormat[format <: String]
@@ -39,7 +39,7 @@ transparent trait DerivedOperation[name <: String] extends Operation:
       results: Seq[Result[Attribute]],
       regions: Seq[Region],
       properties: Map[String, Attribute],
-      attributes: DictType[String, Attribute],
+      attributes: Map[String, Attribute],
   ) =
     defs(
       operands = operands,
@@ -48,6 +48,7 @@ transparent trait DerivedOperation[name <: String] extends Operation:
       regions = detachedRegions,
       properties = properties,
       attributes = attributes,
+      location = location,
     )
 
   def name: String = defs.name

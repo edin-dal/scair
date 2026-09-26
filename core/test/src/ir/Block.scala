@@ -208,3 +208,39 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
         .regions(0).blocks(0).operations(2) // nested test.op3
         .regions(0).blocks(0).isOpOrderValid shouldEqual true
     }
+
+  "Operation order validity" should "survive block construction" in {
+    // `BlockOperations.from` fills the list - invalidating the order as any
+    // mutation does - before computing it, so a freshly built block has to
+    // come out valid.
+    val block = Block(
+      Seq(I32),
+      Seq(TestOp(), TestOp()),
+    )
+
+    block.isOpOrderValid shouldEqual true
+    block.operations.toSeq.map(_.blockIndex) shouldEqual Seq(0, 1)
+  }
+
+  it should "not survive a mutation of the block" in {
+    val block = Block(Seq(TestOp()))
+    block.isOpOrderValid shouldEqual true
+
+    block.addOp(TestOp())
+    block.isOpOrderValid shouldEqual false
+
+    block.recomputeOpOrder()
+    block.isOpOrderValid shouldEqual true
+    block.operations.toSeq.map(_.blockIndex) shouldEqual Seq(0, 1)
+  }
+
+  "A block" should "keep its hash as it is mutated" in {
+    // Identity equality without an identity hash would let a map keyed on a
+    // block lose track of it as soon as the block gained an operation.
+    val block = Block(Seq(TestOp()))
+    val map = scala.collection.mutable.Map(block -> "kept")
+
+    block.addOp(TestOp())
+
+    map.get(block) shouldEqual Some("kept")
+  }

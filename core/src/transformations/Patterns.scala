@@ -16,6 +16,38 @@ enum PatternAction:
   case Erase
   case Abort
 
+/** What a pattern returns: the operations replacing the matched one, with their
+  * replacing results given explicitly or taken from the last of them, or a
+  * [[PatternAction]].
+  */
+type RewriteResult = PatternAction | Operation | Seq[Operation] |
+  (Operation | Seq[Operation], Value[?] | Seq[Value[?]])
+
+/** One operation or several, as several. */
+def asOps(ops: Operation | Seq[Operation]): Seq[Operation] =
+  ops match
+    case op: Operation => Seq(op)
+    case ops: Seq[?]   => ops.asInstanceOf[Seq[Operation]]
+
+/** The operations a rewrite result replaces with, and the results to replace
+  * with - `None` where the result leaves them to be taken from the last
+  * operation. Erasure and abortion are not decoded here; match them first.
+  */
+def asReplacement(
+    result: RewriteResult
+): (Seq[Operation], Option[Seq[Value[Attribute]]]) =
+  result match
+    case (ops, results): (Operation | Seq[Operation], ?) =>
+      (
+        asOps(ops),
+        Some(results match
+          case r: Value[?]       => Seq(r.asInstanceOf[Value[Attribute]])
+          case rs: Seq[Value[?]] => rs.asInstanceOf[Seq[Value[Attribute]]]),
+      )
+    case ops: (Operation | Seq[Operation]) => (asOps(ops), None)
+    case action: PatternAction             =>
+      throw new Exception(s"$action is not a replacement.")
+
 /** Defines a RewritePattern from a partial function. The partial function can
   * return the following types:
   *   - `Unit`: to erase the operation
@@ -28,37 +60,19 @@ enum PatternAction:
   *   A RewritePattern to hook to the infrastructure.
   */
 inline def pattern(
-    partial: PartialFunction[
-      Operation,
-      PatternAction | Operation | Seq[Operation] |
-        (Operation | Seq[Operation], Value[?] | Seq[Value[?]]),
-    ]
+    inline partial: PartialFunction[Operation, RewriteResult]
 ): RewritePattern =
-  val lifted = partial.lift
-
   object pattern extends RewritePattern:
     override def matchAndRewrite(
         op: Operation,
         rewriter: PatternRewriter,
     ): Unit =
-      lifted(op).map((output) =>
-        output match
-          case PatternAction.Erase =>
-            rewriter.eraseOp(op)
-          case PatternAction.Abort => ()
-          case both: (Operation | Seq[Operation], Value[?] | Seq[Value[?]]) =>
-            rewriter.replaceOp(
-              op,
-              both._1,
-              Some(both._2 match
-                case r: Value[?]       => Seq(r)
-                case rs: Seq[Value[?]] => rs),
-            )
-          case newOp: Operation =>
-            rewriter.replaceOp(op, newOp, None)
-          case newOps: Seq[Operation @unchecked] =>
-            rewriter.replaceOp(op, newOps, None)
-      )
+      partial.applyOrElse(op, (_: Operation) => PatternAction.Abort) match
+        case PatternAction.Erase => rewriter.eraseOp(op)
+        case PatternAction.Abort => ()
+        case result              =>
+          val (newOps, newResults) = asReplacement(result)
+          rewriter.replaceOp(op, newOps, newResults)
 
   pattern
 

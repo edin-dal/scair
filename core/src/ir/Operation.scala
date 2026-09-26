@@ -9,7 +9,6 @@ import scair.transformations.RewritePattern
 import scair.utils.*
 
 import scala.collection.mutable
-import scala.collection.mutable.LinkedHashMap
 
 //
 // ░█████╗░ ██████╗░ ███████╗ ██████╗░ ░█████╗░ ████████╗ ██╗ ░█████╗░ ███╗░░██╗
@@ -21,6 +20,19 @@ import scala.collection.mutable.LinkedHashMap
 //
 
 trait Operation extends IRNode with IntrusiveNode[Operation]:
+
+  // Unknown locations share the null sentinel and allocate nothing per operation.
+  private var sourceLocation: Location | Null = null
+
+  final def location: Location = sourceLocation match
+    case null => UnknownLoc
+    case loc  => loc
+
+  final def at(location: Location): this.type =
+    sourceLocation = location match
+      case UnknownLoc => null
+      case loc        => loc
+    this
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
   ||   OPERATION INITIALIZATION   ||
@@ -52,7 +64,12 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
   def results: Seq[Result[Attribute]]
   def regions: Seq[Region]
   def properties: Map[String, Attribute]
-  val attributes: DictType[String, Attribute] = DictType.empty
+
+  /** The operation's discardable attributes. Immutable so that attribute-less
+    * operations (the vast majority) share `Map.empty` and allocate nothing;
+    * write with `op.attributes += k -> v`, `++=` or plain assignment.
+    */
+  var attributes: Map[String, Attribute] = Map.empty
 
   final def detachedRegions = regions.map(_.detached)
 
@@ -78,7 +95,7 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes,
+      attributes: Map[String, Attribute] = attributes,
   ): Operation
 
   /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
@@ -160,7 +177,6 @@ trait Operation extends IRNode with IntrusiveNode[Operation]:
       operands = operands.map(o => valueMapper.getOrElse(o, o)),
       successors = successors.map(b => blockMapper.getOrElseUpdate(b, b)),
       regions = regions.map(_.deepCopy),
-      attributes = LinkedHashMap.from(attributes),
     )
 
   final override def hashCode(): Int = System.identityHashCode(this)
@@ -179,29 +195,27 @@ object UnregisteredOperation:
           results: Seq[Result[Attribute]] = Seq(),
           regions: Seq[Region] = Seq(),
           properties: Map[String, Attribute] = Map.empty[String, Attribute],
-          attributes: DictType[String, Attribute] = DictType
-            .empty[String, Attribute],
+          attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+          location: Location = UnknownLoc,
       ): UnregisteredOperation =
-        new UnregisteredOperation(
+        val op = new UnregisteredOperation(
           name = _name,
           operands = operands,
           successors = successors,
           results = results,
           regions = regions,
           properties = properties,
-          attributes = attributes,
         )
+        op.attributes ++= attributes
+        op.at(location)
 
 case class UnregisteredOperation private (
     override val name: String,
-    override val operands: Seq[Value[Attribute]] = Seq(),
-    override val successors: Seq[Block] = Seq(),
-    override val results: Seq[Result[Attribute]] = Seq(),
-    override val regions: Seq[Region] = Seq(),
-    override val properties: Map[String, Attribute] = Map
-      .empty[String, Attribute],
-    override val attributes: DictType[String, Attribute] = DictType
-      .empty[String, Attribute],
+    override val operands: Seq[Value[Attribute]],
+    override val successors: Seq[Block],
+    override val results: Seq[Result[Attribute]],
+    override val regions: Seq[Region],
+    override val properties: Map[String, Attribute],
 ) extends Operation:
 
   override def updated(
@@ -210,7 +224,7 @@ case class UnregisteredOperation private (
       results: Seq[Result[Attribute]] = results.map(_.typ).map(Result(_)),
       regions: Seq[Region] = detachedRegions,
       properties: Map[String, Attribute] = properties,
-      attributes: DictType[String, Attribute] = attributes,
+      attributes: Map[String, Attribute] = attributes,
   ) =
     UnregisteredOperation(name)(
       operands = operands,
@@ -219,6 +233,7 @@ case class UnregisteredOperation private (
       regions = regions,
       properties = properties,
       attributes = attributes,
+      location = location,
     )
 
 trait OperationCompanion[O <: Operation]:
@@ -236,8 +251,8 @@ trait OperationCompanion[O <: Operation]:
       results: Seq[Result[Attribute]] = Seq(),
       regions: Seq[Region] = Seq(),
       properties: Map[String, Attribute] = Map.empty[String, Attribute],
-      attributes: DictType[String, Attribute] = DictType
-        .empty[String, Attribute],
+      attributes: Map[String, Attribute] = Map.empty[String, Attribute],
+      location: Location = UnknownLoc,
   ): Operation
 
   def canonicalizationPatterns: Seq[RewritePattern] = Seq()
