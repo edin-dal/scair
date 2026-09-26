@@ -3,13 +3,13 @@ package scair.clair.macros
 import fastparse.*
 import fastparse.SingleLineWhitespace.given
 import fastparse.internal.MacroInlineImpls.*
-import scair.*
 import scair.dialects.builtin.UnitAttr
 import scair.ir.*
 import scair.parse.*
 import scair.print.Printer
 
 import scala.quoted.*
+import scala.util.control.NonFatal
 
 //
 // ░█████╗░ ░██████╗ ░██████╗ ███████╗ ███╗░░░███╗ ██████╗░ ██╗░░░░░ ██╗░░░██╗
@@ -27,756 +27,746 @@ import scala.quoted.*
 // ╚═╝░░░░░ ░╚════╝░ ╚═╝░░╚═╝ ╚═╝░░░░░╚═╝ ╚═╝░░╚═╝ ░░░╚═╝░░░
 //
 
-/** Utility function to check if a character is alphabetic */
-private inline def isalpha(c: Char): Boolean =
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+/*≡≡=---=≡≡≡≡≡≡=---=≡≡*\
+||   REPRESENTATION   ||
+\*≡==----=≡≡≡≡=----==≡*/
 
-/** Prints a space in the output if required by printing context. Manages
-  * spacing rules based on punctuation and previous tokens.
-  */
-private def printSpace(p: Expr[Printer], state: PrintingState)(using Quotes) =
+/** A directive of a declarative assembly format, i.e., a unit of its syntax. */
+enum Directive:
 
-  val print =
-    if state.shouldEmitSpace || !state.lastWasPunctuation then
-      '{ $p.print(" ") }
-    else '{}
-
-  state.lastWasPunctuation = false;
-  state.shouldEmitSpace = true;
-
-  print
-
-/** Base trait for assembly format directives. Directives represent a unit of
-  * the assembly format, and can generate printing and parsing implementations
-  * for their constructs.
-  */
-trait Directive:
-
-  /** Generate a specialized printer for the directive's subset of an
-    * operation's definition.
-    * @param op
-    *   The Operation argument of the generated printer.
-    * @param p
-    *   The Printer argument of the generated printer.
-    * @param state
-    *   The current printer generation state.
-    * @return
-    *   Specialized code to print one construct of a specific operation type.
+  /** Literal text, e.g., keywords or punctuation, typically used to clarify
+    * semantics or solve ambiguities.
     */
-  def print(op: Expr[?], p: Expr[Printer])(using
-      state: PrintingState
-  )(using Quotes): Expr[Unit]
+  case Literal(text: String)
 
-  /** Generate a specialized parser for the directive's subset of an operation's
-    * definition.
-    * @param p
-    *   The Parser argument of the generated parser.
-    * @return
-    *   Specialized code to parse one construct of a specific operation type.
+  /** The operation's attribute dictionary. It also carries the properties the
+    * rest of the format does not spell out, as MLIR does, so that no property
+    * is lost by a custom syntax.
     */
-  def parse(p: Expr[Parser])(using
-      ctx: Expr[P[Any]]
-  )(using quotes: Quotes): Expr[P[Any]]
+  case AttrDict
 
-  def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
-    import quotes.reflect.*
-    report.errorAndAbort(
-      s"Directive $this is not supposed to be used as an anchor, or is not implemented yet."
-    )
+  /** One of the operation's operands, regions or properties. */
+  case Variable(construct: OperandDef | RegionDef | OpPropertyDef)
 
-/** Directive for literal text in the assembly format. Examples include
-  * keywords, punctuation, and other fixed strings. Typically used to clarify
-  * semantic or solve ambiguity.
-  */
-case class LiteralDirective(
-    literal: String
-) extends Directive:
+  /** The type(s) of one of the operation's operands or results. */
+  case TypeOf(construct: OperandDef | ResultDef)
 
-  private inline def shouldEmitSpaceBefore(
-      inline lastWasPunctuation: Boolean
-  ): Boolean =
-    if literal.size != 1 && literal != "->" then true
-    else if lastWasPunctuation then !">)}],".contains(literal.head)
-    else !"<>(){}[],".contains(literal.head)
+  /** Directives only present if the anchor's construct is. */
+  case OptionalGroup(
+      anchor: Directive.Variable | Directive.TypeOf,
+      body: List[Directive],
+  )
 
-  override def print(op: Expr[?], p: Expr[Printer])(using
-      state: PrintingState
-  )(using Quotes): Expr[Unit] =
-    val toPrint =
-      if state.shouldEmitSpace && shouldEmitSpaceBefore(
-          state.lastWasPunctuation
-        )
-      then " " + literal
-      else literal
+import Directive.*
 
-    state.shouldEmitSpace = literal.size != 1 || !"<({[".contains(literal.head)
-    state.lastWasPunctuation = literal.head != '_' && !isalpha(literal.head)
-
-    '{ $p.print(${ Expr(toPrint) }) }
-
-  def parse(p: Expr[Parser])(using
-      ctx: Expr[P[Any]]
-  )(using quotes: Quotes): Expr[P[Unit]] =
-    literalStrMacro(Expr(literal))(ctx)
-
-/** Directive for an operation's attribute dictionnary. Its presence is
-  * mandatory in every declarative assembly format, as this ensures the
-  * operation's unknown added attributes are carried by its syntax.
-  *
-  * As MLIR does, it also carries the `properties` the rest of the format does
-  * not spell out, so that no property is lost by a custom syntax.
-  */
-case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
-
-  override def print(op: Expr[?], p: Expr[Printer])(using
-      state: PrintingState
-  )(using Quotes): Expr[Unit] =
-    state.lastWasPunctuation = false
-    val attributes = '{
-      ${ selectMember[Map[String, Attribute]](op, "attributes") }
-    }
-    val printed =
-      if properties.isEmpty then attributes
-      else
-        val props = selectMember[Map[String, Attribute]](op, "properties")
-        // TODO: Might be more efficient to unroll the named properties at compile time instead of pushing to flatMap.
-        '{
-          $attributes ++ ${ Expr(properties) }
-            .flatMap(name => $props.get(name).map(name -> _))
-        }
-    '{ $p.printOptionalAttrDict($printed) }
-
-  def parse(p: Expr[Parser])(using
-      ctx: Expr[P[Any]]
-  )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ optionalAttributesP(using $ctx, $p) }
+/** The construct a variable or type directive refers to. */
+private def constructOf(directive: Variable | TypeOf): MayVariadicOpInputDef =
+  directive match
+    case Variable(construct) => construct
+    case TypeOf(construct)   => construct
 
 /** A unit property carries no value of its own: its presence is the
   * information, and it is spelled out by the literals around it, as in
   * ``(`volatile` $volatile_^)?``. Such a variable prints nothing and parses as
   * present without consuming any input.
   */
-private def isUnitProperty(construct: OpInputDef)(using Quotes): Boolean =
-  construct match
-    case OpPropertyDef(tpe = '[UnitAttr]) => true
-    case _                                => false
+private object Flag:
 
-/** Directive for variables, handling operations' individual constructs
-  * (operands, results, regions, successors or properties).
+  def unapply(d: OpPropertyDef)(using Quotes): Boolean =
+    d.tpe match
+      case '[UnitAttr] => true
+      case _           => false
+
+/** A validated declarative assembly format.
+  *
+  * @param directives
+  *   The format's directives.
+  * @param unspelled
+  *   The properties the format does not spell out, carried by `attr-dict`.
   */
-case class VariableDirective(
-    construct: OpInputDef
-) extends Directive:
-
-  override def print(op: Expr[?], p: Expr[Printer])(using
-      state: PrintingState
-  )(using Quotes): Expr[Unit] =
-    if isUnitProperty(construct) then return '{ () }
-    val space = printSpace(p, state)
-    val printVar = construct match
-      case OperandDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ $p.print(${ selectMember[Operand[Attribute]](op, n) }) }
-          case Variadicity.Variadic =>
-            '{
-              $p.printList(${ selectMember[Seq[Operand[Attribute]]](op, n) })
-            }
-          case Variadicity.Optional =>
-            '{
-              $p.printList(${
-                selectMember[Option[Operand[Attribute]]](op, n)
-              })
-            }
-      case ResultDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ $p.print(${ selectMember[Result[Attribute]](op, n) }) }
-          case Variadicity.Variadic =>
-            '{
-              $p.printList(${ selectMember[Seq[Result[Attribute]]](op, n) })
-            }
-          case Variadicity.Optional =>
-            '{
-              $p.printList(${ selectMember[Option[Result[Attribute]]](op, n) })
-            }
-      case OpPropertyDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{
-              $p.print(${ selectMember[Attribute](op, n) })
-            }
-          case Variadicity.Optional =>
-            '{
-              ${ selectMember[Option[Attribute]](op, n) }.foreach($p.print)
-            }
-
-      case RegionDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ $p.print(${ selectMember[Region](op, n) }) }
-          case Variadicity.Optional =>
-            '{
-              ${ selectMember[Option[Region]](op, n) }.foreach($p.print)
-            }
-          case Variadicity.Variadic =>
-            '{
-              $p.printList(${ selectMember[Seq[Region]](op, n) })
-            }
-
-    Expr.block(List(space), printVar)
-
-  override def parse(p: Expr[Parser])(using
-      ctx: Expr[P[Any]]
-  )(using quotes: Quotes) =
-    construct match
-      // A unit property is spelled by the literals around it, so it parses as
-      // present without consuming any input.
-      case OpPropertyDef(
-            variadicity = Variadicity.Optional,
-            tpe = '[UnitAttr],
-          ) =>
-        '{ Pass(Some(UnitAttr()))(using $ctx) }
-      case OpPropertyDef(tpe = '[UnitAttr]) =>
-        '{ Pass(UnitAttr())(using $ctx) }
-      case OperandDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ operandNameP(using $ctx) }
-          case Variadicity.Variadic =>
-            '{ operandNamesP(using $ctx) }
-          case Variadicity.Optional =>
-            '{ given P[?] = $ctx; operandNameP.? }
-      case OpPropertyDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{
-              attributeP(using $ctx, $p)
-            }
-          case Variadicity.Optional =>
-            '{
-              given P[?] = $ctx
-              given Parser = $p
-              attributeP.?
-            }
-      case RegionDef(name, variadicity) =>
-        variadicity match
-          case Variadicity.Single =>
-            '{
-              given P[?] = $ctx
-              given Parser = $p
-              regionP(Seq())(using $ctx)
-            }
-          case Variadicity.Optional =>
-            '{
-              given P[?] = $ctx
-              given Parser = $p
-              regionP(Seq()).?
-            }
-          case Variadicity.Variadic =>
-            '{
-              given P[?] = $ctx
-              given Parser = $p
-              regionP(Seq())(using $ctx).rep(sep = ",")
-            }
-
-  override def isPresent(op: Expr[?])(using Quotes) =
-    import quotes.reflect.*
-    val p = selectMember[Any](op, construct.name)
-    construct match
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Variadic,
-          ) =>
-        '{ ${ p }.asInstanceOf[Seq[?]].size > 0 }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Optional,
-          ) =>
-        '{ ${ p }.asInstanceOf[Option[?]].isDefined }
-      case d: OpInputDef =>
-        report.errorAndAbort(
-          s"Variable directives can only be used as anchors when variadic or optional, tried to use `${d
-              .name}`."
-        )
-
-/** Directive for types of individual operands or results.
-  */
-case class TypeDirective(
-    construct: OperandDef | ResultDef
-) extends Directive:
-
-  override def print(op: Expr[?], p: Expr[Printer])(using
-      state: PrintingState
-  )(using Quotes): Expr[Unit] =
-
-    val space = printSpace(p, state)
-
-    val printType = construct match
-      case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
-        '{ $p.print(${ selectMember[Value[?]](op, n) }.typ) }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Variadic,
-          ) =>
-        '{
-          $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))
-        }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Optional,
-          ) =>
-        '{
-          ${ selectMember[Option[Value[?]]](op, n) }.map(_.typ).map($p.print)
-            .getOrElse(())
-        }
-
-    Expr.block(List(space), printType)
-
-  override def parse(p: Expr[Parser])(using
-      ctx: Expr[P[Any]]
-  )(using quotes: Quotes) =
-    construct match
-      case MayVariadicOpInputDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ typeP(using $ctx, $p) }
-          case Variadicity.Variadic =>
-            '{ typeListP(using $ctx, $p) }
-          case Variadicity.Optional =>
-            '{
-              given P[?] = $ctx
-              given Parser = $p
-              typeP.?
-            }
-
-  override def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
-    VariableDirective(construct).isPresent(op)
-
-case class OptionalGroupDirective(
-    anchor: Directive,
-    directives: Seq[Directive],
-) extends Directive:
-
-  def parse(
-      p: Expr[Parser]
-  )(using ctx: Expr[P[Any]])(using quotes: Quotes): Expr[P[Tuple]] =
-    '{
-      given P[?] = $ctx
-      (&(${ directives.head.parse(p) }) ~~ ${
-        AssemblyFormatDirective(directives).parseTuple(p)
-      }) | Pass(${
-        Expr
-          .ofTupleFromSeq(
-            AssemblyFormatDirective(directives).parsedDirectives.map(empty)
-          )
-      })
-    }
-
-  override def print(op: Expr[?], p: Expr[Printer])(using
-      state: PrintingState
-  )(using Quotes) =
-    '{
-      if ${ anchor.isPresent(op) }
-      then ${ Expr.block(directives.map(_.print(op, p)).toList, '{ () }) }
-    }
-
-  def empty(directive: Directive)(using quotes: Quotes) =
-    import quotes.reflect.*
-    directive match
-      case VariableDirective(
-            MayVariadicOpInputDef(variadicity = Variadicity.Variadic)
-          ) | TypeDirective(
-            MayVariadicOpInputDef(variadicity = Variadicity.Variadic)
-          ) =>
-        '{ Seq() }
-      case VariableDirective(
-            MayVariadicOpInputDef(variadicity = Variadicity.Optional)
-          ) | TypeDirective(
-            MayVariadicOpInputDef(variadicity = Variadicity.Optional)
-          ) =>
-        '{ None }
-      case _ =>
-        report
-          .errorAndAbort(
-            s"Unsupported directive in optional group: $directive"
-          )
-
-/** Helper function to chain parsers together using fastparse's sequencing
-  * operator. Handles different return types by matching on the specific parser
-  * types.
-  */
-transparent inline def chainParsers(
-    run: Expr[P[Any]],
-    next: Expr[P[Any]],
-)(using quotes: Quotes, ctx: Expr[P[Any]]): Expr[P[Any]] =
-
-  // This match to specialize the parsers types for fastparse's summoned Sequencer
-  // cf fastparse.Implicits.Sequencer.
-  //
-  // I feel like there might be a more elegant way, but I spent enough time to
-  // search for it and this sounds liek a localized enough compromise.
-  (run, next) match
-    case ('{ $run: P[Unit] }, '{ $next: P[n] }) =>
-      '{
-        given P[Any] = $ctx
-        $run ~ $next
-      }
-    case ('{ $run: P[r] }, '{ $next: P[Unit] }) =>
-      '{
-        given P[Any] = $ctx
-        $run ~ $next
-      }
-    case ('{ $run: P[Tuple] }, '{ $next: P[Tuple] }) =>
-      '{
-        given P[Any] = $ctx
-        given fastparse.Implicits.Sequencer[Tuple, Tuple, Tuple] =
-          fastparse.Implicits.Sequencer
-            .NarySequencer[Tuple, Tuple, Tuple](_ ++ _)
-        `~`($run)[Tuple, Tuple]($next)
-      }
-    case ('{ $run: P[Any] }, '{ $next: P[Tuple] }) =>
-      '{
-        given P[Any] = $ctx
-        given fastparse.Implicits.Sequencer[Any, Tuple, Tuple] =
-          fastparse.Implicits.Sequencer.NarySequencer[Any, Tuple, Tuple](_ *: _)
-        `~`($run)[Tuple, Tuple]($next)
-      }
-    case ('{ $run: P[Tuple] }, '{ $next: P[Any] }) =>
-      '{
-        given P[Any] = $ctx
-        given fastparse.Implicits.Sequencer[Tuple, Any, Tuple] =
-          fastparse.Implicits.Sequencer.NarySequencer[Tuple, Any, Tuple](_ :* _)
-        `~`($run)[Any, Tuple]($next)
-      }
-    case _ =>
-      '{
-        given P[Any] = $ctx
-        $run ~ $next
-      }
-
-/** Holds state during printer generation to manage spacing and punctuation.
-  */
-case class PrintingState(
-    var shouldEmitSpace: Boolean = true,
-    var lastWasPunctuation: Boolean = false,
-)
-
-/** Declarative assembly format representation. Contains a sequence of
-  * directives that define the format.
-  */
-case class AssemblyFormatDirective(
-    directives: Seq[Directive]
+final case class AssemblyFormatDef(
+    directives: List[Directive],
+    unspelled: List[OpPropertyDef],
 ):
 
-  /** The properties no other directive of the format spells out. As MLIR does,
-    * those are carried by the attribute dictionary.
+  /** Generate a specialized printer for this format.
+    *
+    * @param opDef
+    *   The definition of the operation.
+    * @param op
+    *   The ADT operation to print.
+    * @param p
+    *   The printer to print with.
     */
-  def propertiesInAttrDict(opDef: OperationDef): Seq[String] =
-    val spelled = parsedDirectives.collect {
-      case VariableDirective(OpPropertyDef(name = name)) => name
-    }
-    opDef.properties.map(_.name).filterNot(spelled.contains)
-
-  def print(opDef: OperationDef, op: Expr[?], p: Expr[Printer])(using
+  def print[T: Type](opDef: OperationDef, op: Expr[T], p: Expr[Printer])(using
       Quotes
   ): Expr[Unit] =
-    given PrintingState = PrintingState()
-    val inAttrDict = propertiesInAttrDict(opDef)
+    FormatPrinter(this, op, p).print(opDef.name)
+
+  /** Generate a specialized parser for this format, directly constructing the
+    * ADT operation.
+    *
+    * @param opDef
+    *   The definition of the operation.
+    * @param p
+    *   The Parser argument of the generated parser.
+    * @param resNames
+    *   The names of the results, parsed before the operation's name.
+    */
+  def parse[T <: Operation: Type](
+      opDef: OperationDef,
+      p: Expr[Parser],
+      resNames: Expr[Seq[String]],
+  )(using Quotes): Expr[P[Any] ?=> P[T]] =
+    '{ (ctx: P[Any]) ?=>
+      ${ FormatParser[T](this, opDef, p, resNames, 'ctx).parse }
+    }
+
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||      SYNTAX       ||
+\*≡==----=≡≡≡=----==≡*/
+
+/** A directive as written, before resolving its variables. */
+private enum Syntax:
+  case Literal(text: String)
+  case AttrDict
+  case Variable(name: String)
+  case TypeOf(name: String)
+  case OptionalGroup(elements: List[(Syntax, Boolean)])
+
+/** An assembly format identifier. Those should match Scala's identifier rules,
+  * for maximum compatibility with the ADT fields; this is an approximation.
+  */
+private def identifierP[$: P]: P[String] =
+  CharsWhileIn("a-zA-Z0-9_").!
+
+private def formatP[$: P]: P[List[Syntax]] = (syntaxP.rep(1) ~ End)
+  .map(_.toList)
+
+private def syntaxP[$: P]: P[Syntax] =
+  typeOfP | literalP | variableP | attrDictP | optionalGroupP
+
+private def literalP[$: P] = ("`" ~~ CharsWhile(_ != '`').! ~~ "`")
+  .map(Syntax.Literal(_))
+
+private def variableP[$: P] = ("$" ~~ identifierP).map(Syntax.Variable(_))
+
+private def typeOfP[$: P] = ("type(" ~~ "$" ~~ identifierP ~~ ")")
+  .map(Syntax.TypeOf(_))
+
+private def attrDictP[$: P] =
+  P("attr-dict").map(_ => Syntax.AttrDict)
+
+private def optionalGroupP[$: P] =
+  ("(" ~ (syntaxP ~~ "^".!.?.map(_.isDefined)).rep(1) ~ ")" ~ "?")./
+    .map(elements => Syntax.OptionalGroup(elements.toList))
+
+/** Parse a declarative assembly format string into its validated
+  * representation.
+  *
+  * @param format
+  *   The declarative assembly format.
+  * @param opDef
+  *   The definition of the operation it is the format of.
+  */
+def parseAssemblyFormat(format: String, opDef: OperationDef)(using
+    Quotes
+): AssemblyFormatDef =
+  import quotes.reflect.report
+
+  def abort(msg: String) =
+    report.errorAndAbort(s"Invalid assembly format for ${opDef.name}: $msg")
+
+  def lookup(name: String) =
+    opDef.allDefs.find(_.name == name)
+      .getOrElse(abort(s"`$$$name` is not a construct of the operation."))
+
+  def resolve(syntax: Syntax): Directive = syntax match
+    case Syntax.Literal(text)  => Literal(text)
+    case Syntax.AttrDict       => AttrDict
+    case Syntax.Variable(name) =>
+      lookup(name) match
+        case d: (OperandDef | RegionDef | OpPropertyDef) => Variable(d)
+        case _: ResultDef                                =>
+          abort(s"results can only be spelled as `type($$$name)`.")
+        case _: SuccessorDef =>
+          abort(s"successors are not supported, found `$$$name`.")
+    case Syntax.TypeOf(name) =>
+      lookup(name) match
+        case d: (OperandDef | ResultDef) => TypeOf(d)
+        case _ => abort(s"`$$$name` has no type, in `type($$$name)`.")
+    case Syntax.OptionalGroup(elements) =>
+      val body = elements.map((s, _) => resolve(s))
+      val anchor = (body zip elements)
+        .collect { case (d, (_, true)) => d } match
+        case Seq(anchor: (Variable | TypeOf)) => anchor
+        case _                                =>
+          abort("an optional group needs exactly one `^` anchor.")
+      if constructOf(anchor).variadicity == Variadicity.Single then
+        abort(s"the anchor `${constructOf(anchor).name}` is not optional.")
+      body.foreach {
+        case _: Literal             =>
+        case d: (Variable | TypeOf) =>
+          if constructOf(d).variadicity == Variadicity.Single then
+            abort(
+              s"`${constructOf(d).name}` in an optional group is not optional."
+            )
+        case _ =>
+          abort(
+            "`attr-dict` and optional groups cannot be in an optional group."
+          )
+      }
+      OptionalGroup(anchor, body)
+
+  val directives = fastparse.parse(format, formatP(using _)) match
+    case Parsed.Success(syntax, _) => syntax.map(resolve)
+    case failure: Parsed.Failure   => abort(failure.trace().msg)
+
+  val all = directives.flatMap {
+    case OptionalGroup(_, body) => body
+    case d                      => List(d)
+  }
+  def once(d: Directive, spelling: String) = all.count(_ == d) match
+    case 1 =>
+    case 0 => abort(s"$spelling is missing.")
+    case _ => abort(s"$spelling is spelled more than once.")
+
+  if opDef.successors.nonEmpty then abort("successors are not supported.")
+  once(AttrDict, "`attr-dict`")
+  opDef.operands.foreach(d =>
+    once(Variable(d), s"`$$${d.name}`")
+    once(TypeOf(d), s"`type($$${d.name})`")
+  )
+  opDef.results.foreach(d => once(TypeOf(d), s"`type($$${d.name})`"))
+  opDef.regions.foreach(d => once(Variable(d), s"`$$${d.name}`"))
+  opDef.properties.foreach(d =>
+    if all.count(_ == Variable(d)) > 1 then
+      abort(s"`$$${d.name}` is spelled more than once.")
+  )
+
+  AssemblyFormatDef(
+    directives,
+    unspelled = opDef.properties.filterNot(d => all.contains(Variable(d)))
+      .toList,
+  )
+
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||     PRINTING      ||
+\*≡==----=≡≡≡=----==≡*/
+
+/** The spacing context of a printed directive.
+  *
+  * @param emitSpace
+  *   Whether the previous directive allows a space after it.
+  * @param afterPunctuation
+  *   Whether the previous directive is punctuation.
+  */
+private final case class Spacing(
+    emitSpace: Boolean = true,
+    afterPunctuation: Boolean = false,
+):
+
+  /** Whether a value is preceded by a space, and the spacing after it. */
+  def value: (Boolean, Spacing) =
+    (emitSpace || !afterPunctuation, Spacing())
+
+  /** Whether a literal is preceded by a space, and the spacing after it. */
+  def literal(text: String): (Boolean, Spacing) =
+    val head = text.head
+    val space = emitSpace &&
+      (if text.size != 1 && text != "->" then true
+       else if afterPunctuation then !">)}],".contains(head)
+       else !"<>(){}[],".contains(head))
+    val isAlpha = (head >= 'a' && head <= 'z') || (head >= 'A' && head <= 'Z')
+    (
+      space,
+      Spacing(
+        emitSpace = text.size != 1 || !"<({[".contains(head),
+        afterPunctuation = head != '_' && !isAlpha,
+      ),
+    )
+
+/** Printer generation for a format, specialized to an ADT operation.
+  *
+  * The spacing between directives is entirely decided at compile time, folding
+  * a [[Spacing]] through them. An optional group's directives are folded as if
+  * present.
+  */
+private class FormatPrinter[T: Type](
+    format: AssemblyFormatDef,
+    op: Expr[T],
+    p: Expr[Printer],
+)(using Quotes):
+
+  def print(name: String): Expr[Unit] =
     Expr.block(
-      '{ $p.print($op.asInstanceOf[Operation].name) } +: directives.map {
-        case _: AttrDictDirective => AttrDictDirective(inAttrDict).print(op, p)
-        case directive            => directive.print(op, p)
-      }.toList,
+      '{ $p.print(${ Expr(name) }) } :: printAll(format.directives, Spacing())
+        ._1,
       '{},
     )
 
-  /** Generates a parser for this assembly format. It currently simply chains
-    * all the individual directives parsers. This will parse each directives'
-    * output into a tuple, which can then be used to generate the operation.
-    */
-  def parseTuple(p: Expr[Parser])(using
-      ctx: Expr[P[Any]]
-  )(using quotes: Quotes): Expr[P[Tuple]] =
-
-    directives.map(_.parse(p)).reduce(chainParsers) match
-      case '{ $tuple: P[Tuple] } =>
-        tuple
-      case '{ $default: P[d] } =>
-        '{ $default.map(Tuple1(_)) }
-
-  /** The list of directives that parse into something, as opposed to literal.
-    * Helps with indexing the parsed tuple.
-    */
-  def parsedDirectives: Seq[Directive] =
+  private def printAll(
+      directives: List[Directive],
+      spacing: Spacing,
+  ): (List[Expr[Unit]], Spacing) =
     directives
-      .flatMap(
-        _ match
-          case OptionalGroupDirective(_, ds) => ds
-          case d: Directive                  => Some(d)
-      ).filter(_ match
-        case _: LiteralDirective => false
-        case _                   => true)
+      .foldLeft((List.empty[Expr[Unit]], spacing)) {
+        case ((printed, spacing), directive) =>
+          val (code, next) = printOne(directive, spacing)
+          (printed ++ code, next)
+      }
 
-  /** Use the operation definition to generate logic to build the operation from
-    * the parsed tuple.
-    */
-  def buildOperation(
-      opDef: OperationDef,
-      p: Expr[Parser],
-      parsed: Expr[Tuple],
-      resNames: Expr[Seq[String]],
-  )(using ctx: Expr[P[Any]])(using Quotes) =
-    import quotes.reflect.report
+  private def printOne(
+      directive: Directive,
+      spacing: Spacing,
+  ): (Option[Expr[Unit]], Spacing) =
+    directive match
+      case Literal(text) =>
+        val (space, next) = spacing.literal(text)
+        val printed = if space then " " + text else text
+        (Some('{ $p.print(${ Expr(printed) }) }), next)
+      case AttrDict =>
+        (
+          Some('{ $p.printOptionalAttrDict($attrDict) }),
+          spacing.copy(afterPunctuation = false),
+        )
+      case Variable(Flag())       => (None, spacing)
+      case d: (Variable | TypeOf) =>
+        val (space, next) = spacing.value
+        val value = printValue(d)
+        (Some(if space then '{ $p.print(" "); $value } else value), next)
+      case OptionalGroup(anchor, body) =>
+        val (printed, next) = printAll(body, spacing)
+        (
+          Some('{
+            if ${ isPresent(anchor) } then ${ Expr.block(printed, '{}) }
+          }),
+          next,
+        )
 
-    // TODO: Bunch of refactoring to do here, akin to what happened in main Macros.
-    // I'm postponing it for now, as I feel it is worth considering actual code reuse
-    // with Macros, rather than just overengineering this part.
-    val operandNames = Map.from(
-      parsedDirectives.zipWithIndex.flatMap((d, i) =>
-        d match
-          case VariableDirective(OperandDef(name = name)) =>
-            Some(name -> '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
-          case _ => None
-      )
-    )
-    val operandNamesArg =
-      Expr.ofList(opDef.operands.map(od => (operandNames(od.name))))
-    val flatOperandNames = '{
-      $operandNamesArg.flatMap(op =>
-        op match
-          case op: String      => Seq(op)
-          case op: Seq[String] => op
-      )
-    }
+  private def printValue(directive: Variable | TypeOf): Expr[Unit] =
+    directive match
+      case Variable(d: OperandDef) =>
+        printEach[Value[Attribute]](d)(v => '{ $p.print($v) })
+      case Variable(d: RegionDef) =>
+        printEach[Region](d)(r => '{ $p.print($r) })
+      case Variable(d: OpPropertyDef) =>
+        printEach[Attribute](d)(a => '{ $p.print($a) })
+      case TypeOf(d) =>
+        printEach[Value[Attribute]](d)(v => '{ $p.print($v.typ) })
 
-    val operandTypes = Map.from(
-      parsedDirectives.zipWithIndex.flatMap((d, i) =>
-        d match
-          case TypeDirective(OperandDef(name = name)) =>
-            Some(name -> '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
-          case _ => None
-      )
-    )
-    val operandTypesArg =
-      Expr.ofList(opDef.operands.map(od => (operandTypes(od.name))))
-    val flatOperandTypes = '{
-      $operandTypesArg.flatMap(op =>
-        op match
-          case op: Attribute      => Seq(op)
-          case op: Seq[Attribute] => op
-      )
-    }
-
-    val resultTypes = Map.from(
-      parsedDirectives.zipWithIndex.flatMap((d, i) =>
-        d match
-          case TypeDirective(ResultDef(name = name)) =>
-            Some(name -> '{ $parsed(${ Expr(i) }) }.asExprOf[Any])
-          case _ => None
-      )
-    )
-    val resultTypesArg =
-      Expr.ofList(opDef.results.map(od => (resultTypes(od.name))))
-    val flatResultTypes = '{
-      $resultTypesArg.flatMap(op =>
-        op match
-          case op: Attribute      => Seq(op)
-          case op: Seq[Attribute] => op
-      )
-    }
-
-    val regionsArg = Expr
-      .ofList(
-        parsedDirectives.zipWithIndex
-          .collect { case (VariableDirective(RegionDef(name = name)), i) =>
-            '{ $parsed(${ Expr(i) }) }.asExprOf[Any]
-          }
-      )
-    val flatRegionsArg = '{
-      $regionsArg.flatMap(op =>
-        op match
-          case op: Region      => Seq(op)
-          case op: Seq[Region] => op
-      )
-    }
-
-    val attrDictIndex = parsedDirectives.zipWithIndex.find(_._1 match
-      case _: AttrDictDirective => true
-      case _                    => false) match
-      case Some((_: AttrDictDirective, i)) => i
-      case _                               =>
-        report
-          .errorAndAbort(
-            "Assembly format directive must contain an `attr-dict` directive"
-          )
-
-    val parsedAttrDict = '{
-      $parsed(${ Expr(attrDictIndex) }).asInstanceOf[Map[String, Attribute]]
-    }
-
-    // The properties the format does not spell out were parsed as part of the
-    // attribute dictionary; take them back out of it.
-    val inAttrDict = propertiesInAttrDict(opDef)
-    val attrDict =
-      if inAttrDict.isEmpty then parsedAttrDict
-      else '{ $parsedAttrDict -- ${ Expr(inAttrDict) } }
-
-    // An optional property parses into an Option; it only makes it into the
-    // properties dictionary when it is actually there.
-    val propertiesEntries = parsedDirectives.zipWithIndex.collect {
-      case (
-            VariableDirective(
-              OpPropertyDef(name = name, variadicity = Variadicity.Optional)
-            ),
-            i,
-          ) =>
-        val value = '{ $parsed(${ Expr(i) }) }.asExprOf[Any]
-        '{ $value.asInstanceOf[Option[Attribute]].map((${ Expr(name) }, _)) }
-      case (VariableDirective(OpPropertyDef(name = name)), i) =>
-        val value = '{ $parsed(${ Expr(i) }) }.asExprOf[Any]
-        '{ Some((${ Expr(name) }, $value.asInstanceOf[Attribute])) }
-    }
-    val spelledProperties = '{
-      Map.from(${ Expr.ofList(propertiesEntries) }.flatten)
-    }
-    val propertiesDict =
-      if inAttrDict.isEmpty then spelledProperties
-      else
+  /** Print each element of a construct, according to its variadicity. */
+  private def printEach[E: Type](d: MayVariadicOpInputDef)(
+      one: Expr[E] => Expr[Unit]
+  ): Expr[Unit] =
+    d.variadicity match
+      case Variadicity.Single   => one(selectMember[E](op, d.name))
+      case Variadicity.Optional =>
+        '{ ${ selectMember[Option[E]](op, d.name) }.foreach(e => ${ one('e) }) }
+      case Variadicity.Variadic =>
         '{
-          $spelledProperties ++ ${ Expr(inAttrDict) }
-            .flatMap(name => $parsedAttrDict.get(name).map(name -> _))
+          $p.printListF(
+            ${ selectMember[Seq[E]](op, d.name) },
+            e => ${ one('e) },
+          )
         }
-    // This pushes the constructor disptching to runtime just like with generic syntax.
-    // TODO: This should at least generate a call to the right Unstructured[T] constructor.
-    // Or of course, directly T if so we choose.
-    '{
-      $p.generateOperationP(
-        opName = ${ Expr(opDef.name) },
-        operandsNames = $flatOperandNames,
-        operandsTypes = $flatOperandTypes,
-        resultsNames = $resNames,
-        resultsTypes = $flatResultTypes,
-        attributes = $attrDict,
-        properties = $propertiesDict,
-        regions = $flatRegionsArg,
-      )(using $ctx)
-    }
 
-  /** Generate a complete specialized parser for this assembly format and
-    * operation definition. This will parse the assembly format into a tuple of
-    * parsed values, which can then be used to build the operation using the
-    * operation definition.
-    *
-    * @param opDef
-    *   The OperationDef for which to generate the parser.
-    * @param p
-    *   The Parser argument of the generated parser.
-    * @param ctx
-    *   The P context for the generated parser.
-    * @return
-    *   Specialized code to parse an assembly format into an Operation.
-    */
-  def parse[O <: Operation: Type](
-      opDef: OperationDef,
-      p: Expr[Parser],
-      resNames: Expr[Seq[String]],
-  )(using
-      quotes: Quotes
-  ): Expr[P[Any] ?=> P[O]] =
-    '{ (ctx: P[Any]) ?=>
-      ${ parseTuple(p)(using '{ ctx }) }.flatMap(parsed =>
-        ${ buildOperation(opDef, p, '{ parsed }, resNames)(using 'ctx) }
-          .asInstanceOf[P[O]]
-      )
-    }
+  private def isPresent(anchor: Variable | TypeOf): Expr[Boolean] =
+    val d = constructOf(anchor)
+    d.variadicity match
+      case Variadicity.Optional =>
+        '{ ${ selectMember[Option[Any]](op, d.name) }.isDefined }
+      case _ =>
+        '{ ${ selectMember[Seq[Any]](op, d.name) }.nonEmpty }
 
-case class Anchor(directive: Directive)
-
-/** Parses an assembly format identifier. Those should match Scala's identifier
-  * rules, for maximum compatibility with the ADT fields; this is an
-  * approximation.
-  */
-def assemblyIdP[$: P]: P[String] =
-  CharsWhileIn("a-zA-Z0-9_").!
-
-/** Parser for the complete assembly format. Parses one or more directives into
-  * an AssemblyFormatDirective.
-  */
-def assemblyFormatP[$: P](using
-    opDef: OperationDef
-): P[AssemblyFormatDirective] = (directiveP.rep(1) ~ End)
-  .map(AssemblyFormatDirective.apply)
-
-/** Parser for any directive.
-  */
-def directiveP[$: P](using
-    opDef: OperationDef
-): P[Directive] =
-  typeDirectiveP | literalDirectiveP | variableDirectiveP | attrDictDirectiveP |
-    optionalGroupDirectiveP
-
-/** Parser for literal directives. Parses text enclosed in backticks as a
-  * literal directive.
-  */
-def literalDirectiveP[$: P]: P[LiteralDirective] =
-  ("`" ~~ CharsWhile(_ != '`').! ~~ "`").map(LiteralDirective.apply)
-
-/** Parser for variable directives. Parses a dollar sign followed by an
-  * identifier, which references a construct of the Operation.
-  */
-def variableDirectiveP[$: P](using opDef: OperationDef) = ("$" ~~ assemblyIdP)
-  .map(name => opDef.allDefs.find(_.name == name)).filter(_.nonEmpty).map(_.get)
-  .map(VariableDirective(_))
-
-/** Parser for type directives. Parses "type($var)" where $var is a variable
-  * directive.
-  */
-def typeDirectiveP[$: P](using opDef: OperationDef) =
-  ("type(" ~~ variableDirectiveP ~~ ")").map(d =>
-    d match
-      case VariableDirective(c: OperandDef) => Some(TypeDirective(c))
-      case VariableDirective(c: ResultDef)  => Some(TypeDirective(c))
-      case _                                => None
-  ).filter(_.nonEmpty).map(_.get)
-
-/** Parser for attribute dictionary directives. Parses the keyword "attr-dict"
-  * into an AttrDictDirective.
-  */
-def attrDictDirectiveP[$: P]: P[AttrDictDirective] =
-  ("attr-dict").map(_ => AttrDictDirective())
-
-def possiblyAnchoredDirectiveP[$: P](using
-    opDef: OperationDef
-) = (directiveP ~~ "^").map(Anchor.apply) | directiveP
-
-def optionalGroupDirectiveP[$: P](using opDef: OperationDef): P[Directive] =
-  ("(" ~ possiblyAnchoredDirectiveP.rep(1) ~ ")" ~ "?")./
-    .filter(
-      _.count(_.isInstanceOf[Anchor]) == 1
-    ).map(directives =>
-      val anchor = directives.find(_.isInstanceOf[Anchor]).get
-        .asInstanceOf[Anchor].directive
-      val flatDirectives = directives.map(d =>
-        d match
-          case Anchor(d)    => d
-          case d: Directive => d
-      )
-      OptionalGroupDirective(anchor, flatDirectives)
+  /** The attribute dictionary, along with the unspelled properties. */
+  private def attrDict: Expr[Map[String, Attribute]] =
+    format.unspelled.foldLeft(
+      selectMember[Map[String, Attribute]](op, "attributes")
+    )((dict, d) =>
+      val name = Expr(d.name)
+      d.variadicity match
+        case Variadicity.Single =>
+          '{ $dict.updated($name, ${ selectMember[Attribute](op, d.name) }) }
+        case Variadicity.Optional =>
+          '{
+            val current = $dict
+            ${ selectMember[Option[Attribute]](op, d.name) } match
+              case Some(value) => current.updated($name, value)
+              case None        => current
+          }
     )
 
-/** Parse a declarative assembly format string into an AssemblyFormatDirective,
-  * its internal representation for implementation generation.
+/*≡≡=---=≡≡≡≡≡=---=≡≡*\
+||      PARSING      ||
+\*≡==----=≡≡≡=----==≡*/
+
+/** A parser for some directives capturing no value, e.g., literals. */
+private final case class Skipped(parser: Expr[P[Unit]])
+
+/** A parser for some directives capturing values.
+  *
+  * @param parser
+  *   The parser, yielding a (nested pair of) captured value(s).
+  * @param empty
+  *   The value yielded when the directives are absent, if they can be.
+  * @param bind
+  *   Where each directive's value lands in the parser's result.
   */
-def parseAssemblyFormat(
-    format: String,
+private final case class Captured[T](
+    parser: Expr[P[T]],
+    empty: Option[Expr[T]],
+    bind: Expr[T] => Map[Directive, Expr[Any]],
+)(using val tpe: Type[T])
+
+private type Parsed = Skipped | Captured[?]
+
+/** A resolution step of a construct, from its captured values.
+  *
+  * @param name
+  *   The name of the construct.
+  * @param parser
+  *   The parser yielding the resolved construct.
+  */
+private final case class Step[V](name: String, parser: Expr[P[V]])(using
+    val tpe: Type[V]
+)
+
+/** Parser generation for a format, specialized to an ADT operation.
+  *
+  * Each directive's parser has a precise type; sequencing them with fastparse's
+  * `~` yields nested pairs of captured values, which are then bound to the
+  * operation's constructs to directly construct it.
+  */
+private class FormatParser[T <: Operation: Type](
+    format: AssemblyFormatDef,
     opDef: OperationDef,
-): AssemblyFormatDirective =
-  given OperationDef = opDef
-  fastparse.parse(format, assemblyFormatP(using _)) match
-    case Parsed.Success(value, index) =>
-      value
-    case failure: Parsed.Failure =>
-      throw new Exception(
-        s"Failed to parse assembly format: ${failure.extra.trace().msg}"
+    p: Expr[Parser],
+    resNames: Expr[Seq[String]],
+    ctx: Expr[P[Any]],
+)(using Quotes):
+
+  def parse: Expr[P[T]] =
+    sequence(format.directives) match
+      case c: Captured[t] =>
+        given Type[t] = c.tpe
+        '{
+          given P[Any] = $ctx
+          ${ c.parser }.flatMap((parsed: t) => ${ build(c.bind('parsed)) })
+        }
+      // A format always captures its attribute dictionary.
+      case Skipped(_) => quotes.reflect.report.errorAndAbort("Unreachable")
+
+  private def sequence(directives: List[Directive]): Parsed =
+    directives.map(parseOne).reduceLeft(andThen)
+
+  private def andThen(first: Parsed, second: Parsed): Parsed =
+    (first, second) match
+      case (Skipped(a), Skipped(b)) =>
+        Skipped('{ given P[Any] = $ctx; $a ~ $b })
+      case (Skipped(a), b: Captured[t]) =>
+        given Type[t] = b.tpe
+        b.copy(parser = '{ given P[Any] = $ctx; $a ~ ${ b.parser } })
+      case (a: Captured[t], Skipped(b)) =>
+        given Type[t] = a.tpe
+        a.copy(parser = '{ given P[Any] = $ctx; ${ a.parser } ~ $b })
+      case (a: Captured[s], b: Captured[t]) =>
+        given Type[s] = a.tpe
+        given Type[t] = b.tpe
+        Captured[(s, t)](
+          '{ given P[Any] = $ctx; ${ a.parser } ~ ${ b.parser } },
+          a.empty.zip(b.empty).map((x, y) => '{ ($x, $y) }),
+          v => a.bind('{ $v._1 }) ++ b.bind('{ $v._2 }),
+        )
+
+  private def parseOne(directive: Directive): Parsed =
+    directive match
+      case Literal(text) =>
+        Skipped(literalStrMacro(Expr(text))(ctx))
+      case AttrDict =>
+        captured(directive, '{ optionalAttributesP(using $ctx, $p) })
+      case Variable(d @ Flag()) =>
+        lifted(directive, d.variadicity, '{ Pass(UnitAttr())(using $ctx) })
+      case Variable(d: OperandDef) =>
+        lifted(
+          directive,
+          d.variadicity,
+          '{ operandNameP(using $ctx) },
+          '{ operandNamesP(using $ctx) },
+        )
+      case Variable(d: RegionDef) =>
+        lifted(
+          directive,
+          d.variadicity,
+          '{
+            given P[Any] = $ctx
+            given Parser = $p
+            regionP()
+          },
+          '{
+            given P[Any] = $ctx
+            given Parser = $p
+            regionP().rep(sep = ",")
+          },
+        )
+      case Variable(d: OpPropertyDef) =>
+        lifted(directive, d.variadicity, '{ attributeP(using $ctx, $p) })
+      case TypeOf(d) =>
+        lifted(
+          directive,
+          d.variadicity,
+          '{ typeP(using $ctx, $p) },
+          '{ typeListP(using $ctx, $p) },
+        )
+      case OptionalGroup(_, body) =>
+        val first = parseOne(body.head) match
+          case Skipped(parser) => parser
+          case c: Captured[?]  => c.parser
+        sequence(body) match
+          case c: Captured[t] =>
+            given Type[t] = c.tpe
+            // Validated: every directive of a group can be absent.
+            val empty = c.empty.get
+            c.copy(parser = '{
+              given P[Any] = $ctx
+              (&($first) ~~ ${ c.parser }) | Pass($empty)
+            })
+          // Validated: a group captures its anchor.
+          case Skipped(_) => quotes.reflect.report.errorAndAbort("Unreachable")
+
+  private def captured[V: Type](
+      directive: Directive,
+      parser: Expr[P[V]],
+      empty: Option[Expr[V]] = None,
+  ): Captured[V] =
+    Captured(parser, empty, v => Map(directive -> v))
+
+  /** The parser of a construct, lifted from the parser of one element according
+    * to its variadicity.
+    */
+  private def lifted[E: Type](
+      directive: Directive,
+      variadicity: Variadicity,
+      one: Expr[P[E]],
+      many: => Expr[P[Seq[E]]] = quotes.reflect.report
+        .errorAndAbort("Unreachable"),
+  ): Captured[?] =
+    variadicity match
+      case Variadicity.Single   => captured(directive, one)
+      case Variadicity.Optional =>
+        captured(
+          directive,
+          '{ given P[Any] = $ctx; $one.? },
+          Some('{ None }),
+        )
+      case Variadicity.Variadic =>
+        captured(directive, many, Some('{ Seq() }))
+
+  /*≡≡=--=≡≡ CONSTRUCTION ≡≡=--=≡≡*/
+
+  /** Construct the operation from the captured values.
+    *
+    * Operands and results are resolved, in that order, before directly calling
+    * the ADT's constructor.
+    */
+  private def build(values: Map[Directive, Expr[Any]]): Expr[P[T]] =
+    val attrDict = values(AttrDict).asExprOf[Map[String, Attribute]]
+    val operands = opDef.operands
+      .map(d => resolveOperand(d, values(Variable(d)), values(TypeOf(d))))
+    val (results, expected) =
+      resolveResults(opDef.results.map(d => d -> values(TypeOf(d))).toList)
+    resolving(operands.toList) { operands =>
+      checkResults(expected) {
+        resolving(results) { results =>
+          val regions = opDef.regions.map(d => d.name -> values(Variable(d)))
+          val properties = opDef.properties.map(d =>
+            val value = values.get(Variable(d)) match
+              case None => '{ $attrDict.get(${ Expr(d.name) }) }
+              case Some(value) if d.variadicity == Variadicity.Single =>
+                '{ Some(${ value.asExprOf[Attribute] }) }
+              case Some(value) => value.asExprOf[Option[Attribute]]
+            d.name -> propertyArgument(d, value)
+          )
+          val attributes =
+            if format.unspelled.isEmpty then attrDict
+            else '{ $attrDict -- ${ Expr(format.unspelled.map(_.name)) } }
+          val constructed = construct[T](
+            opDef.operands.map(d => d.name -> operands(d.name)) ++
+              opDef.results.map(d => d.name -> results(d.name)) ++ regions ++
+              properties
+          )
+          '{
+            given P[Any] = $ctx
+            try
+              val op = $constructed
+              op.attributes ++= $attributes
+              Pass(op)
+            catch case NonFatal(e) => Fail(e.getMessage)
+          }
+        }
+      }
+    }
+
+  /** Bind the values of resolution steps, in order, to build a parser. */
+  private def resolving(
+      steps: List[Step[?]],
+      resolved: Map[String, Expr[Any]] = Map(),
+  )(k: Map[String, Expr[Any]] => Expr[P[T]]): Expr[P[T]] =
+    steps match
+      case Nil                          => k(resolved)
+      case (step: Step[v]) :: remaining =>
+        given Type[v] = step.tpe
+        '{
+          ${ step.parser }.flatMapX((value: v) =>
+            ${ resolving(remaining, resolved + (step.name -> 'value))(k) }
+          )
+        }
+
+  /** Resolve a construct from its parsed name(s) and type(s), lifting the
+    * resolution of one element according to its variadicity.
+    */
+  private def resolve[V: Type](
+      d: MayVariadicOpInputDef,
+      kind: String,
+      names: Expr[Any],
+      types: Expr[Any],
+  )(one: (Expr[String], Expr[Attribute]) => Expr[P[V]]): Step[?] =
+    d.variadicity match
+      case Variadicity.Single =>
+        Step(d.name, one(names.asExprOf[String], types.asExprOf[Attribute]))
+      case Variadicity.Optional =>
+        val name = names.asExprOf[Option[String]]
+        val typ = types.asExprOf[Option[Attribute]]
+        Step(
+          d.name,
+          '{
+            FormatParsing.optional($name, $typ, ${ Expr(kind) })((n, t) =>
+              ${ one('n, 't) }
+            )(using $ctx)
+          },
+        )
+      case Variadicity.Variadic =>
+        val name = names.asExprOf[Seq[String]]
+        val typ = types.asExprOf[Seq[Attribute]]
+        Step(
+          d.name,
+          '{
+            FormatParsing.variadic($name, $typ, ${ Expr(kind) })((n, t) =>
+              ${ one('n, 't) }
+            )(using $ctx)
+          },
+        )
+
+  private def resolveOperand(
+      d: OperandDef,
+      names: Expr[Any],
+      types: Expr[Any],
+  ): Step[?] =
+    d.tpe match
+      case '[type t <: Attribute; `t`] =>
+        resolve(d, "operand", names, types)((name, typ) =>
+          '{ FormatParsing.operand[t]($name, $typ)(using $ctx, $p) }
+        )
+
+  /** Resolve results, in order, distributing the result names over them.
+    *
+    * @return
+    *   The resolution steps, and the expected number of result names.
+    */
+  private def resolveResults(
+      types: List[(ResultDef, Expr[Any])]
+  ): (List[Step[?]], Expr[Int]) =
+    val sizes = types.map((d, types) =>
+      d.variadicity match
+        case Variadicity.Single   => Expr(1)
+        case Variadicity.Optional =>
+          '{ ${ types.asExprOf[Option[Attribute]] }.size }
+        case Variadicity.Variadic =>
+          '{ ${ types.asExprOf[Seq[Attribute]] }.size }
+    )
+    val offsets = sizes
+      .scanLeft(Expr(0))((offset, size) => '{ $offset + $size })
+    val steps = types.lazyZip(sizes).lazyZip(offsets).map {
+      case ((d, types), size, offset) =>
+        val names = d.variadicity match
+          case Variadicity.Single   => '{ $resNames($offset) }
+          case Variadicity.Optional =>
+            '{ Option.when($size == 1)($resNames($offset)) }
+          case Variadicity.Variadic =>
+            '{ $resNames.slice($offset, $offset + $size) }
+        d.tpe match
+          case '[type t <: Attribute; `t`] =>
+            resolve(d, "result", names, types)((name, typ) =>
+              '{ FormatParsing.result[t]($name, $typ)(using $ctx, $p) }
+            )
+    }
+    (steps, offsets.last)
+
+  /** Check the number of result names against the expected one. */
+  private def checkResults(expected: Expr[Int])(
+      k: => Expr[P[T]]
+  ): Expr[P[T]] =
+    '{
+      given P[Any] = $ctx
+      val count = $expected
+      if $resNames.length != count then
+        Fail(
+          s"Number of results (${$resNames.length}) does not match the number of the corresponding result types ($count) in \"${${
+              Expr(opDef.name)
+            }}\"."
+        )
+      else $k
+    }
+
+/*≡≡=---=≡≡≡≡≡≡≡=---=≡≡*\
+||   RUNTIME SUPPORT   ||
+\*≡==----=≡≡≡≡≡=----==≡*/
+
+/** Parsers used by the generated parsers, resolving operands and results.
+  *
+  * Their types are refined unchecked to the ADT's field types, as is the case
+  * for any structured operation: those are checked by its verification.
+  */
+object FormatParsing:
+
+  def operand[A <: Attribute](name: String, typ: Attribute)(using
+      P[Any],
+      Parser,
+  ): P[Operand[A]] =
+    operandP(name, typ).asInstanceOf[P[Operand[A]]]
+
+  def result[A <: Attribute](name: String, typ: Attribute)(using
+      P[Any],
+      Parser,
+  ): P[Result[A]] =
+    resultP(name, typ).asInstanceOf[P[Result[A]]]
+
+  /** Resolve an optional construct from its optional name and type. */
+  inline def optional[V](
+      name: Option[String],
+      typ: Option[Attribute],
+      kind: String,
+  )(inline one: (String, Attribute) => P[V])(using P[Any]): P[Option[V]] =
+    (name, typ) match
+      case (Some(name), Some(typ)) => one(name, typ).map(Some(_))
+      case (None, None)            => Pass(None)
+      case _                       => countFailure(kind, name.size, typ.size)
+
+  /** Resolve a variadic construct from its names and types. */
+  inline def variadic[V](
+      names: Seq[String],
+      types: Seq[Attribute],
+      kind: String,
+  )(inline one: (String, Attribute) => P[V])(using P[Any]): P[Seq[V]] =
+    if names.length != types.length then
+      countFailure(kind, names.length, types.length)
+    else
+      names.indices.foldLeft(Pass(Vector.empty[V]))((resolved, i) =>
+        resolved
+          .flatMapX(resolved => one(names(i), types(i)).map(resolved :+ _))
       )
+
+  def countFailure(kind: String, names: Int, types: Int)(using P[Any]) =
+    Fail(
+      s"Number of ${kind}s ($names) does not match the number of the corresponding $kind types ($types)."
+    )

@@ -272,9 +272,9 @@ def propertiesMacro(
     }
   )
 
-def customPrintMacro(
+def customPrintMacro[T: Type](
     opDef: OperationDef,
-    adtOpExpr: Expr[?],
+    adtOpExpr: Expr[T],
     p: Expr[Printer],
 )(using Quotes): Expr[Unit] =
   opDef.assemblyFormat match

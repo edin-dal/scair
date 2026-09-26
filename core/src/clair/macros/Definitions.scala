@@ -1,6 +1,5 @@
 package scair.clair.macros
 
-import scair.clair.macros.AssemblyFormatDirective
 import scair.constraints.ConstraintImpl
 import scair.ir.Attribute
 
@@ -105,7 +104,7 @@ case class OperationDef(
     val regions: Seq[RegionDef] = Seq(),
     val successors: Seq[SuccessorDef] = Seq(),
     val properties: Seq[OpPropertyDef] = Seq(),
-    val assemblyFormat: Option[AssemblyFormatDirective] = None,
+    val assemblyFormat: Option[AssemblyFormatDef] = None,
     val sameVariadicOperandSize: Boolean = false,
     val sameVariadicResultSize: Boolean = false,
 ):
