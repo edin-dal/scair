@@ -37,6 +37,7 @@ case class ScairOptArgs(
     val passes: Seq[String] = Seq(),
     val verifyDiagnostics: Boolean = false,
     val printLocations: Boolean = false,
+    val parseLocations: Boolean = false,
 )
 
 trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
@@ -61,6 +62,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         parsingDiagnostics = args.parsingDiagnostics,
         allowUnregisteredDialect = args.allowUnregistered,
         inputLineOffset = indexOffset,
+        sourceLocations = args.parseLocations,
       )
       val parsed = parser.parse(
         input,
@@ -103,6 +105,9 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
         opt[Unit]("print-locations").optional()
           .text("Print operation source locations")
           .action((_, c) => c.copy(printLocations = true)),
+        opt[Unit]("parse-locations").optional()
+          .text("Record operation source locations while parsing")
+          .action((_, c) => c.copy(parseLocations = true)),
         opt[Seq[String]]('p', "passes").optional()
           .text("Specify passes to apply to the IR")
           .action((x, c) => c.copy(passes = x)),
