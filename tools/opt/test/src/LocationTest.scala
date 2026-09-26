@@ -75,7 +75,8 @@ class LocationTest extends AnyFlatSpec:
         s"\"arith.constant\"() <{value = 1 : i32}> : () -> i32 loc(\"$input\":2:8)"
       )
       located should endWith(s"} loc(\"$input\":1:1)\n")
-      val generic = run("--print-locations", "--parse-locations", "--print-generic")
+      val generic =
+        run("--print-locations", "--parse-locations", "--print-generic")
       generic should include(s"loc(\"$input\":2:8)")
       generic should endWith(s"loc(\"$input\":1:1)\n")
     finally Files.deleteIfExists(input)
