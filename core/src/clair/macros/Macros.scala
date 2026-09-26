@@ -377,7 +377,9 @@ def verifyMacro(
     )
 
   // Operand constraints share one context (e.g. for `Var` constraints); each
-  // check is generated against the context expression it is given.
+  // check is generated against the context expression it is given. Their
+  // errors only know of the checked attribute, so they are attached to the op
+  // and prefixed with the operand name.
   val constraints
       : Seq[Expr[scair.constraints.ConstraintContext] => Expr[OK[Unit]]] =
     opDef.operands.collect {
@@ -385,7 +387,16 @@ def verifyMacro(
         val typ = '{
           ${ selectMember[Operand[Attribute]](adtOpExpr, name) }.typ
         }
-        ctx => '{ $constraint.verify($typ)(using $ctx) }
+        ctx =>
+          '{
+            $constraint.verify($typ)(using $ctx) match
+              case e: Err =>
+                e.copy(
+                  msg = s"${${ Expr(name) }}: ${e.msg}",
+                  obj = e.obj.orElse(Some($op)),
+                ): OK[Unit]
+              case ok => ok
+          }
     }
 
   // Sequence the checks, short-circuiting on the first error, and yield the op.

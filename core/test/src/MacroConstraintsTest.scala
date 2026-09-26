@@ -36,10 +36,11 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
       val res = x.verify()
       assert(res.isError)
+      assert(res.getError.obj.exists(_ eq x))
       assert(
         res.getError.msg
           .contains(
-            s"Expected $f32, got ${Float64Type()}"
+            s"lhs: Expected $f32, got ${Float64Type()}"
           )
       )
     }
@@ -66,10 +67,11 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
       val res = x.verify()
       assert(res.isError)
+      assert(res.getError.obj.exists(_ eq x))
       assert(
         res.getError.msg
           .contains(
-            s"Expected ${Float32Type()}, got ${Float64Type()}"
+            s"rhs: Expected ${Float32Type()}, got ${Float64Type()}"
           )
       )
     }
@@ -83,10 +85,11 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
     val res = x.verify()
     assert(res.isError)
+    assert(res.getError.obj.exists(_ eq x))
     assert(
       res.getError.msg
         .contains(
-          s"Expected ${Float64Type()}, got ${Float32Type()}"
+          s"rhs: Expected ${Float64Type()}, got ${Float32Type()}"
         )
     )
   }
@@ -100,10 +103,11 @@ class MacroConstraintsTest extends AnyFlatSpec with BeforeAndAfter:
 
     val res = x.verify()
     assert(res.isError)
+    assert(res.getError.obj.exists(_ eq x))
     assert(
       res.getError.msg
         .contains(
-          s"Expected ${Float32Type()}, got ${Float64Type()}"
+          s"rhs: Expected ${Float32Type()}, got ${Float64Type()}"
         )
     )
   }
