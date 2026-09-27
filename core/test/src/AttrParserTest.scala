@@ -15,12 +15,12 @@ import java.io.*
 class AttrParserTest extends AnyFlatSpec with BeforeAndAfter:
 
   val ctx = MLContext()
-  var parser = new Parser(ctx, allowUnregisteredDialect = true)
+  var parser = Parser(ctx, allowUnregisteredDialect = true)
   var out = StringWriter()
   var printer = new AssemblyPrinter(true, p = PrintWriter(out))
 
   before {
-    parser = new Parser(ctx, allowUnregisteredDialect = true)
+    parser = Parser(ctx, allowUnregisteredDialect = true)
     out = StringWriter()
     printer = new AssemblyPrinter(true, p = PrintWriter(out))
   }

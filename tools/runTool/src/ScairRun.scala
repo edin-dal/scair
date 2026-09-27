@@ -67,7 +67,7 @@ trait ScairRunBase extends ScairToolBase[ScairRunArgs]:
     // ONE CHUNK ONLY
 
     val inputModule =
-      val parser = new Parser(ctx, inputPath = args.input)
+      val parser = Parser(ctx, inputPath = args.input)
       parser.parse(
         input = input.mkString,
         parser = moduleP(using _, parser),

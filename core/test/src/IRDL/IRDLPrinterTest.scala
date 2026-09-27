@@ -18,7 +18,7 @@ class IRDLPrinterTest extends AnyFlatSpec:
   val ctx = MLContext()
   ctx.registerDialect(BuiltinDialect)
   ctx.registerDialect(IRDL)
-  var parser = new Parser(ctx)
+  var parser = Parser(ctx)
 
   val module = parser
     .parse("""

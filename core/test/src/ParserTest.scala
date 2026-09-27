@@ -31,10 +31,10 @@ class ParserTest
       case _                                              => false
 
   val ctx = new MLContext()
-  var parser: Parser = new Parser(ctx, allowUnregisteredDialect = true)
+  var parser: MLIRParser = Parser(ctx, allowUnregisteredDialect = true)
 
   before {
-    parser = new Parser(ctx, allowUnregisteredDialect = true)
+    parser = Parser(ctx, allowUnregisteredDialect = true)
   }
 
   val digitTests = Table(

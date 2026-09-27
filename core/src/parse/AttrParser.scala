@@ -24,7 +24,7 @@ import scala.annotation.tailrec
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
 
-private inline def dialectAttributeP[$: P](using p: Parser): P[Attribute] =
+private inline def dialectAttributeP[$: P](using p: MLIRParser): P[Attribute] =
   "#" ~~ prettyDialectReferenceNameP./.flatMapTry {
     (dialect: String, attrName: String) =>
       p.context.getAttrCompanion(s"$dialect.$attrName") match
@@ -36,7 +36,7 @@ private inline def dialectAttributeP[$: P](using p: Parser): P[Attribute] =
           )
   }
 
-private inline def dialectTypeP[$: P](using p: Parser): P[Attribute] =
+private inline def dialectTypeP[$: P](using p: MLIRParser): P[Attribute] =
   "!" ~~ prettyDialectReferenceNameP./.flatMapTry {
     (dialect: String, attrName: String) =>
       p.context.getAttrCompanion(s"$dialect.$attrName") match
@@ -53,48 +53,20 @@ private inline def dialectTypeP[$: P](using p: Parser): P[Attribute] =
 
 // An entry with no value is MLIR's unit attribute shorthand: `{disjoint}` means
 // `{disjoint = unit}`.
-private inline def attributeEntryP[$: P](using Parser) =
-  (bareIdP | stringLiteralP) ~ ("=" ~/ attributeP).orElse(UnitAttr())
+private inline def attributeEntryP[$: P](using MLIRParser) =
+  (bareIdP | stringLiteralP) ~ ("=" ~/ attributeImplP).orElse(UnitAttr())
 
-def attributeP[$: P](using Parser) = P(
-  typeP | builtinAttrP | dialectAttributeP | attributeAliasP
+def attributeImplP[$: P](using MLIRParser) = P(
+  typeImplP | builtinAttrP | dialectAttributeP | attributeAliasP
 )
 
-private inline def attributeAliasP[$: P](using p: Parser) =
+private inline def attributeAliasP[$: P](using p: MLIRParser) =
   "#" ~~ aliasNameP.flatMap((name: String) =>
     p.attributeAliases.get(name) match
       case Some(attr) => Pass(attr)
       case None       =>
         Fail(s"Attribute alias $name not defined.")
   )
-
-inline def attrOfOrP[A <: Attribute](default: A)(using
-    Parser
-)(using P[Any]) =
-  attributeP.orElse(default).flatMap(_ match
-    case attr: A => Pass(attr)
-    case _       => Fail("Expected sumin, got sumin else"))
-
-inline def attrOfP[A <: Attribute](using
-    Parser
-)(using P[Any]) =
-  attributeP.flatMap(_ match
-    case attr: A => Pass(attr)
-    case _       => Fail("Expected sumin, got sumin else"))
-
-inline def typeOfOrP[T <: TypeAttribute](default: T)(using
-    Parser
-)(using P[Any]) =
-  typeP.orElse(default).flatMap(_ match
-    case tpe: T => Pass(tpe)
-    case _      => Fail("Expected sumin, got sumin else"))
-
-inline def typeOfP[T <: TypeAttribute](using
-    Parser
-)(using P[Any]) =
-  typeP.flatMap(_ match
-    case tpe: T => Pass(tpe)
-    case _      => Fail("Expected sumin, got sumin else"))
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||      TYPES      ||
@@ -114,16 +86,16 @@ inline def typeOfP[T <: TypeAttribute](using
 
 // [x] function-type ::= (type | type-list-parens) `->` (type | type-list-parens)
 
-def typeP[$: P](using Parser) =
+def typeImplP[$: P](using MLIRParser) =
   P(builtinTypeP | dialectTypeP | typeAliasP)
 
-def typeListP[$: P](using Parser) = P(typeP.rep(sep = ","))
+def typeListImplP[$: P](using MLIRParser) = P(typeImplP.rep(sep = ","))
 
-def parenTypeListP[$: P](using Parser) = P(
-  "(" ~ typeListP ~ ")"
+def parenTypeListImplP[$: P](using MLIRParser) = P(
+  "(" ~ typeListImplP ~ ")"
 )
 
-private inline def typeAliasP[$: P](using p: Parser) =
+private inline def typeAliasP[$: P](using p: MLIRParser) =
   "!" ~~ aliasNameP.flatMap((name: String) =>
     p.typeAliases.get(name) match
       case Some(attr) => Pass(attr)
@@ -237,16 +209,16 @@ def complexTypeP[$: P](using Parser): P[ComplexType] =
 
 // array-attribute  ::=  `[` (attribute-value (`,` attribute-value)*)? `]`
 
-def arrayAttributeP[$: P](using Parser): P[ArrayAttribute[Attribute]] = P(
-  "[" ~ attributeP.rep(sep = ",").map(ArrayAttribute(_*)) ~ "]"
+def arrayAttributeP[$: P](using MLIRParser): P[ArrayAttribute[Attribute]] = P(
+  "[" ~ attributeImplP.rep(sep = ",").map(ArrayAttribute(_*)) ~ "]"
 )
 
 /*≡==--==≡≡≡≡≡≡≡≡≡==--=≡≡*\
 || DICTIONARY ATTRIBUTE  ||
 \*≡==---==≡≡≡≡≡≡≡==---==≡*/
 
-def dictionaryAttributeP[$: P](using Parser): P[DictionaryAttr] =
-  attributeDictionaryP
+def dictionaryAttributeP[$: P](using MLIRParser): P[DictionaryAttr] =
+  attributeDictionaryImplP
     .map(
       DictionaryAttr.apply
     )
@@ -290,12 +262,12 @@ def stringAttributeP[$: P](using Parser): P[StringData] = P(
 // dimension             ::=   `?` | decimal-literal
 // encoding              ::=   attribute-value
 
-def tensorTypeP[$: P](using Parser): P[TensorType] = P(
+def tensorTypeP[$: P](using MLIRParser): P[TensorType] = P(
   "tensor" ~ "<" ~/ (unrankedTensorTypeP | rankedTensorTypeP) ~ ">"
 )
 
-def rankedTensorTypeP[$: P](using Parser): P[RankedTensorType] = P(
-  dimensionListP ~ typeP ~ ("," ~ encodingP).?
+def rankedTensorTypeP[$: P](using MLIRParser): P[RankedTensorType] = P(
+  dimensionListP ~ typeImplP ~ ("," ~ encodingP).?
 ).map((x: (Seq[IntData], Attribute, Option[Attribute])) =>
   RankedTensorType(
     shape = x._1,
@@ -304,8 +276,8 @@ def rankedTensorTypeP[$: P](using Parser): P[RankedTensorType] = P(
   )
 )
 
-def unrankedTensorTypeP[$: P](using Parser): P[TensorType] =
-  P("*" ~ "x" ~ typeP)
+def unrankedTensorTypeP[$: P](using MLIRParser): P[TensorType] =
+  P("*" ~ "x" ~ typeImplP)
     .map((x: Attribute) => UnrankedTensorType(elementType = x))
 
 def dimensionListP[$: P](using Parser) =
@@ -314,7 +286,7 @@ def dimensionListP[$: P](using Parser) =
 def dimensionP[$: P](using Parser): P[IntData] =
   P("?".map(_ => -1: BigInt) | decimalLiteralP).map(x => IntData(x))
 
-def encodingP[$: P](using Parser) = P(attributeP)
+def encodingP[$: P](using MLIRParser) = P(attributeImplP)
 
 /*≡==--==≡≡≡≡≡==--=≡≡*\
 ||    MEMREF TYPE    ||
@@ -326,12 +298,12 @@ def encodingP[$: P](using Parser) = P(attributeP)
 // dimension-list        ::=   (dimension `x`)*
 // dimension             ::=   `?` | decimal-literal
 
-def memrefTypeP[$: P](using Parser): P[MemrefType] = P(
+def memrefTypeP[$: P](using MLIRParser): P[MemrefType] = P(
   "memref" ~ "<" ~/ (unrankedMemrefTypeP | rankedMemrefTypeP) ~ ">"
 )
 
-def rankedMemrefTypeP[$: P](using Parser): P[RankedMemrefType] = P(
-  dimensionListP ~ typeP
+def rankedMemrefTypeP[$: P](using MLIRParser): P[RankedMemrefType] = P(
+  dimensionListP ~ typeImplP
 ).map((x: (Seq[IntData], Attribute)) =>
   RankedMemrefType(
     shape = x._1,
@@ -339,8 +311,8 @@ def rankedMemrefTypeP[$: P](using Parser): P[RankedMemrefType] = P(
   )
 )
 
-def unrankedMemrefTypeP[$: P](using Parser): P[UnrankedMemrefType] =
-  P("*" ~ "x" ~ typeP)
+def unrankedMemrefTypeP[$: P](using MLIRParser): P[UnrankedMemrefType] =
+  P("*" ~ "x" ~ typeImplP)
     .map((x: Attribute) => UnrankedMemrefType(elementType = x))
 
 def vectorDimensionListP[$: P](using Parser) =
@@ -350,8 +322,8 @@ def vectorDimensionListP[$: P](using Parser) =
       .rep(1).map(_.unzip)
   )
 
-def vectorTypeP[$: P](using Parser): P[VectorType] = P(
-  "vector<" ~/ vectorDimensionListP ~/ typeP ~/ ">"
+def vectorTypeP[$: P](using MLIRParser): P[VectorType] = P(
+  "vector<" ~/ vectorDimensionListP ~/ typeImplP ~/ ">"
 ).map((shape: Seq[IntData], scalableDims: Seq[IntData], typ: Attribute) =>
   VectorType(
     shape = shape,
@@ -389,14 +361,14 @@ private final case class TensorLiteral(
     Option.when(mapped.length == values.length)(mapped)
 
 private def denseElementsTypeP[$: P](using
-    Parser
+    MLIRParser
 ): P[RankedTensorType | RankedMemrefType | VectorType] = P(
   ("tensor" ~ "<" ~/ rankedTensorTypeP ~ ">") |
     ("memref" ~ "<" ~/ rankedMemrefTypeP ~ ">") | vectorTypeP
 ).asInstanceOf[P[RankedTensorType | RankedMemrefType | VectorType]]
 
 def denseIntOrFPElementsAttrP[$: P](using
-    Parser
+    MLIRParser
 ): P[DenseIntOrFPElementsAttr[?]] =
   P(
     "dense" ~/ "<" ~/ tensorLiteralP.orElse(TensorLiteral(Seq(), None)) ~ ">" ~
@@ -481,16 +453,16 @@ def affineSetAttrP[$: P](using Parser): P[AffineSetAttr] =
 ||   FUNCTION TYPE   ||
 \*≡==---==≡≡≡==---==≡*/
 
-def functionTypeP[$: P](using Parser): P[FunctionType] = P(
-  (parenTypeListP ~ "->" ~/ (parenTypeListP | typeP.map(Seq(_))))
+def functionTypeP[$: P](using MLIRParser): P[FunctionType] = P(
+  (parenTypeListImplP ~ "->" ~/ (parenTypeListImplP | typeImplP.map(Seq(_))))
     .map(FunctionType(_, _))
 )
 
-private def builtinTypeP[$: P](using Parser): P[Attribute] =
+private def builtinTypeP[$: P](using MLIRParser): P[Attribute] =
   floatTypeP | indexTypeP | integerTypeP | complexTypeP | functionTypeP |
     tensorTypeP | memrefTypeP | vectorTypeP
 
-private def builtinAttrP[$: P](using Parser): P[Attribute] =
+private def builtinAttrP[$: P](using MLIRParser): P[Attribute] =
   arrayAttributeP | denseArrayAttributeP | symbolRefAttrP | floatAttrP |
     integerAttrP | denseIntOrFPElementsAttrP | affineMapAttrP | affineSetAttrP |
     stringAttributeP | unitAttrP

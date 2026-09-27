@@ -1,7 +1,6 @@
 package scair.parse
 
 import fastparse.*
-import fastparse.Implicits.Repeater
 import fastparse.Parsed.Failure
 import fastparse.internal.Util
 import scair.MLContext
@@ -9,9 +8,7 @@ import scair.clair.OpDefs
 import scair.dialects.builtin.ModuleOp
 import scair.ir.*
 
-import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.collection.mutable.Builder
 
 // ██████╗░ ░█████╗░ ██████╗░ ░██████╗ ███████╗ ██████╗░
 // ██╔══██╗ ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔════╝ ██╔══██╗
@@ -19,143 +16,6 @@ import scala.collection.mutable.Builder
 // ██╔═══╝░ ██╔══██║ ██╔══██╗ ░╚═══██╗ ██╔══╝░░ ██╔══██╗
 // ██║░░░░░ ██║░░██║ ██║░░██║ ██████╔╝ ███████╗ ██║░░██║
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═╝░░╚═╝ ╚═════╝░ ╚══════╝ ╚═╝░░╚═╝
-
-/*≡==--==≡≡≡≡==--=≡≡*\
-|| COMMON FUNCTIONS ||
-\*≡==---==≡≡==---==≡*/
-
-extension [T](inline p: P[T])
-
-  /** Make the parser optional, parsing defaults if otherwise failing.
-    *
-    * @todo:
-    *   Figure out dark implicit magic to figure out magically that the default
-    *   default is "T()".
-    *
-    * @param default
-    *   The default value to use if the parser fails.
-    * @return
-    *   An optional parser, defaulting to default.
-    */
-  inline def orElse[$: P](inline default: => T): P[T] = P(
-    p | Pass(default)
-  )
-
-  /** Like fastparse's flatMapX but capturing exceptions as standard parse
-    * errors.
-    *
-    * @note
-    *   flatMapX because it often yields more natural error positions.
-    *
-    * @param f
-    *   The function to apply to the parsed value.
-    * @return
-    *   A parser that applies f to the parsed value, catching exceptions and
-    *   turning them into parse errors.
-    */
-  inline def flatMapTry[$: P, V](inline f: T => P[V]): P[V] = P(
-    p.flatMapX(parsed =>
-      try f(parsed)
-      catch
-        case e: Exception =>
-          Console.err.print(
-            "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
-          )
-          Fail(e.getMessage())
-    )
-  )
-
-  // Replacement for fastparse's .opaque, with a by-name message, so as not to build it in the happy case.
-  // TODO: Should that be contributed to fastparse's .opauqe or does it have a reason not to be?
-  inline def explain[$: P as ctx](inline msg: => String): P[T] =
-    val oldIndex = ctx.index
-    val startTerminals = ctx.terminalMsgs
-    val res = p
-
-    val res2 =
-      if res.isSuccess then ctx.freshSuccess(ctx.successValue)
-      else ctx.freshFailure(oldIndex)
-
-    if ctx.verboseFailures then
-      ctx.terminalMsgs = startTerminals
-      ctx.reportTerminalMsg(oldIndex, () => msg)
-
-    res2.asInstanceOf[P[T]]
-
-  /** Like fastparse's mapX but capturing exceptions as standard parse errors.
-    *
-    * @note
-    *   flatMapX because it often yields more nat ural error positions.
-    *
-    * @param f
-    *   The function to apply to the parsed value.
-    * @return
-    *   A parser that applies f to the parsed value, catching exceptions and
-    *   turning them into parse errors.
-    */
-  inline def mapTry[$: P, V](inline f: T => V): P[V] = P(
-    p.flatMapX(parsed =>
-      try Pass(f(parsed))
-      catch
-        case e: Exception =>
-          Console.err.print(
-            "WARNING: Caught an exception in parsing; this is deprecated, use fastparse's Fail instead.\n"
-          )
-          Fail(e.getMessage())
-    )
-  )
-
-@tailrec
-def flatRepRec[$: P, V, T](
-    i: Seq[T],
-    f: T => P[V],
-    running: P[Builder[V, Seq[V]]],
-    sep: => P[Unit] = null,
-    error: Int => String,
-)(using
-    whitespace: Whitespace
-): P[Builder[V, Seq[V]]] =
-  i match
-    case head +: tail =>
-      flatRepRec(
-        tail,
-        f,
-        running.flatMap(builder =>
-          (sep ~ f(head).map(builder.addOne)).explain(error(builder.knownSize))
-        ),
-        sep,
-        error,
-      )
-    case Nil => running
-
-extension [T](inline i: Seq[T])
-
-  inline def flatRep[$: P, V](
-      inline f: T => P[V],
-      inline sep: => P[Unit] = null,
-      inline error: Int => String,
-  )(using
-      whitespace: Whitespace
-  ): P[Seq[V]] =
-    i match
-      case head +: tail =>
-        val builder = Seq.newBuilder[V]
-        flatRepRec(
-          tail,
-          f,
-          f(head).map(builder.addOne).explain(error(0)),
-          sep,
-          error,
-        ).map(_.result())
-      case Nil => Pass(Seq.empty[V])
-
-// See uses; enables .rep to concatenate parsed sequences
-// TODO: Expose as nicer helper, but could'nt get it just right for now
-def concatRepeater[T] = new Repeater[Seq[T], Seq[T]]:
-  type Acc = mutable.Buffer[T]
-  def initial = mutable.Buffer.empty[T]
-  def accumulate(t: Seq[T], acc: mutable.Buffer[T]) = acc ++= t
-  def result(acc: mutable.Buffer[T]) = acc.toSeq
 
 /*≡==--==≡≡≡==--=≡≡*\
 ||      SCOPE      ||
@@ -273,7 +133,7 @@ private def trailingLocationP[$: P]: P[Location] =
 ||     PARSER CLASS     ||
 \*≡==---==≡≡≡≡≡≡==---==≡*/
 
-final class Parser(
+final class MLIRParser(
     private[parse] final val context: MLContext,
     private[parse] final val inputPath: Option[String] = None,
     private[parse] final val parsingDiagnostics: Boolean = false,
@@ -286,7 +146,51 @@ final class Parser(
       .Stack(new Scope()),
     private[parse] final val inputLineOffset: Int = 0,
     private[parse] final val sourceLocations: Boolean = false,
-):
+) extends Parser:
+
+  /*≡==--==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==--=≡≡*\
+  ||   INTERFACE IMPLEMENTATION   ||
+  \*≡==---==≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡==---==≡*/
+
+  override def attributeP[$: P]: P[Attribute] =
+    attributeImplP(using summon, this)
+
+  override def typeP[$: P]: P[Attribute] = typeImplP(using summon, this)
+
+  override def typeListP[$: P]: P[Seq[Attribute]] =
+    typeListImplP(using summon, this)
+
+  override def parenTypeListP[$: P]: P[Seq[Attribute]] =
+    parenTypeListImplP(using summon, this)
+
+  override def regionP[$: P](entryArgs: Seq[(String, Attribute)]): P[Region] =
+    regionImplP(entryArgs)(using summon, this)
+
+  override def operandP[$: P, A <: Attribute](
+      name: String,
+      typ: A,
+  ): P[Value[A]] =
+    operandImplP(name, typ)(using summon, this)
+
+  override def resultP[$: P, A <: Attribute](
+      name: String,
+      typ: A,
+  ): P[Result[A]] =
+    resultImplP(name, typ)(using summon, this)
+
+  override def valueIdAndTypeP[$: P]: P[(String, Attribute)] =
+    valueIdAndTypeImplP(using summon, this)
+
+  override def attributeDictionaryP[$: P]: P[Map[String, Attribute]] =
+    attributeDictionaryImplP(using summon, this)
+
+  override def optionalAttributesP[$: P]: P[Map[String, Attribute]] =
+    optionalAttributesImplP(using summon, this)
+
+  override def operationP[$: P]: P[Operation] =
+    operationImplP(using summon, this)
+
+  override def moduleP[$: P]: P[Operation] = moduleImplP(using summon, this)
 
   // Line starts of the last indexed input, cached across calls.
   private var lineStartsOf: String | Null = null
@@ -315,13 +219,13 @@ final class Parser(
   private[parse] def exitRegionP[$: P] =
     scopes.pop().allBlocksAndValuesDefinedP
 
-  def parse[T](
+  override def parse[T](
       input: ParserInputSource,
-      parser: P[?] => P[T] = moduleP(using _, this),
-      verboseFailures: Boolean = false,
-      startIndex: Int = 0,
-      instrument: fastparse.internal.Instrument = null,
-  ) =
+      parser: P[?] => P[T],
+      verboseFailures: Boolean,
+      startIndex: Int,
+      instrument: fastparse.internal.Instrument,
+  ): Parsed[T] =
     fastparse.parse(
       input,
       parser,
@@ -354,19 +258,19 @@ final class Parser(
     * @return
     *   The generated operation.
     */
-  def generateOperationP[$: P](
+  override def generateOperationP[$: P](
       opName: String,
-      resultsNames: Seq[String] = Seq.empty,
-      operandsNames: Seq[String] = Seq.empty,
-      successors: Seq[Block] = Seq.empty,
-      properties: Map[String, Attribute] = Map(),
-      regions: Seq[Region] = Seq.empty,
-      attributes: Map[String, Attribute] = Map(),
-      resultsTypes: Seq[Attribute] = Seq.empty,
-      operandsTypes: Seq[Attribute] = Seq.empty,
+      resultsNames: Seq[String],
+      operandsNames: Seq[String],
+      successors: Seq[Block],
+      properties: Map[String, Attribute],
+      regions: Seq[Region],
+      attributes: Map[String, Attribute],
+      resultsTypes: Seq[Attribute],
+      operandsTypes: Seq[Attribute],
   ): P[Operation] =
 
-    given Parser = this
+    given MLIRParser = this
 
     if operandsNames.length != operandsTypes.length then
       return Fail(
@@ -383,12 +287,12 @@ final class Parser(
     (operandsNames zip operandsTypes).foldLeft(
       Pass(Seq.empty[Value[Attribute]])
     )((l: P[Seq[Value[Attribute]]], r: (String, Attribute)) =>
-      (l ~ operandP(r._1, r._2)).map(_ :+ _)
+      (l ~ operandImplP(r._1, r._2)).map(_ :+ _)
     ).flatMap(operands =>
       (resultsNames zip resultsTypes).foldLeft(
         Pass(Seq.empty[Result[Attribute]])
       )((l: P[Seq[Result[Attribute]]], r: (String, Attribute)) =>
-        (l ~ resultP(r._1, r._2)).map(_ :+ _)
+        (l ~ resultImplP(r._1, r._2)).map(_ :+ _)
       ).flatMap(results =>
         context.getOpCompanion(opName, allowUnregisteredDialect) match
           case Right(companion) =>
@@ -406,7 +310,7 @@ final class Parser(
       )
     )
 
-  def error(failure: Failure, lineOffset: Int = 0) =
+  override def error(failure: Failure, lineOffset: Int): String =
     // .trace() below reparses from the start with more bookkeeping to provide helpful
     // context for the error message.
     // We do this very non-functional bookkeeping in currentScope ourselves, which
@@ -443,8 +347,8 @@ final class Parser(
       Console.err.println(msg)
       sys.exit(1)
 
-def operandP[$: P, A <: Attribute](name: String, typ: A)(using
-    p: Parser
+def operandImplP[$: P, A <: Attribute](name: String, typ: A)(using
+    p: MLIRParser
 ): P[Value[A]] =
   p.scopes.collectFirst {
     case scope if scope.valueMap.contains(name) =>
@@ -461,10 +365,10 @@ def operandP[$: P, A <: Attribute](name: String, typ: A)(using
       p.scopes.top.forwardValues += name
       Pass(forwardValue)
 
-def resultP[$: P, A <: Attribute](
+def resultImplP[$: P, A <: Attribute](
     name: String,
     typ: A,
-)(using p: Parser): P[Result[A]] =
+)(using p: MLIRParser): P[Result[A]] =
   P(
     p.scopes.top.defineValueP(name, typ).map(_.asInstanceOf[Result[A]])
   )
@@ -476,8 +380,9 @@ def resultP[$: P, A <: Attribute](
 // [x] toplevel := (operation | attribute-alias-def | type-alias-def)*
 // shortened definition TODO: finish...
 
-def moduleP[$: P](using p: Parser): P[Operation] = P(
-  Start ~ p.enterRegionP ~ (operationP | attributeAliasDefP | typeAliasDefP).rep
+def moduleImplP[$: P](using p: MLIRParser): P[Operation] = P(
+  Start ~ p.enterRegionP ~ (operationImplP | attributeAliasDefP | typeAliasDefP)
+    .rep
     .map(
       _.collect { case o: Operation =>
         o
@@ -516,7 +421,7 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
 
 //  results      name     operands   successors  dictprops  regions  dictattr  (op types, res types)
 
-def operationP[$: P](using p: Parser): P[Operation] = P(
+def operationImplP[$: P](using p: MLIRParser): P[Operation] = P(
   opResultListP./.flatMap(resNames =>
     (Index.map(p.sourceLocation(_)) ~~
       (genericOperationP(resNames) | customOperationP(resNames)))
@@ -529,11 +434,11 @@ def operationP[$: P](using p: Parser): P[Operation] = P(
 
 def genericOperandsTypesP[$: P](
     operandsNames: Seq[String]
-)(using Parser): P[Seq[Value[Attribute]]] =
+)(using MLIRParser): P[Seq[Value[Attribute]]] =
   val error = (i: Int) =>
     f"Number of operands (${operandsNames.size}) does not match the number of the corresponding operand types ($i)."
   "(" ~ operandsNames.flatRep(
-    name => typeP.flatMap(operandP(name, _)),
+    name => typeImplP.flatMap(operandImplP(name, _)),
     sep = ",",
     error = error,
   ).flatMap(types =>
@@ -544,21 +449,21 @@ def genericOperandsTypesP[$: P](
 
 private def genericResultsTypesP[$: P](
     resultsNames: Seq[String]
-)(using Parser): P[Seq[Result[Attribute]]] =
+)(using MLIRParser): P[Seq[Result[Attribute]]] =
   val error = (i: Int) =>
     f"Number of results (${resultsNames.size}) does not match the number of the corresponding result types ($i)."
   "(" ~ resultsNames.flatRep(
-    name => typeP.flatMap(resultP(name, _)),
+    name => typeImplP.flatMap(resultImplP(name, _)),
     sep = ",",
     error = error,
   ).flatMap(types =>
     ")".explain(
       f"Number of results (${resultsNames.size}) does not match the number of the corresponding result types."
     ).map(_ => types)
-  ) | typeP.flatMap(resultP(resultsNames.head, _)).map(Seq(_))
+  ) | typeImplP.flatMap(resultImplP(resultsNames.head, _)).map(Seq(_))
 
 private def genericOperationNameP[$: P](using
-    p: Parser
+    p: MLIRParser
 ): P[OperationCompanion[?]] =
   stringLiteralP./
     .flatMap(
@@ -569,14 +474,14 @@ private def genericOperationNameP[$: P](using
 
 private def genericOperationP[$: P](
     resultsNames: Seq[String]
-)(using Parser): P[Operation] =
+)(using MLIRParser): P[Operation] =
   genericOperationNameP.flatMap((opCompanion: OperationCompanion[?]) =>
     "(" ~ operandNamesP.orElse(Seq.empty)
       .flatMap((operandsNames: Seq[String]) =>
         ")" ~/ successorListP.orElse(Seq.empty).flatMap(successors =>
           propertiesP.orElse(Map.empty).flatMap(properties =>
             regionListP.orElse(Seq.empty).flatMap(regions =>
-              optionalAttributesP.flatMap(attributes =>
+              optionalAttributesImplP.flatMap(attributes =>
                 ":" ~/ genericOperandsTypesP(
                   operandsNames
                 ).flatMap(operands =>
@@ -601,7 +506,7 @@ private def genericOperationP[$: P](
 
 private def customOperationP[$: P](
     resNames: Seq[String]
-)(using p: Parser) =
+)(using p: MLIRParser) =
   prettyDialectReferenceNameP./.flatMapTry { (x: String, y: String) =>
     p.context.getOpCompanion(s"$x.$y") match
       case Right(companion) =>
@@ -612,24 +517,25 @@ private def customOperationP[$: P](
         )
   }
 
-private def regionListP[$: P](using Parser) =
-  "(" ~ regionP().rep(sep = ",") ~ ")"
+private def regionListP[$: P](using MLIRParser) =
+  "(" ~ regionImplP().rep(sep = ",") ~ ")"
 
 // // Type aliases
 // [x] type-alias-def ::= `!` alias-name `=` type
 // [x] type-alias ::= `!` alias-name
 
-private def typeAliasDefP[$: P](using p: Parser) =
-  ("!" ~~ aliasNameP ~ "=" ~ typeP).flatMap((name: String, value: Attribute) =>
-    p.typeAliases.get(name) match
-      case Some(t) =>
-        Fail(
-          s"""Type alias "$name" already defined as $t."""
-        )
-      case None =>
-        p.typeAliases(name) = value
-        Pass
-  )
+private def typeAliasDefP[$: P](using p: MLIRParser) =
+  ("!" ~~ aliasNameP ~ "=" ~ typeImplP)
+    .flatMap((name: String, value: Attribute) =>
+      p.typeAliases.get(name) match
+        case Some(t) =>
+          Fail(
+            s"""Type alias "$name" already defined as $t."""
+          )
+        case None =>
+          p.typeAliases(name) = value
+          Pass
+    )
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||    ATTRIBUTES    ||
@@ -639,9 +545,9 @@ private def typeAliasDefP[$: P](using p: Parser) =
 // [x] - attribute-alias-def ::= `#` alias-name `=` attribute-value
 // [x] - attribute-alias ::= `#` alias-name
 
-private def attributeAliasDefP[$: P](using p: Parser) =
+private def attributeAliasDefP[$: P](using p: MLIRParser) =
   (
-    "#" ~~ aliasNameP ~ "=" ~ attributeP
+    "#" ~~ aliasNameP ~ "=" ~ attributeImplP
   ).flatMap((name: String, value: Attribute) =>
     p.attributeAliases.get(name) match
       case Some(a) =>
@@ -663,7 +569,7 @@ private def attributeAliasDefP[$: P](using p: Parser) =
 private def populateBlockArgsP[$: P](
     block: Block,
     args: Seq[(String, Attribute)],
-)(using p: Parser) =
+)(using p: MLIRParser) =
   args.foldLeft(Pass(Seq.empty[BlockArgument[Attribute]]))((l, r) =>
     (l ~ p.scopes.top.defineBlockArgumentP(r._1, r._2)).map(_ :+ _)
   ).map(args =>
@@ -672,29 +578,29 @@ private def populateBlockArgsP[$: P](
     block
   )
 
-private def blockBodyP[$: P](block: Block)(using Parser) =
+private def blockBodyP[$: P](block: Block)(using MLIRParser) =
   // TODO: temporary solution to populate indexes within block body.
   var idx = 0
-  operationP.map(op =>
+  operationImplP.map(op =>
     op.containerBlock = Some(block)
     block.operations.addOne(op): Unit
     op.blockIndex = idx
     idx += 1
   ).rep ~ Pass(block)
 
-def blockP[$: P](using Parser) = P(
+def blockP[$: P](using MLIRParser) = P(
   P(blockLabelP.flatMap(blockBodyP))
 )
 
-private def blockLabelP[$: P](using p: Parser) =
+private def blockLabelP[$: P](using p: MLIRParser) =
   (blockIdP.flatMap(p.scopes.top.defineBlockP) ~
     (blockArgListP.orElse(Seq.empty))).flatMap(populateBlockArgsP) ~ ":"
 
-def successorListP[$: P](using Parser) = P(
+def successorListP[$: P](using MLIRParser) = P(
   "[" ~ successorP.rep(sep = ",") ~ "]"
 )
 
-def successorP[$: P](using p: Parser) = P(
+def successorP[$: P](using p: MLIRParser) = P(
   P(caretIdP).map(p.scopes.top.forwardBlock)
 )
 /*≡==--==≡≡≡≡≡==--=≡≡*\
@@ -708,9 +614,9 @@ def successorP[$: P](using p: Parser) = P(
 //                   \/
 // [x] - region        ::= `{` operation* block* `}`
 
-def regionP[$: P](
+def regionImplP[$: P](
     entryArgs: Seq[(String, Attribute)] = Seq.empty
-)(using p: Parser) = P(
+)(using p: MLIRParser) = P(
   "{" ~/ p.enterRegionP ~/
     (populateBlockArgsP(Block(), entryArgs).flatMap(blockBodyP) ~/ blockP.rep)
       .map((entry: Block, blocks: Seq[Block]) =>
@@ -726,14 +632,14 @@ def regionP[$: P](
 
 // [x] - block-arg-list ::= `(` value-id-and-type-list? `)`
 
-def valueIdAndTypeP[$: P](using Parser) = P(valueIdP ~ ":" ~ typeP)
+def valueIdAndTypeImplP[$: P](using MLIRParser) = P(valueIdP ~ ":" ~ typeImplP)
 
-private def valueIdAndTypeListP[$: P](using Parser) =
-  P(valueIdAndTypeP.rep(sep = ",")).orElse(Seq.empty)
+private def valueIdAndTypeListP[$: P](using MLIRParser) =
+  P(valueIdAndTypeImplP.rep(sep = ",")).orElse(Seq.empty)
 
-private def blockArgListP[$: P](using Parser) =
+private def blockArgListP[$: P](using MLIRParser) =
   P(
-    "(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")"
+    "(" ~ valueIdAndTypeImplP.rep(sep = ",") ~ ")"
   )
 
 // [x] dictionary-properties ::= `<` dictionary-attribute `>`
@@ -745,8 +651,8 @@ private def blockArgListP[$: P](using Parser) =
   * @return
   *   A properties dictionary parser.
   */
-def propertiesP[$: P](using Parser) = P(
-  "<" ~ attributeDictionaryP ~ ">"
+def propertiesP[$: P](using MLIRParser) = P(
+  "<" ~ attributeDictionaryImplP ~ ">"
 )
 
 /** Parses an attributes dictionary.
@@ -754,8 +660,8 @@ def propertiesP[$: P](using Parser) = P(
   * @return
   *   An attribute dictionary parser.
   */
-def attributeDictionaryP[$: P](using
-    Parser
+def attributeDictionaryImplP[$: P](using
+    MLIRParser
 ): P[Map[String, Attribute]] = P(
   "{" ~ attributeEntryP.rep(sep = ",").map(Map.from) ~ "}"
 )
@@ -765,7 +671,7 @@ def attributeDictionaryP[$: P](using
   * @return
   *   An optional dictionary of properties - empty if no dictionary is present.
   */
-def optionalPropertiesP[$: P](using Parser) =
+def optionalPropertiesP[$: P](using MLIRParser) =
   (propertiesP).orElse(Map.empty)
 
 /** Parses an optional attributes dictionary from the input.
@@ -773,8 +679,8 @@ def optionalPropertiesP[$: P](using Parser) =
   * @return
   *   An optional dictionary of attributes - empty if no dictionary is present.
   */
-def optionalAttributesP[$: P](using Parser) =
-  (attributeDictionaryP).orElse(Map.empty)
+def optionalAttributesImplP[$: P](using MLIRParser) =
+  (attributeDictionaryImplP).orElse(Map.empty)
 
 /** Parses an optional attributes dictionary from the input, preceded by the
   * `attributes` keyword.
@@ -782,5 +688,23 @@ def optionalAttributesP[$: P](using Parser) =
   * @return
   *   An optional dictionary of attributes - empty if no keyword is present.
   */
-def optionalKeywordAttributesP[$: P](using Parser) =
-  ("attributes" ~/ attributeDictionaryP).orElse(Map.empty)
+def optionalKeywordAttributesP[$: P](using MLIRParser) =
+  ("attributes" ~/ attributeDictionaryImplP).orElse(Map.empty)
+
+/** Creates the default, fastparse-based, [[Parser]] implementation. */
+def Parser(
+    context: MLContext,
+    inputPath: Option[String] = None,
+    parsingDiagnostics: Boolean = false,
+    allowUnregisteredDialect: Boolean = false,
+    inputLineOffset: Int = 0,
+    sourceLocations: Boolean = false,
+): MLIRParser =
+  new MLIRParser(
+    context = context,
+    inputPath = inputPath,
+    parsingDiagnostics = parsingDiagnostics,
+    allowUnregisteredDialect = allowUnregisteredDialect,
+    inputLineOffset = inputLineOffset,
+    sourceLocations = sourceLocations,
+  )

@@ -39,10 +39,10 @@ class EnumAttrTest extends AnyFlatSpec with BeforeAndAfter:
 
   val ctx = MLContext()
   ctx.registerDialect(EnumTestDialect)
-  var parser = new Parser(ctx, allowUnregisteredDialect = false)
+  var parser = Parser(ctx, allowUnregisteredDialect = false)
 
   before {
-    parser = new Parser(ctx, allowUnregisteredDialect = false)
+    parser = Parser(ctx, allowUnregisteredDialect = false)
   }
 
   "EnumAttr" should "print and parse correctly" in {

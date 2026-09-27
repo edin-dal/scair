@@ -26,11 +26,11 @@ class TransformationsTest
   val ctx = new MLContext()
   ctx.registerDialect(cmath)
 
-  var parser: Parser = new Parser(ctx, allowUnregisteredDialect = true)
+  var parser: Parser = Parser(ctx, allowUnregisteredDialect = true)
   var printer = new AssemblyPrinter(true)
 
   before {
-    parser = new Parser(ctx, allowUnregisteredDialect = true)
+    parser = Parser(ctx, allowUnregisteredDialect = true)
     printer = new AssemblyPrinter(true)
   }
 

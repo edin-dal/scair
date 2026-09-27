@@ -56,7 +56,7 @@ trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
     var indexOffset = 0
     inputChunks.map(input =>
       // Parse content
-      val parser = new Parser(
+      val parser = Parser(
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
