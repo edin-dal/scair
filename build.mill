@@ -219,13 +219,33 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
 
   object utils extends ScairModule
 
+  // Aggregate module: re-exports every core submodule, so downstream
+  // `moduleDeps = Seq(core, ...)` stays unchanged. Hosts the core tests.
   object core extends ScairModule:
 
-    override def moduleDeps = Seq(utils)
+    override def moduleDeps = Seq(ir, clair, parser, verify, testdialect, irdl)
 
-    override def mvnDeps = Seq(
-      mvn"com.lihaoyi::fastparse::3.1.1"
-    )
+    object ir extends ScairModule:
+      override def moduleDeps = Seq(utils)
+
+      override def mvnDeps = Seq(
+        mvn"com.lihaoyi::fastparse::3.1.1"
+      )
+
+    object clair extends ScairModule:
+      override def moduleDeps = Seq(ir)
+
+    object parser extends ScairModule:
+      override def moduleDeps = Seq(clair)
+
+    object verify extends ScairModule:
+      override def moduleDeps = Seq(ir)
+
+    object testdialect extends ScairModule:
+      override def moduleDeps = Seq(clair)
+
+    object irdl extends ScairModule:
+      override def moduleDeps = Seq(parser)
 
   // Aggregate module: hosts AllDialects.scala and re-exports every per-dialect
   // submodule so downstream `moduleDeps = Seq(dialects, ...)` stays unchanged.
