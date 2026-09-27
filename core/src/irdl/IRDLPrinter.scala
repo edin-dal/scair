@@ -115,7 +115,6 @@ object IRDLPrinter:
     p.print("package scair.dialects.")
     p.println(dialectName)
     p.println()
-    p.println("import scair.dialects.builtin.*")
     p.println("import scair.ir.*")
     p.println("import scair.clair.*")
     p.println()

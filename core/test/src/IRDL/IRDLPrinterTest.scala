@@ -6,11 +6,8 @@ import scair.irdl.IRDLPrinter.printIRDL
 import scair.parse.*
 
 import fastparse.*
-import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
-import org.scalatest.prop.TableDrivenPropertyChecks.forAll
-import org.scalatest.prop.Tables.Table
 import java.io.*
 
 class IRDLPrinterTest extends AnyFlatSpec:
@@ -42,6 +39,7 @@ class IRDLPrinterTest extends AnyFlatSpec:
 }) : () -> ()
 """.stripMargin) match
     case Parsed.Success(module: ModuleOp, _) => module
+    case other => fail(s"Failed to parse IRDL module: $other")
 
   val dialect = module.body.blocks.head.operations.head.asInstanceOf[Dialect]
   val writer = StringWriter()
@@ -49,7 +47,6 @@ class IRDLPrinterTest extends AnyFlatSpec:
 
   writer.toString shouldEqual """package scair.dialects.cmath
 
-import scair.dialects.builtin.*
 import scair.ir.*
 import scair.clair.*
 
