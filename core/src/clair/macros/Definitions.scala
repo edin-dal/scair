@@ -2,7 +2,6 @@ package scair.clair.macros
 
 import scair.clair.macros.AssemblyFormatDirective
 import scair.constraints.ConstraintImpl
-import scair.ir.Attribute
 
 import scala.quoted.*
 import scala.reflect.*
@@ -88,11 +87,6 @@ case class OpPropertyDef(
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
-case class AttributeParamDef(
-    val name: String,
-    val tpe: Type[? <: Attribute],
-) {}
-
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   OPERATION DEF   ||
 \*≡==----=≡≡≡=----==≡*/
@@ -132,11 +126,3 @@ case class OperationDef(
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||   ATTRIBUTE DEF   ||
 \*≡==----=≡≡≡=----==≡*/
-
-case class AttributeDef(
-    val name: String,
-    val attributes: Seq[AttributeParamDef] = Seq(),
-):
-
-  def allDefsWithIndex =
-    attributes.zipWithIndex
