@@ -126,13 +126,17 @@ final case class AssemblyFormatDef(
 ||      SYNTAX       ||
 \*≡==----=≡≡≡=----==≡*/
 
-/** A directive as written, before resolving its variables. */
-private enum Syntax:
-  case Literal(text: String)
-  case AttrDict
-  case Variable(name: String)
-  case TypeOf(name: String)
-  case OptionalGroup(elements: List[(Syntax, Boolean)])
+/** Abort the expansion on an invalid assembly format. */
+private def invalid(
+    msg: String
+)(using opDef: OperationDef, q: Quotes): Nothing =
+  quotes.reflect.report
+    .errorAndAbort(s"Invalid assembly format for ${opDef.name}: $msg")
+
+/** The operation's construct named `name`. */
+private def lookup(name: String)(using opDef: OperationDef, q: Quotes) =
+  opDef.allDefs.find(_.name == name)
+    .getOrElse(invalid(s"`$$$name` is not a construct of the operation."))
 
 /** An assembly format identifier. Those should match Scala's identifier rules,
   * for maximum compatibility with the ADT fields; this is an approximation.
@@ -140,26 +144,58 @@ private enum Syntax:
 private def identifierP[$: P]: P[String] =
   CharsWhileIn("a-zA-Z0-9_").!
 
-private def formatP[$: P]: P[List[Syntax]] = (syntaxP.rep(1) ~ End)
-  .map(_.toList)
+private def formatP[$: P](using OperationDef, Quotes): P[List[Directive]] =
+  (directiveP.rep(1) ~ End).map(_.toList)
 
-private def syntaxP[$: P]: P[Syntax] =
+private def directiveP[$: P](using OperationDef, Quotes): P[Directive] =
   typeOfP | literalP | variableP | attrDictP | optionalGroupP
 
 private def literalP[$: P] = ("`" ~~ CharsWhile(_ != '`').! ~~ "`")
-  .map(Syntax.Literal(_))
+  .map(Literal(_))
 
-private def variableP[$: P] = ("$" ~~ identifierP).map(Syntax.Variable(_))
+private def variableP[$: P](using OperationDef, Quotes) = ("$" ~~ identifierP)
+  .map(name =>
+    lookup(name) match
+      case d: (OperandDef | RegionDef | OpPropertyDef) => Variable(d)
+      case _: ResultDef                                =>
+        invalid(s"results can only be spelled as `type($$$name)`.")
+      case _: SuccessorDef =>
+        invalid(s"successors are not supported, found `$$$name`.")
+  )
 
-private def typeOfP[$: P] = ("type(" ~~ "$" ~~ identifierP ~~ ")")
-  .map(Syntax.TypeOf(_))
+private def typeOfP[$: P](using OperationDef, Quotes) =
+  ("type(" ~~ "$" ~~ identifierP ~~ ")").map(name =>
+    lookup(name) match
+      case d: (OperandDef | ResultDef) => TypeOf(d)
+      case _ => invalid(s"`$$$name` has no type, in `type($$$name)`.")
+  )
 
 private def attrDictP[$: P] =
-  P("attr-dict").map(_ => Syntax.AttrDict)
+  P("attr-dict").map(_ => AttrDict)
 
-private def optionalGroupP[$: P] =
-  ("(" ~ (syntaxP ~~ "^".!.?.map(_.isDefined)).rep(1) ~ ")" ~ "?")./
-    .map(elements => Syntax.OptionalGroup(elements.toList))
+private def optionalGroupP[$: P](using OperationDef, Quotes) =
+  ("(" ~ (directiveP ~~ "^".!.?.map(_.isDefined)).rep(1) ~ ")" ~ "?")./
+    .map(optionalGroup)
+
+/** Build an optional group from its directives, each marked if anchored. */
+private def optionalGroup(elements: Seq[(Directive, Boolean)])(using
+    OperationDef,
+    Quotes,
+): OptionalGroup =
+  val body = elements.toList.map {
+    case (d: Literal, _) => d
+    case (d: (Variable | TypeOf), _)
+        if constructOf(d).variadicity != Variadicity.Single =>
+      d
+    case (d: (Variable | TypeOf), _) =>
+      invalid(s"`${constructOf(d).name}` in an optional group is not optional.")
+    case _ =>
+      invalid("`attr-dict` and optional groups cannot be in an optional group.")
+  }
+  val anchor = elements.collect { case (d, true) => d } match
+    case Seq(anchor: (Variable | TypeOf)) => anchor
+    case _ => invalid("an optional group needs exactly one `^` anchor.")
+  OptionalGroup(anchor, body)
 
 /** Parse a declarative assembly format string into its validated
   * representation.
@@ -172,54 +208,11 @@ private def optionalGroupP[$: P] =
 def parseAssemblyFormat(format: String, opDef: OperationDef)(using
     Quotes
 ): AssemblyFormatDef =
-  import quotes.reflect.report
-
-  def abort(msg: String) =
-    report.errorAndAbort(s"Invalid assembly format for ${opDef.name}: $msg")
-
-  def lookup(name: String) =
-    opDef.allDefs.find(_.name == name)
-      .getOrElse(abort(s"`$$$name` is not a construct of the operation."))
-
-  def resolve(syntax: Syntax): Directive = syntax match
-    case Syntax.Literal(text)  => Literal(text)
-    case Syntax.AttrDict       => AttrDict
-    case Syntax.Variable(name) =>
-      lookup(name) match
-        case d: (OperandDef | RegionDef | OpPropertyDef) => Variable(d)
-        case _: ResultDef                                =>
-          abort(s"results can only be spelled as `type($$$name)`.")
-        case _: SuccessorDef =>
-          abort(s"successors are not supported, found `$$$name`.")
-    case Syntax.TypeOf(name) =>
-      lookup(name) match
-        case d: (OperandDef | ResultDef) => TypeOf(d)
-        case _ => abort(s"`$$$name` has no type, in `type($$$name)`.")
-    case Syntax.OptionalGroup(elements) =>
-      val body = elements.map((s, _) => resolve(s)).map {
-        case d: Literal => d
-        case d: (Variable | TypeOf)
-            if constructOf(d).variadicity != Variadicity.Single =>
-          d
-        case d: (Variable | TypeOf) =>
-          abort(
-            s"`${constructOf(d).name}` in an optional group is not optional."
-          )
-        case _ =>
-          abort(
-            "`attr-dict` and optional groups cannot be in an optional group."
-          )
-      }
-      val anchor = (body zip elements)
-        .collect { case (d, (_, true)) => d } match
-        case Seq(anchor: (Variable | TypeOf)) => anchor
-        case _                                =>
-          abort("an optional group needs exactly one `^` anchor.")
-      OptionalGroup(anchor, body)
+  given OperationDef = opDef
 
   val directives = fastparse.parse(format, formatP(using _)) match
-    case Parsed.Success(syntax, _) => syntax.map(resolve)
-    case failure: Parsed.Failure   => abort(failure.trace().msg)
+    case Parsed.Success(directives, _) => directives
+    case failure: Parsed.Failure       => invalid(failure.trace().msg)
 
   val all = directives.flatMap {
     case OptionalGroup(_, body) => body
@@ -227,11 +220,11 @@ def parseAssemblyFormat(format: String, opDef: OperationDef)(using
   }
   def once(d: Directive, spelling: String, required: Boolean = true) =
     all.count(_ == d) match
-      case 0 if required => abort(s"$spelling is missing.")
+      case 0 if required => invalid(s"$spelling is missing.")
       case 0 | 1         =>
-      case _             => abort(s"$spelling is spelled more than once.")
+      case _             => invalid(s"$spelling is spelled more than once.")
 
-  if opDef.successors.nonEmpty then abort("successors are not supported.")
+  if opDef.successors.nonEmpty then invalid("successors are not supported.")
   once(AttrDict, "`attr-dict`")
   opDef.operands.foreach(d =>
     once(Variable(d), s"`$$${d.name}`")
