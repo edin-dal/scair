@@ -245,32 +245,46 @@ def propertiesMacro(
     opDef.successors,
     adtOpExpr,
   )
-  // Populating a Dictionary with the properties
-  val mandatoryProps =
-    opDef.properties.collect {
-      case OpPropertyDef(name = name, variadicity = Variadicity.Single) =>
-        (Expr(name), selectMember[Attribute](adtOpExpr, name))
-    } ++ opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp
-
-  val optionalProps =
-    opDef.properties.collect {
-      case OpPropertyDef(name = name, variadicity = Variadicity.Optional) =>
-        (Expr(name), selectMember[Option[Attribute]](adtOpExpr, name))
-    }
   // Properties are typically few; a chain of `updated` goes through the
   // small specialized maps without a builder or tuples along the way.
-  val withMandatory = mandatoryProps
-    .foldLeft('{
-      Map.empty[String, Attribute]
-    })((props, prop) => '{ $props.updated(${ prop._1 }, ${ prop._2 }) })
-  optionalProps.foldLeft(withMandatory)((props, prop) =>
-    '{
-      val current = $props
-      ${ prop._2 } match
-        case Some(value) => current.updated(${ prop._1 }, value)
-        case None        => current
-    }
-  )
+  val (single, optional) =
+    opDef.properties.partition(_.variadicity == Variadicity.Single)
+  val withSingle = single
+    .foldLeft('{ Map.empty[String, Attribute] })(
+      withProperty(_, _, adtOpExpr)
+    )
+  val withSegmentSizes =
+    (opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp)
+      .foldLeft(withSingle)((props, prop) =>
+        '{ $props.updated(${ prop._1 }, ${ prop._2 }) }
+      )
+  optional.foldLeft(withSegmentSizes)(withProperty(_, _, adtOpExpr))
+
+/** Add a property of an ADT operation to a dictionary, if present.
+  *
+  * @param dict
+  *   The dictionary.
+  * @param d
+  *   The property definition.
+  * @param adtOpExpr
+  *   The ADT expression.
+  */
+def withProperty(
+    dict: Expr[Map[String, Attribute]],
+    d: OpPropertyDef,
+    adtOpExpr: Expr[?],
+)(using Quotes): Expr[Map[String, Attribute]] =
+  val name = Expr(d.name)
+  d.variadicity match
+    case Variadicity.Single =>
+      '{ $dict.updated($name, ${ selectMember[Attribute](adtOpExpr, d.name) }) }
+    case Variadicity.Optional =>
+      '{
+        val current = $dict
+        ${ selectMember[Option[Attribute]](adtOpExpr, d.name) } match
+          case Some(value) => current.updated($name, value)
+          case None        => current
+      }
 
 def customPrintMacro[T: Type](
     opDef: OperationDef,

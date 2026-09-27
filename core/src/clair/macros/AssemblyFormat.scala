@@ -54,7 +54,7 @@ enum Directive:
   /** Directives only present if the anchor's construct is. */
   case OptionalGroup(
       anchor: Directive.Variable | Directive.TypeOf,
-      body: List[Directive],
+      body: List[Directive.Literal | Directive.Variable | Directive.TypeOf],
   )
 
 import Directive.*
@@ -196,26 +196,25 @@ def parseAssemblyFormat(format: String, opDef: OperationDef)(using
         case d: (OperandDef | ResultDef) => TypeOf(d)
         case _ => abort(s"`$$$name` has no type, in `type($$$name)`.")
     case Syntax.OptionalGroup(elements) =>
-      val body = elements.map((s, _) => resolve(s))
-      val anchor = (body zip elements)
-        .collect { case (d, (_, true)) => d } match
-        case Seq(anchor: (Variable | TypeOf)) => anchor
-        case _                                =>
-          abort("an optional group needs exactly one `^` anchor.")
-      if constructOf(anchor).variadicity == Variadicity.Single then
-        abort(s"the anchor `${constructOf(anchor).name}` is not optional.")
-      body.foreach {
-        case _: Literal             =>
+      val body = elements.map((s, _) => resolve(s)).map {
+        case d: Literal => d
+        case d: (Variable | TypeOf)
+            if constructOf(d).variadicity != Variadicity.Single =>
+          d
         case d: (Variable | TypeOf) =>
-          if constructOf(d).variadicity == Variadicity.Single then
-            abort(
-              s"`${constructOf(d).name}` in an optional group is not optional."
-            )
+          abort(
+            s"`${constructOf(d).name}` in an optional group is not optional."
+          )
         case _ =>
           abort(
             "`attr-dict` and optional groups cannot be in an optional group."
           )
       }
+      val anchor = (body zip elements)
+        .collect { case (d, (_, true)) => d } match
+        case Seq(anchor: (Variable | TypeOf)) => anchor
+        case _                                =>
+          abort("an optional group needs exactly one `^` anchor.")
       OptionalGroup(anchor, body)
 
   val directives = fastparse.parse(format, formatP(using _)) match
@@ -226,10 +225,11 @@ def parseAssemblyFormat(format: String, opDef: OperationDef)(using
     case OptionalGroup(_, body) => body
     case d                      => List(d)
   }
-  def once(d: Directive, spelling: String) = all.count(_ == d) match
-    case 1 =>
-    case 0 => abort(s"$spelling is missing.")
-    case _ => abort(s"$spelling is spelled more than once.")
+  def once(d: Directive, spelling: String, required: Boolean = true) =
+    all.count(_ == d) match
+      case 0 if required => abort(s"$spelling is missing.")
+      case 0 | 1         =>
+      case _             => abort(s"$spelling is spelled more than once.")
 
   if opDef.successors.nonEmpty then abort("successors are not supported.")
   once(AttrDict, "`attr-dict`")
@@ -239,10 +239,8 @@ def parseAssemblyFormat(format: String, opDef: OperationDef)(using
   )
   opDef.results.foreach(d => once(TypeOf(d), s"`type($$${d.name})`"))
   opDef.regions.foreach(d => once(Variable(d), s"`$$${d.name}`"))
-  opDef.properties.foreach(d =>
-    if all.count(_ == Variable(d)) > 1 then
-      abort(s"`$$${d.name}` is spelled more than once.")
-  )
+  opDef.properties
+    .foreach(d => once(Variable(d), s"`$$${d.name}`", required = false))
 
   AssemblyFormatDef(
     directives,
@@ -266,9 +264,10 @@ private final case class Spacing(
     afterPunctuation: Boolean = false,
 ):
 
-  /** Whether a value is preceded by a space, and the spacing after it. */
-  def value: (Boolean, Spacing) =
-    (emitSpace || !afterPunctuation, Spacing())
+  /** Whether a value is preceded by a space; the spacing after it is the
+    * default one.
+    */
+  def spaceBeforeValue: Boolean = emitSpace || !afterPunctuation
 
   /** Whether a literal is preceded by a space, and the spacing after it. */
   def literal(text: String): (Boolean, Spacing) =
@@ -332,9 +331,14 @@ private class FormatPrinter[T: Type](
         )
       case Variable(Flag())       => (None, spacing)
       case d: (Variable | TypeOf) =>
-        val (space, next) = spacing.value
         val value = printValue(d)
-        (Some(if space then '{ $p.print(" "); $value } else value), next)
+        (
+          Some(
+            if spacing.spaceBeforeValue then '{ $p.print(" "); $value }
+            else value
+          ),
+          Spacing(),
+        )
       case OptionalGroup(anchor, body) =>
         val (printed, next) = printAll(body, spacing)
         (
@@ -381,28 +385,21 @@ private class FormatPrinter[T: Type](
 
   /** The attribute dictionary, along with the unspelled properties. */
   private def attrDict: Expr[Map[String, Attribute]] =
-    format.unspelled.foldLeft(
-      selectMember[Map[String, Attribute]](op, "attributes")
-    )((dict, d) =>
-      val name = Expr(d.name)
-      d.variadicity match
-        case Variadicity.Single =>
-          '{ $dict.updated($name, ${ selectMember[Attribute](op, d.name) }) }
-        case Variadicity.Optional =>
-          '{
-            val current = $dict
-            ${ selectMember[Option[Attribute]](op, d.name) } match
-              case Some(value) => current.updated($name, value)
-              case None        => current
-          }
-    )
+    format.unspelled
+      .foldLeft(
+        selectMember[Map[String, Attribute]](op, "attributes")
+      )(withProperty(_, _, op))
 
 /*≡≡=---=≡≡≡≡≡=---=≡≡*\
 ||      PARSING      ||
 \*≡==----=≡≡≡=----==≡*/
 
+/** A parser for some directives. */
+private sealed trait Parsed:
+  def parser: Expr[P[?]]
+
 /** A parser for some directives capturing no value, e.g., literals. */
-private final case class Skipped(parser: Expr[P[Unit]])
+private final case class Skipped(parser: Expr[P[Unit]]) extends Parsed
 
 /** A parser for some directives capturing values.
   *
@@ -418,8 +415,7 @@ private final case class Captured[T](
     empty: Option[Expr[T]],
     bind: Expr[T] => Map[Directive, Expr[Any]],
 )(using val tpe: Type[T])
-
-private type Parsed = Skipped | Captured[?]
+    extends Parsed
 
 /** A resolution step of a construct, from its captured values.
   *
@@ -447,18 +443,21 @@ private class FormatParser[T <: Operation: Type](
 )(using Quotes):
 
   def parse: Expr[P[T]] =
-    sequence(format.directives) match
+    capturing(format.directives) match
       case c: Captured[t] =>
         given Type[t] = c.tpe
         '{
           given P[Any] = $ctx
           ${ c.parser }.flatMap((parsed: t) => ${ build(c.bind('parsed)) })
         }
-      // A format always captures its attribute dictionary.
-      case Skipped(_) => quotes.reflect.report.errorAndAbort("Unreachable")
 
-  private def sequence(directives: List[Directive]): Parsed =
-    directives.map(parseOne).reduceLeft(andThen)
+  /** The parser of directives known to capture values: a whole format always
+    * captures its attribute dictionary, and a group its anchor.
+    */
+  private def capturing(directives: List[Directive]): Captured[?] =
+    directives.map(parseOne).reduceLeft(andThen) match
+      case c: Captured[?] => c
+      case Skipped(_)     => quotes.reflect.report.errorAndAbort("Unreachable")
 
   private def andThen(first: Parsed, second: Parsed): Parsed =
     (first, second) match
@@ -519,10 +518,8 @@ private class FormatParser[T <: Operation: Type](
           '{ typeListP(using $ctx, $p) },
         )
       case OptionalGroup(_, body) =>
-        val first = parseOne(body.head) match
-          case Skipped(parser) => parser
-          case c: Captured[?]  => c.parser
-        sequence(body) match
+        val first = parseOne(body.head).parser
+        capturing(body) match
           case c: Captured[t] =>
             given Type[t] = c.tpe
             // Validated: every directive of a group can be absent.
@@ -531,8 +528,6 @@ private class FormatParser[T <: Operation: Type](
               given P[Any] = $ctx
               (&($first) ~~ ${ c.parser }) | Pass($empty)
             })
-          // Validated: a group captures its anchor.
-          case Skipped(_) => quotes.reflect.report.errorAndAbort("Unreachable")
 
   private def captured[V: Type](
       directive: Directive,
@@ -571,13 +566,11 @@ private class FormatParser[T <: Operation: Type](
     */
   private def build(values: Map[Directive, Expr[Any]]): Expr[P[T]] =
     val attrDict = values(AttrDict).asExprOf[Map[String, Attribute]]
-    val operands = opDef.operands
-      .map(d => resolveOperand(d, values(Variable(d)), values(TypeOf(d))))
-    val (results, expected) =
-      resolveResults(opDef.results.map(d => d -> values(TypeOf(d))).toList)
-    resolving(operands.toList) { operands =>
+    val operandSteps = opDef.operands.map(resolveOperand(_, values)).toList
+    val (resultSteps, expected) = resolveResults(values)
+    resolving(operandSteps) { operands =>
       checkResults(expected) {
-        resolving(results) { results =>
+        resolving(resultSteps) { results =>
           val regions = opDef.regions.map(d => d.name -> values(Variable(d)))
           val properties = opDef.properties.map(d =>
             val value = values.get(Variable(d)) match
@@ -659,13 +652,13 @@ private class FormatParser[T <: Operation: Type](
 
   private def resolveOperand(
       d: OperandDef,
-      names: Expr[Any],
-      types: Expr[Any],
+      values: Map[Directive, Expr[Any]],
   ): Step[?] =
     d.tpe match
       case '[type t <: Attribute; `t`] =>
-        resolve(d, "operand", names, types)((name, typ) =>
-          '{ FormatParsing.operand[t]($name, $typ)(using $ctx, $p) }
+        resolve(d, "operand", values(Variable(d)), values(TypeOf(d)))(
+          (name, typ) =>
+            '{ FormatParsing.operand[t]($name, $typ)(using $ctx, $p) }
         )
 
   /** Resolve results, in order, distributing the result names over them.
@@ -674,20 +667,21 @@ private class FormatParser[T <: Operation: Type](
     *   The resolution steps, and the expected number of result names.
     */
   private def resolveResults(
-      types: List[(ResultDef, Expr[Any])]
+      values: Map[Directive, Expr[Any]]
   ): (List[Step[?]], Expr[Int]) =
-    val sizes = types.map((d, types) =>
+    val results = opDef.results.toList
+    val sizes = results.map(d =>
       d.variadicity match
         case Variadicity.Single   => Expr(1)
         case Variadicity.Optional =>
-          '{ ${ types.asExprOf[Option[Attribute]] }.size }
+          '{ ${ values(TypeOf(d)).asExprOf[Option[Attribute]] }.size }
         case Variadicity.Variadic =>
-          '{ ${ types.asExprOf[Seq[Attribute]] }.size }
+          '{ ${ values(TypeOf(d)).asExprOf[Seq[Attribute]] }.size }
     )
     val offsets = sizes
       .scanLeft(Expr(0))((offset, size) => '{ $offset + $size })
-    val steps = types.lazyZip(sizes).lazyZip(offsets).map {
-      case ((d, types), size, offset) =>
+    val steps = results.lazyZip(sizes).lazyZip(offsets).map {
+      (d, size, offset) =>
         val names = d.variadicity match
           case Variadicity.Single   => '{ $resNames($offset) }
           case Variadicity.Optional =>
@@ -696,7 +690,7 @@ private class FormatParser[T <: Operation: Type](
             '{ $resNames.slice($offset, $offset + $size) }
         d.tpe match
           case '[type t <: Attribute; `t`] =>
-            resolve(d, "result", names, types)((name, typ) =>
+            resolve(d, "result", names, values(TypeOf(d)))((name, typ) =>
               '{ FormatParsing.result[t]($name, $typ)(using $ctx, $p) }
             )
     }
