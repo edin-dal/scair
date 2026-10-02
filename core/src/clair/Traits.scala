@@ -45,7 +45,7 @@ transparent trait DerivedOperation[name <: String] extends Operation:
       operands = operands,
       successors = successors,
       results = results,
-      regions = detachedRegions,
+      regions = regions,
       properties = properties,
       attributes = attributes,
       location = location,
