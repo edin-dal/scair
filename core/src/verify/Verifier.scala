@@ -21,7 +21,8 @@ object Verifier:
         boundary[OK[Operation]] {
           for chk <- checks do
             chk.run(root) match
-              case e: Err => break(Err(s"${chk.name}: ${e.msg}"): OK[Operation])
-              case _      => ()
+              case e: Err =>
+                break(e.copy(msg = s"${chk.name}: ${e.msg}"): OK[Operation])
+              case _ => ()
           OK(root)
         }
