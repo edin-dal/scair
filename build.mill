@@ -155,8 +155,11 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
 
   // Modules implementing a dialect.
   trait DialectModule extends ScairModule:
-    override def moduleDeps = core +: dialectDeps
+    final override def moduleDeps = core +: dialectDeps
     def dialectDeps: Seq[DialectModule] = Seq()
+
+  trait InterpreterDialectModule(dialect: DialectModule) extends ScairModule:
+    final override def moduleDeps = Seq(interpreter, dialect)
 
   // Modules implementing a dialect via IRDL, through .irdl files.
   trait IRDLDialectModule extends DialectModule:
@@ -252,8 +255,20 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
   object passes extends ScairModule:
     override def moduleDeps = Seq(dialects)
 
+  private def dialectdefs = dialects
   object interpreter extends ScairModule:
-    override def moduleDeps = Seq(dialects)
+    override def moduleDeps = Seq(core)
+
+    object dialects extends ScairModule:
+      override def moduleDeps = interpreter +: moduleDirectChildren.collect {
+        case m: ScairModule => m
+      }
+
+      object arith extends InterpreterDialectModule(dialectdefs.arith)
+      object func extends InterpreterDialectModule(dialectdefs.func)
+      object llvm extends InterpreterDialectModule(dialectdefs.llvm)
+      object memref extends InterpreterDialectModule(dialectdefs.memref)
+      object scf extends InterpreterDialectModule(dialectdefs.scf)
 
   object tools extends ScairModule:
 
@@ -261,10 +276,13 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
       mvn"com.github.scopt::scopt::4.1.0"
     )
 
-    override def moduleDeps = Seq(core)
+    // It feels off to depend on the interpreter for both tool bases still
+    // But it's only the trivial core, and not the bulk of dialect implementations, at
+    // least.
+    override def moduleDeps = Seq(core, interpreter)
 
     object runTool extends ScairModule:
-      override def moduleDeps = Seq(dialects, interpreter, tools)
+      override def moduleDeps = Seq(dialects, interpreter.dialects, tools)
 
       override def mainClass = Some("scair.tools.runTool.ScairRun")
 
@@ -350,8 +368,8 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
           stderr = os.Inherit,
           env = Map(
             ("SCAIR_OPT" -> scairOpt().path.toString),
-            ("SCAIR_RUN" -> scairRun().path.toString)
-          )
+            ("SCAIR_RUN" -> scairRun().path.toString),
+          ) ++ javaHome().map(h => "JAVA_HOME" -> h.path.toString)
         )
       if litStatus.exitCode != 0 then sys.error(f"Filechecks failed")
     }

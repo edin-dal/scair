@@ -18,7 +18,7 @@ import scala.io.BufferedSource
 // ░░░╚═╝░░░ ░╚════╝░ ░╚════╝░ ╚══════╝ ╚═════╝░
 //
 
-abstract class ScairToolBase[Args]:
+abstract class ToolBase[Args]:
   val ctx = MLContext()
 
   registerDialects()
