@@ -4,7 +4,6 @@ import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 
 import scair.dialects.builtin.*
-import scair.clair.{DerivedOperation, OpDefs}
 
 import scair.dialects.test.TestOp
 
