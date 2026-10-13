@@ -28,6 +28,7 @@ class LocationTest extends AnyFlatSpec:
       inputPath = path,
       allowUnregisteredDialect = true,
       inputLineOffset = offset,
+      sourceLocations = true,
     ).parse(input).get.value
 
   private def children(op: Operation): Seq[Operation] =
@@ -94,6 +95,25 @@ class LocationTest extends AnyFlatSpec:
       val genericModule = parse("  \"builtin.module\"() ({}) : () -> ()")
       genericModule.location shouldBe FileLineColLoc("input.mlir", 1, 3)
     }
+
+  it should "agree with fastparse's prettyIndex across line endings" in {
+    for eol <- Seq("\n", "\r\n", "\r") do
+      val input = Seq(
+        "",
+        "builtin.module {",
+        "",
+        "  \"other.a\"() : () -> ()",
+        "    \"other.b\"() : () -> ()",
+        "}",
+      ).mkString(eol)
+      val module = parse(input)
+      for (op, name) <- Seq(module) ++ children(module) zip
+          Seq("builtin.module", "\"other.a\"", "\"other.b\"")
+      do
+        val Array(line, col) = IndexedParserInput(input)
+          .prettyIndex(input.indexOf(name)).split(":").map(_.toInt)
+        op.location shouldBe FileLineColLoc("input.mlir", line, col)
+  }
 
   it should
     "use zero coordinates only for a synthetic module and apply input offsets" in {

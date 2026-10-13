@@ -6,6 +6,9 @@ import scair.ir.*
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
+type InterpreterDialect =
+  Seq[OpImpl[? <: Operation] | OpTerminatorImpl[? <: Operation]]
+
 // global implementation dictionary for interpreter
 type RegisteredImpl =
   (Interpreter, RuntimeCtx, Operation, Seq[Any]) => OpImplResult

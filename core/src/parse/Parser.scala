@@ -285,19 +285,27 @@ final class Parser(
     private[parse] final val scopes: mutable.Stack[Scope] = mutable
       .Stack(new Scope()),
     private[parse] final val inputLineOffset: Int = 0,
+    private[parse] final val sourceLocations: Boolean = false,
 ):
 
+  // Line starts of the last indexed input, cached across calls.
+  private var lineStartsOf: String | Null = null
+  private var lineStarts: Array[Int] = Array.empty
+
+  // Same numbering as prettyIndex, but binary-searched over cached line starts.
   private[parse] def sourceLocation[$: P as ctx](index: Int): Location =
-    ctx.input.prettyIndex(index).split(":") match
-      case Array(line, column) =>
-        (line.toIntOption, column.toIntOption) match
-          case (Some(line), Some(column)) =>
-            FileLineColLoc(
-              inputPath.getOrElse("-"),
-              line + inputLineOffset,
-              column,
-            )
-          case _ => UnknownLoc
+    ctx.input match
+      case IndexedParserInput(data) if sourceLocations =>
+        if !(lineStartsOf eq data) then
+          lineStarts = Util.lineNumberLookup(data)
+          lineStartsOf = data
+        val found = java.util.Arrays.binarySearch(lineStarts, index)
+        val line = math.max(0, if found >= 0 then found else -found - 2)
+        FileLineColLoc(
+          inputPath.getOrElse("-"),
+          line + 1 + inputLineOffset,
+          index - lineStarts(line) + 1,
+        )
       case _ => UnknownLoc
 
   private[parse] def enterRegionP[$: P] =
@@ -484,7 +492,8 @@ def moduleP[$: P](using p: Parser): P[Operation] = P(
       val block = Block(operations = toplevel)
       val region = Region(block)
       val moduleOp = ModuleOp(region)
-        .at(FileLineColLoc(p.inputPath.getOrElse("-"), 0, 0))
+      if p.sourceLocations then
+        moduleOp.at(FileLineColLoc(p.inputPath.getOrElse("-"), 0, 0))
 
       for op <- toplevel do op.containerBlock = Some(block)
       block.containerRegion = Some(region)
