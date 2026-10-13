@@ -37,7 +37,8 @@
 }, {
 }) : (i1) -> (i1, i1)
 
-%24, %25 = "scf.index_switch"(%13) <{cases = array<i1: 0, 1>}> ({
+%24, %25 = "scf.index_switch"(%13) <{cases = array<i64: 0, 1>}> ({
+}, {
 }, {
 }) : (index) -> (i1, i1)
 
@@ -85,7 +86,8 @@ scf.yield %24 : i1
 // CHECK-NEXT:      "scf.condition"(%0, %1, %2) : (i1, i32, i32) -> ()
 // CHECK-NEXT:    }, {
 // CHECK-NEXT:    }) : (i1) -> (i1, i1)
-// CHECK-NEXT:    %24, %25 = "scf.index_switch"(%13) <{cases = array<i1: 0, 1>}> ({
+// CHECK-NEXT:    %24, %25 = "scf.index_switch"(%13) <{cases = array<i64: 0, 1>}> ({
+// CHECK-NEXT:    }, {
 // CHECK-NEXT:    }, {
 // CHECK-NEXT:    }) : (index) -> (i1, i1)
 // CHECK-NEXT:    %26, %27, %28 = "test.op"() : () -> (index, index, index)
