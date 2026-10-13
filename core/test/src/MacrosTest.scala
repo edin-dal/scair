@@ -5,7 +5,6 @@ import org.scalatest.*
 import org.scalatest.flatspec.*
 import org.scalatest.matchers.should.Matchers.*
 import scair.utils.*
-import javax.tools.FileObject
 
 case class RegionOp(
     wowregions: Seq[Region]

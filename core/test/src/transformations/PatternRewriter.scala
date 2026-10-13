@@ -7,7 +7,6 @@ import scair.transformations.*
 import scair.parse.Parser
 import scair.print.AssemblyPrinter
 import scair.MLContext
-import java.io.*
 import java.io.StringWriter
 
 class PatternRewriterTest extends AnyFlatSpec:
