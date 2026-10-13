@@ -37,15 +37,16 @@ def asReplacement(
     result: RewriteResult
 ): (Seq[Operation], Option[Seq[Value[Attribute]]]) =
   result match
-    case (ops, results): (Operation | Seq[Operation], ?) =>
+    case (ops, results) =>
       (
         asOps(ops),
         Some(results match
-          case r: Value[?]       => Seq(r.asInstanceOf[Value[Attribute]])
-          case rs: Seq[Value[?]] => rs.asInstanceOf[Seq[Value[Attribute]]]),
+          case r: Value[?] => Seq(r.asInstanceOf[Value[Attribute]])
+          case rs: Seq[?]  => rs.asInstanceOf[Seq[Value[Attribute]]]),
       )
-    case ops: (Operation | Seq[Operation]) => (asOps(ops), None)
-    case action: PatternAction             =>
+    case op: Operation         => (Seq(op), None)
+    case ops: Seq[?]           => (ops.asInstanceOf[Seq[Operation]], None)
+    case action: PatternAction =>
       throw new Exception(s"$action is not a replacement.")
 
 /** Defines a RewritePattern from a partial function. The partial function can
