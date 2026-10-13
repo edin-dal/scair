@@ -142,10 +142,10 @@ val myDialect: InterpreterDialect = Seq(run_maxsi, run_my_br)
 
 As with dialect registration for ScaIR tools, there are two common ways to make your dialect available to the interpreter:
 
-* When using ScaIR as a library: extend `ScairRunBase` (in `scair.tools.runTool`) and override `interpreterDialects` to append your dialect:
+* When using ScaIR as a library: extend `RunBase` (in `scair.tools.runTool`) and override `interpreterDialects` to append your dialect:
 
 ```scala
-object MyRun extends ScairRunBase:
+object MyRun extends RunBase:
   override def interpreterDialects =
     scair.interpreter.allInterpreterDialects :+ myDialect
 ```

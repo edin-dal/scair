@@ -1,5 +1,7 @@
 package scair.tools.opt
 
+import scair.tools.OptArgs
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.*
 import scair.ir.*
@@ -29,7 +31,7 @@ class LocationTest extends AnyFlatSpec:
     try
       val modules = ScairOpt
         .parse(
-          ScairOptArgs(
+          OptArgs(
             input = Some("split.mlir"),
             splitInputFile = true,
             parseLocations = true,
