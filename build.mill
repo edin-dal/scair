@@ -163,6 +163,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     override def moduleDeps = (core +: dialectDeps) ++ passDeps
     def dialectDeps: Seq[DialectModule] = Seq()
     def passDeps: Seq[PassModule] = Seq()
+
   trait InterpreterDialectModule(dialect: DialectModule) extends ScairModule:
     final override def moduleDeps = Seq(interpreter, dialect)
 
