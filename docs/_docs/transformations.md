@@ -11,6 +11,7 @@ title: "Transformations and Pass"
 [IntegerAttr+]: scair.dialects.builtin.IntegerAttr.+
 [WalkerPass]: scair.transformations.WalkerPass
 [ModulePass]: scair.transformations.ModulePass
+[PassDefs]: scair.transformations.PassDefs
 [PatternRewriteWalker]: scair.transformations.PatternRewriteWalker
 [RewritePattern]: scair.transformations.RewritePattern
 [GreedyRewritePatternApplier]: scair.transformations.GreedyRewritePatternApplier
@@ -149,10 +150,10 @@ Finally, let's package our transformations into a **[WalkerPass]**.
 import scair.transformations.*
 import scair.MLContext
 //}
-final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "sample-constant-folding-and-dce"
+final case class SampleConstantFoldingAndDCE() extends WalkerPass
+    derives PassDefs:
 
-  override final val walker = PatternRewriteWalker(
+  override def walker(using MLContext) = PatternRewriteWalker(
     GreedyRewritePatternApplier(
 	    Seq(
 		    AddIFold,
@@ -164,6 +165,46 @@ final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
 
 [WalkerPass] is a kind of IR **[ModulePass]** that walks over all operations in the IR via **[PatternRewriteWalker]**, and applies a given pattern. 
 In this case a **[GreedyRewritePatternApplier]**, which itself is a pattern that takes an Operation and applies all given patterns greedily over it, until a change is seen, or all patterns are tried.  
+
+Deriving **[PassDefs]** names the pass after its class, in kebab case: here `sample-constant-folding-and-dce`. Annotate the class with `@passName("...")` to pick another name.
+
+### **Pass options**
+
+A pass's options are the fields of its case class. Give a field a default value to make the option optional:
+
+```scala sc-compile-with:addi-fold,dce
+//{
+import scair.transformations.*
+import scair.MLContext
+//}
+enum Order:
+  case TopDown, BottomUp
+
+final case class SampleOptionsPass(
+    iterations: Int,                 // required
+    order: Order = Order.TopDown,
+    verbose: Boolean = false,
+    skip: Seq[String] = Seq(),
+) extends WalkerPass derives PassDefs:
+
+  override def walker(using MLContext) = PatternRewriteWalker(
+    GreedyRewritePatternApplier(Seq(AddIFold, DeadCodeElimination))
+  )
+```
+
+On the command line, the options follow the pass name in braces, in kebab case and separated by spaces:
+
+```bash
+scair-opt -p 'sample-options-pass{iterations=3 order=bottom-up verbose skip=a,b}'
+```
+
+- A list option takes comma-separated values.
+- A bare `verbose` means `verbose=true`.
+- An `Option` given without a value means `None`.
+- Values that contain spaces, commas or braces go in double quotes.
+- Enum options take their case names, in kebab case.
+
+Supported option types are `Int`, `Long`, `Double`, `String`, `Boolean`, simple enums, and `Option`, `Seq` and `List` of those. To support another type, define a `given PassOption[T]`.
 
 ## **Footnotes**
 

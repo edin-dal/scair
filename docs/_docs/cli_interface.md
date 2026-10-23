@@ -63,7 +63,7 @@ Additionally, there are a number of flags currently available for `scair-opt`:
 
 - **`--print-generic`** -> prints the IR strictly in the generic format.
 
-- **`--passes`** -> a comma separated list of passes to apply to the IR.
+- **`-p`, `--passes`** -> the pass pipeline to apply to the IR: a comma-separated list of passes, each optionally followed by its options in braces, e.g. `canonicalize,my-pass{max-iterations=3 verbose}`. See [pass options](transformations.md#pass-options).
 
 - **`--verify-diagnostics`** -> verification diagnose mode, i.e verification errors are not fatal for the whole run
 
