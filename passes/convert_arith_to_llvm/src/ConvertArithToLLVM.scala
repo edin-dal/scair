@@ -1,6 +1,5 @@
 package scair.passes.convert_arith_to_llvm
 
-import scair.MLContext
 import scair.dialects.arith
 import scair.dialects.builtin.*
 import scair.dialects.llvm
@@ -53,9 +52,7 @@ private val LowerICmp = conversionPattern { case op: llvm.ICmp =>
 // Converts scalar arithmetic to LLVM arithmetic.
 // Example: `arith.constant` / `arith.addi` / `arith.muli`
 //   -> `llvm.constant` / `llvm.add` / `llvm.mul`.
-final class ConvertArithToLLVM(ctx: MLContext) extends ConversionPass(ctx):
-  override val name: String = "convert-arith-to-llvm"
-
+final case class ConvertArithToLLVM() extends ConversionPass derives PassDefs:
   override val typeConverter: TypeConverter = TypeConverter(Seq(IndexToLLVM))
 
   override val patterns: Seq[ConversionPattern] =

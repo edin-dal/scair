@@ -8,6 +8,7 @@ import scair.ir.Result
 import scair.passes.canonicalization.RemoveUnusedOperations
 import scair.transformations.GreedyRewritePatternApplier
 import scair.transformations.Owner
+import scair.transformations.PassDefs
 import scair.transformations.PatternRewriteWalker
 import scair.transformations.WalkerPass
 import scair.transformations.pattern
@@ -29,9 +30,8 @@ val AddIfold = pattern {
     Constant(c0 + c1, Result(c0.typ))
 }
 
-final class BenchmarkConstantFolding(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "benchmark-constant-folding"
+final case class BenchmarkConstantFolding() extends WalkerPass derives PassDefs:
 
-  override final val walker = PatternRewriteWalker(
+  override def walker(using MLContext) = PatternRewriteWalker(
     GreedyRewritePatternApplier(Seq(AddIfold, RemoveUnusedOperations))
   )

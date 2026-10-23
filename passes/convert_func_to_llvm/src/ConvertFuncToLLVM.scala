@@ -1,6 +1,5 @@
 package scair.passes.convert_func_to_llvm
 
-import scair.MLContext
 import scair.dialects.func
 import scair.dialects.llvm
 import scair.ir.*
@@ -30,9 +29,7 @@ private val LowerReturn = conversionPattern { case _: func.Return =>
   llvm.Return(adaptor.operands)
 }
 
-final class ConvertFuncToLLVM(ctx: MLContext) extends ConversionPass(ctx):
-  override val name: String = "convert-func-to-llvm"
-
+final case class ConvertFuncToLLVM() extends ConversionPass derives PassDefs:
   override val typeConverter: TypeConverter = TypeConverter(Seq.empty)
 
   override val patterns: Seq[ConversionPattern] =

@@ -84,11 +84,11 @@ case class CSE(
       // Just mimicing MLIR here
       case _ => ()
 
-final class CommonSubexpressionElimination(ctx: MLContext)
-    extends ModulePass(ctx):
-  override val name = "cse"
+@passName("cse")
+final case class CommonSubexpressionElimination() extends ModulePass
+    derives PassDefs:
 
-  override def transform(op: Operation): Operation =
+  override def transform(op: Operation)(using MLContext): Operation =
     given Rewriter = RewriteMethods
     val c = CSE()
     op.regions.foreach(c.simplify)

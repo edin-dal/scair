@@ -51,17 +51,43 @@ val TestReplacingDummyOperation = pattern {
     op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
 }
 
-final class DummyPass(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "dummy-pass"
+final case class DummyPass() extends WalkerPass derives PassDefs:
 
-  override final val walker = PatternRewriteWalker(AddDummyAttributeToDict)
+  override def walker(using MLContext) = PatternRewriteWalker(
+    AddDummyAttributeToDict
+  )
 
-final class TestInsertionPass(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "test-ins-pass"
+@passName("test-ins-pass")
+final case class TestInsertionPass() extends WalkerPass derives PassDefs:
 
-  override final val walker = PatternRewriteWalker(TestInsertingDummyOperation)
+  override def walker(using MLContext) = PatternRewriteWalker(
+    TestInsertingDummyOperation
+  )
 
-final class TestReplacementPass(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "test-rep-pass"
+@passName("test-rep-pass")
+final case class TestReplacementPass() extends WalkerPass derives PassDefs:
 
-  override final val walker = PatternRewriteWalker(TestReplacingDummyOperation)
+  override def walker(using MLContext) = PatternRewriteWalker(
+    TestReplacingDummyOperation
+  )
+
+enum TestOrder:
+  case TopDown, BottomUp
+
+/** Records its own options on the operation it runs on, to test option parsing.
+  */
+final case class TestPassOptions(
+    number: Int = 1,
+    ratio: Double = 0.5,
+    label: String = "default",
+    flag: Boolean = false,
+    maybe: Option[Int] = None,
+    sizes: Seq[Int] = Seq(),
+    order: TestOrder = TestOrder.TopDown,
+) extends ModulePass derives PassDefs:
+
+  override def transform(op: Operation)(using MLContext): Operation =
+    op.attributes += "test.options" -> StringData(
+      PassDefs[TestPassOptions].show(this)
+    )
+    op

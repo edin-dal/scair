@@ -10,22 +10,30 @@ import scair.ir.*
 // ██║░░░░░ ██║░░██║ ██████╔╝ ██████╔╝ ███████╗ ██████╔╝
 // ╚═╝░░░░░ ╚═╝░░╚═╝ ╚═════╝░ ╚═════╝░ ╚══════╝ ╚═════╝░
 
-abstract class ModulePass(ctx: MLContext):
-  val name: String
-  def transform(op: Operation): Operation = ???
+/** A transformation over an operation, usually a module.
+  *
+  * Passes are case classes whose fields are their options, and derive their
+  * [[PassDefs]]:
+  * {{{
+  * final case class MyPass(maxIterations: Int = 10) extends ModulePass
+  *     derives PassDefs
+  * }}}
+  */
+trait ModulePass:
+  def transform(op: Operation)(using MLContext): Operation
 
-abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx):
-  def walker: PatternRewriteWalker
+trait WalkerPass extends ModulePass:
+  def walker(using MLContext): PatternRewriteWalker
 
-  final override def transform(op: Operation): Operation =
+  final override def transform(op: Operation)(using MLContext): Operation =
     walker.rewrite(op)
     return op
 
-  final def transform(block: Block): Block =
+  final def transform(block: Block)(using MLContext): Block =
     walker.rewrite(block)
     return block
 
-  final def transform(region: Region): Region =
+  final def transform(region: Region)(using MLContext): Region =
     walker.rewrite(region)
     return region
 
@@ -35,7 +43,7 @@ abstract class WalkerPass(ctx: MLContext) extends ModulePass(ctx):
   * single sweep over the regions of the operation the pass is given; see
   * [[ConversionDriver]].
   */
-abstract class ConversionPass(ctx: MLContext) extends ModulePass(ctx):
+trait ConversionPass extends ModulePass:
 
   def typeConverter: TypeConverter
 
@@ -44,7 +52,7 @@ abstract class ConversionPass(ctx: MLContext) extends ModulePass(ctx):
   /** Whether to fold the materialized casts once the conversion is done. */
   def reconcile: Boolean = true
 
-  final override def transform(op: Operation): Operation =
+  final override def transform(op: Operation)(using MLContext): Operation =
     ConversionDriver(typeConverter, patterns).convert(op)
     if reconcile then ReconcileCasts.walker.rewrite(op)
     return op
