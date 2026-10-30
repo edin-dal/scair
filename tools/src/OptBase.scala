@@ -7,7 +7,6 @@ import scair.print.AssemblyPrinter
 import scair.print.ErrorPrinter
 import scair.tools.ToolBase
 import scair.transformations.ModulePass
-import scair.transformations.PipelineParser
 import scair.utils.*
 import scair.verify.Verifier
 import scopt.OParser

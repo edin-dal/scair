@@ -1,7 +1,8 @@
-package scair.transformations
+package scair.tools
 
 import fastparse.*
 import scair.MLContext
+import scair.transformations.*
 
 /** Parses a pipeline directly into registered pass instances. */
 final class PipelineParser(context: MLContext):
@@ -31,10 +32,3 @@ final class PipelineParser(context: MLContext):
 
   private def error(input: String, failure: Parsed.Failure): String =
     s"$input\n${" " * failure.index}^\n${failure.label}"
-
-def passOptionNameP[$: P]: P[String] = P(CharsWhileIn("A-Za-z0-9_.+\\-").!)
-
-def passOptionValueP[$: P]: P[String] = P(
-  ("\"" ~~ (CharsWhile(c => c != '"' && c != '\\').! | ("\\" ~~ AnyChar.!)).repX
-    .map(_.mkString) ~~ "\"") | passOptionNameP
-)

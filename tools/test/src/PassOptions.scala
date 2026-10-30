@@ -3,6 +3,7 @@ import org.scalatest.matchers.should.Matchers.*
 import scair.MLContext
 import scair.ir.*
 import scair.transformations.*
+import scair.tools.PipelineParser
 
 enum Direction:
   case TopDown, BottomUp

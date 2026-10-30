@@ -169,3 +169,10 @@ inline def summonPasses[Passes <: Tuple]: Seq[PassCompanion[?]] =
     case _: (head *: tail) =>
       summonInline[PassCompanion[head & ModulePass & Product]] +:
         summonPasses[tail]
+
+def passOptionNameP[$: P]: P[String] = P(CharsWhileIn("A-Za-z0-9_.+\\-").!)
+
+def passOptionValueP[$: P]: P[String] = P(
+  ("\"" ~~ (CharsWhile(c => c != '"' && c != '\\').! | ("\\" ~~ AnyChar.!)).repX
+    .map(_.mkString) ~~ "\"") | passOptionNameP
+)
