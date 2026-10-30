@@ -11,6 +11,7 @@ title: "Transformations and Pass"
 [IntegerAttr+]: scair.dialects.builtin.IntegerAttr.+
 [WalkerPass]: scair.transformations.WalkerPass
 [ModulePass]: scair.transformations.ModulePass
+[PassCompanion]: scair.transformations.PassCompanion
 [PatternRewriteWalker]: scair.transformations.PatternRewriteWalker
 [RewritePattern]: scair.transformations.RewritePattern
 [GreedyRewritePatternApplier]: scair.transformations.GreedyRewritePatternApplier
@@ -149,10 +150,10 @@ Finally, let's package our transformations into a **[WalkerPass]**.
 import scair.transformations.*
 import scair.MLContext
 //}
-final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "sample-constant-folding-and-dce"
+final case class SampleConstantFoldingAndDCE() extends WalkerPass
+    derives PassCompanion:
 
-  override final val walker = PatternRewriteWalker(
+  override def walker(using MLContext) = PatternRewriteWalker(
     GreedyRewritePatternApplier(
 	    Seq(
 		    AddIFold,
@@ -164,6 +165,48 @@ final class SampleConstantFoldingAndDCE(ctx: MLContext) extends WalkerPass(ctx):
 
 [WalkerPass] is a kind of IR **[ModulePass]** that walks over all operations in the IR via **[PatternRewriteWalker]**, and applies a given pattern. 
 In this case a **[GreedyRewritePatternApplier]**, which itself is a pattern that takes an Operation and applies all given patterns greedily over it, until a change is seen, or all patterns are tried.  
+
+Deriving **[PassCompanion]** uses the Scala class name as the pass name: here `SampleConstantFoldingAndDCE`. Mix in `PassName["..."]` to override it, e.g. `CommonSubexpressionElimination` uses `PassName["CSE"]` and `LoopInvariantCodeMotion` uses `PassName["LICM"]`.
+
+### **Pass options**
+
+A pass's options are the fields of its case class. Give a field a default value to make the option optional:
+
+```scala sc-compile-with:addi-fold,dce
+//{
+import scair.transformations.*
+import scair.MLContext
+//}
+enum Order:
+  case TopDown, BottomUp
+
+final case class SampleOptionsPass(
+    iterations: Int,                 // required
+    order: Order = Order.TopDown,
+    verbose: Boolean = false,
+    skip: Seq[String] = Seq(),
+) extends WalkerPass derives PassCompanion:
+
+  override def walker(using MLContext) = PatternRewriteWalker(
+    GreedyRewritePatternApplier(Seq(AddIFold, DeadCodeElimination))
+  )
+```
+
+On the command line, the options follow the pass name in braces, using the exact Scala field names and separated by spaces:
+
+```bash
+scair-opt -p 'SampleOptionsPass{iterations=3 order=BottomUp verbose skip=a,b}'
+```
+
+- Each option may be specified at most once per pass.
+- A list option takes comma-separated values.
+- A `Boolean` option without a value is read as `true`: `verbose` means `verbose=true`. Other types require a value.
+- Values that contain spaces, commas or braces go in double quotes.
+- Enum options take their exact Scala case names.
+
+Supported option types are `Int`, `Long`, `BigInt`, `Double`, `Boolean`, `String`, simple enums, and `Option` or `Seq` of those. Nested wrappers and other types are not supported.
+
+Register pass types with `summonPasses[(FirstPass, SecondPass)]`, which returns their derived companions for a tool's `passes` list.
 
 ## **Footnotes**
 

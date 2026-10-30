@@ -155,13 +155,10 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
           if newRes != op.results then
             rewriter.replaceOp(op, op.updated(results = newRes))
 
-      final class TestPass(ctx: MLContext) extends WalkerPass(ctx):
-        override val name = "test-test"
-        override final val walker = PatternRewriteWalker(TestPattern)
+      object TestPass extends WalkerPass:
+        override def walker(using MLContext) = PatternRewriteWalker(TestPattern)
 
-      val pass = TestPass(ctx)
-
-      val output = pass.transform(input)
+      val output = TestPass.transform(input)(using ctx)
 
       output.regions(0).blocks(0).isOpOrderValid shouldEqual false
     }
@@ -195,13 +192,10 @@ class BlockTest extends AnyFlatSpec with BeforeAndAfter:
           if newRes != op.results then
             rewriter.replaceOp(op, op.updated(results = newRes))
 
-      final class TestPass(ctx: MLContext) extends WalkerPass(ctx):
-        override val name = "test-test"
-        override final val walker = PatternRewriteWalker(TestPattern)
+      object TestPass extends WalkerPass:
+        override def walker(using MLContext) = PatternRewriteWalker(TestPattern)
 
-      val pass = TestPass(ctx)
-
-      val output = pass.transform(input)
+      val output = TestPass.transform(input)(using ctx)
 
       output.regions(0).blocks(0).isOpOrderValid shouldEqual false
       input.regions(0).blocks(0).operations(0) // test.op1

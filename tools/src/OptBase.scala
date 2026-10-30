@@ -1,10 +1,12 @@
 package scair.tools
 
+import scair.MLContext
 import scair.ir.*
 import scair.parse.*
 import scair.print.AssemblyPrinter
 import scair.print.ErrorPrinter
 import scair.tools.ToolBase
+import scair.transformations.ModulePass
 import scair.utils.*
 import scair.verify.Verifier
 import scopt.OParser
@@ -34,7 +36,7 @@ case class OptArgs(
     val splitInputFile: Boolean = false,
     val parsingDiagnostics: Boolean = false,
     val printGeneric: Boolean = false,
-    val passes: Seq[String] = Seq(),
+    val passes: String = "",
     val verifyDiagnostics: Boolean = false,
     val printLocations: Boolean = false,
     val parseLocations: Boolean = false,
@@ -104,9 +106,9 @@ trait OptBase extends ToolBase[OptArgs]:
         opt[Unit]("parse-locations").optional()
           .text("Record operation source locations while parsing")
           .action((_, c) => c.copy(parseLocations = true)),
-        opt[Seq[String]]('p', "passes").optional()
-          .text("Specify passes to apply to the IR")
-          .action((x, c) => c.copy(passes = x)),
+        opt[String]('p', "passes").optional().text(
+          "Pass pipeline to apply to the IR, e.g. `Canonicalize,MyPass{opt=1 list=1,2}`"
+        ).action((x, c) => c.copy(passes = x)),
         opt[Unit]("verify-diagnostics").optional().text(
           "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
         ).action((_, c) => c.copy(verifyDiagnostics = true)),
@@ -126,9 +128,18 @@ trait OptBase extends ToolBase[OptArgs]:
         p.printTopLevel(operation)
         if verifyDiagnostics then error else sys.exit(42)
 
+  def fail(message: String): Nothing =
+    Console.err.println(message)
+    sys.exit(1)
+
+  def parsePipeline(spec: String): Seq[ModulePass] =
+    PipelineParser(ctx).parse(spec).fold(fail, identity)
+
   def main(args: Array[String]): Unit =
 
     val parsedArgs = parseArgs(args)
+    val pipeline = parsePipeline(parsedArgs.passes)
+    given MLContext = ctx
 
     // Open the input file or stdin
     val input = parsedArgs.input match
@@ -150,17 +161,7 @@ trait OptBase extends ToolBase[OptArgs]:
             module match
               case OK(op) =>
                 // apply the specified passes
-                parsedArgs.passes.foldLeft(module)((module, parsedPass) =>
-                  val pass = ctx.passContext.get(parsedPass) match
-                    case Some(pass) => pass
-                    case None       =>
-                      Console.err.println(
-                        f"error: '$parsedPass' does not refer to a registered pass."
-                      )
-                      Console.err.println(f"Currently registered passes are:")
-                      ctx.passContext.keysIterator
-                        .foreach(p => Console.println(f"  - $p"))
-                      sys.exit(1)
+                pipeline.foldLeft(module)((module, pass) =>
                   module.map { op =>
                     val out = pass.transform(op)
 
