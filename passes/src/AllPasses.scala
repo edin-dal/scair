@@ -10,6 +10,7 @@ import scair.passes.convert_arith_to_llvm.ConvertArithToLLVM
 import scair.passes.convert_func_to_llvm.ConvertFuncToLLVM
 import scair.passes.cse.CommonSubexpressionElimination
 import scair.passes.licm.LoopInvariantCodeMotion
+import scair.passes.mlir_opt.MLIROpt
 import scair.passes.reconcile.ReconcileUnrealizedCasts
 import scair.transformations.summonPasses
 
@@ -42,5 +43,6 @@ val allPasses = summonPasses[
       TestPassOptions,
       Canonicalize,
       LoopInvariantCodeMotion,
+      MLIROpt,
   )
 ]
