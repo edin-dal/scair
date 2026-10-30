@@ -281,13 +281,14 @@ final case class RankedMemrefType(
     elementType: Attribute,
     shape: ArrayAttribute[IntData],
     encoding: Option[Attribute] = None,
+    memorySpace: Option[Attribute] = None,
 ) extends MemrefType,
       ShapedType:
 
   override def name: String = "builtin.ranked_memref"
 
   override def parameters: Seq[Attribute] =
-    shape +: elementType +: encoding.toSeq
+    shape +: elementType +: (encoding.toSeq ++ memorySpace.toSeq)
 
   override def getNumDims = shape.length
   override def getShape = shape.map(_.data.toLong)
@@ -301,14 +302,24 @@ final case class RankedMemrefType(
       p.print("x")
     )
 
-    p.print(elementType, ">")
+    p.print(elementType)
+    memorySpace.foreach(space => p.print(", ", space))
+    p.print(">")
 
-final case class UnrankedMemrefType(elementType: Attribute)
-    extends DerivedAttribute["builtin.unranked_memref"]
-    with MemrefType derives AttrDefs:
+final case class UnrankedMemrefType(
+    elementType: Attribute,
+    memorySpace: Option[Attribute] = None,
+) extends MemrefType:
+
+  override def name: String = "builtin.unranked_memref"
+
+  override def parameters: Seq[Attribute] =
+    elementType +: memorySpace.toSeq
 
   override def customPrint(p: Printer) =
-    p.print("tensor<*x", elementType, ">")
+    p.print("memref<*x", elementType)
+    memorySpace.foreach(space => p.print(", ", space))
+    p.print(">")
 
 /*≡==--==≡≡≡≡==--=≡≡*\
 ||   VECTOR TYPE    ||

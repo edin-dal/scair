@@ -321,8 +321,9 @@ def encodingP[$: P](using Parser) = P(attributeP)
 \*≡==---==≡≡≡==---==≡*/
 
 // memref-type           ::=   `memref` `<` (ranked-memref-type | unranked-memref-type) `>`
-// ranked-memref-type    ::=   dimension-list type
-// unranked-memref-type  ::=   `*` `x` type
+// ranked-memref-type    ::=   dimension-list type (`,` memory-space)?
+// unranked-memref-type  ::=   `*` `x` type (`,` memory-space)?
+// memory-space         ::=   attribute-value
 // dimension-list        ::=   (dimension `x`)*
 // dimension             ::=   `?` | decimal-literal
 
@@ -331,17 +332,19 @@ def memrefTypeP[$: P](using Parser): P[MemrefType] = P(
 )
 
 def rankedMemrefTypeP[$: P](using Parser): P[RankedMemrefType] = P(
-  dimensionListP ~ typeP
-).map((x: (Seq[IntData], Attribute)) =>
+  dimensionListP ~ typeP ~ ("," ~/ attributeP).?
+).map((x: (Seq[IntData], Attribute, Option[Attribute])) =>
   RankedMemrefType(
     shape = x._1,
     elementType = x._2,
+    memorySpace = x._3,
   )
 )
 
 def unrankedMemrefTypeP[$: P](using Parser): P[UnrankedMemrefType] =
-  P("*" ~ "x" ~ typeP)
-    .map((x: Attribute) => UnrankedMemrefType(elementType = x))
+  P("*" ~ "x" ~ typeP ~ ("," ~/ attributeP).?).map((elementType, memorySpace) =>
+    UnrankedMemrefType(elementType = elementType, memorySpace = memorySpace)
+  )
 
 def vectorDimensionListP[$: P](using Parser) =
   P(
