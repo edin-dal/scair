@@ -84,8 +84,9 @@ case class CSE(
       // Just mimicing MLIR here
       case _ => ()
 
-final case class CommonSubexpressionElimination() extends ModulePass
-    derives PassCompanion:
+final case class CommonSubexpressionElimination()
+    extends ModulePass
+    with PassName["CSE"] derives PassCompanion:
 
   override def transform(op: Operation)(using MLContext): Operation =
     given Rewriter = RewriteMethods

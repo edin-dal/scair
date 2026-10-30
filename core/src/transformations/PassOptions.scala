@@ -66,6 +66,9 @@ object PassOption:
     def typeName = o.typeName.replaceFirst("Seq", "List")
     def parse[$: P]: P[List[T]] = o.parse.map(_.toList)
 
+/** Overrides the Scala class name used in pass pipelines. */
+trait PassName[name <: String]
+
 final case class PassField(
     name: String,
     option: PassOption[?],
@@ -128,7 +131,9 @@ object PassCompanion:
     val labels = constValueTuple[m.MirroredElemLabels].toList
     val options = summonAll[Tuple.Map[m.MirroredElemTypes, PassOption]].toList
     new PassCompanion(
-      constValue[m.MirroredLabel],
+      inline erasedValue[P] match
+        case _: PassName[name] => constValue[name]
+        case _                 => constValue[m.MirroredLabel],
       labels.lazyZip(options).lazyZip(flagsOf[m.MirroredElemTypes])
         .lazyZip(defaultsOf[P]).map((l, o, f, d) =>
           PassField(l.toString, o.asInstanceOf[PassOption[?]], f, d)

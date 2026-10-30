@@ -166,7 +166,7 @@ final case class SampleConstantFoldingAndDCE() extends WalkerPass
 [WalkerPass] is a kind of IR **[ModulePass]** that walks over all operations in the IR via **[PatternRewriteWalker]**, and applies a given pattern. 
 In this case a **[GreedyRewritePatternApplier]**, which itself is a pattern that takes an Operation and applies all given patterns greedily over it, until a change is seen, or all patterns are tried.  
 
-Deriving **[PassCompanion]** uses the Scala class name as the pass name: here `SampleConstantFoldingAndDCE`.
+Deriving **[PassCompanion]** uses the Scala class name as the pass name: here `SampleConstantFoldingAndDCE`. Mix in `PassName["..."]` to override it, e.g. `CommonSubexpressionElimination` uses `PassName["CSE"]` and `LoopInvariantCodeMotion` uses `PassName["LICM"]`.
 
 ### **Pass options**
 

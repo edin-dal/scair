@@ -107,8 +107,9 @@ def moveLoopInvariantCode(loop: LoopLike)(using Rewriter): Int =
     (op, _) => loop.moveOutOfLoop(op),
   )
 
-final case class LoopInvariantCodeMotion() extends ModulePass
-    derives PassCompanion:
+final case class LoopInvariantCodeMotion()
+    extends ModulePass
+    with PassName["LICM"] derives PassCompanion:
 
   override def transform(op: Operation)(using MLContext): Operation =
     given Rewriter = RewriteMethods

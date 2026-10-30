@@ -19,7 +19,9 @@ final case class OptionsPass(
 ) extends ModulePass derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
-final case class LongNamedLLVMPass() extends ModulePass derives PassCompanion:
+final case class LongNamedLLVMPass()
+    extends ModulePass
+    with PassName["ShortPass"] derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
 final case class EnumOptionsPass(
@@ -60,7 +62,7 @@ class PassOptionsTest extends AnyFlatSpec:
 
   "PipelineParser" should "construct pipelines with typed options" in {
     pipeline(
-      """LongNamedLLVMPass, OptionsPass{count=1 names="a,b",c label="hi, {there} \"you\""},EnumOptionsPass{}"""
+      """ShortPass, OptionsPass{count=1 names="a,b",c label="hi, {there} \"you\""},EnumOptionsPass{}"""
     ) shouldEqual Right(
       Seq(
         LongNamedLLVMPass(),
@@ -77,12 +79,12 @@ class PassOptionsTest extends AnyFlatSpec:
 
   it should "reject malformed pipelines" in {
     for spec <- Seq(
-        "LongNamedLLVMPass,",
-        "LongNamedLLVMPass{x=}",
-        "LongNamedLLVMPass{x",
+        "ShortPass,",
+        "ShortPass{x=}",
+        "ShortPass{x",
         "OptionsPass{count=1,}",
-        "LongNamedLLVMPass LongNamedLLVMPass",
-        ",LongNamedLLVMPass",
+        "ShortPass ShortPass",
+        ",ShortPass",
         "OptionsPass{count=1foo}",
         "OptionsPass{count=1 names=}",
         "OptionsPass{count=1 names=x,,y}",
@@ -110,10 +112,11 @@ class PassOptionsTest extends AnyFlatSpec:
     )
   }
 
-  "PassCompanion" should "use Scala class names" in {
-    companions.map(_.name) shouldEqual
-      Seq("OptionsPass", "LongNamedLLVMPass", "EnumOptionsPass")
-  }
+  "PassCompanion" should
+    "use Scala class names unless overridden by PassName" in {
+      companions.map(_.name) shouldEqual
+        Seq("OptionsPass", "ShortPass", "EnumOptionsPass")
+    }
 
   it should "use exact Scala field and enum case names" in {
     val context = MLContext()

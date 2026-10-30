@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --allow-unregistered-dialect -p CommonSubexpressionElimination | filecheck %s
+// RUN: scair-opt %s --allow-unregistered-dialect -p CSE | filecheck %s
 
 // CHECK:       #map = affine_map<(d0)[] -> (d0 mod 2)>
 // CHECK-NEXT:  #map1 = affine_map<()[] -> (0)>
