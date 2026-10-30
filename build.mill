@@ -269,6 +269,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
 
     object canonicalization extends PassModule
     object cse extends PassModule
+    object mlir_opt extends PassModule
     object licm extends PassModule
     object reconcile extends PassModule
     object cdt extends PassModule
@@ -304,7 +305,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     // It feels off to depend on the interpreter for both tool bases still
     // But it's only the trivial core, and not the bulk of dialect implementations, at
     // least.
-    override def moduleDeps = Seq(core, interpreter)
+    override def moduleDeps = Seq(core, interpreter, passes.mlir_opt)
 
     object runTool extends ScairModule:
       override def moduleDeps = Seq(dialects, interpreter.dialects, tools)

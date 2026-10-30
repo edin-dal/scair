@@ -174,5 +174,5 @@ def passOptionNameP[$: P]: P[String] = P(CharsWhileIn("A-Za-z0-9_.+\\-").!)
 
 def passOptionValueP[$: P]: P[String] = P(
   ("\"" ~~ (CharsWhile(c => c != '"' && c != '\\').! | ("\\" ~~ AnyChar.!)).repX
-    .map(_.mkString) ~~ "\"") | passOptionNameP
+    .map(_.mkString) ~~ "\"") | CharsWhileIn("A-Za-z0-9_./+\\-").!
 )
