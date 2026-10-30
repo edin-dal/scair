@@ -166,7 +166,7 @@ final case class SampleConstantFoldingAndDCE() extends WalkerPass
 [WalkerPass] is a kind of IR **[ModulePass]** that walks over all operations in the IR via **[PatternRewriteWalker]**, and applies a given pattern. 
 In this case a **[GreedyRewritePatternApplier]**, which itself is a pattern that takes an Operation and applies all given patterns greedily over it, until a change is seen, or all patterns are tried.  
 
-Deriving **[PassCompanion]** names the pass after its class, in kebab case: here `sample-constant-folding-and-dce`. Mix in `PassName["..."]` to pick another name.
+Deriving **[PassCompanion]** uses the Scala class name as the pass name: here `SampleConstantFoldingAndDCE`.
 
 ### **Pass options**
 
@@ -192,17 +192,17 @@ final case class SampleOptionsPass(
   )
 ```
 
-On the command line, the options follow the pass name in braces, in kebab case and separated by spaces:
+On the command line, the options follow the pass name in braces, using the exact Scala field names and separated by spaces:
 
 ```bash
-scair-opt -p 'sample-options-pass{iterations=3 order=bottom-up verbose skip=a,b}'
+scair-opt -p 'SampleOptionsPass{iterations=3 order=BottomUp verbose skip=a,b}'
 ```
 
 - Each option may be specified at most once per pass.
 - A list option takes comma-separated values.
 - A `Boolean` option without a value is read as `true`: `verbose` means `verbose=true`. Other types require a value.
 - Values that contain spaces, commas or braces go in double quotes.
-- Enum options take their case names, in kebab case.
+- Enum options take their exact Scala case names.
 
 Supported option types are `Int`, `Long`, `Double`, `String`, `Boolean`, simple enums, and `Option`, `Seq` and `List` of those. To support another type, define a `given PassOption[T]`.
 

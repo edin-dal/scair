@@ -4,8 +4,6 @@ import scair.MLContext
 import scair.ir.*
 import scair.transformations.*
 
-import java.util.Locale
-
 enum Direction:
   case TopDown, BottomUp
 
@@ -21,14 +19,17 @@ final case class OptionsPass(
 ) extends ModulePass derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
-final case class LongNamedLLVMPass() extends ModulePass with PassName["short"]
-    derives PassCompanion:
+final case class LongNamedLLVMPass() extends ModulePass derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
 final case class EnumOptionsPass(
     selected: Option[Direction] = None,
     order: List[Direction] = List(),
 ) extends ModulePass derives PassCompanion:
+  override def transform(op: Operation)(using MLContext) = op
+
+final case class CamelCasePass(maxIterations: Int = 10) extends ModulePass
+    derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
 object PassConstruction:
@@ -59,7 +60,7 @@ class PassOptionsTest extends AnyFlatSpec:
 
   "PipelineParser" should "construct pipelines with typed options" in {
     pipeline(
-      """short, options-pass{count=1 names="a,b",c label="hi, {there} \"you\""},enum-options-pass{}"""
+      """LongNamedLLVMPass, OptionsPass{count=1 names="a,b",c label="hi, {there} \"you\""},EnumOptionsPass{}"""
     ) shouldEqual Right(
       Seq(
         LongNamedLLVMPass(),
@@ -76,15 +77,15 @@ class PassOptionsTest extends AnyFlatSpec:
 
   it should "reject malformed pipelines" in {
     for spec <- Seq(
-        "short,",
-        "short{x=}",
-        "short{x",
-        "options-pass{count=1,}",
-        "short short",
-        ",short",
-        "options-pass{count=1foo}",
-        "options-pass{count=1 names=}",
-        "options-pass{count=1 names=x,,y}",
+        "LongNamedLLVMPass,",
+        "LongNamedLLVMPass{x=}",
+        "LongNamedLLVMPass{x",
+        "OptionsPass{count=1,}",
+        "LongNamedLLVMPass LongNamedLLVMPass",
+        ",LongNamedLLVMPass",
+        "OptionsPass{count=1foo}",
+        "OptionsPass{count=1 names=}",
+        "OptionsPass{count=1 names=x,,y}",
       )
     do pipeline(spec).isLeft shouldBe true
   }
@@ -92,7 +93,7 @@ class PassOptionsTest extends AnyFlatSpec:
   it should "report failures without repeating pass construction" in {
     val context = MLContext()
     summonPasses[Tuple1[CountedPass]].foreach(context.registerPass)
-    for input <- Seq("counted-pass,not-a-pass", "counted-pass,") do
+    for input <- Seq("CountedPass,not-a-pass", "CountedPass,") do
       PassConstruction.defaults = 0
       PassConstruction.instances = 0
       PipelineParser(context).parse(input).isLeft shouldBe true
@@ -109,26 +110,26 @@ class PassOptionsTest extends AnyFlatSpec:
     )
   }
 
-  "PassCompanion" should "derive names" in {
+  "PassCompanion" should "use Scala class names" in {
     companions.map(_.name) shouldEqual
-      Seq("options-pass", "short", "enum-options-pass")
-    kebabCase("ConvertArithToLLVM") shouldEqual "convert-arith-to-llvm"
-    kebabCase("LLVMToArith") shouldEqual "llvm-to-arith"
+      Seq("OptionsPass", "LongNamedLLVMPass", "EnumOptionsPass")
   }
 
-  it should "derive locale-independent names" in {
-    val previous = Locale.getDefault
-    try
-      Locale.setDefault(Locale.forLanguageTag("tr-TR"))
-      kebabCase("maxIterations") shouldEqual "max-iterations"
-      kebabCase("LLVMToIR") shouldEqual "llvm-to-ir"
-    finally Locale.setDefault(previous)
+  it should "use exact Scala field and enum case names" in {
+    val context = MLContext()
+    summonPasses[Tuple1[CamelCasePass]].foreach(context.registerPass)
+    PipelineParser(context).parse("CamelCasePass{maxIterations=3}") shouldEqual
+      Right(Seq(CamelCasePass(3)))
+    PipelineParser(context).parse("CamelCasePass{max-iterations=3}")
+      .isLeft shouldBe true
+    pipeline("options-pass{count=1}").isLeft shouldBe true
+    build("OptionsPass{count=1 direction=bottom-up}").isLeft shouldBe true
   }
 
   it should "build passes from options, with defaults" in {
-    build("options-pass{count=3}") shouldEqual Right(OptionsPass(3))
+    build("OptionsPass{count=3}") shouldEqual Right(OptionsPass(3))
     build(
-      "options-pass{count=-1 scale=2 label=\"a b\" verbose limit=4 sizes=1,2,3 names=x,y direction=bottom-up}"
+      "OptionsPass{count=-1 scale=2 label=\"a b\" verbose limit=4 sizes=1,2,3 names=x,y direction=BottomUp}"
     ) shouldEqual Right(
       OptionsPass(
         -1,
@@ -141,22 +142,22 @@ class PassOptionsTest extends AnyFlatSpec:
         Direction.BottomUp,
       )
     )
-    build("options-pass{count=1 verbose}") shouldEqual Right(
+    build("OptionsPass{count=1 verbose}") shouldEqual Right(
       OptionsPass(1, verbose = true)
     )
   }
 
   it should "support automatic enums inside optional and list options" in {
-    val spec = "enum-options-pass{selected=bottom-up order=top-down,bottom-up}"
+    val spec = "EnumOptionsPass{selected=BottomUp order=TopDown,BottomUp}"
     val pass = EnumOptionsPass(
       Some(Direction.BottomUp),
       List(Direction.TopDown, Direction.BottomUp),
     )
     build(spec) shouldEqual Right(pass)
-    build("enum-options-pass{selected order}").isLeft shouldBe true
-    build("enum-options-pass{order=top-down,sideways}").left.toOption.get should
+    build("EnumOptionsPass{selected order}").isLeft shouldBe true
+    build("EnumOptionsPass{order=TopDown,sideways}").left.toOption.get should
       include(
-        "enum-options-pass: option 'order': expected List[top-down|bottom-up]"
+        "EnumOptionsPass: option 'order': expected List[TopDown|BottomUp]"
       )
   }
 
@@ -171,34 +172,34 @@ class PassOptionsTest extends AnyFlatSpec:
         "count=1 names=x names=y" -> "names",
       )
     do
-      build(s"options-pass{$options}").left.toOption.get should
-        include(s"options-pass: duplicate option '$key'")
+      build(s"OptionsPass{$options}").left.toOption.get should
+        include(s"OptionsPass: duplicate option '$key'")
 
-    pipeline("options-pass{count=1},options-pass{count=2}") shouldEqual
+    pipeline("OptionsPass{count=1},OptionsPass{count=2}") shouldEqual
       Right(Seq(OptionsPass(1), OptionsPass(2)))
   }
 
   it should "report the input, caret and message without a location header" in {
-    pipeline("options-pass{count=x}").left.toOption.get shouldEqual
-      """options-pass{count=x}
-        |                   ^
-        |options-pass: option 'count': expected Int""".stripMargin
+    pipeline("OptionsPass{count=x}").left.toOption.get shouldEqual
+      """OptionsPass{count=x}
+        |                  ^
+        |OptionsPass: option 'count': expected Int""".stripMargin
   }
 
   it should "report bad options" in {
     for (spec, message) <- Seq(
-        "options-pass" -> "options-pass: missing required option 'count'",
-        "options-pass{count=x}" -> "options-pass: option 'count': expected Int",
-        "options-pass{count}" -> "options-pass: option 'count': expected Int",
-        "options-pass{count=1 sizes}" ->
-          "options-pass: option 'sizes': expected Seq[Int]",
-        "options-pass{count=1 label}" ->
-          "options-pass: option 'label': expected String",
-        "options-pass{count=1 direction=sideways}" ->
-          "options-pass: option 'direction': expected top-down|bottom-up",
-        "options-pass{count=1 cuont=2}" ->
-          "options-pass: unknown option 'cuont', expected one of: count, scale, label, verbose, limit, sizes, names, direction",
+        "OptionsPass" -> "OptionsPass: missing required option 'count'",
+        "OptionsPass{count=x}" -> "OptionsPass: option 'count': expected Int",
+        "OptionsPass{count}" -> "OptionsPass: option 'count': expected Int",
+        "OptionsPass{count=1 sizes}" ->
+          "OptionsPass: option 'sizes': expected Seq[Int]",
+        "OptionsPass{count=1 label}" ->
+          "OptionsPass: option 'label': expected String",
+        "OptionsPass{count=1 direction=sideways}" ->
+          "OptionsPass: option 'direction': expected TopDown|BottomUp",
+        "OptionsPass{count=1 cuont=2}" ->
+          "OptionsPass: unknown option 'cuont', expected one of: count, scale, label, verbose, limit, sizes, names, direction",
       )
     do build(spec).left.toOption.get should include(message)
-    build("options-pass{count=1,2}").isLeft shouldBe true
+    build("OptionsPass{count=1,2}").isLeft shouldBe true
   }

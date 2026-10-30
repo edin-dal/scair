@@ -1,11 +1,11 @@
 // The test pass records each parsed field as an attribute. Every run prints
 // with -g so those attributes are visible.
 
-// RUN: scair-opt -g %s -p test-pass-options | filecheck %s --check-prefix=DEFAULT
-// RUN: scair-opt -g %s -p 'test-pass-options{number=3 ratio=2.5 label="a b, {c}" flag maybe=7 sizes=1,2,3 order=bottom-up}' | filecheck %s --check-prefix=ALL
-// RUN: scair-opt -g %s -p 'test-pass-options{flag=false number=1}' | filecheck %s --check-prefix=DEFAULT
-// RUN: scair-opt -g %s -p 'test-pass-options{number=2} , test-pass-options{sizes=4}' | filecheck %s --check-prefix=TWICE
-// RUN: scair-opt -g %s -p 'test-pass-options{flag}' | filecheck %s --check-prefix=BARE
+// RUN: scair-opt -g %s -p TestPassOptions | filecheck %s --check-prefix=DEFAULT
+// RUN: scair-opt -g %s -p 'TestPassOptions{number=3 ratio=2.5 label="a b, {c}" flag maybe=7 sizes=1,2,3 order=BottomUp}' | filecheck %s --check-prefix=ALL
+// RUN: scair-opt -g %s -p 'TestPassOptions{flag=false number=1}' | filecheck %s --check-prefix=DEFAULT
+// RUN: scair-opt -g %s -p 'TestPassOptions{number=2} , TestPassOptions{sizes=4}' | filecheck %s --check-prefix=TWICE
+// RUN: scair-opt -g %s -p 'TestPassOptions{flag}' | filecheck %s --check-prefix=BARE
 
 builtin.module {}
 

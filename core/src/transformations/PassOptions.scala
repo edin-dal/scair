@@ -5,21 +5,13 @@ import fastparse.NoWhitespace.*
 import scair.clair.macros.defaultExprs
 import scair.parse.explain
 
-import java.util.Locale
+import scala.compiletime.constValue
 import scala.compiletime.constValueTuple
 import scala.compiletime.erasedValue
 import scala.compiletime.summonAll
 import scala.compiletime.summonInline
 import scala.deriving.Mirror
 import scala.quoted.*
-
-/** `ConvertArithToLLVM` -> `convert-arith-to-llvm`, `maxIterations` ->
-  * `max-iterations`.
-  */
-def kebabCase(s: String): String =
-  // CLI names must not depend on the compiler or runtime locale.
-  s.replaceAll("([A-Z]+)([A-Z][a-z])", "$1-$2")
-    .replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT)
 
 /** How to parse a pass option value of type T.
   *
@@ -32,13 +24,12 @@ trait PassOption[T]:
 
 object PassOption:
 
-  /** Simple enums, spelled as their kebab-cased case names.
+  /** Simple enums, spelled exactly as their Scala case names.
     */
   inline given enumeration[E <: scala.reflect.Enum](using
       m: Mirror.SumOf[E]
   ): PassOption[E] =
-    val names = constValueTuple[m.MirroredElemLabels].toList
-      .map(l => kebabCase(l.toString))
+    val names = constValueTuple[m.MirroredElemLabels].toList.map(_.toString)
     val values = summonAll[Tuple.Map[m.MirroredElemTypes, ValueOf]].toList
       .map(_.asInstanceOf[ValueOf[E]].value)
     PassOption.choice(names.zip(values))
@@ -75,9 +66,6 @@ object PassOption:
     def typeName = o.typeName.replaceFirst("Seq", "List")
     def parse[$: P]: P[List[T]] = o.parse.map(_.toList)
 
-/** Overrides the pass name derived from the class name. */
-trait PassName[name <: String]
-
 final case class PassField(
     name: String,
     option: PassOption[?],
@@ -91,7 +79,7 @@ final case class PassField(
   * final case class MyPass(maxIterations: Int = 10) extends ModulePass
   *     derives PassCompanion
   * }}}
-  * is run as `my-pass{max-iterations=3}`.
+  * is run as `MyPass{maxIterations=3}`.
   */
 final class PassCompanion[T <: ModulePass & Product](
     val name: String,
@@ -140,10 +128,10 @@ object PassCompanion:
     val labels = constValueTuple[m.MirroredElemLabels].toList
     val options = summonAll[Tuple.Map[m.MirroredElemTypes, PassOption]].toList
     new PassCompanion(
-      passNameOf[P],
+      constValue[m.MirroredLabel],
       labels.lazyZip(options).lazyZip(flagsOf[m.MirroredElemTypes])
         .lazyZip(defaultsOf[P]).map((l, o, f, d) =>
-          PassField(kebabCase(l.toString), o.asInstanceOf[PassOption[?]], f, d)
+          PassField(l.toString, o.asInstanceOf[PassOption[?]], f, d)
         ),
       m.fromProduct,
     )
@@ -157,21 +145,9 @@ object PassCompanion:
           case _          => false
         ) :: flagsOf[tail]
 
-  inline def passNameOf[P]: String = ${ passNameImpl[P] }
-
   inline def defaultsOf[P]: Seq[Option[() => Any]] = ${
     defaultsImpl[P]
   }
-
-  def passNameImpl[P: Type](using Quotes): Expr[String] =
-    import quotes.reflect.*
-    Type.of[P] match
-      case '[PassName[name]] =>
-        Type.valueOfConstant[name] match
-          case Some(name: String) => Expr(name)
-          case _                  =>
-            report.errorAndAbort("PassName requires a literal string type")
-      case _ => Expr(kebabCase(TypeRepr.of[P].typeSymbol.name))
 
   def defaultsImpl[P: Type](using
       Quotes

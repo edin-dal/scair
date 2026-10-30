@@ -1,26 +1,26 @@
-// RUN: scair-opt %s -p 'test-pass-options{nubmer=3}' 2>&1 | filecheck %s --check-prefix=UNKNOWN
-// RUN: scair-opt %s -p 'test-pass-options{number=three}' 2>&1 | filecheck %s --check-prefix=BADVALUE
-// RUN: scair-opt %s -p 'test-pass-options{order=sideways}' 2>&1 | filecheck %s --check-prefix=BADENUM
-// RUN: scair-opt %s -p 'test-pass-options{number=3' 2>&1 | filecheck %s --check-prefix=MALFORMED
-// RUN: scair-opt %s -p 'test-pass-options{number=1 number=2}' 2>&1 | filecheck %s --check-prefix=DUPLICATE
+// RUN: scair-opt %s -p 'TestPassOptions{nubmer=3}' 2>&1 | filecheck %s --check-prefix=UNKNOWN
+// RUN: scair-opt %s -p 'TestPassOptions{number=three}' 2>&1 | filecheck %s --check-prefix=BADVALUE
+// RUN: scair-opt %s -p 'TestPassOptions{order=sideways}' 2>&1 | filecheck %s --check-prefix=BADENUM
+// RUN: scair-opt %s -p 'TestPassOptions{number=3' 2>&1 | filecheck %s --check-prefix=MALFORMED
+// RUN: scair-opt %s -p 'TestPassOptions{number=1 number=2}' 2>&1 | filecheck %s --check-prefix=DUPLICATE
 // RUN: scair-opt %s -p 'not-a-pass{x=1}' 2>&1 | filecheck %s --check-prefix=NOPASS
 
 builtin.module {}
 
 // UNKNOWN-NOT: Parse error at
-// UNKNOWN: {{^}}test-pass-options{nubmer=3}
+// UNKNOWN: {{^}}TestPassOptions{nubmer=3}
 // UNKNOWN-NEXT: ^
-// UNKNOWN-NEXT: test-pass-options: unknown option 'nubmer', expected one of: number, ratio, label, flag, maybe, sizes, order
+// UNKNOWN-NEXT: TestPassOptions: unknown option 'nubmer', expected one of: number, ratio, label, flag, maybe, sizes, order
 
-// BADVALUE: {{^}}test-pass-options{number=three}
+// BADVALUE: {{^}}TestPassOptions{number=three}
 // BADVALUE-NEXT: ^
-// BADVALUE-NEXT: test-pass-options: option 'number': expected Int
+// BADVALUE-NEXT: TestPassOptions: option 'number': expected Int
 
-// BADENUM: {{^}}test-pass-options{order=sideways}
+// BADENUM: {{^}}TestPassOptions{order=sideways}
 // BADENUM-NEXT: ^
-// BADENUM-NEXT: test-pass-options: option 'order': expected top-down|bottom-up
+// BADENUM-NEXT: TestPassOptions: option 'order': expected TopDown|BottomUp
 
-// MALFORMED: {{^}}test-pass-options{number=3
+// MALFORMED: {{^}}TestPassOptions{number=3
 // MALFORMED-NEXT: ^
 // MALFORMED-NEXT: "}"
 
@@ -28,8 +28,8 @@ builtin.module {}
 // NOPASS-NEXT: ^
 // NOPASS-NEXT: 'not-a-pass' does not refer to a registered pass.
 // NOPASS-NEXT: Currently registered passes are:
-// NOPASS:        - test-pass-options{{$}}
+// NOPASS:        - TestPassOptions{{$}}
 
-// DUPLICATE: {{^}}test-pass-options{number=1 number=2}
+// DUPLICATE: {{^}}TestPassOptions{number=1 number=2}
 // DUPLICATE-NEXT: ^
-// DUPLICATE-NEXT: test-pass-options: duplicate option 'number'
+// DUPLICATE-NEXT: TestPassOptions: duplicate option 'number'

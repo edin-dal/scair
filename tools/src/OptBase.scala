@@ -108,7 +108,7 @@ trait OptBase extends ToolBase[OptArgs]:
           .text("Record operation source locations while parsing")
           .action((_, c) => c.copy(parseLocations = true)),
         opt[String]('p', "passes").optional().text(
-          "Pass pipeline to apply to the IR, e.g. `canonicalize,my-pass{opt=1 list=1,2}`"
+          "Pass pipeline to apply to the IR, e.g. `Canonicalize,MyPass{opt=1 list=1,2}`"
         ).action((x, c) => c.copy(passes = x)),
         opt[Unit]("verify-diagnostics").optional().text(
           "Verification diagnose mode, i.e verification errors are not fatal for the whole run"

@@ -57,17 +57,13 @@ final case class DummyPass() extends WalkerPass derives PassCompanion:
     AddDummyAttributeToDict
   )
 
-final case class TestInsertionPass()
-    extends WalkerPass
-    with PassName["test-ins-pass"] derives PassCompanion:
+final case class TestInsertionPass() extends WalkerPass derives PassCompanion:
 
   override def walker(using MLContext) = PatternRewriteWalker(
     TestInsertingDummyOperation
   )
 
-final case class TestReplacementPass()
-    extends WalkerPass
-    with PassName["test-rep-pass"] derives PassCompanion:
+final case class TestReplacementPass() extends WalkerPass derives PassCompanion:
 
   override def walker(using MLContext) = PatternRewriteWalker(
     TestReplacingDummyOperation
