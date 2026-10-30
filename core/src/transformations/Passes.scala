@@ -22,6 +22,9 @@ import scair.ir.*
 trait ModulePass:
   def transform(op: Operation)(using MLContext): Operation
 
+/** A pass failing on its input, reported as an error rather than a crash. */
+final class PassFailure(message: String) extends Exception(message)
+
 trait WalkerPass extends ModulePass:
   def walker(using MLContext): PatternRewriteWalker
 

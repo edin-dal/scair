@@ -4,6 +4,7 @@ import scair.MLContext
 import scair.ir.*
 import scair.transformations.*
 import scair.tools.PipelineParser
+import scair.passes.mlir_opt.MLIROpt
 
 enum Direction:
   case TopDown, BottomUp
@@ -64,7 +65,9 @@ final case class CountedPass(count: Int = PassConstruction.defaultCount())
 class PassOptionsTest extends AnyFlatSpec:
 
   val companions =
-    summonPasses[(OptionsPass, LongNamedLLVMPass, EnumOptionsPass)]
+    summonPasses[
+      (OptionsPass, LongNamedLLVMPass, EnumOptionsPass, MLIROpt)
+    ]
 
   val ctx = MLContext()
   companions.foreach(ctx.registerPass)
@@ -89,6 +92,28 @@ class PassOptionsTest extends AnyFlatSpec:
       )
     )
     pipeline("") shouldEqual Right(Seq())
+  }
+
+  it should "expand mlir-opt pipelines" in {
+    def mlirOpt(pipeline: String) = MLIROpt(
+      arguments = Seq(
+        "--mlir-print-op-generic",
+        "--allow-unregistered-dialect",
+        "-p",
+        s"builtin.module($pipeline)",
+      )
+    )
+    pipeline("mlir-opt[cse,canonicalize{max-iterations=2}]") shouldEqual
+      Right(Seq(mlirOpt("cse,canonicalize{max-iterations=2}")))
+    pipeline("ShortPass,mlir-opt[],mlir-opt{generic=false}") shouldEqual Right(
+      Seq(LongNamedLLVMPass(), mlirOpt(""), MLIROpt(generic = false))
+    )
+    pipeline("ShortPass,foo[cse]").left.toOption.get should include(
+      "`mlir-opt` to mark an MLIR pipeline"
+    )
+    pipeline("mlir-opt[cse").isLeft shouldBe true
+    build("OptionsPass{count=1 label=/tmp/a.mlir}") shouldEqual
+      Right(OptionsPass(1, label = "/tmp/a.mlir"))
   }
 
   it should "reject malformed pipelines" in {
@@ -129,7 +154,7 @@ class PassOptionsTest extends AnyFlatSpec:
   "PassCompanion" should
     "use Scala class names unless overridden by PassName" in {
       companions.map(_.name) shouldEqual
-        Seq("OptionsPass", "ShortPass", "EnumOptionsPass")
+        Seq("OptionsPass", "ShortPass", "EnumOptionsPass", "mlir-opt")
     }
 
   it should "use exact Scala field and enum case names" in {

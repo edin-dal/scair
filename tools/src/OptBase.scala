@@ -7,6 +7,7 @@ import scair.print.AssemblyPrinter
 import scair.print.ErrorPrinter
 import scair.tools.ToolBase
 import scair.transformations.ModulePass
+import scair.transformations.PassFailure
 import scair.utils.*
 import scair.verify.Verifier
 import scopt.OParser
@@ -163,7 +164,10 @@ trait OptBase extends ToolBase[OptArgs]:
                 // apply the specified passes
                 pipeline.foldLeft(module)((module, pass) =>
                   module.map { op =>
-                    val out = pass.transform(op)
+                    val out =
+                      try pass.transform(op)
+                      catch
+                        case e: PassFailure => fail(s"error: ${e.getMessage}")
 
                     if !parsedArgs.skipVerify then
                       Verifier.verify(out).fold(
