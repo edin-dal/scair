@@ -42,6 +42,7 @@ final case class MLIROpt(
     printer.flush()
 
     val command = executable +: arguments
+    // Piping stdin can kill Scala Native with SIGPIPE if mlir-opt exits early.
     val inputFile = Files.createTempFile("scair-mlir-opt", ".mlir")
     val output =
       try
