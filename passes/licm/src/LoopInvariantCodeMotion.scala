@@ -107,10 +107,11 @@ def moveLoopInvariantCode(loop: LoopLike)(using Rewriter): Int =
     (op, _) => loop.moveOutOfLoop(op),
   )
 
-final class LoopInvariantCodeMotion(ctx: MLContext) extends ModulePass(ctx):
-  override val name = "licm"
+final case class LoopInvariantCodeMotion()
+    extends ModulePass
+    with PassName["licm"] derives PassCompanion:
 
-  override def transform(op: Operation): Operation =
+  override def transform(op: Operation)(using MLContext): Operation =
     given Rewriter = RewriteMethods
 
     // Walk through all loops in innermost-loop-first order. This way, we first

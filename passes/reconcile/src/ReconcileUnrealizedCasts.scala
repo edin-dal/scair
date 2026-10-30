@@ -3,7 +3,6 @@ package scair.passes.reconcile
 import scair.MLContext
 import scair.transformations.*
 
-final class ReconcileUnrealizedCasts(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "reconcile-unrealized-casts"
-
-  override final val walker = ReconcileCasts.walker
+final case class ReconcileUnrealizedCasts() extends WalkerPass
+    derives PassCompanion:
+  override def walker(using MLContext) = ReconcileCasts.walker

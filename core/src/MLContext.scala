@@ -1,7 +1,7 @@
 package scair
 
 import scair.ir.*
-import scair.transformations.ModulePass
+import scair.transformations.PassCompanion
 
 import scala.collection.mutable
 
@@ -14,12 +14,11 @@ import scala.collection.mutable
 
 class MLContext():
 
-  val passContext: mutable.Map[String, ModulePass] = mutable.Map()
+  val passContext: mutable.Map[String, PassCompanion[?]] = mutable.Map()
 
   def getPass(name: String) = passContext.get(name)
 
-  def registerPass(passFactory: MLContext => ModulePass) =
-    val pass = passFactory(this)
+  def registerPass(pass: PassCompanion[?]) =
     passContext += pass.name -> pass
 
   val dialectOpContext: mutable.Map[String, OperationCompanion[?]] =

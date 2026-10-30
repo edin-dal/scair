@@ -39,17 +39,16 @@ val Commute = pattern { case c: Commutative =>
   else c.updated(operands = nops)
 }
 
-final class Canonicalize(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "canonicalize"
+final case class Canonicalize() extends WalkerPass derives PassCompanion:
 
-  lazy val canonicalizationPatterns = ctx.dialectOpContext.valuesIterator
-    .flatMap(_.canonicalizationPatterns).toSeq
-
-  override final val walker = PatternRewriteWalker(
-    GreedyRewritePatternApplier(
-      Seq(
-        RemoveUnusedOperations,
-        Commute,
-      ) ++ canonicalizationPatterns
+  override def walker(using ctx: MLContext) =
+    val canonicalizationPatterns = ctx.dialectOpContext.valuesIterator
+      .flatMap(_.canonicalizationPatterns).toSeq
+    PatternRewriteWalker(
+      GreedyRewritePatternApplier(
+        Seq(
+          RemoveUnusedOperations,
+          Commute,
+        ) ++ canonicalizationPatterns
+      )
     )
-  )
