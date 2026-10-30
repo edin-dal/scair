@@ -204,7 +204,7 @@ scair-opt -p 'SampleOptionsPass{iterations=3 order=BottomUp verbose skip=a,b}'
 - Values that contain spaces, commas or braces go in double quotes.
 - Enum options take their exact Scala case names.
 
-Supported option types are `Int`, `Long`, `Double`, `String`, `Boolean`, simple enums, and `Option`, `Seq` and `List` of those. To support another type, define a `given PassOption[T]`.
+Supported option types are `Int`, `Long`, `BigInt`, `Double`, `Boolean`, `String`, simple enums, and `Option` or `Seq` of those. Nested wrappers and other types are not supported.
 
 Register pass types with `summonPasses[(FirstPass, SecondPass)]`, which returns their derived companions for a tool's `passes` list.
 

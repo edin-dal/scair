@@ -7,6 +7,8 @@
 // RUN: scair-opt -g %s -p 'TestPassOptions{number=2} , TestPassOptions{sizes=4}' | filecheck %s --check-prefix=TWICE
 // RUN: scair-opt -g %s -p 'TestPassOptions{flag}' | filecheck %s --check-prefix=BARE
 
+// RUN: scair-opt -g %s -p 'TestPassOptions{wide=9223372036854775807 big=9223372036854775808}' | filecheck %s --check-prefix=NUMBERS
+
 builtin.module {}
 
 // DEFAULT-DAG: test.number = 1
@@ -30,3 +32,6 @@ builtin.module {}
 // TWICE-DAG: test.sizes = [4]
 
 // BARE-DAG: test.flag = "true"
+
+// NUMBERS-DAG: test.wide = 9223372036854775807
+// NUMBERS-DAG: test.big = 9223372036854775808

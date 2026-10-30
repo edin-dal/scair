@@ -14,7 +14,7 @@ final case class OptionsPass(
     verbose: Boolean = false,
     limit: Option[Int] = None,
     sizes: Seq[Int] = Seq(),
-    names: List[String] = List("a"),
+    names: Seq[String] = Seq("a"),
     direction: Direction = Direction.TopDown,
 ) extends ModulePass derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
@@ -26,12 +26,25 @@ final case class LongNamedLLVMPass()
 
 final case class EnumOptionsPass(
     selected: Option[Direction] = None,
-    order: List[Direction] = List(),
+    order: Seq[Direction] = Seq(),
 ) extends ModulePass derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
 final case class CamelCasePass(maxIterations: Int = 10) extends ModulePass
     derives PassCompanion:
+  override def transform(op: Operation)(using MLContext) = op
+
+final case class NumericOptionsPass(
+    long: Long,
+    big: BigInt,
+    optional: Option[BigInt],
+    longs: Seq[Long],
+    bigs: Seq[BigInt],
+    flags: Seq[Boolean],
+    flag: Option[Boolean],
+    scales: Seq[Double],
+    text: Option[String],
+) extends ModulePass derives PassCompanion:
   override def transform(op: Operation)(using MLContext) = op
 
 object PassConstruction:
@@ -69,7 +82,7 @@ class PassOptionsTest extends AnyFlatSpec:
         OptionsPass(
           1,
           label = "hi, {there} \"you\"",
-          names = List("a,b", "c"),
+          names = Seq("a,b", "c"),
         ),
         EnumOptionsPass(),
       )
@@ -141,7 +154,7 @@ class PassOptionsTest extends AnyFlatSpec:
         true,
         Some(4),
         Seq(1, 2, 3),
-        List("x", "y"),
+        Seq("x", "y"),
         Direction.BottomUp,
       )
     )
@@ -150,18 +163,69 @@ class PassOptionsTest extends AnyFlatSpec:
     )
   }
 
-  it should "support automatic enums inside optional and list options" in {
+  it should "support automatic enums inside Option and Seq options" in {
     val spec = "EnumOptionsPass{selected=BottomUp order=TopDown,BottomUp}"
     val pass = EnumOptionsPass(
       Some(Direction.BottomUp),
-      List(Direction.TopDown, Direction.BottomUp),
+      Seq(Direction.TopDown, Direction.BottomUp),
     )
     build(spec) shouldEqual Right(pass)
     build("EnumOptionsPass{selected order}").isLeft shouldBe true
     build("EnumOptionsPass{order=TopDown,sideways}").left.toOption.get should
       include(
-        "EnumOptionsPass: option 'order': expected List[TopDown|BottomUp]"
+        "EnumOptionsPass: option 'order': expected Seq[TopDown|BottomUp]"
       )
+  }
+
+  it should "support Long, BigInt and scalar wrappers" in {
+    val context = MLContext()
+    summonPasses[Tuple1[NumericOptionsPass]].foreach(context.registerPass)
+    val large = BigInt("9223372036854775808")
+    val input =
+      s"NumericOptionsPass{long=9223372036854775807 big=$large optional=$large longs=1,-2 bigs=$large,-$large flags=true,false flag=false scales=1.5,2 text=hello}"
+    PipelineParser(context).parse(input) shouldEqual Right(
+      Seq(
+        NumericOptionsPass(
+          Long.MaxValue,
+          large,
+          Some(large),
+          Seq(1L, -2L),
+          Seq(large, -large),
+          Seq(true, false),
+          Some(false),
+          Seq(1.5, 2.0),
+          Some("hello"),
+        )
+      )
+    )
+    for invalid <- Seq(
+        input.replace("long=9223372036854775807", "long=9223372036854775808"),
+        input.replace(s"big=$large", "big=oops"),
+        input.replace("flag=false", "flag"),
+        input.replace("flags=true,false", "flags=true,maybe"),
+      )
+    do PipelineParser(context).parse(invalid).isLeft shouldBe true
+  }
+
+  it should "reject unsupported types and nested wrappers at compile time" in {
+    assertDoesNotCompile(
+      """case class Bad(x: Float) extends scair.transformations.ModulePass derives scair.transformations.PassCompanion { def transform(op: scair.ir.Operation)(using scair.MLContext) = op }"""
+    )
+    assertDoesNotCompile(
+      """case class Bad(x: List[Int]) extends scair.transformations.ModulePass derives scair.transformations.PassCompanion { def transform(op: scair.ir.Operation)(using scair.MLContext) = op }"""
+    )
+    assertDoesNotCompile(
+      """case class Bad(x: Option[Option[Int]]) extends scair.transformations.ModulePass derives scair.transformations.PassCompanion { def transform(op: scair.ir.Operation)(using scair.MLContext) = op }"""
+    )
+    assertDoesNotCompile(
+      """case class Bad(x: Option[Seq[Int]]) extends scair.transformations.ModulePass derives scair.transformations.PassCompanion { def transform(op: scair.ir.Operation)(using scair.MLContext) = op }"""
+    )
+    assertDoesNotCompile(
+      """case class Bad(x: Seq[Option[Int]]) extends scair.transformations.ModulePass derives scair.transformations.PassCompanion { def transform(op: scair.ir.Operation)(using scair.MLContext) = op }"""
+    )
+    assertDoesNotCompile(
+      """case class Bad(x: Seq[Seq[Int]]) extends scair.transformations.ModulePass derives scair.transformations.PassCompanion { def transform(op: scair.ir.Operation)(using scair.MLContext) = op }"""
+    )
   }
 
   it should "reject duplicate options within each pass" in {

@@ -10,7 +10,7 @@ builtin.module {}
 // UNKNOWN-NOT: Parse error at
 // UNKNOWN: {{^}}TestPassOptions{nubmer=3}
 // UNKNOWN-NEXT: ^
-// UNKNOWN-NEXT: TestPassOptions: unknown option 'nubmer', expected one of: number, ratio, label, flag, maybe, sizes, order
+// UNKNOWN-NEXT: TestPassOptions: unknown option 'nubmer', expected one of: number, ratio, label, flag, maybe, sizes, order, wide, big
 
 // BADVALUE: {{^}}TestPassOptions{number=three}
 // BADVALUE-NEXT: ^

@@ -8,71 +8,40 @@ import scair.parse.explain
 import scala.compiletime.constValue
 import scala.compiletime.constValueTuple
 import scala.compiletime.erasedValue
+import scala.compiletime.error
 import scala.compiletime.summonAll
+import scala.compiletime.summonFrom
 import scala.compiletime.summonInline
 import scala.deriving.Mirror
 import scala.quoted.*
 
-/** How to parse a pass option value of type T.
-  *
-  * An option is given on the command line as `key=v1,v2,...`. A bare `key` is
-  * read as `key=true` for Boolean options.
-  */
-trait PassOption[T]:
-  def typeName: String
-  def parse[$: P]: P[T]
+/** The fixed pipeline value syntax; wrappers only contain scalar values. */
+private[transformations] enum PassOptionParser:
+  case Scalar(label: String, read: String => Option[Any], flag: Boolean = false)
+  case Optional(value: Scalar)
+  case Repeated(value: Scalar)
 
-object PassOption:
+  def typeName: String = this match
+    case Scalar(label, _, _) => label
+    case Optional(value)     => s"Option[${value.typeName}]"
+    case Repeated(value)     => s"Seq[${value.typeName}]"
 
-  /** Simple enums, spelled exactly as their Scala case names.
-    */
-  inline given enumeration[E <: scala.reflect.Enum](using
-      m: Mirror.SumOf[E]
-  ): PassOption[E] =
-    val names = constValueTuple[m.MirroredElemLabels].toList.map(_.toString)
-    val values = summonAll[Tuple.Map[m.MirroredElemTypes, ValueOf]].toList
-      .map(_.asInstanceOf[ValueOf[E]].value)
-    PassOption.choice(names.zip(values))
+  def isFlag: Boolean = this match
+    case Scalar(_, _, flag) => flag
+    case _                  => false
 
-  def scalar[T](
-      name: String,
-      read: String => Option[T],
-  ): PassOption[T] = new:
-    def typeName = name
-    def parse[$: P]: P[T] =
+  def parse[$: P]: P[Any] = this match
+    case Scalar(_, read, _) =>
       passOptionValueP.flatMap(v => read(v).fold(Fail)(Pass(_)))
-
-  def choice[E](cases: Seq[(String, E)]): PassOption[E] =
-    scalar(
-      cases.map(_._1).mkString("|"),
-      v => cases.collectFirst { case (`v`, e) => e },
-    )
-
-  given PassOption[Int] = scalar("Int", _.toIntOption)
-  given PassOption[Long] = scalar("Long", _.toLongOption)
-  given PassOption[Double] = scalar("Double", _.toDoubleOption)
-  given PassOption[Boolean] = scalar("Boolean", _.toBooleanOption)
-  given PassOption[String] = scalar("String", Some(_))
-
-  given [T](using o: PassOption[T]): PassOption[Option[T]] = new:
-    def typeName = s"Option[${o.typeName}]"
-    def parse[$: P]: P[Option[T]] = o.parse.map(Some(_))
-
-  given [T](using o: PassOption[T]): PassOption[Seq[T]] = new:
-    def typeName = s"Seq[${o.typeName}]"
-    def parse[$: P]: P[Seq[T]] = o.parse.rep(1, sep = ","./)
-
-  given [T](using o: PassOption[Seq[T]]): PassOption[List[T]] = new:
-    def typeName = o.typeName.replaceFirst("Seq", "List")
-    def parse[$: P]: P[List[T]] = o.parse.map(_.toList)
+    case Optional(value) => value.parse.map(Some(_))
+    case Repeated(value) => value.parse.rep(1, sep = ","./)
 
 /** Overrides the Scala class name used in pass pipelines. */
 trait PassName[name <: String]
 
-final case class PassField(
+private[transformations] final case class PassField(
     name: String,
-    option: PassOption[?],
-    flag: Boolean,
+    option: PassOptionParser,
     default: Option[() => Any],
 )
 
@@ -86,7 +55,7 @@ final case class PassField(
   */
 final class PassCompanion[T <: ModulePass & Product](
     val name: String,
-    val fields: Seq[PassField],
+    private[transformations] val fields: Seq[PassField],
     build: Product => T,
 ):
 
@@ -107,8 +76,8 @@ final class PassCompanion[T <: ModulePass & Product](
               s"$name: option '$key': expected ${field.option.typeName}"
             // A boolean key without `=` is read as `key=true`.
             ("=" ~/ field.option.parse.explain(expected) |
-              (if field.flag then Pass(true) else Fail).explain(expected))
-              .map(value => key -> value)
+              (if field.option.isFlag then Pass(true) else Fail)
+                .explain(expected)).map(value => key -> value)
     )
 
     P(("{" ~/ " ".rep ~ option.rep(sep = " ".rep(1)) ~ " ".rep ~ "}").?)
@@ -129,26 +98,68 @@ object PassCompanion:
       m: Mirror.ProductOf[P]
   ): PassCompanion[P] =
     val labels = constValueTuple[m.MirroredElemLabels].toList
-    val options = summonAll[Tuple.Map[m.MirroredElemTypes, PassOption]].toList
+    val options = parsersOf[m.MirroredElemTypes]
     new PassCompanion(
       inline erasedValue[P] match
         case _: PassName[name] => constValue[name]
         case _                 => constValue[m.MirroredLabel],
-      labels.lazyZip(options).lazyZip(flagsOf[m.MirroredElemTypes])
-        .lazyZip(defaultsOf[P]).map((l, o, f, d) =>
-          PassField(l.toString, o.asInstanceOf[PassOption[?]], f, d)
-        ),
+      labels.lazyZip(options).lazyZip(defaultsOf[P])
+        .map((l, o, d) => PassField(l.toString, o, d)),
       m.fromProduct,
     )
 
-  inline def flagsOf[Ts <: Tuple]: List[Boolean] =
+  private inline def parsersOf[Ts <: Tuple]: List[PassOptionParser] =
     inline erasedValue[Ts] match
       case _: EmptyTuple     => Nil
-      case _: (head *: tail) =>
-        (inline erasedValue[head] match
-          case _: Boolean => true
-          case _          => false
-        ) :: flagsOf[tail]
+      case _: (head *: tail) => parserOf[head] :: parsersOf[tail]
+
+  private inline def parserOf[T]: PassOptionParser =
+    inline erasedValue[T] match
+      case _: Option[a] =>
+        summonFrom {
+          case _: (T =:= Option[a]) => PassOptionParser.Optional(scalarOf[a])
+          case _ => error("Pass optional fields must use Option[T]")
+        }
+      case _: Seq[a] =>
+        summonFrom {
+          case _: (T =:= Seq[a]) => PassOptionParser.Repeated(scalarOf[a])
+          case _                 =>
+            error(
+              "Pass sequence fields must use Seq[T], not List or other collection types"
+            )
+        }
+      case _ => scalarOf[T]
+
+  private inline def scalarOf[T]: PassOptionParser.Scalar =
+    import PassOptionParser.Scalar
+    inline erasedValue[T] match
+      case _: Int    => Scalar("Int", _.toIntOption)
+      case _: Long   => Scalar("Long", _.toLongOption)
+      case _: BigInt =>
+        Scalar("BigInt", s => scala.util.Try(BigInt(s)).toOption)
+      case _: Double  => Scalar("Double", _.toDoubleOption)
+      case _: Boolean => Scalar("Boolean", _.toBooleanOption, flag = true)
+      case _: String  => Scalar("String", Some(_))
+      case _: scala.reflect.Enum =>
+        enumOf[T](using summonInline[Mirror.SumOf[T]])
+      case _ =>
+        error(
+          "Unsupported pass option type: expected Int, Long, BigInt, Double, Boolean, String, a simple enum, or Option/Seq of one of these (no nesting)"
+        )
+
+  private inline def enumOf[T](using
+      m: Mirror.SumOf[T]
+  ): PassOptionParser.Scalar =
+    val names = constValueTuple[m.MirroredElemLabels].toList.map(_.toString)
+    val values = summonAll[Tuple.Map[m.MirroredElemTypes, ValueOf]].toList
+      .map(_.asInstanceOf[ValueOf[T]].value)
+    PassOptionParser.Scalar(
+      names.mkString("|"),
+      s =>
+        names.zip(values).collectFirst {
+          case (name, value) if name == s => value
+        },
+    )
 
   inline def defaultsOf[P]: Seq[Option[() => Any]] = ${
     defaultsImpl[P]

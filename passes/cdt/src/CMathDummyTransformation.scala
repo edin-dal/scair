@@ -82,6 +82,8 @@ final case class TestPassOptions(
     maybe: Option[Int] = None,
     sizes: Seq[Int] = Seq(),
     order: TestOrder = TestOrder.TopDown,
+    wide: Long = 0L,
+    big: BigInt = BigInt(0),
 ) extends ModulePass derives PassCompanion:
 
   override def transform(op: Operation)(using MLContext): Operation =
@@ -93,5 +95,7 @@ final case class TestPassOptions(
       "test.maybe" -> StringData(maybe.toString),
       "test.sizes" -> ArrayAttribute(sizes.map(v => IntData(v))*),
       "test.order" -> StringData(order.toString),
+      "test.wide" -> IntData(wide),
+      "test.big" -> IntData(big),
     )
     op
