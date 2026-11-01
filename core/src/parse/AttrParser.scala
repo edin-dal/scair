@@ -494,7 +494,6 @@ private def builtinTypeP[$: P](using Parser): P[Attribute] =
     tensorTypeP | memrefTypeP | vectorTypeP
 
 private def builtinAttrP[$: P](using Parser): P[Attribute] =
-  dictionaryAttributeP | arrayAttributeP |
-    denseArrayAttributeP | symbolRefAttrP | floatAttrP | integerAttrP |
-    denseIntOrFPElementsAttrP | affineMapAttrP | affineSetAttrP |
-    stringAttributeP | unitAttrP
+  dictionaryAttributeP | arrayAttributeP | denseArrayAttributeP |
+    symbolRefAttrP | floatAttrP | integerAttrP | denseIntOrFPElementsAttrP |
+    affineMapAttrP | affineSetAttrP | stringAttributeP | unitAttrP
