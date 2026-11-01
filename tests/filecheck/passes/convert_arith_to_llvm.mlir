@@ -14,10 +14,10 @@ builtin.module {
 // CHECK: builtin.module {
 // CHECK-NEXT:   func.func @plain(%0: i32, %1: i32, %2: f32, %3: f32) -> (i32, f32) {
 // CHECK-NEXT:     %4 = "llvm.mlir.constant"() <{value = 2 : i32}> : () -> i32
-// CHECK-NEXT:     %5 = "llvm.add"(%0, %1) : (i32, i32) -> i32
-// CHECK-NEXT:     %6 = "llvm.mul"(%5, %4) : (i32, i32) -> i32
-// CHECK-NEXT:     %7 = "llvm.fadd"(%2, %3) : (f32, f32) -> f32
-// CHECK-NEXT:     %8 = "llvm.fmul"(%7, %2) : (f32, f32) -> f32
+// CHECK-NEXT:     %5 = "llvm.add"(%0, %1) <{overflowFlags = 0 : i32}> : (i32, i32) -> i32
+// CHECK-NEXT:     %6 = "llvm.mul"(%5, %4) <{overflowFlags = 0 : i32}> : (i32, i32) -> i32
+// CHECK-NEXT:     %7 = "llvm.fadd"(%2, %3) <{fastmathFlags = #llvm.fastmath<none>}> : (f32, f32) -> f32
+// CHECK-NEXT:     %8 = "llvm.fmul"(%7, %2) <{fastmathFlags = #llvm.fastmath<none>}> : (f32, f32) -> f32
 // CHECK-NEXT:     func.return %6, %8 : i32, f32
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
@@ -38,7 +38,7 @@ builtin.module {
 // CHECK-NEXT:   func.func @indexed(%0: index, %1: index) -> index {
 // CHECK-NEXT:     %2 = "builtin.unrealized_conversion_cast"(%0) : (index) -> i64
 // CHECK-NEXT:     %3 = "builtin.unrealized_conversion_cast"(%1) : (index) -> i64
-// CHECK-NEXT:     %4 = "llvm.add"(%2, %3) : (i64, i64) -> i64
+// CHECK-NEXT:     %4 = "llvm.add"(%2, %3) <{overflowFlags = 0 : i32}> : (i64, i64) -> i64
 // CHECK-NEXT:     %5 = "builtin.unrealized_conversion_cast"(%4) : (i64) -> index
 // CHECK-NEXT:     func.return %5 : index
 // CHECK-NEXT:   }
