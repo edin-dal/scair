@@ -40,10 +40,10 @@ To refresh ourselves, let's inspect the IR:
 func.call @print(%2) : (i32) -> ()
 ```
 
-Now, let's apply our `sample-constant-folding-and-dce` pass:
+Now, let's apply our `SampleConstantFoldingAndDCE` pass:
 
 ```bash
-~/scair$ scair-opt sample.mlir --passes sample-constant-folding-and-dce
+~/scair$ scair-opt sample.mlir --passes SampleConstantFoldingAndDCE
 builtin.module {
   %0 = "arith.constant"() <{value = 10}> : () -> i32
   func.call @print(%0) : (i32) -> ()
@@ -63,7 +63,7 @@ Additionally, there are a number of flags currently available for `scair-opt`:
 
 - **`--print-generic`** -> prints the IR strictly in the generic format.
 
-- **`--passes`** -> a comma separated list of passes to apply to the IR.
+- **`-p`, `--passes`** -> the pass pipeline to apply to the IR: a comma-separated list of passes, each optionally followed by its options in braces, e.g. `Canonicalize,MyPass{maxIterations=3 verbose}`. See [pass options](transformations.md#pass-options).
 
 - **`--verify-diagnostics`** -> verification diagnose mode, i.e verification errors are not fatal for the whole run
 

@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p canonicalize | filecheck %s
+// RUN: scair-opt %s -p Canonicalize | filecheck %s
 
 // Dialect-independent canonicalization patterns. Dialect-specific folds live
 // beside their dialect, in tests/filecheck/dialects/<dialect>/canonicalize.mlir.

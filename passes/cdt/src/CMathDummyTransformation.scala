@@ -1,7 +1,7 @@
 package scair.passes.cdt
 
 import scair.MLContext
-import scair.dialects.builtin.StringData
+import scair.dialects.builtin.*
 import scair.ir.*
 import scair.transformations.*
 
@@ -51,17 +51,51 @@ val TestReplacingDummyOperation = pattern {
     op.updated(attributes = op.attributes + ("replaced" -> StringData("false")))
 }
 
-final class DummyPass(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "dummy-pass"
+final case class DummyPass() extends WalkerPass derives PassCompanion:
 
-  override final val walker = PatternRewriteWalker(AddDummyAttributeToDict)
+  override def walker(using MLContext) = PatternRewriteWalker(
+    AddDummyAttributeToDict
+  )
 
-final class TestInsertionPass(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "test-ins-pass"
+final case class TestInsertionPass() extends WalkerPass derives PassCompanion:
 
-  override final val walker = PatternRewriteWalker(TestInsertingDummyOperation)
+  override def walker(using MLContext) = PatternRewriteWalker(
+    TestInsertingDummyOperation
+  )
 
-final class TestReplacementPass(ctx: MLContext) extends WalkerPass(ctx):
-  override val name = "test-rep-pass"
+final case class TestReplacementPass() extends WalkerPass derives PassCompanion:
 
-  override final val walker = PatternRewriteWalker(TestReplacingDummyOperation)
+  override def walker(using MLContext) = PatternRewriteWalker(
+    TestReplacingDummyOperation
+  )
+
+enum TestOrder:
+  case TopDown, BottomUp
+
+/** Records its own options on the operation it runs on, to test option parsing.
+  */
+final case class TestPassOptions(
+    number: Int = 1,
+    ratio: Double = 0.5,
+    label: String = "default",
+    flag: Boolean = false,
+    maybe: Option[Int] = None,
+    sizes: Seq[Int] = Seq(),
+    order: TestOrder = TestOrder.TopDown,
+    wide: Long = 0L,
+    big: BigInt = BigInt(0),
+) extends ModulePass derives PassCompanion:
+
+  override def transform(op: Operation)(using MLContext): Operation =
+    op.attributes ++= Map(
+      "test.number" -> IntData(number),
+      "test.ratio" -> FloatData(ratio),
+      "test.label" -> StringData(label),
+      "test.flag" -> StringData(flag.toString),
+      "test.maybe" -> StringData(maybe.toString),
+      "test.sizes" -> ArrayAttribute(sizes.map(v => IntData(v))*),
+      "test.order" -> StringData(order.toString),
+      "test.wide" -> IntData(wide),
+      "test.big" -> IntData(big),
+    )
+    op

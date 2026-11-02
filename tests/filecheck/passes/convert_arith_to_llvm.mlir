@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --split-input-file -p convert-arith-to-llvm | filecheck %s -DFILE=%s
+// RUN: scair-opt %s --split-input-file -p ConvertArithToLLVM | filecheck %s -DFILE=%s
 
 builtin.module {
   func.func @plain(%a: i32, %b: i32, %x: f32, %y: f32) -> (i32, f32) {

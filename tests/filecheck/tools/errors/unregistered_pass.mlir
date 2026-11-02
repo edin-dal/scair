@@ -2,6 +2,9 @@
 
 builtin.module{}
 
-// CHECK:       error: 'not-a-pass' does not refer to a registered pass.
+// CHECK-NOT: Parse error at
+// CHECK:       {{^}}not-a-pass
+// CHECK-NEXT:  ^
+// CHECK-NEXT:  'not-a-pass' does not refer to a registered pass.
 // CHECK-NEXT:  Currently registered passes are:
-// CHECK-NEXT:    - 
+// CHECK-NEXT:    -

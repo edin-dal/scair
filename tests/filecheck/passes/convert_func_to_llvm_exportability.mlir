@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p convert-func-to-llvm | filecheck %s
+// RUN: scair-opt %s -p ConvertFuncToLLVM | filecheck %s
 
 builtin.module {
   func.func private @printNewline()

@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --allow-unregistered-dialect -p reconcile-unrealized-casts | filecheck %s
+// RUN: scair-opt %s --allow-unregistered-dialect -p ReconcileUnrealizedCasts | filecheck %s
 
 builtin.module {
   func.func @unusedCast(%0: i64) -> i64 {

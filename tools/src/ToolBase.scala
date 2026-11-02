@@ -3,7 +3,7 @@ package scair.tools
 import scair.MLContext
 import scair.ir.Dialect
 import scair.ir.Operation
-import scair.transformations.ModulePass
+import scair.transformations.PassCompanion
 import scair.utils.OK
 import scopt.OParser
 
@@ -26,7 +26,7 @@ abstract class ToolBase[Args]:
 
   def dialects: Seq[Dialect] = Seq()
 
-  def passes: Seq[MLContext => ModulePass] = Seq()
+  def passes: Seq[PassCompanion[?]] = Seq()
 
   final def registerDialects(): Unit =
     dialects.foreach(ctx.registerDialect)
