@@ -208,6 +208,27 @@ Supported option types are `Int`, `Long`, `BigInt`, `Double`, `Boolean`, `String
 
 Register pass types with `summonPasses[(FirstPass, SecondPass)]`, which returns their derived companions for a tool's `passes` list.
 
+### **Running MLIR passes**
+
+The `mlir-opt` pass prints the IR, runs it through MLIR's `mlir-opt`, and parses the result back, so MLIR passes can run in the middle of a ScaIR pipeline:
+
+```bash
+scair-opt -p 'Canonicalize,mlir-opt[cse,loop-invariant-code-motion],Canonicalize'
+```
+
+`mlir-opt[<pipeline>]` is shorthand for running `mlir-opt --mlir-print-op-generic --allow-unregistered-dialect -p 'builtin.module(<pipeline>)'`. For full control over the arguments, use the pass's options instead:
+
+```bash
+scair-opt -p 'mlir-opt{arguments=--cse,--mlir-disable-threading}'
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `executable` | `$SCAIR_MLIR_OPT`, else `mlir-opt` | The `mlir-opt` binary to run. |
+| `arguments` | none | The command line arguments to pass to it. |
+| `generic` | `true` | Whether to give it the IR in generic format. |
+| `allowUnregisteredDialect` | `false` | Whether to accept operations ScaIR doesn't know in its output. |
+
 ## **Footnotes**
 
 
