@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p convert-func-to-llvm | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
+// RUN: scair-opt %s -p ConvertFuncToLLVM | mlir-opt --mlir-print-op-generic | scair-opt | filecheck %s
 
 // LLVM functions have one result; multiple func results use a struct.
 func.func @pair(%i: i32, %f: f32) -> (i32, f32) {
