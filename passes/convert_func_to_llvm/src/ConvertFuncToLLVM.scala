@@ -1,6 +1,5 @@
 package scair.passes.convert_func_to_llvm
 
-import scair.MLContext
 import scair.dialects.builtin.*
 import scair.dialects.func
 import scair.dialects.llvm
