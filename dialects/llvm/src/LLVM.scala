@@ -6,12 +6,21 @@ import scair.dialects.builtin.*
 import scair.enums.*
 import scair.ir.*
 import scair.parse.*
-import scair.parse.given
 import scair.print.Printer
 import scair.utils.*
 
-case class Ptr() extends DerivedAttribute["llvm.ptr"] with TypeAttribute
-    derives AttrDefs
+case class Ptr(addressSpace: IntData = IntData(0))
+    extends DerivedAttribute["llvm.ptr"]
+    with TypeAttribute derives AttrDefs:
+
+  override def printParameters(p: Printer): Unit =
+    if addressSpace.data != 0 then p.print("<", addressSpace, ">")
+
+given AttributeCustomParser[Ptr]:
+
+  override def parse[$: P](using Parser): P[Ptr] =
+    P(("<" ~ decimalLiteralP ~ ">").?)
+      .map(space => Ptr(IntData(space.getOrElse(BigInt(0)))))
 
 enum ICmpPredicate(name: String) extends I64Enum(name):
   case eq extends ICmpPredicate("eq")
@@ -24,11 +33,6 @@ enum ICmpPredicate(name: String) extends I64Enum(name):
   case ule extends ICmpPredicate("ule")
   case ugt extends ICmpPredicate("ugt")
   case uge extends ICmpPredicate("uge")
-
-object ICmpPredicate:
-
-  def fromString(value: String): Option[ICmpPredicate] =
-    values.find(_.name == value)
 
 enum FCmpPredicate(name: String) extends I64Enum(name):
   case AlwaysFalse extends FCmpPredicate("false")
@@ -48,11 +52,6 @@ enum FCmpPredicate(name: String) extends I64Enum(name):
   case UNO extends FCmpPredicate("uno")
   case AlwaysTrue extends FCmpPredicate("true")
 
-object FCmpPredicate:
-
-  def fromString(value: String): Option[FCmpPredicate] =
-    values.find(_.name == value)
-
 final case class StructType(
     elems: ArrayAttribute[TypeAttribute]
 ) extends DerivedAttribute["llvm.struct"]
@@ -67,7 +66,7 @@ final case class StructType(
 given AttributeCustomParser[StructType]:
 
   override def parse[$: P](using Parser): P[StructType] =
-    P("<" ~ "(" ~ typeP.rep(sep = ",") ~ ")" ~ ">")
+    P("<" ~ "(" ~ llvmTypeP.rep(sep = ",") ~ ")" ~ ">")
       .map(elems => StructType(elems.map(_.asInstanceOf[TypeAttribute])))
 
 final case class ArrayType(
@@ -83,7 +82,7 @@ final case class ArrayType(
 given AttributeCustomParser[ArrayType]:
 
   override def parse[$: P](using Parser): P[ArrayType] =
-    P("<" ~ decimalLiteralP ~ "x" ~ typeP ~ ">").map((size, elem) =>
+    P("<" ~ decimalLiteralP ~ "x" ~ llvmTypeP ~ ">").map((size, elem) =>
       ArrayType(IntData(size), elem.asInstanceOf[TypeAttribute])
     )
 
@@ -105,70 +104,47 @@ case class Poison(
     with Pure derives OpDefs
 
 case class Add(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
-    overflowFlags: Option[ArrayAttribute[StringData]] = None,
-) extends DerivedOperation["llvm.add"] derives OpDefs
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
+    overflowFlags: IntegerAttr = IntegerAttr(IntData(0), I32),
+) extends DerivedOperation["llvm.add"]
+    with Commutative
+    with Pure derives OpDefs
 
 case class Mul(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
-    overflowFlags: Option[ArrayAttribute[StringData]] = None,
-) extends DerivedOperation["llvm.mul"] derives OpDefs
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
+    overflowFlags: IntegerAttr = IntegerAttr(IntData(0), I32),
+) extends DerivedOperation["llvm.mul"]
+    with Commutative
+    with Pure derives OpDefs
 
 case class FAdd(
-    lhs: Operand[FloatType],
-    rhs: Operand[FloatType],
-    res: Result[FloatType],
-) extends DerivedOperation["llvm.fadd"] derives OpDefs
+    lhs: Operand[FloatType | VectorType],
+    rhs: Operand[FloatType | VectorType],
+    res: Result[FloatType | VectorType],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
+) extends DerivedOperation["llvm.fadd"]
+    with Pure derives OpDefs
 
 case class FMul(
-    lhs: Operand[FloatType],
-    rhs: Operand[FloatType],
-    res: Result[FloatType],
-) extends DerivedOperation["llvm.fmul"] derives OpDefs
+    lhs: Operand[FloatType | VectorType],
+    rhs: Operand[FloatType | VectorType],
+    res: Result[FloatType | VectorType],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
+) extends DerivedOperation["llvm.fmul"]
+    with Pure derives OpDefs
 
 case class ICmp(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType],
+    lhs: Operand[IntegerType | Ptr | VectorType],
+    rhs: Operand[IntegerType | Ptr | VectorType],
+    res: Result[IntegerType | VectorType],
     predicate: ICmpPredicate,
-) extends DerivedOperation["llvm.icmp"] derives OpDefs:
+) extends DerivedOperation["llvm.icmp"]
+    with Pure derives OpDefs
 
-  override def customPrint(printer: Printer): Unit =
-    printer.print(name, " ")
-    printer.print("\"", predicate.name, "\" ")
-    printer.print(lhs, ", ", rhs, " : ", lhs.typ)
-
-given OperationCustomParser[ICmp]:
-
-  def parse[$: P](resNames: Seq[String])(using Parser): P[ICmp] =
-    P(
-      stringLiteralP ~ operandNameP ~ "," ~ operandNameP ~ ":" ~
-        (typeOfP[IntegerType] | typeOfP[IndexType])
-    ).flatMap((pred, lhsName, rhsName, typ) =>
-      ICmpPredicate.fromString(pred) match
-        case None            => Fail(s"unknown llvm.icmp predicate '$pred'")
-        case Some(predicate) =>
-          operandP(lhsName, typ).flatMap(lhs =>
-            operandP(rhsName, typ).flatMap(rhs =>
-              resultP(resNames.head, I1).map(res =>
-                ICmp(
-                  lhs.asInstanceOf[Operand[IntegerType | IndexType]],
-                  rhs.asInstanceOf[Operand[IntegerType | IndexType]],
-                  res,
-                  predicate,
-                )
-              )
-            )
-          )
-    )
-
-// The syntax is MLIR's: the flags are keywords, except `nontemporal`, which
-// MLIR leaves to the attribute dictionary (the format not spelling it out is
-// what puts it there).
 case class Load(
     addr: Operand[Ptr],
     res: Result[Attribute],
@@ -176,10 +152,15 @@ case class Load(
     nontemporal: Option[UnitAttr] = None,
     invariant: Option[UnitAttr] = None,
     invariantGroup: Option[UnitAttr] = None,
-) extends DerivedOperation["llvm.load"]
-    with AssemblyFormat[
-      "(`volatile` $volatile_^)? $addr (`invariant` $invariant^)? (`invariant_group` $invariantGroup^)? attr-dict `:` type($addr) `->` type($res)"
-    ] derives OpDefs
+    alignment: Option[IntegerAttr] = None,
+    ordering: IntegerAttr = IntegerAttr(IntData(0), I64),
+    syncscope: Option[StringData] = None,
+    dereferenceable: Option[DereferenceableAttr] = None,
+    access_groups: Option[ArrayAttribute[Attribute]] = None,
+    alias_scopes: Option[ArrayAttribute[Attribute]] = None,
+    noalias_scopes: Option[ArrayAttribute[Attribute]] = None,
+    tbaa: Option[ArrayAttribute[Attribute]] = None,
+) extends DerivedOperation["llvm.load"] derives OpDefs
 
 case class Store(
     value: Operand[Attribute],
@@ -187,6 +168,13 @@ case class Store(
     volatile_ : Option[UnitAttr] = None,
     nontemporal: Option[UnitAttr] = None,
     invariantGroup: Option[UnitAttr] = None,
+    alignment: Option[IntegerAttr] = None,
+    ordering: IntegerAttr = IntegerAttr(IntData(0), I64),
+    syncscope: Option[StringData] = None,
+    access_groups: Option[ArrayAttribute[Attribute]] = None,
+    alias_scopes: Option[ArrayAttribute[Attribute]] = None,
+    noalias_scopes: Option[ArrayAttribute[Attribute]] = None,
+    tbaa: Option[ArrayAttribute[Attribute]] = None,
 ) extends DerivedOperation["llvm.store"] derives OpDefs
 
 // Mirrors MLIR's LLVM GEPOp encoding. MLIR stores one entry per GEP index in
@@ -200,11 +188,12 @@ private def isDynamicGEPIndex(attr: IntegerAttr): Boolean =
   attr.value.value == gepDynamicIndexSentinel
 
 case class GetElementPtr(
-    base: Operand[Ptr],
-    dynamicIndices: Seq[Operand[IntegerType | IndexType]],
-    res: Result[Ptr],
+    base: Operand[Ptr | VectorType],
+    dynamicIndices: Seq[Operand[IntegerType | VectorType]],
+    res: Result[Ptr | VectorType],
     rawConstantIndices: DenseArrayAttr,
-    elem_type: Attribute,
+    elem_type: TypeAttribute,
+    noWrapFlags: IntegerAttr = IntegerAttr(IntData(0), I32),
 ) extends DerivedOperation["llvm.getelementptr"]
     with Pure derives OpDefs:
 
@@ -222,113 +211,66 @@ case class GetElementPtr(
     else OK(this)
 
 case class ExtractValue(
-    container: Operand[Attribute],
+    container: Operand[StructType | ArrayType],
     position: DenseArrayAttr,
     res: Result[Attribute],
-) extends DerivedOperation["llvm.extractvalue"] derives OpDefs:
-
-  override def customPrint(printer: Printer): Unit =
-    printer.print(name, " ", container, "[")
-    printer.printListF(
-      position.data.data.collect { case i: IntegerAttr => i.value.value },
-      idx => printer.print(idx.toString),
-      sep = ", ",
-    )
-    printer.print("] : ", container.typ)
+) extends DerivedOperation["llvm.extractvalue"]
+    with Pure derives OpDefs
 
 case class InsertValue(
+    container: Operand[StructType | ArrayType],
     value: Operand[Attribute],
-    container: Operand[Attribute],
     position: DenseArrayAttr,
-    res: Result[Attribute],
-) extends DerivedOperation["llvm.insertvalue"] derives OpDefs:
-
-  override def customPrint(printer: Printer): Unit =
-    printer.print(name, " ", value, ", ", container, "[")
-    printer.printListF(
-      position.data.data.collect { case i: IntegerAttr => i.value.value },
-      idx => printer.print(idx.toString),
-      sep = ", ",
-    )
-    printer.print("] : ", res.typ)
+    res: Result[StructType | ArrayType],
+) extends DerivedOperation["llvm.insertvalue"]
+    with Pure derives OpDefs
 
 case class PtrToInt(
-    in: Operand[Ptr],
-    out: Result[IntegerType | IndexType],
-) extends DerivedOperation["llvm.ptrtoint"] derives OpDefs
+    in: Operand[Ptr | VectorType],
+    out: Result[IntegerType | VectorType],
+) extends DerivedOperation["llvm.ptrtoint"]
+    with Pure derives OpDefs
 
 case class IntToPtr(
-    in: Operand[IntegerType | IndexType],
-    out: Result[Ptr],
-) extends DerivedOperation["llvm.inttoptr"] derives OpDefs
-
-/** The properties `llvm.call`'s syntax does not spell out, and which its
-  * attribute dictionary carries instead.
-  */
-private val callSyntaxProperties = Seq(
-  "convergent",
-  "no_unwind",
-  "will_return",
-  "no_inline",
-  "always_inline",
-  "inline_hint",
-)
-
-given OperationCustomParser[Call]:
-
-  def parse[$: P](resNames: Seq[String])(using p: Parser): P[Call] =
-    P(
-      symbolRefAttrP ~ "(" ~ operandNameP.rep(sep = ",") ~ ")" ~
-        optionalAttributesP ~ ":" ~ parenTypeListP ~ "->" ~
-        (parenTypeListP | typeP.map(Seq(_)))
-    ).flatMap { (callee, operandNames, attributes, operandTypes, resultTypes) =>
-      // The unit flags are printed within the attribute dictionary; they are
-      // properties, so they are taken back out of it here.
-      val (unspelled, discardable) = attributes
-        .partition((name, _) => callSyntaxProperties.contains(name))
-      p.generateOperationP(
-        opName = "llvm.call",
-        resultsNames = resNames,
-        operandsNames = operandNames,
-        operandsTypes = operandTypes,
-        resultsTypes = resultTypes,
-        properties = unspelled + ("callee" -> callee),
-        attributes = discardable,
-      ).map(_.asInstanceOf[Call])
-    }
+    in: Operand[IntegerType | VectorType],
+    out: Result[Ptr | VectorType],
+    dereferenceable: Option[DereferenceableAttr] = None,
+) extends DerivedOperation["llvm.inttoptr"]
+    with Pure derives OpDefs
 
 case class Call(
-    callee: SymbolRefAttr,
-    operandss: Seq[Operand[Attribute]],
-    resultss: Seq[Result[Attribute]],
+    callee: Option[SymbolRefAttr],
+    callee_operands: Seq[Operand[Attribute]],
+    result: Seq[Result[Attribute]],
     convergent: Option[UnitAttr] = None,
     no_unwind: Option[UnitAttr] = None,
     will_return: Option[UnitAttr] = None,
     no_inline: Option[UnitAttr] = None,
     always_inline: Option[UnitAttr] = None,
     inline_hint: Option[UnitAttr] = None,
-) extends DerivedOperation["llvm.call"] derives OpDefs:
-
-  override def customPrint(printer: Printer): Unit =
-    printer.print(name, " @", callee.rootRef.data, "(")
-    printer.printList(operandss)
-    printer.print(")")
-    printer.printOptionalAttrDict(attributes, properties, callSyntaxProperties)
-    printer.print(" : (")
-    printer.printListF(operandss.map(_.typ), printer.print, sep = ", ")
-    printer.print(") -> ")
-    resultss.map(_.typ) match
-      case Seq() =>
-        printer.print("()")
-      case Seq(single) =>
-        printer.print(single)
-      case many =>
-        printer.printListF(many, printer.print, "(", ", ", ")")
+    var_callee_type: Option[LLVMFunctionType] = None,
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
+    CConv: CConv = scair.dialects.llvm.CConv.C,
+    TailCallKind: TailCallKind = scair.dialects.llvm.TailCallKind.None,
+    memory_effects: Option[MemoryEffectsAttr] = None,
+    op_bundle_operands: Seq[Operand[Attribute]] = Seq.empty,
+    op_bundle_sizes: DenseArrayAttr =
+      DenseArrayAttr(I32, Seq.empty[IntegerAttr]),
+    op_bundle_tags: Option[ArrayAttribute[StringData]] = None,
+    arg_attrs: Option[ArrayAttribute[DictionaryAttr]] = None,
+    res_attrs: Option[ArrayAttribute[DictionaryAttr]] = None,
+    access_groups: Option[ArrayAttribute[Attribute]] = None,
+    alias_scopes: Option[ArrayAttribute[Attribute]] = None,
+    noalias_scopes: Option[ArrayAttribute[Attribute]] = None,
+    tbaa: Option[ArrayAttribute[Attribute]] = None,
+) extends DerivedOperation["llvm.call"] derives OpDefs
 
 case class Br(
     args: Seq[Operand[Attribute]],
     dest: Block,
+    loop_annotation: Option[Attribute] = None,
 ) extends DerivedOperation["llvm.br"]
+    with Pure
     with IsTerminator derives OpDefs
 
 case class CondBr(
@@ -337,71 +279,21 @@ case class CondBr(
     falseArgs: Seq[Operand[Attribute]],
     trueDest: Block,
     falseDest: Block,
+    branch_weights: Option[DenseArrayAttr] = None,
+    loop_annotation: Option[Attribute] = None,
 ) extends DerivedOperation["llvm.cond_br"]
+    with Pure
     with IsTerminator derives OpDefs
 
 case class Return(
     args: Seq[Operand[Attribute]]
 ) extends DerivedOperation["llvm.return"]
+    with Pure
     with IsTerminator derives OpDefs
-
-/** The properties `llvm.func`'s syntax does not spell out, and which its
-  * attribute dictionary carries instead.
-  */
-private val funcSyntaxProperties = Seq(
-  "dso_local",
-  "convergent",
-  "no_inline",
-  "always_inline",
-  "inline_hint",
-  "no_unwind",
-  "will_return",
-  "optimize_none",
-  "arm_streaming",
-  "arm_locally_streaming",
-  "arm_streaming_compatible",
-  "arm_new_za",
-  "arm_in_za",
-  "arm_out_za",
-  "arm_inout_za",
-  "arm_preserves_za",
-)
-
-given OperationCustomParser[Func]:
-
-  def parseResultTypes[$: P](using Parser): P[Seq[Attribute]] =
-    ("->" ~ (parenTypeListP | typeP.map(Seq(_)))).orElse(Seq.empty)
-
-  def parse[$: P](resNames: Seq[String])(using p: Parser): P[Func] =
-    ("private".!.? ~ symbolRefAttrP ~
-      (("(" ~ valueIdAndTypeP.rep(sep = ",") ~ ")")
-        .flatMap((args: Seq[(String, Attribute)]) =>
-          Pass(args.map(_._2)) ~ parseResultTypes ~
-            ("attributes" ~ attributeDictionaryP).orElse(Map()) ~ regionP(args)
-        ) |
-        (
-          parenTypeListP ~ parseResultTypes ~
-            ("attributes" ~ attributeDictionaryP).orElse(Map()) ~ Pass(Region())
-        ))).flatMap {
-      case (visibility, symbol, (argTypes, resTypes, attributes, body)) =>
-        // The properties the syntax does not spell out were parsed as part of
-        // the attribute dictionary; take them back out of it.
-        val (unspelled, discardable) = attributes
-          .partition((name, _) => funcSyntaxProperties.contains(name))
-        p.generateOperationP(
-          opName = "llvm.func",
-          properties = unspelled ++ Map(
-            "sym_name" -> symbol.rootRef,
-            "function_type" -> FunctionType(argTypes, resTypes),
-          ) ++ visibility.map(v => "sym_visibility" -> StringData(v)),
-          regions = Seq(body),
-          attributes = discardable,
-        ).map(_.asInstanceOf[Func])
-    }
 
 case class Func(
     sym_name: StringData,
-    function_type: FunctionType,
+    function_type: LLVMFunctionType,
     sym_visibility: Option[StringData],
     body: Region,
     dso_local: Option[UnitAttr] = None,
@@ -420,239 +312,238 @@ case class Func(
     arm_out_za: Option[UnitAttr] = None,
     arm_inout_za: Option[UnitAttr] = None,
     arm_preserves_za: Option[UnitAttr] = None,
+    linkage: Linkage = Linkage.External,
+    CConv: CConv = scair.dialects.llvm.CConv.C,
+    comdat: Option[SymbolRefAttr] = None,
+    personality: Option[SymbolRefAttr] = None,
+    garbageCollector: Option[StringData] = None,
+    passthrough: Option[ArrayAttribute[Attribute]] = None,
+    arg_attrs: Option[ArrayAttribute[DictionaryAttr]] = None,
+    res_attrs: Option[ArrayAttribute[DictionaryAttr]] = None,
+    function_entry_count: Option[IntegerAttr] = None,
+    memory_effects: Option[MemoryEffectsAttr] = None,
+    visibility_ : IntegerAttr = IntegerAttr(IntData(0), I64),
+    unnamed_addr: Option[IntegerAttr] = None,
+    section: Option[StringData] = None,
+    alignment: Option[IntegerAttr] = None,
+    vscale_range: Option[VScaleRangeAttr] = None,
+    frame_pointer: Option[FramePointerKind] = None,
+    target_cpu: Option[StringData] = None,
+    tune_cpu: Option[StringData] = None,
+    reciprocal_estimates: Option[StringData] = None,
+    prefer_vector_width: Option[StringData] = None,
+    target_features: Option[TargetFeaturesAttr] = None,
+    no_infs_fp_math: Option[IntegerAttr] = None,
+    no_nans_fp_math: Option[IntegerAttr] = None,
+    no_signed_zeros_fp_math: Option[IntegerAttr] = None,
+    denormal_fp_math: Option[StringData] = None,
+    denormal_fp_math_f32: Option[StringData] = None,
+    fp_contract: Option[StringData] = None,
+    instrument_function_entry: Option[StringData] = None,
+    instrument_function_exit: Option[StringData] = None,
+    vec_type_hint: Option[VecTypeHintAttr] = None,
+    work_group_size_hint: Option[DenseArrayAttr] = None,
+    reqd_work_group_size: Option[DenseArrayAttr] = None,
+    intel_reqd_sub_group_size: Option[IntegerAttr] = None,
+    uwtable_kind: Option[UWTableKind] = None,
 ) extends DerivedOperation["llvm.func"]
     with IsolatedFromAbove
-    with Symbol
-    with SymbolTable derives OpDefs:
+    with Symbol derives OpDefs
 
-  override def customPrint(printer: Printer): Unit =
-    val lprinter = printer.scoped
-    lprinter.print("llvm.func ")
-    sym_visibility.foreach { visibility =>
-      lprinter.print(visibility.data)
-      lprinter.print(" ")
-    }
-    lprinter.print("@")
-    lprinter.print(sym_name.data)
-    if body.blocks.isEmpty then
-      lprinter.print("(")
-      lprinter.printListF(function_type.inputs, lprinter.print, sep = ", ")
-      lprinter.print(")")
-      if function_type.outputs.nonEmpty then
-        lprinter.print(" -> ")
-        function_type.outputs match
-          case ArrayAttribute(single) => lprinter.print(single)
-          case many => lprinter.printList(many, "(", ", ", ")")
-    else
-      val entry = body.blocks.head
-      lprinter.printListF(
-        entry.arguments,
-        lprinter.printArgument,
-        "(",
-        ", ",
-        ")",
-      )
-      if function_type.outputs.nonEmpty then
-        lprinter.print(" -> ")
-        function_type.outputs match
-          case ArrayAttribute(single) => lprinter.print(single)
-          case many => lprinter.printList(many, "(", ", ", ")")
-    if attributes.nonEmpty ||
-      properties.keySet.exists(funcSyntaxProperties.contains)
-    then
-      lprinter.print(" attributes")
-      lprinter.printOptionalAttrDict(
-        attributes,
-        properties,
-        funcSyntaxProperties,
-      )
-    if body.blocks.nonEmpty then
-      val entry = body.blocks.head
-      val others = body.blocks.tail
-      lprinter.print(" {\n")
-      lprinter.indented(entry.operations.foreach(lprinter.print))
-      others.foreach(lprinter.print)
-      lprinter.withIndent(lprinter.print("}"))
-
-// The LLVM integer arithmetic operations below are effect free but not
-// speculatable: upstream `LLVM_ArithmeticOpBase` grants `NoMemoryEffect`
-// alone, since a poison-generating flag (nsw/nuw/exact/disjoint) makes the
-// result undefined. Only their floating point counterparts are `Pure`.
+// Definitions and traits follow LLVMOps.td at llvmorg-22.1.1.
 case class Sub(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
-    overflowFlags: Option[ArrayAttribute[StringData]] = None,
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
+    overflowFlags: IntegerAttr = IntegerAttr(IntData(0), I32),
 ) extends DerivedOperation["llvm.sub"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class SDiv(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
     isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.sdiv"]
     with NoMemoryEffect derives OpDefs
 
 case class SRem(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
 ) extends DerivedOperation["llvm.srem"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class FSub(
-    lhs: Operand[FloatType],
-    rhs: Operand[FloatType],
-    res: Result[FloatType],
+    lhs: Operand[FloatType | VectorType],
+    rhs: Operand[FloatType | VectorType],
+    res: Result[FloatType | VectorType],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
 ) extends DerivedOperation["llvm.fsub"]
     with Pure derives OpDefs
 
 case class FDiv(
-    lhs: Operand[FloatType],
-    rhs: Operand[FloatType],
-    res: Result[FloatType],
+    lhs: Operand[FloatType | VectorType],
+    rhs: Operand[FloatType | VectorType],
+    res: Result[FloatType | VectorType],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
 ) extends DerivedOperation["llvm.fdiv"]
     with Pure derives OpDefs
 
 case class FRem(
-    lhs: Operand[FloatType],
-    rhs: Operand[FloatType],
-    res: Result[FloatType],
+    lhs: Operand[FloatType | VectorType],
+    rhs: Operand[FloatType | VectorType],
+    res: Result[FloatType | VectorType],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
 ) extends DerivedOperation["llvm.frem"]
     with Pure derives OpDefs
 
 case class FNeg(
-    operand: Operand[FloatType],
-    res: Result[FloatType],
+    operand: Operand[FloatType | VectorType],
+    res: Result[FloatType | VectorType],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
 ) extends DerivedOperation["llvm.fneg"]
     with Pure derives OpDefs
 
 case class FCmp(
-    lhs: Operand[FloatType],
-    rhs: Operand[FloatType],
-    res: Result[IntegerType],
+    lhs: Operand[FloatType | VectorType],
+    rhs: Operand[FloatType | VectorType],
+    res: Result[IntegerType | VectorType],
     predicate: FCmpPredicate,
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
 ) extends DerivedOperation["llvm.fcmp"]
     with Pure derives OpDefs
 
 case class And(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
 ) extends DerivedOperation["llvm.and"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Or(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
     isDisjoint: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.or"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class XOr(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
 ) extends DerivedOperation["llvm.xor"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Unreachable()
     extends DerivedOperation["llvm.unreachable"]
     with IsTerminator derives OpDefs
 
 case class Alloca(
-    arraySize: Operand[IntegerType | IndexType],
+    arraySize: Operand[IntegerType],
     res: Result[Ptr],
-    elem_type: Attribute,
+    elem_type: TypeAttribute,
     alignment: Option[IntegerAttr] = None,
     inalloca: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.alloca"] derives OpDefs
 
 case class Trunc(
-    in: Operand[IntegerType | IndexType],
-    out: Result[IntegerType],
+    in: Operand[IntegerType | VectorType],
+    out: Result[IntegerType | VectorType],
+    overflowFlags: IntegerAttr = IntegerAttr(IntData(0), I32),
 ) extends DerivedOperation["llvm.trunc"]
     with Pure derives OpDefs
 
 case class ZExt(
-    in: Operand[IntegerType | IndexType],
-    out: Result[IntegerType | IndexType],
+    in: Operand[IntegerType | VectorType],
+    out: Result[IntegerType | VectorType],
     nonNeg: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.zext"]
     with Pure derives OpDefs
 
 case class SExt(
-    in: Operand[IntegerType | IndexType],
-    out: Result[IntegerType | IndexType],
+    in: Operand[IntegerType | VectorType],
+    out: Result[IntegerType | VectorType],
 ) extends DerivedOperation["llvm.sext"]
     with Pure derives OpDefs
 
 case class SIToFP(
-    in: Operand[IntegerType | IndexType],
-    out: Result[FloatType],
+    in: Operand[IntegerType | VectorType],
+    out: Result[FloatType | VectorType],
 ) extends DerivedOperation["llvm.sitofp"]
     with Pure derives OpDefs
 
 case class FPToSI(
-    in: Operand[FloatType],
-    out: Result[IntegerType | IndexType],
+    in: Operand[FloatType | VectorType],
+    out: Result[IntegerType | VectorType],
 ) extends DerivedOperation["llvm.fptosi"]
     with Pure derives OpDefs
 
 case class FPTrunc(
-    in: Operand[FloatType],
-    out: Result[FloatType],
+    in: Operand[FloatType | VectorType],
+    out: Result[FloatType | VectorType],
 ) extends DerivedOperation["llvm.fptrunc"]
     with Pure derives OpDefs
 
 case class FPExt(
-    in: Operand[FloatType],
-    out: Result[FloatType],
+    in: Operand[FloatType | VectorType],
+    out: Result[FloatType | VectorType],
 ) extends DerivedOperation["llvm.fpext"]
     with Pure derives OpDefs
 
 case class Shl(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
-    overflowFlags: Option[ArrayAttribute[StringData]] = None,
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
+    overflowFlags: IntegerAttr = IntegerAttr(IntData(0), I32),
 ) extends DerivedOperation["llvm.shl"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class LShr(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
     isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.lshr"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class AShr(
-    lhs: Operand[IntegerType | IndexType],
-    rhs: Operand[IntegerType | IndexType],
-    res: Result[IntegerType | IndexType],
+    lhs: Operand[IntegerType | VectorType],
+    rhs: Operand[IntegerType | VectorType],
+    res: Result[IntegerType | VectorType],
     isExact: Option[UnitAttr] = None,
 ) extends DerivedOperation["llvm.ashr"]
-    with NoMemoryEffect derives OpDefs
+    with Pure derives OpDefs
 
 case class Select(
-    condition: Operand[IntegerType],
+    condition: Operand[IntegerType | VectorType],
     trueValue: Operand[Attribute],
     falseValue: Operand[Attribute],
     res: Result[Attribute],
+    fastmathFlags: FastmathFlagsAttr = FastmathFlagsAttr(),
 ) extends DerivedOperation["llvm.select"]
     with Pure derives OpDefs
 
-case class CallIndirect(
-    callee: Operand[Ptr],
-    operandss: Seq[Operand[Attribute]],
-    resultss: Seq[Result[Attribute]],
-) extends DerivedOperation["llvm.call_indirect"] derives OpDefs
-
 val LLVMDialect = summonDialect[
-  (Ptr, StructType, ArrayType),
+  (
+      Ptr,
+      StructType,
+      ArrayType,
+      VoidType,
+      LLVMFunctionType,
+      FastmathFlagsAttr,
+      DereferenceableAttr,
+      CConv,
+      Linkage,
+      TailCallKind,
+      FramePointerKind,
+      UWTableKind,
+      VScaleRangeAttr,
+      TargetFeaturesAttr,
+      VecTypeHintAttr,
+      MemoryEffectsAttr,
+  ),
   (
       Func,
       Constant,
@@ -693,7 +584,6 @@ val LLVMDialect = summonDialect[
       PtrToInt,
       IntToPtr,
       Call,
-      CallIndirect,
       Alloca,
       Br,
       CondBr,

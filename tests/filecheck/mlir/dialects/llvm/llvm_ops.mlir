@@ -17,14 +17,16 @@
   "func.return"() : () -> ()
 }) : () -> ()
 
-// CHECK:       func.func @flags(%{{.*}}: i32, %{{.*}}: !llvm.ptr) {
-// CHECK-NEXT:    %{{.*}} = llvm.load volatile %{{.*}} invariant invariant_group {nontemporal} : !llvm.ptr -> i32
-// CHECK-NEXT:    %{{.*}} = llvm.load %{{.*}} : !llvm.ptr -> i32
-// CHECK-NEXT:    "llvm.store"(%{{.*}}, %{{.*}}) <{volatile_, nontemporal, invariantGroup}> : (i32, !llvm.ptr) -> ()
-// CHECK-NEXT:    %{{.*}} = "llvm.sdiv"(%{{.*}}, %{{.*}}) <{isExact}> : (i32, i32) -> i32
-// CHECK-NEXT:    %{{.*}} = "llvm.lshr"(%{{.*}}, %{{.*}}) <{isExact}> : (i32, i32) -> i32
-// CHECK-NEXT:    %{{.*}} = "llvm.ashr"(%{{.*}}, %{{.*}}) <{isExact}> : (i32, i32) -> i32
-// CHECK-NEXT:    %{{.*}} = "llvm.or"(%{{.*}}, %{{.*}}) <{isDisjoint}> : (i32, i32) -> i32
-// CHECK-NEXT:    %{{.*}} = "llvm.zext"(%{{.*}}) <{nonNeg}> : (i32) -> i64
-// CHECK-NEXT:    func.return
-// CHECK-NEXT:  }
+// CHECK: builtin.module {
+// CHECK-NEXT:   func.func @flags(%0: i32, %1: !llvm.ptr) {
+// CHECK-NEXT:     %2 = "llvm.load"(%1) <{invariantGroup, volatile_, nontemporal, ordering = 0 : i64, invariant}> : (!llvm.ptr) -> i32
+// CHECK-NEXT:     %3 = "llvm.load"(%1) <{ordering = 0 : i64}> : (!llvm.ptr) -> i32
+// CHECK-NEXT:     "llvm.store"(%0, %1) <{ordering = 0 : i64, volatile_, nontemporal, invariantGroup}> : (i32, !llvm.ptr) -> ()
+// CHECK-NEXT:     %4 = "llvm.sdiv"(%0, %0) <{isExact}> : (i32, i32) -> i32
+// CHECK-NEXT:     %5 = "llvm.lshr"(%0, %0) <{isExact}> : (i32, i32) -> i32
+// CHECK-NEXT:     %6 = "llvm.ashr"(%0, %0) <{isExact}> : (i32, i32) -> i32
+// CHECK-NEXT:     %7 = "llvm.or"(%0, %0) <{isDisjoint}> : (i32, i32) -> i32
+// CHECK-NEXT:     %8 = "llvm.zext"(%0) <{nonNeg}> : (i32) -> i64
+// CHECK-NEXT:     func.return
+// CHECK-NEXT:   }
+// CHECK-NEXT: }
