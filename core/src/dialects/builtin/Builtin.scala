@@ -562,27 +562,11 @@ final case class AffineSetAttr(affineSet: AffineSet)
 //  ModuleOp  //
 // ==------== //
 
-given OperationCustomParser[ModuleOp]:
-
-  // ==--- Custom Parsing ---== //
-  def parse[$: P](
-      resNames: Seq[String]
-  )(using Parser): P[ModuleOp] =
-    P(
-      regionP()
-    ).map(ModuleOp.apply)
-
-  // ==----------------------== //
-
 case class ModuleOp(
     body: Region
 ) extends DerivedOperation["builtin.module"]
-    with SymbolTable derives OpDefs:
-
-  override def customPrint(
-      p: Printer
-  ) =
-    p.print("builtin.module ", regions(0))
+    with AssemblyFormat["attr-dict-with-keyword $body"]
+    with SymbolTable derives OpDefs
 
 case class UnrealizedConversionCastOp(
     inputs: Seq[Value[Attribute]] = Seq(),
