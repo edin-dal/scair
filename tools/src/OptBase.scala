@@ -13,6 +13,7 @@ import scair.verify.Verifier
 import scopt.OParser
 
 import scala.io.BufferedSource
+import scala.io.Codec
 import scala.io.Source
 //
 // ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
@@ -142,8 +143,8 @@ trait OptBase extends ToolBase[OptArgs]:
 
     // Open the input file or stdin
     val input = parsedArgs.input match
-      case Some(file) => Source.fromFile(file)
-      case None       => Source.stdin
+      case Some(file) => Source.fromFile(file)(using Codec.ISO8859)
+      case None       => Source.fromInputStream(System.in)(using Codec.ISO8859)
 
     val parsedModules = parse(parsedArgs)(input)
 
