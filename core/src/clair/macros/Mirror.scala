@@ -218,15 +218,15 @@ def defaultExprs[T: Type](using Quotes): Map[String, Expr[Any]] =
 
   }.toMap
 
-/** For a case class T, returns a dictionary mapping `@property` annotated field
+/** For a case class T, returns a dictionary mapping `@irName` annotated field
   * names to their property key.
   */
 def propertyKeys[T: Type](using Quotes): Map[String, String] =
   import quotes.reflect.*
 
   TypeRepr.of[T].typeSymbol.primaryConstructor.paramSymss.flatten.flatMap { f =>
-    f.getAnnotation(TypeRepr.of[property].typeSymbol).map(_.asExpr match
-      case '{ new `property`(${ Expr(key) }) } => f.name -> key)
+    f.getAnnotation(TypeRepr.of[irName].typeSymbol).map(_.asExpr match
+      case '{ new `irName`(${ Expr(key) }) } => f.name -> key)
   }.toMap
 
 def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =

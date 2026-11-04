@@ -36,8 +36,8 @@ case class MulMultiVariadic(
 ) extends DerivedOperation["cmath.mulmultivariadic"] derives OpDefs
 
 case class Renamed(
-    @property("name") symbol: StringData,
-    @property("value") optional: Option[StringData] = None,
+    @irName("name") symbol: StringData,
+    @irName("value") optional: Option[StringData] = None,
 ) extends DerivedOperation["cmath.renamed"]
     with AssemblyFormat["$name ($value^)? attr-dict"] derives OpDefs
 
@@ -642,7 +642,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       }
     }
 
-  "A @property field" should "use its key as the property name" in {
+  "An @irName field" should "use its key as the property name" in {
     val comp = summon[OpDefs[Renamed]]
     val adt = Renamed(StringData("a"), Some(StringData("b")))
     comp.destructure(adt).properties shouldEqual Map(

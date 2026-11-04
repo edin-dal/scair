@@ -248,14 +248,22 @@ def propertiesMacro(
   // Populating a Dictionary with the properties
   val mandatoryProps =
     opDef.properties.collect {
-      case d @ OpPropertyDef(variadicity = Variadicity.Single) =>
-        (Expr(d.name), selectMember[Attribute](adtOpExpr, d.field))
+      case OpPropertyDef(
+            name = name,
+            field = field,
+            variadicity = Variadicity.Single,
+          ) =>
+        (Expr(name), selectMember[Attribute](adtOpExpr, field))
     } ++ opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp
 
   val optionalProps =
     opDef.properties.collect {
-      case d @ OpPropertyDef(variadicity = Variadicity.Optional) =>
-        (Expr(d.name), selectMember[Option[Attribute]](adtOpExpr, d.field))
+      case OpPropertyDef(
+            name = name,
+            field = field,
+            variadicity = Variadicity.Optional,
+          ) =>
+        (Expr(name), selectMember[Option[Attribute]](adtOpExpr, field))
     }
   // Properties are typically few; a chain of `updated` goes through the
   // small specialized maps without a builder or tuples along the way.
