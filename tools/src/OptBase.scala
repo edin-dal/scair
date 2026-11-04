@@ -1,0 +1,207 @@
+package scair.tools
+
+import scair.MLContext
+import scair.ir.*
+import scair.parse.*
+import scair.print.AssemblyPrinter
+import scair.print.ErrorPrinter
+import scair.tools.ToolBase
+import scair.transformations.ModulePass
+import scair.transformations.PassFailure
+import scair.utils.*
+import scair.verify.Verifier
+import scopt.OParser
+
+import scala.io.BufferedSource
+import scala.io.Source
+//
+// ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
+// ██╔════╝ ██╔══██╗ ██╔══██╗ ██║ ██╔══██╗
+// ╚█████╗░ ██║░░╚═╝ ███████║ ██║ ██████╔╝
+// ░╚═══██╗ ██║░░██╗ ██╔══██║ ██║ ██╔══██╗
+// ██████╔╝ ╚█████╔╝ ██║░░██║ ██║ ██║░░██║
+// ╚═════╝░ ░╚════╝░ ╚═╝░░╚═╝ ╚═╝ ╚═╝░░╚═╝
+//
+// ░█████╗░ ██████╗░ ████████╗
+// ██╔══██╗ ██╔══██╗ ╚══██╔══╝
+// ██║░░██║ ██████╔╝ ░░░██║░░░
+// ██║░░██║ ██╔═══╝░ ░░░██║░░░
+// ╚█████╔╝ ██║░░░░░ ░░░██║░░░
+// ░╚════╝░ ╚═╝░░░░░ ░░░╚═╝░░░
+//
+
+case class OptArgs(
+    val allowUnregistered: Boolean = false,
+    val input: Option[String] = None,
+    val skipVerify: Boolean = false,
+    val splitInputFile: Boolean = false,
+    val parsingDiagnostics: Boolean = false,
+    val printGeneric: Boolean = false,
+    val passes: String = "",
+    val verifyDiagnostics: Boolean = false,
+    val printLocations: Boolean = false,
+    val parseLocations: Boolean = false,
+)
+
+trait OptBase extends ToolBase[OptArgs]:
+
+  override def parse(args: OptArgs)(
+      input: BufferedSource
+  ): Array[OK[Operation]] =
+    // TODO: more robust separator splitting
+    val inputChunks =
+      if args.splitInputFile then input.mkString.split("\n// -----\n")
+      else Array(input.mkString)
+    var indexOffset = 0
+    inputChunks.map(input =>
+      // Parse content
+      val parser = new Parser(
+        ctx,
+        inputPath = args.input,
+        parsingDiagnostics = args.parsingDiagnostics,
+        allowUnregisteredDialect = args.allowUnregistered,
+        inputLineOffset = indexOffset,
+        sourceLocations = args.parseLocations,
+      )
+      val parsed = parser.parse(
+        input,
+        parser = moduleP(using _, parser),
+      ) match
+        case fastparse.Parsed.Success(inputModule, _) =>
+          OK(inputModule)
+        case failure: fastparse.Parsed.Failure =>
+          Err(parser.error(failure, indexOffset))
+      if args.splitInputFile && !(input eq inputChunks.last) then
+        indexOffset += input.count(_ == '\n') + 2
+
+      parsed
+    )
+
+  override def parseArgs(args: Array[String]): OptArgs =
+    // Define CLI args
+    val argbuilder = OParser.builder[OptArgs]
+    val argparser =
+      import argbuilder.*
+      OParser.sequence(
+        commonHeaders,
+        // The input file - defaulting to stdin
+        arg[String]("file").optional().text("input file")
+          .action((x, c) => c.copy(input = Some(x))),
+        opt[Unit]('a', "allow-unregistered-dialect").optional().text(
+          "Accept unregistered operations and attributes, bestPRINT effort with generic syntax."
+        ).action((_, c) => c.copy(allowUnregistered = true)),
+        opt[Unit]('s', "skip-verify").optional().text("Skip verification")
+          .action((_, c) => c.copy(skipVerify = true)),
+        opt[Unit]("split-input-file").optional()
+          .text("Split input file on `// -----`")
+          .action((_, c) => c.copy(splitInputFile = true)),
+        opt[Unit]("parsing-diagnostics").optional().text(
+          "Parsing diagnose mode, i.e parse errors are not fatal for the whole run"
+        ).action((_, c) => c.copy(parsingDiagnostics = true)),
+        opt[Unit]('g', "print-generic").optional()
+          .text("Print Strictly in Generic format")
+          .action((_, c) => c.copy(printGeneric = true)),
+        opt[Unit]("print-locations").optional()
+          .text("Print operation source locations")
+          .action((_, c) => c.copy(printLocations = true)),
+        opt[Unit]("parse-locations").optional()
+          .text("Record operation source locations while parsing")
+          .action((_, c) => c.copy(parseLocations = true)),
+        opt[String]('p', "passes").optional().text(
+          "Pass pipeline to apply to the IR, e.g. `Canonicalize,MyPass{opt=1 list=1,2}`"
+        ).action((x, c) => c.copy(passes = x)),
+        opt[Unit]("verify-diagnostics").optional().text(
+          "Verification diagnose mode, i.e verification errors are not fatal for the whole run"
+        ).action((_, c) => c.copy(verifyDiagnostics = true)),
+      )
+
+    // Parse the CLI args
+    OParser.parse(argparser, args, OptArgs()).get
+
+  def handleVerificationError(
+      error: Err,
+      operation: Operation,
+      verifyDiagnostics: Boolean,
+  ): OK[Operation] =
+    val p = ErrorPrinter(error)
+    p.printTopLevel(operation)
+    if verifyDiagnostics then error else sys.exit(42)
+
+  def fail(message: String): Nothing =
+    Console.err.println(message)
+    sys.exit(1)
+
+  def parsePipeline(spec: String): Seq[ModulePass] =
+    PipelineParser(ctx).parse(spec).fold(fail, identity)
+
+  def main(args: Array[String]): Unit =
+
+    val parsedArgs = parseArgs(args)
+    val pipeline = parsePipeline(parsedArgs.passes)
+    given MLContext = ctx
+
+    // Open the input file or stdin
+    val input = parsedArgs.input match
+      case Some(file) => Source.fromFile(file)
+      case None       => Source.stdin
+
+    val parsedModules = parse(parsedArgs)(input)
+
+    parsedModules.foreach(parsedModule =>
+
+      parsedModule match
+        case OK(inputModule) =>
+
+          val processedModule: OK[Operation] =
+            var module =
+              if parsedArgs.skipVerify then OK(inputModule)
+              else inputModule.structured.flatMap(op => Verifier.verify(op))
+            // verify parsed content
+            module match
+              case OK(op) =>
+                // apply the specified passes
+                pipeline.foldLeft(module)((module, pass) =>
+                  module.map { op =>
+                    val out =
+                      try pass.transform(op)
+                      catch
+                        case e: PassFailure => fail(s"error: ${e.getMessage}")
+
+                    if !parsedArgs.skipVerify then
+                      Verifier.verify(out).fold(
+                        handleVerificationError(
+                          _,
+                          out,
+                          parsedArgs.verifyDiagnostics,
+                        ),
+                        _ => (),
+                      )
+
+                    out
+
+                  }
+                )
+              case err: Err =>
+                handleVerificationError(
+                  err,
+                  inputModule,
+                  parsedArgs.verifyDiagnostics,
+                )
+
+          {
+            val printer = new AssemblyPrinter(
+              parsedArgs.printGeneric,
+              printLocations = parsedArgs.printLocations,
+            )
+            processedModule.fold(
+              err => (),
+              printer.printTopLevel,
+            )
+            printer.flush()
+          }
+        case Err(msg = errorMsg) =>
+          if parsedArgs.parsingDiagnostics then println(errorMsg)
+          else throw new Exception(errorMsg)
+
+      if parsedModule != parsedModules.last then println("// -----")
+    )

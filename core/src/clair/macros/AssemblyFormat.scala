@@ -126,15 +126,16 @@ case class LiteralDirective(
   * As MLIR does, it also carries the `properties` the rest of the format does
   * not spell out, so that no property is lost by a custom syntax.
   */
-case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
+case class AttrDictDirective(
+    properties: Seq[String] = Seq(),
+    keyword: Boolean = false,
+) extends Directive:
 
   override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
   )(using Quotes): Expr[Unit] =
     state.lastWasPunctuation = false
-    val attributes = '{
-      ${ selectMember[Map[String, Attribute]](op, "attributes") }
-    }
+    val attributes = selectMember[Map[String, Attribute]](op, "attributes")
     val printed =
       if properties.isEmpty then attributes
       else
@@ -144,12 +145,24 @@ case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
           $attributes ++ ${ Expr(properties) }
             .flatMap(name => $props.get(name).map(name -> _))
         }
-    '{ $p.printOptionalAttrDict($printed) }
+    val printKeyword = if keyword then '{ $p.print(" attributes") } else '{}
+    '{
+      val attrs = $printed
+      if attrs.nonEmpty then
+        $printKeyword
+        $p.printAttrDict(attrs)
+    }
 
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ optionalAttributesP(using $ctx, $p) }
+    if keyword then
+      '{
+        given P[Any] = $ctx
+        given Parser = $p
+        ("attributes" ~ attributeDictionaryP).orElse(Map.empty)
+      }
+    else '{ optionalAttributesP(using $ctx, $p) }
 
 /** A unit property carries no value of its own: its presence is the
   * information, and it is spelled out by the literals around it, as in
@@ -312,20 +325,15 @@ case class TypeDirective(
 
     val space = printSpace(p, state)
 
-    val printType = construct match
-      case MayVariadicOpInputDef(name = n, variadicity = Variadicity.Single) =>
+    val n = construct.name
+    val printType = construct.variadicity match
+      case Variadicity.Single =>
         '{ $p.print(${ selectMember[Value[?]](op, n) }.typ) }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Variadic,
-          ) =>
+      case Variadicity.Variadic =>
         '{
           $p.printList(${ selectMember[Seq[Value[?]]](op, n) }.map(_.typ))
         }
-      case MayVariadicOpInputDef(
-            name = n,
-            variadicity = Variadicity.Optional,
-          ) =>
+      case Variadicity.Optional =>
         '{
           ${ selectMember[Option[Value[?]]](op, n) }.map(_.typ).map($p.print)
             .getOrElse(())
@@ -336,19 +344,17 @@ case class TypeDirective(
   override def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes) =
-    construct match
-      case MayVariadicOpInputDef(name = n, variadicity = v) =>
-        v match
-          case Variadicity.Single =>
-            '{ typeP(using $ctx, $p) }
-          case Variadicity.Variadic =>
-            '{ typeListP(using $ctx, $p) }
-          case Variadicity.Optional =>
-            '{
-              given P[?] = $ctx
-              given Parser = $p
-              typeP.?
-            }
+    construct.variadicity match
+      case Variadicity.Single =>
+        '{ typeP(using $ctx, $p) }
+      case Variadicity.Variadic =>
+        '{ typeListP(using $ctx, $p) }
+      case Variadicity.Optional =>
+        '{
+          given P[?] = $ctx
+          given Parser = $p
+          typeP.?
+        }
 
   override def isPresent(op: Expr[?])(using Quotes): Expr[Boolean] =
     VariableDirective(construct).isPresent(op)
@@ -485,8 +491,9 @@ case class AssemblyFormatDirective(
     val inAttrDict = propertiesInAttrDict(opDef)
     Expr.block(
       '{ $p.print($op.asInstanceOf[Operation].name) } +: directives.map {
-        case _: AttrDictDirective => AttrDictDirective(inAttrDict).print(op, p)
-        case directive            => directive.print(op, p)
+        case d: AttrDictDirective =>
+          d.copy(properties = inAttrDict).print(op, p)
+        case directive => directive.print(op, p)
       }.toList,
       '{},
     )
@@ -545,8 +552,8 @@ case class AssemblyFormatDirective(
     val flatOperandNames = '{
       $operandNamesArg.flatMap(op =>
         op match
-          case op: String      => Seq(op)
-          case op: Seq[String] => op
+          case op: String => Seq(op)
+          case op: Seq[?] => op.asInstanceOf[Seq[String]]
       )
     }
 
@@ -563,8 +570,8 @@ case class AssemblyFormatDirective(
     val flatOperandTypes = '{
       $operandTypesArg.flatMap(op =>
         op match
-          case op: Attribute      => Seq(op)
-          case op: Seq[Attribute] => op
+          case op: Attribute => Seq(op)
+          case op: Seq[?]    => op.asInstanceOf[Seq[Attribute]]
       )
     }
 
@@ -581,8 +588,8 @@ case class AssemblyFormatDirective(
     val flatResultTypes = '{
       $resultTypesArg.flatMap(op =>
         op match
-          case op: Attribute      => Seq(op)
-          case op: Seq[Attribute] => op
+          case op: Attribute => Seq(op)
+          case op: Seq[?]    => op.asInstanceOf[Seq[Attribute]]
       )
     }
 
@@ -596,8 +603,8 @@ case class AssemblyFormatDirective(
     val flatRegionsArg = '{
       $regionsArg.flatMap(op =>
         op match
-          case op: Region      => Seq(op)
-          case op: Seq[Region] => op
+          case op: Region => Seq(op)
+          case op: Seq[?] => op.asInstanceOf[Seq[Region]]
       )
     }
 
@@ -744,7 +751,8 @@ def typeDirectiveP[$: P](using opDef: OperationDef) =
   * into an AttrDictDirective.
   */
 def attrDictDirectiveP[$: P]: P[AttrDictDirective] =
-  ("attr-dict").map(_ => AttrDictDirective())
+  ("attr-dict-with-keyword").map(_ => AttrDictDirective(keyword = true)) |
+    ("attr-dict").map(_ => AttrDictDirective())
 
 def possiblyAnchoredDirectiveP[$: P](using
     opDef: OperationDef

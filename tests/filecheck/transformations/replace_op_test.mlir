@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p test-rep-pass --allow-unregistered-dialect --skip-verify | filecheck %s
+// RUN: scair-opt %s -p TestReplacementPass --allow-unregistered-dialect --skip-verify | filecheck %s
 // TODO: Reenable verification, when Graph Regions are available
 
 "test.op"(%0) : (i32) -> ()

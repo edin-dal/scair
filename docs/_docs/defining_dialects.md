@@ -332,33 +332,9 @@ Calling `summonDialect` constructs a dialect definition, describing its attribut
 
 ### Register a Dialect
 
-ScaIR tools typically inherit from `ScairOptBase`, which defines the set of available dialects via the dialects field:
-
-```scala
-//{
-import scair.tools.opt.*
-import scair.tools.ScairToolBase
-//}
-trait ScairOptBase extends ScairToolBase[ScairOptArgs]:
-  override def dialects = scair.dialects.allDialects
-```
-
-which defaults to:
-
-```scala sc:nocompile
-val allDialects: Seq[Dialect] =
-  Seq(
-    BuiltinDialect,
-    ...,
-    MyDialect
-  )
-```
-
-A dialect becomes usable once it is included in the sequence returned by dialects.
-
 There are two common ways to register a dialect:
 
-* When using ScaIR as a library: Create a custom `Opt` class inheriting from `ScairOptBase` and override `dialects` to include your dialect.
+* When using ScaIR as a library: Create a custom `Opt` class inheriting from `OptBase` and override `dialects` to include your dialect.
 
 * When working within ScaIR itself: Add the dialect directly to the `allDialects` sequence.
 

@@ -38,7 +38,7 @@ class LoopLikeTest extends AnyFlatSpec with BeforeAndAfter:
 
     loop.loopRegions shouldBe Seq(body)
 
-    loop match
+    (loop: Operation) match
       case LoopLike(regions) => regions shouldBe Seq(body)
       case _                 => fail("should have matched LoopLike")
   }

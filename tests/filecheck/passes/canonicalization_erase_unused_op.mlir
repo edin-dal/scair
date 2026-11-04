@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p canonicalize | filecheck %s -DFILE=%s
+// RUN: scair-opt %s -p Canonicalize | filecheck %s -DFILE=%s
 
 func.func @dead_addi(%0: index) {
   %1 = "arith.constant"() <{value = 0 : index}> : () -> index

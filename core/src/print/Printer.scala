@@ -150,22 +150,31 @@ abstract class Printer(
   ): Unit =
     printListF(iterable, (x: Printable) => print(x), start, sep, end)
 
+  private inline def printSeparated[T](
+      it: Iterator[T],
+      inline f: T => Unit,
+      inline sep: String,
+  ): Unit =
+    if it.hasNext then
+      f(it.next())
+      it.foreach(element =>
+        print(sep)
+        f(element)
+      )
+
   inline def printListF[T](
       inline iterable: IterableOnce[T],
-      f: T => Unit,
+      inline f: T => Unit,
       inline start: String = "",
       inline sep: String = ", ",
       inline end: String = "",
   ): Unit =
     inline if start != "" then print(start)
-    inline if sep == "" then iterable.foreach(f)
-    else if iterable.nonEmpty then
-      val it = iterable.iterator
-      f(it.next())
-      it.foreach(e =>
-        print(sep)
-        f(e)
-      )
+    inline if sep == "" then
+      inline iterable match
+        case xs: Iterable[T] => xs.foreach(f)
+        case xs              => xs.iterator.foreach(f)
+    else printSeparated(iterable.iterator, f, sep)
     inline if end != "" then print(end)
 
   @targetName("printDispatch")

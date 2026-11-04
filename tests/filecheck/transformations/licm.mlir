@@ -1,4 +1,4 @@
-// RUN: scair-opt %s --split-input-file -p licm | filecheck %s
+// RUN: scair-opt %s --split-input-file -p LICM | filecheck %s
 
 // Ported from mlir/test/Transforms/loop-invariant-code-motion.mlir, keeping
 // upstream's case names, ordering and CHECK style so the two can be diffed.

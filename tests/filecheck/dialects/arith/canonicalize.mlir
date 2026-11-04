@@ -1,4 +1,4 @@
-// RUN: scair-opt %s -p canonicalize | filecheck %s
+// RUN: scair-opt %s -p Canonicalize | filecheck %s
 
 // CHECK:       builtin.module {
 

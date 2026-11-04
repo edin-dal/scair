@@ -1,6 +1,8 @@
 // RUN: scair-opt %s | filecheck %s
 
 builtin.module {
+    builtin.module attributes {hello = @world}{
+    }
     %0, %1, %2, %3 = "test.op"() : () -> (i1, i8, i16, i32)
     %4 = "builtin.unrealized_conversion_cast"() : () -> i32
     %5 = "builtin.unrealized_conversion_cast"(%0) : (i1) -> i32
@@ -9,6 +11,8 @@ builtin.module {
 }
 
 // CHECK:       builtin.module {
+// CHECK-NEXT:    builtin.module attributes {hello = @world} {
+// CHECK-NEXT:    }
 // CHECK-NEXT:    %0, %1, %2, %3 = "test.op"() : () -> (i1, i8, i16, i32)
 // CHECK-NEXT:    %4 = "builtin.unrealized_conversion_cast"() : () -> i32
 // CHECK-NEXT:    %5 = "builtin.unrealized_conversion_cast"(%0) : (i1) -> i32
