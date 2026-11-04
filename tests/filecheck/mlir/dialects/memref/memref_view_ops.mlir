@@ -84,9 +84,9 @@ func.func @views(%i: index, %j: index) {
 // CHECK-NEXT:      %15 = memref.memory_space_cast %12 : memref<*xf32, 5 : i64> to memref<*xf32, 3 : i64>
 // CHECK-NEXT:      %16 = "memref.rank"(%6) : (memref<*xf32>) -> index
 // CHECK-NEXT:      %17 = "memref.rank"(%2) : (memref<4x5xf32>) -> index
-// CHECK-NEXT:      %18 = "memref.collapse_shape"(%5) <{reassociation = [[0 : i64, 1 : i64], [2 : i64]]}> : (memref<2x3x4xf32>) -> memref<6x4xf32>
-// CHECK-NEXT:      %19 = "memref.collapse_shape"(%5) <{reassociation = [[0 : i64, 1 : i64, 2 : i64]]}> : (memref<2x3x4xf32>) -> memref<24xf32>
-// CHECK-NEXT:      %20 = "memref.collapse_shape"(%4) <{reassociation = []}> : (memref<f32>) -> memref<f32>
+// CHECK-NEXT:      %18 = memref.collapse_shape %5 [[0 : i64, 1 : i64], [2 : i64]] : memref<2x3x4xf32> into memref<6x4xf32>
+// CHECK-NEXT:      %19 = memref.collapse_shape %5 [[0 : i64, 1 : i64, 2 : i64]] : memref<2x3x4xf32> into memref<24xf32>
+// CHECK-NEXT:      %20 = memref.collapse_shape %4 [] : memref<f32> into memref<f32>
 // CHECK-NEXT:      %21 = "memref.expand_shape"(%18) <{reassociation = [[0 : i64, 1 : i64], [2 : i64]], static_output_shape = array<i64: 2, 3, 4>}> : (memref<6x4xf32>) -> memref<2x3x4xf32>
 // CHECK-NEXT:      %22 = "memref.expand_shape"(%3, %1) <{reassociation = [[0 : i64, 1 : i64], [2 : i64]], static_output_shape = array<i64: -9223372036854775808, 4, 5>}> : (memref<?x5xf32>, index) -> memref<?x4x5xf32>
 // CHECK-NEXT:      %23 = "memref.expand_shape"(%4) <{reassociation = [], static_output_shape = array<i64>}> : (memref<f32>) -> memref<f32>

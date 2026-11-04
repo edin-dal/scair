@@ -82,6 +82,9 @@ case class CollapseShape(
     reassociation: ArrayAttribute[ArrayAttribute[IntegerAttr]],
     result: Result[RankedMemrefType],
 ) extends DerivedOperation["memref.collapse_shape"]
+    with AssemblyFormat[
+      "$src $reassociation attr-dict `:` type($src) `into` type($result)"
+    ]
     with Pure derives OpDefs
 
 case class Copy(
