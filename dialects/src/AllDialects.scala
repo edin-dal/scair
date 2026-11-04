@@ -12,6 +12,7 @@ import scair.dialects.lingodb.*
 import scair.dialects.llvm.LLVMDialect
 import scair.dialects.math.MathDialect
 import scair.dialects.memref.MemrefDialect
+import scair.dialects.nvvm.NVVMDialect
 import scair.dialects.scf.SCFDialect
 import scair.dialects.test.Test
 import scair.ir.Dialect
@@ -45,6 +46,7 @@ val allDialects: Seq[Dialect] =
     AffineDialect,
     FuncDialect,
     LLVMDialect,
+    NVVMDialect,
     SCFDialect,
     DbDialect,
     TuplesDialect,

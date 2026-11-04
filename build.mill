@@ -248,6 +248,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     object arith extends DialectModule
     object func extends DialectModule
     object llvm extends DialectModule
+    object nvvm extends DialectModule
     object memref extends DialectModule
     object scf extends DialectModule
     object lingodb extends DialectModule
