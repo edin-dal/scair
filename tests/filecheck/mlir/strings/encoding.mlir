@@ -2,6 +2,8 @@
 
 // RUN: mlir-opt %s --allow-unregistered-dialect --mlir-print-op-generic | filecheck %s --strict-whitespace
 // RUN: scair-opt %s --allow-unregistered-dialect --print-generic | filecheck %s --strict-whitespace
+// RUN: scair-opt %s --allow-unregistered-dialect --print-generic -p 'mlir-opt[]' | filecheck %s --strict-whitespace
+// RUN: LC_ALL=C scair-opt %s --allow-unregistered-dialect --print-generic -p 'mlir-opt[]' | filecheck %s --strict-whitespace
 // RUN: scair-opt --allow-unregistered-dialect --print-generic < %s | filecheck %s --strict-whitespace
 // RUN: LC_ALL=C scair-opt %s --allow-unregistered-dialect --print-generic | filecheck %s --strict-whitespace
 // RUN: LC_ALL=C scair-opt --allow-unregistered-dialect --print-generic < %s | filecheck %s --strict-whitespace

@@ -2,6 +2,7 @@
 
 // RUN: mlir-opt %s | filecheck %s --strict-whitespace
 // RUN: scair-opt %s | filecheck %s --strict-whitespace
+// RUN: scair-opt %s -p 'mlir-opt[]' | filecheck %s --strict-whitespace
 
 // CHECK: {{(builtin\.)?}}module {
 

@@ -21,6 +21,7 @@
 // RUN:   > %t
 // RUN: mlir-opt %t --allow-unregistered-dialect --mlir-print-op-generic | filecheck %s --strict-whitespace
 // RUN: scair-opt %t --allow-unregistered-dialect --print-generic | filecheck %s --strict-whitespace
+// RUN: scair-opt %t --allow-unregistered-dialect --print-generic -p 'mlir-opt[]' | filecheck %s --strict-whitespace
 
 // CHECK: "builtin.module"() ({
 
