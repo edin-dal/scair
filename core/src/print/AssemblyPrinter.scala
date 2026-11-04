@@ -160,3 +160,4 @@ case class AssemblyPrinter(
   def printTopLevel(ops: Seq[Operation]): Unit =
     printAliases(ops)
     print(ops)
+    print("\n")
