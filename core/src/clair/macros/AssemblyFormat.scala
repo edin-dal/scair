@@ -126,7 +126,10 @@ case class LiteralDirective(
   * As MLIR does, it also carries the `properties` the rest of the format does
   * not spell out, so that no property is lost by a custom syntax.
   */
-case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
+case class AttrDictDirective(
+    properties: Seq[String] = Seq(),
+    keyword: Boolean = false,
+) extends Directive:
 
   override def print(op: Expr[?], p: Expr[Printer])(using
       state: PrintingState
@@ -142,12 +145,24 @@ case class AttrDictDirective(properties: Seq[String] = Seq()) extends Directive:
           $attributes ++ ${ Expr(properties) }
             .flatMap(name => $props.get(name).map(name -> _))
         }
-    '{ $p.printOptionalAttrDict($printed) }
+    val printKeyword = if keyword then '{ $p.print(" attributes") } else '{}
+    '{
+      val attrs = $printed
+      if attrs.nonEmpty then
+        $printKeyword
+        $p.printAttrDict(attrs)
+    }
 
   def parse(p: Expr[Parser])(using
       ctx: Expr[P[Any]]
   )(using quotes: Quotes): Expr[P[Map[String, Attribute]]] =
-    '{ optionalAttributesP(using $ctx, $p) }
+    if keyword then
+      '{
+        given P[Any] = $ctx
+        given Parser = $p
+        ("attributes" ~ attributeDictionaryP).orElse(Map.empty)
+      }
+    else '{ optionalAttributesP(using $ctx, $p) }
 
 /** A unit property carries no value of its own: its presence is the
   * information, and it is spelled out by the literals around it, as in
@@ -476,8 +491,9 @@ case class AssemblyFormatDirective(
     val inAttrDict = propertiesInAttrDict(opDef)
     Expr.block(
       '{ $p.print($op.asInstanceOf[Operation].name) } +: directives.map {
-        case _: AttrDictDirective => AttrDictDirective(inAttrDict).print(op, p)
-        case directive            => directive.print(op, p)
+        case d: AttrDictDirective =>
+          d.copy(properties = inAttrDict).print(op, p)
+        case directive => directive.print(op, p)
       }.toList,
       '{},
     )
@@ -735,7 +751,8 @@ def typeDirectiveP[$: P](using opDef: OperationDef) =
   * into an AttrDictDirective.
   */
 def attrDictDirectiveP[$: P]: P[AttrDictDirective] =
-  ("attr-dict").map(_ => AttrDictDirective())
+  ("attr-dict-with-keyword").map(_ => AttrDictDirective(keyword = true)) |
+    ("attr-dict").map(_ => AttrDictDirective())
 
 def possiblyAnchoredDirectiveP[$: P](using
     opDef: OperationDef
