@@ -114,6 +114,13 @@ case class ExtractStridedMetadata(
     with SameVariadicResultSize
     with Pure derives OpDefs
 
+case class GetGlobal(
+    @irName("name") global: SymbolRefAttr,
+    result: Result[MemrefType],
+) extends DerivedOperation["memref.get_global"]
+    with AssemblyFormat["$name `:` type($result) attr-dict"]
+    with Pure derives OpDefs
+
 case class Global(
     sym_name: StringData,
     sym_visibility: Option[StringData] = None,
@@ -203,6 +210,7 @@ val MemrefDialect =
         Copy,
         ExpandShape,
         ExtractStridedMetadata,
+        GetGlobal,
         Global,
         MemorySpaceCast,
         Prefetch,
