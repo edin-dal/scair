@@ -35,6 +35,14 @@ case class MulMultiVariadic(
     resultSegmentSizes: DenseArrayAttr,
 ) extends DerivedOperation["cmath.mulmultivariadic"] derives OpDefs
 
+case class MulTrailingSingles(
+    head: Seq[Operand[IntegerType]],
+    middle: Option[Operand[IntegerType]],
+    first: Operand[IntegerType],
+    second: Operand[IntegerType],
+    tail: Seq[Operand[IntegerType]],
+) extends DerivedOperation["cmath.multrailingsingles"] derives OpDefs
+
 case class MulSameVariadicOperands(
     lhs: Operand[IntegerType],
     rhs: Seq[Operand[IntegerType]],
@@ -634,6 +642,29 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
               Result(IntegerType(IntData(5), Unsigned)),
             ) =>
       }
+    }
+
+  "Multi Variadic Conversion to ADTOp" should
+    "Offset single operands by the variadic segments before them" in {
+      val values = (1 to 7).map(w => Value(IntegerType(IntData(w), Unsigned)))
+      val comp = summon[OpDefs[MulTrailingSingles]]
+      val op = comp.UnstructuredOp(
+        operands = values,
+        properties = Map(
+          "operandSegmentSizes" -> DenseArrayAttr(
+            IntegerType(IntData(32), Signless),
+            Seq(3, 1, 1, 1, 1).map(s =>
+              IntegerAttr(IntData(s), IntegerType(IntData(32), Signless))
+            ),
+          )
+        ),
+      )
+      val adt = comp.structure(op)
+      adt.head shouldEqual values.slice(0, 3)
+      adt.middle shouldEqual Some(values(3))
+      adt.first shouldEqual values(4)
+      adt.second shouldEqual values(5)
+      adt.tail shouldEqual values.slice(6, 7)
     }
 
   "Same Variadic Operand Size" should
