@@ -123,11 +123,9 @@ trait OptBase extends ToolBase[OptArgs]:
       operation: Operation,
       verifyDiagnostics: Boolean,
   ): OK[Operation] =
-    error match
-      case Err(msg, Some(_)) =>
-        val p = ErrorPrinter(error)
-        p.printTopLevel(operation)
-        if verifyDiagnostics then error else sys.exit(42)
+    val p = ErrorPrinter(error)
+    p.printTopLevel(operation)
+    if verifyDiagnostics then error else sys.exit(42)
 
   def fail(message: String): Nothing =
     Console.err.println(message)

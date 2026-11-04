@@ -9,7 +9,7 @@
 
 // CHECK:       "scf.index_switch"(%0) <{cases = array<i64: 0, 1>}> ({
 // CHECK:       }) : (index) -> ()
-// CHECK-NEXT:  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// CHECK-NEXT:  ^^^^^^^^^^^^^^^^^^
 // CHECK-NEXT:  > scf.index_switch: has 1 case regions but 2 case values
 
 // -----
@@ -25,5 +25,5 @@
 
 // CHECK:       "scf.index_switch"(%0) <{cases = array<i64: 0>}> ({
 // CHECK:       }) : (index) -> ()
-// CHECK-NEXT:  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// CHECK-NEXT:  ^^^^^^^^^^^^^^^^^^
 // CHECK-NEXT:  > scf.index_switch: has 2 case regions but 1 case values

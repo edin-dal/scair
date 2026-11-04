@@ -15,6 +15,9 @@ private final class ErrorPrinterFilter(writer: Writer)
 
   var msg: Option[(String, Int, Int)] = None
 
+  /** Whether the message was printed, i.e. the erroneous object was found. */
+  var messagePrinted = false
+
   @tailrec
   def writeRec(str: String, start: Int): Unit =
     str.indexOf('\n', start) match
@@ -43,6 +46,10 @@ private final class ErrorPrinterFilter(writer: Writer)
     1 to start foreach (_ => super.write(" "))
     start + 1 to end foreach (_ => super.write("^"))
     super.write("\n")
+    printMessageLines(content, start)
+
+  final def printMessageLines(content: String, start: Int = 0): Unit =
+    messagePrinted = true
     content.linesIterator.foreach(l =>
       1 to start foreach (_ => super.write(" "))
       super.write("> ")
@@ -116,8 +123,10 @@ final class ErrorPrinter private (
 
   val obj = error.obj.getOrElse(null)
 
+  // Share the filter, so that nested scopes keep track of the same line and
+  // of whether the message was printed.
   override def scoped =
-    ErrorPrinter(
+    new ErrorPrinter(
       error,
       w,
       indent,
@@ -129,6 +138,14 @@ final class ErrorPrinter private (
       indentLevel,
       printLocations,
     )
+
+  /** Prints the IR, underlining the erroneous object with the message; or after
+    * it if the error is not attached to a printed operation, attribute or
+    * value.
+    */
+  override def printTopLevel(ops: Seq[Operation]): Unit =
+    super.printTopLevel(ops)
+    if !w.messagePrinted then w.printMessageLines(error.msg)
 
   override def print(operation: Operation): Unit =
     if obj eq operation then

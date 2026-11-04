@@ -19,11 +19,12 @@ object SSADominanceCheck extends VerifierCheck:
         r.blocks.foreach { b =>
           b.operations.foreach { op =>
             // Check operand dominance at this use site
-            op.operands.foreach { v =>
+            op.operands.zipWithIndex.foreach { (v, i) =>
               if !dom.valueDominates(v, op) then
                 break(
                   Err(
-                    s"value $v does not dominate its use in op `${op.name}`"
+                    s"operand #$i does not dominate this use",
+                    Some(op),
                   ): OK[Unit]
                 )
             }
