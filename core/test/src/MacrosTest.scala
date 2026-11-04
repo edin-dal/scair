@@ -35,6 +35,12 @@ case class MulMultiVariadic(
     resultSegmentSizes: DenseArrayAttr,
 ) extends DerivedOperation["cmath.mulmultivariadic"] derives OpDefs
 
+case class Renamed(
+    @property("name") symbol: StringData,
+    @property("value") optional: Option[StringData] = None,
+) extends DerivedOperation["cmath.renamed"]
+    with AssemblyFormat["$name ($value^)? attr-dict"] derives OpDefs
+
 case class MulSameVariadicOperands(
     lhs: Operand[IntegerType],
     rhs: Seq[Operand[IntegerType]],
@@ -635,6 +641,35 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
             ) =>
       }
     }
+
+  "A @property field" should "use its key as the property name" in {
+    val comp = summon[OpDefs[Renamed]]
+    val adt = Renamed(StringData("a"), Some(StringData("b")))
+    comp.destructure(adt).properties shouldEqual Map(
+      "name" -> StringData("a"),
+      "value" -> StringData("b"),
+    )
+    val restructured = comp.structure(comp.destructure(adt))
+    restructured.symbol shouldEqual adt.symbol
+    restructured.optional shouldEqual adt.optional
+  }
+
+  it should "be spelled by its key in an assembly format" in {
+    val ctx = scair.MLContext()
+    ctx.registerDialect(summonDialect[EmptyTuple, Tuple1[Renamed]])
+    val parser = new scair.parse.Parser(ctx)
+    val source = """cmath.renamed "a" "b""""
+    parser.parse(source, scair.parse.operationP(using _, parser)) match
+      case fastparse.Parsed.Success(op: Renamed, _) =>
+        op.symbol shouldEqual StringData("a")
+        op.optional shouldEqual Some(StringData("b"))
+        val out = java.io.StringWriter()
+        val printer = scair.print.AssemblyPrinter(p = out)
+        op.customPrint(printer)
+        printer.flush()
+        out.toString should include(source)
+      case other => fail(s"Failed to parse operation: $other")
+  }
 
   "Same Variadic Operand Size" should
     "Not emit an operandSegmentSizes property when destructuring" in {

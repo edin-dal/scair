@@ -27,6 +27,11 @@ transparent trait DerivedAttribute[name <: String]
 
 trait AssemblyFormat[format <: String]
 
+/** Names the property a field stands for, when its MLIR name cannot be a field
+  * of an operation, as `name` clashes with `Operation.name`.
+  */
+final class property(val key: String) extends scala.annotation.StaticAnnotation
+
 transparent trait DerivedOperation[name <: String] extends Operation:
 
   // This enables summoning the right instance without an explicit type parameter

@@ -132,6 +132,7 @@ def getDefInput[Label: Type, Elem: Type](using
             v,
             constraint,
             defaults.get(name),
+            field = name,
           )
     case _: Type[?] =>
       report.errorAndAbort(
@@ -217,6 +218,17 @@ def defaultExprs[T: Type](using Quotes): Map[String, Expr[Any]] =
 
   }.toMap
 
+/** For a case class T, returns a dictionary mapping `@property` annotated field
+  * names to their property key.
+  */
+def propertyKeys[T: Type](using Quotes): Map[String, String] =
+  import quotes.reflect.*
+
+  TypeRepr.of[T].typeSymbol.primaryConstructor.paramSymss.flatten.flatMap { f =>
+    f.getAnnotation(TypeRepr.of[property].typeSymbol).map(_.asExpr match
+      case '{ new `property`(${ Expr(key) }) } => f.name -> key)
+  }.toMap
+
 def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
   import quotes.reflect.*
 
@@ -240,6 +252,7 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
             TypeRepr.of[T].typeSymbol.pos.get,
           )
       val defaults = defaultExprs[T]
+      val keys = propertyKeys[T]
       val inputs = Type.of[(elemLabels, elemTypes)] match
         case '[(Tuple, Tuple)] =>
           summonInput[elemLabels, elemTypes](using defaults)
@@ -250,7 +263,9 @@ def getDefImpl[T <: Operation: Type](using quotes: Quotes): OperationDef =
         results = inputs.collect { case a: ResultDef => a },
         regions = inputs.collect { case a: RegionDef => a },
         successors = inputs.collect { case a: SuccessorDef => a },
-        properties = inputs.collect { case a: OpPropertyDef => a },
+        properties = inputs.collect { case a: OpPropertyDef =>
+          a.copy(name = keys.getOrElse(a.name, a.name))
+        },
         assemblyFormat = None,
       )
       val format = Type.of[T] match

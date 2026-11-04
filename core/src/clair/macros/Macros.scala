@@ -248,14 +248,14 @@ def propertiesMacro(
   // Populating a Dictionary with the properties
   val mandatoryProps =
     opDef.properties.collect {
-      case OpPropertyDef(name = name, variadicity = Variadicity.Single) =>
-        (Expr(name), selectMember[Attribute](adtOpExpr, name))
+      case d @ OpPropertyDef(variadicity = Variadicity.Single) =>
+        (Expr(d.name), selectMember[Attribute](adtOpExpr, d.field))
     } ++ opSegSizeProp ++ resSegSizeProp ++ regSegSizeProp ++ succSegSizeProp
 
   val optionalProps =
     opDef.properties.collect {
-      case OpPropertyDef(name = name, variadicity = Variadicity.Optional) =>
-        (Expr(name), selectMember[Option[Attribute]](adtOpExpr, name))
+      case d @ OpPropertyDef(variadicity = Variadicity.Optional) =>
+        (Expr(d.name), selectMember[Option[Attribute]](adtOpExpr, d.field))
     }
   // Properties are typically few; a chain of `updated` goes through the
   // small specialized maps without a builder or tuples along the way.
@@ -927,7 +927,7 @@ def tryConstruct[T: Type](
         properties,
       ) zip opDef.successors).map((e, d) => NamedArg(d.name, e.asTerm)) ++
       opDef.properties.map {
-        case OpPropertyDef(name, tpe, variadicity, _, defaultValue) =>
+        case OpPropertyDef(name, tpe, variadicity, _, defaultValue, field) =>
           val namedArg = tpe match
             case '[type t <: scala.reflect.Enum & IntegerEnumAttr; `t`] =>
               val property = variadicity match
@@ -941,7 +941,7 @@ def tryConstruct[T: Type](
                     properties,
                     name,
                   )
-              NamedArg(name, property.asTerm)
+              NamedArg(field, property.asTerm)
             case '[type t <: Attribute; `t`] =>
               val property = variadicity match
                 case Variadicity.Optional =>
@@ -955,7 +955,7 @@ def tryConstruct[T: Type](
                     name,
                     defaultValue,
                   )
-              NamedArg(name, property.asTerm)
+              NamedArg(field, property.asTerm)
           namedArg
       }
   // Return a call to the primary constructor of the ADT.
