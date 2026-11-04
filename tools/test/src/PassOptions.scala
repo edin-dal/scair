@@ -98,10 +98,10 @@ class PassOptionsTest extends AnyFlatSpec:
     def mlirOpt(pipeline: String) = MLIROpt(
       arguments = Seq(
         "--mlir-print-op-generic",
-        "--allow-unregistered-dialect",
         "-p",
         s"builtin.module($pipeline)",
-      )
+      ),
+      allowUnregisteredDialect = true,
     )
     pipeline("mlir-opt[cse,canonicalize{max-iterations=2}]") shouldEqual
       Right(Seq(mlirOpt("cse,canonicalize{max-iterations=2}")))

@@ -216,7 +216,7 @@ The `mlir-opt` pass prints the IR, runs it through MLIR's `mlir-opt`, and parses
 scair-opt -p 'Canonicalize,mlir-opt[cse,loop-invariant-code-motion],Canonicalize'
 ```
 
-`mlir-opt[<pipeline>]` is shorthand for running `mlir-opt --mlir-print-op-generic --allow-unregistered-dialect -p 'builtin.module(<pipeline>)'`. For full control over the arguments, use the pass's options instead:
+`mlir-opt[<pipeline>]` is shorthand for running `mlir-opt --allow-unregistered-dialect --mlir-print-op-generic -p 'builtin.module(<pipeline>)'`. For full control over the arguments, use the pass's options instead:
 
 ```bash
 scair-opt -p 'mlir-opt{arguments=--cse,--mlir-disable-threading}'
@@ -227,7 +227,9 @@ scair-opt -p 'mlir-opt{arguments=--cse,--mlir-disable-threading}'
 | `executable` | `$SCAIR_MLIR_OPT`, else `mlir-opt` | The `mlir-opt` binary to run. |
 | `arguments` | none | The command line arguments to pass to it. |
 | `generic` | `true` | Whether to give it the IR in generic format. |
-| `allowUnregisteredDialect` | `false` | Whether to accept operations ScaIR doesn't know in its output. |
+| `allowUnregisteredDialect` | `false` | Whether to pass it `--allow-unregistered-dialect`. |
+
+Its output is parsed back under `scair-opt`'s own `--allow-unregistered-dialect`.
 
 ## **Footnotes**
 

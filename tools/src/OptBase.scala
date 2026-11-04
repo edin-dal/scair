@@ -60,7 +60,7 @@ trait OptBase extends ToolBase[OptArgs]:
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
-        allowUnregisteredDialect = args.allowUnregistered,
+        allowUnregisteredDialect = ctx.allowUnregisteredDialect,
         inputLineOffset = indexOffset,
         sourceLocations = args.parseLocations,
       )
@@ -138,6 +138,7 @@ trait OptBase extends ToolBase[OptArgs]:
   def main(args: Array[String]): Unit =
 
     val parsedArgs = parseArgs(args)
+    ctx.allowUnregisteredDialect = parsedArgs.allowUnregistered
     val pipeline = parsePipeline(parsedArgs.passes)
     given MLContext = ctx
 
