@@ -144,7 +144,7 @@ class LocationTest extends AnyFlatSpec:
           val module = parse(s"$input $suffix", offset = 20)
           module.location shouldBe location
           val printed = print(module, locations = true, generic = generic)
-          printed should endWith(s" $suffix\n")
+          printed should endWith(s" $suffix\n\n")
           parse(printed).location shouldBe location
           print(parse(printed), locations = true, generic = generic) shouldBe
             printed
@@ -174,7 +174,7 @@ class LocationTest extends AnyFlatSpec:
   "Location printing" should
     "escape filenames exactly like string attributes" in {
       val filename = "quote\"backslash\\newline\ntab\t.mlir"
-      val escaped = "\"quote\\\"backslash\\\\newline\\ntab\\t.mlir\""
+      val escaped = "\"quote\\22backslash\\\\newline\\0Atab\\09.mlir\""
       val out = StringWriter()
       AssemblyPrinter(p = out).print(StringData(filename))
       out.toString shouldBe escaped
@@ -199,6 +199,7 @@ class LocationTest extends AnyFlatSpec:
                                 |    "other.op"() : () -> ()
                                 |  }
                                 |}
+                                |
                                 |""".stripMargin
       print(module, locations = true) shouldBe
         """builtin.module {
@@ -206,6 +207,7 @@ class LocationTest extends AnyFlatSpec:
                                                    |    "other.op"() : () -> () loc(unknown)
                                                    |  } loc("source.scala":12:7 to 14:3)
                                                    |} loc("source.scala":12:7)
+                                                   |
                                                    |""".stripMargin
       for generic <- Seq(false, true) do
         val printed = print(module, locations = true, generic = generic)
@@ -223,5 +225,5 @@ class LocationTest extends AnyFlatSpec:
       val module = parse("  \"other.op\"() : () -> ()")
       val printed = print(module, locations = true)
       printed should include("loc(\"input.mlir\":1:3)")
-      printed should endWith("loc(\"input.mlir\":0:0)\n")
+      printed should endWith("loc(\"input.mlir\":0:0)\n\n")
     }
