@@ -15,4 +15,4 @@
 // MISSING: error: cannot run '/nonexistent'
 
 // NOPASS: 'not-a-pass' does not refer to a registered pass
-// NOPASS: error: 'mlir-opt --mlir-print-op-generic --allow-unregistered-dialect -p builtin.module(not-a-pass)' failed
+// NOPASS: error: 'mlir-opt --allow-unregistered-dialect --mlir-print-op-generic -p builtin.module(not-a-pass)' failed

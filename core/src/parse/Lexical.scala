@@ -100,7 +100,8 @@ def stringLiteralBisRecP(using
       case '"' => ctx.freshSuccess[String](str.toString(), index + 1)
       case '\n' | 11 | '\f' => Fail("expected '\"' in string literal")
       case '\\'             =>
-        val c1 = input(index + 1)
+        val c1 =
+          if input.isReachable(index + 1) then input(index + 1) else 0.toChar
         (c1: @switch) match
           case '"' =>
             str.append('"')
@@ -116,7 +117,9 @@ def stringLiteralBisRecP(using
             stringLiteralBisRecP(index + 2)
           case 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' |
               'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' =>
-            val c2 = input(index + 2)
+            val c2 =
+              if input.isReachable(index + 2) then input(index + 2)
+              else 0.toChar
             (c2: @switch) match
               case 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' |
                   'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' |

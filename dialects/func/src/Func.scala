@@ -90,7 +90,7 @@ case class Func(
         lprinter.print(visibility.data, " ")
       case None => ()
     lprinter.print("@")
-    lprinter.print(sym_name.data)
+    lprinter.printKeywordOrString(sym_name.data)
     body.blocks match
       case Seq() =>
         lprinter.print(function_type)

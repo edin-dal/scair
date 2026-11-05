@@ -13,6 +13,7 @@
 // SPLIT:       builtin.module {
 // SPLIT-NEXT:    "test.op"() : () -> ()
 // SPLIT-NEXT:  }
+// SPLIT-EMPTY:
 // SPLIT-NEXT:  // -----
 // SPLIT-NEXT:  builtin.module {
 // SPLIT-NEXT:    "test.op"() : () -> ()
