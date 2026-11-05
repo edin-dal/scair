@@ -3,6 +3,7 @@ package scair.dialects
 import scair.dialects.affine.AffineDialect
 import scair.dialects.arith.ArithDialect
 import scair.dialects.builtin.BuiltinDialect
+import scair.dialects.cf.CfDialect
 import scair.dialects.cmath.cmath
 import scair.dialects.complex.Complex
 import scair.dialects.func.FuncDialect
@@ -45,6 +46,7 @@ val allDialects: Seq[Dialect] =
     cmath,
     AffineDialect,
     FuncDialect,
+    CfDialect,
     LLVMDialect,
     SCFDialect,
     DbDialect,

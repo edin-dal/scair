@@ -48,21 +48,20 @@ final class DominanceInfo(root: Operation):
   /** Returns true if SSA value 'v' dominates its use at operation 'user'.
     *
     * Rules:
-    *   - Block argument: only valid within the defining block (and nested
-    *     regions under ops in that block, via hierarchical lifting).
+    *   - Block argument: defined at the start of its block, so that block must
+    *     dominate the (lifted) user op's block.
     *   - Op result: defOp must dominate the (lifted) user op.
     */
   def valueDominates(v: Value[Attribute], user: Operation): Boolean =
     v.owner match
       case Some(b: Block) =>
-        // Block arguments are only in-scope in their own block.
         // If 'user' is inside nested regions, lift it up to 'b''s region
-        // and require it's still in the same defining block.
+        // and require 'b' to dominate the block it lands in.
         (for
           defRegion <- b.containerRegion
           liftedUse <- liftUseToRegion(user, defRegion)
           useBlock <- liftedUse.containerBlock
-        yield useBlock eq b).getOrElse(false)
+        yield blockDominates(defRegion, b, useBlock)).getOrElse(false)
 
       case Some(defOp: Operation) =>
         opDominates(defOp, user)
