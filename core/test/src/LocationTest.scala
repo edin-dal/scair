@@ -174,7 +174,7 @@ class LocationTest extends AnyFlatSpec:
   "Location printing" should
     "escape filenames exactly like string attributes" in {
       val filename = "quote\"backslash\\newline\ntab\t.mlir"
-      val escaped = "\"quote\\\"backslash\\\\newline\\ntab\\t.mlir\""
+      val escaped = "\"quote\\22backslash\\\\newline\\0Atab\\09.mlir\""
       val out = StringWriter()
       AssemblyPrinter(p = out).print(StringData(filename))
       out.toString shouldBe escaped

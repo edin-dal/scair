@@ -4,6 +4,8 @@ import scair.dialects.builtin.UnitAttr
 import scair.ir.*
 
 import java.io.Writer
+import java.nio.charset.StandardCharsets.ISO_8859_1
+import java.nio.charset.StandardCharsets.UTF_8
 import scala.annotation.targetName
 import scala.collection.immutable.ListMap
 
@@ -58,17 +60,30 @@ abstract class Printer(
     print("\n")
     flush()
 
-  /** Print a quoted MLIR string, shared by string attributes and filenames. */
+  /** Print a quoted MLIR string, shared by string attributes and filenames.
+    *
+    * Tools read their input as Latin-1, so parsed strings hold one char per
+    * byte. Wider chars can only come from Scala code, and are encoded as UTF-8.
+    */
   def printStringLiteral(value: String): Unit =
-    print("\"")
-    print(value.flatMap {
-      case '\n' => "\\n"
-      case '\t' => "\\t"
-      case '\\' => "\\\\"
-      case '"'  => "\\\""
-      case c    => c.toString
-    })
-    print("\"")
+    val bytes =
+      if value.forall(_ <= 0xff) then value.getBytes(ISO_8859_1)
+      else value.getBytes(UTF_8)
+    val literal = java.lang.StringBuilder("\"")
+    for byte <- bytes do
+      val c = byte & 0xff
+      if c == '\\' then literal.append("\\\\")
+      else if c >= 0x20 && c <= 0x7e && c != '"' then literal.append(c.toChar)
+      else
+        literal.append('\\').append(Character.forDigit(c >> 4, 16).toUpper)
+          .append(Character.forDigit(c & 0xf, 16).toUpper)
+    print(literal.append('"').toString)
+
+  /** Print an MLIR bare identifier, or a string if it is not one. */
+  def printKeywordOrString(value: String): Unit =
+    val isBare = value.headOption.exists(c => c.isLetter || c == '_') &&
+      value.forall(c => c < 0x80 && (c.isLetterOrDigit || "_$.".contains(c)))
+    if isBare then print(value) else printStringLiteral(value)
 
   @deprecated(
     "Just a first way to work with Java's Writer from Scala. Find better!"
@@ -93,8 +108,10 @@ abstract class Printer(
     */
   def printAttrEntry(k: String, v: Attribute): Unit =
     v match
-      case _: UnitAttr => print(k)
-      case _           => print(k, " = ", v)
+      case _: UnitAttr => printKeywordOrString(k)
+      case _           =>
+        printKeywordOrString(k)
+        print(" = ", v)
 
   def printAttrDict(
       attrs: Map[String, Attribute]
