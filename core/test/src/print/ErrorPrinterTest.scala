@@ -21,6 +21,7 @@ class ErrorPrinterTest extends AnyFlatSpec:
     printError(Err("wrong", Some(op)), op) shouldEqual """"test.op"() : () -> ()
         |^^^^^^^^^^^^^^^^^^^^^^
         |> wrong
+        |
         |""".stripMargin
   }
 
@@ -33,12 +34,14 @@ class ErrorPrinterTest extends AnyFlatSpec:
         |  ^^^^^^^^^^^^^^^^^^^^^^
         |  > wrong
         |}) : () -> ()
+        |
         |""".stripMargin
   }
 
   it should "print the message after the IR if the error is not attached" in {
     val op = UnregisteredOperation("test.op")()
     printError(Err("wrong"), op) shouldEqual """"test.op"() : () -> ()
+        |
         |> wrong
         |""".stripMargin
   }
@@ -50,6 +53,7 @@ class ErrorPrinterTest extends AnyFlatSpec:
       """"builtin.module"() ({
         |^bb0:
         |}) : () -> ()
+        |
         |> wrong
         |""".stripMargin
   }
