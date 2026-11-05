@@ -13,6 +13,7 @@ import scair.verify.Verifier
 import scopt.OParser
 
 import scala.io.BufferedSource
+import scala.io.Codec
 import scala.io.Source
 //
 // ░██████╗ ░█████╗░ ░█████╗░ ██╗ ██████╗░
@@ -59,7 +60,7 @@ trait OptBase extends ToolBase[OptArgs]:
         ctx,
         inputPath = args.input,
         parsingDiagnostics = args.parsingDiagnostics,
-        allowUnregisteredDialect = args.allowUnregistered,
+        allowUnregisteredDialect = ctx.allowUnregisteredDialect,
         inputLineOffset = indexOffset,
         sourceLocations = args.parseLocations,
       )
@@ -137,13 +138,14 @@ trait OptBase extends ToolBase[OptArgs]:
   def main(args: Array[String]): Unit =
 
     val parsedArgs = parseArgs(args)
+    ctx.allowUnregisteredDialect = parsedArgs.allowUnregistered
     val pipeline = parsePipeline(parsedArgs.passes)
     given MLContext = ctx
 
     // Open the input file or stdin
     val input = parsedArgs.input match
-      case Some(file) => Source.fromFile(file)
-      case None       => Source.stdin
+      case Some(file) => Source.fromFile(file)(using Codec.ISO8859)
+      case None       => Source.fromInputStream(System.in)(using Codec.ISO8859)
 
     val parsedModules = parse(parsedArgs)(input)
 

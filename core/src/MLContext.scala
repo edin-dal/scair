@@ -12,7 +12,7 @@ import scala.collection.mutable
 // ██║░╚═╝░██║ ███████╗ ╚█████╔╝ ╚█████╔╝ ██║░╚███║ ░░░██║░░░ ███████╗ ██╔╝╚██╗ ░░░██║░░░
 // ╚═╝░░░░░╚═╝ ╚══════╝ ░╚════╝░ ░╚════╝░ ╚═╝░░╚══╝ ░░░╚═╝░░░ ╚══════╝ ╚═╝░░╚═╝ ░░░╚═╝░░░
 
-class MLContext():
+class MLContext(var allowUnregisteredDialect: Boolean = false):
 
   val passContext: mutable.Map[String, PassCompanion[?]] = mutable.Map()
 

@@ -25,7 +25,7 @@ import scala.util.Using
   * @param arguments
   *   The command line arguments to `mlir-opt`.
   * @param allowUnregisteredDialect
-  *   Whether to accept unregistered operations in `mlir-opt`'s output.
+  *   Whether to pass `--allow-unregistered-dialect` to `mlir-opt`.
   */
 final case class MLIROpt(
     executable: String = sys.env.getOrElse("SCAIR_MLIR_OPT", "mlir-opt"),
@@ -41,7 +41,9 @@ final case class MLIROpt(
     printer.printTopLevel(op)
     printer.flush()
 
-    val command = executable +: arguments
+    val command = executable +:
+      (Option.when(allowUnregisteredDialect)("--allow-unregistered-dialect")
+        .toSeq ++ arguments)
     // Piping stdin can kill Scala Native with SIGPIPE if mlir-opt exits early.
     val inputFile = Files.createTempFile("scair-mlir-opt", ".mlir")
     val output =
@@ -68,7 +70,7 @@ final case class MLIROpt(
         ctx,
         inputPath = Some(s"<$executable output>"),
         parsingDiagnostics = true,
-        allowUnregisteredDialect = allowUnregisteredDialect,
+        allowUnregisteredDialect = ctx.allowUnregisteredDialect,
       )
     parser.parse(output) match
       case Parsed.Success(module, _) => module

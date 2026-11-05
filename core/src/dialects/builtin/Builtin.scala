@@ -360,7 +360,10 @@ final case class SymbolRefAttr(
   override def customPrint(p: Printer) =
     p.printListF(
       rootRef +: nestedRefs,
-      ref => p.print("@", ref.data),
+      ref =>
+        p.print("@")
+        p.printKeywordOrString(ref.data)
+      ,
       sep = "::",
     )
 
