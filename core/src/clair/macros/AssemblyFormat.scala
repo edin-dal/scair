@@ -213,7 +213,7 @@ case class VariableDirective(
             '{
               $p.printList(${ selectMember[Option[Result[Attribute]]](op, n) })
             }
-      case OpPropertyDef(name = n, variadicity = v) =>
+      case OpPropertyDef(field = n, variadicity = v) =>
         v match
           case Variadicity.Single =>
             '{
@@ -295,7 +295,7 @@ case class VariableDirective(
 
   override def isPresent(op: Expr[?])(using Quotes) =
     import quotes.reflect.*
-    val p = selectMember[Any](op, construct.name)
+    val p = selectMember[Any](op, construct.field)
     construct match
       case MayVariadicOpInputDef(
             name = n,

@@ -71,15 +71,15 @@ class LocationTest extends AnyFlatSpec:
         stream.close()
     try
       run() shouldBe
-        "builtin.module {\n  %0 = \"arith.constant\"() <{value = 1 : i32}> : () -> i32\n}\n"
+        "builtin.module {\n  %0 = \"arith.constant\"() <{value = 1 : i32}> : () -> i32\n}\n\n"
       val located = run("--print-locations", "--parse-locations")
       located should include(
         s"\"arith.constant\"() <{value = 1 : i32}> : () -> i32 loc(\"$input\":2:8)"
       )
-      located should endWith(s"} loc(\"$input\":1:1)\n")
+      located should endWith(s"} loc(\"$input\":1:1)\n\n")
       val generic =
         run("--print-locations", "--parse-locations", "--print-generic")
       generic should include(s"loc(\"$input\":2:8)")
-      generic should endWith(s"loc(\"$input\":1:1)\n")
+      generic should endWith(s"loc(\"$input\":1:1)\n\n")
     finally Files.deleteIfExists(input)
   }

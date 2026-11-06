@@ -1,4 +1,5 @@
 // RUN: scair-opt %s --skip-verify | filecheck %s
+// This is testing the parser's ability to parse this correctly, hence the --skip-verify - we are not checking correct dominance here.
 // TODO: Reenable verification, when Graph Regions are available
 "test.op"() ({
   "test.op"(%0) : (i32) -> ()

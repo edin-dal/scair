@@ -25,8 +25,9 @@ final class PipelineParser(context: MLContext):
         else
           P(!"[").opaque("`mlir-opt` to mark an MLIR pipeline").map(_ => None)
       arguments.flatMapX {
-        case Some(values) => Pass(MLIROpt(arguments = values))
-        case None         =>
+        case Some(values) =>
+          Pass(MLIROpt(arguments = values, allowUnregisteredDialect = true))
+        case None =>
           context.getPass(name) match
             case Some(pass) => pass.parse
             case None       =>
@@ -43,7 +44,6 @@ final class PipelineParser(context: MLContext):
     ("["./ ~~ CharsWhile(_ != ']', 0).! ~~ "]").map(pipeline =>
       Seq(
         "--mlir-print-op-generic",
-        "--allow-unregistered-dialect",
         "-p",
         s"builtin.module($pipeline)",
       )

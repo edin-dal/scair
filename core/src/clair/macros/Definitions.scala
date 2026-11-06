@@ -33,6 +33,7 @@ object OpInputDef:
 
 sealed trait OpInputDef:
   def name: String
+  def field: String = name
 
 object MayVariadicOpInputDef:
 
@@ -85,6 +86,7 @@ case class OpPropertyDef(
       Variadicity.Optional.type = Variadicity.Single,
     val constraint: Option[Expr[ConstraintImpl[?]]] = None,
     val defaultValue: Option[Expr[Any]],
+    override val field: String,
 ) extends OpInputDef
     with MayVariadicOpInputDef {}
 
