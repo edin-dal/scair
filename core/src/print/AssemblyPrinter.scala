@@ -122,7 +122,8 @@ case class AssemblyPrinter(
   \*≡==---==≡≡≡≡≡≡≡≡≡==---==≡*/
 
   def printGenericMLIROperation(op: Operation) =
-    print("\"", op.name, "\"(", op.operands, ")")
+    printStringLiteral(op.name)
+    print("(", op.operands, ")")
     if op.successors.nonEmpty then
       printListF(op.successors, b => print(assignBlockName(b)), "[", ", ", "]")
     if op.properties.nonEmpty then
@@ -160,3 +161,4 @@ case class AssemblyPrinter(
   def printTopLevel(ops: Seq[Operation]): Unit =
     printAliases(ops)
     print(ops)
+    print("\n")
