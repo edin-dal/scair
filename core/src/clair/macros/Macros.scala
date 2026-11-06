@@ -683,12 +683,24 @@ def multivariadicConstructPartitioner[Def <: OpInputDef: Type](
   // Partition the constructs according to the segmentSizes
   defs.zipWithIndex.map { case (d, i) =>
     getConstructVariadicity(d) match
-      case Variadicity.Single =>
+      // Only variadics shift what follows them.
+      case Variadicity.Single
+          if defs.take(i)
+            .forall(getConstructVariadicity(_) == Variadicity.Single) =>
         '{
           (
               properties: Map[String, Attribute],
               flat: Seq[DefinedInput[Def]],
           ) => flat(${ Expr(i) })
+        }
+      case Variadicity.Single =>
+        '{
+          (
+              properties: Map[String, Attribute],
+              flat: Seq[DefinedInput[Def]],
+          ) =>
+            val sizes = ${ segmentSizes }(properties, flat)
+            flat(sizes.slice(0, ${ Expr(i) }).sum)
         }
       case Variadicity.Variadic | Variadicity.Optional =>
         '{
