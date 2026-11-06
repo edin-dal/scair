@@ -6,6 +6,7 @@ import scair.dialects.builtin.BuiltinDialect
 import scair.dialects.cmath.cmath
 import scair.dialects.complex.Complex
 import scair.dialects.func.FuncDialect
+import scair.dialects.gpu.GPUDialect
 import scair.dialects.irdl.IRDL
 import scair.dialects.linalg.LinalgDialect
 import scair.dialects.lingodb.*
@@ -51,4 +52,5 @@ val allDialects: Seq[Dialect] =
     RelAlgDialect,
     SubopDialect,
     LinalgDialect,
+    GPUDialect,
   )

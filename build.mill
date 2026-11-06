@@ -247,6 +247,7 @@ object `package` extends ScairSettings with ScoverageReport with UnidocModule wi
     object affine extends DialectModule
     object arith extends DialectModule
     object func extends DialectModule
+    object gpu extends DialectModule
     object llvm extends DialectModule
     object memref extends DialectModule
     object scf extends DialectModule
