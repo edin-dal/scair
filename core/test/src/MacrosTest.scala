@@ -42,6 +42,7 @@ case class MulTrailingSingles(
     second: Operand[IntegerType],
     tail: Seq[Operand[IntegerType]],
 ) extends DerivedOperation["cmath.multrailingsingles"] derives OpDefs
+
 case class Renamed(
     @irName("name") symbol: StringData,
     @irName("value") optional: Option[StringData] = None,
@@ -671,6 +672,7 @@ class MacrosTest extends AnyFlatSpec with BeforeAndAfter:
       adt.second shouldEqual values(5)
       adt.tail shouldEqual values.slice(6, 7)
     }
+
   "An @irName field" should "use its key as the property name" in {
     val comp = summon[OpDefs[Renamed]]
     val adt = Renamed(StringData("a"), Some(StringData("b")))
