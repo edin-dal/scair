@@ -3,7 +3,7 @@ name: Publishing
 # Run on every push to main, or manually on any branch
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "emilien/publish-single-deploy" ]
   workflow_dispatch:
 
 permissions:
