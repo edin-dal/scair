@@ -45,6 +45,10 @@ case object Signless extends Signedness("signless", "i")
 
 sealed abstract class FloatType extends TypeAttribute
 
+final case class BFloat16Type() extends FloatType with DerivedAttribute["bf16"]
+    derives AttrDefs:
+  override def customPrint(p: Printer) = p.print(name)
+
 final case class Float16Type() extends FloatType with DerivedAttribute["f16"]
     derives AttrDefs:
   override def customPrint(p: Printer) = p.print(name)
