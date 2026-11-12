@@ -1,9 +1,10 @@
 name: Publishing
 
-# Run on every push to main
+# Run on every push to main, or manually on any branch
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,4 +22,8 @@ jobs:
             MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
             MILL_SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
             MILL_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          run: ./mill publishSonatypeCentral + __:ScairModule.publishSonatypeCentral + __:ScairModule.nativeOpt.publishSonatypeCentral
+          # One sequential Maven deploy for all modules, instead of one parallel deploy per module.
+          # __:UnidocModule selects the root module (scair-all), the only one extending it.
+          run: >-
+            ./mill mill.javalib.SonatypeCentralPublishModule/publishAll
+            --publishArtifacts '{__:UnidocModule,__:ScairModule,__:ScairModule.nativeOpt}.publishArtifacts'
